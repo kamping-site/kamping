@@ -8,14 +8,41 @@
 #include "mpi_ops.hpp"
 #include "type_helpers.hpp"
 
-// Questions/Problems:
-// - Collectives with asymmetric send/recv numbers who does memory allocations
+// questions/problems:
+// - collectives with asymmetric send/recv numbers who does memory allocations
 // - support for serialization out of the box?
 // - support for large-size mpi (64-bit bit send_counts) out of the box?
 // - point-to-point how to handle different send modes?
 // ...
+//
+// Improvements/Adjustments
+// -> memory management: Return Container as template parameter (default is
+// std::vector)
+//    -> Return Container as class template parameter
+// -> (contiguous) Iterators instead of pointers
+//
+// Requirements:
+//  memory allocation * additional return of info about sizes for vectorized
+//  variants * additional info about send sizes to input
+// Two approaches to solve the above requirements:
+// 1. function overloads -> combinatorial explosion in interface
+// 2. method chaining + state machine:
+//  some calls of gatherv
+//    MPIContext ctx;
+//    std::vector<..> data = ctx.gatherv(send_buf).set_root(3).call();
+//    std::vector<..> data =
+//    ctx.gatherv(send_buf).set_root(3).use_recv_counts(counts_buffer).call();
+//    ctx.gatherv(send_buf).set_recv_buffer(recv_buffer).call();
+//    auto [recv_buf, recv_counts] = ctx.gatherv(send_buf).return_counts().call();
+// requires state machine per collective operations
 
 namespace MPIWrapper {
+
+struct Rank {
+  int rank;
+};
+
+template <template <typename> typename DefaultContainer = std::vector>
 class MPIContext {
  public:
   enum class SendMode { normal, buffered, synchronous };
@@ -60,9 +87,12 @@ class MPIContext {
     return {};
   }
   template <typename T>
-  void gatherv(T* send_buffer, T* recv_buffer, std::size_t size, int root) const {}
-  template <typename T>
-  std::vector<T> gatherv(T* send_buffer, std::size_t size, int root) const {
+  void gatherv(T* send_buffer, T* recv_buffer, std::size_t size,
+               int root) const {}
+  template <typename T,
+            template <typename> typename Container = DefaultContainer>
+  Container<T> gatherv(T* send_buffer, std::size_t size, int root,
+                       std::vector<std::size_t>&) const {
     return {};
   }
   template <typename T>
@@ -90,7 +120,8 @@ class MPIContext {
   // * (sparse) alltoalls
   // *********************************
   template <typename T>
-  void all_to_all(T* send_buffer, T* recv_buffer, std::size_t* send_counts) const {}
+  void all_to_all(T* send_buffer, T* recv_buffer,
+                  std::size_t* send_counts) const {}
   template <typename T>
   std::vector<T> all_to_all(T* send_buffer, std::size_t* send_counts) const {}
   template <typename T>
@@ -109,7 +140,8 @@ class MPIContext {
   //   -> memory management is a bit special as of
   // *********************************
   template <typename T>
-  void broadcast(T* send_recv_buffer, std::size_t nb_elems, int root = 0) const {
+  void broadcast(T* send_recv_buffer, std::size_t nb_elems,
+                 int root = 0) const {
     broadcast_impl(this, send_recv_buffer, nb_elems, root);
   }
   template <typename T>
@@ -151,6 +183,9 @@ class MPIContext {
   template <typename T>
   std::vector<T> recv(int sender, int tag) {}
   // missing -> asynchronous variants
+  //
+  //
+  //
 
   MPI_Comm get_comm() const { return comm_; }
   int rank() const { return rank_; }
