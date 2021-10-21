@@ -1,0 +1,2 @@
+add_library(kamping INTERFACE)
+target_include_direc
