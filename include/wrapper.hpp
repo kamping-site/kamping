@@ -28,7 +28,7 @@ class MPIContext {
   // * reduce
   // *********************************
   template <typename T, typename Op>
-  void reduce(T* ts, std::size_t size, Op op, int root) {
+  void reduce(T* buffer, std::size_t size, Op op, int root) {
     // boost.mpi like mpi-function detection
     // if constexpr (is_same_v<Op, MPI_Op>) {
     //  MPI_Reduce(&t, 1, get_mpi_type<T>(), op, root, comm_);
@@ -42,7 +42,7 @@ class MPIContext {
     return T{};
   }
   template <typename T, typename Op>
-  void reduce(std::vector<T>& ts, Op op, int root) {
+  void reduce(std::vector<T>& buffer, Op op, int root) {
     // like above
     return T{};
   }
@@ -54,15 +54,15 @@ class MPIContext {
   // gathers
   // *********************************
   template <typename T>
-  void gather(T t, T* out_buffer, int root) const {}
+  void gather(T t, T* send_buffer, int root) const {}
   template <typename T>
   std::vector<T> gather(T t, int root) const {
     return {};
   }
   template <typename T>
-  void gatherv(T* send_buf, T* recv_buf, std::size_t size, int root) const {}
+  void gatherv(T* send_buffer, T* recv_buffer, std::size_t size, int root) const {}
   template <typename T>
-  std::vector<T> gatherv(T* send_buf, std::size_t size, int root) const {
+  std::vector<T> gatherv(T* send_buffer, std::size_t size, int root) const {
     return {};
   }
   template <typename T>
@@ -73,26 +73,26 @@ class MPIContext {
   // * allgathers
   // *********************************
   template <typename T>
-  void allgather(T t, T* out_buffer) const {}
+  void allgather(T t, T* send_buf) const {}
   template <typename T>
   std::vector<T> allgather(T t) const {
     return {};
   }
   template <typename T>
-  void allgatherv(T t, T* out_buffer) const {}
+  void allgatherv(T t, T* send_buf) const {}
   template <typename T>
-  void allgatherv(T* send_buf, T* recv_buf, std::size_t size) const {}
+  void allgatherv(T* send_buffer, T* recv_buffer, std::size_t size) const {}
   template <typename T>
-  std::vector<T> allgatherv(T* send_buf, std::size_t size) const {
+  std::vector<T> allgatherv(T* send_buffer, std::size_t size) const {
     return {};
   }
   // *********************************
   // * (sparse) alltoalls
   // *********************************
   template <typename T>
-  void all_to_all(T* send_buf, T* recv_buf, std::size_t* send_counts) const {}
+  void all_to_all(T* send_buffer, T* recv_buffer, std::size_t* send_counts) const {}
   template <typename T>
-  std::vector<T> all_to_all(T* send_buf, std::size_t* send_counts) const {}
+  std::vector<T> all_to_all(T* send_buffer, std::size_t* send_counts) const {}
   template <typename T>
   std::vector<T> all_to_all(std::vector<T>& send_buf) const {}
   template <typename SendMessage, typename RecvMessages, typename Config>
@@ -109,8 +109,8 @@ class MPIContext {
   //   -> memory management is a bit special as of
   // *********************************
   template <typename T>
-  void broadcast(T* send_recv_buf, std::size_t nb_elems, int root = 0) const {
-    broadcast_impl(this, send_recv_buf, nb_elems, root);
+  void broadcast(T* send_recv_buffer, std::size_t nb_elems, int root = 0) const {
+    broadcast_impl(this, send_recv_buffer, nb_elems, root);
   }
   template <typename T>
   void broadcast(T& t, int root = 0) const {
@@ -141,12 +141,12 @@ class MPIContext {
   // * point-to-point
   // *********************************
   template <typename T>
-  void send(const T* send_buf, std::size_t size, int recipient, int tag,
+  void send(const T* send_buffer, std::size_t size, int recipient, int tag,
             SendMode mode) {}
   template <typename T>
-  void recv(const T* recv_buf, int sender, int tag) {}
+  void recv(const T* recv_buffer, int sender, int tag) {}
   template <typename T>
-  void send(const std::vector<T>& send_buf, int recipient, int tag,
+  void send(const std::vector<T>& send_buffer, int recipient, int tag,
             SendMode mode) {}
   template <typename T>
   std::vector<T> recv(int sender, int tag) {}
