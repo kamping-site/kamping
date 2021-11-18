@@ -1,0 +1,317 @@
+#+STARTUP: beamer
+#+TITLE:    Requirements of KaMPIng 
+#+OPTIONS:  H:2 toc:nil
+#+LATEX_CLASS_OPTIONS: [10pt]
+
+* Disclaimer                                                        :B_frame:
+  :PROPERTIES:
+  :BEAMER_env: frame
+  :END:
+  This is a living document, please help to improve it
+  
+* Collected Requirements                                           :noexport:
+** Demian
+   #+BEGIN_SRC cpp
+     gathverv a;
+     if(foo) {
+         ??? = std::move(a).set_recv_count_buffer();
+     }
+     ???.collect();
+   #+END_SRC
+   Irgendwie sowas wäre echt gut zu haben. 
+
+   - Recv-counts angeben können oder von der library berechnen lassen
+   - Für alle verwendeten Buffer (recv, counts, displacements) entweder von der
+     Library speicher anlegen lassen oder vom Benutzer gegebene verwenden
+   - Keine Funktionen mit 100 Parametern, wo ich erst mal in die Doku gucken muss,
+     welche da rein kommen und in welcher Reihenfolge
+   - Irgendeine vorm von compile-time-checks für völlig falsche Sachen wäre
+     zumindest nice to have
+   - Der Benutzer sollte selbst entscheiden können, in was für einem Container er
+     seine Daten hält (solange er die Daten fortlaufend im Speicher ablegt)
+   - Modernes C++. Dazu gehört für mich insbesondere das Vermeiden von
+     output-Iteratoren (ich weiß, dass sich das mit 3. beißt^^)
+   - Allgemein genug, damit man auch nicht-standard-MPI-Dinge einbauen kann. Z.B.
+     Sparse All-to-all oder Dorniniks Vorschlag.
+   - Für so gut wie alles sollte es die Möglichkeit geben es von der Library
+     berechnen zu lassen oder default values zu verwenden (Tag, root, kA was noch)
+
+** Lukas
+   #+BEGIN_SRC cpp
+     // Use every function with either a single pod ...
+     auto sum = ctx.allreduce(llh).call();
+     
+     // ... complex, but trivially serialisable datatype (i.e. continous memory, no pointers) ...
+     auto complexSum = ctx.allreduce(complexLLH).call();
+     
+     // this should also be possible in-place
+     sum = ctx.allreduce(sum).call();
+     sum = ctx.reduce(sum).call(); // local number on all ranks != root, reduced number on root
+     
+     // ... a data_t *
+     // sums is a data * containign 10 elements
+     ctx.allreduce(sums, 10).call();
+     
+     // or something having a .data() -> data *
+     // sums is a std::vector()
+     ctx.allreduce(sums).call(); // in-place
+     
+     // not in-place, memory allocating
+     auto result = ctx.allreduce(sums).result_vector().call();
+     
+     // or
+     // results is a std.vector
+     ctx.allreduce(sums).result_vector(results).call();
+     
+     // analogous for data*
+     ctx.allreduce(sums).result_memptr(resultsPtr).call();
+     
+     // ob ich das mit allocating will weiß ich nicht, ist nicht so C++y
+     // bekommen wir es hin, dass wenn ich .result_vector() spezifiziere, sums eine const reference sein darf?
+     
+     // Automatisch der zweite call, falls ich bei einer Operation auf einem vector nicht weiß, wie viele Elemente rein kommen
+     auto dest_vec = ctx.broadcast(src_vec).call();
+     // oder, falls ich es weiß
+     auto dest_vec = ctx.broadcast(src_vec).n(<n>);
+     
+     // Wollen wir ein interface in dem alle außer der root den src_vec teil weglassen können?
+     dest_vec = ctx.broadcast().n(<n>)
+     
+         // Wie wäre es, wenn ein paar Defaults für den alle Operationen auf diesem Communicator setzbar sind?
+         ctx.default_root(...) // andere Namen um ctx.gather().default_root() zu vermeiden
+         ctx.default_tag(...)
+         ctx.gather().call() // nutzt die defaults
+         ctx.broadcast().call() // nutzt die defaults
+     
+         // At least compile time checks auf "unsinnige" Parameterkombinationen 
+     
+         // definierte Werte auf rank 0 bei einem exclusive scan
+         std::vector a = {1, 2, 3, 4, 5, 6, ...}
+         ctx.exclusive_scan(a, MPI_OP_SUM).call(); //in-place
+     // auf rank 0 steht jetzt die Identität der Operation, also hier = 0. In reinem MPI ist das undefiniert.
+     
+     // Idealerweise gibt eine Operation die in-place arbeitet void zurück
+     a = ctx.exclusive_scan(a, MPI_OP_MAX).call(); // compiliert nicht
+     
+     // Ich kann mir den Funktionsaufruf stückweise bauen
+     auto call = ctx.reduce(a);
+     if (ctx.num_ranks() % 2 == 0) {
+         call.set_root(1);
+     } // ich weiß, dass ich das in den Parameter packen kann, aber mir geht es ums Prinzip
+     // default root = 0
+     call.call();
+     call.call(); // Sollte das funktionieren? Ergibt das für manche oder alle Operationen Sinn?
+     
+     // Eine Möglichkeit Operationen einmal zu definieren und dann regelmäßig zu verwenden.
+     auto llhAllreduce = ctx.predefined_allreduce(); // Ja, da fehlen Parameter; Evtl per Tags angeben, welchen Overload man später gedenkt zu übergeben?
+     llhAllreduce.root(1); // kein default Wert sondern Parameter binden
+     llhAllreduce.tag(...);
+  
+     // Und nun z.B. in einer Schleife
+     ...
+     auto global_llh = llhAllreduce.call(llh); // In dem .call müssen jetzt die fehlenden Parameter von oben stehen
+     ...
+     
+     // Sparse All-to-All, regular und irregular
+     
+     // Ein Callback Interface für non-blocking operations
+     ctx.register_revc_callback(<from>, <callback lambda>).tag(<tag>).permanent().call(); // hier ist .call() vielleicht missverständlich
+     // .once() sollte der default sein, aber auch explizit hinschreibbar
+     // Vielleicht sollte man .start_callback_threads() oder was Ähnliches verlangen bevor man irgendwas mit callbacks macht, damit dem Nutzer klar wird, dass diese Operation einen neuen Thread startet?
+     
+     // Für SparseAllToAll
+     // Frage: Wie ist data aufgebaut? Separate Datenstruktur welche den Destination Rank angibt? Allgemein: Wie machen wir das bei allv calls?
+     // Wir sollten nicht davon ausgehen, dass z.B. data schon ein zweidimensionales Array ist oder so. Evtl Helperfunktionen welche das destRanks Array für den User bauen?
+     ctx.sparse_all_to_allv(data, destRanks).recv_callback(...).call();
+     
+     // Ich habe kein Problem damit wenn es operation und operation_callback oder operation_nonblocking als separate Funktionen gibt statt wie oben mit Function Chaining
+     
+     // Das klassische Polling Interface
+     auto async_receive = ctx.async_receive(<from>).tag(<tag>).timeout(<ms>).call();
+     if (async_receive.timeout())
+         if (async_receive.received())
+     
+             // Nice to have but imho not essential would be custom serialization
+             // That is, if customClass is no trivially serializable but has a .serialize() and .deserialize() function, I can still use it in all the above functions.
+     
+             // Fault tolerance and chaos monkeys etc, compile time enabled
+             auto ctx = KaMPIng::MPI_Context<tag enable for example fault-tolerance>(MPI_COMM_WORLD);
+     
+     // For Fault-Tolerance, invalidating communicators is necessary, also updating communicators, ideally callbacks which are invoked when a communicator is
+     // detected as faulty and one if an operation should happen on a revoked comm.
+     ctx.register_fault_tolerance_callbacks(<fn>, <tag: revoked, failure, both>)
+     ctx.allreduce() // Rank failure detected or comm revoked -> callback called
+     
+     auto ctx = ctx.fix_comm(); // New Communicator object, think about what should be copied (e.g. the ft-callback etc)
+     
+     // Fake fault-tolerance support: Simulating failures
+     
+     // Splitting communicators
+     auto group_comm = ctx.split(...)
+     
+         // Maybe Michas lightweight split?
+     
+         // Ideally: message logging + replay? But I guess this is way too much work.
+     
+         // Mocking: Recreate the interface using google mock.
+     
+         // Some simple counters as for example numbers of messages sent per node, number of bytes sent, etc; compile time enabled
+     
+         // Timing and collecting timers
+     
+         // Do we want to support the MPI File IO and RDMA stuff? I vote for yes
+     
+         // Selecting which MPI Algorithm to use for a specific operation
+         // Wird vor allem relevant wenn der Student den ich betreue seine reproduzierbaren Reduce Operationen implementiert hat
+         ctx.broadcast(...).algorithm(linear_pipelined).call(); 
+   #+END_SRC
+   Named arguments [https://www.fluentcpp.com/2019/03/22/generalizing-unordered-named-arguments/]
+   Aber ich freunde mich gerade mit dem Function Chaining + Runtime Checks an. Zumindestens was
+   das benutzen oben angeht, keine Ahnung wie gut sich das implementieren lässt
+** Dorninik
+   Es soll ein Interface geben, über das man anytime asynchron
+   Point-to-point-Nachrichten beliebiger Länge senden und empfangen kann, ohne
+   manuell RECVs dafür zu posten. Code dafür existiert ja bei mir schon, aber
+   möglicherweise könnte die Architektur bei uns ja nochmal überarbeitet werden.
+
+   - Man soll eine Instanz einer AsyncMsgQueue (oder wie auch immer das Ding dann
+     heißen soll) konstruieren können, die mit einem bestimmten MPI Tag assoziiert
+     ist. Es wird garantiert, dass die Queue nur mithilfe dieses MPI Tags
+     Nachrichten verschickt und empfängt. Umgekehrt garantiert der Nutzer, dass er
+     diesen Tag nicht anderweitig verwendet. Vermutlich macht es Sinn, der Instanz
+     im Konstruktor auch einen MPI Communicator zu geben, über den alle
+     Kommunikation läuft (in meiner Implementierung läuft alles über
+     MPI_COMM_WORLD).
+   - Auf der AsyncMsgQueue kann man Message Handler für bestimmte MPI Tags
+     registrieren. Ein Message Handler ist ein Callback, das als Input ein Message
+     Handle bekommt und nichts zurückgibt. Das Message Handle ist ein Struct, das
+     alle nötigen Inhalte der Message enthält, d.h. Sender, Tag, Inhalt. Man sollte
+     auch einen default Message Handler registrieren können, der ausgeführt wird,
+     wenn zum Tag kein passender Message Handler registriert ist. Analog zu Message
+     Handlern soll man auch Handler registrieren können, die bei vollendetem
+     Versenden einer Nachricht aufgerufen werden (hier reicht es, wenn das Callback
+     nur die Nachrichten-ID erhält).
+   - Auf der AsyncMsgQueue kann man eine Send-Methode aufrufen, die irgendein
+     serialisier{t,bar}es Objekt, einen Nachrichtentag und einen Empfänger-Rank
+     bekommt. Dieses Objekt soll dann intern versendet werden (verwendet dabei den
+     intern festgelegten Tag und schreibt den Anwender-Tag mit in die Nachricht).
+     Falls das Objekt eine Mindestgröße \(k > k_\max\) überschreitet, soll die Nachricht
+     intern in $\lceil{k / k_\max}\rceil$ Batches aufgeteilt versendet werden (v.a. um Latenzen
+     des MPI-Threads zu minimieren). $k_\max$ sollte man als Nutzer setzen können,
+     vermutlich im Konstruktor von AsyncMsgQueue. Die Methode gibt eine
+     Nachrichten-ID zurück, damit der Nutzer sie sich merken kann, für etwaige
+     spätere Callbacks nach dem vollständigen Versenden. - Auf der Instanz kann man
+     eine Methode aufrufen (=advance()= o.Ä.), die auf empfangene Nachrichten prüft
+     und für jede vollständig empfangene Nachricht ggf. den passenden Message
+     Handler ausführt.
+   - Jeder Call einer AsyncMsgQueue sollte nur sehr kurze Zeit benötigen. Das
+     bedeutet, dass Dinge wie die Deallokation eines Send-/Recv-Buffers oder das
+     Allokieren von Speicher für eine zusammengesetzte Nachricht nebenläufig
+     passieren müssen. Man kann aber davon ausgehen, dass es innerhalb eines Calls
+     mindestens in Ordnung ist, Speicher der Größenordnung $k_\max$ zu allokieren und
+     zu schreiben/lesen.
+     
+
+* Project Goals
+** Main Goals                                                       
+   - provide an MPI wrapper which makes using MPI feel like C++
+   - ban =man MPI_*= from your command line history
+   - zero-overhead whenever possible
+   - easy to use when simple communication is required, but powerful enough for finely tuned behavior
+   - accumulate knowledge/algorithms of our group in a single place
+   - ensure that the library outlives multiple generations of our group
+** Platform
+   - compiles with GCC, Clang, Intel Compiler on all HPC systems we have access to
+   - C++17
+     - we do not want to rely on C++20 features, because Intel does not support it yet
+   - use *modern* CMake to enable easy inclusion in projects
+     - how to achieve this should be documented for the user
+** Design Goals 
+   - a user should be able to use the library by reading only a minimal amount of documentation
+     - code completion and the compiler should give enough assistance
+     - compile-time checks for incorrect usage
+     - avoid long parameter lists
+   - useful defaults
+     - if I don't need a tag, I do not have to give one
+     - if it is clear that the root is 0, I don't want to care about setting it explicitly
+   - allow inclusion of more complex operations/algorithms
+     - message queue, sparse-all-to-all, ...
+     - architecture must be general enough
+* Details
+** General Features
+   - automatic =MPI_Datatype=
+     - send as bytes if useful
+     - opt-in custom serialization via [[https://uscilab.github.io/cereal/][Cereal]]
+   - wrapper for communicators
+   - user-defined operations can be provided as lambdas
+   - allow setting communicator-wide defaults
+** Collective Operations
+   :PROPERTIES:
+   :BEAMER_opt: allowframebreaks,label=
+   :END:
+   - the easiest variant of =MPI_Coll_v= should be called with (a) single/multiple containers
+     - just return the result
+     - the library exchanges send/receive counts automatically
+     - no additional parameters required
+     - if we know how much data each rank will receive/send we want to provide this info beforehand
+   - =MPI_Exclusive_scan= should be defined on rank 0
+   - construct operations and reuse them
+*** User-defined Containers                                         :B_block:
+    :PROPERTIES:
+    :BEAMER_env: block
+    :END:
+     - should work with a single element or some vector-like containers as input
+       - also stdlib containers with custom allocator
+     - support for plain pointers (\rightarrow via =std::span= (C++20) or =gls::span=)
+     - user allocates receive buffer or library handles allocation
+     - distinguish where each received part comes from when using gather, all-to-all
+       - return views to parts of the buffer (\rightarrow slice)
+     - allow inplace operations
+** Asynchronous Communication
+   - classic polling based interface
+     - timeouts
+     - should use =std::promise=, =std::future=
+*** Asynchronous Message Queue
+     - each instance is associated with a tag
+     - register message handler for specific tags as callback
+       - message handle contains sender, tag, message
+     - default handler
+     - register handler when sending finished
+     - divide large message into batches
+** Advanced Functionality
+   :PROPERTIES:
+   :BEAMER_opt: allowframebreaks,label=
+   :END:
+*** Sparse-All-To-All                                               :B_block:
+    :PROPERTIES:
+    :BEAMER_env: block
+    :END:
+    - to be specified
+    - similar interface to all-to-all
+    - switch to sparse communication dynamically
+*** Fault-Tolerance                                                 :B_block:
+    :PROPERTIES:
+    :BEAMER_env: block
+    :END:
+    - compile-time enabled
+    - simulating failures
+    - register callbacks for ...
+      - communicator revoked
+      - failure
+      - both
+*** Mocking/Testing                                                 :B_block:
+    :PROPERTIES:
+    :BEAMER_env: block
+    :END:
+    - unit testing
+      - provide helper classes for easily writing tests
+      - support for googletest, maybe Catch2
+      - CMake helpers for easy test registration
+    - mocking (?)
+** Additional Features
+   - simple profiling (number of messages, message volume)
+   - timing and collecting timers
+   - select specific algorithm for collective operations
+   - MPI file I/O, RDMA
+   - communicator splitting
+   - =send_if(buffer, <lambda>)= without copying
