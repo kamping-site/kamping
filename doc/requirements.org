@@ -1,5 +1,6 @@
 #+STARTUP: beamer
 #+TITLE:    Requirements of KaMPIng 
+#+AUTHOR: The MPI Hyperedge
 #+OPTIONS:  H:2 toc:nil
 #+LATEX_CLASS_OPTIONS: [10pt]
 
@@ -106,7 +107,7 @@
      auto llhAllreduce = ctx.predefined_allreduce(); // Ja, da fehlen Parameter; Evtl per Tags angeben, welchen Overload man später gedenkt zu übergeben?
      llhAllreduce.root(1); // kein default Wert sondern Parameter binden
      llhAllreduce.tag(...);
-  
+     
      // Und nun z.B. in einer Schleife
      ...
      auto global_llh = llhAllreduce.call(llh); // In dem .call müssen jetzt die fehlenden Parameter von oben stehen
@@ -217,6 +218,7 @@
    - provide an MPI wrapper which makes using MPI feel like C++
    - ban =man MPI_*= from your command line history
    - zero-overhead whenever possible
+     - if not possible this must be clear to the user
    - easy to use when simple communication is required, but powerful enough for finely tuned behavior
    - accumulate knowledge/algorithms of our group in a single place
    - ensure that the library outlives multiple generations of our group
@@ -240,6 +242,7 @@
 * Details
 ** General Features
    - automatic =MPI_Datatype=
+     - user-defined MPI type
      - send as bytes if useful
      - opt-in custom serialization via [[https://uscilab.github.io/cereal/][Cereal]]
    - wrapper for communicators
@@ -256,14 +259,16 @@
      - if we know how much data each rank will receive/send we want to provide this info beforehand
    - =MPI_Exclusive_scan= should be defined on rank 0
    - construct operations and reuse them
+   - reduce operation with variable length objects emitted by custom reduction operator
 *** User-defined Containers                                         :B_block:
     :PROPERTIES:
     :BEAMER_env: block
     :END:
      - should work with a single element or some vector-like containers as input
        - also stdlib containers with custom allocator
-     - support for plain pointers (\rightarrow via =std::span= (C++20) or =gls::span=)
+     - support for plain pointers (\rightarrow via =std::span= (C++20) or =gls::span= (enforces bound-checks))
      - user allocates receive buffer or library handles allocation
+       - same type as input or user defined
      - distinguish where each received part comes from when using gather, all-to-all
        - return views to parts of the buffer (\rightarrow slice)
      - allow inplace operations
@@ -272,12 +277,15 @@
      - timeouts
      - should use =std::promise=, =std::future=
 *** Asynchronous Message Queue
-     - each instance is associated with a tag
+     - send and receive messages at any time
+     - each instance is associated with a tag (\rightarrow defines communication channel)
      - register message handler for specific tags as callback
        - message handle contains sender, tag, message
      - default handler
      - register handler when sending finished
-     - divide large message into batches
+     - divide large message into smaller blocks
+     - aggregation of small messages
+     - possibility to receive all pending messages (\rightarrow flush message queue globally)
 ** Advanced Functionality
    :PROPERTIES:
    :BEAMER_opt: allowframebreaks,label=
@@ -287,6 +295,7 @@
     :BEAMER_env: block
     :END:
     - to be specified
+    - could be combined with message queue
     - similar interface to all-to-all
     - switch to sparse communication dynamically
 *** Fault-Tolerance                                                 :B_block:
@@ -307,11 +316,20 @@
       - provide helper classes for easily writing tests
       - support for googletest, maybe Catch2
       - CMake helpers for easy test registration
+      - fake implementation for single threaded tests
     - mocking (?)
+*** Hybrid Model 
 ** Additional Features
    - simple profiling (number of messages, message volume)
+     - disable at compile time
+     - extensibility
    - timing and collecting timers
+   - integration of backward-cpp
+   - distributed output facilities
+     - debug output of variables
+     - output to separate file for each rank
    - select specific algorithm for collective operations
-   - MPI file I/O, RDMA
-   - communicator splitting
+     - problem: implementation defined
+   - MPI file I/O, one-sided communication
+   - (lightweight) communicator splitting
    - =send_if(buffer, <lambda>)= without copying
