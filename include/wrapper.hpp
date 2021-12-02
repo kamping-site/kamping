@@ -28,9 +28,9 @@ public:
     template<class recvBuffType, class recvCountsType, class recvDisplsType>
     struct gatherv_output {
         gatherv_output(recvBuffType &&recvBuff, recvCountsType &&recvCounts, recvDisplsType &&recvDispls)
-            : _recvBuff(std::move(recvBuff))
-            , _recvCounts(std::move(recvCounts))
-            , _recvDispls(std::move(recvDispls)) {}
+            : _recvBuff(std::forward<recvBuffType>(recvBuff))
+            , _recvCounts(std::forward<recvCountsType>(recvCounts))
+            , _recvDispls(std::forward<recvDisplsType>(recvDispls)) {}
 
         // TODO Try to do this by checking whether extract() exists
         template<typename recvBuffType2 = recvBuffType, std::enable_if_t<recvBuffType2::isExtractable, bool> = true>
@@ -103,6 +103,7 @@ public:
 
 
         // TODO Use correct type
+        // TODO check if recvBuf is large enough
         MPI_Gatherv(sendBuf.get().ptr, mySendCount, MPI_INT, recvPtr, recvCountsPtr, recvDisplsPtr, MPI_INT, rootPE.getRoot(), comm_);
 
         return gatherv_output(std::move(recvBuf), std::move(recvCountsContainer), std::move(recvDisplsContainer));

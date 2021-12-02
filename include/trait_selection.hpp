@@ -136,7 +136,7 @@ public:
     static constexpr ptraits par_type = ptrait;
     using value_type = T;
     static constexpr bool isExtractable = true;
-    out_vector_alternative(std::vector<T> &&rref) : vec_ref(std::move(rref)) {}
+    out_vector_alternative(std::vector<T> &&rref) : vec_ref(std::forward<std::vector<T>>(rref)) {}
     T *get_ptr(size_t s) {
         vec_ref.resize(s);
         return vec_ref.data();
@@ -208,7 +208,7 @@ out_unique_unspecified<T, ptraits::out> out([[maybe_unused]] new_pointer<T> &&) 
 
 template<class T>
 out_vector_alternative<T, ptraits::out> out(std::vector<T> &&vec) {
-    return out_vector_alternative<T, ptraits::out>(std::move(vec));
+    return out_vector_alternative<T, ptraits::out>(std::forward<std::vector<T>>(vec));
 }
 
 template<class T>
@@ -256,7 +256,7 @@ out_unique_unspecified<T, ptraits::recvDispls> recv_displs([[maybe_unused]] new_
 
 template<class T>
 out_vector_alternative<T, ptraits::recvDispls> recv_displs(std::vector<T> &&vec) {
-    return out_vector_alternative<T, ptraits::recvDispls>(std::move(vec));
+    return out_vector_alternative<T, ptraits::recvDispls>(std::forward<std::vector<T>>(vec));
 }
 
 template<class T>
@@ -287,7 +287,7 @@ out_unique_unspecified<T, ptraits::recvCounts> recv_counts([[maybe_unused]] new_
 
 template<class T>
 out_vector_alternative<T, ptraits::recvCounts> recv_counts(std::vector<T> &&vec) {
-    return out_vector_alternative<T, ptraits::recvCounts>(std::move(vec));
+    return out_vector_alternative<T, ptraits::recvCounts>(std::forward<std::vector<T>>(vec));
 }
 
 template<class T>
