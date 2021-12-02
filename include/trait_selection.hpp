@@ -19,7 +19,7 @@ constexpr size_t find_pos() {
 // returns the first parameter whose type has the appropriate par_type
 template<ptraits trait, class... Args>
 decltype(auto) select_trait(Args &&... args) {
-    return std::get<find_pos<trait, 0, Args...>()>(std::forward_as_tuple(args...));
+    return std::move(std::get<find_pos<trait, 0, Args...>()>(std::forward_as_tuple(args...)));
 }
 
 template<class T>
@@ -231,4 +231,66 @@ private:
 
 in_root root(int root_) {
     return in_root(root_);
+}
+
+
+template<class T>
+out_vector<T, ptraits::recvDispls> recv_displs(std::vector<T> &vec) {
+    return out_vector<T, ptraits::recvDispls>(vec);
+}
+
+template<class T>
+out_unique<T, ptraits::recvDispls> recv_displs(std::unique_ptr<T[]> &ptr) {
+    return out_unique<T, ptraits::recvDispls>(ptr);
+}
+
+template<class T>
+out_vector_unspecified<T, ptraits::recvDispls> recv_displs([[maybe_unused]] new_vector<T> &&) {
+    return out_vector_unspecified<T, ptraits::recvDispls>();
+}
+
+template<class T>
+out_unique_unspecified<T, ptraits::recvDispls> recv_displs([[maybe_unused]] new_pointer<T> &&) {
+    return out_unique_unspecified<T, ptraits::recvDispls>();
+}
+
+template<class T>
+out_vector_alternative<T, ptraits::recvDispls> recv_displs(std::vector<T> &&vec) {
+    return out_vector_alternative<T, ptraits::recvDispls>(std::move(vec));
+}
+
+template<class T>
+out_unique_unspecified<T, ptraits::recvDispls> recv_displs([[maybe_unused]] T *ptr) {
+    return out_unique_unspecified<T, ptraits::recvDispls>();
+}
+
+
+template<class T>
+out_vector<T, ptraits::recvCounts> recv_counts(std::vector<T> &vec) {
+    return out_vector<T, ptraits::recvCounts>(vec);
+}
+
+template<class T>
+out_unique<T, ptraits::recvCounts> recv_counts(std::unique_ptr<T[]> &ptr) {
+    return out_unique<T, ptraits::recvCounts>(ptr);
+}
+
+template<class T>
+out_vector_unspecified<T, ptraits::recvCounts> recv_counts([[maybe_unused]] new_vector<T> &&) {
+    return out_vector_unspecified<T, ptraits::recvCounts>();
+}
+
+template<class T>
+out_unique_unspecified<T, ptraits::recvCounts> recv_counts([[maybe_unused]] new_pointer<T> &&) {
+    return out_unique_unspecified<T, ptraits::recvCounts>();
+}
+
+template<class T>
+out_vector_alternative<T, ptraits::recvCounts> recv_counts(std::vector<T> &&vec) {
+    return out_vector_alternative<T, ptraits::recvCounts>(std::move(vec));
+}
+
+template<class T>
+out_unique_unspecified<T, ptraits::recvCounts> recv_counts([[maybe_unused]] T *ptr) {
+    return out_unique_unspecified<T, ptraits::recvCounts>();
 }

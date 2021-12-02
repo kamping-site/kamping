@@ -25,21 +25,34 @@ public:
         MPI_Comm_size(comm_, &size_);
     }
 
-    template<class recvBuffType>
+    template<class recvBuffType, class recvCountsType, class recvDisplsType>
     struct gatherv_output {
-        gatherv_output(recvBuffType &&recvBuff) : _recvBuff(recvBuff) {}
+        gatherv_output(recvBuffType &&recvBuff, recvCountsType &&recvCounts, recvDisplsType &&recvDispls)
+            : _recvBuff(std::move(recvBuff))
+            , _recvCounts(std::move(recvCounts))
+            , _recvDispls(std::move(recvDispls)) {}
 
         // TODO Try to do this by checking whether extract() exists
         template<typename recvBuffType2 = recvBuffType, std::enable_if_t<recvBuffType2::isExtractable, bool> = true>
-        decltype(auto) getRecvBuff() {
+        decltype(auto) extractRecvBuff() {
             return _recvBuff.extract();
         }
 
-        // TODO add recv counts as optional output
-        // TODO add recv displacements as optional output
+        template<typename recvCountsType2 = recvCountsType, std::enable_if_t<recvCountsType2::isExtractable, bool> = true>
+        decltype(auto) extractRecvCounts() {
+            return _recvCounts.extract();
+        }
+
+
+        template<typename recvDisplsType2 = recvDisplsType, std::enable_if_t<recvDisplsType2::isExtractable, bool> = true>
+        decltype(auto) extractRecvDispls() {
+            return _recvDispls.extract();
+        }
 
     private:
         recvBuffType _recvBuff;
+        recvCountsType _recvCounts;
+        recvDisplsType _recvDispls;
     };
 
     template<class... Args>
@@ -51,8 +64,17 @@ public:
         auto recvBuf = select_trait<ptraits::out>(std::forward<Args>(args)..., out(new_vector<send_type>()));
         using recv_type = typename decltype(recvBuf)::value_type;
 
-        // TODO add recv counts as optional input parameter
-        // TODO add recv displacements as optional input parameter
+        auto recvCountsContainer =
+            select_trait<ptraits::recvCounts>(std::forward<Args>(args)..., recv_counts(new_vector<int>()));
+        static_assert(std::is_same<typename decltype(recvCountsContainer)::value_type, int>::value,
+                      "Recv counts must be int");
+        auto recvCountsPtr = recvCountsContainer.get_ptr(size_);
+
+        auto recvDisplsContainer =
+            select_trait<ptraits::recvDispls>(std::forward<Args>(args)..., recv_displs(new_vector<int>()));
+        static_assert(std::is_same<typename decltype(recvDisplsContainer)::value_type, int>::value,
+                      "Recv displacements must be int");
+        auto recvDisplsPtr = recvDisplsContainer.get_ptr(size_);
 
         // Select root. Defaults to 0
         // TODO let use choose default root for context
@@ -62,28 +84,18 @@ public:
         // TODO don't do this if the user supplies send counts at root
         // TODO only do these allocations and calculations on root
         int mySendCount = sendBuf.get().size;
-        std::vector<int> recvCounts(size_);
 
-        MPI_Gather(&mySendCount, 1, MPI_INT, recvCounts.data(), 1, MPI_INT, rootPE.getRoot(), comm_);
+        MPI_Gather(&mySendCount, 1, MPI_INT, recvCountsPtr, 1, MPI_INT, rootPE.getRoot(), comm_);
 
-        std::vector<int> recvDispls(size_);
-        std::exclusive_scan(recvCounts.begin(), recvCounts.end(), recvDispls.begin(), 0);
+        std::exclusive_scan(recvCountsPtr, recvCountsPtr + size_, recvDisplsPtr, 0);
 
-        int recvSize = recvDispls.back() + recvCounts.back();
+        int recvSize = *(recvDisplsPtr + size_ - 1) + *(recvCountsPtr + size_ - 1);
         auto recvPtr = recvBuf.get_ptr(recvSize);
 
         // TODO Use correct type
-        MPI_Gatherv(sendBuf.get().ptr,
-                    mySendCount,
-                    MPI_INT,
-                    recvPtr,
-                    recvCounts.data(),
-                    recvDispls.data(),
-                    MPI_INT,
-                    rootPE.getRoot(),
-                    comm_);
+        MPI_Gatherv(sendBuf.get().ptr, mySendCount, MPI_INT, recvPtr, recvCountsPtr, recvDisplsPtr, MPI_INT, rootPE.getRoot(), comm_);
 
-        return gatherv_output(std::move(recvBuf));
+        return gatherv_output(std::move(recvBuf), std::move(recvCountsContainer), std::move(recvDisplsContainer));
     }
 
     MPI_Comm get_comm() const {
