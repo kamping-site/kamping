@@ -22,7 +22,7 @@ void printResult(int rank, std::unique_ptr<int[]> &recvData, size_t size, std::s
     std::stringstream ss;
     ss << rank << ": " << name << ": [";
     for(size_t i = 0; i < size; ++i) {
-        ss << *(recvData.get() + i) << ", ";
+        ss << recvData.get()[i] << ", ";
     }
     ss << "]" << std::endl;
     std::cout << ss.str() << std::flush;
