@@ -67,7 +67,7 @@ int main() {
     std::vector<int> recvDispls2 = gatherResults2.extractRecvDispls();
 
     printResult(ctx.rank(), recvData2, "data");
-    printResult(ctx.rank(), recvCounts2, ctx.size(), "counts");
+    printResult(ctx.rank(), recvCounts2, ctx.rank() == 1 ? ctx.size() : 0, "counts");
     printResult(ctx.rank(), recvDispls2, "displs");
 
     MPI_Finalize();

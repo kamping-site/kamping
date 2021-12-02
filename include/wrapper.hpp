@@ -68,13 +68,11 @@ public:
             select_trait<ptraits::recvCounts>(std::forward<Args>(args)..., recv_counts(new_vector<int>()));
         static_assert(std::is_same<typename decltype(recvCountsContainer)::value_type, int>::value,
                       "Recv counts must be int");
-        auto recvCountsPtr = recvCountsContainer.get_ptr(size_);
 
         auto recvDisplsContainer =
             select_trait<ptraits::recvDispls>(std::forward<Args>(args)..., recv_displs(new_vector<int>()));
         static_assert(std::is_same<typename decltype(recvDisplsContainer)::value_type, int>::value,
                       "Recv displacements must be int");
-        auto recvDisplsPtr = recvDisplsContainer.get_ptr(size_);
 
         // Select root. Defaults to 0
         // TODO let user choose default root for context
@@ -82,15 +80,27 @@ public:
 
         //  Gather send counts at root
         // TODO don't do this if the user supplies send counts at root
-        // TODO only do these allocations and calculations on root
         int mySendCount = sendBuf.get().size;
 
-        MPI_Gather(&mySendCount, 1, MPI_INT, recvCountsPtr, 1, MPI_INT, rootPE.getRoot(), comm_);
+        int *recvCountsPtr;
+        int *recvDisplsPtr;
+        recv_type *recvPtr;
+        if(rank_ == rootPE.getRoot()) {
+            recvCountsPtr = recvCountsContainer.get_ptr(size_);
+            recvDisplsPtr = recvDisplsContainer.get_ptr(size_);
+            MPI_Gather(&mySendCount, 1, MPI_INT, recvCountsPtr, 1, MPI_INT, rootPE.getRoot(), comm_);
 
-        std::exclusive_scan(recvCountsPtr, recvCountsPtr + size_, recvDisplsPtr, 0);
+            std::exclusive_scan(recvCountsPtr, recvCountsPtr + size_, recvDisplsPtr, 0);
 
-        int recvSize = *(recvDisplsPtr + size_ - 1) + *(recvCountsPtr + size_ - 1);
-        auto recvPtr = recvBuf.get_ptr(recvSize);
+            int recvSize = *(recvDisplsPtr + size_ - 1) + *(recvCountsPtr + size_ - 1);
+            recvPtr = recvBuf.get_ptr(recvSize);
+        } else {
+            recvCountsPtr = recvCountsContainer.get_ptr(0);
+            recvDisplsPtr = recvDisplsContainer.get_ptr(0);
+            auto recvPtr = recvBuf.get_ptr(0);
+            MPI_Gather(&mySendCount, 1, MPI_INT, nullptr, 1, MPI_INT, rootPE.getRoot(), comm_);
+        }
+
 
         // TODO Use correct type
         MPI_Gatherv(sendBuf.get().ptr, mySendCount, MPI_INT, recvPtr, recvCountsPtr, recvDisplsPtr, MPI_INT, rootPE.getRoot(), comm_);
