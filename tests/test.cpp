@@ -52,10 +52,13 @@ int main() {
     std::vector<int> recvData2;
     // Gather sendData on PE 1, use existing vector to receive into and return the counts as a new unique_ptr
     auto gatherResults2 = ctx.gatherv(in(sendData), out(recvData2), root(1), recv_counts(new_pointer<int>()));
+
     // This fails because we have given the out vector as input
     // auto recvData3 = gatherResults2.extractRecvBuff();
+
     // unique_ptr because we requested it in the gatherv call
     std::unique_ptr<int[]> recvCounts2 = gatherResults2.extractRecvCounts();
+
     // default is vector
     std::vector<int> recvDispls2 = gatherResults2.extractRecvDispls();
 
