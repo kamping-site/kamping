@@ -1,10 +1,12 @@
 #include "wrapper.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <mpi.h>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 
@@ -47,6 +49,8 @@ int main() {
     if(ctx.rank() == 0) {
         std::cout << "----------------------------------------------" << std::endl;
     }
+    // Sleep so all thread have time to flush their buffers
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     MPI_Barrier(MPI_COMM_WORLD);
 
     std::vector<int> recvData2;
