@@ -77,7 +77,7 @@ public:
         auto recvDisplsPtr = recvDisplsContainer.get_ptr(size_);
 
         // Select root. Defaults to 0
-        // TODO let use choose default root for context
+        // TODO let user choose default root for context
         auto rootPE = select_trait<ptraits::root>(std::forward<Args>(args)..., root(0));
 
         //  Gather send counts at root
