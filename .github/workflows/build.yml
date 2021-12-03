@@ -23,8 +23,8 @@ jobs:
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v2
-    - name: submodules
-      run: git submodule init && git submodule update
+      with:
+        submodules: 'recursive'
     - name: export-compiler
       run: |
         echo CXX=${{ matrix.compiler.cxx }} >> $GITHUB_ENV
