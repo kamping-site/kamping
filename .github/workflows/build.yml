@@ -64,11 +64,9 @@ jobs:
         echo $CC
         mpirun --version
         mpicxx --version
-    - name: mkdir
-      run: mkdir build
     - name: cmake
-      run: cd build && cmake -E env CXXFLAGS="-Werror" cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+      run: cmake -E env CXXFLAGS="-Werror" cmake -B build .. -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
     - name: build
-      run: cd build && cmake --build .
+      run: cmake --build build/
     - name: run tests
-      run: cd build && ctest .
+      run: ctest build/
