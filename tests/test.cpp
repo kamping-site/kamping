@@ -10,20 +10,20 @@
 #include <vector>
 
 
-void printResult(int rank, std::vector<int> &recvData, std::string name) {
+void printResult(int rank, std::vector<int>& recvData, std::string name) {
     std::stringstream ss;
     ss << rank << ": " << name << ": [";
-    for(auto elem : recvData) {
+    for (auto elem: recvData) {
         ss << elem << ", ";
     }
     ss << "]" << std::endl;
     std::cout << ss.str() << std::flush;
 }
 
-void printResult(int rank, std::unique_ptr<int[]> &recvData, size_t size, std::string name) {
+void printResult(int rank, std::unique_ptr<int[]>& recvData, size_t size, std::string name) {
     std::stringstream ss;
     ss << rank << ": " << name << ": [";
-    for(size_t i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         ss << recvData.get()[i] << ", ";
     }
     ss << "]" << std::endl;
@@ -37,16 +37,16 @@ int main() {
     std::vector<int> sendData(ctx.rank() + 1, ctx.rank());
     // Gather sendData on PE 0 and allocate all other buffers inside the library
     auto gatherResults = ctx.gatherv(in(sendData));
-    auto recvData = gatherResults.extractRecvBuff();
-    auto recvCounts = gatherResults.extractRecvCounts();
-    auto recvDispls = gatherResults.extractRecvDispls();
+    auto recvData      = gatherResults.extractRecvBuff();
+    auto recvCounts    = gatherResults.extractRecvCounts();
+    auto recvDispls    = gatherResults.extractRecvDispls();
 
     printResult(ctx.rank(), recvData, "data");
     printResult(ctx.rank(), recvCounts, "counts");
     printResult(ctx.rank(), recvDispls, "displs");
 
     MPI_Barrier(MPI_COMM_WORLD);
-    if(ctx.rank() == 0) {
+    if (ctx.rank() == 0) {
         std::cout << "----------------------------------------------" << std::endl;
     }
     // Sleep so all thread have time to flush their buffers
