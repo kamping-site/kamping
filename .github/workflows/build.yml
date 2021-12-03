@@ -1,0 +1,34 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler:
+          - { name: Clang, cc: clang, cxx: clang++}
+          - { name: GNU, cc: gcc, cxx: g++}
+        build-mode: [Debug, Release]
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@v2
+    - name: submodules
+      run: git submodule init && git submodule update
+    - name: mkdir
+      run: mkdir build
+    - name: cmake
+      run: cd build && cmake -E env CXXFLAGS="-Werror" cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }}
+    - name: make
+      run: cd build && make -j all
+    - name: make test
+      run: cd build && make check
