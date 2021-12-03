@@ -104,6 +104,6 @@ endif()
 * Use "modern" CMake as build system
 * Use Doxygen for documentation. TODO @Florian: Which style?
 * Use `git submodule` to include dependencies. TODO: Explain in the README, how to work with git submodules.
-* Do only commit corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `hotfix-` branches and merge them to the `main` branch using a Pull Request. Only merge if the CI passes.
-* Write *many* unit tests. If there is no unit test for it, it does not exist. Also check for nonsensical inputs and.
+* Commit only corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `hotfix-` branches and merge them to the `main` branch using a Pull Request. Only merge the pull request to the main branch if the CI checks pass.
+* Write *many* unit tests for your code. If there is no unit test for it, it does not exist. Also check for nonsensical inputs and edge cases.
 * Each Pull Request has to be reviewed and accepted by someone who is not the author of the code.
