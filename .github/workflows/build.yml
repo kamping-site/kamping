@@ -11,24 +11,62 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
         compiler:
           - { name: Clang, cc: clang, cxx: clang++}
           - { name: GNU, cc: gcc, cxx: g++}
+          - { name: Intel, cc: icx, cxx: icpx}
         build-mode: [Debug, Release]
+        mpi-implementation: [openmpi, mpich, intelmpi]
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v2
-    - name: submodules
-      run: git submodule init && git submodule update
-    - name: mkdir
-      run: mkdir build
+      with:
+        submodules: 'recursive'
+    - name: export-compiler
+      run: |
+        echo CXX=${{ matrix.compiler.cxx }} >> $GITHUB_ENV
+        echo CC=${{ matrix.compiler.cc }} >> $GITHUB_ENV
+    - name: install-openmpi
+      if: matrix.mpi-implementation == 'openmpi'
+      run: sudo apt-get install libopenmpi-dev
+    - name: install-mpich
+      if: matrix.mpi-implementation == 'mpich'
+      run: sudo apt-get install -y mpich
+    - name: setup-intel-oneapi
+      if: matrix.mpi-implementation == 'intelmpi' || matrix.compiler.name == 'Intel'
+      run: |
+        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+        sudo apt-get install -y intel-oneapi-common-vars
+    - name: install-intelmpi
+      if: matrix.mpi-implementation == 'intelmpi'
+      run: |
+        sudo apt-get install -y intel-oneapi-mpi
+        sudo apt-get install -y intel-oneapi-mpi-devel
+    - name: install-icc
+      if: matrix.compiler.name == 'Intel'
+      run: |
+        sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+    - name: source-intel-vars
+      if: matrix.mpi-implementation == 'intelmpi' || matrix.compiler.name == 'Intel'
+      run: |
+        source /opt/intel/oneapi/setvars.sh
+        printenv >> $GITHUB_ENV
+    - name: print-mpi-version
+      run: |
+        echo $CXX
+        echo $CC
+        mpirun --version
+        mpicxx --version
     - name: cmake
-      run: cd build && cmake -E env CXXFLAGS="-Werror" cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }}
-    - name: make
-      run: cd build && make -j all
-    - name: make test
-      run: cd build && make check
+      run: cmake -E env CXXFLAGS="-Werror" cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+    - name: build
+      run: cmake --build build/ --parallel 2
+    - name: run tests
+      run: ctest build/
