@@ -70,5 +70,5 @@ jobs:
       run: cd build && cmake -E env CXXFLAGS="-Werror" cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
     - name: make
       run: cd build && make -j all
-    - name: make test
-      run: cd build && make test
+    - name: run tests
+      run: cd build && ctest .
