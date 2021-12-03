@@ -6,7 +6,7 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 # Scoping and Naming
 * We are working in the `kamping` (KaMPI.ng) namespace to avoid polluting the user's namespace with trivial names as `in`, `out`, or `root`.
 * Classes start with an Upper case letter and are using CamelCase.
-* Start variables, attributes, functions, and members with a lower case letter. Use use `snake_case`, that is, separate words by an underscore (\_). Write acronyms in lower case letters, e.g., `partitioned_msa` and `generate_mpi_failure`. This also applies to KaMPI.ng -> `kamping`.
+* Start variables, attributes, functions, and members with a lower case letter. Use `snake_case`, that is, separate words by an underscore (\_). Write acronyms in lower case letters, e.g., `partitioned_msa` and `generate_mpi_failure`. This also applies to KaMPI.ng -> `kamping`.
 * `struct`s have only trivial methods if at all, everything more complicated has to be a `class`. `struct`s are always forbidden to have private members or functions.
 * `std::pair` leads to hard to read code. Use named pairs (`struct`s) instead.
 * Private attributes and member functions *start* with an underscore, e.g., `_name` or `_clear_cache()`.
