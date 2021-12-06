@@ -3,7 +3,7 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/extern/googletest" "extern/googletest")
 # gtest-mpi-listener does not use modern CMake, therefore we need this fix
 set(gtest-mpi-listener_SOURCE_DIR ${CMAKE_SOURCE_DIR}/extern/gtest-mpi-listener)
 add_library(gtest-mpi-listener INTERFACE)
-target_include_directories(gtest-mpi-listener INTERFACE "${gtest-mpi-listener_SOURCE_DIR}/include")
+target_include_directories(gtest-mpi-listener INTERFACE "${gtest-mpi-listener_SOURCE_DIR}")
 target_link_libraries(gtest-mpi-listener INTERFACE MPI::MPI_CXX gtest gmock)
 
 # register the test main class
