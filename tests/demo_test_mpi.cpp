@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
@@ -16,11 +17,11 @@ struct ExampleTest : ::testing::Test {
 TEST_F(ExampleTest, SingleElementGatherWorks) {
     std::vector<int> recv_buf;
     if (rank == 0) {
-        recv_buf.resize(size);
+        recv_buf.resize(static_cast<std::size_t>(size));
     }
     MPI_Gather(&rank, 1, MPI_INT, recv_buf.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
     if (rank == 0) {
-        std::vector<int> expected(size);
+        std::vector<int> expected(static_cast<std::size_t>(size));
         std::iota(expected.begin(), expected.end(), 0);
         EXPECT_THAT(recv_buf, testing::Eq(expected));
     }

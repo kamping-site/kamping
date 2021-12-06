@@ -6,8 +6,6 @@ add_library(gtest-mpi-listener INTERFACE)
 target_include_directories(gtest-mpi-listener INTERFACE "${gtest-mpi-listener_SOURCE_DIR}")
 target_link_libraries(gtest-mpi-listener INTERFACE MPI::MPI_CXX gtest gmock)
 
-message(STATUS "${MPI_CXX_VERSION} ${MPI_CXX_LIBRARY_VERSION_STRING} ${MPIEXEC_PREFLAGS} ${MPIEXEC_POSTFLAGS}")
-
 
 function(kamping_has_oversubscribe KAMPING_OVERSUBSCRIBE_FLAG)
   string(FIND ${MPI_CXX_LIBRARY_VERSION_STRING} "OpenMPI" SEARCH_POSITION1)

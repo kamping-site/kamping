@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.12)
-project(kamping
+project(
+  kamping
   DESCRIPTION "An MPI wrapper which makes using MPI feel like C++"
-  LANGUAGES CXX)
+  LANGUAGES CXX
+)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+  # folder support for IDEs
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
   # this has to be enabled in the main CMakeLists file
@@ -12,10 +15,10 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   # find Doxygen
   find_package(Doxygen)
   if(Doxygen_FOUND)
-    #add_subdirectory(doc)
-    endif()
-  else()
-    message(STATUS "Doxygen not found, not building docs")
+    #add_subdirectory(docs)
+  endif()
+else()
+  message(STATUS "Doxygen not found, not building docs")
 endif()
 
 # Require out-of-source builds
@@ -23,6 +26,9 @@ file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
 if(EXISTS "${LOC_PATH}")
   message(FATAL_ERROR "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles.")
 endif()
+
+option(KAMPING_WARNING_ARE_ERRORS OFF)
+option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
 find_package(MPI REQUIRED)
@@ -36,16 +42,57 @@ target_include_directories(kamping INTERFACE include)
 target_compile_features(kamping INTERFACE cxx_std_17)
 target_link_libraries(kamping INTERFACE MPI::MPI_CXX)
 
-set(KAMPING_WARNING_FLAGS $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Intel>,$<CXX_COMPILER_ID:IntelLLVM>>:
-  -Wall -Wextra -pedantic -Werror>
-  $<$<CXX_COMPILER_ID:MSVC>:
-  /WX /W4>)
+list(
+  APPEND KAMPING_WARNING_FLAGS
+  "-Wall"
+  "-Wextra"
+  "-Wconversion"
+  "-Wnon-virtual-dtor"
+  "-Woverloaded-virtual"
+  "-Wshadow"
+  "-Wsign-conversion"
+  "-Wundef"
+  "-Wunreachable-code"
+  "-Wunused"
+)
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  list(
+    APPEND KAMPING_WARNING_FLAGS
+    "-Wcast-align"
+    "-Wnull-dereference"
+    "-Wpedantic"
+  )
+endif()
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  list(
+    APPEND KAMPING_WARNING_FLAGS
+    "-Wcast-align"
+    "-Wnull-dereference"
+    "-Wpedantic"
+    "-Wnoexcept"
+    "-Wsuggest-attribute=const"
+    "-Wsuggest-attribute=noreturn"
+    "-Wsuggest-override"
+  )
+endif()
+
+# OFF by default.
+if(KAMPING_WARNINGS_ARE_ERRORS)
+  list(
+    APPEND KAMPING_WARNING_FLAGS
+    "-Werror"
+  )
+endif()
 
 add_library(kamping::kamping ALIAS kamping)
 
-# Testing only available if this is the main app
-if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    AND BUILD_TESTING)
+# Testing and examples are only built if this is the main project
+# or of KAMPING_BUILD_EXAMPLES_AND_TESTS is set (OFF by default)
+if(
+  CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR KAMPING_BUILD_EXAMPLES_AND_TESTS
+)
   add_subdirectory(examples)
   add_subdirectory(tests)
 endif()

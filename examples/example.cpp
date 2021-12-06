@@ -1,6 +1,7 @@
 #include "wrapper.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <iostream>
 #include <memory>
 #include <mpi.h>
@@ -34,7 +35,7 @@ int main() {
     MPI_Init(nullptr, nullptr);
     MPIWrapper::MPIContext ctx{MPI_COMM_WORLD};
 
-    std::vector<int> sendData(ctx.rank() + 1, ctx.rank());
+    std::vector<int> sendData(static_cast<std::size_t>(ctx.rank() + 1), ctx.rank());
     // Gather sendData on PE 0 and allocate all other buffers inside the library
     auto gatherResults = ctx.gatherv(in(sendData));
     auto recvData      = gatherResults.extractRecvBuff();
@@ -67,7 +68,7 @@ int main() {
     std::vector<int> recvDispls2 = gatherResults2.extractRecvDispls();
 
     printResult(ctx.rank(), recvData2, "data");
-    printResult(ctx.rank(), recvCounts2, ctx.rank() == 1 ? ctx.size() : 0, "counts");
+    printResult(ctx.rank(), recvCounts2, static_cast<std::size_t>(ctx.rank() == 1 ? ctx.size() : 0), "counts");
     printResult(ctx.rank(), recvDispls2, "displs");
 
     MPI_Finalize();
