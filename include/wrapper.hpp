@@ -86,10 +86,10 @@ public:
         // TODO don't do this if the user supplies send counts at root
         int mySendCount = sendBuf.get().size;
 
-        int*       recvCountsPtr;
-        int*       recvDisplsPtr;
-        recv_type* recvPtr;
-        if (rank_ == rootPE.getRoot()) {
+        int *recvCountsPtr;
+        int *recvDisplsPtr;
+        recv_type *recvPtr = nullptr;
+        if(rank_ == rootPE.getRoot()) {
             recvCountsPtr = recvCountsContainer.get_ptr(size_);
             recvDisplsPtr = recvDisplsContainer.get_ptr(size_);
             MPI_Gather(&mySendCount, 1, MPI_INT, recvCountsPtr, 1, MPI_INT, rootPE.getRoot(), comm_);
