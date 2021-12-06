@@ -9,6 +9,7 @@
 #include <numeric>
 #include <type_traits>
 #include <vector>
+#include <algorithm>
 
 
 namespace MPIWrapper {
@@ -100,7 +101,7 @@ public:
         } else {
             recvCountsPtr = recvCountsContainer.get_ptr(0);
             recvDisplsPtr = recvDisplsContainer.get_ptr(0);
-            auto recvPtr  = recvBuf.get_ptr(0);
+            auto recvPtr [[maybe_unused]] = recvBuf.get_ptr(0);
             MPI_Gather(&mySendCount, 1, MPI_INT, nullptr, 1, MPI_INT, rootPE.getRoot(), comm_);
         }
 
