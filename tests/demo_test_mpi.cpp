@@ -3,10 +3,10 @@
 #include <mpi.h>
 #include <numeric>
 
-struct ExampleTest: ::testing::Test {
+struct ExampleTest : ::testing::Test {
     void SetUp() override {
-      MPI_Comm_size(MPI_COMM_WORLD, &size);
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
     int rank;
