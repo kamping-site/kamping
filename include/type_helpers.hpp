@@ -14,8 +14,8 @@ MPI_Datatype mpi_custom_continuous_type() {
 }
 template <typename T>
 MPI_Datatype get_mpi_type() {
-  return mpi_custom_continuous_type<sizeof(T)>();
+    return mpi_custom_continuous_type<sizeof(T)>();
 }
 
 
-}  // namespace MPIWrapper
+} // namespace MPIWrapper
