@@ -1,4 +1,7 @@
 # KaMPI.ng: Karlsruhe MPI next generation
+
+![KaMPI.ng logo](./doc/logo.svg)
+
 This is KaMPI.ng, an MPI wrapper which makes using MPI feel like real C++
 
 KaMPI.ng is developed at the [Algorithm Engineering Group](https://algo2.iti.kit.edu) at Karlsruhe Institute of Technology.
