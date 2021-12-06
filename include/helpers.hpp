@@ -8,9 +8,9 @@
 /// 
 /// @tparam To Type to be casted to.
 /// @tparam From Type to be casted from, will be auto inferred.
-/// @param value The value you want to cast.
-/// @return true if value can be safely casted into type To, that is, is inside To's range.
-/// @return false if the value is outside To'range. 
+/// @param value Value you want to cast.
+/// @return \c true if value can be safely casted into type To, that is, value is in To's range.
+/// @return \c false otherwise.
 /// @see throwing_cast
 /// @see asserting_cast
 ///
@@ -46,7 +46,7 @@ constexpr bool in_range(From value) noexcept {
 /// 
 /// @tparam To Type to cast to.
 /// @tparam From Type to cast from, will be auto inferred.
-/// @param value The value you want to cast. 
+/// @param value Value you want to cast.
 /// @return constexpr To The casted value.
 /// @see in_range
 /// @see throwing_cast
@@ -62,8 +62,8 @@ constexpr To asserting_cast(From value) noexcept {
 /// 
 /// @tparam To Type to cast to.
 /// @tparam From Type to cast from, will be auto inferred.
-/// @param value The value you want to cast. 
-/// @return constexpr To The casted value.
+/// @param value Value you want to cast.
+/// @return constexpr To Casted value.
 /// @see in_range
 /// @see asserting_cast
 ///
