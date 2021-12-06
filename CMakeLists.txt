@@ -35,7 +35,7 @@ target_include_directories(kamping INTERFACE include)
 target_compile_features(kamping INTERFACE cxx_std_17)
 target_link_libraries(kamping INTERFACE MPI::MPI_CXX)
 
-set(KAMPING_WARNING_FLAGS $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Intel>>:
+set(KAMPING_WARNING_FLAGS $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Intel>,$<CXX_COMPILER_ID:IntelLLVM>>:
   -Wall -Wextra -pedantic -Werror>
   $<$<CXX_COMPILER_ID:MSVC>:
   /WX /W4>)
