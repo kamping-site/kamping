@@ -6,13 +6,13 @@ on:
       - main
     paths-ignore:
       - 'docs/**'
-      - README.md
+      - 'README.md'
   pull_request:
     branches:
       - main
     paths-ignore:
       - 'docs/**'
-      - README.md
+      - 'README.md'
   workflow_dispatch:
 
 jobs:
