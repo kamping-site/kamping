@@ -12,6 +12,8 @@ on:
 jobs:
   build:
     runs-on: self-hosted
+    container:
+      image: "Dockerfile"
     strategy:
       matrix:
         compiler:

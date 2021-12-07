@@ -12,8 +12,7 @@ jobs:
   formatting-check:
     name: Formatting Check
     runs-on: self-hosted
-    runs:
-      using: "docker"
+    container:
       image: "Dockerfile"
     steps:
     - uses: actions/checkout@v2
