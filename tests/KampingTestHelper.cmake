@@ -6,14 +6,17 @@ add_library(gtest-mpi-listener INTERFACE)
 target_include_directories(gtest-mpi-listener INTERFACE "${gtest-mpi-listener_SOURCE_DIR}")
 target_link_libraries(gtest-mpi-listener INTERFACE MPI::MPI_CXX gtest gmock)
 
-
+# sets the provided output variable KAMPING_OVERSUBSCRIBE_FLAG to the flags required to run mpiexec with
+# more MPI ranks than cores available
 function(kamping_has_oversubscribe KAMPING_OVERSUBSCRIBE_FLAG)
   string(FIND ${MPI_CXX_LIBRARY_VERSION_STRING} "OpenMPI" SEARCH_POSITION1)
   string(FIND ${MPI_CXX_LIBRARY_VERSION_STRING} "Open MPI" SEARCH_POSITION2)
   # only Open MPI seems to require the --oversubscribe flag
+  # MPICH and Intel don't know it but silently run commands with more ranks than cores available
   if(${SEARCH_POSITION1} EQUAL -1 AND ${SEARCH_POSITION2} EQUAL -1)
     set("${KAMPING_OVERSUBSCRIBE_FLAG}" "" PARENT_SCOPE)
   else()
+    # We are using Open MPI
     set("${KAMPING_OVERSUBSCRIBE_FLAG}" "--oversubscribe" PARENT_SCOPE)
   endif()
 endfunction()
@@ -30,7 +33,8 @@ mark_as_advanced(
   gtest_disable_pthreads gtest_force_shared_crt gtest_hide_internal_symbols
 )
 
-# Adds an executable target with the specified files and links gtest and the MPI gtest runner
+# Adds an executable target with the specified files FILES and links gtest and the MPI gtest runner
+# example: kamping_add_test_executable(mytest FILES mytest.cpp myotherfile.cpp)
 function(kamping_add_test_executable KAMPING_TARGET)
   cmake_parse_arguments(
     "KAMPING"
@@ -44,7 +48,9 @@ function(kamping_add_test_executable KAMPING_TARGET)
   target_compile_options(${KAMPING_TARGET} PRIVATE ${KAMPING_WARNING_FLAGS})
 endfunction()
 
-# Registers an executable target as a test to be executed with the the specified number of MPI ranks
+# Registers an executable target KAMPING_TEST_TARGET as a test to be executed with ctest
+# using the specified number of MPI ranks CORES
+# example: kamping_add_mpi_test(mytest CORES 2 4 8)
 function(kamping_add_mpi_test KAMPING_TEST_TARGET)
   cmake_parse_arguments(
     KAMPING
