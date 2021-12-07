@@ -33,28 +33,28 @@ jobs:
         echo CC=${{ matrix.compiler.cc }} >> $GITHUB_ENV
     - name: install-openmpi
       if: matrix.mpi-implementation == 'openmpi'
-      run: sudo apt-get install libopenmpi-dev
+      run: apt-get install libopenmpi-dev -y
     - name: install-mpich
       if: matrix.mpi-implementation == 'mpich'
-      run: sudo apt-get install -y mpich
+      run: apt-get install -y mpich
     - name: setup-intel-oneapi
       if: matrix.mpi-implementation == 'intelmpi' || matrix.compiler.name == 'Intel'
       run: |
         wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
         rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-        sudo apt-get update
-        sudo apt-get install -y intel-oneapi-common-vars
+        echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+        apt-get update
+        apt-get install -y intel-oneapi-common-vars
     - name: install-intelmpi
       if: matrix.mpi-implementation == 'intelmpi'
       run: |
-        sudo apt-get install -y intel-oneapi-mpi
-        sudo apt-get install -y intel-oneapi-mpi-devel
+        apt-get install -y intel-oneapi-mpi
+        apt-get install -y intel-oneapi-mpi-devel
     - name: install-icc
       if: matrix.compiler.name == 'Intel'
       run: |
-        sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+        apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
     - name: source-intel-vars
       if: matrix.mpi-implementation == 'intelmpi' || matrix.compiler.name == 'Intel'
       run: |
