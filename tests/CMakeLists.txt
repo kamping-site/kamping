@@ -17,5 +17,4 @@ kamping_add_test_executable(demo_test_mpi FILES demo_test_mpi.cpp)
 
 # register the test using kamping_add_mpi_test
 # this will register the test to run using 2, 4, 8, 16 MPI ranks
-# it will use at most the number of cores available on the machine
 kamping_add_mpi_test(demo_test_mpi CORES 2 4 8 16)
