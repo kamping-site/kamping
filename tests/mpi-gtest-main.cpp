@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: (Apache-2.0 OR MIT)
  *
  ******************************************************************************/
-// TODO Rename this file to mpi_gtest_main.cpp to be in line with the other filenames and the coding guidelines.
+
 #include "gtest-mpi-listener.hpp"
 #include "mpi.h"
 #include "gtest/gtest.h"
