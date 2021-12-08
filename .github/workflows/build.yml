@@ -36,7 +36,7 @@ jobs:
       run: apt-get install libopenmpi-dev -y
     - name: install-mpich
       if: matrix.mpi-implementation == 'mpich'
-      run: apt-get install -y mpich
+      run: apt-get install -y mpich libmpich-dev
     - name: setup-intel-oneapi
       if: matrix.mpi-implementation == 'intelmpi' || matrix.compiler.name == 'Intel'
       run: |
