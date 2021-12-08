@@ -212,23 +212,6 @@ TEST(Test_Helpers, mpi_datatype_enum) {
     EXPECT_THAT(possible_mpi_datatypes<int64_t>(), Contains(mpi_datatype<scopedEnumInt64_t>()));
 }
 
-// TODO Once someone tells me how to implement this without sacrificing the readability and usability (error messages) of the implementation.
-// TEST(Test_Helpers, mpi_datatype_pointer) {
-//     // Calling mpi_datatype with a pointer types should not compile.
-// }
-// 
-// TEST(Test_Helpers, mpi_datatype_function) {
-//     // Calling mpi_datatype with a function type should not compile.
-// }
-// 
-// TEST(Test_Helpers, mpi_datatype_union) {
-//     // Calling mpi_datatype with a union type should not compile.
-// }
-// 
-// TEST(Test_Helpers, mpi_datatype_void) {
-//     // Calling mpi_datatype with a void type should not compile.
-// }
-
 TEST(Test_Helpers, mpi_datatype_continuous_type) {
     struct TestStruct {
         int a;
