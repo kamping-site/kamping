@@ -53,7 +53,7 @@ class RunningExample {
 ```
 
 For members a brief inline documentation is sufficient.
-Note that both public *and* private members and functions (see [example](###Example-of-Minimal-Documentation-Style)) have to be documented.
+Note that both public *and* private members and functions (see [example](#example-of-minimal-documentation-style)) have to be documented.
 
 ```cpp
 ///
@@ -125,9 +125,11 @@ When documenting parameters it is also possible to specify whether the parameter
 Since most parameters are usually input parameters, only `[out]` and `[in,out]` has to be specified explicitly.
 Types of parameters do not have to be specified explicitly, i.e., we write `@param example [...]` instead of `@param Type const& examplet [...]`.
 
-Next, we can document the return value of functions using the `@return` keyword.
+We can document the return value of functions using the `@return` keyword.
 If multiple cases of return values are documented, `@return` can be used for each case to improve readability of the documentation in the code.
 They are automatically concatenated in the documentation.
+With this keyword, we finally have everything we need to obtain the minimal documentation that is required for everything in the KaMPI.ng code base (as shown in the example below).
+We say *minimal* because the documentation can be improved by using special formatting, cross-references, and many more features, which we discuss further [below](#formatting-and-references).
 
 ### Example of Minimal Documentation Style
 
