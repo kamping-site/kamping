@@ -19,10 +19,9 @@ jobs:
         compiler:
           - { name: Clang, cc: clang, cxx: clang++}
           - { name: GNU, cc: gcc, cxx: g++}
-          # - { name: Intel, cc: icx, cxx: icpx}
+          - { name: Intel, cc: icx, cxx: icpx}
         build-mode: [Debug, Release]
-        # mpi-implementation: [openmpi, mpich, intelmpi]
-        mpi-implementation: [openmpi, mpich]
+        mpi-implementation: [openmpi, mpich, intelmpi]
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v2
