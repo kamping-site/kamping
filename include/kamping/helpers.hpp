@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 
 ///
@@ -69,7 +70,7 @@ constexpr To asserting_cast(From value) noexcept {
 template <class To, class From>
 constexpr To throwing_cast(From value) {
     if (!in_range<To>(value)) {
-        throw std::range_error("string(value) is not not representable the target type");
+        throw std::range_error(std::to_string(value) + " is not not representable the target type.");
     } else {
         return static_cast<To>(value);
     }

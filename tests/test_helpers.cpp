@@ -60,4 +60,18 @@ TEST(HelpersTest, throwing_cast) {
     uint8_t u8val = 200;
     ASSERT_NO_THROW(throwing_cast<uint8_t>(u8val));
     ASSERT_THROW(throwing_cast<int8_t>(u8val), std::range_error);
+
+    // Check the error messages.
+    try {
+        throwing_cast<int8_t>(1337);
+    } catch (std::exception& e) {
+        ASSERT_EQ(e.what(), std::string("1337 is not not representable the target type."));
+    }
+
+    // ... for negative values.
+    try {
+        throwing_cast<uint8_t>(-42);
+    } catch (std::exception& e) {
+        ASSERT_EQ(e.what(), std::string("-42 is not not representable the target type."));
+    }
 }
