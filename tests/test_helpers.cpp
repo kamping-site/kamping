@@ -65,12 +65,17 @@ TEST(HelpersTest, asserting_cast) {
     ASSERT_EQ(asserting_cast<uint8_t>(u8val), 200);
 
     // According to the googletest documentation, throwing an exception is not considered a death.
+    // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
     ASSERT_DEATH(asserting_cast<int8_t>(u8val), "Assertion `in_range<To>\\(value\\)' failed.");
 }
 
 TEST(HelpersTest, throwing_cast) {
     uint8_t u8val = 200;
+
+    // A valid cast does not throw an exception.
     ASSERT_NO_THROW(throwing_cast<uint8_t>(u8val));
+
+    // An invalid cast throws an exception.
     ASSERT_THROW(throwing_cast<int8_t>(u8val), std::range_error);
 
     // Check the error messages.

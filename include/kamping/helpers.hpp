@@ -19,6 +19,7 @@ constexpr bool in_range(From value) noexcept {
     static_assert(std::is_integral_v<From>, "From has to be an integral type.");
     static_assert(std::is_integral_v<To>, "To has to be an integral type.");
 
+    // Check that the 0 is included in From and To. 0 is always included in signed types.
     static_assert(
         std::is_signed_v<From> || std::numeric_limits<From>::min() == 0, "The type From has to include the number 0.");
     static_assert(
@@ -33,6 +34,7 @@ constexpr bool in_range(From value) noexcept {
         static_assert(std::numeric_limits<To>::digits <= std::numeric_limits<uintmax_t>::digits, "To has more bits than uintmax_t.");
     }
 
+    // Check if the parameters value is inside To's range.
     if constexpr (std::is_unsigned_v<From> && std::is_unsigned_v<To>) {
         return static_cast<uintmax_t>(value) <= static_cast<uintmax_t>(std::numeric_limits<To>::max());
     } else if constexpr (std::is_signed_v<From> && std::is_signed_v<To>) {
