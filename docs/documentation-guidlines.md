@@ -123,12 +123,12 @@ private:
 
 When documenting parameters it is also possible to specify whether the parameter is an input or output parameter via `@param[in]` and `@param[out]` (or both `@param[in,out]`).
 Since most parameters are usually input parameters, only `[out]` and `[in,out]` has to be specified explicitly.
-Types of parameters do not have to be specified explicitly.
-Note that in the example above we write `@param example [...]` instead of `@param Type const& examplet [...]`.
+Types of parameters do not have to be specified explicitly, i.e., we write `@param example [...]` instead of `@param Type const& examplet [...]`.
 
-#### Syntax Highlighting and References
+Next, we can document the return value of functions using the `@return` keyword.
+If multiple cases of return values are documented, `@return` can be used for each case to improve readability of the documentation in the code.
+They are automatically concatenated in the documentation.
 
-#### Using Bibtex
 ### Example of Minimal Documentation Style
 
 ```cpp
@@ -166,18 +166,22 @@ private:
 };
 ```
 
+In the example above, we also have added the first formatting commands with `\c`, which sets the following word in typewriter front.
+Before we take a look at the formatting that should be used in the KaMPI.ng documentation, we give a short overview what parts of the documentation are required.
 In the table below, we give a brief overview which keywords have to be used as part of the documentation in which parts of the code.
 Here *Yes* means that the keyword has to be used, *(Yes)* means that the keyword has to be used if applicable, *Optional* means that the keyword can be used if deemed necessary, and a dash (*-*) means that this keyword is not applicable here.
 
-| Part of the Code/Required | `@brief` | detailed description | `@tparam` |
-|---------------------------|----------|----------------------|-----------|
-| namespace                 |          |                      |           |
-| class                     | Yes      | Yes                  | (Yes)     |
-| function                  | Yes      | Optional             | (Yes)     |
-| member                    | Yes      | Optional             | -         |
-| enum                      | Yes      | Optional             | -         |
-| struct                    | Yes      | Yes                  | (Yes)     |
-|                           |          |                      |           |
+| Part of the Code/Required        | `@brief` | detailed description | `@tparam` | `@param` | `@return` |
+|----------------------------------|----------|----------------------|-----------|----------|-----------|
+| class                            | Yes      | Yes                  | (Yes)     | -        | -         |
+| public **and** private functions | Yes      | Optional             | (Yes)     | (Yes)    | (Yes)     |
+| public **and** private members   | Yes      | Optional             | -         | -        | -         |
+| enum                             | Yes      | Optional             | -         | -        | -         |
+| struct                           | Yes      | Yes                  | (Yes)     | -        | -         |
+
+#### Syntax Highlighting and References
+
+#### Using Bibtex
 
 ## Additional (Non-Code) Material
 Since a good documentation does not only document each class and function of the library, we also want to include additional resources, e.g., examples and guides, within out documentation.
