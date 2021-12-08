@@ -64,7 +64,7 @@ jobs:
     - name: print-mpirun-version
       run: mpirun --version
     - name: print-mpicxx-linker-flags
-      run: mpicxx --showme:link
+      run: mpicxx -show
     - name: cmake
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
     - name: build
