@@ -2,7 +2,8 @@
 FROM ubuntu:latest
 
 ENV TZ=Europe/Berlin
-RUN DEBIAN_FRONTEND="noninteractive" apt update
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apt update
 
 # Copies your code file from your action repository to the filesystem path `/` of the container
 COPY entrypoint.sh /entrypoint.sh
