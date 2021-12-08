@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.12)
 project(
   kamping
   DESCRIPTION "An MPI wrapper which makes using MPI feel like C++"
-  LANGUAGES CXX
 )
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
