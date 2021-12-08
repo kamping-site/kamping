@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install git
-        git: apt install git
+        run: apt install git
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - name: Hello world action step
