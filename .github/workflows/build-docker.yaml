@@ -12,7 +12,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install git
-        run: apt install git
+        run: |
+          export TZ=Europe/Berlin
+          ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+          apt update
+          apt install git cmake -y
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - name: Hello world action step
