@@ -14,8 +14,8 @@ jobs:
       - name: Hello world action step
         uses: ./.github/actions/cmake-build-action # Uses an action in the root directory
         id: cmake-build-action
-        with:
-          who-to-greet: 'Mona the Octocat'
-      # Use the output from the `hello` step
-      - name: Get the output time
-        run: echo "The time was ${{ steps.hello.outputs.time }}"
+      #   with:
+      #     who-to-greet: 'Mona the Octocat'
+      # # Use the output from the `hello` step
+      # - name: Get the output time
+      #   run: echo "The time was ${{ steps.hello.outputs.time }}"
