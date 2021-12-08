@@ -62,11 +62,12 @@ constexpr bool in_range(From value) noexcept {
 ///
 /// @brief Casts a value to the type To. If the value is outside To's range, throws an assertion.
 ///
+/// Alternatively, exceptions can be used instead of assertions by using \ref trowing_cast.
+///
 /// @tparam To Type to cast to.
 /// @tparam From Type to cast from, will be auto inferred.
 /// @param value Value you want to cast.
 /// @return constexpr To The casted value.
-/// @see throwing_cast
 ///
 template <class To, class From>
 constexpr To asserting_cast(From value) noexcept {
@@ -77,11 +78,12 @@ constexpr To asserting_cast(From value) noexcept {
 ///
 /// @brief Casts a value to the type To. If the value is outside To's range, throws an exception.
 ///
+/// Alternatively, assertions can be used instead of exceptions by using \ref asserting_cast.
+///
 /// @tparam To Type to cast to.
 /// @tparam From Type to cast from, will be auto inferred.
 /// @param value Value you want to cast.
 /// @return constexpr To Casted value.
-/// @see asserting_cast
 ///
 template <class To, class From>
 constexpr To throwing_cast(From value) {
