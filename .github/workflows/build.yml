@@ -12,8 +12,8 @@ on:
 jobs:
   build:
     runs-on: self-hosted
-    container:
-      image: "localhost:5000/kamping-ci"
+    using: 'docker'
+    image: 'Dockerfile'
     strategy:
       matrix:
         compiler:
