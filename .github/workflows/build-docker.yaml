@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Hello world action step
-        uses: ./ # Uses an action in the root directory
+        uses: ./.github/actions/cmake-build-action # Uses an action in the root directory
         id: cmake-build-action
         with:
           who-to-greet: 'Mona the Octocat'
