@@ -27,11 +27,19 @@ constexpr bool in_range(From value) noexcept {
 
     // Check if we can safely cast To and From into (u)intmax_t.
     if constexpr (std::is_signed_v<From> && std::is_signed_v<To>) {
-        static_assert(std::numeric_limits<From>::digits <= std::numeric_limits<intmax_t>::digits, "From has more bits than intmax_t.");
-        static_assert(std::numeric_limits<To>::digits <= std::numeric_limits<intmax_t>::digits, "To has more bits than intmax_t.");
+        static_assert(
+            std::numeric_limits<From>::digits <= std::numeric_limits<intmax_t>::digits,
+            "From has more bits than intmax_t.");
+        static_assert(
+            std::numeric_limits<To>::digits <= std::numeric_limits<intmax_t>::digits,
+            "To has more bits than intmax_t.");
     } else {
-        static_assert(std::numeric_limits<From>::digits <= std::numeric_limits<uintmax_t>::digits, "From has more bits than uintmax_t.");
-        static_assert(std::numeric_limits<To>::digits <= std::numeric_limits<uintmax_t>::digits, "To has more bits than uintmax_t.");
+        static_assert(
+            std::numeric_limits<From>::digits <= std::numeric_limits<uintmax_t>::digits,
+            "From has more bits than uintmax_t.");
+        static_assert(
+            std::numeric_limits<To>::digits <= std::numeric_limits<uintmax_t>::digits,
+            "To has more bits than uintmax_t.");
     }
 
     // Check if the parameters value is inside To's range.
