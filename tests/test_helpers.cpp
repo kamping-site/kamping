@@ -45,6 +45,18 @@ TEST(HelpersTest, in_range) {
 
     unsigned long a = 16;
     ASSERT_TRUE(in_range<unsigned char>(a));
+
+    // Cast large values into narrower types.
+    ASSERT_FALSE(in_range<uint8_t>(std::numeric_limits<uint16_t>::max()));
+    ASSERT_FALSE(in_range<uint16_t>(std::numeric_limits<uint32_t>::max() - 1000));
+    ASSERT_FALSE(in_range<uint32_t>(std::numeric_limits<uint64_t>::max() - 133742));
+
+    ASSERT_FALSE(in_range<int8_t>(std::numeric_limits<int16_t>::max()));
+    ASSERT_FALSE(in_range<int8_t>(std::numeric_limits<int16_t>::min()));
+    ASSERT_FALSE(in_range<int16_t>(std::numeric_limits<int32_t>::max()));
+    ASSERT_FALSE(in_range<int16_t>(std::numeric_limits<int32_t>::min()));
+    ASSERT_FALSE(in_range<int32_t>(std::numeric_limits<int64_t>::max()));
+    ASSERT_FALSE(in_range<int32_t>(std::numeric_limits<int64_t>::min()));
 }
 
 TEST(HelpersTest, asserting_cast) {
