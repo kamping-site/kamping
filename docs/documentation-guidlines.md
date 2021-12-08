@@ -168,7 +168,7 @@ private:
 };
 ```
 
-In the example above, we also have added the first formatting commands with `\c`, which sets the following word in typewriter front.
+In the example above, we also have added the first formatting commands with `\c`, which sets the following word in typewriter font.
 Before we take a look at the formatting that should be used in the KaMPI.ng documentation, we give a short overview what parts of the documentation are required.
 In the table below, we give a brief overview which keywords have to be used as part of the documentation in which parts of the code.
 Here *Yes* means that the keyword has to be used, *(Yes)* means that the keyword has to be used if applicable, *Optional* means that the keyword can be used if deemed necessary, and a dash (*-*) means that this keyword is not applicable here.
@@ -181,12 +181,44 @@ Here *Yes* means that the keyword has to be used, *(Yes)* means that the keyword
 | enum                             | Yes      | Optional             | -         | -        | -         |
 | struct                           | Yes      | Yes                  | (Yes)     | -        | -         |
 
-#### Syntax Highlighting and References
+### Formatting and References
 
-#### Using Bibtex
+As mentioned above, the documentation can be formatted with different commands.
+Due to better readability of the unprocessed documentation, we use a backslash `\` to enable formatting commands similar to how LaTeX works.
+(`@` would also work but is strongly discouraged in KaMPI.ng.)
+
+- **Typwriter Font** `\c`
+
+  We use typewriter font to highlight language specific concepts like boolean types `true` and `false`, character types like `signed char` and `unsigned char`, `nullptr`, or fixed size integers like `std::uint16_t` or `std::int64_t`.
+  Note that [Doxygen] is unaware of any C++-Standard-Library-Classes so if such classes (e.g., `std::vector` or `std::array`) are used, they should also be formatted using typewriter font.
+- **References to Other Parts of the Code** `\ref` or done automatically
+
+  Sometimes it may be useful to refer to other parts of the documentation, e.g., if there is an alternative to a function that does similar things the user might be looking for or if there is more relevant documentation at another part of the code.
+  Fortunately, [Doxygen] has a well-working [automatic link generation].
+  For most documented parts of the code, links will be added automatically.
+  More precisely, links are auto-generated for classes that contain at least one non-lower case character.
+  If a class should not fulfill this requirement  check the [coding guidelines] because that should not happen or use `\ref` to manually add a reference to the class.
+  Links to (member) functions are also added automatically.
+  Please refer to the [automatic link generation] guide for more information on the required formatting if the generation should not work directly.
+  The same holds for members.
+
+  One important rule when it comes to adding references, do *not* simply add a reference to another part of the documentation without describing what to find there if it is not clear from context (see [this discussion](https://meta.stackexchange.com/q/225370) for an explanation).
+- **Formulas and Math Font Support** `\f$`
+
+  The documentation supports LaTeX syntax to generate good looking formulas and enable math font support.
+  For example `\f$O(n\lg\frac{n}{k})\f$` renders a nice looking asymptotic bound.
+- **Citing** `\cite`
+
+  Resources can also be cited using BibTeX.
+  To this end, the reference has to be placed in the global `literature.bib` file **TODO will be addedd, when next section is written.**
+  Please read the **TODO** section on how to format the BibTeX entry.
+  Then, it can be cited by using the `\cite <BibTeX key>` command.
+
+### Structuring the Documentation
 
 ## Additional (Non-Code) Material
 Since a good documentation does not only document each class and function of the library, we also want to include additional resources, e.g., examples and guides, within out documentation.
 
+[automatic link generation]: https://www.doxygen.nl/manual/autolink.html#linkfunc
 [Doxygen]: https://www.doxygen.nl/
 [coding guidelines]: coding-guidelines.md
