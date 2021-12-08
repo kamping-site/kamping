@@ -4,6 +4,8 @@
 #include "trait_selection.hpp"
 #include "type_helpers.hpp"
 
+#include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <mpi.h>
 #include <numeric>
@@ -83,24 +85,24 @@ public:
 
         //  Gather send counts at root
         // TODO don't do this if the user supplies send counts at root
-        int mySendCount = sendBuf.get().size;
+        int mySendCount = static_cast<int>(sendBuf.get().size);
 
         int*       recvCountsPtr;
         int*       recvDisplsPtr;
-        recv_type* recvPtr;
+        recv_type* recvPtr = nullptr;
         if (rank_ == rootPE.getRoot()) {
-            recvCountsPtr = recvCountsContainer.get_ptr(size_);
-            recvDisplsPtr = recvDisplsContainer.get_ptr(size_);
+            recvCountsPtr = recvCountsContainer.get_ptr(static_cast<std::size_t>(size_));
+            recvDisplsPtr = recvDisplsContainer.get_ptr(static_cast<std::size_t>(size_));
             MPI_Gather(&mySendCount, 1, MPI_INT, recvCountsPtr, 1, MPI_INT, rootPE.getRoot(), comm_);
 
             std::exclusive_scan(recvCountsPtr, recvCountsPtr + size_, recvDisplsPtr, 0);
 
             int recvSize = *(recvDisplsPtr + size_ - 1) + *(recvCountsPtr + size_ - 1);
-            recvPtr      = recvBuf.get_ptr(recvSize);
+            recvPtr      = recvBuf.get_ptr(static_cast<std::size_t>(recvSize));
         } else {
             recvCountsPtr = recvCountsContainer.get_ptr(0);
             recvDisplsPtr = recvDisplsContainer.get_ptr(0);
-            auto recvPtr  = recvBuf.get_ptr(0);
+            recvPtr       = recvBuf.get_ptr(0);
             MPI_Gather(&mySendCount, 1, MPI_INT, nullptr, 1, MPI_INT, rootPE.getRoot(), comm_);
         }
 

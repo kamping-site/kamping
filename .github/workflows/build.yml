@@ -66,7 +66,7 @@ jobs:
     - name: print-mpicxx-linker-flags
       run: mpicxx --showme:link
     - name: cmake
-      run: cmake -E env CXXFLAGS="-Werror" cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
     - name: build
       run: cmake --build build/ --parallel 2
     - name: run tests

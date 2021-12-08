@@ -1,6 +1,6 @@
 # KaMPI.ng: Karlsruhe MPI next generation
 
-![KaMPI.ng logo](./doc/logo.svg)
+![KaMPI.ng logo](./docs/logo.svg)
 
 This is KaMPI.ng, an MPI wrapper which makes using MPI feel like real C++
 
