@@ -53,13 +53,18 @@ class RunningExample {
 ```
 
 For members a brief inline documentation is sufficient.
+Note that both public *and* private members and functions (see [example](###Example-of-Minimal-Documentation-Style)) have to be documented.
 
 ```cpp
 ///
 /// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
 class RunningExample {
 
+public:
     bool is_used; ///< Marks if the example is used during construction.
+
+private:
+    int examples_in_use_; ///< Counts the number of examples that are currently in use.
 
 };
 ```
@@ -76,7 +81,11 @@ The detailed description is optional and only required if the brief description 
 /// KaMPI.ng. We will add more and more stuff to this example, until every realisitc case is covered.
 class RunningExample {
 
+public:
     bool is_used; ///< Marks if the example is used during construction.
+
+private:
+    int examples_in_use_; ///< Counts the number of examples that are currently in use.
 
 };
 ```
@@ -93,6 +102,7 @@ The `@tparam` keyword always has to appear before the `@param` keyword.
 /// KaMPI.ng. We will add more and more stuff to this example, until every realisitc case is covered.
 class RunningExample {
 
+public:
     bool is_used; ///< Marks if the example is used during construction.
 
     /// @brief Example function showing the usage of two more keywords while evaluating it.
@@ -104,6 +114,10 @@ class RunningExample {
         // Do stuff here
         //
     }
+
+private:
+    int examples_in_use_; ///< Counts the number of examples that are currently in use.
+
 };
 ```
 
@@ -115,8 +129,42 @@ Note that in the example above we write `@param example [...]` instead of `@para
 #### Syntax Highlighting and References
 
 #### Using Bibtex
+### Example of Minimal Documentation Style
 
-### Scope
+```cpp
+/// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
+///
+/// Since there are a lot of different ways to document code using Doxygen, we use this class to show how to do so in
+/// KaMPI.ng. We will add more and more stuff to this example, until every realisitc case is covered.
+class RunningExample {
+
+public:
+    bool is_used; ///< Marks if the example is used during construction.
+
+    /// @brief Example function showing the usage of two more keywords while evaluating it.
+    /// @tparam Type Type of the example passed to the function.
+    /// @param example Example that is evaluated.
+    template <typename Type>
+    void evaluate_example(Type const& example) {
+        //
+        // Do stuff here
+        //
+    }
+
+private:
+    int examples_in_use_; ///< Counts the number of examples that are currently in use.
+
+    /// @brief Checks if an example is currently somewhere and should not be reused.
+    /// @param example Example for which it is checked whether it is currently used.
+    /// @return \c true if the exampel is used somewhere.
+    /// @return \c false otherwise.
+    bool is_currently_used(RunningExample const& example) {
+        //
+        // Do stuff here
+        //
+    }
+};
+```
 
 In the table below, we give a brief overview which keywords have to be used as part of the documentation in which parts of the code.
 Here *Yes* means that the keyword has to be used, *(Yes)* means that the keyword has to be used if applicable, *Optional* means that the keyword can be used if deemed necessary, and a dash (*-*) means that this keyword is not applicable here.
