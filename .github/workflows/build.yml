@@ -19,9 +19,10 @@ jobs:
         compiler:
           - { name: Clang, cc: clang, cxx: clang++}
           - { name: GNU, cc: gcc, cxx: g++}
-          - { name: Intel, cc: icx, cxx: icpx}
+          # - { name: Intel, cc: icx, cxx: icpx}
         build-mode: [Debug, Release]
-        mpi-implementation: [openmpi, mpich, intelmpi]
+        # mpi-implementation: [openmpi, mpich, intelmpi]
+        mpi-implementation: [openmpi, mpich]
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v2
@@ -59,7 +60,7 @@ jobs:
       if: matrix.mpi-implementation == 'intelmpi' || matrix.compiler.name == 'Intel'
       run: |
         source /opt/intel/oneapi/setvars.sh
-        # printenv >> $GITHUB_ENV
+        printenv >> $GITHUB_ENV
     - name: print-mpi-version
       run: |
         echo $CXX
