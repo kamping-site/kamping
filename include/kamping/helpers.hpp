@@ -12,8 +12,6 @@
 /// @param value Value you want to cast.
 /// @return \c true if value can be safely casted into type To, that is, value is in To's range.
 /// @return \c false otherwise.
-/// @see throwing_cast
-/// @see asserting_cast
 ///
 template <class To, class From>
 constexpr bool in_range(From value) noexcept {
@@ -51,7 +49,6 @@ constexpr bool in_range(From value) noexcept {
 /// @tparam From Type to cast from, will be auto inferred.
 /// @param value Value you want to cast.
 /// @return constexpr To The casted value.
-/// @see in_range
 /// @see throwing_cast
 ///
 template <class To, class From>
@@ -67,7 +64,6 @@ constexpr To asserting_cast(From value) noexcept {
 /// @tparam From Type to cast from, will be auto inferred.
 /// @param value Value you want to cast.
 /// @return constexpr To Casted value.
-/// @see in_range
 /// @see asserting_cast
 ///
 template <class To, class From>
