@@ -38,7 +38,10 @@ jobs:
       run: apt-get install libopenmpi-dev -y
     - name: install-mpich
       if: matrix.mpi-implementation == 'mpich'
-      run: apt-get install -y mpich libmpich-dev
+      run: |
+        apt-get install -y mpich libmpich-dev
+        echo MPICH_CXX=${{ matrix.compiler.cxx }} >> $GITHUB_ENV
+        echo MPICH_CC=${{ matrix.compiler.cc }} >> $GITHUB_ENV
     - name: setup-intel-oneapi
       if: matrix.mpi-implementation == 'intelmpi' || matrix.compiler.name == 'Intel'
       run: |
