@@ -24,8 +24,14 @@ constexpr bool in_range(From value) noexcept {
     static_assert(
         std::is_signed_v<To> || std::numeric_limits<To>::min() == 0, "The type To has to include the number 0.");
 
-    static_assert(std::numeric_limits<From>::digits <= 64, "From might have at most 64 bits.");
-    static_assert(std::numeric_limits<To>::digits <= 64, "To might have at most 64 bits.");
+    // Check if we can safely cast To and From into (u)intmax_t.
+    if constexpr (std::is_signed_v<From> && std::is_signed_v<To>) {
+        static_assert(std::numeric_limits<From>::digits <= std::numeric_limits<intmax_t>::digits, "From has more bits than intmax_t.");
+        static_assert(std::numeric_limits<To>::digits <= std::numeric_limits<intmax_t>::digits, "To has more bits than intmax_t.");
+    } else {
+        static_assert(std::numeric_limits<From>::digits <= std::numeric_limits<uintmax_t>::digits, "From has more bits than uintmax_t.");
+        static_assert(std::numeric_limits<To>::digits <= std::numeric_limits<uintmax_t>::digits, "To has more bits than uintmax_t.");
+    }
 
     if constexpr (std::is_unsigned_v<From> && std::is_unsigned_v<To>) {
         return static_cast<uintmax_t>(value) <= static_cast<uintmax_t>(std::numeric_limits<To>::max());
