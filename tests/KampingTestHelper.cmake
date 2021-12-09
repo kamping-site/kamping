@@ -70,6 +70,7 @@ function(kamping_add_mpi_test KAMPING_TEST_TARGET)
       ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${p} ${MPIEXEC_OVERSUBSCRIBE_FLAG} ${MPIEXEC_PREFLAGS} $<TARGET_FILE:${KAMPING_TEST_TARGET}> ${MPIEXEC_POSTFLAGS}
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     )
+    # TODO: Do no rely on the return value of mpiexec to check if a test succeeded, as this does not work for ULFM.
   endforeach()
 endfunction()
 
