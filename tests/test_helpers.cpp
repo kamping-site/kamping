@@ -68,6 +68,17 @@ TEST(HelpersTest, asserting_cast) {
     // According to the googletest documentation, throwing an exception is not considered a death.
     // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
     EXPECT_DEATH(asserting_cast<int8_t>(u8val), "Assertion `in_range<To>\\(value\\)' failed.");
+#else
+    // From https://stackoverflow.com/questions/60594487/expect-no-death-in-google-test
+    // This checks if the code after the asserting cast was still executed by exiting afterwards and letting gtest check
+    // whether the exit occurred
+    EXPECT_EXIT(
+        {
+            asserting_cast<int8_t>(u8val);
+            fprintf(stderr, "Still alive!");
+            exit(0);
+        },
+        ::testing::ExitedWithCode(0), "Still alive!");
 #endif
 }
 
