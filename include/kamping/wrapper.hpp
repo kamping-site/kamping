@@ -1,9 +1,5 @@
 #pragma once
 
-#include "mpi_ops.hpp"
-#include "trait_selection.hpp"
-#include "type_helpers.hpp"
-
 #include <algorithm>
 #include <cstddef>
 #include <limits>
@@ -12,6 +8,9 @@
 #include <type_traits>
 #include <vector>
 
+#include "kamping/mpi_datatype.hpp"
+#include "kamping/mpi_ops.hpp"
+#include "kamping/trait_selection.hpp"
 
 namespace MPIWrapper {
 
