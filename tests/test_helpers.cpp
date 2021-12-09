@@ -64,9 +64,11 @@ TEST(HelpersTest, asserting_cast) {
     // There is no EXPECT_NO_DEATH()
     EXPECT_EQ(asserting_cast<uint8_t>(u8val), 200);
 
+#ifndef NDEBUG
     // According to the googletest documentation, throwing an exception is not considered a death.
     // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
     EXPECT_DEATH(asserting_cast<int8_t>(u8val), "Assertion `in_range<To>\\(value\\)' failed.");
+#endif
 }
 
 TEST(HelpersTest, throwing_cast) {
