@@ -30,14 +30,11 @@ jobs:
       run: |
         echo CXX=${{ matrix.compiler.cxx }} >> $GITHUB_ENV
         echo CC=${{ matrix.compiler.cc }} >> $GITHUB_ENV
-    - name: install-openmpi
-      run: |
-        apt-get install libopenmpi-dev -y
         echo OMPI_CXX=${{ matrix.compiler.cxx }} >> $GITHUB_ENV
         echo OMPI_CC=${{ matrix.compiler.cc }} >> $GITHUB_ENV
     - name: print-mpirun-version
       run: mpirun --version
-    - name: print-mpicxx-linker-flags
+    - name: print-mpicxx-flags
       run: mpicxx -show
     - name: cmake
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_EXPORT_COMPILE_COMMANDS=1 
