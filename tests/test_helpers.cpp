@@ -13,7 +13,7 @@
 using namespace ::testing;
 
 // From https://stackoverflow.com/questions/60594487/expect-no-death-in-google-test
-// This checks if the code after the asserting cast was still executed by exiting afterwards and letting gtest check
+// This checks if the code after the expression was still executed by exiting afterwards and letting gtest check
 // whether the exit occurred
 #define EXPECT_NO_DEATH(expression)          \
     EXPECT_EXIT(                             \
