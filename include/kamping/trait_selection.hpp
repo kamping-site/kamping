@@ -229,7 +229,7 @@ private:
     int _root;
 };
 
-in_root root(int root_) {
+inline in_root root(int root_) {
     return in_root(root_);
 }
 
