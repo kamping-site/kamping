@@ -12,6 +12,18 @@
 
 using namespace ::testing;
 
+// From https://stackoverflow.com/questions/60594487/expect-no-death-in-google-test
+// This checks if the code after the asserting cast was still executed by exiting afterwards and letting gtest check
+// whether the exit occurred
+#define EXPECT_NO_DEATH(expression)          \
+    EXPECT_EXIT(                             \
+        {                                    \
+            { #expression; }                 \
+            fprintf(stderr, "Still alive!"); \
+            exit(0);                         \
+        },                                   \
+        ::testing::ExitedWithCode(0), "Still alive!");
+
 TEST(HelpersTest, in_range) {
     uint8_t u8val = 200;
     EXPECT_TRUE(in_range<uint8_t>(u8val));
@@ -61,24 +73,14 @@ TEST(HelpersTest, in_range) {
 
 TEST(HelpersTest, asserting_cast) {
     uint8_t u8val = 200;
-    // There is no EXPECT_NO_DEATH()
-    EXPECT_EQ(asserting_cast<uint8_t>(u8val), 200);
+    EXPECT_NO_DEATH(asserting_cast<uint8_t>(u8val))
 
 #ifndef NDEBUG
     // According to the googletest documentation, throwing an exception is not considered a death.
     // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
     EXPECT_DEATH(asserting_cast<int8_t>(u8val), "Assertion `in_range<To>\\(value\\)' failed.");
 #else
-    // From https://stackoverflow.com/questions/60594487/expect-no-death-in-google-test
-    // This checks if the code after the asserting cast was still executed by exiting afterwards and letting gtest check
-    // whether the exit occurred
-    EXPECT_EXIT(
-        {
-            asserting_cast<int8_t>(u8val);
-            fprintf(stderr, "Still alive!");
-            exit(0);
-        },
-        ::testing::ExitedWithCode(0), "Still alive!");
+    EXPECT_NO_DEATH(asserting_cast<int8_t>(u8val));
 #endif
 }
 
