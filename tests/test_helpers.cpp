@@ -13,7 +13,6 @@
 
 using namespace ::testing;
 
-
 TEST(HelpersTest, in_range) {
     uint8_t u8val = 200;
     EXPECT_TRUE(in_range<uint8_t>(u8val));
