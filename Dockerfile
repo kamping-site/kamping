@@ -12,3 +12,12 @@ ARG CMAKE_VERSION=3.21.0
 RUN wget https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION-linux-x86_64.sh && \
     sh ./cmake-$CMAKE_VERSION-linux-x86_64.sh --skip-license --prefix=/usr/local && \
     rm cmake-$CMAKE_VERSION-linux-x86_64.sh
+
+# add non-root user
+RUN useradd -m dev
+# add user to docker group
+
+RUN usermod -aG docker dev
+
+USER dev
+WORKDIR /home/dev
