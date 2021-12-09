@@ -41,4 +41,4 @@ jobs:
     - name: build
       run: cmake --build build/ --parallel 2
     - name: run tests
-      run: ctest build/
+      run: ctest --test-dir build/
