@@ -14,6 +14,7 @@ jobs:
     runs-on: self-hosted
     container:
       image: "localhost:5000/kamping-ci"
+    continue-on-error: true
     strategy:
       matrix:
         compiler:
