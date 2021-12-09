@@ -27,7 +27,7 @@ if(EXISTS "${LOC_PATH}")
   message(FATAL_ERROR "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles.")
 endif()
 
-option(KAMPING_WARNING_ARE_ERRORS OFF)
+option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
@@ -79,6 +79,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 # OFF by default.
+message(STATUS "${KAMPING_WARNINGS_ARE_ERRORS}")
 if(KAMPING_WARNINGS_ARE_ERRORS)
   list(
     APPEND KAMPING_WARNING_FLAGS
