@@ -1,5 +1,7 @@
 FROM ubuntu:21.10
 
+# This Dockerfile is not directly used in the workflows. It is the one used on our self-hosted runner though and only here for documentation.
+
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y
 RUN apt-get install git gcc clang curl ca-certificates cmake wget gnupg lsb-release doxygen graphviz build-essential libopenmpi-dev -y
