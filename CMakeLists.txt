@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(
   kamping
   DESCRIPTION "An MPI wrapper which makes using MPI feel like C++"
+  LANGUAGES CXX
 )
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
@@ -30,7 +31,7 @@ option(KAMPING_WARNING_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
-find_package(MPI REQUIRED COMPONENTS C CXX)
+find_package(MPI REQUIRED)
 
 add_subdirectory(extern)
 
