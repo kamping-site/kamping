@@ -12,7 +12,6 @@ on:
 jobs:
   build:
     runs-on: self-hosted
-    continue-on-error: true
     container:
       image: "localhost:5000/kamping-ci"
     strategy:
