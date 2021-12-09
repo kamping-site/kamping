@@ -39,5 +39,9 @@ jobs:
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
     - name: build
       run: cmake --build build/ --parallel 2
+    - name: Allow-running-mpi
+      run: |
+        echo OMPI_ALLOW_RUN_AS_ROOT=1 >> $GITHUB_ENV
+        echo OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 >> $GITHUB_ENV
     - name: run tests
       run: ctest --output-on-failure --test-dir build/
