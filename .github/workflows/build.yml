@@ -31,7 +31,10 @@ jobs:
         echo CXX=${{ matrix.compiler.cxx }} >> $GITHUB_ENV
         echo CC=${{ matrix.compiler.cc }} >> $GITHUB_ENV
     - name: install-openmpi
-      run: apt-get install libopenmpi-dev -y
+      run: |
+        apt-get install libopenmpi-dev -y
+        echo OMPI_CXX=${{ matrix.compiler.cxx }} >> $GITHUB_ENV
+        echo OMPI_CC=${{ matrix.compiler.cc }} >> $GITHUB_ENV
     - name: print-mpirun-version
       run: mpirun --version
     - name: print-mpicxx-linker-flags
