@@ -1,0 +1,13 @@
+namespace kamping {
+
+  @todo fill with some content as soon as there is content
+
+  
+  /** @mainpage KaMPI.ng Documentation Overview
+
+  ### Guidelines
+  \subpage documentation_guidelines
+
+  */
+
+} // namespace kamping
