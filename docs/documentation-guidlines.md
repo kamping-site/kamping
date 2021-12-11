@@ -177,6 +177,7 @@ Here *Yes* means that the keyword has to be used, *(Yes)* means that the keyword
 |----------------------------------|----------|----------------------|-----------|----------|-----------|
 | class                            | Yes      | Yes                  | (Yes)     | -        | -         |
 | public **and** private functions | Yes      | Optional             | (Yes)     | (Yes)    | (Yes)     |
+| global functions                 | Yes      | Optional             | (Yes)     | (Yes)    | (Yes)     |
 | public **and** private members   | Yes      | Optional             | -         | -        | -         |
 | enum                             | Yes      | Optional             | -         | -        | -         |
 | struct                           | Yes      | Yes                  | (Yes)     | -        | -         |
@@ -210,15 +211,82 @@ Due to better readability of the unprocessed documentation, we use a backslash `
 - **Citing** `\cite`
 
   Resources can also be cited using BibTeX.
-  To this end, the reference has to be placed in the global `literature.bib` file **TODO will be addedd, when next section is written.**
-  Please read the **TODO** section on how to format the BibTeX entry.
+  To this end, the reference has to be placed in the global [literature.bib] file.
+  Please read the [following section](#references) on how to format the BibTeX entry.
   Then, it can be cited by using the `\cite <BibTeX key>` command.
 
 ### Structuring the Documentation
+[Doxygen] can be used to [group] different parts of the documentation independent of the structure of the source code.
+We want to keep the number of groups small but still use this feature to make different aspects of KaMPI.ng easily discoverable in the documentation.
+Documentation can be added to a group via the `@addtogroup` command, e.g.,
+```cpp
+/** @addtogroup <label>
+ *  @{
+ */
+...
+
+/** @}*/
+```
+All groups have to be defined somewhere.
+To this end, we use the main file of our documentation [main.dox], see [below](#main-page).
+Here, we can define the group using the following commands.
+
+```cpp
+@defgroup <label> <Printed Name>
+@brief Brief description of the group. Can be followed by a detailed description (separated by empty line).
+```
 
 ## Additional (Non-Code) Material
 Since a good documentation does not only document each class and function of the library, we also want to include additional resources, e.g., examples and guides, within out documentation.
 
-[automatic link generation]: https://www.doxygen.nl/manual/autolink.html#linkfunc
+### Main Page
+The main page (starting page) of the documentation is [main.dox].
+Here, general information and links to additional resources should be added.
+Additionally, we can add a brief description of all groups here.
+
+### Guides and Examples
+
+TODO
+
+### References
+All references have to be added as BibTeX entry in [literature.bib].
+There are two cases: either the reference is available in [dblp] or not.
+If its available in [dblp], please just copy the *condensed* BibTeX entry to [literature.bib] and add the *DOI* if available.
+
+```bibtex
+@article{DBLP:journals/siamcomp/KnuthMP77,
+  author    = {Donald E. Knuth and
+               James H. Morris Jr. and
+               Vaughan R. Pratt},
+  title     = {Fast Pattern Matching in Strings},
+  journal   = {{SIAM} J. Comput.},
+  volume    = {6},
+  number    = {2},
+  pages     = {323--350},
+  year      = {1977},
+  doi       = {10.1137/0206024},
+}
+```
+In case that the reference is not available in the [dbpl], try to emulate the BibTeX style as close a possible and mark the entry an *nondblp*.
+```bibtex
+@article{NODBLP:journals/siamcomp/KnuthMP77,
+  author    = {Donald E. Knuth and
+               James H. Morris Jr. and
+               Vaughan R. Pratt},
+  title     = {Fast Pattern Matching in Strings},
+  journal   = {{SIAM} J. Comput.},
+  volume    = {6},
+  number    = {2},
+  pages     = {323--350},
+  year      = {1977},
+  doi       = {10.1137/0206024},
+}
+```
+
 [Doxygen]: https://www.doxygen.nl/
+[automatic link generation]: https://www.doxygen.nl/manual/autolink.html#linkfunc
 [coding guidelines]: coding-guidelines.md
+[dblp]: https://dblp.uni-trier.de/
+[group]: https://www.doxygen.nl/manual/grouping.html
+[literature.bib]: literature.bib
+[main.dox]: main.dox
