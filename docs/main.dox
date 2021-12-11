@@ -5,6 +5,8 @@ namespace kamping {
   
   /** @mainpage KaMPI.ng Documentation Overview
 
+  <img width="920" height="200" src="logo.svg">
+
   ### Guidelines
   \subpage documentation_guidelines
 

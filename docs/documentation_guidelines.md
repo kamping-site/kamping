@@ -1,4 +1,4 @@
-KaMPI.ng Documentation Guidelines {#documentation_guidelines}
+Documentation Guidelines {#documentation_guidelines}
 ============
 
 In this document, we describe the documentation guidelines for the KaMPI.ng library.
