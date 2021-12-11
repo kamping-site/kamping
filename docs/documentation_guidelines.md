@@ -248,7 +248,8 @@ Additionally, we can add a brief description of all groups here.
 
 ### Guides and Examples
 
-TODO
+Guides and examples should be added in form of Markdown files and linked in [main.dox].
+See this file for an example.
 
 ### References
 All references have to be added as BibTeX entry in [literature.bib].
