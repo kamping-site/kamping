@@ -7,8 +7,9 @@ namespace kamping {
 
   <img width="920" height="200" src="logo.svg">
 
-  ### Guidelines
-  \subpage documentation_guidelines
+  ## Guidelines
+  - \subpage coding_guidelines
+  - \subpage documentation_guidelines
 
   */
 

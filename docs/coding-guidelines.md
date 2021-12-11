@@ -1,3 +1,5 @@
+Coding Guidelines {#coding_guidelines}
+============
 # General
 We are writing a header-only library.
 Using the provided `.clang-format` library is mandatory. The CI will reject non-conforming pull-requests.
