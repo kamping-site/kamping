@@ -19,6 +19,24 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 * Use `.cpp` and `.hpp` as file endings. File names are lowercase and separate word using an underscore. For example `sparse_all2all.hpp`.
 * Name local variables with full names. If a name would get too long, write a comment explaining the full meaning of the variable. Use acronyms very sparingly. Some allowed acronyms: `len` for `length (of)`, `num` for `number (of)`, `mpi`.
 
+# Naming and organizing tests.
+Name your unit test files `test_corresponding_filename_of_code.cpp`. Inside this file, add tests using the following naming scheme: `TEST(Test_ClassName, function_<description>)`, where `<description>` could for example be: `basics`, `invalid_parameters`, `typedefs_and_using` or many others.
+
+The tests for the global helper function `mpi_datatype<T>()` are in `tests/test_mpi_datatype.cpp` and for example includes the folling tests:
+
+```cpp
+TEST(Test_Helpers, mpi_datatype_basics) {
+// ...
+TEST(Test_Helpers, mpi_datatype_typedefs_and_using) {
+// ...
+TEST(Test_Helpers, mpi_datatype_size_t) {
+// ...
+TEST(Test_Helpers, mpi_datatype_enum) {
+// ...
+```
+As `mpi_datatype<T>()` is not part of any class, we use the organizatorial unit `Helpers` as the class name.
+TODO @Lukas Add a section explaining the usage of compilation failure tests.
+
 # Rules for functions
 TODO @Demian @Matthias: Rules for API
 * For internal functions: Return output only values via the `return` statement, even multiple return values.
