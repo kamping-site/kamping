@@ -137,4 +137,3 @@ template <typename T>
 /// @}
 
 } // namespace kamping
-
