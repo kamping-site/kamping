@@ -9,7 +9,7 @@ When it comes to the scope of documentation, we use the following as rule of thu
 
 
 
-## General
+# General
 First, let us take a look at the general guidelines for documentation.
 [Doxygen] uses (normal) C++-comments and special commands within these comments to extract and generate the documentation.
 
@@ -17,7 +17,7 @@ Similar to all documents, the documentation has to be written in English.
 All documentation should consist of full sentences---do *not* use bullet points.
 The documentation is written for others that may not be as familiar with the code as you are, so keep that in mind when you think that a detailed documentation may not be necessary.
 
-### Comment Syntax
+# Comment Syntax
 Since multi-line comments are not allowed in the [coding guidelines] of this project, we use single-line comments to mark the documentation.
 Instead of using plain single-line C++-comments, e.g., `//`, three slashes are required `///` to start a [Doxygen]-comment block.
 Note that at least *two* consecutive lines of such comments have to be present to start a comment block that is recognized by [Doxygen].
@@ -37,7 +37,7 @@ class Foo {
 };
 ```
 
-### Keywords
+# Keywords
 
 The most important keywords that will be used throughout the documentation are `@brief`, `@param`, `@tparam`, and `@return`.
 
@@ -132,7 +132,7 @@ They are automatically concatenated in the documentation.
 With this keyword, we finally have everything we need to obtain the minimal documentation that is required for everything in the KaMPI.ng code base (as shown in the example below).
 We say *minimal* because the documentation can be improved by using special formatting, cross-references, and many more features, which we discuss further [below](#formatting-and-references).
 
-### Example of Minimal Documentation Style
+# Example of Minimal Documentation Style
 
 ```cpp
 /// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
@@ -169,21 +169,38 @@ private:
 };
 ```
 
+# Global Functions
+Doxygen considers all files as private per default.
+Do make the (required) documentation of global functions appear in the generated documentation, all files containing global functions must contain a `\\\ @file` at the top of the file without any label.
+Additionally, a `\\\ @brief Description` of the file's content should be given.
+
+```cpp
+\\\ @file
+\\\ @brief Global function used in this example.
+
+\\\ @brief Example of a global function
+void example() {
+    // Do stuff here
+}
+```
+
+# tl;dr
+
 In the example above, we also have added the first formatting commands with `\c`, which sets the following word in typewriter font.
 Before we take a look at the formatting that should be used in the KaMPI.ng documentation, we give a short overview what parts of the documentation are required.
 In the table below, we give a brief overview which keywords have to be used as part of the documentation in which parts of the code.
 Here *Yes* means that the keyword has to be used, *(Yes)* means that the keyword has to be used if applicable, *Optional* means that the keyword can be used if deemed necessary, and a dash (*-*) means that this keyword is not applicable here.
 
-| Part of the Code/Required        | `@brief` | detailed description | `@tparam` | `@param` | `@return` |
-|----------------------------------|----------|----------------------|-----------|----------|-----------|
-| class                            | Yes      | Yes                  | (Yes)     | -        | -         |
-| public **and** private functions | Yes      | Optional             | (Yes)     | (Yes)    | (Yes)     |
-| global functions                 | Yes      | Optional             | (Yes)     | (Yes)    | (Yes)     |
-| public **and** private members   | Yes      | Optional             | -         | -        | -         |
-| enum                             | Yes      | Optional             | -         | -        | -         |
-| struct                           | Yes      | Yes                  | (Yes)     | -        | -         |
+| Part of the Code/Required        | `@brief` | detailed description | `@tparam` | `@param` | `@return` | `@file` including `@brief` |
+|----------------------------------|----------|----------------------|-----------|----------|-----------|----------------------------|
+| class                            | Yes      | Yes                  | (Yes)     | -        | -         | -                          |
+| public **and** private functions | Yes      | Optional             | (Yes)     | (Yes)    | (Yes)     | -                          |
+| global functions                 | Yes      | Optional             | (Yes)     | (Yes)    | (Yes)     | Yes                        |
+| public **and** private members   | Yes      | Optional             | -         | -        | -         | -                          |
+| enum                             | Yes      | Optional             | -         | -        | -         | -                          |
+| struct                           | Yes      | Yes                  | (Yes)     | -        | -         | -                          |
 
-### Formatting and References
+# Formatting and References
 
 As mentioned above, the documentation can be formatted with different commands.
 Due to better readability of the unprocessed documentation, we use a backslash `\` to enable formatting commands similar to how LaTeX works.
@@ -216,7 +233,7 @@ Due to better readability of the unprocessed documentation, we use a backslash `
   Please read the [following section](#references) on how to format the BibTeX entry.
   Then, it can be cited by using the `\cite <BibTeX key>` command.
 
-### Structuring the Documentation
+# Structuring the Documentation
 [Doxygen] can be used to [group] different parts of the documentation independent of the structure of the source code.
 We want to keep the number of groups small but still use this feature to make different aspects of KaMPI.ng easily discoverable in the documentation.
 Documentation can be added to a group via the `@addtogroup` command, e.g.,
@@ -238,20 +255,20 @@ Here, we can define the group using the following commands.
 @brief Brief description of the group. Can be followed by a detailed description (separated by empty line).
 ```
 
-## Additional (Non-Code) Material
+# Additional (Non-Code) Material
 Since a good documentation does not only document each class and function of the library, we also want to include additional resources, e.g., examples and guides, within out documentation.
 
-### Main Page
+## Main Page
 The main page (starting page) of the documentation is [main.dox].
 Here, general information and links to additional resources should be added.
 Additionally, we can add a brief description of all groups here.
 
-### Guides and Examples
+## Guides and Examples
 
 Guides and examples should be added in form of Markdown files and linked in [main.dox].
 See this file for an example.
 
-### References
+## References
 All references have to be added as BibTeX entry in [literature.bib].
 There are two cases: either the reference is available in [dblp] or not.
 If its available in [dblp], please just copy the *condensed* BibTeX entry to [literature.bib] and add the *DOI* if available.
