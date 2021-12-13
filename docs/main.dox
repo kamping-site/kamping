@@ -7,6 +7,9 @@ namespace kamping {
 
   <img width="920" height="200" src="logo.svg">
 
+  ## Dependencies
+  - Building this documentation requires `Doxygen 1.9.2`.
+
   ## Guidelines
   - \subpage coding_guidelines
   - \subpage documentation_guidelines
