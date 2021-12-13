@@ -22,14 +22,14 @@ Since multi-line comments are not allowed in the [coding guidelines] of this pro
 Instead of using plain single-line C++-comments, e.g., `//`, three slashes are required `///` to start a [Doxygen]-comment block.
 Note that at least *two* consecutive lines of such comments have to be present to start a comment block that is recognized by [Doxygen].
 
-```
+```cpp
 /// I am a multi-line comment block that is used for documentation.
 /// Look at me, I am another line.
 ```
 
 If you want to write an inline/single line comment, after a member of a class or struct, an additional marker `<` is required.
 
-```
+```cpp
 class Foo {
 
   int bar ///< Documentation for bar.
@@ -45,7 +45,7 @@ Whenever you add documentation to a new part of the code, a brief summary is nec
 To this end, the `@brief` keyword is used.
 A brief description is mandatory for all classes, structs, enums, members, and functions.
 
-```
+```cpp
 ///
 /// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
 class RunningExample {
@@ -56,7 +56,7 @@ class RunningExample {
 For members a brief inline documentation is sufficient.
 Note that both public *and* private members and functions (see [example](#example-of-minimal-documentation-style)) have to be documented.
 
-```
+```cpp
 ///
 /// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
 class RunningExample {
@@ -75,7 +75,7 @@ However, sometimes it is necessary to add a more detailed description.
 To this end, no keyword is required, instead start a new paragraph below the `@brief` description.
 The detailed description is mandatory for classes and structs and optional for everything else, where it is only required if the brief description does not fully explain the functionality or if some additional details require an explanation.
 
-```
+```cpp
 /// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
 ///
 /// Since there are a lot of different ways to document code using Doxygen, we use this class to show how to do so in
@@ -96,7 +96,7 @@ We use the keywords `@tparam` and `@param` to do so.
 Note that the `@tparam` keyword can also be used for classes and structs (which is not shown in the example).
 The `@tparam` keyword always has to appear before the `@param` keyword.
 
-```
+```cpp
 /// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
 ///
 /// Since there are a lot of different ways to document code using Doxygen, we use this class to show how to do so in
@@ -134,7 +134,7 @@ We say *minimal* because the documentation can be improved by using special form
 
 ### Example of Minimal Documentation Style
 
-```
+```cpp
 /// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
 ///
 /// Since there are a lot of different ways to document code using Doxygen, we use this class to show how to do so in
@@ -221,7 +221,7 @@ Due to better readability of the unprocessed documentation, we use a backslash `
 We want to keep the number of groups small but still use this feature to make different aspects of KaMPI.ng easily discoverable in the documentation.
 Documentation can be added to a group via the `@addtogroup` command, e.g.,
 
-```
+```cpp
 /// @addtogroup <label>
 /// @{
 
