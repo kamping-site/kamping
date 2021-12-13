@@ -73,7 +73,7 @@ private:
 The brief documentation helps to get a quick understanding of the functionality usage of the documented code.
 However, sometimes it is necessary to add a more detailed description.
 To this end, no keyword is required, instead start a new paragraph below the `@brief` description.
-The detailed description is optional and only required if the brief description does not fully explain the functionality or if some additional details require an explanation.
+The detailed description is mandatory for classes and structs and optional for everything else, where it is only required if the brief description does not fully explain the functionality or if some additional details require an explanation.
 
 ```
 /// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
@@ -124,7 +124,7 @@ private:
 
 When documenting parameters it is also possible to specify whether the parameter is an input or output parameter via `@param[in]` and `@param[out]` (or both `@param[in,out]`).
 Since most parameters are usually input parameters, only `[out]` and `[in,out]` has to be specified explicitly.
-Types of parameters do not have to be specified explicitly, i.e., we write `@param example [...]` instead of `@param Type const& examplet [...]`.
+Types of parameters do not have to be specified explicitly, i.e., we write `@param example [...]` instead of `@param Type const& example [...]`.
 
 We can document the return value of functions using the `@return` keyword.
 If multiple cases of return values are documented, `@return` can be used for each case to improve readability of the documentation in the code.
@@ -159,7 +159,7 @@ private:
 
     /// @brief Checks if an example is currently somewhere and should not be reused.
     /// @param example Example for which it is checked whether it is currently used.
-    /// @return \c true if the exampel is used somewhere.
+    /// @return \c true if the example is used somewhere.
     /// @return \c false otherwise.
     bool is_currently_used(RunningExample const& example) {
         //
@@ -191,7 +191,7 @@ Due to better readability of the unprocessed documentation, we use a backslash `
 
 - **Typwriter Font** `\c`
 
-  We use typewriter font to highlight language specific concepts like boolean types `true` and `false`, character types like `signed char` and `unsigned char`, `nullptr`, or fixed size integers like `std::uint16_t` or `std::int64_t`.
+  We use typewriter font to highlight language specific concepts like boolean types `true` and `false`, character types like `signed char` and `unsigned char`, `nullptr`, or fixed size integers like `uint16_t` or `int64_t`.
   Note that [Doxygen] is unaware of any C++-Standard-Library-Classes so if such classes (e.g., `std::vector` or `std::array`) are used, they should also be formatted using typewriter font.
 - **References to Other Parts of the Code** `\ref` or done automatically
 
