@@ -1,11 +1,12 @@
 namespace kamping {
 
-  @todo fill with some content as soon as there is content
-
-  
   /** @mainpage KaMPI.ng Documentation Overview
 
   <img width="920" height="200" src="logo.svg">
+
+  ## Functionallity
+  - \ref kamping_utility : advanced \ref asserting_cast() and \ref throwing_cast()
+  - \ref kamping_mpi_utility : \ref mpi_datatype() "automatic C++ to MPI type conversion"
 
   ## Dependencies
   - Building this documentation requires `Doxygen 1.9.2`.
@@ -15,5 +16,18 @@ namespace kamping {
   - \subpage documentation_guidelines
 
   */
+
+/**
+  \defgroup kamping_utility Utility
+  \brief Quality of life features that make coding with (and within) KaMPI.ng easier
+
+  - \ref helper.hpp
+
+  \defgroup kamping_mpi_utility MPI Utility
+  \brief Quality of life features for MPI like automatic type conversion (from C++ to MPI)
+
+  - \ref mpi_datatype.hpp
+
+*/
 
 } // namespace kamping

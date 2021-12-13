@@ -1,3 +1,6 @@
+/// @file
+/// @brief Helper functions that make casts safer.
+
 #pragma once
 
 #include <limits>
@@ -5,6 +8,8 @@
 #include <string>
 #include <type_traits>
 
+/// @addtogroup kamping_utility
+/// @{
 ///
 /// @brief Checks if value can be safely casted into type To, that is, it lies in the range [min(To), max(To)].
 ///
@@ -93,3 +98,5 @@ constexpr To throwing_cast(From value) {
         return static_cast<To>(value);
     }
 }
+
+///@}
