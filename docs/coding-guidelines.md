@@ -1,3 +1,5 @@
+Coding Guidelines {#coding_guidelines}
+============
 # General
 We are writing a header-only library.
 Using the provided `.clang-format` library is mandatory. The CI will reject non-conforming pull-requests.
@@ -125,4 +127,3 @@ endif()
 * Commit only corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `hotfix-` branches and merge them to the `main` branch using a Pull Request. Only merge the pull request to the main branch if the CI checks pass.
 * Write *many* unit tests for your code. If there is no unit test for it, it does not exist. Also check for nonsensical inputs and edge cases.
 * Each Pull Request has to be reviewed and accepted by someone who is not the author of the code.
-

@@ -634,3 +634,6 @@ tags
 
 # Softwipe Output files
 softwipe_*
+
+# Doxygen HTML documentation
+docs/html/**

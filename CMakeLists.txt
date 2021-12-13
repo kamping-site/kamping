@@ -14,8 +14,15 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 
   # find Doxygen
   find_package(Doxygen)
-  if(Doxygen_FOUND)
-    #add_subdirectory(docs)
+  if(DOXYGEN_FOUND)
+    if (DOXYGEN_VERSION VERSION_LESS "1.9.2")
+      message(WARNING "Doxygen must be version 1.9.2 or newer. Documentation may not be displayed correctly.")
+    endif()
+    add_custom_target(docs
+      COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/Doxyfile
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      COMMENT "Generating Documentation"
+      VERBATIM)
   endif()
 else()
   message(STATUS "Doxygen not found, not building docs")
