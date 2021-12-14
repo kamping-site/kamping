@@ -1,3 +1,6 @@
+/// @file
+/// @brief Utility that maps C++ types to types that can be understood by MPI.
+
 #include <cassert>
 #include <complex>
 #include <cstdint>
@@ -6,6 +9,9 @@
 #include <mpi.h>
 
 namespace kamping {
+
+/// @addtogroup kamping_mpi_utility
+/// @{
 ///
 /// @brief Creates a custom continuous MPI datatype.
 ///
@@ -127,4 +133,7 @@ template <typename T>
 
     return mpi_type;
 }
+
+/// @}
+
 } // namespace kamping
