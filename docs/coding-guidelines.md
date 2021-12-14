@@ -7,7 +7,7 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 
 # Scoping and Naming
 * We are working in the `kamping` (KaMPI.ng) namespace to avoid polluting the user's namespace with trivial names as `in`, `out`, or `root`.
-* Classes start with an Upper case letter and are using CamelCase.
+* Classes and structs start with an Upper case letter and are using CamelCase.
 * Start variables, attributes, functions, and members with a lower case letter. Use `snake_case`, that is, separate words by an underscore (\_). Write acronyms in lower case letters, e.g., `partitioned_msa` and `generate_mpi_failure`. This also applies to KaMPI.ng -> `kamping`.
 * `struct`s have only trivial methods if at all, everything more complicated has to be a `class`. `struct`s are always forbidden to have private members or functions.
 * `std::pair` leads to hard to read code. Use named pairs (`struct`s) instead.
@@ -15,9 +15,11 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 * Getters and setters are overloaded methods, for example `author.name()` is a getter and `author.name("Turing")` the corresponding setter.
 * For methods which return a boolean, consider prefixing the name with `is`, e.g., `is_valid()` instead of `valid()`
 * Methods which return a number with non-obvious unit should have the unit as a postfix, for example `length_px()` instead of `length()`.
-* Declare methods and attributes in the following order: `public`, `protected`, `private`. Inside these regions: `using` (typedefs), attributes, methods.
+* Declare methods and attributes in the following order: `public`, `protected`, `private`. Inside these regions: `using` (typedefs) and (scoped) `enum`s, `struct`s and `class`es, attributes, methods.
 * Use `.cpp` and `.hpp` as file endings. File names are lowercase and separate word using an underscore. For example `sparse_all2all.hpp`.
 * Name local variables with full names. If a name would get too long, write a comment explaining the full meaning of the variable. Use acronyms very sparingly. Some allowed acronyms: `len` for `length (of)`, `num` for `number (of)`, `mpi`.
+* Use informative names for templated types. "T1" etc. is only allowed for very general code. Template names are in CamelCase (like classes), e.g. `GeneratorFunction`.
+* Types defined with `using` inherit the naming rules of the type they are aliasing. For example `using MessageChecker = MessageContainer<...>::MessageChecker` for a class or struct alias.
 
 # Naming and organizing tests.
 Name your unit test files `test_corresponding_filename_of_code.cpp`. Inside this file, add tests using the following naming scheme: `TEST(Test_ClassName, function_<description>)`, where `<description>` could for example be: `basics`, `invalid_parameters`, `typedefs_and_using` or many others.
@@ -50,17 +52,18 @@ TODO @Demian @Matthias: Rules for API
 
 # Header files and includes
 * Use `#pragma once` instead of include guards, as it is available on all important compilers.
-* Include all used headers, don't rely on transitive inclusions. Maybe use include-what-you-use to check.
+* Include all used headers, don't rely on transitive inclusions. Maybe use `include-what-you-use` to check.
 * The `#include` statements will be automatically sorted by clang-format inside blocks separated by a whitespace. Use the following, whitespace-separated blocks: 1. System header, 2. STL header, 3. External library header, 4. Project header.
 * Do not use `using namespace` in header files as this would then also apply to all files including this header file.
+* Use the `kamping/` prefix when including our own header files.
 
 # General
 * Use east side `const`.
+* Use the more concise `size_t` over `std::size_t`. Do not put `using size_t = std::size_t` into your code.
 * Use `nullptr` instead of `NULL` or `0`.
 * Use `using` instead of `typedef`.
 * Use `sizeof` instead of constants.
 * Use C++ style casts; if possible, use `asserting_cast<destType>(srcValve)` or `throwing_cast<destType>(srcValue)`.
-* Use informative names for templated types. "T1" etc. is only allowed for really, rally general code.
 * Use `//` instead of `/* */` for comments, even multi-line comments.
 * Add Doxygen documentation for each (!) function and member variable, even private ones. Describe what this function does, which parameters it takes and what the return value is. Also describe all assumptions you make. This rule applies to all functions, even trivial ones.
 * Start comments describing TODOs with `// TODO ...`. This allows grepping for TODOs.
@@ -124,6 +127,6 @@ endif()
 * Use "modern" CMake as build system
 * Use Doxygen for documentation. TODO @Florian: Which style?
 * Use `git submodule` to include dependencies. TODO: Explain in the README, how to work with git submodules.
-* Commit only corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `hotfix-` branches and merge them to the `main` branch using a Pull Request. Only merge the pull request to the main branch if the CI checks pass.
+* Commit only corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `fix-` branches and merge them to the `main` branch using a Pull Request.
 * Write *many* unit tests for your code. If there is no unit test for it, it does not exist. Also check for nonsensical inputs and edge cases.
-* Each Pull Request has to be reviewed and accepted by someone who is not the author of the code.
+* Each Pull Request has to be reviewed by at least one person who is not the author of the code. Everyone involved in a discussion, including the pull request's author, can close a discussion once its matter is resolved. Avoid writing "Done" etc. when resolving a discussion, as this generates a lot of low-entropy mails; simply close the discussion if the matter is resolved completely. If unsure, leave the discussion open and ask the reviewer if the change is sufficient. Resolving a discussion might for example include moving the discussion to a new issue or implementing the requested changes. Once all discussions are closed, all CI checks are successful, and there are no more rejecting reviews, it is the pull request's author's responsibility to merge the changes into the main branch. Use squash and merge to merge a pull request back into the main branch.
