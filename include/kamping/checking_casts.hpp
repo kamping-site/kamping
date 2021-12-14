@@ -8,9 +8,11 @@
 #include <string>
 #include <type_traits>
 
+namespace kamping {
+
 /// @addtogroup kamping_utility
 /// @{
-///
+
 /// @brief Checks if value can be safely casted into type To, that is, it lies in the range [min(To), max(To)].
 ///
 /// @tparam To Type to be casted to.
@@ -100,3 +102,5 @@ constexpr To throwing_cast(From value) {
 }
 
 ///@}
+
+} // namespace kamping
