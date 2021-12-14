@@ -21,7 +21,7 @@ namespace kamping {
   \defgroup kamping_utility Utility
   \brief Quality of life features that make coding with (and within) KaMPI.ng easier
 
-  - \ref helper.hpp
+  - \ref checking_casts.hpp
 
   \defgroup kamping_mpi_utility MPI Utility
   \brief Quality of life features for MPI like automatic type conversion (from C++ to MPI)
