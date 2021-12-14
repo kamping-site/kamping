@@ -171,7 +171,7 @@ private:
 
 # Global Functions
 Doxygen considers all files as private per default.
-Do make the (required) documentation of global functions appear in the generated documentation, all files containing global functions must contain a `\\\ @file` at the top of the file without any label.
+To make the (required) documentation of global functions appear in the generated documentation, all files containing global functions must contain a `\\\ @file` at the top of the file without any label.
 Additionally, a `\\\ @brief Description` of the file's content should be given.
 
 ```cpp
