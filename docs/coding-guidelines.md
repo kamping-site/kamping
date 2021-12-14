@@ -7,7 +7,7 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 
 # Scoping and Naming
 * We are working in the `kamping` (KaMPI.ng) namespace to avoid polluting the user's namespace with trivial names as `in`, `out`, or `root`.
-* Classes start with an Upper case letter and are using CamelCase. Structs should use Snake case and end with a `_t`; for example `message_t`. This way, their naming is closer to those of the basic C++ types like for example `uint64_t`.
+* Classes and structs start with an Upper case letter and are using CamelCase.
 * Start variables, attributes, functions, and members with a lower case letter. Use `snake_case`, that is, separate words by an underscore (\_). Write acronyms in lower case letters, e.g., `partitioned_msa` and `generate_mpi_failure`. This also applies to KaMPI.ng -> `kamping`.
 * `struct`s have only trivial methods if at all, everything more complicated has to be a `class`. `struct`s are always forbidden to have private members or functions.
 * `std::pair` leads to hard to read code. Use named pairs (`struct`s) instead.
@@ -19,7 +19,7 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 * Use `.cpp` and `.hpp` as file endings. File names are lowercase and separate word using an underscore. For example `sparse_all2all.hpp`.
 * Name local variables with full names. If a name would get too long, write a comment explaining the full meaning of the variable. Use acronyms very sparingly. Some allowed acronyms: `len` for `length (of)`, `num` for `number (of)`, `mpi`.
 * Use informative names for templated types. "T1" etc. is only allowed for very general code. Template names are in CamelCase (like classes), e.g. `GeneratorFunction`.
-* Types defined with `using` inherit the naming rules of the type they are aliasing. For example `using MessageChecker = MessageContainer<...>::MessageChecker` or `using message_t = MessageContainer<...>::long_message_t`.
+* Types defined with `using` inherit the naming rules of the type they are aliasing. For example `using MessageChecker = MessageContainer<...>::MessageChecker` for a class or struct alias.
 
 # Naming and organizing tests.
 Name your unit test files `test_corresponding_filename_of_code.cpp`. Inside this file, add tests using the following naming scheme: `TEST(Test_ClassName, function_<description>)`, where `<description>` could for example be: `basics`, `invalid_parameters`, `typedefs_and_using` or many others.
