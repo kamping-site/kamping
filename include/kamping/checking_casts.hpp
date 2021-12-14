@@ -13,7 +13,8 @@ namespace kamping {
 /// @addtogroup kamping_utility
 /// @{
 
-/// @brief Checks if value can be safely casted into type To, that is, it lies in the range [min(To), max(To)].
+/// @brief Checks if an integer value can be safely casted into an integer type To, that is, it lies in the range
+/// [min(To), max(To)].
 ///
 /// This function works only for integer types which have at most std::numeric_limits<intmax_t>::digits (To and From are
 /// signed) or std::numeric_limits<intmax_t>::digits (else) bits. This function includes checks for these two
@@ -71,7 +72,7 @@ constexpr bool in_range(From value) noexcept {
 }
 
 ///
-/// @brief Casts a value to the type To. If the value is outside To's range, throws an assertion.
+/// @brief Casts an integer value to the integer type To. If the value is outside To's range, throws an assertion.
 ///
 /// Alternatively, exceptions can be used instead of assertions by using \ref throwing_cast().
 ///
@@ -83,7 +84,7 @@ constexpr bool in_range(From value) noexcept {
 /// @tparam To Type to cast to.
 /// @tparam From Type to cast from, will be auto inferred.
 /// @param value Value you want to cast.
-/// @return constexpr To The casted value.
+/// @return Casted value.
 ///
 template <class To, class From>
 constexpr To asserting_cast(From value) noexcept {
@@ -92,7 +93,7 @@ constexpr To asserting_cast(From value) noexcept {
 }
 
 ///
-/// @brief Casts a value to the type To. If the value is outside To's range, throws an exception.
+/// @brief Casts an integer value to the integer type To. If the value is outside To's range, throws an exception.
 ///
 /// Alternatively, assertions can be used instead of exceptions by using \ref asserting_cast().
 ///
@@ -103,7 +104,7 @@ constexpr To asserting_cast(From value) noexcept {
 /// @tparam To Type to cast to.
 /// @tparam From Type to cast from, will be auto inferred.
 /// @param value Value you want to cast.
-/// @return constexpr To Casted value.
+/// @return Casted value.
 ///
 template <class To, class From>
 constexpr To throwing_cast(From value) {
