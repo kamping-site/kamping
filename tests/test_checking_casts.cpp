@@ -8,9 +8,10 @@
 #include <gtest/gtest-death-test.h>
 #include <gtest/gtest.h>
 
-#include "kamping/helpers.hpp"
+#include "kamping/checking_casts.hpp"
 
 using namespace ::testing;
+using namespace ::kamping;
 
 TEST(HelpersTest, in_range) {
     uint8_t u8val = 200;
