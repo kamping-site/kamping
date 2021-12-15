@@ -13,6 +13,12 @@ namespace kamping {
 
     /// @brief Constructor where an MPI communicator has to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
+    explicit Communicator(MPI_Comm comm) : _rank(get_mpi_rank(comm)),
+                                           _size(get_mpi_size(comm)),
+                                           _comm(comm) { }
+
+    /// @brief Rank of the current MPI process in the communicator.
+    /// @return Rank of the current MPI process in the communicator.
     int rank() const {
       return _rank;
     }
@@ -30,9 +36,26 @@ namespace kamping {
     }
 
   private:
-    int _rank; ///< Rank of the MPI process in this communicator.
-    int _size; ///< Size of this communicator.
-    MPI_Comm _comm; ///< Corresponding MPI communicator.
+
+    /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
+    /// @return Rank of the current MPI process in the communicator.
+    int get_mpi_rank(MPI_Comm comm) const {
+      int rank;
+      MPI_Comm_rank(comm, &rank);
+      return rank;
+    }
+
+    /// @brief Compute the size of the communicator using \c MPI_Comm_size.
+    /// @return Size of the communicator.
+    int get_mpi_size(MPI_Comm comm) const {
+      int size;
+      MPI_Comm_size(comm, &size);
+      return size;
+    }
+
+    int const _rank; ///< Rank of the MPI process in this communicator.
+    int const _size; ///< Size of this communicator.
+    MPI_Comm const _comm; ///< Corresponding MPI communicator.
   }; // class communicator
 
 } // namespace kamping
