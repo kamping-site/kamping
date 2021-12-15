@@ -38,3 +38,23 @@ TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
   EXPECT_EQ(comm.rank(), self_rank);
   EXPECT_EQ(comm.size(), self_size);
 }
+
+TEST_F(CommunicatorTest, RankAdvanceBoundCheck) {
+  Communicator comm;
+
+  for (int i = -(2 * size); i < (2 * size); ++i) {
+    if (i + rank < 0 || i + rank >= size) {
+      EXPECT_DEATH(comm.rank_advance_bound_checked(i), ".*");
+    } else {
+      EXPECT_EQ(rank + i, comm.rank_advance_bound_checked(i));
+    }
+  }
+}
+
+TEST_F(CommunicatorTest, RankAdvanceCyclic) {
+  Communicator comm;
+
+  for (int i = -(2 * size); i < (2 * size); ++i) {
+    EXPECT_EQ((rank + i) % size, comm.rank_advance_cyclic(i));
+  }
+}
