@@ -11,7 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "kamping/wrapper.hpp"
+#include "kamping/buffers.hpp"
+#include "kamping/template_magic_helpers.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -23,7 +24,7 @@
 #include <thread>
 #include <vector>
 
-
+/*
 void printResult(int rank, std::vector<int>& recvData, std::string name) {
     std::stringstream ss;
     ss << rank << ": " << name << ": [";
@@ -83,6 +84,118 @@ int main() {
     printResult(ctx.rank(), recvData2, "data");
     printResult(ctx.rank(), recvCounts2, static_cast<std::size_t>(ctx.rank() == 1 ? ctx.size() : 0), "counts");
     printResult(ctx.rank(), recvDispls2, "displs");
+
+    MPI_Finalize();
+}
+*/
+
+int main() {
+    MPI_Init(nullptr, nullptr);
+    {
+        std::vector<int> vec{1, 2, 3};
+        auto             send_counts = kamping::send_counts(vec);
+        const auto [ptr, size]       = send_counts.get();
+        for (std::size_t i = 0; i < size; ++i) {
+            std::cout << ptr[i] << std::endl;
+        }
+    }
+
+    {
+        int  arr[3]            = {4, 5, 6};
+        auto send_buf          = kamping::send_buf(arr, 3);
+        const auto [ptr, size] = send_buf.get();
+        for (std::size_t i = 0; i < size; ++i) {
+            std::cout << ptr[i] << std::endl;
+        }
+    }
+
+    const size_t n = 3;
+    {
+        std::cout << "DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER" << std::endl;
+        std::vector<int> vec{1, 2, 3};
+        auto             send_displs = kamping::send_displs(vec);
+        const auto       ptr         = send_displs.get_ptr(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            std::cout << ptr[i] << std::endl;
+        }
+        std::cout << "is consumable: " << decltype(send_displs)::is_consumable << std::endl;
+    }
+
+    {
+        std::cout << "DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER" << std::endl;
+        std::vector<int> vec{1, 2, 3};
+        auto             send_displs = kamping::send_displs_input(vec);
+        const auto       ptr         = send_displs.get_ptr(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            std::cout << ptr[i] << std::endl;
+        }
+        std::cout << "is consumable: " << decltype(send_displs)::is_consumable << std::endl;
+    }
+
+    {
+        std::cout << "DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER" << std::endl;
+        std::vector<int> vec{1, 2, 3};
+        std::unique_ptr<int[]> data(new int[n]());
+        auto                   send_displs = kamping::send_displs_input(data);
+        const auto             ptr         = send_displs.get_ptr(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            std::cout << ptr[i] << std::endl;
+        }
+        std::cout << "is consumable: " << decltype(send_displs)::is_consumable << std::endl;
+    }
+
+    {
+        std::cout << "DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER" << std::endl;
+        std::unique_ptr<int[]> data(new int[n]());
+        auto                   send_displs = kamping::send_displs(data);
+        const auto             ptr         = send_displs.get_ptr(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            std::cout << ptr[i] << std::endl;
+        }
+        std::cout << "is consumable: " << decltype(send_displs)::is_consumable << std::endl;
+    }
+
+    {
+        std::cout << "DEFINE_LIB_ALLOC_CONTAINER_BASED_BUFFER" << std::endl;
+        auto             send_displs = kamping::send_displs<std::vector<int>>(kamping::NewContainer{});
+        const auto       ptr         = send_displs.get_ptr(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            std::cout << ptr[i] << std::endl;
+        }
+        std::cout << "is consumable: " << decltype(send_displs)::is_consumable << std::endl;
+    }
+
+    {
+        std::cout << "DEFINE_LIB_ALLOC_UNIQUE_PTR_BASED_BUFFER" << std::endl;
+        auto             send_displs = kamping::send_displs<int>(kamping::NewPtr{});
+        const auto       ptr         = send_displs.get_ptr(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            std::cout << ptr[i] << std::endl;
+        }
+        std::cout << "is consumable: " << decltype(send_displs)::is_consumable << std::endl;
+    }
+
+    {
+        std::cout << "DEFINE_MOVED_CONTAINER_BASED_BUFFER" << std::endl;
+        std::vector<int> vec{1, 2, 3};
+        auto             send_displs = kamping::send_displs(std::move(vec));
+        const auto       ptr         = send_displs.get_ptr(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            std::cout << ptr[i] << std::endl;
+        }
+        std::cout << "is consumable: " << decltype(send_displs)::is_consumable << std::endl;
+    }
+
+    {
+        std::cout << "DEFINE_MOVED_CONTAINER_BASED_BUFFER" << std::endl;
+        std::vector<int> vec{1, 2, 3};
+        auto             send_displs = kamping::send_displs_input(std::move(vec));
+        const auto       ptr         = send_displs.get_ptr(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            std::cout << ptr[i] << std::endl;
+        }
+        std::cout << "is consumable: " << decltype(send_displs)::is_consumable << std::endl;
+    }
 
     MPI_Finalize();
 }
