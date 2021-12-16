@@ -35,10 +35,10 @@ void printResult(int rank, std::unique_ptr<int[]>& recvData, size_t size, std::s
 using namespace kamping;
 
 int main() {
-    std::vector<int> a;
-    std::vector<int> b;
+    std::vector<std::pair<int, int>> a{{1, 2}, {2, 3}};
+    std::vector<std::pair<int, int>> b{{3, 3}, {4, 5}};
 
-    ASSERT(false || true && false, "", assert::lightweight);
+    ASSERT(a == b, "", assert::lightweight);
     std::exit(0);
 
     MPI_Init(nullptr, nullptr);

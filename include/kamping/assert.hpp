@@ -6,23 +6,75 @@
 #include <ostream>
 #include <string_view>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 #define KAMPING_ASSERTION_LEVEL 1
 #define KAMPING_EXCEPTION_MODE  1
 
-namespace kamping {
-namespace assert {
+#define SOURCE_LOCATION                         \
+    kamping::assert::internal::SourceLocation { \
+        __FILE__, __LINE__, __func__            \
+    }
+
+#define ASSERT(expression, message, level)                                                                           \
+    do {                                                                                                             \
+        if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
+            if (!kamping::assert::internal::evaluate_assertion(                                                      \
+                    kamping::assert::internal::finalize_expr(kamping::assert::internal::Decomposer{} <= expression), \
+                    SOURCE_LOCATION, #expression)) {                                                                 \
+                kamping::assert::Logger(std::cerr) << message << "\n";                                               \
+                std::abort();                                                                                        \
+            }                                                                                                        \
+        }                                                                                                            \
+    } while (false)
+
+namespace kamping::assert {
 namespace internal {
-template <typename, typename = void>
+template <typename, typename, typename = void>
 struct IsPrintableType : std::false_type {};
 
-template <typename ValueT>
-struct IsPrintableType<ValueT, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<ValueT>())>>
+template <typename StreamT, typename ValueT>
+struct IsPrintableType<StreamT, ValueT, std::void_t<decltype(std::declval<StreamT&>() << std::declval<ValueT>())>>
     : std::true_type {};
+} // namespace internal
 
+class Logger {
+public:
+    explicit Logger(std::ostream& out) : _out(out) {}
+
+    template <typename T, std::enable_if_t<internal::IsPrintableType<std::ostream, T>::value, int> = 0>
+    Logger& operator<<(T&& value) {
+        _out << std::forward<T>(value);
+        return *this;
+    }
+
+private:
+    std::ostream& _out;
+};
+
+template <typename ValueT, typename AllocatorT>
+Logger& operator<<(Logger& logger, std::vector<ValueT, AllocatorT> const& container) {
+    if (container.empty()) {
+        return logger << "<>";
+    }
+
+    logger << "<";
+    for (const auto& element: container) {
+        logger << element << ", ";
+    }
+    return logger << "\b\b>";
+}
+
+template <typename Key, typename Value>
+Logger& operator<<(Logger& logger, std::pair<Key, Value> const& pair) {
+    return logger << "<" << pair.first << ", " << pair.second << ">";
+}
+
+namespace internal {
 template <typename T>
-void stringify_value(std::ostream& out, const T& value) {
-    if constexpr (IsPrintableType<T>::value) {
+void stringify_value(Logger& out, const T& value) {
+    if constexpr (IsPrintableType<Logger, T>::value) {
         out << value;
     } else {
         out << "<?>";
@@ -35,9 +87,9 @@ public:
 
     [[nodiscard]] virtual bool result() const = 0;
 
-    virtual void stringify(std::ostream& out) const = 0;
+    virtual void stringify(Logger& out) const = 0;
 
-    friend std::ostream& operator<<(std::ostream& out, Expr const& expr) {
+    friend Logger& operator<<(Logger& out, Expr const& expr) {
         expr.stringify(out);
         return out;
     }
@@ -56,7 +108,7 @@ public:
         return _result;
     }
 
-    void stringify(std::ostream& out) const final {
+    void stringify(Logger& out) const final {
         stringify_value(out, _lhs);
         out << " " << _op << " ";
         stringify_value(out, _rhs);
@@ -90,7 +142,7 @@ class UnaryExpr : public Expr {
         return static_cast<bool>(_lhs);
     }
 
-    void stringify(std::ostream& out) const final {
+    void stringify(Logger& out) const final {
         stringify_value(out, _lhs);
     }
 
@@ -161,11 +213,11 @@ Expr&& finalize_expr(ExprT&& expr) {
 
 bool evaluate_assertion(Expr&& expr, const SourceLocation& where, char const* expr_str) {
     if (!expr.result()) {
-        std::cerr << where.file << ": In function '" << where.function << "':\n"
-                  << where.file << ":" << where.row << ": Lordy, lordy, look who's faulty:\n"
-                  << "\t" << expr_str << "\n"
-                  << "with expansion:\n"
-                  << "\t" << expr << "\n";
+        Logger(std::cerr) << where.file << ": In function '" << where.function << "':\n"
+                          << where.file << ":" << where.row << ": Lordy, lordy, look who's faulty:\n"
+                          << "\t" << expr_str << "\n"
+                          << "with expansion:\n"
+                          << "\t" << expr << "\n";
     }
     return expr.result();
 }
@@ -175,21 +227,4 @@ bool evaluate_assertion(Expr&& expr, const SourceLocation& where, char const* ex
 constexpr int lightweight = 1;
 constexpr int normal      = 2;
 constexpr int heavy       = 3;
-} // namespace assert
-
-#define SOURCE_LOCATION                         \
-    kamping::assert::internal::SourceLocation { \
-        __FILE__, __LINE__, __func__            \
-    }
-
-#define ASSERT(expression, message, level)                                                                           \
-    do {                                                                                                             \
-        if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
-            if (!kamping::assert::internal::evaluate_assertion(                                                      \
-                    kamping::assert::internal::finalize_expr(kamping::assert::internal::Decomposer{} <= expression), \
-                    SOURCE_LOCATION, #expression)) {                                                                 \
-                std::abort();                                                                                        \
-            }                                                                                                        \
-        }                                                                                                            \
-    } while (false)
-} // namespace kamping
+} // namespace kamping::assert
