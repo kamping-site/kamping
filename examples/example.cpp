@@ -1,4 +1,5 @@
 #include "kamping/wrapper.hpp"
+#include "kamping/assert.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -31,7 +32,15 @@ void printResult(int rank, std::unique_ptr<int[]>& recvData, size_t size, std::s
     std::cout << ss.str() << std::flush;
 }
 
+using namespace kamping;
+
 int main() {
+    std::vector<int> a;
+    std::vector<int> b;
+
+    ASSERT(a == b, "", assert::lightweight);
+    std::exit(0);
+
     MPI_Init(nullptr, nullptr);
     MPIWrapper::MPIContext ctx{MPI_COMM_WORLD};
 

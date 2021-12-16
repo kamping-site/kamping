@@ -37,6 +37,9 @@ endif()
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 
+option(KAMPING_USE_EXCEPTIONS "If set, we use exceptions instead of assertions for recoverable errors." ON)
+option(KAMPING_ASSERTION_LEVEL "Specifies the minimum level of assertions that are enabled. If this option is not set explicitly, it is deduced from the build type." 0)
+
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
 find_package(MPI REQUIRED)
 
