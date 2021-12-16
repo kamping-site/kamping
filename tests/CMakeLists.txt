@@ -31,7 +31,7 @@ target_link_libraries(test_mpi_datatype PRIVATE kamping)
 kamping_add_mpi_test(test_mpi_datatype CORES 1)
 
 kamping_add_test_executable(test_communicator FILES test_communicator.cpp)
-kamping_add_mpi_test(test_communicator CORES 2 4 8 16)
+kamping_add_mpi_test(test_communicator CORES 1 2 4 8 16)
 target_link_libraries(test_communicator PRIVATE kamping)
 
 kamping_add_compilation_failure_test(
