@@ -39,6 +39,17 @@ TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
   EXPECT_EQ(comm.size(), self_size);
 }
 
+TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
+  for (int i = -(2 * size); i < (2 * size); ++i) {
+    if (i < 0 || i >= size) {
+      EXPECT_DEATH(Communicator comm(MPI_COMM_WORLD, i), ".*");
+    } else {
+      Communicator comm(MPI_COMM_WORLD, i);
+      ASSERT_EQ(comm.root(), i);
+    }
+  }
+}
+
 TEST_F(CommunicatorTest, RankAdvanceBoundCheck) {
   Communicator comm;
 
@@ -56,5 +67,16 @@ TEST_F(CommunicatorTest, RankAdvanceCyclic) {
 
   for (int i = -(2 * size); i < (2 * size); ++i) {
     EXPECT_EQ((rank + i) % size, comm.rank_advance_cyclic(i));
+  }
+}
+
+TEST_F(CommunicatorTest, ValidRank) {
+  Communicator comm;
+
+  int mpi_size;
+  MPI_Comm_size(comm.mpi_communicator(), &mpi_size);
+  
+  for (int i = -(2 * mpi_size); i < (2 * mpi_size); ++i) {
+    EXPECT_EQ((i >= 0 && i < mpi_size), comm.is_valid_rank(i));
   }
 }

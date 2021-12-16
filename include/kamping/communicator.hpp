@@ -12,7 +12,14 @@ public:
 
     /// @brief Constructor where an MPI communicator has to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
-    explicit Communicator(MPI_Comm comm) : _rank(get_mpi_rank(comm)), _size(get_mpi_size(comm)), _comm(comm) {}
+    explicit Communicator(MPI_Comm comm) : Communicator(comm, 0) {}
+
+    /// @brief Constructor where an MPI communicator and the default root have to be specified.
+    /// @param comm MPI communicator that is wrapped by this \c Communicator.
+    /// @param root Default root that is used by MPI operations requiring a root.
+    explicit Communicator(MPI_Comm comm, int root) : _rank(get_mpi_rank(comm)), _size(get_mpi_size(comm)), _comm(comm) {
+        this->root(root);
+    }
 
     /// @brief Rank of the current MPI process in the communicator.
     /// @return Rank of the current MPI process in the communicator.
@@ -32,6 +39,22 @@ public:
         return _comm;
     }
 
+    /// @brief Set a new root for MPI operations that require a root.
+    /// @param new_root The new default root.
+    void root(int const new_root) {
+        /// @todo Assert or Throw if not all MPI processes in this communicator have the same root.
+      if (!is_valid_rank(new_root)) {
+        std::abort();
+      }
+      _root = new_root;
+    }
+
+    /// @brief Default root for MPI operations that require a root.
+    /// @return Default root for MPI operations that require a root.
+    int root() const {
+        return _root;
+    }
+
     /// @brief Increases the current rank by \c distance and checks if the resulting rank is valid in this communicator.
     ///
     /// The resulting rank is valid, iff it is at least zero and less than this communicator's size. The \c distance can
@@ -40,7 +63,7 @@ public:
     /// @param distance Amount current rank is decreased or increased by.
     /// @return Rank if rank is in [0, size of communicator) and ASSERT/EXCEPTION? otherwise.
     int rank_advance_bound_checked(int const distance) const {
-        if (int result = _rank + distance; result < _size && result >= 0) {
+      if (int result = _rank + distance; is_valid_rank(result)) {
             return result;
         }
         /// @todo Make use of our assert/exception functionality.
@@ -56,6 +79,12 @@ public:
     int rank_advance_cyclic(int const distance) const {
         return (_rank + distance) % _size;
     }
+
+  /// @brief Checks if a rank is a valid rank for this communicator, i.e., if the rank is in [0, size).
+  /// @return \c true if rank in [0,size) and \c false otherwise.
+  bool is_valid_rank(int const rank) const {
+    return rank >= 0 && rank < _size;
+  }
 
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
@@ -77,6 +106,8 @@ private:
     int const      _rank; ///< Rank of the MPI process in this communicator.
     int const      _size; ///< Size of this communicator.
     MPI_Comm const _comm; ///< Corresponding MPI communicator.
-};                        // class communicator
+
+    int _root; ///< Default root for MPI operations that require a root.
+};             // class communicator
 
 } // namespace kamping
