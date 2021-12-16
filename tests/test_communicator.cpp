@@ -23,6 +23,7 @@ TEST_F(CommunicatorTest, EmptyConstructor) {
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_WORLD);
     EXPECT_EQ(comm.rank(), rank);
     EXPECT_EQ(comm.size(), size);
+    EXPECT_EQ(comm.root(), 0);
 }
 
 TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
@@ -37,6 +38,7 @@ TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_SELF);
     EXPECT_EQ(comm.rank(), self_rank);
     EXPECT_EQ(comm.size(), self_size);
+    EXPECT_EQ(comm.rank(), 0);
 }
 
 TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
