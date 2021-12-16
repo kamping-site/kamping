@@ -55,7 +55,7 @@ TEST_F(CommunicatorTest, RankAdvanceBoundCheck) {
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i + rank < 0 || i + rank >= size) {
-            EXPECT_DEATH(comm.rank_advance_bound_checked(i), ".*");
+            EXPECT_DEATH(comm.compute_rank_bound_checked(i), ".*");
         } else {
             EXPECT_EQ(rank + i, comm.compute_rank_bound_checked(i));
         }
