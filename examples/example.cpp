@@ -38,7 +38,7 @@ int main() {
     std::vector<int> a;
     std::vector<int> b;
 
-    ASSERT(a == b, "", assert::lightweight);
+    ASSERT(1 + 2 == 2, "", assert::lightweight);
     std::exit(0);
 
     MPI_Init(nullptr, nullptr);

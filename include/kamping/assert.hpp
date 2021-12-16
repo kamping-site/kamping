@@ -33,8 +33,9 @@ class Expr {
 public:
     virtual ~Expr() = default;
 
-    [[nodiscard]] virtual bool result() const                     = 0;
-    virtual void               stringify(std::ostream& out) const = 0;
+    [[nodiscard]] virtual bool result() const = 0;
+
+    virtual void stringify(std::ostream& out) const = 0;
 
     friend std::ostream& operator<<(std::ostream& out, Expr const& expr) {
         expr.stringify(out);
@@ -68,9 +69,9 @@ private:
     RhsT const&      _rhs;
 };
 
-template<typename LhsT>
+template <typename LhsT>
 class UnaryExpr : public Expr {
-    explicit UnaryExpr(const LhsT &lhs) : _lhs(lhs) {}
+    explicit UnaryExpr(const LhsT& lhs) : _lhs(lhs) {}
 
     [[nodiscard]] bool result() const final {
         return static_cast<bool>(_lhs);
@@ -81,7 +82,7 @@ class UnaryExpr : public Expr {
     }
 
 private:
-    const LhsT &_lhs;
+    const LhsT& _lhs;
 };
 
 template <typename LhsT>
@@ -127,11 +128,19 @@ constexpr bool assertion_enabled(int level) {
     return level <= KAMPING_ASSERTION_LEVEL;
 }
 
-template<typename ExprT>
-bool evaluate_assertion(ExprT&& expr, const SourceLocation& where, char const* expr_str) {
-    const bool result = std::conditional_t<std::is_convertible_v<ExprT, Expr>,
+template <typename ExprT>
+Expr&& finalize_expr(ExprT&& expr) {
+    if constexpr (std::is_base_of_v<Expr, std::remove_reference_t<std::remove_const_t<ExprT>>>) {
+        return std::forward<ExprT>(expr);
+    } else {
+        return expr.make_unary();
+    }
+}
+
+bool evaluate_assertion(Expr&& expr, const SourceLocation& where, char const* expr_str) {
     if (!expr.result()) {
-        std::cerr << "Lordy, lordy, look who's faulty:\n"
+        std::cerr << where.file << ": In function '" << where.function << "':\n"
+                  << where.file << ":" << where.row << ": Lordy, lordy, look who's faulty:\n"
                   << "\t" << expr_str << "\n"
                   << "with expansion:\n"
                   << "\t" << expr << "\n";
@@ -151,13 +160,14 @@ constexpr int heavy       = 3;
         __FILE__, __LINE__, __func__            \
     }
 
-#define ASSERT(expression, message, level)                                                                  \
-    do {                                                                                                    \
-        if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                \
-            if (!kamping::assert::internal::evaluate_assertion(                                             \
-                    kamping::assert::internal::Decomposer{} <= expression, SOURCE_LOCATION, #expression)) { \
-                std::abort();                                                                               \
-            }                                                                                               \
-        }                                                                                                   \
+#define ASSERT(expression, message, level)                                                                           \
+    do {                                                                                                             \
+        if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
+            if (!kamping::assert::internal::evaluate_assertion(                                                      \
+                    kamping::assert::internal::finalize_expr(kamping::assert::internal::Decomposer{} <= expression), \
+                    SOURCE_LOCATION, #expression)) {                                                                 \
+                std::abort();                                                                                        \
+            }                                                                                                        \
+        }                                                                                                            \
     } while (false)
 } // namespace kamping
