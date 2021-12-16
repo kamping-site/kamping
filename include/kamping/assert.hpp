@@ -62,6 +62,19 @@ public:
         stringify_value(out, _rhs);
     }
 
+#define KAMINPAR_ASSERT_OP(op)                                                                                    \
+    template <typename RhsPrimeT>                                                                                 \
+    friend BinaryExpr<BinaryExpr<LhsT, RhsT>, RhsPrimeT> operator op(                                             \
+        BinaryExpr<LhsT, RhsT>&& lhs, RhsPrimeT const& rhs_prime) {                                               \
+        using namespace std::string_view_literals;                                                                \
+        return BinaryExpr<BinaryExpr<LhsT, RhsT>, RhsPrimeT>(lhs.result() op rhs_prime, lhs, #op##sv, rhs_prime); \
+    }
+
+    KAMINPAR_ASSERT_OP(&&)
+    KAMINPAR_ASSERT_OP(||)
+
+#undef KAMINPAR_ASSERT_OP
+
 private:
     bool             _result;
     LhsT const&      _lhs;
@@ -90,22 +103,31 @@ class LhsExpr {
 public:
     explicit LhsExpr(LhsT const& lhs) : _lhs(lhs) {}
 
-    template <typename RhsT>
-    friend BinaryExpr<LhsT, RhsT> operator==(LhsExpr&& lhs, RhsT const& rhs) {
-        using namespace std::string_view_literals;
-        return {lhs._lhs == rhs, lhs._lhs, "=="sv, rhs};
-    }
-
-    template <typename RhsT>
-    friend BinaryExpr<LhsT, RhsT> operator!=(LhsExpr&& lhs, RhsT const& rhs) {
-        using namespace std::string_view_literals;
-        return {lhs._lhs != rhs, lhs._lhs, "!="sv, rhs};
-    }
-
     UnaryExpr<LhsT> make_unary() {
         static_assert(std::is_convertible_v<LhsT, bool>, "expression must be convertible to bool");
         return {_lhs};
     }
+
+#define KAMINPAR_ASSERT_OP(op)                                                  \
+    template <typename RhsT>                                                    \
+    friend BinaryExpr<LhsT, RhsT> operator op(LhsExpr&& lhs, RhsT const& rhs) { \
+        using namespace std::string_view_literals;                              \
+        return {lhs._lhs op rhs, lhs._lhs, #op##sv, rhs};                       \
+    }
+
+    KAMINPAR_ASSERT_OP(==)
+    KAMINPAR_ASSERT_OP(!=)
+    KAMINPAR_ASSERT_OP(&&)
+    KAMINPAR_ASSERT_OP(||)
+    KAMINPAR_ASSERT_OP(<)
+    KAMINPAR_ASSERT_OP(<=)
+    KAMINPAR_ASSERT_OP(>)
+    KAMINPAR_ASSERT_OP(>=)
+    KAMINPAR_ASSERT_OP(&)
+    KAMINPAR_ASSERT_OP(|)
+    KAMINPAR_ASSERT_OP(^)
+
+#undef KAMINPAR_ASSERT_OP
 
 private:
     const LhsT& _lhs;
