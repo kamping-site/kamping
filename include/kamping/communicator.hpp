@@ -43,10 +43,10 @@ public:
     /// @param new_root The new default root.
     void root(int const new_root) {
         /// @todo Assert or Throw if not all MPI processes in this communicator have the same root.
-      if (!is_valid_rank(new_root)) {
-        std::abort();
-      }
-      _root = new_root;
+        if (!is_valid_rank(new_root)) {
+            std::abort();
+        }
+        _root = new_root;
     }
 
     /// @brief Default root for MPI operations that require a root.
@@ -55,36 +55,38 @@ public:
         return _root;
     }
 
-    /// @brief Increases the current rank by \c distance and checks if the resulting rank is valid in this communicator.
+    /// @brief Computes a rank that is \c distance ranks away from this MPI thread's current rank and checks if this is
+    /// valid rank in this communicator.
     ///
     /// The resulting rank is valid, iff it is at least zero and less than this communicator's size. The \c distance can
     /// be negative. Unlike \ref rank_advance_cyclic(), this does not guarantee a valid rank but can indicate if the
     /// resulting rank is not valid.
     /// @param distance Amount current rank is decreased or increased by.
     /// @return Rank if rank is in [0, size of communicator) and ASSERT/EXCEPTION? otherwise.
-    int rank_advance_bound_checked(int const distance) const {
-      if (int result = _rank + distance; is_valid_rank(result)) {
+    int compute_rank_bound_checked(int const distance) const {
+        if (int result = _rank + distance; is_valid_rank(result)) {
             return result;
         }
         /// @todo Make use of our assert/exception functionality.
         std::abort();
     }
 
-    /// @brief Cyclically compute rank with distance \c distance.
+    /// @brief Computes a rank that is some ranks apart from this MPI thread's rank modulo the communicator's size.
     ///
-    /// If there are not \c distance more (or less) ranks, the computation considers the ranks cyclically. Note that
-    /// unlike \ref rank_advance_bound_checked() this always results in a valid rank.
-    /// @param distance Amount current rank is decreased or increased by.
-    /// @return The cyclic rank \c distance ranks apart from the current rank.
-    int rank_advance_cyclic(int const distance) const {
+    /// When we need to compute a rank that is greater (or smaller) than this communicator's rank, we can use this
+    /// function. It computes the rank that is \c distance ranks appart. However, this function always returns a valid
+    /// rank, as it computes the rank in a circular fashion, i.e., \f$ new\_rank=(rank + distance) \% size \f$.
+    /// @param distance Distance of the new rank to the rank of this MPI thread.
+    /// @return The circular rank that is \c distance ranks apart from this MPI threads rank.
+    int compute_rank_circular(int const distance) const {
         return (_rank + distance) % _size;
     }
 
-  /// @brief Checks if a rank is a valid rank for this communicator, i.e., if the rank is in [0, size).
-  /// @return \c true if rank in [0,size) and \c false otherwise.
-  bool is_valid_rank(int const rank) const {
-    return rank >= 0 && rank < _size;
-  }
+    /// @brief Checks if a rank is a valid rank for this communicator, i.e., if the rank is in [0, size).
+    /// @return \c true if rank in [0,size) and \c false otherwise.
+    bool is_valid_rank(int const rank) const {
+        return rank >= 0 && rank < _size;
+    }
 
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
