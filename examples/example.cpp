@@ -134,7 +134,7 @@ int main() {
 
     {
         std::cout << "DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER" << std::endl;
-        std::vector<int> vec{1, 2, 3};
+        std::vector<int>       vec{1, 2, 3};
         std::unique_ptr<int[]> data(new int[n]());
         auto                   send_displs = kamping::send_displs_input(data);
         const auto             ptr         = send_displs.get_ptr(n);
@@ -157,8 +157,8 @@ int main() {
 
     {
         std::cout << "DEFINE_LIB_ALLOC_CONTAINER_BASED_BUFFER" << std::endl;
-        auto             send_displs = kamping::send_displs<std::vector<int>>(kamping::NewContainer{});
-        const auto       ptr         = send_displs.get_ptr(n);
+        auto       send_displs = kamping::send_displs<>(kamping::NewContainer<std::vector<int>>{});
+        const auto ptr         = send_displs.get_ptr(n);
         for (std::size_t i = 0; i < n; ++i) {
             std::cout << ptr[i] << std::endl;
         }
@@ -167,8 +167,8 @@ int main() {
 
     {
         std::cout << "DEFINE_LIB_ALLOC_UNIQUE_PTR_BASED_BUFFER" << std::endl;
-        auto             send_displs = kamping::send_displs<int>(kamping::NewPtr{});
-        const auto       ptr         = send_displs.get_ptr(n);
+        auto       send_displs = kamping::send_displs(kamping::NewPtr<int>{});
+        const auto ptr         = send_displs.get_ptr(n);
         for (std::size_t i = 0; i < n; ++i) {
             std::cout << ptr[i] << std::endl;
         }

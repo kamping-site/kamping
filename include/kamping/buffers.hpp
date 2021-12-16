@@ -16,10 +16,12 @@ namespace kamping {
 /// @brief Type used for tag dispatching.
 ///
 /// This types needs to be used to select internal::LibAllocContainerBasedBuffer as buffer type.
+template <typename Container>
 struct NewContainer {};
 /// @brief Type used for tag dispatching.
 ///
 /// This types needs to be used to select internal::LibAllocUniquePtrBasedBuffer as buffer type.
+template <typename T>
 struct NewPtr {};
 
 namespace internal {
@@ -216,14 +218,14 @@ private:
 #define DEFINE_LIB_ALLOC_CONTAINER_BASED_BUFFER(func_name, parameter_trait)                                  \
     template <typename Cont>                                                                                 \
     kamping::internal::LibAllocContainerBasedBuffer<Cont, kamping::internal::ParameterType::parameter_trait> \
-    func_name(NewContainer&&) {                                                                              \
+    func_name(NewContainer<Cont>&&) {                                                                        \
         return kamping::internal::LibAllocContainerBasedBuffer<                                              \
             Cont, kamping::internal::ParameterType::parameter_trait>();                                      \
     }
 #define DEFINE_LIB_ALLOC_UNIQUE_PTR_BASED_BUFFER(func_name, parameter_trait)                                         \
     template <typename T>                                                                                            \
     kamping::internal::LibAllocUniquePtrBasedBuffer<T, kamping::internal::ParameterType::parameter_trait> func_name( \
-        NewPtr&&) {                                                                                                  \
+        NewPtr<T>&&) {                                                                                               \
         return kamping::internal::LibAllocUniquePtrBasedBuffer<                                                      \
             T, kamping::internal::ParameterType::parameter_trait>();                                                 \
     }
@@ -238,12 +240,12 @@ private:
     }
 
 } // namespace internal
+
 DEFINE_CONTAINER_BASED_CONST_BUFFER(send_buf, send_buf)
 DEFINE_PTR_BASED_CONST_BUFFER(send_buf, send_buf)
 
 DEFINE_CONTAINER_BASED_CONST_BUFFER(send_counts, send_counts)
 DEFINE_PTR_BASED_CONST_BUFFER(send_counts, send_counts)
-
 
 DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER(recv_buf, recv_buf, false)
 DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER(recv_buf, recv_buf, false)
