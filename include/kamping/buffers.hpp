@@ -79,7 +79,7 @@ private:
 };
 
 ///
-/// @brief Struct containing sum definitions used by all modifiable buffers.
+/// @brief Struct containing some definitions used by all modifiable buffers.
 ///
 /// @tparam ParameterType (parameter) type represented by this buffer
 /// @tparam is_consumable_ indicates whether this buffer already contains useable data

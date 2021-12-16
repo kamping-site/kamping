@@ -157,7 +157,7 @@ int main() {
 
     {
         std::cout << "DEFINE_LIB_ALLOC_CONTAINER_BASED_BUFFER" << std::endl;
-        auto       send_displs = kamping::send_displs<>(kamping::NewContainer<std::vector<int>>{});
+        auto       send_displs = kamping::send_displs(kamping::NewContainer<std::vector<int>>{});
         const auto ptr         = send_displs.get_ptr(n);
         for (std::size_t i = 0; i < n; ++i) {
             std::cout << ptr[i] << std::endl;
