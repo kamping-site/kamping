@@ -97,7 +97,9 @@ endif()
 option(KAMPING_EXCEPTION_MODE "Use exceptions to report recoverable errors." ON)
 if (KAMPING_EXCEPTION_MODE)
   target_compile_definitions(kamping INTERFACE -DKAMPING_EXCEPTION_MODE)
-  message(STATUS "Build in exception mode.")
+  message(STATUS "Build with exceptions enabled.")
+else()
+  message(STATUS "Build with exceptions disabled. Assertions are used instead.")
 endif()
 
 # Level 0 = no assertions, level 1 = light assertions, level 2 = normal assertions, level 3 = heavy assertions

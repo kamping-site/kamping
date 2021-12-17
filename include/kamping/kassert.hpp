@@ -17,11 +17,11 @@
 
 /// @brief Implementation of ASSERTIONs.
 ///
-/// This macro generates code that
-/// 1. at compile time, checks if assertions of the given level are enabled
-/// 2. decomposes and evaluates the assertion, outputs an error if it fails
-/// 3. prints an additional user-defined error message
-/// 4. halts the program using \c std::abort().
+/// This macro generates code that ...
+/// 1. At compile time, checks if assertions of the given level are enabled.
+/// 2. Decomposes and evaluates the assertion, outputs an error if it fails.
+/// 3. Prints an additional user-defined error message.
+/// 4. Halts the program using \c std::abort().
 #define KAMPING_ASSERT_IMPL(type, expression, message, level)                                                        \
     do {                                                                                                             \
         if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
@@ -29,11 +29,20 @@
                     type,                                                                                            \
                     kamping::assert::internal::finalize_expr(kamping::assert::internal::Decomposer{} <= expression), \
                     KAMPING_SOURCE_LOCATION, #expression)) {                                                         \
-                kamping::assert::Logger<std::ostream&>(std::cerr) << message << "\n";                                \
+                kamping::assert::Logger<std::ostream&>(std::cerr) << message << std::endl;                           \
                 std::abort();                                                                                        \
             }                                                                                                        \
         }                                                                                                            \
     } while (false)
+
+// Note that expanding the macro into a `do { ... } while(false)` is a common trick to make the macro act like a
+// statement.
+//
+// Without the loop, using the macro inside an if-else construction with a trailing ';' would be break the code:
+// if (...) ASSERT(...); else [...] // syntax error
+// Without a trailing ';', it would change the meaning of the code:
+// if (...) ASSERT(...) else [...] // 'else' is now the else branch of the if produced by the ASSERT macro
+// Similarly, wrapping everything in a {} block would also break the code with a trailing ';'.
 
 /// @brief Assertion macro
 /// @param expression Expression to be checked.
@@ -42,7 +51,7 @@
 #define KASSERT(expression, message, level) KAMPING_ASSERT_IMPL("ASSERTION", expression, message, level)
 
 #ifdef KAMPING_EXCEPTION_MODE
-    /// @brief Throws an exception if the expression evaluates to false (in exception mode)
+    /// @brief Throws an exception if the expression evaluates to false (in exception mode).
     /// @param expression Expression to be checked.
     /// @param message Additional user message, can use \c << to build the message.
     /// @param assertion_type Type name of the assertion to be used. Most offer an appropriate constructor.
@@ -68,13 +77,11 @@ namespace kamping::assert {
 namespace internal {
 /// @internal
 
-/// @brief Sets \c value to \c false for non-streamable types.
+// If partially specialized template is not applicable, set value to false.
 template <typename, typename, typename = void>
 struct IsStreamableTypeImpl : std::false_type {};
 
-/// @brief Sets \c value to \c true for streamable types.
-/// @tparam StreamT An output stream overloading the \c << operator.
-/// @tparam ValueT A value type that may or may not be used with \c StreamT::operator<<.
+// Partially specialize template if StreamT::operator<<(ValueT) is valid.
 template <typename StreamT, typename ValueT>
 struct IsStreamableTypeImpl<StreamT, ValueT, std::void_t<decltype(std::declval<StreamT&>() << std::declval<ValueT>())>>
     : std::true_type {};
@@ -135,7 +142,7 @@ public:
     /// @brief Forward all values for which \c StreamT::operator<< is defined to the underlying streaming object.
     /// @param value Value to be stringified.
     /// @tparam ValueT Type of the value to be stringified.
-    template <typename ValueT, std::enable_if_t<internal::IsStreamableTypeImpl<std::ostream, ValueT>::value, int> = 0>
+    template <typename ValueT, std::enable_if_t<internal::IsStreamableType<std::ostream, ValueT>, int> = 0>
     Logger<StreamT>& operator<<(ValueT&& value) {
         _out << std::forward<ValueT>(value);
         return *this;
@@ -210,7 +217,7 @@ Logger<StreamT>& operator<<(Logger<StreamT>& logger, std::vector<ValueT, Allocat
 /// @brief Stringification of \code{std::pair<K, V>} in assertions.
 ///
 /// Outputs a \code{std::pair<K, V>} in the following format, where \c first and \c second are the stringified
-/// components of the pair: (first, second)
+/// components of the pair: (first, second).
 ///
 /// \tparam StreamT The underlying output stream of the Logger.
 /// \tparam Key Type of the first component of the pair.
@@ -240,11 +247,11 @@ namespace internal {
 ///
 /// @{
 
-/// @brief Inteface for decomposed unary and binary expressions.
-class Expr {
+/// @brief Interface for decomposed unary and binary expressions.
+class Expression {
 public:
     /// @brief Virtual destructor since we use virtual functions.
-    virtual ~Expr() = default;
+    virtual ~Expression() = default;
 
     /// @brief Evaluate the assertion wrapped in this Expr.
     /// @return The boolean value that the assertion evalutes to.
@@ -258,7 +265,7 @@ public:
     /// @param out The assertion logger.
     /// @param expr The expression to be stringified.
     /// @return The assertion logger.
-    friend OStreamLogger& operator<<(OStreamLogger& out, Expr const& expr) {
+    friend OStreamLogger& operator<<(OStreamLogger& out, Expression const& expr) {
         expr.stringify(out);
         return out;
     }
@@ -268,14 +275,14 @@ public:
 /// @tparam LhsT Decomposed type of the left hand side of the expression.
 /// @tparam RhsT Decomposed type of the right hand side of the expression.
 template <typename LhsT, typename RhsT>
-class BinaryExpr : public Expr {
+class BinaryExpression : public Expression {
 public:
     /// @brief Constructs a decomposed binary expression.
     /// @param result Boolean result of the expression.
     /// @param lhs Decomposed left hand side of the expression.
     /// @param op Stringified operator or relation.
     /// @param rhs Decomposed right hand side of the expression.
-    BinaryExpr(bool const result, LhsT const& lhs, const std::string_view op, RhsT const& rhs)
+    BinaryExpression(bool const result, LhsT const& lhs, const std::string_view op, RhsT const& rhs)
         : _result(result),
           _lhs(lhs),
           _op(op),
@@ -295,12 +302,13 @@ public:
         stringify_value(out, _rhs);
     }
 
-#define KAMPING_ASSERT_OP(op)                                                                                     \
-    template <typename RhsPrimeT>                                                                                 \
-    friend BinaryExpr<BinaryExpr<LhsT, RhsT>, RhsPrimeT> operator op(                                             \
-        BinaryExpr<LhsT, RhsT>&& lhs, RhsPrimeT const& rhs_prime) {                                               \
-        using namespace std::string_view_literals;                                                                \
-        return BinaryExpr<BinaryExpr<LhsT, RhsT>, RhsPrimeT>(lhs.result() op rhs_prime, lhs, #op##sv, rhs_prime); \
+#define KAMPING_ASSERT_OP(op)                                                     \
+    template <typename RhsPrimeT>                                                 \
+    friend BinaryExpression<BinaryExpression<LhsT, RhsT>, RhsPrimeT> operator op( \
+        BinaryExpression<LhsT, RhsT>&& lhs, RhsPrimeT const& rhs_prime) {         \
+        using namespace std::string_view_literals;                                \
+        return BinaryExpression<BinaryExpression<LhsT, RhsT>, RhsPrimeT>(         \
+            lhs.result() op rhs_prime, lhs, #op##sv, rhs_prime);                  \
     }
 
     KAMPING_ASSERT_OP(&&)
@@ -322,10 +330,10 @@ private:
 /// @brief Decomposed unary expression.
 /// @tparam Lhst Decomposed expression type.
 template <typename LhsT>
-class UnaryExpr : public Expr {
+class UnaryExpression : public Expression {
     /// @brief Constructs this unary expression from an expression.
     /// @param lhs The expression.
-    explicit UnaryExpr(const LhsT& lhs) : _lhs(lhs) {}
+    explicit UnaryExpression(const LhsT& lhs) : _lhs(lhs) {}
 
     /// @brief Evaluates this expression.
     /// @return The boolean result of this expression.
@@ -348,25 +356,25 @@ private:
 /// or relation follows, or into a \c UnaryExpr otherwise.
 /// @tparam LhsT The expression type.
 template <typename LhsT>
-class LhsExpr {
+class LhsExpression {
 public:
     /// @brief Constructs this left hand size of a decomposed expression.
     /// @param lhs The wrapped expression.
-    explicit LhsExpr(LhsT const& lhs) : _lhs(lhs) {}
+    explicit LhsExpression(LhsT const& lhs) : _lhs(lhs) {}
 
     /// @brief Turns this expression into an \c UnaryExpr. This might only be called if the wrapped expression is
     /// implicitly convertible to \c bool.
     /// @return This expression as \c UnaryExpr.
-    UnaryExpr<LhsT> make_unary() {
+    UnaryExpression<LhsT> make_unary() {
         static_assert(std::is_convertible_v<LhsT, bool>, "expression must be convertible to bool");
         return {_lhs};
     }
 
-#define KAMPING_ASSERT_OP(op)                                                   \
-    template <typename RhsT>                                                    \
-    friend BinaryExpr<LhsT, RhsT> operator op(LhsExpr&& lhs, RhsT const& rhs) { \
-        using namespace std::string_view_literals;                              \
-        return {lhs._lhs op rhs, lhs._lhs, #op##sv, rhs};                       \
+#define KAMPING_ASSERT_OP(op)                                                               \
+    template <typename RhsT>                                                                \
+    friend BinaryExpression<LhsT, RhsT> operator op(LhsExpression&& lhs, RhsT const& rhs) { \
+        using namespace std::string_view_literals;                                          \
+        return {lhs._lhs op rhs, lhs._lhs, #op##sv, rhs};                                   \
     }
 
     KAMPING_ASSERT_OP(==)
@@ -395,8 +403,8 @@ struct Decomposer {
     /// @param lhs The left hand side of the expression.
     /// @return \c lhs wrapped in a \c LhsExpr.
     template <typename LhsT>
-    friend LhsExpr<LhsT> operator<=(Decomposer&&, LhsT const& lhs) {
-        return LhsExpr<LhsT>(lhs);
+    friend LhsExpression<LhsT> operator<=(Decomposer&&, LhsT const& lhs) {
+        return LhsExpression<LhsT>(lhs);
     }
 };
 
@@ -405,8 +413,8 @@ struct Decomposer {
 /// @param expr The expression.
 /// @return The expression as some subclass of \c Expr.
 template <typename ExprT>
-Expr&& finalize_expr(ExprT&& expr) {
-    if constexpr (std::is_base_of_v<Expr, std::remove_reference_t<std::remove_const_t<ExprT>>>) {
+Expression&& finalize_expr(ExprT&& expr) {
+    if constexpr (std::is_base_of_v<Expression, std::remove_reference_t<std::remove_const_t<ExprT>>>) {
         return std::forward<ExprT>(expr);
     } else {
         return expr.make_unary();
@@ -440,7 +448,8 @@ constexpr bool assertion_enabled(int level) {
 /// @param where Source code location of the assertion.
 /// @param expr_str Stringified assertion expression.
 /// @return Result of the assertion. If true, the assertion was triggered and the program should be halted.
-bool evaluate_and_print_assertion(char const* type, Expr&& expr, const SourceLocation& where, char const* expr_str) {
+bool evaluate_and_print_assertion(
+    char const* type, Expression&& expr, const SourceLocation& where, char const* expr_str) {
     if (!expr.result()) {
         OStreamLogger(std::cerr) << where.file << ": In function '" << where.function << "':\n"
                                  << where.file << ":" << where.row << ": FAILED " << type << "\n"
