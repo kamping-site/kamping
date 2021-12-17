@@ -41,7 +41,8 @@ int main() {
     std::vector<std::pair<int, int>> a{{1, 2}, {2, 3}};
     std::vector<std::pair<int, int>> b{{3, 3}, {4, 5}};
 
-    KAMPING_ASSERT(a != a || g() == f(), "this work!" << "right?", assert::lightweight);
+    //KASSERT(a != a || g() == f(), "this work!" << "right?", assert::lightweight);
+    KTHROW(a != a, "ok", assert::internal::AssertException);
     std::exit(0);
 
     MPI_Init(nullptr, nullptr);

@@ -17,20 +17,57 @@
         __FILE__, __LINE__, __func__            \
     }
 
-#define KASSERT(expression, message, level)                                                                          \
+#define KAMPING_ASSERT_IMPL(type, expression, message, level)                                                        \
     do {                                                                                                             \
         if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
             if (!kamping::assert::internal::evaluate_assertion(                                                      \
+                    type,                                                                                            \
                     kamping::assert::internal::finalize_expr(kamping::assert::internal::Decomposer{} <= expression), \
                     KAMPING_SOURCE_LOCATION, #expression)) {                                                         \
-                kamping::assert::Logger(std::cerr) << message << "\n";                                               \
+                kamping::assert::Logger<std::ostream&>(std::cerr) << message << "\n";                                \
                 std::abort();                                                                                        \
             }                                                                                                        \
         }                                                                                                            \
     } while (false)
 
+#define KASSERT(expression, message, level) KAMPING_ASSERT_IMPL("ASSERTION", expression, message, level)
+
+#ifdef KAMPING_EXCEPTION_MODE
+    #define KTHROW(expression, message, assertion_type)                                                        \
+        do {                                                                                                   \
+            if (!(expression)) {                                                                               \
+                throw assertion_type(                                                                          \
+                    #expression,                                                                               \
+                    (kamping::assert::Logger<std::ostringstream&&>{std::ostringstream{}} << message) \
+                        .stream()                                                                              \
+                        .str());                                                                               \
+            }                                                                                                  \
+        } while (false)
+#else
+    #define KTHROW(expression, message, assertion_type) \
+        KAMPING_ASSERT_IMPL(#assertion_type, expression, message, kamping::assert::normal)
+#endif
+
 namespace kamping::assert {
 namespace internal {
+class AssertException : public std::exception {
+public:
+    explicit AssertException(std::string const& expression, std::string const& message)
+        : _what(build_what(expression, message)) {}
+
+    [[nodiscard]] char const* what() const noexcept final {
+        return _what.c_str();
+    }
+
+private:
+    static std::string build_what(std::string const& expression, std::string const& message) {
+        using namespace std::string_literals;
+        return "FAILED ASSERTION:"s + "\n\t"s + expression + "\n" + message + "\n";
+    }
+
+    std::string _what;
+};
+
 template <typename, typename, typename = void>
 struct IsPrintableType : std::false_type {};
 
@@ -39,47 +76,55 @@ struct IsPrintableType<StreamT, ValueT, std::void_t<decltype(std::declval<Stream
     : std::true_type {};
 } // namespace internal
 
+template <typename StreamT>
 class Logger {
 public:
-    explicit Logger(std::ostream& out) : _out(out) {}
+    explicit Logger(StreamT&& out) : _out(std::forward<StreamT>(out)) {}
 
     template <typename T, std::enable_if_t<internal::IsPrintableType<std::ostream, T>::value, int> = 0>
-    Logger& operator<<(T&& value) {
+    Logger<StreamT>& operator<<(T&& value) {
         _out << std::forward<T>(value);
         return *this;
     }
 
+    StreamT&& stream() {
+        return std::forward<StreamT>(_out);
+    }
+
 private:
-    std::ostream& _out;
+    StreamT&& _out;
 };
 
-template <typename ValueT, typename AllocatorT>
-Logger& operator<<(Logger& logger, std::vector<ValueT, AllocatorT> const& container) {
-    if (container.empty()) {
-        return logger << "<>";
+template <typename StreamT, typename ValueT, typename AllocatorT>
+Logger<StreamT>& operator<<(Logger<StreamT>& logger, std::vector<ValueT, AllocatorT> const& container) {
+    logger << "[";
+    bool first = true;
+    for (auto const& element: container) {
+        if (!first) {
+            logger << ", ";
+        }
+        logger << element;
+        first = false;
     }
-
-    logger << "<";
-    for (const auto& element: container) {
-        logger << element << ", ";
-    }
-    return logger << "\b\b>";
+    return logger << "]";
 }
 
-template <typename Key, typename Value>
-Logger& operator<<(Logger& logger, std::pair<Key, Value> const& pair) {
-    return logger << "<" << pair.first << ", " << pair.second << ">";
+template <typename StreamT, typename Key, typename Value>
+Logger<StreamT>& operator<<(Logger<StreamT>& logger, std::pair<Key, Value> const& pair) {
+    return logger << "(" << pair.first << ", " << pair.second << ")";
 }
 
 namespace internal {
-template <typename T>
-void stringify_value(Logger& out, const T& value) {
-    if constexpr (IsPrintableType<Logger, T>::value) {
+template <typename StreamT, typename ValueT>
+void stringify_value(Logger<StreamT>& out, const ValueT& value) {
+    if constexpr (IsPrintableType<Logger<StreamT>, ValueT>::value) {
         out << value;
     } else {
         out << "<?>";
     }
 }
+
+using OStreamLoger = Logger<std::ostream&>;
 
 class Expr {
 public:
@@ -87,9 +132,9 @@ public:
 
     [[nodiscard]] virtual bool result() const = 0;
 
-    virtual void stringify(Logger& out) const = 0;
+    virtual void stringify(OStreamLoger& out) const = 0;
 
-    friend Logger& operator<<(Logger& out, Expr const& expr) {
+    friend OStreamLoger& operator<<(OStreamLoger& out, Expr const& expr) {
         expr.stringify(out);
         return out;
     }
@@ -108,7 +153,7 @@ public:
         return _result;
     }
 
-    void stringify(Logger& out) const final {
+    void stringify(OStreamLoger& out) const final {
         stringify_value(out, _lhs);
         out << " " << _op << " ";
         stringify_value(out, _rhs);
@@ -142,7 +187,7 @@ class UnaryExpr : public Expr {
         return static_cast<bool>(_lhs);
     }
 
-    void stringify(Logger& out) const final {
+    void stringify(OStreamLoger& out) const final {
         stringify_value(out, _lhs);
     }
 
@@ -211,13 +256,13 @@ Expr&& finalize_expr(ExprT&& expr) {
     }
 }
 
-bool evaluate_assertion(Expr&& expr, const SourceLocation& where, char const* expr_str) {
+bool evaluate_assertion(char const* type, Expr&& expr, const SourceLocation& where, char const* expr_str) {
     if (!expr.result()) {
-        Logger(std::cerr) << where.file << ": In function '" << where.function << "':\n"
-                          << where.file << ":" << where.row << ": FAILED ASSERTION\n"
-                          << "\t" << expr_str << "\n"
-                          << "with expansion:\n"
-                          << "\t" << expr << "\n";
+        OStreamLoger{std::cerr} << where.file << ": In function '" << where.function << "':\n"
+                                << where.file << ":" << where.row << ": FAILED " << type << "\n"
+                                << "\t" << expr_str << "\n"
+                                << "with expansion:\n"
+                                << "\t" << expr << "\n";
     }
     return expr.result();
 }
