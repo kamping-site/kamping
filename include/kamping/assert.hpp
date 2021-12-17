@@ -17,7 +17,7 @@
 #define KAMPING_ASSERT_IMPL(type, expression, message, level)                                                        \
     do {                                                                                                             \
         if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
-            if (!kamping::assert::internal::evaluate_assertion(                                                      \
+            if (!kamping::assert::internal::evaluate_and_print_assertion(                                            \
                     type,                                                                                            \
                     kamping::assert::internal::finalize_expr(kamping::assert::internal::Decomposer{} <= expression), \
                     KAMPING_SOURCE_LOCATION, #expression)) {                                                         \
@@ -206,6 +206,20 @@ Logger<StreamT>& operator<<(Logger<StreamT>& logger, std::pair<Key, Value> const
 namespace internal {
 /// @internal
 
+/// @name Expression expansion
+///
+/// Classes to decompose and expand parts of an expression. Example usage:
+/// @code
+/// OStreamLogger(std::cerr) << finalize_expr(Decomposer{} <= <expression>);
+/// @endcode
+/// \c Decomposer wraps the first part of an expression in a \c LhsExpr, which overloads binary operators and relations
+/// to create objects of \c BinaryExpr. \c BinaryExpr overloads \c && and \c || to build chained expressions.
+/// If the expression does not contain any operators or relations, it is turned into an \c UnaryExpr by \c finalize_expr
+/// if and only if it is implicitly convertible to bool; otherwise, the expression is malformed an a static assertion
+/// is triggered.
+///
+/// @{
+
 class Expr {
 public:
     virtual ~Expr() = default;
@@ -317,6 +331,17 @@ struct Decomposer {
     }
 };
 
+template <typename ExprT>
+Expr&& finalize_expr(ExprT&& expr) {
+    if constexpr (std::is_base_of_v<Expr, std::remove_reference_t<std::remove_const_t<ExprT>>>) {
+        return std::forward<ExprT>(expr);
+    } else {
+        return expr.make_unary();
+    }
+}
+
+/// @}
+
 struct SourceLocation {
     char const* file;
     unsigned    row;
@@ -327,18 +352,16 @@ constexpr bool assertion_enabled(int level) {
     return level <= KAMPING_ASSERTION_LEVEL;
 }
 
-template <typename ExprT>
-Expr&& finalize_expr(ExprT&& expr) {
-    if constexpr (std::is_base_of_v<Expr, std::remove_reference_t<std::remove_const_t<ExprT>>>) {
-        return std::forward<ExprT>(expr);
-    } else {
-        return expr.make_unary();
-    }
-}
-
-bool evaluate_assertion(char const* type, Expr&& expr, const SourceLocation& where, char const* expr_str) {
+/// @brief Evaluates an assertion expression. If the assertion fails, prints an error describing the failed assertion.
+/// @param type Actual type of this check. In exception mode, this parameter has always value \c ASSERTION, otherwise
+/// it names the type of the exception that would have been thrown.
+/// @param expr Assertion expression to be checked.
+/// @param where Source code location of the assertion.
+/// @param expr_str Stringified assertion expression.
+/// @return Result of the assertion. If true, the assertion was triggered and the program should be halted.
+bool evaluate_and_print_assertion(char const* type, Expr&& expr, const SourceLocation& where, char const* expr_str) {
     if (!expr.result()) {
-        OStreamLogger{std::cerr} << where.file << ": In function '" << where.function << "':\n"
+        OStreamLogger(std::cerr) << where.file << ": In function '" << where.function << "':\n"
                                  << where.file << ":" << where.row << ": FAILED " << type << "\n"
                                  << "\t" << expr_str << "\n"
                                  << "with expansion:\n"
