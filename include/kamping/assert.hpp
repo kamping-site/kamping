@@ -9,9 +9,6 @@
 #include <utility>
 #include <vector>
 
-#define KAMPING_ASSERTION_LEVEL 1
-#define KAMPING_EXCEPTION_MODE  1
-
 #define KAMPING_SOURCE_LOCATION                 \
     kamping::assert::internal::SourceLocation { \
         __FILE__, __LINE__, __func__            \

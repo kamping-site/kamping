@@ -37,9 +37,6 @@ endif()
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 
-option(KAMPING_USE_EXCEPTIONS "If set, we use exceptions instead of assertions for recoverable errors." ON)
-option(KAMPING_ASSERTION_LEVEL "Specifies the minimum level of assertions that are enabled. If this option is not set explicitly, it is deduced from the build type." 0)
-
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
 find_package(MPI REQUIRED)
 
@@ -95,6 +92,19 @@ if(KAMPING_WARNINGS_ARE_ERRORS)
     "-Werror"
   )
 endif()
+
+# If enabled, use exceptions, otherwise use KASSERT()
+option(KAMPING_EXCEPTION_MODE "Use exceptions to report recoverable errors." ON)
+if (KAMPING_EXCEPTION_MODE)
+  target_compile_definitions(kamping INTERFACE -DKAMPING_EXCEPTION_MODE)
+  message(STATUS "Build in exception mode.")
+endif()
+
+# Level 0 = no assertions, level 1 = light assertions, level 2 = normal assertions, level 3 = heavy assertions
+# Default to no assertions in Release mode, normal assertions in Debug mode
+set(KAMPING_ASSERTION_LEVEL $<IF:$<CONFIG:Debug>,2,0> CACHE STRING "Higher values enable more complex assertions. To disable all runtime checks, set to '0'.")
+set_property(CACHE KAMPING_ASSERTION_LEVEL PROPERTY STRINGS 0 1 2 3)
+target_compile_definitions(kamping INTERFACE -DKAMPING_ASSERTION_LEVEL=${KAMPING_ASSERTION_LEVEL})
 
 add_library(kamping::kamping ALIAS kamping)
 
