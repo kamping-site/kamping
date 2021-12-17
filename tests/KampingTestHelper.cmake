@@ -1,4 +1,4 @@
-include(KaTestTrophe)
+include(KaTestrophe)
 include(GoogleTest)
 
 # Convenience wrapper for adding tests for KaMPI.ng
