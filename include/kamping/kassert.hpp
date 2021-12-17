@@ -16,7 +16,7 @@
         __FILE__, __LINE__, __func__            \
     }
 
-/// @brief Implementation of ASSERTIONs.
+/// @brief Implementation of KASSERTION.
 ///
 /// This macro generates code that ...
 /// 1. At compile time, checks if assertions of the given level are enabled.
@@ -30,13 +30,13 @@
                     type,                                                                                            \
                     kamping::assert::internal::finalize_expr(kamping::assert::internal::Decomposer{} <= expression), \
                     KAMPING_SOURCE_LOCATION, #expression)) {                                                         \
-                kamping::assert::Logger<std::ostream&>(std::cerr) << message << std::endl;                           \
+                kamping::assert::Logger<std::ostream&>(std::cerr) << message << "\n";                                \
                 std::abort();                                                                                        \
             }                                                                                                        \
         }                                                                                                            \
     } while (false)
 
-// Note that expanding the macro into a `do { ... } while(false)` is a common trick to make the macro act like a
+// Note that expanding the macro into a `do { ... } while(false)` loop is a common trick to make the macro act like a
 // statement.
 //
 // Without the loop, using the macro inside an if-else construction with a trailing ';' would be break the code:
@@ -236,15 +236,15 @@ namespace internal {
 
 /// @name Expression expansion
 ///
-/// Classes to decompose and expand parts of an expression. Example usage:
+/// Implements the decomposition and expansion of expressions. Example usage:
 /// @code
 /// OStreamLogger(std::cerr) << finalize_expr(Decomposer{} <= <expression>);
 /// @endcode
-/// \c Decomposer wraps the first part of an expression in a \c LhsExpr, which overloads binary operators and relations
-/// to create objects of \c BinaryExpr. \c BinaryExpr overloads \c && and \c || to build chained expressions.
-/// If the expression does not contain any operators or relations, it is turned into an \c UnaryExpr by \c finalize_expr
-/// if and only if it is implicitly convertible to bool; otherwise, the expression is malformed an a static assertion
-/// is triggered.
+/// \c Decomposer wraps the first part of an expression in a \c LhsExpression, which overloads binary operators and
+/// relations to create objects of \c BinaryExpression. \c BinaryExpression overloads \c && and \c || to build chained
+/// expressions. If the expression does not contain any operators or relations, it is turned into an \c UnaryExpression
+/// by \c finalize_expr if and only if it is implicitly convertible to bool; otherwise, the expression is malformed an a
+/// static assertion is triggered.
 ///
 /// @{
 
