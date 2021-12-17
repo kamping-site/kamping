@@ -42,7 +42,7 @@ int main() {
     std::vector<std::pair<int, int>> b{{3, 3}, {4, 5}};
 
     //KASSERT(a != a || g() == f(), "this work!" << "right?", assert::lightweight);
-    KTHROW(a != a, "ok", assert::internal::AssertException);
+    KTHROW(a != a, "ok", assert::DefaultException);
     std::exit(0);
 
     MPI_Init(nullptr, nullptr);

@@ -30,15 +30,14 @@
 #define KASSERT(expression, message, level) KAMPING_ASSERT_IMPL("ASSERTION", expression, message, level)
 
 #ifdef KAMPING_EXCEPTION_MODE
-    #define KTHROW(expression, message, assertion_type)                                                        \
-        do {                                                                                                   \
-            if (!(expression)) {                                                                               \
-                throw assertion_type(                                                                          \
-                    #expression,                                                                               \
-                    (kamping::assert::Logger<std::ostringstream&&>{std::ostringstream{}} << message) \
-                        .stream()                                                                              \
-                        .str());                                                                               \
-            }                                                                                                  \
+    #define KTHROW(expression, message, assertion_type)                                                                \
+        do {                                                                                                           \
+            if (!(expression)) {                                                                                       \
+                throw assertion_type(                                                                                  \
+                    #expression, (kamping::assert::internal::RrefOStringstreamLogger{std::ostringstream{}} << message) \
+                                     .stream()                                                                         \
+                                     .str());                                                                          \
+            }                                                                                                          \
         } while (false)
 #else
     #define KTHROW(expression, message, assertion_type) \
@@ -47,51 +46,133 @@
 
 namespace kamping::assert {
 namespace internal {
-class AssertException : public std::exception {
+/// @internal
+
+/// @brief Sets \c value to \c false for non-streamable types.
+template <typename, typename, typename = void>
+struct IsStreamableTypeImpl : std::false_type {};
+
+/// @brief Sets \c value to \c true for streamable types.
+/// @tparam StreamT An output stream overloading the \c << operator.
+/// @tparam ValueT A value type that may or may not be used with \c StreamT::operator<<.
+template <typename StreamT, typename ValueT>
+struct IsStreamableTypeImpl<StreamT, ValueT, std::void_t<decltype(std::declval<StreamT&>() << std::declval<ValueT>())>>
+    : std::true_type {};
+
+/// @brief Determines whether a value of type \c ValueT can be streamed into an output stream of type \c StreamT.
+/// @tparam StreamT An output stream overloading the \c << operator.
+/// @tparam ValueT A value type that may or may not be used with \c StreamT::operator<<.
+template <typename StreamT, typename ValueT>
+constexpr bool IsStreamableType = IsStreamableTypeImpl<StreamT, ValueT>::value;
+
+/// @endinternal
+} // namespace internal
+
+/// @brief The default exception type used together with \c KTHROW. Reports the erroneous expression together with a
+/// custom error message.
+class DefaultException : public std::exception {
 public:
-    explicit AssertException(std::string const& expression, std::string const& message)
+    /// @brief Constructs the exception based on the erroneous expression and a custom error message.
+    /// @param expression The stringified expression that caused this exception to be thrown.
+    /// @param message A custom error message.
+    explicit DefaultException(std::string const& expression, std::string const& message)
         : _what(build_what(expression, message)) {}
 
+    /// @brief Prints a description of this exception.
+    /// @return A description of this exception.
     [[nodiscard]] char const* what() const noexcept final {
         return _what.c_str();
     }
 
 private:
+    /// @brief Builds the description of this exception.
+    /// @return The description of this exception.
     static std::string build_what(std::string const& expression, std::string const& message) {
         using namespace std::string_literals;
         return "FAILED ASSERTION:"s + "\n\t"s + expression + "\n" + message + "\n";
     }
 
+    /// @brief The description of this exception.
     std::string _what;
 };
 
-template <typename, typename, typename = void>
-struct IsPrintableType : std::false_type {};
-
-template <typename StreamT, typename ValueT>
-struct IsPrintableType<StreamT, ValueT, std::void_t<decltype(std::declval<StreamT&>() << std::declval<ValueT>())>>
-    : std::true_type {};
-} // namespace internal
-
+/// @brief Simple wrapper for output streams that is used to stringify values in assertions and exceptions.
+///
+/// To enable stringification for custom types, overload the \c << operator of this class.
+/// The library overloads this operator for the following STL types:
+///
+/// * \c std::vector<T>
+/// * \c std::pair<K, V>
+///
+/// \tparam StreamT The underlying streaming object (e.g., \c std::ostream or \c std::ostringstream).
 template <typename StreamT>
 class Logger {
 public:
+    /// @brief Construct the object with an underlying streaming object.
+    /// @param out The underlying streaming object.
     explicit Logger(StreamT&& out) : _out(std::forward<StreamT>(out)) {}
 
-    template <typename T, std::enable_if_t<internal::IsPrintableType<std::ostream, T>::value, int> = 0>
-    Logger<StreamT>& operator<<(T&& value) {
-        _out << std::forward<T>(value);
+    /// @brief Forward all values for which \c StreamT::operator<< is defined to the underlying streaming object.
+    /// @param value Value to be stringified.
+    /// @tparam ValueT Type of the value to be stringified.
+    template <typename ValueT, std::enable_if_t<internal::IsStreamableTypeImpl<std::ostream, ValueT>::value, int> = 0>
+    Logger<StreamT>& operator<<(ValueT&& value) {
+        _out << std::forward<ValueT>(value);
         return *this;
     }
 
+    /// @brief Get the underlying streaming object.
+    /// @return The underlying streaming object.
     StreamT&& stream() {
         return std::forward<StreamT>(_out);
     }
 
 private:
+    /// @brief The underlying streaming object.
     StreamT&& _out;
 };
 
+namespace internal {
+/// @internal
+
+/// @brief Stringify a value using the given assertion logger. If the value cannot be streamed into the logger, print
+/// \c <?> instead.
+/// @tparam StreamT The underlying streaming object of the assertion logger.
+/// @tparam ValueT The type of the value to be stringified.
+/// @param out The assertion logger.
+/// @param value The value to be stringified.
+/// @return The stringification of \c value, or \c <?> if the value cannot be stringified by the logger.
+template <typename StreamT, typename ValueT>
+void stringify_value(Logger<StreamT>& out, const ValueT& value) {
+    if constexpr (IsStreamableType<Logger<StreamT>, ValueT>) {
+        out << value;
+    } else {
+        out << "<?>";
+    }
+}
+
+/// @brief Logger writing all output to a \c std::ostream. This specialization is used to generate the KASSERT error
+/// messages.
+using OStreamLogger = Logger<std::ostream&>;
+
+/// @brief Logger writing all output to a rvalue \c std::ostringstream. This specialization is used to generate the
+/// custom error message for KTHROW exceptions.
+using RrefOStringstreamLogger = Logger<std::ostringstream&&>;
+
+/// @endinternal
+} // namespace internal
+
+/// @brief Stringification of \c std::vector<T> in assertions.
+///
+/// Outputs a \c std::vector<T> in the following format, where \code{element i} are the stringified elements of the
+/// vector: [element 1, element 2, ...]
+///
+/// \tparam StreamT The underlying output stream of the Logger.
+/// \tparam ValueT The type of the elements contained in the vector.
+/// \tparam AllocatorT The allocator of the vector.
+/// \param logger The assertion logger.
+/// \param container The vector to be stringified.
+/// \return The stringified vector as described above.
 template <typename StreamT, typename ValueT, typename AllocatorT>
 Logger<StreamT>& operator<<(Logger<StreamT>& logger, std::vector<ValueT, AllocatorT> const& container) {
     logger << "[";
@@ -106,22 +187,24 @@ Logger<StreamT>& operator<<(Logger<StreamT>& logger, std::vector<ValueT, Allocat
     return logger << "]";
 }
 
+/// @brief Stringification of \code{std::pair<K, V>} in assertions.
+///
+/// Outputs a \code{std::pair<K, V>} in the following format, where \c first and \c second are the stringified
+/// components of the pair: (first, second)
+///
+/// \tparam StreamT The underlying output stream of the Logger.
+/// \tparam Key Type of the first component of the pair.
+/// \tparam Value Type of the second component of the pair.
+/// \param logger The assertion logger.
+/// \param pair The pair to be stringified.
+/// \return The stringification of the pair as described above.
 template <typename StreamT, typename Key, typename Value>
 Logger<StreamT>& operator<<(Logger<StreamT>& logger, std::pair<Key, Value> const& pair) {
     return logger << "(" << pair.first << ", " << pair.second << ")";
 }
 
 namespace internal {
-template <typename StreamT, typename ValueT>
-void stringify_value(Logger<StreamT>& out, const ValueT& value) {
-    if constexpr (IsPrintableType<Logger<StreamT>, ValueT>::value) {
-        out << value;
-    } else {
-        out << "<?>";
-    }
-}
-
-using OStreamLoger = Logger<std::ostream&>;
+/// @internal
 
 class Expr {
 public:
@@ -129,9 +212,9 @@ public:
 
     [[nodiscard]] virtual bool result() const = 0;
 
-    virtual void stringify(OStreamLoger& out) const = 0;
+    virtual void stringify(OStreamLogger& out) const = 0;
 
-    friend OStreamLoger& operator<<(OStreamLoger& out, Expr const& expr) {
+    friend OStreamLogger& operator<<(OStreamLogger& out, Expr const& expr) {
         expr.stringify(out);
         return out;
     }
@@ -150,7 +233,7 @@ public:
         return _result;
     }
 
-    void stringify(OStreamLoger& out) const final {
+    void stringify(OStreamLogger& out) const final {
         stringify_value(out, _lhs);
         out << " " << _op << " ";
         stringify_value(out, _rhs);
@@ -184,7 +267,7 @@ class UnaryExpr : public Expr {
         return static_cast<bool>(_lhs);
     }
 
-    void stringify(OStreamLoger& out) const final {
+    void stringify(OStreamLogger& out) const final {
         stringify_value(out, _lhs);
     }
 
@@ -255,18 +338,26 @@ Expr&& finalize_expr(ExprT&& expr) {
 
 bool evaluate_assertion(char const* type, Expr&& expr, const SourceLocation& where, char const* expr_str) {
     if (!expr.result()) {
-        OStreamLoger{std::cerr} << where.file << ": In function '" << where.function << "':\n"
-                                << where.file << ":" << where.row << ": FAILED " << type << "\n"
-                                << "\t" << expr_str << "\n"
-                                << "with expansion:\n"
-                                << "\t" << expr << "\n";
+        OStreamLogger{std::cerr} << where.file << ": In function '" << where.function << "':\n"
+                                 << where.file << ":" << where.row << ": FAILED " << type << "\n"
+                                 << "\t" << expr_str << "\n"
+                                 << "with expansion:\n"
+                                 << "\t" << expr << "\n";
     }
     return expr.result();
 }
+
+/// @endinternal
 } // namespace internal
 
-// predefined assertion levels
-constexpr int lightweight = 1;
-constexpr int normal      = 2;
-constexpr int heavy       = 3;
+/// @name Predefined assertion levels
+/// Assertion levels that can be used with the KASSERT macro.
+/// @{
+/// @brief Assertion level for lightweight assertions.
+constexpr int light = 1;
+/// @brief Default assertion level. This level is used if no assertion level is specified.
+constexpr int normal = 2;
+/// @brief Assertion level for heavyweight assertions.
+constexpr int heavy = 3;
+/// @}
 } // namespace kamping::assert
