@@ -12,17 +12,17 @@
 #define KAMPING_ASSERTION_LEVEL 1
 #define KAMPING_EXCEPTION_MODE  1
 
-#define SOURCE_LOCATION                         \
+#define KAMPING_SOURCE_LOCATION                 \
     kamping::assert::internal::SourceLocation { \
         __FILE__, __LINE__, __func__            \
     }
 
-#define ASSERT(expression, message, level)                                                                           \
+#define KAMPING_ASSERT(expression, message, level)                                                                   \
     do {                                                                                                             \
         if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
             if (!kamping::assert::internal::evaluate_assertion(                                                      \
                     kamping::assert::internal::finalize_expr(kamping::assert::internal::Decomposer{} <= expression), \
-                    SOURCE_LOCATION, #expression)) {                                                                 \
+                    KAMPING_SOURCE_LOCATION, #expression)) {                                                         \
                 kamping::assert::Logger(std::cerr) << message << "\n";                                               \
                 std::abort();                                                                                        \
             }                                                                                                        \
@@ -114,7 +114,7 @@ public:
         stringify_value(out, _rhs);
     }
 
-#define KAMINPAR_ASSERT_OP(op)                                                                                    \
+#define KAMPING_ASSERT_OP(op)                                                                                     \
     template <typename RhsPrimeT>                                                                                 \
     friend BinaryExpr<BinaryExpr<LhsT, RhsT>, RhsPrimeT> operator op(                                             \
         BinaryExpr<LhsT, RhsT>&& lhs, RhsPrimeT const& rhs_prime) {                                               \
@@ -122,10 +122,10 @@ public:
         return BinaryExpr<BinaryExpr<LhsT, RhsT>, RhsPrimeT>(lhs.result() op rhs_prime, lhs, #op##sv, rhs_prime); \
     }
 
-    KAMINPAR_ASSERT_OP(&&)
-    KAMINPAR_ASSERT_OP(||)
+    KAMPING_ASSERT_OP(&&)
+    KAMPING_ASSERT_OP(||)
 
-#undef KAMINPAR_ASSERT_OP
+#undef KAMPING_ASSERT_OP
 
 private:
     bool             _result;
@@ -160,26 +160,26 @@ public:
         return {_lhs};
     }
 
-#define KAMINPAR_ASSERT_OP(op)                                                  \
+#define KAMPING_ASSERT_OP(op)                                                   \
     template <typename RhsT>                                                    \
     friend BinaryExpr<LhsT, RhsT> operator op(LhsExpr&& lhs, RhsT const& rhs) { \
         using namespace std::string_view_literals;                              \
         return {lhs._lhs op rhs, lhs._lhs, #op##sv, rhs};                       \
     }
 
-    KAMINPAR_ASSERT_OP(==)
-    KAMINPAR_ASSERT_OP(!=)
-    KAMINPAR_ASSERT_OP(&&)
-    KAMINPAR_ASSERT_OP(||)
-    KAMINPAR_ASSERT_OP(<)
-    KAMINPAR_ASSERT_OP(<=)
-    KAMINPAR_ASSERT_OP(>)
-    KAMINPAR_ASSERT_OP(>=)
-    KAMINPAR_ASSERT_OP(&)
-    KAMINPAR_ASSERT_OP(|)
-    KAMINPAR_ASSERT_OP(^)
+    KAMPING_ASSERT_OP(==)
+    KAMPING_ASSERT_OP(!=)
+    KAMPING_ASSERT_OP(&&)
+    KAMPING_ASSERT_OP(||)
+    KAMPING_ASSERT_OP(<)
+    KAMPING_ASSERT_OP(<=)
+    KAMPING_ASSERT_OP(>)
+    KAMPING_ASSERT_OP(>=)
+    KAMPING_ASSERT_OP(&)
+    KAMPING_ASSERT_OP(|)
+    KAMPING_ASSERT_OP(^)
 
-#undef KAMINPAR_ASSERT_OP
+#undef KAMPING_ASSERT_OP
 
 private:
     const LhsT& _lhs;
@@ -214,7 +214,7 @@ Expr&& finalize_expr(ExprT&& expr) {
 bool evaluate_assertion(Expr&& expr, const SourceLocation& where, char const* expr_str) {
     if (!expr.result()) {
         Logger(std::cerr) << where.file << ": In function '" << where.function << "':\n"
-                          << where.file << ":" << where.row << ": Lordy, lordy, look who's faulty:\n"
+                          << where.file << ":" << where.row << ": FAILED ASSERTION\n"
                           << "\t" << expr_str << "\n"
                           << "with expansion:\n"
                           << "\t" << expr << "\n";
