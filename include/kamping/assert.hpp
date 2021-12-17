@@ -17,7 +17,7 @@
         __FILE__, __LINE__, __func__            \
     }
 
-#define KAMPING_ASSERT(expression, message, level)                                                                   \
+#define KASSERT(expression, message, level)                                                                          \
     do {                                                                                                             \
         if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
             if (!kamping::assert::internal::evaluate_assertion(                                                      \
