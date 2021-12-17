@@ -220,33 +220,55 @@ namespace internal {
 ///
 /// @{
 
+/// @brief Inteface for decomposed unary and binary expressions.
 class Expr {
 public:
+    /// @brief Virtual destructor since we use virtual functions.
     virtual ~Expr() = default;
 
+    /// @brief Evaluate the assertion wrapped in this Expr.
+    /// @return The boolean value that the assertion evalutes to.
     [[nodiscard]] virtual bool result() const = 0;
 
+    /// @brief Write this expression with stringified operands to the given assertion logger.
+    /// @param out The assertion logger.
     virtual void stringify(OStreamLogger& out) const = 0;
 
+    /// @brief Writes an expression with stringified operands to the given assertion logger.
+    /// @param out The assertion logger.
+    /// @param expr The expression to be stringified.
+    /// @return The assertion logger.
     friend OStreamLogger& operator<<(OStreamLogger& out, Expr const& expr) {
         expr.stringify(out);
         return out;
     }
 };
 
+/// @brief A decomposed binary expression.
+/// @tparam LhsT Decomposed type of the left hand side of the expression.
+/// @tparam RhsT Decomposed type of the right hand side of the expression.
 template <typename LhsT, typename RhsT>
 class BinaryExpr : public Expr {
 public:
+    /// @brief Constructs a decomposed binary expression.
+    /// @param result Boolean result of the expression.
+    /// @param lhs Decomposed left hand side of the expression.
+    /// @param op Stringified operator or relation.
+    /// @param rhs Decomposed right hand side of the expression.
     BinaryExpr(bool const result, LhsT const& lhs, const std::string_view op, RhsT const& rhs)
         : _result(result),
           _lhs(lhs),
           _op(op),
           _rhs(rhs) {}
 
+    /// @brief The boolean result of the expression.
+    /// @return The boolean result of the expression.
     [[nodiscard]] bool result() const final {
         return _result;
     }
 
+    /// @brief Writes this expression with stringified operands to the given assertion logger.
+    /// @param out The assertion logger.
     void stringify(OStreamLogger& out) const final {
         stringify_value(out, _lhs);
         out << " " << _op << " ";
@@ -267,33 +289,54 @@ public:
 #undef KAMPING_ASSERT_OP
 
 private:
-    bool             _result;
-    LhsT const&      _lhs;
+    /// @brief Boolean result of this expression.
+    bool _result;
+    /// @brief Decomposed left hand side of this expression.
+    LhsT const& _lhs;
+    /// @brief Stringified operand or relation symbol.
     std::string_view _op;
-    RhsT const&      _rhs;
+    /// @brief Right hand side of this expression.
+    RhsT const& _rhs;
 };
 
+/// @brief Decomposed unary expression.
+/// @tparam Lhst Decomposed expression type.
 template <typename LhsT>
 class UnaryExpr : public Expr {
+    /// @brief Constructs this unary expression from an expression.
+    /// @param lhs The expression.
     explicit UnaryExpr(const LhsT& lhs) : _lhs(lhs) {}
 
+    /// @brief Evaluates this expression.
+    /// @return The boolean result of this expression.
     [[nodiscard]] bool result() const final {
         return static_cast<bool>(_lhs);
     }
 
+    /// @brief Writes this expression with stringified operands to the given assertion logger.
+    /// @param out The assertion logger.
     void stringify(OStreamLogger& out) const final {
         stringify_value(out, _lhs);
     }
 
 private:
+    /// @brief The expression.
     const LhsT& _lhs;
 };
 
+/// @brief The left hand size of a decomposed expression. This can either be turned into a \c BinaryExpr if an operand
+/// or relation follows, or into a \c UnaryExpr otherwise.
+/// @tparam LhsT The expression type.
 template <typename LhsT>
 class LhsExpr {
 public:
+    /// @brief Constructs this left hand size of a decomposed expression.
+    /// @param lhs The wrapped expression.
     explicit LhsExpr(LhsT const& lhs) : _lhs(lhs) {}
 
+    /// @brief Turns this expression into an \c UnaryExpr. This might only be called if the wrapped expression is
+    /// implicitly convertible to \c bool.
+    /// @return This expression as \c UnaryExpr.
     UnaryExpr<LhsT> make_unary() {
         static_assert(std::is_convertible_v<LhsT, bool>, "expression must be convertible to bool");
         return {_lhs};
@@ -321,16 +364,26 @@ public:
 #undef KAMPING_ASSERT_OP
 
 private:
+    /// @brief The wrapped expression.
     const LhsT& _lhs;
 };
 
+/// @brief Decomposes an expression (see group description).
 struct Decomposer {
+    /// @brief Decomposes an expression (see group description).
+    /// @tparam LhsT The type of the expression.
+    /// @param lhs The left hand side of the expression.
+    /// @return \c lhs wrapped in a \c LhsExpr.
     template <typename LhsT>
     friend LhsExpr<LhsT> operator<=(Decomposer&&, LhsT const& lhs) {
         return LhsExpr<LhsT>(lhs);
     }
 };
 
+/// @brief Transforms \c LhsExpr into \c UnaryExpr, does nothing to a \c Expr (see group description).
+/// @tparam ExprT Type of the expression, either \c LhsExpr or a \c BinaryExpr.
+/// @param expr The expression.
+/// @return The expression as some subclass of \c Expr.
 template <typename ExprT>
 Expr&& finalize_expr(ExprT&& expr) {
     if constexpr (std::is_base_of_v<Expr, std::remove_reference_t<std::remove_const_t<ExprT>>>) {
@@ -342,12 +395,20 @@ Expr&& finalize_expr(ExprT&& expr) {
 
 /// @}
 
+/// @brief Describes a source code location.
 struct SourceLocation {
+    /// @brief Filename.
     char const* file;
-    unsigned    row;
+    /// @brief Line number.
+    unsigned row;
+    /// @brief Function name.
     char const* function;
 };
 
+/// @brief Checks if a assertion of the given level is enabled. This is controlled by the CMake option
+/// \c KAMPING_ASSERTION_LEVEL.
+/// @param level The level of the assertion.
+/// @return Whether the assertion is enabled.
 constexpr bool assertion_enabled(int level) {
     return level <= KAMPING_ASSERTION_LEVEL;
 }
