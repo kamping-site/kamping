@@ -9,11 +9,19 @@
 #include <utility>
 #include <vector>
 
+/// @brief Creates an instance of \c SourceLocation describing the current location in the source code.
 #define KAMPING_SOURCE_LOCATION                 \
     kamping::assert::internal::SourceLocation { \
         __FILE__, __LINE__, __func__            \
     }
 
+/// @brief Implementation of ASSERTIONs.
+///
+/// This macro generates code that
+/// 1. at compile time, checks if assertions of the given level are enabled
+/// 2. decomposes and evaluates the assertion, outputs an error if it fails
+/// 3. prints an additional user-defined error message
+/// 4. halts the program using \c std::abort().
 #define KAMPING_ASSERT_IMPL(type, expression, message, level)                                                        \
     do {                                                                                                             \
         if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
@@ -27,9 +35,17 @@
         }                                                                                                            \
     } while (false)
 
+/// @brief Assertion macro
+/// @param expression Expression to be checked.
+/// @param message Additional user message, can use \c << to build the message.
+/// @param level Level of the assertion.
 #define KASSERT(expression, message, level) KAMPING_ASSERT_IMPL("ASSERTION", expression, message, level)
 
 #ifdef KAMPING_EXCEPTION_MODE
+    /// @brief Throws an exception if the expression evaluates to false (in exception mode)
+    /// @param expression Expression to be checked.
+    /// @param message Additional user message, can use \c << to build the message.
+    /// @param assertion_type Type name of the assertion to be used. Most offer an appropriate constructor.
     #define KTHROW(expression, message, assertion_type)                                                                \
         do {                                                                                                           \
             if (!(expression)) {                                                                                       \
@@ -40,6 +56,10 @@
             }                                                                                                          \
         } while (false)
 #else
+    /// @brief Delegates to KASSERT when not in exception mode.
+    /// @param expression Expression to be checked.
+    /// @param message Additional user message, can use \c << to build the message.
+    /// @param assertion_type Type name of the assertion to be used.
     #define KTHROW(expression, message, assertion_type) \
         KAMPING_ASSERT_IMPL(#assertion_type, expression, message, kamping::assert::normal)
 #endif
@@ -104,7 +124,7 @@ private:
 /// * \c std::vector<T>
 /// * \c std::pair<K, V>
 ///
-/// \tparam StreamT The underlying streaming object (e.g., \c std::ostream or \c std::ostringstream).
+/// @tparam StreamT The underlying streaming object (e.g., \c std::ostream or \c std::ostringstream).
 template <typename StreamT>
 class Logger {
 public:
