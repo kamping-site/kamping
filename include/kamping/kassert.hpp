@@ -409,10 +409,10 @@ struct Decomposer {
     }
 };
 
-/// @brief Transforms \c LhsExpr into \c UnaryExpr, does nothing to a \c Expr (see group description).
-/// @tparam ExprT Type of the expression, either \c LhsExpr or a \c BinaryExpr.
+/// @brief Transforms \c LhsExpression into \c UnaryExpression, does nothing to a \c Expression (see group description).
+/// @tparam ExprT Type of the expression, either \c LhsExpression or a \c BinaryExpression.
 /// @param expr The expression.
-/// @return The expression as some subclass of \c Expr.
+/// @return The expression as some subclass of \c Expression.
 template <typename ExprT>
 Expression&& finalize_expr(ExprT&& expr) {
     if constexpr (std::is_base_of_v<Expression, std::remove_reference_t<std::remove_const_t<ExprT>>>) {
