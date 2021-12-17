@@ -39,15 +39,31 @@ TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
     EXPECT_EQ(comm.rank(), self_rank);
     EXPECT_EQ(comm.size(), self_size);
     EXPECT_EQ(comm.rank(), 0);
+
+    EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL), ".*");
 }
 
 TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
             EXPECT_DEATH(Communicator comm(MPI_COMM_WORLD, i), ".*");
+            EXPECT_DEATH(Communicator comm(MPI_COMM_NULL, i), ".*");
         } else {
             Communicator comm(MPI_COMM_WORLD, i);
             ASSERT_EQ(comm.root(), i);
+            EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL, i), ".*");
+        }
+    }
+}
+
+TEST_F(CommunicatorTest, SetRankBoundCheck) {
+  Communicator comm;
+    for (int i = -(2 * size); i < (2 * size); ++i) {
+        if (i < 0 || i >= size) {
+          EXPECT_DEATH(comm.root(i), ".*");
+        } else {
+          comm.root(i);
+          EXPECT_EQ(i, comm.root());
         }
     }
 }

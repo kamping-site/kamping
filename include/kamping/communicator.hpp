@@ -19,6 +19,10 @@ public:
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
     /// @param root Default root that is used by MPI operations requiring a root.
     explicit Communicator(MPI_Comm comm, int root) : _rank(get_mpi_rank(comm)), _size(get_mpi_size(comm)), _comm(comm) {
+      if (comm == MPI_COMM_NULL) {
+        /// @todo Throw or assert
+        std::abort();
+      }
         this->root(root);
     }
 
@@ -28,8 +32,8 @@ public:
         return _rank;
     }
 
-    /// @brief Size of the communicator.
-    /// @return Size of the communicator.
+    /// @brief Number of MPI processes in this communicator.
+    /// @return Number of MPI processes in this communicator.
     int size() const {
         return _size;
     }
@@ -98,7 +102,7 @@ private:
         return rank;
     }
 
-    /// @brief Compute the size of the communicator using \c MPI_Comm_size.
+    /// @brief Compute the number of MPI processes in this communicator using \c MPI_Comm_size.
     /// @return Size of the communicator.
     int get_mpi_size(MPI_Comm comm) const {
         int size;
@@ -107,7 +111,7 @@ private:
     }
 
     int const      _rank; ///< Rank of the MPI process in this communicator.
-    int const      _size; ///< Size of this communicator.
+    int const      _size; ///< Number of MPI processes in this communicator.
     MPI_Comm const _comm; ///< Corresponding MPI communicator.
 
     int _root; ///< Default root for MPI operations that require a root.
