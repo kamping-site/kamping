@@ -1,17 +1,32 @@
 /// @file
 /// @brief Buffer wrapper around buffer based parameter types
+/// The Buffer classes defined in this file serve as in, out and in/out parameters to the
+/// \c MPI calls wrapped by KaMPI.ng.
+/// The non-modifiable buffers (PtrBasedConstBuffer, ContainerBasedConstBuffer)
+/// encapsulate input data like data to send or send counts needed for a lot of \c MPI calls. If the user already
+/// computed additional information like the send displacements or receive counts for a collective operations that would
+/// otherwise have to be computed by the library, these values can also be provided to the library via non-modifiable
+/// buffers.
+/// The modifiable buffers:
+/// - UserAllocatedContainerBasedBuffer
+/// - UserAllocatedUniquePtrBasedBuffer
+/// - LibAllocatedUniquePtrBasedBuffer
+/// - LibAllocatedUniquePtrBasedBuffer
+/// - MovedContainerBasedBuffer
+/// provide memory to store the result of \c MPI calls and (intermediate information needed to complete an \c MPI call
+/// like send displacements or receive counts/displacements etc. if the user has not yet provided them). The storage can
+/// be either provided by the user or can be allocated by the library.
+///
 
 #pragma once
 
 #include <cstddef>
 #include <memory>
 
-#include "definitions.hpp"
-
+#include "parameter_type_definitions.hpp"
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
-
 
 /// @brief Type used for tag dispatching.
 ///
@@ -28,27 +43,30 @@ namespace internal {
 
 
 ///
-/// @brief Own simple implementation of std::span.
+/// @brief Object referring to a contiguous sequence of size objects.
 ///
-/// Since KaMPI.ng needs to be C++17 compatible and std::span is part of C++20, we need our own implementation.
+/// Since KaMPI.ng needs to be C++17 compatible and std::span is part of C++20, we need our own implementation of the
+/// above-described functionality.
 /// @tparam T type for which the span is defined.
 template <typename T>
 struct Span {
-    const T* ptr;  ///< Pointer to the data reference by Span.
-    size_t   size; ///< Number of elements of type T referenced by Span.
+    const T* ptr;  ///< Pointer to the data referred to by Span.
+    size_t   size; ///< Number of elements of type T referred to by Span.
 };
 
+
+/// @brief Constant buffer based on a pointer.
 ///
-/// @brief Constant buffer based on on a pointer.
-///
-/// PtrBasedConstBuffer wraps read-only buffer storage of type T and represents an input of ParameterType type
+/// PtrBasedConstBuffer wraps read-only buffer storage of type T and represents an input of ParameterType
+/// type.
 /// @tparam T type contained in the buffer
 /// @tparam ParameterType parameter type represented by this buffer
 template <typename T, ParameterType type>
 class PtrBasedConstBuffer {
 public:
-    static constexpr ParameterType ptype = type; ///< The type of parameter this buffer represents
-    using value_type                     = T; ///< Value type of the buffer. //TODO this seems so obvious/redundant ...
+    static constexpr ParameterType ptype         = type;  ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable = false; ///< Indicates whether the underlying storage is modifiable.
+    using value_type                             = T;     ///< Value type of the buffer.
 
     PtrBasedConstBuffer(const T* ptr, size_t size) : _span{ptr, size} {}
 
@@ -62,223 +80,113 @@ private:
     Span<T> _span; ///< Actual storage to which PtrBasedConstBuffer refers.
 };
 
-template <typename Cont, ParameterType type>
+/// @brief Constant buffer based on a container type.
+///
+/// ContainerBasedConstBuffer wraps read-only buffer storage provided by an std-like container like std::vector. The
+/// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
+/// @tparam Container Container on which this buffer is based.
+/// @tparam ParameterType parameter type represented by this buffer.
+template <typename Container, ParameterType type>
 class ContainerBasedConstBuffer {
 public:
-    static constexpr ParameterType ptype = type;
-    using value_type                     = typename Cont::value_type;
+    static constexpr ParameterType ptype         = type;  ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable = false; ///< Indicates whether the underlying storage is modifiable.
+    using value_type                             = typename Container::value_type; ///< Value type of the buffer.
 
-    ContainerBasedConstBuffer(const Cont& cont) : _cont(cont) {}
+    ///@brief Constructor for ContainerBasedConstBuffer.
+    /// param container Container holding the actual data.
+    ContainerBasedConstBuffer(const Container& container) : _container(container) {}
 
+    ///@brief Get access to the underlying read-only storage.
+    ///@return Span referring to the underlying read-only storage.
     Span<value_type> get() {
-        return {std::data(_cont), _cont.size()};
+        return {std::data(_container), _container.size()};
     }
 
 private:
-    const Cont& _cont;
+    const Container& _container; ///< Container which holds the actual data.
 };
 
-///
 /// @brief Struct containing some definitions used by all modifiable buffers.
 ///
 /// @tparam ParameterType (parameter) type represented by this buffer
 /// @tparam is_consumable_ indicates whether this buffer already contains useable data
-template <ParameterType type, bool is_consumable_>
+template <ParameterType type>
 struct BufferParameterType {
-    static constexpr ParameterType ptype = type; ///< ParameterType which the buffer represents.
-    static constexpr bool          is_consumable =
-        is_consumable_; ///< This flag indicates whether the buffer content can be consumed or whether the underlying
-                        ///< storage simply contains "empty" memory which needs to be filled.
+    static constexpr ParameterType ptype         = type; ///< ParameterType which the buffer represents.
+    static constexpr bool          is_modifiable = true; ///< Indicates whether the underlying storage is modifiable.
 };
 
-template <typename Cont, ParameterType ptype, bool is_consumable>
-class UserAllocContainerBasedBuffer : public BufferParameterType<ptype, is_consumable> {
-public:
-    using value_type = typename Cont::value_type;
-    UserAllocContainerBasedBuffer(Cont& cont) : _cont(cont) {}
-    value_type* get_ptr(size_t s) {
-        if (_cont.size() < s)
-            _cont.resize(s);
-        return _cont.data();
-    }
-
-private:
-    Cont& _cont;
-};
-
-template <typename T, ParameterType trait, bool is_consumable>
-class UserAllocUniquePtrBasedBuffer : public BufferParameterType<trait, is_consumable> {
-public:
-    using value_type = T;
-    UserAllocUniquePtrBasedBuffer(std::unique_ptr<T[]>& ptr) : ptr_ref(ptr) {}
-    T* get_ptr([[maybe_unused]] size_t s) {
-        return ptr_ref.get();
-    }
-
-private:
-    std::unique_ptr<T[]>& ptr_ref;
-};
-
-template <typename Cont, ParameterType trait>
-class LibAllocContainerBasedBuffer : public BufferParameterType<trait, false> {
-public:
-    using value_type = typename Cont::value_type;
-    LibAllocContainerBasedBuffer() {}
-    value_type* get_ptr(size_t s) {
-        _cont.resize(s);
-        return std::data(_cont);
-    }
-    Cont extract() {
-        return std::move(_cont);
-    }
-    operator Cont() {
-        return std::move(_cont);
-    }
-
-private:
-    Cont _cont;
-};
-
-template <typename T, ParameterType ptype>
-class LibAllocUniquePtrBasedBuffer : public BufferParameterType<ptype, false> {
-public:
-    using value_type = T;
-    LibAllocUniquePtrBasedBuffer() {}
-    T* get_ptr(size_t s) {
-        _ptr_ref = std::make_unique<T[]>(s);
-        return _ptr_ref.get();
-    }
-    std::unique_ptr<T[]> extract() {
-        return std::move(_ptr_ref);
-    }
-    operator std::unique_ptr<T[]>() {
-        return std::move(_ptr_ref);
-    }
-
-private:
-    std::unique_ptr<T[]> _ptr_ref;
-};
-
-template <typename Cont, ParameterType trait, bool is_consumable>
-class MovedContainerBasedBuffer : public BufferParameterType<trait, is_consumable> {
-public:
-    using value_type = typename Cont::value_type;
-    MovedContainerBasedBuffer(Cont&& rref) : _cont(std::forward<Cont>(rref)) {}
-    value_type* get_ptr(size_t s) {
-        _cont.resize(s);
-        return std::data(_cont);
-    }
-    Cont extract() {
-        return std::move(_cont);
-    }
-    operator Cont() {
-        return std::move(_cont);
-    }
-
-private:
-    Cont _cont;
-};
-
-///@brief Macro to generate all buffers based on kamping::internal::ContainerBasedConstBuffer.
+/// @brief Buffer based on a container type that has been allocated by the user (but may be resized if the provided
+/// space is not sufficient).
 ///
-///@param func_name Name of the function that will be generated.
-///@param trait kamping::internal::ParameterType which the buffer returned by the generated function will represent.
-#define DEFINE_CONTAINER_BASED_CONST_BUFFER(func_name, trait)                                                     \
-    template <typename Cont>                                                                                      \
-    kamping::internal::ContainerBasedConstBuffer<Cont, kamping::internal::ParameterType::trait> func_name(        \
-        Cont& cont) {                                                                                             \
-        return kamping::internal::ContainerBasedConstBuffer<Cont, kamping::internal::ParameterType::trait>(cont); \
+/// UserAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like std::vector
+/// that has already been allocated by the user. The Container type must provide \c data(), \size() and \c resize() and
+/// expose the type definition \c value_type. type.
+/// @tparam Container Container on which this buffer is based.
+/// @tparam ParameterType parameter type represented by this buffer.
+template <typename Container, ParameterType ptype>
+class UserAllocatedContainerBasedBuffer : public BufferParameterType<ptype> {
+public:
+    using value_type = typename Container::value_type; ///< Value type of the buffer.
+
+    ///@brief Constructor for UserAllocatedContainerBasedBuffer.
+    /// param container Container providing storage for data that may be written.
+    UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
+
+    ///@brief Request memory sufficient to hold at least \c s elements of \c value_type.
+    ///
+    /// If the underlying container does not provide enough memory it will be resized.
+    ///@param s Number of elements for which memory is requested.
+    ///@return Pointer to enough memory for \c s elements of type \c value_type.
+    value_type* get_ptr(size_t s) {
+        if (_container.size() < s)
+            _container.resize(s);
+        return _container.data();
     }
 
-#define DEFINE_PTR_BASED_CONST_BUFFER(func_name, trait)                                                       \
-    template <typename T>                                                                                     \
-    kamping::internal::PtrBasedConstBuffer<T, kamping::internal::ParameterType::trait> func_name(             \
-        const T* ptr, size_t size) {                                                                          \
-        return kamping::internal::PtrBasedConstBuffer<T, kamping::internal::ParameterType::trait>(ptr, size); \
+private:
+    Container& _container; ///< Container which holds the actual data.
+};
+
+/// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
+///
+/// LibAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like std::vector
+/// that will be allocated by KaMPI.ng. The Container type must provide \c data(), \size() and \c resize() and
+/// expose the type definition \c value_type. type.
+/// @tparam Container Container on which this buffer is based.
+/// @tparam ParameterType parameter type represented by this buffer.
+template <typename Container, ParameterType type>
+class LibAllocatedContainerBasedBuffer : public BufferParameterType<type> {
+public:
+    using value_type = typename Container::value_type;
+    ///@brief Constructor for LibAllocatedContainerBasedBuffer.
+    ///
+    LibAllocatedContainerBasedBuffer() {}
+
+    ///@brief Request memory sufficient to hold at least \c s elements of \c value_type.
+    ///
+    /// If the underlying container does not provide enough memory it will be resized.
+    ///@param s Number of elements for which memory is requested.
+    ///@return Pointer to enough memory for \c s elements of type \c value_type.
+    value_type* get_ptr(size_t s) {
+        _container.resize(s);
+        return std::data(_container);
     }
 
-
-#define DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER(func_name, parameter_trait, is_consumable) \
-    template <typename Cont>                                                                \
-    kamping::internal::UserAllocContainerBasedBuffer<                                       \
-        Cont, kamping::internal::ParameterType::parameter_trait, is_consumable>             \
-    func_name(Cont& cont) {                                                                 \
-        return kamping::internal::UserAllocContainerBasedBuffer<                            \
-            Cont, kamping::internal::ParameterType::parameter_trait, is_consumable>(cont);  \
-    }
-#define DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER(func_name, parameter_trait, is_consumable) \
-    template <typename T>                                                                    \
-    kamping::internal::UserAllocUniquePtrBasedBuffer<                                        \
-        T, kamping::internal::ParameterType::parameter_trait, is_consumable>                 \
-    func_name(std::unique_ptr<T[]>& ptr) {                                                   \
-        return kamping::internal::UserAllocUniquePtrBasedBuffer<                             \
-            T, kamping::internal::ParameterType::parameter_trait, is_consumable>(ptr);       \
+    ///@brief Extract the underlying container. This will leave LibAllocatedContainerBasedBuffer in an unspecified
+    /// state.
+    ///
+    ///@return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
+    Container extract() {
+        return std::move(_container);
     }
 
-#define DEFINE_LIB_ALLOC_CONTAINER_BASED_BUFFER(func_name, parameter_trait)                                  \
-    template <typename Cont>                                                                                 \
-    kamping::internal::LibAllocContainerBasedBuffer<Cont, kamping::internal::ParameterType::parameter_trait> \
-    func_name(NewContainer<Cont>&&) {                                                                        \
-        return kamping::internal::LibAllocContainerBasedBuffer<                                              \
-            Cont, kamping::internal::ParameterType::parameter_trait>();                                      \
-    }
-#define DEFINE_LIB_ALLOC_UNIQUE_PTR_BASED_BUFFER(func_name, parameter_trait)                                         \
-    template <typename T>                                                                                            \
-    kamping::internal::LibAllocUniquePtrBasedBuffer<T, kamping::internal::ParameterType::parameter_trait> func_name( \
-        NewPtr<T>&&) {                                                                                               \
-        return kamping::internal::LibAllocUniquePtrBasedBuffer<                                                      \
-            T, kamping::internal::ParameterType::parameter_trait>();                                                 \
-    }
-
-#define DEFINE_MOVED_CONTAINER_BASED_BUFFER(func_name, parameter_trait, is_consumable)                     \
-    template <typename Cont, typename = typename std::enable_if_t<!std::is_lvalue_reference<Cont>::value>> \
-    kamping::internal::MovedContainerBasedBuffer<                                                          \
-        Cont, kamping::internal::ParameterType::parameter_trait, is_consumable>                            \
-    func_name(Cont&& cont) {                                                                               \
-        return kamping::internal::MovedContainerBasedBuffer<                                               \
-            Cont, kamping::internal::ParameterType::parameter_trait, is_consumable>(std::move(cont));      \
-    }
+private:
+    Container _container; ///< Container which holds the actual data.
+};
 
 } // namespace internal
-
-DEFINE_CONTAINER_BASED_CONST_BUFFER(send_buf, send_buf)
-DEFINE_PTR_BASED_CONST_BUFFER(send_buf, send_buf)
-
-DEFINE_CONTAINER_BASED_CONST_BUFFER(send_counts, send_counts)
-DEFINE_PTR_BASED_CONST_BUFFER(send_counts, send_counts)
-
-DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER(recv_buf, recv_buf, false)
-DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER(recv_buf, recv_buf, false)
-DEFINE_LIB_ALLOC_CONTAINER_BASED_BUFFER(recv_buf, recv_buf)
-DEFINE_LIB_ALLOC_UNIQUE_PTR_BASED_BUFFER(recv_buf, recv_buf)
-DEFINE_MOVED_CONTAINER_BASED_BUFFER(recv_buf, recv_buf, false);
-
-DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER(recv_counts, recv_counts, false)
-DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER(recv_counts_input, recv_counts, true)
-DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER(recv_count, recv_counts, false)
-DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER(recv_count_input, recv_counts, true)
-DEFINE_LIB_ALLOC_CONTAINER_BASED_BUFFER(recv_counts, recv_counts)
-DEFINE_LIB_ALLOC_UNIQUE_PTR_BASED_BUFFER(recv_counts, recv_counts)
-DEFINE_MOVED_CONTAINER_BASED_BUFFER(recv_counts, recv_counts, false);
-DEFINE_MOVED_CONTAINER_BASED_BUFFER(recv_counts_input, recv_counts, true);
-
-DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER(recv_displs, recv_displs, false)
-DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER(recv_displs_input, recv_displs, true)
-DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER(recv_displs, recv_displs, false)
-DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER(recv_displs_input, recv_displs, true)
-DEFINE_LIB_ALLOC_CONTAINER_BASED_BUFFER(recv_displs, recv_displs)
-DEFINE_LIB_ALLOC_UNIQUE_PTR_BASED_BUFFER(recv_displs, recv_displs)
-DEFINE_MOVED_CONTAINER_BASED_BUFFER(recv_displs, recv_displs, false);
-DEFINE_MOVED_CONTAINER_BASED_BUFFER(recv_displs_input, recv_displs, true);
-
-DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER(send_displs, send_displs, false)
-DEFINE_USER_ALLOC_CONTAINER_BASED_BUFFER(send_displs_input, send_displs, true)
-DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER(send_displs, send_displs, false)
-DEFINE_USER_ALLOC_UNIQUE_PTR_BASED_BUFFER(send_displs_input, send_displs, true)
-DEFINE_LIB_ALLOC_CONTAINER_BASED_BUFFER(send_displs, send_displs)
-DEFINE_LIB_ALLOC_UNIQUE_PTR_BASED_BUFFER(send_displs, send_displs)
-DEFINE_MOVED_CONTAINER_BASED_BUFFER(send_displs, send_displs, false);
-DEFINE_MOVED_CONTAINER_BASED_BUFFER(send_displs_input, send_displs, true);
 
 /// @}
 

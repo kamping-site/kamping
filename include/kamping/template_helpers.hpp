@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <tuple>
 
-#include "definitions.hpp"
+#include "parameter_type_definitions.hpp"
 
 namespace kamping {
 namespace internal {
