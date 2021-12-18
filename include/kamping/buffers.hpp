@@ -134,8 +134,8 @@ struct BufferParameterType {
 /// space is not sufficient).
 ///
 /// UserAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like std::vector
-/// that has already been allocated by the user. The Container type must provide \c data(), \c size() and \c resize() and
-/// expose the type definition \c value_type. type.
+/// that has already been allocated by the user. The Container type must provide \c data(), \c size() and \c resize()
+/// and expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType ptype>
