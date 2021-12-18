@@ -1,3 +1,16 @@
+// This file is part of KaMPIng.
+//
+// Copyright 2021 The KaMPIng Authors
+//
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
 /// @file
 /// @brief Buffer wrapper around buffer based parameter types
 /// The Buffer classes defined in this file serve as in, out and in/out parameters to the
@@ -121,7 +134,7 @@ struct BufferParameterType {
 /// space is not sufficient).
 ///
 /// UserAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like std::vector
-/// that has already been allocated by the user. The Container type must provide \c data(), \size() and \c resize() and
+/// that has already been allocated by the user. The Container type must provide \c data(), \c size() and \c resize() and
 /// expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
@@ -134,14 +147,14 @@ public:
     /// param container Container providing storage for data that may be written.
     UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
 
-    ///@brief Request memory sufficient to hold at least \c s elements of \c value_type.
+    ///@brief Request memory sufficient to hold at least \c size elements of \c value_type.
     ///
     /// If the underlying container does not provide enough memory it will be resized.
-    ///@param s Number of elements for which memory is requested.
-    ///@return Pointer to enough memory for \c s elements of type \c value_type.
-    value_type* get_ptr(size_t s) {
-        if (_container.size() < s)
-            _container.resize(s);
+    ///@param size Number of elements for which memory is requested.
+    ///@return Pointer to enough memory for \c size elements of type \c value_type.
+    value_type* get_ptr(size_t size) {
+        if (_container.size() < size)
+            _container.resize(size);
         return _container.data();
     }
 
@@ -152,25 +165,25 @@ private:
 /// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
 ///
 /// LibAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like std::vector
-/// that will be allocated by KaMPI.ng. The Container type must provide \c data(), \size() and \c resize() and
+/// that will be allocated by KaMPI.ng. The Container type must provide \c data(), \c size() and \c resize() and
 /// expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
 class LibAllocatedContainerBasedBuffer : public BufferParameterType<type> {
 public:
-    using value_type = typename Container::value_type;
+    using value_type = typename Container::value_type; ///< Value type of the buffer.
     ///@brief Constructor for LibAllocatedContainerBasedBuffer.
     ///
     LibAllocatedContainerBasedBuffer() {}
 
-    ///@brief Request memory sufficient to hold at least \c s elements of \c value_type.
+    ///@brief Request memory sufficient to hold at least \c size elements of \c value_type.
     ///
     /// If the underlying container does not provide enough memory it will be resized.
-    ///@param s Number of elements for which memory is requested.
-    ///@return Pointer to enough memory for \c s elements of type \c value_type.
-    value_type* get_ptr(size_t s) {
-        _container.resize(s);
+    ///@param size Number of elements for which memory is requested.
+    ///@return Pointer to enough memory for \c size elements of type \c value_type.
+    value_type* get_ptr(size_t size) {
+        _container.resize(size);
         return std::data(_container);
     }
 

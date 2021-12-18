@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "kamping/buffer_factories.hpp"
-#include "kamping/template_helpers.hpp"
+#include "kamping/named_parameter_selection.hpp"
 
 /*
 void printResult(int rank, std::vector<int>& recvData, std::string name) {

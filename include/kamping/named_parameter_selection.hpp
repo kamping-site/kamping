@@ -1,3 +1,17 @@
+// This file is part of KaMPIng.
+//
+// Copyright 2021 The KaMPIng Authors
+//
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
+// <https://www.gnu.org/licenses/>.:
+
+
 /// @file
 /// @brief Template magic to implement named parameters in cpp
 
@@ -40,18 +54,6 @@ template <ParameterType ptype, typename... Args>
 decltype(auto) select_ptype(Args&&... args) {
     return std::move(std::get<find_pos<ptype, 0, Args...>()>(std::forward_as_tuple(args...)));
 }
-
-// https://stackoverflow.com/a/9154394 TODO license?
-template <typename>
-struct true_type : std::true_type {};
-template <typename T>
-auto test_extract(int) -> true_type<decltype(std::declval<T>().extract())>;
-template <typename T>
-auto test_extract(...) -> std::false_type;
-template <typename T>
-struct has_extract : decltype(internal::test_extract<T>(0)) {};
-template <typename T>
-inline constexpr bool has_extract_v = has_extract<T>::value;
 
 ///@}
 } // namespace internal
