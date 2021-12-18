@@ -26,7 +26,6 @@
 
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
-#include "kamping/template_magic_helpers.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -40,65 +39,6 @@ namespace internal {
 struct BufferCategoryNotUsed {};
 } // namespace internal
 
-///@brief MPIResult contains the result of a \c MPI call wrapped by KaMPI.ng.
-///
-/// A wrapped \c MPI call can have multiple different results such as the \c
-/// recv_buffer, \c recv_counts, \c recv_displs etc. If the buffers where these
-/// results have been written to by the library call has been allocated
-/// by/transfered to KaMPI.ng, the content of the buffers can be extracted using
-/// extract_<result>.
-/// Note that not all below-listed buffer categories needs to be used by every wrapped \c MPI call.
-/// If a specific call does not use a buffer category, you have to provide internal::BufferCategoryNotUsed instead.
-///
-///@tparam RecBuf Buffer type containing the received elements.
-///@tparam RecCounts Buffer type containing the numbers of received elements.
-///@tparam RecDispls Buffer type containing the displacements of the received elements.
-///@tparam SendDispls Buffer type containing the displacements of the sent elements.
-///@tparam MPIStatusObject Buffer type containing the \c MPI status object(s).
-template <class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls, class MPIStatusObject>
-class MPIResult {
-public:
-    MPIResult(
-        RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvDispls&& recv_displs, SendDispls&& send_displs,
-        MPIStatusObject&& mpi_status)
-        : _recv_buffer(std::forward<recv_buf>(recv_buf)),
-          _recv_counts(std::forward<RecvCounts>(recv_counts)),
-          _recv_displs(std::forward<RecvDispls>(recv_displs)),
-          _send_displs(std::forward<SendDispls>(send_displs)),
-          _mpi_status(std::forward<MPIStatusObject>(mpi_status)) {}
-
-    template <typename U = RecvBuf, std::enable_if_t<kamping::internal::has_extract_v<U>, bool> = true>
-    decltype(auto) extract_recv_buffer() {
-        return _recv_buffer.extract();
-    }
-
-    template <typename U = RecvCounts, std::enable_if_t<kamping::internal::has_extract_v<U>, bool> = true>
-    decltype(auto) extract_recv_counts() {
-        return _recv_counts.extract();
-    }
-
-    template <typename U = RecvDispls, std::enable_if_t<kamping::internal::has_extract_v<U>, bool> = true>
-    decltype(auto) extract_recv_displs() {
-        return _recv_displs.extract();
-    }
-
-    template <typename U = SendDispls, std::enable_if_t<kamping::internal::has_extract_v<U>, bool> = true>
-    decltype(auto) extract_send_displs() {
-        return _send_displs.extract();
-    }
-
-    template <typename U = MPIStatusObject, std::enable_if_t<kamping::internal::has_extract_v<U>, bool> = true>
-    decltype(auto) extract_mpi_status() {
-        return _mpi_status.extract();
-    }
-
-private:
-    RecvBuf         _recv_buffer;
-    RecvCounts      _recv_counts;
-    RecvDispls      _recv_displs;
-    SendDispls      _send_displs;
-    MPIStatusObject _mpi_status;
-};
 class MPIContext {
 public:
     // enum class SendMode { normal, buffered, synchronous };
