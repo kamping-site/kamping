@@ -7,41 +7,64 @@ Our general philosophy is:
 > If there is no unit test for it, it does not exist.
 
 # Naming and organizing tests
-Name your unit test files `test_corresponding_filename_of_code.cpp`. Inside this file, add tests using the following naming scheme: `TEST(Test_ClassName, function_<description>)`, where `<description>` could for example be: `basics`, `invalid_parameters`, `typedefs_and_using` or many others.
-
-The tests for the global helper function `mpi_datatype<T>()` are in `tests/test_mpi_datatype.cpp` and for example include the following tests:
+Consider the following class:
 
 ```cpp
-TEST(Test_Helpers, mpi_datatype_basics) {
-// ...
-TEST(Test_Helpers, mpi_datatype_typedefs_and_using) {
-// ...
-TEST(Test_Helpers, mpi_datatype_size_t) {
-// ...
-TEST(Test_Helpers, mpi_datatype_enum) {
-// ...
+// file: include/kamping/foo.hpp
+class Foo {
+public:
+    int bar();
+    int baz(int x);
+}
 ```
-As `mpi_datatype<T>()` is not part of any class, we use the organizatorial unit `Helpers` as the class name.
+
+The corresponding test file should be named `tests/foo_test.cpp`. Inside this file, add tests using the following naming scheme: `TEST(FooTest, <member function of Foo>_<description>)`, where `<description>` could for example be: `basics`, `invalid_parameters`, or many others.
+
+The tests for `Foo` may look like this:
+
+```cpp
+// file: tests/foo_test.cpp
+TEST(FooTest, bar_basics) {
+    // ...
+}
+TEST(Test_Helpers, mpi_datatype_enum) {
+    // ...
+}
+TEST(FooTest, baz_basics) {
+    // ...
+}
+TEST(FooTest, baz_negative_input) {
+    // ...
+}
+TEST(FooTest, baz_invalid_parameter) {
+    // ...
+}
+```
+
+Do not forget to document what your tests are checking.
 
 # Registering tests
-If you have written your unit tests, you need to build the tests and register them with `ctest` so they may be executed automatically by our CI.
+If you have written your unit tests, you need to build the tests and register them with `ctest` so they may be executed automatically by our CI or by running `ctest` or `make test` in the build directory.
 
-We provide several CMake helper functions to ease test registration. These helpers are implemented in the CMake modules `KampingTestHelper` and `KaTestrophe`.
+We provide several CMake helper functions to ease test registration. These helpers are implemented in the CMake modules `KampingTestHelper` and `KaTestrophe`, but usually you should only have to use the former.
 
-To register a test `tests/my_unit_test.cpp` which does not rely on MPI use `kamping_register_test(...)` and add the following line to `tests/CMakeLists.txt`
+To simplify building a specific test by relying on command line completion (e.g. by using `make test_<TAB>`), the test target names should start with the prefix `test_*`.
+
+To register a test `tests/foo_test.cpp` which should not be executed using `mpiexec` use `kamping_register_test(...)` and add the following line to `tests/CMakeLists.txt`
 
 ```cmake
-kamping_register_test(my_unit_test FILES my_unit_test.cpp)
+kamping_register_test(test_foo FILES foo_test.cpp)
 ```
-This links the test with KaMPI.ng, adds the test target and registers the test with `ctest`.
+This links the test with KaMPI.ng (which transitively links MPI), adds the test target and registers the test with `ctest`.
 
-If your test `test/my_mpi_unit_test.cpp` should be executed in parallel using MPI use `kamping_register_mpi_test(...)` like so:
+If your test `test/foo_mpi_test.cpp` should be executed in parallel using MPI use `kamping_register_mpi_test(...)` like so:
 
 ```cmake
-kamping_register_mpi_test(my_mpi_unit_test FILES my_mpi_unit_test.cpp CORES 1 2 4 8)
+kamping_register_mpi_test(test_foo_mpi FILES foo_mpi_test.cpp CORES 1 2 4 8)
 ```
 The test will be executed using 1, 2, 4 and 8 MPI ranks separately.
 
+For a detailed description of the functions available for registering tests, see the reference below.
 
 # Compilation failure tests
 
@@ -50,7 +73,34 @@ The test will be executed using 1, 2, 4 and 8 MPI ranks separately.
 
 # Reference
 
+## KampingTestHelper
+The CMake module `KaTestrophe` provides convenience wrappers for registering tests for KaMPI.ng. 
+
+```cmake
+# Convenience wrapper for adding tests for KaMPI.ng
+# This creates the target, links googletest and kamping (which includes MPI as transitive depenency), enables warnings and registers the test.
+# The test is executed directly, wihout using `mpiexec`
+#
+# TARGET_NAME the target name
+# FILES the files of the target
+#
+kamping_register_test(target FILES [filename ...])
+```
+
+```cmake
+# Convenience wrapper for adding tests for KaMPI.ng which rely on MPI
+# This creates the target, links googletest, kamping and MPI, enables warnings and registers the tests.
+# The test is executed using `mpiexec`, using the number of MPI ranks specified.
+#
+# TARGET_NAME the target name
+# FILES the files of the target
+# CORES the number of MPI ranks to run the test for
+#
+kamping_register_mpi_test(target FILES [filename ...] CORES [Integer ...])
+```
+
 ## KaTestrophe
+The CMake module `KaTestrophe` provides general functions for registering unit tests with `ctest`, which should be executed using `mpiexec`. They are agnostic to the library under test and do not depend on KaMPI.ng. You should only have to use them if you want fine control over what is linked to your test and how it is executed.
 
 ```cmake
 # Adds an executable target with the specified files FILES and links gtest and the MPI gtest runner
@@ -61,7 +111,8 @@ katestrophe_add_test_executable(target FILES [filename ...])
 ```
 
 ```cmake
-# Registers an executable target KATESTROPHE_TEST_TARGET as a test to be executed with ctest
+# Registers an executable target KATESTROPHE_TEST_TARGET as a test to be executed with ctest.
+# The test is executed using `mpiexec`, using the number of MPI ranks specified.
 #
 # KATESTROPHE_TEST_TARGET target name
 # CORES the number of MPI ranks to run the test with
@@ -83,28 +134,6 @@ katestrophe_add_compilation_failure_test(
   SECTIONS [section ...]
   LIBRARIES [library ...]
 )
-```
-## KampingTestHelper
-
-```cmake
-# Convenience wrapper for adding tests for KaMPI.ng
-# this creates the target, links googletest and kamping, enables warnings and registers the test
-#
-# TARGET_NAME the target name
-# FILES the files of the target
-#
-kamping_register_test(target FILES [filename ...])
-```
-
-```cmake
-# Convenience wrapper for adding tests for KaMPI.ng which rely on MPI
-# this creates the target, links googletest, kamping and MPI, enables warnings and registers the tests
-#
-# TARGET_NAME the target name
-# FILES the files of the target
-# CORES the number of MPI ranks to run the test for
-#
-kamping_register_mpi_test(target FILES [filename ...] CORES [Integer ...])
 ```
 
 [GoogleTest]: https://google.github.io/googletest/
