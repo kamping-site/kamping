@@ -100,6 +100,10 @@ if (NOT DEFINED KATESTROPHE_INCLUDED)
       ${ARGN}
       )
 
+    # the file should compile without any section enabled
+    add_executable(${KATESTROPHE_TARGET} ${KATESTROPHE_FILES})
+    target_link_libraries(${KATESTROPHE_TARGET} PUBLIC ${KATESTROPHE_LIBRARIES})
+
     # For each given section, add a target.
     foreach(SECTION ${KATESTROPHE_SECTIONS})
       string(TOLOWER ${SECTION} SECTION_LOWERCASE)
