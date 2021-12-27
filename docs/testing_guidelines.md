@@ -68,9 +68,48 @@ For a detailed description of the functions available for registering tests, see
 
 # Compilation failure tests
 
-```cmake
+If you want to test, that a certain piece of code does not compile, you can create compilation failure test.
+This is one of the only possibilities to test that a templated class cannot be instantiated with a specific template parameter or that a `static_assert` fails.
+
+KaMPI.ng provides a CMake helper for creating compilation failure tests.
+Let's look at the example of `mpi_datatype<Datatype>()` which should not compile for types for which there is no equivalent MPI datatype, e.g. `void` or a pointer.
+
+First, we have to create a simple `cpp` file containing the code to be tested.
+To reduce the amount of duplicated code, the CMake macro for compilation failures supports sections.
+In each compilation, only one of sections (`POINTER`, `VOID`) is enabled.
+To test that there is no bug in the remainder of the file, we also define a `else` section for which compilation should succeed.
+@todo Niklas: Does this work yet?
+Our CMake helper will automatically compile the file without any sections macros defined to check this.
+
+This is the content of our compilation failure test for `mpi_datatype<Datatype>()`.
+
+```cpp
+using namespace ::kamping;
+
+int main(int argc, char** argv) {
+#if defined(POINTER)
+    // Calling mpi_datatype with a pointer type should not compile.
+    auto result = mpi_datatype<int*>();
+// [...] more sections, e.g. function
+#elif defined(VOID)
+    // Calling mpi_datatype with a void type should not compile.
+    auto result = mpi_datatype<void>();
+#else
+// If none of the above sections is active, this file will compile successfully.
+#endif
+}
 ```
 
+And the CMake code to register our tests:
+
+```cmake
+katestrophe_add_compilation_failure_test(
+    TARGET test_mpi_datatype_unsupported_types
+    FILES test_mpi_datatype_unsupported_types.cpp
+    SECTIONS "POINTER" "VOID"
+    LIBRARIES kamping
+)
+```
 # Reference
 
 ## KampingTestHelper
