@@ -68,7 +68,7 @@ For a detailed description of the functions available for registering tests, see
 
 # Compilation failure tests
 
-If you want to test, that a certain piece of code does not compile, you can create compilation failure test.
+If you want to test that a certain piece of code does not compile, you can create a compilation failure test.
 This is one of the only possibilities to test that a templated class cannot be instantiated with a specific template parameter or that a `static_assert` fails.
 
 KaMPI.ng provides a CMake helper for creating compilation failure tests.
@@ -78,7 +78,6 @@ First, we have to create a simple `cpp` file containing the code to be tested.
 To reduce the amount of duplicated code, the CMake macro for compilation failures supports sections.
 In each compilation, only one of sections (`POINTER`, `VOID`) is enabled.
 To test that there is no bug in the remainder of the file, we also define a `else` section for which compilation should succeed.
-@todo Niklas: Does this work yet?
 Our CMake helper will automatically compile the file without any sections macros defined to check this.
 
 This is the content of our compilation failure test for `mpi_datatype<Datatype>()`.
