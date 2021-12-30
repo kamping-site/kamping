@@ -104,7 +104,8 @@ class MPIMinimalistPrinter : public ::testing::EmptyTestEventListener
     result_vector()
  {
     int is_mpi_initialized;
-    assert(MPI_Initialized(&is_mpi_initialized) == MPI_SUCCESS);
+    int return_code = MPI_Initialized(&is_mpi_initialized);
+    assert(return_code == MPI_SUCCESS);
     if (!is_mpi_initialized) {
       printf("MPI must be initialized before RUN_ALL_TESTS!\n");
       printf("Add '::testing::InitGoogleTest(&argc, argv);\n");
@@ -119,7 +120,8 @@ class MPIMinimalistPrinter : public ::testing::EmptyTestEventListener
     result_vector()
  {
    int is_mpi_initialized;
-   assert(MPI_Initialized(&is_mpi_initialized) == MPI_SUCCESS);
+   int return_code = MPI_Initialized(&is_mpi_initialized);
+   assert(return_code == MPI_SUCCESS);
    if (!is_mpi_initialized) {
      printf("MPI must be initialized before RUN_ALL_TESTS!\n");
      printf("Add '::testing::InitGoogleTest(&argc, argv);\n");
@@ -135,7 +137,8 @@ class MPIMinimalistPrinter : public ::testing::EmptyTestEventListener
     (const MPIMinimalistPrinter& printer) {
 
     int is_mpi_initialized;
-    assert(MPI_Initialized(&is_mpi_initialized) == MPI_SUCCESS);
+    int return_code = MPI_Initialized(&is_mpi_initialized);
+    assert(return_code == MPI_SUCCESS);
     if (!is_mpi_initialized) {
       printf("MPI must be initialized before RUN_ALL_TESTS!\n");
       printf("Add '::testing::InitGoogleTest(&argc, argv);\n");
@@ -152,7 +155,8 @@ class MPIMinimalistPrinter : public ::testing::EmptyTestEventListener
   void OnEnvironmentTearDownStart()
   {
     int is_mpi_finalized;
-    assert(MPI_Finalized(&is_mpi_finalized) == MPI_SUCCESS);
+    int return_code = MPI_Finalized(&is_mpi_finalized);
+    assert(return_code == MPI_SUCCESS);
     if (!is_mpi_finalized) {
       MPI_Comm_free(&comm);
     }
@@ -281,7 +285,8 @@ MPIWrapperPrinter(::testing::TestEventListener *l, MPI_Comm comm_) :
     ::testing::TestEventListener(), listener(l), result_vector()
  {
    int is_mpi_initialized;
-   assert(MPI_Initialized(&is_mpi_initialized) == MPI_SUCCESS);
+   int return_code = MPI_Initialized(&is_mpi_initialized);
+   assert(return_code == MPI_SUCCESS);
    if (!is_mpi_initialized) {
      printf("MPI must be initialized before RUN_ALL_TESTS!\n");
      printf("Add '::testing::InitGoogleTest(&argc, argv);\n");
@@ -298,7 +303,8 @@ MPIWrapperPrinter
     listener(printer.listener), result_vector(printer.result_vector) {
 
     int is_mpi_initialized;
-    assert(MPI_Initialized(&is_mpi_initialized) == MPI_SUCCESS);
+    int return_code = MPI_Initialized(&is_mpi_initialized);
+    assert(return_code == MPI_SUCCESS);
     if (!is_mpi_initialized) {
       printf("MPI must be initialized before RUN_ALL_TESTS!\n");
       printf("Add '::testing::InitGoogleTest(&argc, argv);\n");
@@ -474,7 +480,8 @@ virtual void OnTestPartResult
 virtual void OnEnvironmentsTearDownStart(const ::testing::UnitTest &unit_test)
 {
     int is_mpi_finalized;
-    assert(MPI_Finalized(&is_mpi_finalized) == MPI_SUCCESS);
+    int return_code = MPI_Finalized(&is_mpi_finalized);
+    assert(return_code == MPI_SUCCESS);
     if (!is_mpi_finalized) {
         MPI_Comm_free(&comm);
     }
