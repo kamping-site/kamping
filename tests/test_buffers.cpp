@@ -19,7 +19,7 @@
 
 using namespace ::kamping::internal;
 
-// Simplified Container to test KaMPI.ng's buffers with containers other than std::vector
+// Simple container to test KaMPI.ng's buffers with containers other than std::vector
 template <typename T>
 class OwnContainer {
 public:
@@ -42,7 +42,7 @@ private:
 };
 
 // Tests the basic functionality of ContainerBasedConstBuffer (i.e. its only public function get())
-TEST(ContainerBasedConstBuffer, get_basics) {
+TEST(Test_ContainerBasedConstBuffer, get_basics) {
     std::vector<int>       int_vec{1, 2, 3};
     std::vector<int> const int_vec_const{1, 2, 3, 4};
 
@@ -59,7 +59,7 @@ TEST(ContainerBasedConstBuffer, get_basics) {
     static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.get().ptr), const int*>);
 }
 
-TEST(ContainerBasedConstBuffer, get_containers_other_than_vector) {
+TEST(Test_ContainerBasedConstBuffer, get_containers_other_than_vector) {
     std::string                                         str = "I am underlying storage";
     OwnContainer<int>                                   own_container;
     constexpr ParameterType                             ptype = ParameterType::send_counts;
