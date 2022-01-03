@@ -24,4 +24,4 @@ KaMPI.ng is developed at the [Algorithm Engineering Group](https://algo2.iti.kit
    
 ## LICENSE
 
-KaMPIng is released under the GNU Lesser General Public License. See [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER) for details
+KaMPI.ng is released under the GNU Lesser General Public License. See [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER) for details
