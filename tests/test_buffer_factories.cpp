@@ -15,7 +15,7 @@
 
 #include "kamping/buffer_factories.hpp"
 
-using namespace ::kamping;
+  using namespace ::kamping;
 
 TEST(HelpersTest, send_buf_basics) {
     std::vector<int>       int_vec{1, 2, 3, 4, 5, 6};

@@ -16,6 +16,12 @@ target_link_libraries(test_buffers PUBLIC gtest gtest_main gmock kamping)
 gtest_discover_tests(test_buffers WORKING_DIRECTORY ${PROJECT_DIR})
 target_compile_options(test_buffers PRIVATE ${KAMPING_WARNING_FLAGS})
 
+add_executable(test_named_parameter_selection test_named_parameter_selection.cpp)
+target_link_libraries(test_named_parameter_selection PUBLIC gtest gtest_main gmock kamping)
+gtest_discover_tests(test_named_parameter_selection WORKING_DIRECTORY ${PROJECT_DIR})
+target_compile_options(test_named_parameter_selection PRIVATE ${KAMPING_WARNING_FLAGS})
+
+
 # Registering tests with MPI:
 
 # We need MPI for the datatypes test as we are using MPI_Type_continuous which in
@@ -27,5 +33,3 @@ kamping_register_compilation_failure_test(
     FILES test_mpi_datatype_unsupported_types.cpp
     SECTIONS "POINTER" "FUNCTION" "UNION" "VOID"
 )
-
-# Tests for buffers and their factory functions
