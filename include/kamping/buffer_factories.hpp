@@ -56,7 +56,7 @@ send_counts(const Container& container) {
 ///@return ContainerBasedConstBuffer refering to the storage containing the recv counts.
 template <typename Container>
 internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>
-recv_counts_given(const Container& container) {
+recv_counts_in(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
 }
 
@@ -69,7 +69,7 @@ recv_counts_given(const Container& container) {
 ///@return ContainerBasedConstBuffer refering to the storage containing the send displacements.
 template <typename Container>
 internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_displs>
-send_displs_given(const Container& container) {
+send_displs_in(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_displs>(container);
 }
 
@@ -82,7 +82,7 @@ send_displs_given(const Container& container) {
 ///@return ContainerBasedConstBuffer refering to the storage containing the recv displacements.
 template <typename Container>
 internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_displs>
-recv_displs_given(const Container& container) {
+recv_displs_in(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_displs>(container);
 }
 
@@ -97,7 +97,7 @@ recv_displs_given(const Container& container) {
 template <typename Container>
 internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_buf>
 recv_buf(Container& container) {
-    return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_buf>(container);
+    return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_buf>(container);
 }
 
 template <typename Container>
@@ -108,37 +108,37 @@ recv_buf(NewContainer<Container>&&) {
 
 template <typename Container>
 internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>
-send_displs(Container& container) {
-    return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_displs>(container);
+send_displs_out(Container& container) {
+    return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>(container);
 }
 
 template <typename Container>
 internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>
-send_displs(NewContainer<Container>&&) {
+send_displs_out(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>();
 }
 
 template <typename Container>
 internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>
-recv_counts(Container& container) {
-    return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
+recv_counts_out(Container& container) {
+    return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>(container);
 }
 
 template <typename Container>
 internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>
-recv_counts(NewContainer<Container>&&) {
+recv_counts_out(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>();
 }
 
 template <typename Container>
 internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>
-recv_displs(Container& container) {
-    return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_displs>(container);
+recv_displs_out(Container& container) {
+    return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>(container);
 }
 
 template <typename Container>
 internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>
-recv_displs(NewContainer<Container>&&) {
+recv_displs_out(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>();
 }
 

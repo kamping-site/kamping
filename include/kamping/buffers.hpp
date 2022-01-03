@@ -85,7 +85,7 @@ public:
 
     ///@brief Get access to the underlying read-only storage.
     ///@return Span referring to the underlying read-only storage.
-    Span<T> get() {
+    Span<T> get() const {
         return _span;
     }
 
@@ -112,7 +112,7 @@ public:
 
     ///@brief Get access to the underlying read-only storage.
     ///@return Span referring to the underlying read-only storage.
-    Span<value_type> get() {
+    Span<value_type> get() const {
         return {std::data(_container), _container.size()};
     }
 
