@@ -21,8 +21,8 @@
 #include <thread>
 #include <vector>
 
-#include "kamping/parameter_factories.hpp"
 #include "kamping/named_parameter_selection.hpp"
+#include "kamping/parameter_factories.hpp"
 
 /*
 void printResult(int rank, std::vector<int>& recvData, std::string name) {

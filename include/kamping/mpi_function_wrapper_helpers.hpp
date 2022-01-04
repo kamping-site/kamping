@@ -73,8 +73,7 @@ public:
     /// If any of the buffer categories are not used by the wrapped \c MPI call or if the caller has provided (and still
     /// owns) the memory for the associated results, the empty placeholder type BufferCategoryNotUsed must be passed to
     /// the constructor instead of an actual buffer object.
-    MPIResult(
-        RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvDispls&& recv_displs, SendDispls&& send_displs)
+    MPIResult(RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvDispls&& recv_displs, SendDispls&& send_displs)
         : _recv_buffer(std::forward<RecvBuf>(recv_buf)),
           _recv_counts(std::forward<RecvCounts>(recv_counts)),
           _recv_displs(std::forward<RecvDispls>(recv_displs)),

@@ -192,7 +192,7 @@ recv_displs_out(NewContainer<Container>&&) {
 ///
 ///@param rank Rank of the root PE.
 ///@returns Root Object containing the rank information of the root PE.
-internal::Root root(int rank) {
+inline internal::Root root(int rank) {
     return internal::Root(rank);
 }
 
