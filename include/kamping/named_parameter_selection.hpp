@@ -32,17 +32,17 @@ namespace internal {
 /// @brief Returns position of first argument in Args with Trait trait.
 ///
 /// @tparam Trait trait with which an argument should be found.
-/// @tparam I index of current argument to evaluate.
-/// @tparam A argument to evaluate.
+/// @tparam Index index of current argument to evaluate.
+/// @tparam Arg argument to evaluate.
 /// @tparam Args all remaining arguments.
-/// @return position of first argument whit matched trait.
+/// @return position of first argument with matched trait.
 ///
-template <ParameterType parameter_type, size_t I, typename Arg, typename... Args>
+template <ParameterType parameter_type, size_t Index, typename Arg, typename... Args>
 constexpr size_t find_pos() {
     if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type)
-        return I;
+        return Index;
     else
-        return find_pos<parameter_type, I + 1, Args...>();
+        return find_pos<parameter_type, Index + 1, Args...>();
 }
 /// @brief Returns parameter with requested trait.
 ///
