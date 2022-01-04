@@ -54,7 +54,7 @@ template <ParameterType ptype, typename... Args>
 decltype(auto) select_ptype(Args&&... args) {
     constexpr size_t selected_index = find_pos<ptype, 0, Args...>();
     using SelectedType              = typename std::tuple_element<selected_index, std::tuple<Args...>>::type;
-    //TODO is this ok or too restricting?
+    // TODO is this ok or too restricting?
     static_assert(
         std::is_lvalue_reference<SelectedType>::value,
         "Function does only accept lvalues, as it would produce dangling reference if called with temporaries");

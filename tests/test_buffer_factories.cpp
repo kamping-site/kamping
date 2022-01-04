@@ -75,7 +75,7 @@ void test_library_allocated_buffer(
     EXPECT_TRUE(GeneratedBuffer::is_modifiable);
     EXPECT_EQ(GeneratedBuffer::ptype, expected_parameter_type);
 
-    //TODO how to test this?
+    // TODO how to test this?
     std::ignore = generated_buffer.get_ptr(10);
     std::ignore = generated_buffer.get_ptr(30);
     std::ignore = generated_buffer.get_ptr(5);
@@ -173,8 +173,8 @@ TEST(HelpersTest, recv_buf_basics_user_alloc) {
 }
 
 TEST(HelpersTest, recv_buf_basics_library_alloc) {
-    auto             buffer_based_on_library_alloc_vector = recv_buf(NewContainer<std::vector<int>>{});
-    using ExpectedValueType                               = int;
+    auto buffer_based_on_library_alloc_vector = recv_buf(NewContainer<std::vector<int>>{});
+    using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector, ParameterType::recv_buf);
 }
@@ -189,8 +189,8 @@ TEST(HelpersTest, send_displs_out_basics_user_alloc) {
 }
 
 TEST(HelpersTest, send_displs_out_basics_library_alloc) {
-    auto             buffer_based_on_library_alloc_vector = send_displs_out(NewContainer<std::vector<int>>{});
-    using ExpectedValueType                               = int;
+    auto buffer_based_on_library_alloc_vector = send_displs_out(NewContainer<std::vector<int>>{});
+    using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector, ParameterType::send_displs);
 }
@@ -206,8 +206,8 @@ TEST(HelpersTest, recv_counts_out_basics_user_alloc) {
 }
 
 TEST(HelpersTest, recv_counts_out_basics_library_alloc) {
-    auto             buffer_based_on_library_alloc_vector = recv_counts_out(NewContainer<std::vector<int>>{});
-    using ExpectedValueType                               = int;
+    auto buffer_based_on_library_alloc_vector = recv_counts_out(NewContainer<std::vector<int>>{});
+    using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector, ParameterType::recv_counts);
 }
@@ -215,15 +215,15 @@ TEST(HelpersTest, recv_counts_out_basics_library_alloc) {
 TEST(HelpersTest, recv_displs_out_basics_user_alloc) {
     const size_t     size = 10;
     std::vector<int> int_vec(size);
-    auto             buffer_based_on_user_alloc_vector    = recv_displs_out(int_vec);
-    using ExpectedValueType                               = int;
+    auto             buffer_based_on_user_alloc_vector = recv_displs_out(int_vec);
+    using ExpectedValueType                            = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector, ParameterType::recv_displs, int_vec);
 }
 
 TEST(HelpersTest, recv_displs_out_basics_library_alloc) {
-    auto             buffer_based_on_library_alloc_vector = recv_displs_out(NewContainer<std::vector<int>>{});
-    using ExpectedValueType                               = int;
+    auto buffer_based_on_library_alloc_vector = recv_displs_out(NewContainer<std::vector<int>>{});
+    using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector, ParameterType::recv_displs);
 }

@@ -118,7 +118,7 @@ TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_containers_other_than_vecto
 }
 
 TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_basics) {
-    constexpr ParameterType                                    ptype = ParameterType::recv_counts;
+    constexpr ParameterType                                   ptype = ParameterType::recv_counts;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer_based_on_int_vector;
 
     auto resize_write_check = [&](size_t requested_size) {
