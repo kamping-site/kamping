@@ -23,14 +23,25 @@ namespace internal {
 
 
 // https://stackoverflow.com/a/9154394 TODO license?
+///@brief Helper to implement has_extract_v
+///
 template <typename>
+///@brief Helper to implement has_extract_v
+///
 struct true_type : std::true_type {};
 template <typename T>
 auto test_extract(int) -> true_type<decltype(std::declval<T>().extract())>;
+///@brief Helper to implement has_extract_v
+///
 template <typename T>
 auto test_extract(...) -> std::false_type;
+///@brief Helper to implement has_extract_v
+///
 template <typename T>
 struct has_extract : decltype(internal::test_extract<T>(0)) {};
+///@brief has_extract_v is \c true iff type T has a member function \c extract().
+///
+/// @tparam T Type which is tested for the existance of a member function.
 template <typename T>
 inline constexpr bool has_extract_v = has_extract<T>::value;
 
@@ -54,7 +65,7 @@ struct BufferCategoryNotUsed {};
 ///@tparam RecDispls Buffer type containing the displacements of the received elements.
 ///@tparam SendDispls Buffer type containing the displacements of the sent elements.
 ///@tparam MPIStatusObject Buffer type containing the \c MPI status object(s).
-template <class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls, class MPIStatusObject>
+template <class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls>
 class MPIResult {
 public:
     ///@brief Constructor of MPIResult.
@@ -63,13 +74,11 @@ public:
     /// owns) the memory for the associated results, the empty placeholder type BufferCategoryNotUsed must be passed to
     /// the constructor instead of an actual buffer object.
     MPIResult(
-        RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvDispls&& recv_displs, SendDispls&& send_displs,
-        MPIStatusObject&& mpi_status)
+        RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvDispls&& recv_displs, SendDispls&& send_displs)
         : _recv_buffer(std::forward<RecvBuf>(recv_buf)),
           _recv_counts(std::forward<RecvCounts>(recv_counts)),
           _recv_displs(std::forward<RecvDispls>(recv_displs)),
-          _send_displs(std::forward<SendDispls>(send_displs)),
-          _mpi_status(std::forward<MPIStatusObject>(mpi_status)) {}
+          _send_displs(std::forward<SendDispls>(send_displs)) {}
 
     ///@brief Extracts the \c recv_buffer from the MPIResult object.
     ///
@@ -118,21 +127,6 @@ public:
         return _send_displs.extract();
     }
 
-    ///@todo there is an ongoing discussion about the design of this object (own object or flattened within MPIResult)
-    /// adjust accordingly.
-    ///@brief Extracts the \c mpi status object from the MPIResult object.
-    ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    ///@tparam MPIStatusObject_ Template parameter helper only needed to remove this function if MPIStatusObject does
-    /// not possess a member function \c extract().
-    ///@return Returns the underlying storage containing the mpi status object.
-    template <
-        typename MPIStatusObject_                                                  = MPIStatusObject,
-        std::enable_if_t<kamping::internal::has_extract_v<MPIStatusObject_>, bool> = true>
-    decltype(auto) extract_mpi_status() {
-        return _mpi_status.extract();
-    }
-
 private:
     RecvBuf _recv_buffer;    ///< Buffer object containing the received elements. May be empty if the received elements
                              ///< have been written into storage owned by the caller of KaMPI.ng.
@@ -142,7 +136,6 @@ private:
                              ///< displacements have been written into storage owned by the caller of KaMPI.ng.
     SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if the send
                              ///< displacements have been written into storage owned by the caller of KaMPI.ng.
-    MPIStatusObject _mpi_status; ///< @todo see todo in associcated member function
 };
 
 } // namespace kamping

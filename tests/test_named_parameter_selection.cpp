@@ -13,8 +13,8 @@
 
 #include <gtest/gtest.h>
 
-#include "kamping/buffer_factories.hpp"
 #include "kamping/named_parameter_selection.hpp"
+#include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping::internal;
 

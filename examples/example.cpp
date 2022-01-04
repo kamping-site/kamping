@@ -21,7 +21,7 @@
 #include <thread>
 #include <vector>
 
-#include "kamping/buffer_factories.hpp"
+#include "kamping/parameter_factories.hpp"
 #include "kamping/named_parameter_selection.hpp"
 
 /*

@@ -15,37 +15,13 @@
 
 #include <gtest/gtest.h>
 
-#include "kamping/buffers.hpp"
+#include "helpers_for_testing.hpp"
+#include "kamping/parameter_objects.hpp"
 
 using namespace ::kamping::internal;
 
 // Simple container to test KaMPI.ng's buffers with containers other than std::vector
-template <typename T>
-class OwnContainer {
-public:
-    using value_type = T;
-    T* data() noexcept {
-        return _vec.data();
-    }
-    const T* data() const noexcept {
-        return _vec.data();
-    }
-    std::size_t size() const {
-        return _vec.size();
-    }
-    void resize(std::size_t new_size) {
-        _vec.resize(new_size);
-    }
-    const T& operator[](size_t i) const {
-        return _vec[i];
-    }
-    T& operator[](size_t i) {
-        return _vec[i];
-    }
 
-private:
-    std::vector<T> _vec;
-};
 
 // Tests the basic functionality of ContainerBasedConstBuffer (i.e. its only public function get())
 TEST(Test_ContainerBasedConstBuffer, get_basics) {
@@ -66,11 +42,11 @@ TEST(Test_ContainerBasedConstBuffer, get_basics) {
 }
 
 TEST(Test_ContainerBasedConstBuffer, get_containers_other_than_vector) {
-    std::string                                         str = "I am underlying storage";
-    OwnContainer<int>                                   own_container;
-    constexpr ParameterType                             ptype = ParameterType::send_counts;
-    ContainerBasedConstBuffer<std::string, ptype>       buffer_based_on_string(str);
-    ContainerBasedConstBuffer<OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
+    std::string                                                  str = "I am underlying storage";
+    testing::OwnContainer<int>                                   own_container;
+    constexpr ParameterType                                      ptype = ParameterType::send_counts;
+    ContainerBasedConstBuffer<std::string, ptype>                buffer_based_on_string(str);
+    ContainerBasedConstBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
 
     EXPECT_EQ(buffer_based_on_string.get().size, str.size());
     EXPECT_EQ(buffer_based_on_string.get().ptr, str.data());
@@ -99,10 +75,10 @@ TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_basics) {
 }
 
 TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_containers_other_than_vector) {
-    OwnContainer<int> own_container;
+    testing::OwnContainer<int> own_container;
 
-    constexpr ParameterType                                     ptype = ParameterType::recv_counts;
-    UserAllocatedContainerBasedBuffer<OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
+    constexpr ParameterType                                              ptype = ParameterType::recv_counts;
+    UserAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
 
     auto resize_write_check = [&](size_t requested_size) {
         int* ptr = buffer_based_on_own_container.get_ptr(requested_size);
@@ -138,8 +114,8 @@ TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_basics) {
 }
 
 TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_containers_other_than_vector) {
-    constexpr ParameterType                                    ptype = ParameterType::recv_counts;
-    LibAllocatedContainerBasedBuffer<OwnContainer<int>, ptype> buffer_based_on_own_container;
+    constexpr ParameterType                                             ptype = ParameterType::recv_counts;
+    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container;
 
     auto resize_write_check = [&](size_t requested_size) {
         int* ptr = buffer_based_on_own_container.get_ptr(requested_size);
@@ -151,7 +127,7 @@ TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_containers_other_tha
     resize_write_check(50);
     const size_t last_resize = 9;
     resize_write_check(last_resize);
-    OwnContainer<int> underlying_container = buffer_based_on_own_container.extract();
+    testing::OwnContainer<int> underlying_container = buffer_based_on_own_container.extract();
     for (size_t i = 0; i < last_resize; ++i) {
         EXPECT_EQ(underlying_container[i], static_cast<int>(last_resize - i));
     }

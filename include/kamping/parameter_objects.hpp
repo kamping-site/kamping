@@ -12,8 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 /// @file
-/// @brief Buffer wrapper around buffer based parameter types
-/// The Buffer classes defined in this file serve as in, out and in/out parameters to the
+/// @The classes defined in this file serve as in, out and in/out parameters to the
 /// \c MPI calls wrapped by KaMPI.ng.
 /// The non-modifiable buffers (PtrBasedConstBuffer, ContainerBasedConstBuffer)
 /// encapsulate input data like data to send or send counts needed for a lot of \c MPI calls. If the user already
@@ -68,30 +67,31 @@ struct Span {
 };
 
 
-/// @brief Constant buffer based on a pointer.
-///
-/// PtrBasedConstBuffer wraps read-only buffer storage of type T and represents an input of ParameterType
-/// type.
-/// @tparam T type contained in the buffer
-/// @tparam ParameterType parameter type represented by this buffer
-template <typename T, ParameterType type>
-class PtrBasedConstBuffer {
-public:
-    static constexpr ParameterType ptype         = type;  ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable = false; ///< Indicates whether the underlying storage is modifiable.
-    using value_type                             = T;     ///< Value type of the buffer.
-
-    PtrBasedConstBuffer(const T* ptr, size_t size) : _span{ptr, size} {}
-
-    ///@brief Get access to the underlying read-only storage.
-    ///@return Span referring to the underlying read-only storage.
-    Span<T> get() const {
-        return _span;
-    }
-
-private:
-    Span<T> _span; ///< Actual storage to which PtrBasedConstBuffer refers.
-};
+//@todo enable once the tests have been written
+///// @brief Constant buffer based on a pointer.
+/////
+///// PtrBasedConstBuffer wraps read-only buffer storage of type T and represents an input of ParameterType
+///// type.
+///// @tparam T type contained in the buffer
+///// @tparam ParameterType parameter type represented by this buffer
+// template <typename T, ParameterType type>
+// class PtrBasedConstBuffer {
+// public:
+//     static constexpr ParameterType ptype         = type;  ///< The type of parameter this buffer represents.
+//     static constexpr bool          is_modifiable = false; ///< Indicates whether the underlying storage is
+//     modifiable. using value_type                             = T;     ///< Value type of the buffer.
+//
+//     PtrBasedConstBuffer(const T* ptr, size_t size) : _span{ptr, size} {}
+//
+//     ///@brief Get access to the underlying read-only storage.
+//     ///@return Span referring to the underlying read-only storage.
+//     Span<T> get() const {
+//         return _span;
+//     }
+//
+// private:
+//     Span<T> _span; ///< Actual storage to which PtrBasedConstBuffer refers.
+// };
 
 /// @brief Constant buffer based on a container type.
 ///
@@ -199,6 +199,22 @@ private:
     Container _container; ///< Container which holds the actual data.
 };
 
+///@brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
+class Root {
+public:
+    static constexpr ParameterType ptype = ParameterType::root; ///< The type of parameter this object encapsulates.
+    ///@ Constructor for Root.
+    ///@param rank Rank of the root PE.
+    Root(int rank) : _rank{rank} {}
+    ///@brief Returns the rank of the root.
+    ///@returns Rank of the root.
+    int rank() const {
+        return _rank;
+    }
+
+private:
+    int _rank; ///< Rank of the root PE.
+};
 } // namespace internal
 
 /// @}

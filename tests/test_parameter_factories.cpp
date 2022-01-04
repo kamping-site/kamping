@@ -13,7 +13,7 @@
 
 #include <gtest/gtest.h>
 
-#include "kamping/buffer_factories.hpp"
+#include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping;
 using namespace ::kamping::internal;
@@ -226,4 +226,9 @@ TEST(HelpersTest, recv_displs_out_basics_library_alloc) {
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector, ParameterType::recv_displs);
+}
+
+TEST(HelpersTest, root_basics) {
+    auto root_obj = root(22);
+    EXPECT_EQ(root_obj.rank(), 22);
 }

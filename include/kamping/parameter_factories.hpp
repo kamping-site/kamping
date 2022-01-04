@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "buffers.hpp"
+#include "parameter_objects.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -128,7 +128,6 @@ send_displs_out(Container& container) {
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
 ///@tparam Container Container type which contains the send displacments.
-///@param container Container which will contain the send displacements.
 ///@return LibAllocatedContainerBasedBuffer refering to the storage containing the send displacements.
 template <typename Container>
 internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>
@@ -155,7 +154,6 @@ recv_counts_out(Container& container) {
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
 ///@tparam Container Container type which contains the send displacments.
-///@param container Container which will contain the receive counts.
 ///@return LibAllocatedContainerBasedBuffer refering to the storage containing the receive counts.
 template <typename Container>
 internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>
@@ -182,12 +180,20 @@ recv_displs_out(Container& container) {
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
 ///@tparam Container Container type which contains the send displacments.
-///@param container Container which will contain the receive displacments.
 ///@return LibAllocatedContainerBasedBuffer refering to the storage containing the receive displacments.
 template <typename Container>
 internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>
 recv_displs_out(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>();
+}
+
+///@brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like \c
+/// MPI_Gather.
+///
+///@param rank Rank of the root PE.
+///@returns Root Object containing the rank information of the root PE.
+internal::Root root(int rank) {
+    return internal::Root(rank);
 }
 
 /// @}
