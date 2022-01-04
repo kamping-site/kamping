@@ -72,12 +72,12 @@ struct Span {
 /////
 ///// PtrBasedConstBuffer wraps read-only buffer storage of type T and represents an input of ParameterType
 ///// type.
-///// @tparam T type contained in the buffer
-///// @tparam ParameterType parameter type represented by this buffer
+///// @tparam T type contained in the buffer.
+///// @tparam ParameterType parameter type represented by this buffer.
 // template <typename T, ParameterType type>
 // class PtrBasedConstBuffer {
 // public:
-//     static constexpr ParameterType ptype         = type;  ///< The type of parameter this buffer represents.
+//     static constexpr ParameterType parameter_type         = type;  ///< The type of parameter this buffer represents.
 //     static constexpr bool          is_modifiable = false; ///< Indicates whether the underlying storage is
 //     modifiable. using value_type                             = T;     ///< Value type of the buffer.
 //
@@ -102,9 +102,9 @@ struct Span {
 template <typename Container, ParameterType type>
 class ContainerBasedConstBuffer {
 public:
-    static constexpr ParameterType ptype         = type;  ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable = false; ///< Indicates whether the underlying storage is modifiable.
-    using value_type                             = typename Container::value_type; ///< Value type of the buffer.
+    static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
+    using value_type                              = typename Container::value_type; ///< Value type of the buffer.
 
     ///@brief Constructor for ContainerBasedConstBuffer.
     /// param container Container holding the actual data.
@@ -126,8 +126,8 @@ private:
 /// @tparam is_consumable_ indicates whether this buffer already contains useable data
 template <ParameterType type>
 struct BufferParameterType {
-    static constexpr ParameterType ptype         = type; ///< ParameterType which the buffer represents.
-    static constexpr bool          is_modifiable = true; ///< Indicates whether the underlying storage is modifiable.
+    static constexpr ParameterType parameter_type = type; ///< ParameterType which the buffer represents.
+    static constexpr bool          is_modifiable  = true; ///< Indicates whether the underlying storage is modifiable.
 };
 
 /// @brief Buffer based on a container type that has been allocated by the user (but may be resized if the provided
@@ -138,8 +138,8 @@ struct BufferParameterType {
 /// and expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
-template <typename Container, ParameterType ptype>
-class UserAllocatedContainerBasedBuffer : public BufferParameterType<ptype> {
+template <typename Container, ParameterType parameter_type>
+class UserAllocatedContainerBasedBuffer : public BufferParameterType<parameter_type> {
 public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
 
@@ -202,7 +202,8 @@ private:
 ///@brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
 class Root {
 public:
-    static constexpr ParameterType ptype = ParameterType::root; ///< The type of parameter this object encapsulates.
+    static constexpr ParameterType parameter_type =
+        ParameterType::root; ///< The type of parameter this object encapsulates.
     ///@ Constructor for Root.
     ///@param rank Rank of the root PE.
     Root(int rank) : _rank{rank} {}

@@ -37,12 +37,12 @@ namespace internal {
 /// @tparam Args all remaining arguments.
 /// @return position of first argument whit matched trait.
 ///
-template <ParameterType ptype, size_t I, typename Arg, typename... Args>
+template <ParameterType parameter_type, size_t I, typename Arg, typename... Args>
 constexpr size_t find_pos() {
-    if constexpr (std::remove_reference_t<Arg>::ptype == ptype)
+    if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type)
         return I;
     else
-        return find_pos<ptype, I + 1, Args...>();
+        return find_pos<parameter_type, I + 1, Args...>();
 }
 /// @brief Returns parameter with requested trait.
 ///
@@ -50,9 +50,9 @@ constexpr size_t find_pos() {
 /// @tparam Args all arguments to be searched.
 /// returns the first parameter whose type has the appropriate par_type.
 ///
-template <ParameterType ptype, typename... Args>
-decltype(auto) select_ptype(Args&&... args) {
-    constexpr size_t selected_index = find_pos<ptype, 0, Args...>();
+template <ParameterType parameter_type, typename... Args>
+decltype(auto) select_parameter_type(Args&&... args) {
+    constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
     using SelectedType              = typename std::tuple_element<selected_index, std::tuple<Args...>>::type;
     // TODO is this ok or too restricting?
     static_assert(

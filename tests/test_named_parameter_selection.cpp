@@ -19,39 +19,39 @@
 using namespace ::kamping::internal;
 
 // Mock argument for testing the named parameter selection mechanism
-template <ParameterType _ptype>
+template <ParameterType _parameter_type>
 struct Argument {
-    static constexpr ParameterType ptype = _ptype;
+    static constexpr ParameterType parameter_type = _parameter_type;
     Argument(int i) : _i{i} {}
     int _i;
 };
 
-TEST(HelpersTest, select_ptype_basics) {
+TEST(HelpersTest, select_parameter_type_basics) {
     Argument<ParameterType::send_buf>    arg0{0};
     Argument<ParameterType::recv_buf>    arg1{1};
     Argument<ParameterType::send_counts> arg2{2};
     {
-        const auto& selected_arg = select_ptype<ParameterType::send_buf>(arg0, arg1, arg2);
+        const auto& selected_arg = select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2);
         EXPECT_EQ(selected_arg._i, 0);
     }
     {
-        const auto& selected_arg = select_ptype<ParameterType::recv_buf>(arg0, arg1, arg2);
+        const auto& selected_arg = select_parameter_type<ParameterType::recv_buf>(arg0, arg1, arg2);
         EXPECT_EQ(selected_arg._i, 1);
     }
     {
-        const auto& selected_arg = select_ptype<ParameterType::send_counts>(arg0, arg1, arg2);
+        const auto& selected_arg = select_parameter_type<ParameterType::send_counts>(arg0, arg1, arg2);
         EXPECT_EQ(selected_arg._i, 2);
     }
 }
 
-TEST(HelpersTest, select_ptype_duplicates) {
+TEST(HelpersTest, select_parameter_type_duplicates) {
     Argument<ParameterType::send_buf>    arg0{0};
     Argument<ParameterType::recv_buf>    arg1{1};
     Argument<ParameterType::send_counts> arg2{2};
     Argument<ParameterType::send_buf>    arg3{3};
     {
         // if two arguments have the same ParameterType the first occurence in the argument list is selected
-        const auto& selected_arg = select_ptype<ParameterType::send_buf>(arg0, arg1, arg2, arg3);
+        const auto& selected_arg = select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2, arg3);
         EXPECT_EQ(selected_arg._i, 0);
     }
 }

@@ -27,7 +27,7 @@ void test_const_buffer(
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
     EXPECT_FALSE(GeneratedBuffer::is_modifiable);
-    EXPECT_EQ(GeneratedBuffer::ptype, expected_parameter_type);
+    EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
 
     auto span = generated_buffer.get();
     static_assert(std::is_pointer_v<decltype(span.ptr)>, "Member ptr of internal::Span is not a pointer.");
@@ -51,7 +51,7 @@ void test_user_allocated_buffer(
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
     EXPECT_TRUE(GeneratedBuffer::is_modifiable);
-    EXPECT_EQ(GeneratedBuffer::ptype, expected_parameter_type);
+    EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
 
     auto resize_write_check = [&](size_t nb_elements) {
         ExpectedValueType* ptr = generated_buffer.get_ptr(nb_elements);
@@ -73,7 +73,7 @@ void test_library_allocated_buffer(
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
     EXPECT_TRUE(GeneratedBuffer::is_modifiable);
-    EXPECT_EQ(GeneratedBuffer::ptype, expected_parameter_type);
+    EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
 
     // TODO how to test this?
     std::ignore = generated_buffer.get_ptr(10);
