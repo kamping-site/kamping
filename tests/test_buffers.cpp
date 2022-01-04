@@ -24,7 +24,7 @@ template <typename T>
 class OwnContainer {
 public:
     using value_type = T;
-    T* data() {
+    T* data() noexcept {
         return _vec.data();
     }
     const T* data() const noexcept {
@@ -35,6 +35,12 @@ public:
     }
     void resize(std::size_t new_size) {
         _vec.resize(new_size);
+    }
+    const T& operator[](size_t i) const {
+        return _vec[i];
+    }
+    T& operator[](size_t i) {
+        return _vec[i];
     }
 
 private:
@@ -71,4 +77,82 @@ TEST(Test_ContainerBasedConstBuffer, get_containers_other_than_vector) {
 
     EXPECT_EQ(buffer_based_on_own_container.get().size, own_container.size());
     EXPECT_EQ(buffer_based_on_own_container.get().ptr, own_container.data());
+}
+
+TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_basics) {
+    std::vector<int> int_vec{1, 2, 3, 2, 1};
+
+    constexpr ParameterType                                    ptype = ParameterType::send_counts;
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer_based_on_int_vector(int_vec);
+
+    auto resize_write_check = [&](size_t requested_size) {
+        int* ptr = buffer_based_on_int_vector.get_ptr(requested_size);
+        EXPECT_EQ(ptr, int_vec.data());
+        for (size_t i = 0; i < requested_size; ++i) {
+            ptr[i] = static_cast<int>(requested_size - i);
+            EXPECT_EQ(ptr[i], int_vec[i]);
+        }
+    };
+    resize_write_check(10);
+    resize_write_check(50);
+    resize_write_check(9);
+}
+
+TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_containers_other_than_vector) {
+    OwnContainer<int> own_container;
+
+    constexpr ParameterType                                     ptype = ParameterType::recv_counts;
+    UserAllocatedContainerBasedBuffer<OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
+
+    auto resize_write_check = [&](size_t requested_size) {
+        int* ptr = buffer_based_on_own_container.get_ptr(requested_size);
+        EXPECT_EQ(ptr, own_container.data());
+        for (size_t i = 0; i < requested_size; ++i) {
+            ptr[i] = static_cast<int>(requested_size - i);
+            EXPECT_EQ(ptr[i], own_container[i]);
+        }
+    };
+    resize_write_check(10);
+    resize_write_check(50);
+    resize_write_check(9);
+}
+
+TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_basics) {
+    constexpr ParameterType                                    ptype = ParameterType::recv_counts;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer_based_on_int_vector;
+
+    auto resize_write_check = [&](size_t requested_size) {
+        int* ptr = buffer_based_on_int_vector.get_ptr(requested_size);
+        for (size_t i = 0; i < requested_size; ++i) {
+            ptr[i] = static_cast<int>(requested_size - i);
+        }
+    };
+    resize_write_check(10);
+    resize_write_check(50);
+    const size_t last_resize = 9;
+    resize_write_check(last_resize);
+    std::vector<int> underlying_container = buffer_based_on_int_vector.extract();
+    for (size_t i = 0; i < last_resize; ++i) {
+        EXPECT_EQ(underlying_container[i], static_cast<int>(last_resize - i));
+    }
+}
+
+TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_containers_other_than_vector) {
+    constexpr ParameterType                                    ptype = ParameterType::recv_counts;
+    LibAllocatedContainerBasedBuffer<OwnContainer<int>, ptype> buffer_based_on_own_container;
+
+    auto resize_write_check = [&](size_t requested_size) {
+        int* ptr = buffer_based_on_own_container.get_ptr(requested_size);
+        for (size_t i = 0; i < requested_size; ++i) {
+            ptr[i] = static_cast<int>(requested_size - i);
+        }
+    };
+    resize_write_check(10);
+    resize_write_check(50);
+    const size_t last_resize = 9;
+    resize_write_check(last_resize);
+    OwnContainer<int> underlying_container = buffer_based_on_own_container.extract();
+    for (size_t i = 0; i < last_resize; ++i) {
+        EXPECT_EQ(underlying_container[i], static_cast<int>(last_resize - i));
+    }
 }
