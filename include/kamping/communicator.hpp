@@ -64,11 +64,11 @@ public:
     /// valid rank in this communicator.
     ///
     /// The resulting rank is valid, iff it is at least zero and less than this communicator's size. The \c distance can
-    /// be negative. Unlike \ref rank_advance_cyclic(), this does not guarantee a valid rank but can indicate if the
+    /// be negative. Unlike \ref rank_shifted_cyclic(), this does not guarantee a valid rank but can indicate if the
     /// resulting rank is not valid.
     /// @param distance Amount current rank is decreased or increased by.
     /// @return Rank if rank is in [0, size of communicator) and ASSERT/EXCEPTION? otherwise.
-    int compute_rank_bound_checked(int const distance) const {
+    int rank_shifted_checked(int const distance) const {
         if (int result = _rank + distance; is_valid_rank(result)) {
             return result;
         }
@@ -83,7 +83,7 @@ public:
     /// rank, as it computes the rank in a circular fashion, i.e., \f$ new\_rank=(rank + distance) \% size \f$.
     /// @param distance Distance of the new rank to the rank of this MPI thread.
     /// @return The circular rank that is \c distance ranks apart from this MPI threads rank.
-    int compute_rank_circular(int const distance) const {
+    int rank_shifted_cyclic(int const distance) const {
         return (_rank + distance) % _size;
     }
 
