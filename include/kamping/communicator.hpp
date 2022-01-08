@@ -19,10 +19,10 @@ public:
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
     /// @param root Default root that is used by MPI operations requiring a root.
     explicit Communicator(MPI_Comm comm, int root) : _rank(get_mpi_rank(comm)), _size(get_mpi_size(comm)), _comm(comm) {
-      if (comm == MPI_COMM_NULL) {
-        /// @todo Throw or assert
-        std::abort();
-      }
+        if (comm == MPI_COMM_NULL) {
+            /// @todo Throw or assert
+            std::abort();
+        }
         this->root(root);
     }
 
@@ -58,6 +58,17 @@ public:
     /// @return Default root for MPI operations that require a root.
     int root() const {
         return _root;
+    }
+
+    /// @brief Split the communicator in different \colors.
+    /// @param color All ranks that have the same color will be in the same new communicator.
+    /// @param key By default, ranks in the new communicator are determined by the underlying MPI library (if \c key is
+    /// 0). Otherwise, ranks are ordered the same way the keys are ordered.
+    /// @return \ref Communicator wrapping the newly split MPI communicator.
+    Communicator split(int const color, int const key = 0) const {
+        MPI_Comm new_comm;
+        MPI_Comm_split(_comm, color, key, &new_comm);
+        return Communicator(new_comm);
     }
 
     /// @brief Computes a rank that is \c distance ranks away from this MPI thread's current rank and checks if this is
