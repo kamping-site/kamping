@@ -28,9 +28,9 @@ namespace kamping {
 /// value_type
 ///@tparam Container Container type which contains the elements to send.
 ///@param container Container which contains the elements to send
-///@return ContainerBasedConstBuffer refering to the storage containing the data elements to send.
+///@return Object referring to the storage containing the data elements to send.
 template <typename Container>
-internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_buf> send_buf(const Container& container) {
+auto send_buf(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_buf>(container);
 }
 
@@ -41,10 +41,9 @@ internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_buf
 /// value_type
 ///@tparam Container Container type which contains the send counts.
 ///@param container Container which contains the send counts.
-///@return ContainerBasedConstBuffer refering to the storage containing the send counts.
+///@return Object referring to the storage containing the send counts.
 template <typename Container>
-internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_counts>
-send_counts(const Container& container) {
+auto send_counts(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_counts>(container);
 }
 
@@ -55,10 +54,9 @@ send_counts(const Container& container) {
 /// value_type
 ///@tparam Container Container type which contains the recv counts.
 ///@param container Container which contains the recv counts.
-///@return ContainerBasedConstBuffer refering to the storage containing the recv counts.
+///@return Object referring to the storage containing the recv counts.
 template <typename Container>
-internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>
-recv_counts_in(const Container& container) {
+auto recv_counts_in(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
 }
 
@@ -69,10 +67,9 @@ recv_counts_in(const Container& container) {
 /// value_type
 ///@tparam Container Container type which contains the send displacements.
 ///@param container Container which contains the send displacements.
-///@return ContainerBasedConstBuffer refering to the storage containing the send displacements.
+///@return Object referring to the storage containing the send displacements.
 template <typename Container>
-internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_displs>
-send_displs_in(const Container& container) {
+auto send_displs_in(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_displs>(container);
 }
 
@@ -83,10 +80,9 @@ send_displs_in(const Container& container) {
 /// value_type
 ///@tparam Container Container type which contains the recv displacements.
 ///@param container Container type which contains the recv displacements.
-///@return ContainerBasedConstBuffer refering to the storage containing the recv displacements.
+///@return Object referring to the storage containing the recv displacements.
 template <typename Container>
-internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_displs>
-recv_displs_in(const Container& container) {
+auto recv_displs_in(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_displs>(container);
 }
 
@@ -96,16 +92,21 @@ recv_displs_in(const Container& container) {
 /// contained \c value_type
 ///@tparam Container Container type which contains the received elements.
 ///@param container Container which will contain the received elements.
-///@return UserAllocatedContainerBasedBuffer refering to the storage containing the received elements.
+///@return Object referring to the storage containing the received elements.
 template <typename Container>
-internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_buf>
-recv_buf(Container& container) {
+auto recv_buf(Container& container) {
     return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_buf>(container);
 }
 
+///@brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
+/// will contained the received elements when the \c MPI call has been completed.
+/// The storage is allocated by the library and encapsulated in a container of type Container.
+/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
+/// contained \c value_type
+///@tparam Container Container type which contains the received elements.
+///@return Object referring to the storage containing the send displacements.
 template <typename Container>
-internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_buf>
-recv_buf(NewContainer<Container>&&) {
+auto recv_buf(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_buf>();
 }
 
@@ -115,10 +116,9 @@ recv_buf(NewContainer<Container>&&) {
 /// contained \c value_type
 ///@tparam Container Container type which contains the send displacments.
 ///@param container Container which will contain the send displacements.
-///@return UserAllocatedContainerBasedBuffer refering to the storage containing the send displacements.
+///@return Object referring to the storage containing the send displacements.
 template <typename Container>
-internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>
-send_displs_out(Container& container) {
+auto send_displs_out(Container& container) {
     return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>(container);
 }
 
@@ -128,10 +128,9 @@ send_displs_out(Container& container) {
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
 ///@tparam Container Container type which contains the send displacments.
-///@return LibAllocatedContainerBasedBuffer refering to the storage containing the send displacements.
+///@return Object referring to the storage containing the send displacements.
 template <typename Container>
-internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>
-send_displs_out(NewContainer<Container>&&) {
+auto send_displs_out(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>();
 }
 
@@ -141,10 +140,9 @@ send_displs_out(NewContainer<Container>&&) {
 /// contained \c value_type
 ///@tparam Container Container type which contains the receive counts.
 ///@param container Container which will contain the receive counts.
-///@return UserAllocatedContainerBasedBuffer refering to the storage containing the receive counts.
+///@return Object referring to the storage containing the receive counts.
 template <typename Container>
-internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>
-recv_counts_out(Container& container) {
+auto recv_counts_out(Container& container) {
     return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>(container);
 }
 
@@ -154,10 +152,9 @@ recv_counts_out(Container& container) {
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
 ///@tparam Container Container type which contains the send displacments.
-///@return LibAllocatedContainerBasedBuffer refering to the storage containing the receive counts.
+///@return Object referring to the storage containing the receive counts.
 template <typename Container>
-internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>
-recv_counts_out(NewContainer<Container>&&) {
+auto recv_counts_out(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>();
 }
 
@@ -167,10 +164,9 @@ recv_counts_out(NewContainer<Container>&&) {
 /// contained \c value_type
 ///@tparam Container Container type which contains the receive displacements.
 ///@param container Container which will contain the receive displacements.
-///@return UserAllocatedContainerBasedBuffer refering to the storage containing the receive displacements.
+///@return Object referring to the storage containing the receive displacements.
 template <typename Container>
-internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>
-recv_displs_out(Container& container) {
+auto recv_displs_out(Container& container) {
     return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>(container);
 }
 
@@ -180,10 +176,9 @@ recv_displs_out(Container& container) {
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
 ///@tparam Container Container type which contains the send displacments.
-///@return LibAllocatedContainerBasedBuffer refering to the storage containing the receive displacments.
+///@return Object referring to the storage containing the receive displacments.
 template <typename Container>
-internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>
-recv_displs_out(NewContainer<Container>&&) {
+auto recv_displs_out(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>();
 }
 
@@ -192,7 +187,7 @@ recv_displs_out(NewContainer<Container>&&) {
 ///
 ///@param rank Rank of the root PE.
 ///@returns Root Object containing the rank information of the root PE.
-inline internal::Root root(int rank) {
+inline auto root(int rank) {
     return internal::Root(rank);
 }
 

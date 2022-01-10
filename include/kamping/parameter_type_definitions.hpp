@@ -17,6 +17,8 @@
 #pragma once
 
 namespace kamping {
+///@brief Internal namespace marking the code that is not user-facing.
+///
 namespace internal {
 
 /// @addtogroup kamping_utility
