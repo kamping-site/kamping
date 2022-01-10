@@ -39,35 +39,35 @@ TEST_F(CommunicatorTest, EmptyConstructor) {
     EXPECT_EQ(comm.root(), 0);
 }
 
-TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
-    Communicator comm(MPI_COMM_SELF);
+// TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
+//     Communicator comm(MPI_COMM_SELF);
 
-    int self_rank;
-    int self_size;
+//     int self_rank;
+//     int self_size;
 
-    MPI_Comm_size(MPI_COMM_SELF, &self_size);
-    MPI_Comm_rank(MPI_COMM_SELF, &self_rank);
+//     MPI_Comm_size(MPI_COMM_SELF, &self_size);
+//     MPI_Comm_rank(MPI_COMM_SELF, &self_rank);
 
-    EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_SELF);
-    EXPECT_EQ(comm.rank(), self_rank);
-    EXPECT_EQ(comm.size(), self_size);
-    EXPECT_EQ(comm.rank(), 0);
+//     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_SELF);
+//     EXPECT_EQ(comm.rank(), self_rank);
+//     EXPECT_EQ(comm.size(), self_size);
+//     EXPECT_EQ(comm.rank(), 0);
 
-    EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL), ".*");
-}
+//     EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL), ".*");
+// }
 
-TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
-    for (int i = -(2 * size); i < (2 * size); ++i) {
-        if (i < 0 || i >= size) {
-            EXPECT_DEATH(Communicator comm(MPI_COMM_WORLD, i), ".*");
-            EXPECT_DEATH(Communicator comm(MPI_COMM_NULL, i), ".*");
-        } else {
-            Communicator comm(MPI_COMM_WORLD, i);
-            ASSERT_EQ(comm.root(), i);
-            EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL, i), ".*");
-        }
-    }
-}
+// TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
+//     for (int i = -(2 * size); i < (2 * size); ++i) {
+//         if (i < 0 || i >= size) {
+//             EXPECT_DEATH(Communicator comm(MPI_COMM_WORLD, i), ".*");
+//             EXPECT_DEATH(Communicator comm(MPI_COMM_NULL, i), ".*");
+//         } else {
+//             Communicator comm(MPI_COMM_WORLD, i);
+//             ASSERT_EQ(comm.root(), i);
+//             EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL, i), ".*");
+//         }
+//     }
+// }
 
 TEST_F(CommunicatorTest, SetRankBoundCheck) {
   Communicator comm;
@@ -81,23 +81,23 @@ TEST_F(CommunicatorTest, SetRankBoundCheck) {
     }
 }
 
-TEST_F(CommunicatorTest, RankAdvanceBoundCheck) {
+TEST_F(CommunicatorTest, RankShiftedChecked) {
     Communicator comm;
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i + rank < 0 || i + rank >= size) {
-            EXPECT_DEATH(comm.compute_rank_bound_checked(i), ".*");
+            EXPECT_DEATH(comm.rank_shifted_checked(i), ".*");
         } else {
-            EXPECT_EQ(rank + i, comm.compute_rank_bound_checked(i));
+            EXPECT_EQ(rank + i, comm.rank_shifted_checked(i));
         }
     }
 }
 
-TEST_F(CommunicatorTest, RankAdvanceCyclic) {
+TEST_F(CommunicatorTest, RankShiftedeCyclic) {
     Communicator comm;
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
-        EXPECT_EQ((rank + i) % size, comm.compute_rank_circular(i));
+        EXPECT_EQ((rank + i) % size, comm.rank_shifted_cyclic(i));
     }
 }
 
