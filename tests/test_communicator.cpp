@@ -111,3 +111,31 @@ TEST_F(CommunicatorTest, ValidRank) {
         EXPECT_EQ((i >= 0 && i < mpi_size), comm.is_valid_rank(i));
     }
 }
+
+TEST_F(CommunicatorTest, Split) {
+    Communicator comm;
+
+    // Test split with any number of reasonable colors
+    for (int i = 2; i <= size; ++i) {
+        int const color         = rank % i;
+        auto      splitted_comm = comm.split(color);
+        int const expected_size = (size / i) + ((size % i > rank % i) ? 1 : 0);
+        EXPECT_EQ(splitted_comm.size(), expected_size);
+        /// @todo add tests that check if all ranks are in the correct splitted communicator as soon as we have
+        /// collective communication wrappers available
+    }
+
+    // Test split with any number of reasonable colors and inverse keys
+    for (int i = 2; i <= size; ++i) {
+        int const color         = rank % i;
+        auto      splitted_comm = comm.split(color, size - rank);
+        int const expected_size = (size / i) + ((size % i > rank % i) ? 1 : 0);
+        EXPECT_EQ(splitted_comm.size(), expected_size);
+
+        int const smaller_ranks_in_split = rank / i;
+        int const expected_rank          = expected_size - smaller_ranks_in_split - 1;
+        EXPECT_EQ(splitted_comm.rank(), expected_rank);
+        /// @todo add tests that check if all ranks are in the correct splitted communicator as soon as we have
+        /// collective communication wrappers available
+    }
+}
