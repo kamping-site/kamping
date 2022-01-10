@@ -12,7 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 /// @file
-/// @The classes defined in this file serve as in, out and in/out parameters to the
+/// The classes defined in this file serve as in, out and in/out parameters to the
 /// \c MPI calls wrapped by KaMPI.ng.
 /// The non-modifiable buffers (PtrBasedConstBuffer, ContainerBasedConstBuffer)
 /// encapsulate input data like data to send or send counts needed for a lot of \c MPI calls. If the user already
