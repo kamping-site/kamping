@@ -70,13 +70,13 @@ TEST_F(CommunicatorTest, EmptyConstructor) {
 // }
 
 TEST_F(CommunicatorTest, SetRankBoundCheck) {
-  Communicator comm;
+    Communicator comm;
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-          EXPECT_DEATH(comm.root(i), ".*");
+            EXPECT_DEATH(comm.root(i), ".*");
         } else {
-          comm.root(i);
-          EXPECT_EQ(i, comm.root());
+            comm.root(i);
+            EXPECT_EQ(i, comm.root());
         }
     }
 }
