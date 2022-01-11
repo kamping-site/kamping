@@ -102,13 +102,15 @@ int main(int argc, char** argv) {
 And the CMake code to register our tests:
 
 ```cmake
-katestrophe_add_compilation_failure_test(
-    TARGET test_mpi_datatype_unsupported_types
+kamping_register_compilation_failure_test(
+    test_mpi_datatype_unsupported_types
     FILES test_mpi_datatype_unsupported_types.cpp
     SECTIONS "POINTER" "VOID"
-    LIBRARIES kamping
 )
 ```
+
+If you want to link libraries other than KaMPI.ng, use `katestrophe_add_compilation_failure_test`.
+
 # Reference
 
 ## KampingTestHelper
@@ -135,6 +137,16 @@ kamping_register_test(target FILES [filename ...])
 # CORES the number of MPI ranks to run the test for
 #
 kamping_register_mpi_test(target FILES [filename ...] CORES [Integer ...])
+```
+
+```cmake
+# Convenience wrapper for registering a set of tests that should fail to compile and require KaMPI.ng to be linked.
+#
+# TARGET prefix for the targets to be built
+# FILES the list of files to include in the target
+# SECTIONS sections of the compilation test to build
+#
+kamping_register_compilation_failure_test(<target name> FILES [filename ... ] SECTIONS [section ...])
 ```
 
 ## KaTestrophe
