@@ -42,3 +42,25 @@ function(kamping_register_mpi_test KAMPING_TARGET_NAME)
   target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE kamping)
   katestrophe_add_mpi_test(${KAMPING_TARGET_NAME} CORES ${KAMPING_CORES} DISCOVER_TESTS)
 endfunction()
+
+# Convenience wrapper for registering a set of tests that should fail to compile and require KaMPI.ng to be linked.
+#
+# TARGET prefix for the targets to be built
+# FILES the list of files to include in the target
+# SECTIONS sections of the compilation test to build
+#
+function(kamping_register_compilation_failure_test KAMPING_TARGET_NAME)
+  cmake_parse_arguments(
+    "KAMPING"
+    ""
+    ""
+    "FILES;SECTIONS"
+    ${ARGN}
+    )
+  katestrophe_add_compilation_failure_test(
+    TARGET ${KAMPING_TARGET_NAME}
+    FILES ${KAMPING_FILES}
+    SECTIONS ${KAMPING_SECTIONS}
+    LIBRARIES kamping
+    )
+endfunction()
