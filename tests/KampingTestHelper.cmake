@@ -1,117 +1,66 @@
-add_subdirectory("${PROJECT_SOURCE_DIR}/extern/googletest" "extern/googletest")
+include(KaTestrophe)
+include(GoogleTest)
 
-# gtest-mpi-listener does not use modern CMake, therefore we need this fix
-set(gtest-mpi-listener_SOURCE_DIR ${CMAKE_SOURCE_DIR}/extern/gtest-mpi-listener)
-add_library(gtest-mpi-listener INTERFACE)
-target_include_directories(gtest-mpi-listener INTERFACE "${gtest-mpi-listener_SOURCE_DIR}")
-target_link_libraries(gtest-mpi-listener INTERFACE MPI::MPI_CXX gtest gmock)
-
-# sets the provided output variable KAMPING_OVERSUBSCRIBE_FLAG to the flags required to run mpiexec with
-# more MPI ranks than cores available
-function(kamping_has_oversubscribe KAMPING_OVERSUBSCRIBE_FLAG)
-  string(FIND ${MPI_CXX_LIBRARY_VERSION_STRING} "OpenMPI" SEARCH_POSITION1)
-  string(FIND ${MPI_CXX_LIBRARY_VERSION_STRING} "Open MPI" SEARCH_POSITION2)
-  # only Open MPI seems to require the --oversubscribe flag
-  # MPICH and Intel don't know it but silently run commands with more ranks than cores available
-  if(${SEARCH_POSITION1} EQUAL -1 AND ${SEARCH_POSITION2} EQUAL -1)
-    set("${KAMPING_OVERSUBSCRIBE_FLAG}" "" PARENT_SCOPE)
-  else()
-    # We are using Open MPI
-    set("${KAMPING_OVERSUBSCRIBE_FLAG}" "--oversubscribe" PARENT_SCOPE)
-  endif()
-endfunction()
-kamping_has_oversubscribe(MPIEXEC_OVERSUBSCRIBE_FLAG)
-
-# register the test main class
-add_library(mpi-gtest-main EXCLUDE_FROM_ALL mpi-gtest-main.cpp)
-target_link_libraries(mpi-gtest-main PUBLIC gtest-mpi-listener)
-
-# keep the cache clean
-mark_as_advanced(
-  BUILD_GMOCK BUILD_GTEST BUILD_SHARED_LIBS
-  gmock_build_tests gtest_build_samples gtest_build_tests
-  gtest_disable_pthreads gtest_force_shared_crt gtest_hide_internal_symbols
-)
-
-# Adds an executable target with the specified files FILES and links gtest and the MPI gtest runner
-# example: kamping_add_test_executable(mytest FILES mytest.cpp myotherfile.cpp)
-function(kamping_add_test_executable KAMPING_TARGET)
+# Convenience wrapper for adding tests for KaMPI.ng
+# this creates the target, links googletest and kamping, enables warnings and registers the test
+#
+# TARGET_NAME the target name
+# FILES the files of the target
+#
+# example: kamping_register_test(mytarget FILES mytarget.cpp)
+function(kamping_register_test KAMPING_TARGET_NAME)
   cmake_parse_arguments(
     "KAMPING"
     ""
     ""
     "FILES"
     ${ARGN}
-  )
-  add_executable(${KAMPING_TARGET} "${KAMPING_FILES}")
-  target_link_libraries(${KAMPING_TARGET} PUBLIC gtest mpi-gtest-main)
-  target_compile_options(${KAMPING_TARGET} PRIVATE ${KAMPING_WARNING_FLAGS})
+    )
+  add_executable(${KAMPING_TARGET_NAME} ${KAMPING_FILES})
+  target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE gtest gtest_main gmock kamping)
+  target_compile_options(${KAMPING_TARGET_NAME} PRIVATE ${KAMPING_WARNING_FLAGS})
+  gtest_discover_tests(${KAMPING_TARGET_NAME} WORKING_DIRECTORY ${PROJECT_DIR})
 endfunction()
 
-# Registers an executable target KAMPING_TEST_TARGET as a test to be executed with ctest
-# using the specified number of MPI ranks CORES
-# example: kamping_add_mpi_test(mytest CORES 2 4 8)
-function(kamping_add_mpi_test KAMPING_TEST_TARGET)
+# Convenience wrapper for adding tests for KaMPI.ng which rely on MPI
+# this creates the target, links googletest, kamping and MPI, enables warnings and registers the tests
+#
+# TARGET_NAME the target name
+# FILES the files of the target
+# CORES the number of MPI ranks to run the test for
+#
+# example: kamping_register_mpi_test(mytarget FILES mytarget.cpp CORES 1 2 4 8)
+function(kamping_register_mpi_test KAMPING_TARGET_NAME)
   cmake_parse_arguments(
-    KAMPING
+   "KAMPING"
     ""
     ""
-    "CORES"
+    "FILES;CORES"
     ${ARGN}
-  )
-  if(NOT KAMPING_CORES)
-    set(KAMPING_CORES ${MPIEXEC_MAX_NUMPROCS})
-  endif()
-  foreach(p ${KAMPING_CORES})
-    set(TEST_NAME "${KAMPING_TEST_TARGET}.${p}cores")
-    add_test(
-      NAME "${TEST_NAME}"
-      COMMAND
-      ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${p} ${MPIEXEC_OVERSUBSCRIBE_FLAG} ${MPIEXEC_PREFLAGS} $<TARGET_FILE:${KAMPING_TEST_TARGET}> ${MPIEXEC_POSTFLAGS}
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     )
-    # TODO: Do no rely on the return value of mpiexec to check if a test succeeded, as this does not work for ULFM.
-  endforeach()
+  katestrophe_add_test_executable(${KAMPING_TARGET_NAME} FILES ${KAMPING_FILES})
+  target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE kamping)
+  katestrophe_add_mpi_test(${KAMPING_TARGET_NAME} CORES ${KAMPING_CORES})
 endfunction()
 
-# Registers a set of tests which should fail to compile.
-# Loosely based on: https://stackoverflow.com/questions/30155619/expected-build-failure-tests-in-cmake
-function(kamping_add_compilation_failure_test)
-    cmake_parse_arguments(
-        "KAMPING" # prefix
-        "" # options
-        "TARGET" # one value arguements
-        "FILES;SECTIONS;LIBRARIES" # multiple value arguments
-        ${ARGN}
+# Convenience wrapper for registering a set of tests that should fail to compile and require KaMPI.ng to be linked.
+#
+# TARGET prefix for the targets to be built
+# FILES the list of files to include in the target
+# SECTIONS sections of the compilation test to build
+#
+function(kamping_register_compilation_failure_test KAMPING_TARGET_NAME)
+  cmake_parse_arguments(
+    "KAMPING"
+    ""
+    ""
+    "FILES;SECTIONS"
+    ${ARGN}
     )
-    
-    # For each given section, add a target.
-    foreach(SECTION ${KAMPING_SECTIONS})
-        string(TOLOWER ${SECTION} SECTION_LOWERCASE)
-        set(THIS_TARGETS_NAME "${KAMPING_TARGET}.${SECTION_LOWERCASE}")
-
-        # Add the executable and link the libraries.
-        add_executable(${THIS_TARGETS_NAME} ${KAMPING_FILES})
-        target_link_libraries(${THIS_TARGETS_NAME} PUBLIC ${KAMPING_LIBRARIES})
-
-        # Select the correct section of the target by setting the appropriate preprocessor define.
-        target_compile_definitions(${THIS_TARGETS_NAME} PRIVATE ${SECTION})
-
-        # Exclude the target fromn the "all" target.
-        set_target_properties(
-            ${THIS_TARGETS_NAME} PROPERTIES
-            EXCLUDE_FROM_ALL TRUE
-            EXCLUDE_FROM_DEFAULT_BUILD TRUE
-        )
-        
-        # Add a test invoking "cmake --build" to test if the target compiles.
-        add_test(
-            NAME "${THIS_TARGETS_NAME}"
-            COMMAND cmake --build . --target ${THIS_TARGETS_NAME} --config $<CONFIGURATION>
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        )
-
-        # Specify, that the target should not compile.
-        set_tests_properties("${THIS_TARGETS_NAME}" PROPERTIES WILL_FAIL TRUE)
-    endforeach()
-endfunction() 
+  katestrophe_add_compilation_failure_test(
+    TARGET ${KAMPING_TARGET_NAME}
+    FILES ${KAMPING_FILES}
+    SECTIONS ${KAMPING_SECTIONS}
+    LIBRARIES kamping
+    )
+endfunction()

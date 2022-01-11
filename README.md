@@ -21,3 +21,7 @@ KaMPI.ng is developed at the [Algorithm Engineering Group](https://algo2.iti.kit
    - C++17
      - we do not want to rely on C++20 features, because Intel does not support it yet
    - easy inclusion into other projects by using modern CMake
+   
+## LICENSE
+
+KaMPI.ng is released under the GNU Lesser General Public License. See [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER) for details

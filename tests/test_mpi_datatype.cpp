@@ -1,14 +1,14 @@
-// This file is part of KaMPIng.
+// This file is part of KaMPI.ng.
 //
-// Copyright 2021 The KaMPIng Authors
+// Copyright 2021 The KaMPI.ng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <cstdint>
@@ -136,7 +136,7 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
     return possible_mpi_datatypes;
 }
 
-TEST(Test_Helpers, mpi_datatype_basics) {
+TEST(HelpersTest, mpi_datatype_basics) {
     // Check using the equivalent_mpi_datatypes() helper.
     EXPECT_THAT(possible_mpi_datatypes<char>(), Contains(mpi_datatype<char>()));
     EXPECT_THAT(possible_mpi_datatypes<unsigned char>(), Contains(mpi_datatype<unsigned char>()));
@@ -171,14 +171,14 @@ TEST(Test_Helpers, mpi_datatype_basics) {
         possible_mpi_datatypes<std::complex<long double>>(), Contains(mpi_datatype<std::complex<long double>>()));
 }
 
-TEST(Test_Helpers, mpi_datatype_const_and_volatile) {
+TEST(HelpersTest, mpi_datatype_const_and_volatile) {
     // Ignore const and volatile qualifiers.
     EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<const int8_t>()));
     EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<volatile int8_t>()));
     EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<const volatile int8_t>()));
 }
 
-TEST(Test_Helpers, mpi_datatype_typedefs_and_using) {
+TEST(HelpersTest, mpi_datatype_typedefs_and_using) {
     // typedefs and using directives.
     typedef int myInt;
     EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(mpi_datatype<myInt>()));
@@ -187,7 +187,7 @@ TEST(Test_Helpers, mpi_datatype_typedefs_and_using) {
     EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(mpi_datatype<myFloat>()));
 }
 
-TEST(Test_Helpers, mpi_datatype_size_t) {
+TEST(HelpersTest, mpi_datatype_size_t) {
     // size_t, which should be one of the unsigned integer types with at least 16 bits (as of C++11).
     EXPECT_THAT(
         (std::array{MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG}),
@@ -199,7 +199,7 @@ TEST(Test_Helpers, mpi_datatype_size_t) {
         Contains(mpi_datatype<std::size_t>()));
 }
 
-TEST(Test_Helpers, mpi_datatype_enum) {
+TEST(HelpersTest, mpi_datatype_enum) {
     // Calling mpi_datatype with a enum type should use the underlying type.
 
     // Unscoped enum
@@ -225,7 +225,7 @@ TEST(Test_Helpers, mpi_datatype_enum) {
     EXPECT_THAT(possible_mpi_datatypes<int64_t>(), Contains(mpi_datatype<scopedEnumInt64_t>()));
 }
 
-TEST(Test_Helpers, mpi_datatype_continuous_type) {
+TEST(HelpersTest, mpi_datatype_continuous_type) {
     struct TestStruct {
         int a;
         int b;
@@ -264,7 +264,7 @@ TEST(Test_Helpers, mpi_datatype_continuous_type) {
     EXPECT_NE(MPI_C_LONG_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
 }
 
-TEST(Test_Helpers, mpi_datatype_c_array) {
+TEST(HelpersTest, mpi_datatype_c_array) {
     // Calling mpi_datatype with an array should return a continuous datatype.
     int c_array[3];
 

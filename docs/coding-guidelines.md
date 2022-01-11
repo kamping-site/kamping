@@ -21,23 +21,8 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 * Use informative names for templated types. "T1" etc. is only allowed for very general code. Template names are in CamelCase (like classes), e.g. `GeneratorFunction`.
 * Types defined with `using` inherit the naming rules of the type they are aliasing. For example `using MessageChecker = MessageContainer<...>::MessageChecker` for a class or struct alias.
 
-# Naming and organizing tests.
-Name your unit test files `test_corresponding_filename_of_code.cpp`. Inside this file, add tests using the following naming scheme: `TEST(Test_ClassName, function_<description>)`, where `<description>` could for example be: `basics`, `invalid_parameters`, `typedefs_and_using` or many others.
-
-The tests for the global helper function `mpi_datatype<T>()` are in `tests/test_mpi_datatype.cpp` and for example includes the folling tests:
-
-```cpp
-TEST(Test_Helpers, mpi_datatype_basics) {
-// ...
-TEST(Test_Helpers, mpi_datatype_typedefs_and_using) {
-// ...
-TEST(Test_Helpers, mpi_datatype_size_t) {
-// ...
-TEST(Test_Helpers, mpi_datatype_enum) {
-// ...
-```
-As `mpi_datatype<T>()` is not part of any class, we use the organizatorial unit `Helpers` as the class name.
-TODO @Lukas Add a section explaining the usage of compilation failure tests.
+# Writing Tests
+For details on how to write tests see the [Testing Guidelines](testing_guidelines.md).
 
 # Rules for functions
 TODO @Demian @Matthias: Rules for API
