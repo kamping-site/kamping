@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     auto result = mpi_datatype<my_union>();
 #elif defined(VOID)
     // Calling mpi_datatype with a void type should not compile.
-    auto result mpi_datatype<void>();
+    auto result = mpi_datatype<void>();
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif
