@@ -84,10 +84,10 @@ public:
         return Communicator(new_comm);
     }
 
-    /// @brief Convert a rank id from this communicator to the rank id in another communicator.
-    /// @param rank The rank id in this communicator
+    /// @brief Convert a rank from this communicator to the rank in another communicator.
+    /// @param rank The rank in this communicator
     /// @param otherComm The communicator to convert the rank to
-    /// @return The rank id in otherComm
+    /// @return The rank in otherComm
     int convert_rank_to_communicator(int const rank, Communicator const& otherComm) const {
         MPI_Group myGroup;
         MPI_Comm_group(_comm, &myGroup);
@@ -98,10 +98,10 @@ public:
         return rankInOtherComm;
     }
 
-    /// @brief Convert a rank id from another communicator to the rank id in this communicator.
-    /// @param rank The rank id in otherComm
+    /// @brief Convert a rank from another communicator to the rank in this communicator.
+    /// @param rank The rank in otherComm
     /// @param otherComm The communicator to convert the rank from
-    /// @return The rank id in this communicator
+    /// @return The rank in this communicator
     int convert_rank_from_communicator(int const rank, Communicator const& otherComm) const {
         return otherComm.convert_rank_to_communicator(rank, *this);
     }
