@@ -84,6 +84,28 @@ public:
         return Communicator(new_comm);
     }
 
+    /// @brief Convert a rank from this communicator to the rank in another communicator.
+    /// @param rank The rank in this communicator
+    /// @param other_comm The communicator to convert the rank to
+    /// @return The rank in other_comm
+    int convert_rank_to_communicator(int const rank, Communicator const& other_comm) const {
+        MPI_Group my_group;
+        MPI_Comm_group(_comm, &my_group);
+        MPI_Group other_group;
+        MPI_Comm_group(other_comm._comm, &other_group);
+        int rank_in_other_comm;
+        MPI_Group_translate_ranks(my_group, 1, &rank, other_group, &rank_in_other_comm);
+        return rank_in_other_comm;
+    }
+
+    /// @brief Convert a rank from another communicator to the rank in this communicator.
+    /// @param rank The rank in other_comm
+    /// @param other_comm The communicator to convert the rank from
+    /// @return The rank in this communicator
+    int convert_rank_from_communicator(int const rank, Communicator const& other_comm) const {
+        return other_comm.convert_rank_to_communicator(rank, *this);
+    }
+
     /// @brief Computes a rank that is \c distance ranks away from this MPI thread's current rank and checks if this is
     /// valid rank in this communicator.
     ///
