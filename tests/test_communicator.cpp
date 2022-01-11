@@ -125,11 +125,11 @@ TEST_F(CommunicatorTest, SplitAndRankConversion) {
         // Check for all rank ids whether they correctly convert to the splitted communicator
         for (int rankToTest = 0; rankToTest < size; ++rankToTest) {
             int const expectedRankInSplittedcomm = rankToTest % i == color ? rankToTest / i : MPI_UNDEFINED;
-            EXPECT_EQ(expectedRankInSplittedcomm, comm.convertRankToCommunicator(rankToTest, splitted_comm));
-            EXPECT_EQ(expectedRankInSplittedcomm, splitted_comm.convertRankFromCommunicator(rankToTest, comm));
+            EXPECT_EQ(expectedRankInSplittedcomm, comm.convert_rank_to_communicator(rankToTest, splitted_comm));
+            EXPECT_EQ(expectedRankInSplittedcomm, splitted_comm.convert_rank_from_communicator(rankToTest, comm));
             if (expectedRankInSplittedcomm != MPI_UNDEFINED) {
-                EXPECT_EQ(rankToTest, comm.convertRankFromCommunicator(expectedRankInSplittedcomm, splitted_comm));
-                EXPECT_EQ(rankToTest, splitted_comm.convertRankToCommunicator(expectedRankInSplittedcomm, comm));
+                EXPECT_EQ(rankToTest, comm.convert_rank_from_communicator(expectedRankInSplittedcomm, splitted_comm));
+                EXPECT_EQ(rankToTest, splitted_comm.convert_rank_to_communicator(expectedRankInSplittedcomm, comm));
             }
         }
     }
@@ -149,11 +149,11 @@ TEST_F(CommunicatorTest, SplitAndRankConversion) {
         for (int rankToTest = 0; rankToTest < size; ++rankToTest) {
             int const expectedRankInSplittedcomm =
                 rankToTest % i == color ? expected_size - (rankToTest / i) - 1 : MPI_UNDEFINED;
-            EXPECT_EQ(expectedRankInSplittedcomm, comm.convertRankToCommunicator(rankToTest, splitted_comm));
-            EXPECT_EQ(expectedRankInSplittedcomm, splitted_comm.convertRankFromCommunicator(rankToTest, comm));
+            EXPECT_EQ(expectedRankInSplittedcomm, comm.convert_rank_to_communicator(rankToTest, splitted_comm));
+            EXPECT_EQ(expectedRankInSplittedcomm, splitted_comm.convert_rank_from_communicator(rankToTest, comm));
             if (expectedRankInSplittedcomm != MPI_UNDEFINED) {
-                EXPECT_EQ(rankToTest, comm.convertRankFromCommunicator(expectedRankInSplittedcomm, splitted_comm));
-                EXPECT_EQ(rankToTest, splitted_comm.convertRankToCommunicator(expectedRankInSplittedcomm, comm));
+                EXPECT_EQ(rankToTest, comm.convert_rank_from_communicator(expectedRankInSplittedcomm, splitted_comm));
+                EXPECT_EQ(rankToTest, splitted_comm.convert_rank_to_communicator(expectedRankInSplittedcomm, comm));
             }
         }
     }

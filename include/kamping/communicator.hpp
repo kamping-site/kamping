@@ -88,7 +88,7 @@ public:
     /// @param rank The rank id in this communicator
     /// @param otherComm The communicator to convert the rank to
     /// @return The rank id in otherComm
-    int convertRankToCommunicator(int const rank, Communicator const& otherComm) const {
+    int convert_rank_to_communicator(int const rank, Communicator const& otherComm) const {
         MPI_Group myGroup;
         MPI_Comm_group(_comm, &myGroup);
         MPI_Group otherGroup;
@@ -102,8 +102,8 @@ public:
     /// @param rank The rank id in otherComm
     /// @param otherComm The communicator to convert the rank from
     /// @return The rank id in this communicator
-    int convertRankFromCommunicator(int const rank, Communicator const& otherComm) const {
-        return otherComm.convertRankToCommunicator(rank, *this);
+    int convert_rank_from_communicator(int const rank, Communicator const& otherComm) const {
+        return otherComm.convert_rank_to_communicator(rank, *this);
     }
 
     /// @brief Computes a rank that is \c distance ranks away from this MPI thread's current rank and checks if this is
