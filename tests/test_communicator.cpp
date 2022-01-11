@@ -112,7 +112,7 @@ TEST_F(CommunicatorTest, ValidRank) {
     }
 }
 
-TEST_F(CommunicatorTest, Split) {
+TEST_F(CommunicatorTest, SplitAndRankConversion) {
     Communicator comm;
 
     // Test split with any number of reasonable colors
@@ -121,8 +121,17 @@ TEST_F(CommunicatorTest, Split) {
         auto      splitted_comm = comm.split(color);
         int const expected_size = (size / i) + ((size % i > rank % i) ? 1 : 0);
         EXPECT_EQ(splitted_comm.size(), expected_size);
-        /// @todo add tests that check if all ranks are in the correct splitted communicator as soon as we have
-        /// collective communication wrappers available
+
+        // Check for all rank ids whether they correctly convert to the splitted communicator
+        for (int rankToTest = 0; rankToTest < size; ++rankToTest) {
+            int const expectedRankInSplittedcomm = rankToTest % i == color ? rankToTest / i : MPI_UNDEFINED;
+            EXPECT_EQ(expectedRankInSplittedcomm, comm.convertRankToCommunicator(rankToTest, splitted_comm));
+            EXPECT_EQ(expectedRankInSplittedcomm, splitted_comm.convertRankFromCommunicator(rankToTest, comm));
+            if (expectedRankInSplittedcomm != MPI_UNDEFINED) {
+                EXPECT_EQ(rankToTest, comm.convertRankFromCommunicator(expectedRankInSplittedcomm, splitted_comm));
+                EXPECT_EQ(rankToTest, splitted_comm.convertRankToCommunicator(expectedRankInSplittedcomm, comm));
+            }
+        }
     }
 
     // Test split with any number of reasonable colors and inverse keys
@@ -135,7 +144,17 @@ TEST_F(CommunicatorTest, Split) {
         int const smaller_ranks_in_split = rank / i;
         int const expected_rank          = expected_size - smaller_ranks_in_split - 1;
         EXPECT_EQ(splitted_comm.rank(), expected_rank);
-        /// @todo add tests that check if all ranks are in the correct splitted communicator as soon as we have
-        /// collective communication wrappers available
+
+        // Check for all rank ids whether they correctly convert to the splitted communicator
+        for (int rankToTest = 0; rankToTest < size; ++rankToTest) {
+            int const expectedRankInSplittedcomm =
+                rankToTest % i == color ? expected_size - (rankToTest / i) - 1 : MPI_UNDEFINED;
+            EXPECT_EQ(expectedRankInSplittedcomm, comm.convertRankToCommunicator(rankToTest, splitted_comm));
+            EXPECT_EQ(expectedRankInSplittedcomm, splitted_comm.convertRankFromCommunicator(rankToTest, comm));
+            if (expectedRankInSplittedcomm != MPI_UNDEFINED) {
+                EXPECT_EQ(rankToTest, comm.convertRankFromCommunicator(expectedRankInSplittedcomm, splitted_comm));
+                EXPECT_EQ(rankToTest, splitted_comm.convertRankToCommunicator(expectedRankInSplittedcomm, comm));
+            }
+        }
     }
 }
