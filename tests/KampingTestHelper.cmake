@@ -40,7 +40,7 @@ function(kamping_register_mpi_test KAMPING_TARGET_NAME)
     )
   katestrophe_add_test_executable(${KAMPING_TARGET_NAME} FILES ${KAMPING_FILES})
   target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE kamping)
-  katestrophe_add_mpi_test(${KAMPING_TARGET_NAME} CORES ${KAMPING_CORES})
+  katestrophe_add_mpi_test(${KAMPING_TARGET_NAME} CORES ${KAMPING_CORES} DISCOVER_TESTS)
 endfunction()
 
 # Convenience wrapper for registering a set of tests that should fail to compile and require KaMPI.ng to be linked.
