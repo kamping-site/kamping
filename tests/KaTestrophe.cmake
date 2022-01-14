@@ -1,6 +1,9 @@
 if (NOT DEFINED KATESTROPHE_INCLUDED)
   set(KATESTROPHE_INCLUDED TRUE)
   add_subdirectory("${PROJECT_SOURCE_DIR}/extern/googletest" "extern/googletest")
+  list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+  include (MPIGoogleTest)
 
   # gtest-mpi-listener does not use modern CMake, therefore we need this fix
   set(gtest-mpi-listener_SOURCE_DIR ${CMAKE_SOURCE_DIR}/extern/gtest-mpi-listener)
@@ -57,13 +60,14 @@ if (NOT DEFINED KATESTROPHE_INCLUDED)
   # Registers an executable target KATESTROPHE_TEST_TARGET as a test to be executed with ctest
   #
   # KATESTROPHE_TEST_TARGET target name
+  # DISCOVER_TESTS sets whether the individual tests should be added to the ctest output (like gtest_discover_tests)
   # CORES the number of MPI ranks to run the test with
   #
   # example: katestrophe_add_mpi_test(mytest CORES 2 4 8)
   function(katestrophe_add_mpi_test KATESTROPHE_TEST_TARGET)
     cmake_parse_arguments(
       KATESTROPHE
-      ""
+      "DISCOVER_TESTS"
       ""
       "CORES"
       ${ARGN}
@@ -73,12 +77,21 @@ if (NOT DEFINED KATESTROPHE_INCLUDED)
     endif()
     foreach(p ${KATESTROPHE_CORES})
       set(TEST_NAME "${KATESTROPHE_TEST_TARGET}.${p}cores")
-      add_test(
-        NAME "${TEST_NAME}"
-        COMMAND
-        ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${p} ${MPIEXEC_OVERSUBSCRIBE_FLAG} ${MPIEXEC_PREFLAGS} $<TARGET_FILE:${KATESTROPHE_TEST_TARGET}> ${MPIEXEC_POSTFLAGS}
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-        )
+      set(MPI_EXEC_COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${p} ${MPIEXEC_OVERSUBSCRIBE_FLAG} ${MPIEXEC_PREFLAGS})
+      if (KATESTROPHE_DISCOVER_TESTS)
+        katestrophe_discover_tests(${KATESTROPHE_TEST_TARGET}
+          TEST_SUFFIX ".${p}cores"
+          WORKING_DIRECTORY ${MPI}
+          MPI_EXEC_COMMAND "${MPI_EXEC_COMMAND}"
+          )
+      else()
+        add_test(
+          NAME "${TEST_NAME}"
+          COMMAND
+          ${MPI_EXEC_COMMAND} $<TARGET_FILE:${KATESTROPHE_TEST_TARGET}>
+          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+          )
+      endif()
       # TODO: Do not rely on the return value of mpiexec to check if a test succeeded, as this does not work for ULFM.
     endforeach()
   endfunction()
