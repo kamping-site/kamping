@@ -24,10 +24,7 @@ namespace internal {
 
 // https://stackoverflow.com/a/9154394 TODO license?
 ///@brief Helper to implement has_extract_v
-///
 template <typename>
-///@brief Helper to implement has_extract_v
-///
 struct true_type : std::true_type {};
 template <typename T>
 auto test_extract(int) -> true_type<decltype(std::declval<T>().extract())>;
