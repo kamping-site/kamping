@@ -1,5 +1,18 @@
+// This file is part of KaMPI.ng.
+//
+// Copyright 2021 The KaMPI.ng Authors
+//
+// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
 /// @file
-/// @brief Macros for optional runtime checks
+/// @brief Macros for asserting runtime checks.
 
 #pragma once
 
@@ -9,6 +22,18 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+
+/// @brief
+/// Assertion macro
+#define KASSERT(...)               \
+    KAMPING_KASSERT_VARARG_HELPER( \
+        , ##__VA_ARGS__, KASSERT_3(__VA_ARGS__), KASSERT_2(__VA_ARGS__), KASSERT_1(__VA_ARGS__), ignore)
+
+/// @brief
+/// Throwing assertion macro
+#define KTHROW(...)                \
+    KAMPING_KASSERT_VARARG_HELPER( \
+        , ##__VA_ARGS__, KTHROW_3(__VA_ARGS__), KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
 
 /// @brief Creates an instance of \c SourceLocation describing the current location in the source code.
 #define KAMPING_SOURCE_LOCATION                 \
@@ -45,18 +70,20 @@
 // if (...) ASSERT(...) else [...] // 'else' is now the else branch of the if produced by the ASSERT macro
 // Similarly, wrapping everything in a {} block would also break the code with a trailing ';'.
 
-/// @brief Assertion macro
+/// @brief Assertion macro with expression, message and level.
 /// @param expression Expression to be checked.
 /// @param message Additional user message, can use \c << to build the message.
 /// @param level Level of the assertion.
-#define KASSERT(expression, message, level) KAMPING_ASSERT_IMPL("ASSERTION", expression, message, level)
+#define KASSERT_3(expression, message, level) KAMPING_ASSERT_IMPL("ASSERTION", expression, message, level)
+#define KASSERT_2(expression, message)        KASSERT_3(expression, message, kamping::assert::normal)
+#define KASSERT_1(expression)                 KASSERT_2(expression, "")
 
 #ifdef KAMPING_EXCEPTION_MODE
     /// @brief Throws an exception if the expression evaluates to false (in exception mode).
     /// @param expression Expression to be checked.
     /// @param message Additional user message, can use \c << to build the message.
     /// @param assertion_type Type name of the assertion to be used. Most offer an appropriate constructor.
-    #define KTHROW(expression, message, assertion_type)                                                                \
+    #define KTHROW_3(expression, message, assertion_type)                                                              \
         do {                                                                                                           \
             if (!(expression)) {                                                                                       \
                 throw assertion_type(                                                                                  \
@@ -70,11 +97,27 @@
     /// @param expression Expression to be checked.
     /// @param message Additional user message, can use \c << to build the message.
     /// @param assertion_type Type name of the assertion to be used.
-    #define KTHROW(expression, message, assertion_type) \
+    #define KTHROW_3(expression, message, assertion_type) \
         KAMPING_ASSERT_IMPL(#assertion_type, expression, message, kamping::assert::normal)
 #endif
 
+#define KTHROW_2(expression, message) KTHROW_3(expression, message, kamping::assert::KassertException)
+#define KTHROW_1(expression)          KTHROW_2(expression, "")
+
+#define KAMPING_KASSERT_VARARG_HELPER(X, Y, Z, W, FUNC, ...) FUNC
+
 namespace kamping::assert {
+/// @name Predefined assertion levels
+/// Assertion levels that can be used with the KASSERT macro.
+/// @{
+/// @brief Assertion level for lightweight assertions.
+constexpr int light = 1;
+/// @brief Default assertion level. This level is used if no assertion level is specified.
+constexpr int normal = 2;
+/// @brief Assertion level for heavyweight assertions.
+constexpr int heavy = 3;
+/// @}
+
 namespace internal {
 /// @internal
 
@@ -332,6 +375,7 @@ private:
 /// @tparam Lhst Decomposed expression type.
 template <typename LhsT>
 class UnaryExpression : public Expression {
+public:
     /// @brief Constructs this unary expression from an expression.
     /// @param lhs The expression.
     explicit UnaryExpression(const LhsT& lhs) : _lhs(lhs) {}
@@ -368,7 +412,7 @@ public:
     /// @return This expression as \c UnaryExpr.
     UnaryExpression<LhsT> make_unary() {
         static_assert(std::is_convertible_v<LhsT, bool>, "expression must be convertible to bool");
-        return {_lhs};
+        return UnaryExpression<LhsT>{_lhs};
     }
 
 #define KAMPING_ASSERT_OP(op)                                                               \
@@ -414,7 +458,7 @@ struct Decomposer {
 /// @param expr The expression.
 /// @return The expression as some subclass of \c Expression.
 template <typename ExprT>
-Expression&& finalize_expr(ExprT&& expr) {
+decltype(auto) finalize_expr(ExprT&& expr) {
     if constexpr (std::is_base_of_v<Expression, std::remove_reference_t<std::remove_const_t<ExprT>>>) {
         return std::forward<ExprT>(expr);
     } else {
@@ -463,15 +507,4 @@ bool evaluate_and_print_assertion(
 
 /// @endinternal
 } // namespace internal
-
-/// @name Predefined assertion levels
-/// Assertion levels that can be used with the KASSERT macro.
-/// @{
-/// @brief Assertion level for lightweight assertions.
-constexpr int light = 1;
-/// @brief Default assertion level. This level is used if no assertion level is specified.
-constexpr int normal = 2;
-/// @brief Assertion level for heavyweight assertions.
-constexpr int heavy = 3;
-/// @}
 } // namespace kamping::assert
