@@ -98,12 +98,12 @@ constexpr bool IsStreamableType = IsStreamableTypeImpl<StreamT, ValueT>::value;
 
 /// @brief The default exception type used together with \c KTHROW. Reports the erroneous expression together with a
 /// custom error message.
-class DefaultException : public std::exception {
+class KassertException : public std::exception {
 public:
     /// @brief Constructs the exception based on the erroneous expression and a custom error message.
     /// @param expression The stringified expression that caused this exception to be thrown.
     /// @param message A custom error message.
-    explicit DefaultException(std::string const& expression, std::string const& message)
+    explicit KassertException(std::string const& expression, std::string const& message)
         : _what(build_what(expression, message)) {}
 
     /// @brief Prints a description of this exception.
