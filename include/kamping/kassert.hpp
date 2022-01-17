@@ -111,18 +111,21 @@
 // In KAMPING_EXCEPTION_MODE, we throw an exception similar to the implementation of KASSERT(), although expression
 // decomposition in exceptions is currently unsupported. Otherwise, the macro delegates to KASSERT().
 #ifdef KAMPING_EXCEPTION_MODE
-    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)                                       \
-        do {                                                                                                           \
-            if (!(expression)) {                                                                                       \
-                throw assertion_type(                                                                                  \
-                    #expression, (kamping::assert::internal::RrefOStringstreamLogger{std::ostringstream{}} << message) \
-                                     .stream()                                                                         \
-                                     .str());                                                                          \
-            }                                                                                                          \
+    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)                              \
+        do {                                                                                                  \
+            if constexpr (kamping::assert::internal::assertion_enabled(kamping::assert::exception)) {         \
+                if (!(expression)) {                                                                          \
+                    throw assertion_type(                                                                     \
+                        #expression,                                                                          \
+                        (kamping::assert::internal::RrefOStringstreamLogger{std::ostringstream{}} << message) \
+                            .stream()                                                                         \
+                            .str());                                                                          \
+                }                                                                                             \
+            }                                                                                                 \
         } while (false)
 #else
     #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type) \
-        KAMPING_KASSERT_HPP_KASSERT_IMPL(#assertion_type, expression, message, kamping::assert::normal)
+        KAMPING_KASSERT_HPP_KASSERT_IMPL(#assertion_type, expression, message, kamping::assert::exception)
 #endif
 
 // KTHROW() chooses the right implementation depending on its number of arguments.
@@ -148,12 +151,14 @@ namespace kamping::assert {
 /// @name Predefined assertion levels
 /// Assertion levels that can be used with the KASSERT macro.
 /// @{
+/// @brief Assertion level for exceptions if exception mode is disabled.
+constexpr int exception = 1;
 /// @brief Assertion level for lightweight assertions.
-constexpr int light = 1;
+constexpr int light = 2;
 /// @brief Default assertion level. This level is used if no assertion level is specified.
-constexpr int normal = 2;
+constexpr int normal = 3;
 /// @brief Assertion level for heavyweight assertions.
-constexpr int heavy = 3;
+constexpr int heavy = 4;
 /// @}
 
 namespace internal {
