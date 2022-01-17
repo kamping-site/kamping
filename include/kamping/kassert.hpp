@@ -23,18 +23,37 @@
 #include <utility>
 #include <vector>
 
-/// @brief
-/// Assertion macro
+/// @brief Assertion macro for the KaMPI.ng library. Accepts between one and three parameters.
+/// @param expression The assertion expression (mandatory argument).
+/// @param message Error message that is printed in addition to the decomposed expression (optional argument).
+/// @param level The level of the assertion (optional arguments, defaults to \c kamping::assert::normal).
 #define KASSERT(...)               \
     KAMPING_KASSERT_VARARG_HELPER( \
         , ##__VA_ARGS__, KASSERT_3(__VA_ARGS__), KASSERT_2(__VA_ARGS__), KASSERT_1(__VA_ARGS__), ignore)
 
-/// @brief
-/// Throwing assertion macro
+/// @brief Macro for throwing exceptions inside the KaMPI.ng library. Accepts between one and three parameters.
+/// @param expression Expression that causes the exception to be thrown if it evaluates the \c false
+/// (mandatory argument).
+/// @param message Error message that is added to the exception (optional argument).
+/// @param assertion_type Type of the exception that should be thrown
+/// (optional argument, defaults to \c kamping::assert::KassertException).
 #define KTHROW(...)                \
     KAMPING_KASSERT_VARARG_HELPER( \
         , ##__VA_ARGS__, KTHROW_3(__VA_ARGS__), KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
 
+// To decompose expressions, the KAMPING_KASSERT_HPP_ASSERT_IMPL() produces code such as
+//
+// Decomposer{} <= a == b       [ with implicit parentheses: ((Decomposer{} <= a) == b) ]
+//
+// This triggers a warning with -Wparentheses, suggesting to set explicit parentheses, which is impossible in this
+// situation. Thus, we use compiler-specific _Pragmas to suppress these warning.
+// Note that warning suppression in GCC does not work if the KASSERT() call is passed through >= two macro calls:
+//
+// #define A(stmt) B(stmt)
+// #define B(stmt) stmt;
+// A(KASSERT(1 != 1)); -- warning suppression does not work
+//
+// This is a known limitation of the current implementation.
 #if defined(__GNUC__) && !defined(__clang__) // GCC
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH               _Pragma("GCC diagnostic push")
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_POP                _Pragma("GCC diagnostic pop")
@@ -49,14 +68,16 @@
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_PARENTHESES
 #endif
 
-/// @brief Implementation of KASSERTION.
-///
-/// This macro generates code that ...
-/// 1. At compile time, checks if assertions of the given level are enabled.
-/// 2. Decomposes and evaluates the assertion, outputs an error if it fails.
-/// 3. Prints an additional user-defined error message.
-/// 4. Halts the program using \c std::abort().
-#define KAMPING_ASSERT_IMPL(type, expression, message, level)                                                        \
+// This is the actual implementation of the KASSERT() macro.
+//
+// - Note that expanding the macro into a `do { ... } while(false)` pseudo-loop is a common trick to make a macro
+//   "act like a statement". Otherwise, it would have surprising effects if the macro is used inside a `if` branch
+//   without braces.
+// - If the assertion level is disabled, this should not generate any code (assuming that the compiler removes the
+//   dead loop).
+// - `evaluate_and_print_assertion` evaluates the assertion and prints an error message if it failed.
+// - The call to `std::abort()` is not wrapped in a function to keep the stack trace clean.
+#define KAMPING_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level)                                           \
     do {                                                                                                             \
         if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
             KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH                                                                      \
@@ -72,30 +93,25 @@
         }                                                                                                            \
     } while (false)
 
-
-// Note that expanding the macro into a `do { ... } while(false)` loop is a common trick to make the macro act like a
-// statement.
+// Expands a macro depending on its number of arguments. For instance,
 //
-// Without the loop, using the macro inside an if-else construction with a trailing ';' would be break the code:
-// if (...) ASSERT(...); else [...] // syntax error
-// Without a trailing ';', it would change the meaning of the code:
-// if (...) ASSERT(...) else [...] // 'else' is now the else branch of the if produced by the ASSERT macro
-// Similarly, wrapping everything in a {} block would also break the code with a trailing ';'.
+// #define FOO(...) KAMPING_KASSERT_VARARG_HELPER(, ##__VA_ARGS__, IMPL3, IMPL2, IMPL1, IMPL0)
+//
+// expands to IMPL3 with 3 arguments, IMPL2 with 2 arguments, IMPL1 with 1 argument and IMPL0 with zero arguments.
+// To do this, the macro always expands to its 5th argument. Depending on the number of parameters, ##__VA_ARGS__
+// pushes the right implementation to the 5th parameter.
+#define KAMPING_KASSERT_VARARG_HELPER(X, Y, Z, W, FUNC, ...) FUNC
 
-/// @brief Assertion macro with expression, message and level.
-/// @param expression Expression to be checked.
-/// @param message Additional user message, can use \c << to build the message.
-/// @param level Level of the assertion.
-#define KASSERT_3(expression, message, level) KAMPING_ASSERT_IMPL("ASSERTION", expression, message, level)
+// KASSERT() chooses the right implementation depending on its number of arguments.
+#define KASSERT_3(expression, message, level) KAMPING_KASSERT_HPP_KASSERT_IMPL("ASSERTION", expression, message, level)
 #define KASSERT_2(expression, message)        KASSERT_3(expression, message, kamping::assert::normal)
 #define KASSERT_1(expression)                 KASSERT_2(expression, "")
 
+// Implementation of the KTHROW() macro.
+// In KAMPING_EXCEPTION_MODE, we throw an exception similar to the implementation of KASSERT(), although expression
+// decomposition in exceptions is currently unsupported. Otherwise, the macro delegates to KASSERT().
 #ifdef KAMPING_EXCEPTION_MODE
-    /// @brief Throws an exception if the expression evaluates to false (in exception mode).
-    /// @param expression Expression to be checked.
-    /// @param message Additional user message, can use \c << to build the message.
-    /// @param assertion_type Type name of the assertion to be used. Most offer an appropriate constructor.
-    #define KTHROW_3(expression, message, assertion_type)                                                              \
+    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)                                       \
         do {                                                                                                           \
             if (!(expression)) {                                                                                       \
                 throw assertion_type(                                                                                  \
@@ -105,18 +121,15 @@
             }                                                                                                          \
         } while (false)
 #else
-    /// @brief Delegates to KASSERT when not in exception mode.
-    /// @param expression Expression to be checked.
-    /// @param message Additional user message, can use \c << to build the message.
-    /// @param assertion_type Type name of the assertion to be used.
-    #define KTHROW_3(expression, message, assertion_type) \
-        KAMPING_ASSERT_IMPL(#assertion_type, expression, message, kamping::assert::normal)
+    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type) \
+        KAMPING_KASSERT_HPP_KASSERT_IMPL(#assertion_type, expression, message, kamping::assert::normal)
 #endif
 
+// KTHROW() chooses the right implementation depending on its number of arguments.
+#define KTHROW_3(expression, message, assertion_type) \
+    KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)
 #define KTHROW_2(expression, message) KTHROW_3(expression, message, kamping::assert::KassertException)
 #define KTHROW_1(expression)          KTHROW_2(expression, "")
-
-#define KAMPING_KASSERT_VARARG_HELPER(X, Y, Z, W, FUNC, ...) FUNC
 
 // __PRETTY_FUNCTION__ is a compiler extension supported by GCC and clang that prints more information than __func__
 #if defined(__GNUC__) || defined(__clang__)
@@ -125,7 +138,7 @@
     #define KAMPING_KASSERT_HPP_FUNCTION_NAME __func__
 #endif
 
-/// @brief Creates an instance of \c SourceLocation describing the current location in the source code.
+// Represents the static location in the source code.
 #define KAMPING_KASSERT_HPP_SOURCE_LOCATION                   \
     kamping::assert::internal::SourceLocation {               \
         __FILE__, __LINE__, KAMPING_KASSERT_HPP_FUNCTION_NAME \
