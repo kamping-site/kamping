@@ -39,7 +39,7 @@ TEST(HelpersTest, select_parameter_type_basics) {
 }
 
 TEST(HelpersTest, select_parameter_type_duplicates) {
-    testing::Argument<ParameterType::send_buf>  arg0{0};
+    testing::Argument<ParameterType::send_buf>    arg0{0};
     testing::Argument<ParameterType::recv_buf>    arg1{1};
     testing::Argument<ParameterType::send_counts> arg2{2};
     testing::Argument<ParameterType::send_buf>    arg3{3};
