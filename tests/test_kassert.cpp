@@ -61,13 +61,13 @@ TEST(KassertTest, unary_true_expressions) {
     KASSERT(!false);
 
     // variables
-    const bool var_true  = true;
-    const bool var_false = false;
+    bool const var_true  = true;
+    bool const var_false = false;
     KASSERT(var_true);
     KASSERT(!var_false);
 
     // function calls
-    auto id = [](const bool ans) {
+    auto id = [](bool const ans) {
         return ans;
     };
     KASSERT(id(true));
@@ -87,13 +87,13 @@ TEST(KassertTest, unary_false_expressions) {
     EXPECT_EXIT({ KASSERT(!true); }, KilledBySignal(SIGABRT), "");
 
     // variables
-    const bool var_true  = true;
-    const bool var_false = false;
+    bool const var_true  = true;
+    bool const var_false = false;
     EXPECT_EXIT({ KASSERT(var_false); }, KilledBySignal(SIGABRT), "");
     EXPECT_EXIT({ KASSERT(!var_true); }, KilledBySignal(SIGABRT), "");
 
     // functions
-    auto id = [](const bool ans) {
+    auto id = [](bool const ans) {
         return ans;
     };
     EXPECT_EXIT({ KASSERT(id(false)); }, KilledBySignal(SIGABRT), "");
@@ -169,19 +169,19 @@ TEST(KassertTest, false_logical_operator_expressions) {
 
 TEST(KassertTest, primitive_type_expansion) {
     // arithmetic operators
-    auto generic_eq = [](const auto lhs, const auto rhs) {
+    auto generic_eq = [](auto const lhs, auto const rhs) {
         KASSERT(lhs == rhs);
     };
-    auto generic_gt = [](const auto lhs, const auto rhs) {
+    auto generic_gt = [](auto const lhs, auto const rhs) {
         KASSERT(lhs > rhs);
     };
-    auto generic_ge = [](const auto lhs, const auto rhs) {
+    auto generic_ge = [](auto const lhs, auto const rhs) {
         KASSERT(lhs >= rhs);
     };
-    auto generic_lt = [](const auto lhs, const auto rhs) {
+    auto generic_lt = [](auto const lhs, auto const rhs) {
         KASSERT(lhs < rhs);
     };
-    auto generic_le = [](const auto lhs, const auto rhs) {
+    auto generic_le = [](auto const lhs, auto const rhs) {
         KASSERT(lhs <= rhs);
     };
 
@@ -192,10 +192,10 @@ TEST(KassertTest, primitive_type_expansion) {
     EXPECT_EXIT({ generic_le(2, 1); }, KilledBySignal(SIGABRT), "2 <= 1");
 
     // logical operators
-    auto generic_logical_and = [](const auto lhs, const auto rhs) {
+    auto generic_logical_and = [](auto const lhs, auto const rhs) {
         KASSERT(lhs && rhs);
     };
-    auto generic_logical_or = [](const auto lhs, const auto rhs) {
+    auto generic_logical_or = [](auto const lhs, auto const rhs) {
         KASSERT(lhs || rhs);
     };
 
@@ -206,10 +206,10 @@ TEST(KassertTest, primitive_type_expansion) {
     EXPECT_EXIT({ generic_logical_or(0, 0); }, KilledBySignal(SIGABRT), "0 || 0");    // implicitly convertible to bool
 
     // more complex expressions
-    auto generic_logical_and_and_and = [](const auto val1, const auto val2, const auto val3, const auto val4) {
+    auto generic_logical_and_and_and = [](auto const val1, auto const val2, auto const val3, auto const val4) {
         KASSERT(val1 && val2 && val3 && val4);
     };
-    auto generic_logical_eq_or_or = [](const auto val1, const auto val2, const auto val3, const auto val4) {
+    auto generic_logical_eq_or_or = [](auto const val1, auto const val2, auto const val3, auto const val4) {
         KASSERT(val1 == val2 || val3 || val4);
     };
 
@@ -217,10 +217,10 @@ TEST(KassertTest, primitive_type_expansion) {
     EXPECT_EXIT({ generic_logical_eq_or_or(1, 2, false, 0); }, KilledBySignal(SIGABRT), "1 == 2 || 0 || 0");
 
     // relation + logical operator (more complex expressions on the rhs of the logical operator cannot be decomposed)
-    auto generic_eq_and = [](const auto eq_lhs, const auto eq_rhs, const auto and_rhs) {
+    auto generic_eq_and = [](auto const eq_lhs, auto const eq_rhs, auto const and_rhs) {
         KASSERT(eq_lhs == eq_rhs && and_rhs);
     };
-    auto generic_lt_or = [](const auto lt_lhs, const auto lt_rhs, const auto or_rhs) {
+    auto generic_lt_or = [](auto const lt_lhs, auto const lt_rhs, auto const or_rhs) {
         KASSERT(lt_lhs < lt_rhs || or_rhs);
     };
 

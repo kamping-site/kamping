@@ -257,7 +257,7 @@ namespace internal {
 /// @param value The value to be stringified.
 /// @return The stringification of \c value, or \c <?> if the value cannot be stringified by the logger.
 template <typename StreamT, typename ValueT>
-void stringify_value(Logger<StreamT>& out, const ValueT& value) {
+void stringify_value(Logger<StreamT>& out, ValueT const& value) {
     if constexpr (IsStreamableType<Logger<StreamT>, ValueT>) {
         out << value;
     } else {
@@ -369,7 +369,7 @@ public:
     /// @param lhs Decomposed left hand side of the expression.
     /// @param op Stringified operator or relation.
     /// @param rhs Decomposed right hand side of the expression.
-    BinaryExpression(bool const result, LhsT const& lhs, const std::string_view op, RhsT const& rhs)
+    BinaryExpression(bool const result, LhsT const& lhs, std::string_view const op, RhsT const& rhs)
         : _result(result),
           _lhs(lhs),
           _op(op),
@@ -422,7 +422,7 @@ class UnaryExpression : public Expression {
 public:
     /// @brief Constructs this unary expression from an expression.
     /// @param lhs The expression.
-    explicit UnaryExpression(const LhsT& lhs) : _lhs(lhs) {}
+    explicit UnaryExpression(LhsT const& lhs) : _lhs(lhs) {}
 
     /// @brief Evaluates this expression.
     /// @return The boolean result of this expression.
@@ -438,7 +438,7 @@ public:
 
 private:
     /// @brief The expression.
-    const LhsT& _lhs;
+    LhsT const& _lhs;
 };
 
 /// @brief The left hand size of a decomposed expression. This can either be turned into a \c BinaryExpr if an operand
@@ -483,7 +483,7 @@ public:
 
 private:
     /// @brief The wrapped expression.
-    const LhsT& _lhs;
+    LhsT const& _lhs;
 };
 
 /// @brief Decomposes an expression (see group description).
@@ -539,7 +539,7 @@ constexpr bool assertion_enabled(int level) {
 /// @param expr_str Stringified assertion expression.
 /// @return Result of the assertion. If true, the assertion was triggered and the program should be halted.
 bool evaluate_and_print_assertion(
-    char const* type, Expression&& expr, const SourceLocation& where, char const* expr_str) {
+    char const* type, Expression&& expr, SourceLocation const& where, char const* expr_str) {
     if (!expr.result()) {
         OStreamLogger(std::cerr) << where.file << ": In function '" << where.function << "':\n"
                                  << where.file << ":" << where.row << ": FAILED " << type << "\n"
