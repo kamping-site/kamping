@@ -34,7 +34,7 @@ namespace internal {
 ///
 /// This is the base case of the recursion.
 ///
-/// @tparam Trait trait with which an argument should be found.
+/// @tparam ParameterType to be searched for.
 /// @tparam Index index of current argument to evaluate.
 /// @tparam Arg argument to evaluate.
 /// @return the index
