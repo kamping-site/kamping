@@ -21,6 +21,8 @@
 
 #include <mpi.h>
 
+#include "kamping/kassert.hpp"
+
 namespace kamping {
 
 /// @addtogroup kamping_mpi_utility
@@ -142,7 +144,7 @@ template <typename T>
         mpi_type = mpi_custom_continuous_type<sizeof(T)>();
     }
 
-    assert(mpi_type != MPI_DATATYPE_NULL);
+    KASSERT(mpi_type != MPI_DATATYPE_NULL);
 
     return mpi_type;
 }
