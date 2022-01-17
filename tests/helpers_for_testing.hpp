@@ -17,17 +17,19 @@
 #pragma once
 
 #include <cstddef>
-#include <numeric>
 #include <vector>
 
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "kamping/parameter_type_definitions.hpp"
 
 namespace testing {
 ///@brief Simple Container type. Can be used to test library function with containers other than vector.
 ///
 template <typename T>
-class OwnContainer {
+class OwnContainer
+
+{
 public:
     using value_type = T;
     OwnContainer()   = default;
@@ -53,6 +55,14 @@ public:
 
 private:
     std::vector<T> _vec;
+};
+
+///@ Mock argument for wrapped \c MPI calls.
+template <kamping::internal::ParameterType _parameter_type>
+struct Argument {
+    static constexpr kamping::internal::ParameterType parameter_type = _parameter_type;
+    Argument(int i) : _i{i} {}
+    int _i;
 };
 
 ///@}

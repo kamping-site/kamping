@@ -11,23 +11,18 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "kamping/mpi_function_wrapper_helpers.hpp"
-#include "kamping/parameter_factories.hpp"
+#include "kamping/named_parameter_selection.hpp"
+
+#include "helpers_for_testing.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
     using namespace ::kamping::internal;
-    // none of the extract function should work if the underlying buffer does not provide a member extract().
-    kamping::MPIResult mpi_result{
-        BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{}};
-#if defined(RECV_BUFFER_NOT_EXTRACTABLE)
-    std::ignore = mpi_result.extract_recv_buffer();
-#elif defined(RECV_COUNTS_NOT_EXTRACTABLE)
-    std::ignore = mpi_result.extract_recv_counts();
-#elif defined(RECV_DISPLACEMENTS_NOT_EXTRACTABLE)
-    std::ignore = mpi_result.extract_recv_displs();
-#elif defined(SEND_DISPLACEMENTS_NOT_EXTRACTABLE)
-    std::ignore = mpi_result.extract_send_displs();
+    testing::Argument<ParameterType::send_buf> arg0{0};
+    testing::Argument<ParameterType::recv_buf> arg1{1};
+    // if the requested ParameterType is not given, parameter selection should fail to compile.
+#if defined(REQUESTED_PARAMETER_NOT_GIVEN)
+    const auto& selected_arg = select_parameter_type<ParameterType::send_counts>(arg0, arg1);
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif

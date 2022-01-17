@@ -28,3 +28,10 @@ kamping_register_compilation_failure_test(
   SECTIONS "RECV_BUFFER_NOT_EXTRACTABLE" "RECV_COUNTS_NOT_EXTRACTABLE" "RECV_DISPLACEMENTS_NOT_EXTRACTABLE" "SEND_DISPLACEMENTS_NOT_EXTRACTABLE"
   LIBRARIES kamping
 )
+
+kamping_register_compilation_failure_test(
+  test_named_parameter_selection_compilation_failure
+  FILES test_named_parameter_selection_compilation_failures.cpp
+  SECTIONS "REQUESTED_PARAMETER_NOT_GIVEN"
+  LIBRARIES kamping
+)

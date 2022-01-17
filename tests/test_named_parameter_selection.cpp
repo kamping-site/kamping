@@ -16,20 +16,14 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/parameter_factories.hpp"
 
+#include "helpers_for_testing.hpp"
+
 using namespace ::kamping::internal;
 
-// Mock argument for testing the named parameter selection mechanism
-template <ParameterType _parameter_type>
-struct Argument {
-    static constexpr ParameterType parameter_type = _parameter_type;
-    Argument(int i) : _i{i} {}
-    int _i;
-};
-
 TEST(HelpersTest, select_parameter_type_basics) {
-    Argument<ParameterType::send_buf>    arg0{0};
-    Argument<ParameterType::recv_buf>    arg1{1};
-    Argument<ParameterType::send_counts> arg2{2};
+    testing::Argument<ParameterType::send_buf>    arg0{0};
+    testing::Argument<ParameterType::recv_buf>    arg1{1};
+    testing::Argument<ParameterType::send_counts> arg2{2};
     {
         const auto& selected_arg = select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2);
         EXPECT_EQ(selected_arg._i, 0);
@@ -45,10 +39,10 @@ TEST(HelpersTest, select_parameter_type_basics) {
 }
 
 TEST(HelpersTest, select_parameter_type_duplicates) {
-    Argument<ParameterType::send_buf>    arg0{0};
-    Argument<ParameterType::recv_buf>    arg1{1};
-    Argument<ParameterType::send_counts> arg2{2};
-    Argument<ParameterType::send_buf>    arg3{3};
+    testing::Argument<ParameterType::send_buf>  arg0{0};
+    testing::Argument<ParameterType::recv_buf>    arg1{1};
+    testing::Argument<ParameterType::send_counts> arg2{2};
+    testing::Argument<ParameterType::send_buf>    arg3{3};
     {
         // if two arguments have the same ParameterType the first occurence in the argument list is selected
         const auto& selected_arg = select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2, arg3);
