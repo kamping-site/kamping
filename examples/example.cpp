@@ -11,16 +11,4 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "kamping/kassert.hpp"
-#include "kamping/wrapper.hpp"
-
-int a() {
-    return 1;
-}
-int b() {
-    return 2;
-}
-
-int main() {
-    KASSERT(a() == b(), "", kamping::assert::normal);
-}
+int main() {}
