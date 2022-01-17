@@ -165,6 +165,58 @@ TEST(KassertTest, false_logical_operator_expressions) {
     EXPECT_EXIT({ KASSERT(false && !false); }, KilledBySignal(SIGABRT), "");
 }
 
+// Test expression expansion of primitive types
+
+TEST(KassertTest, primitive_type_expansion) {
+    // arithmetic operators
+    auto generic_eq = [](const auto lhs, const auto rhs) {
+        KASSERT(lhs == rhs);
+    };
+    auto generic_gt = [](const auto lhs, const auto rhs) {
+        KASSERT(lhs > rhs);
+    };
+    auto generic_ge = [](const auto lhs, const auto rhs) {
+        KASSERT(lhs >= rhs);
+    };
+    auto generic_lt = [](const auto lhs, const auto rhs) {
+        KASSERT(lhs < rhs);
+    };
+    auto generic_le = [](const auto lhs, const auto rhs) {
+        KASSERT(lhs <= rhs);
+    };
+
+    EXPECT_EXIT({ generic_eq(1, 2); }, KilledBySignal(SIGABRT), "1 == 2");
+    EXPECT_EXIT({ generic_gt(1, 2); }, KilledBySignal(SIGABRT), "1 > 2");
+    EXPECT_EXIT({ generic_ge(1, 2); }, KilledBySignal(SIGABRT), "1 >= 2");
+    EXPECT_EXIT({ generic_lt(2, 1); }, KilledBySignal(SIGABRT), "2 < 1");
+    EXPECT_EXIT({ generic_le(2, 1); }, KilledBySignal(SIGABRT), "2 <= 1");
+
+    // logical operators
+    auto generic_logical_and = [](const auto lhs, const auto rhs) {
+        KASSERT(lhs && rhs);
+    };
+    auto generic_logical_or = [](const auto lhs, const auto rhs) {
+        KASSERT(lhs || rhs);
+    };
+
+    EXPECT_EXIT({ generic_logical_and(true, false); }, KilledBySignal(SIGABRT), "1 && 0");
+    EXPECT_EXIT({ generic_logical_or(false, false); }, KilledBySignal(SIGABRT), "0 || 0");
+
+    EXPECT_EXIT({ generic_logical_and(0, 10); }, KilledBySignal(SIGABRT), "0 && 10"); // implicitly convertible to bool
+    EXPECT_EXIT({ generic_logical_or(0, 0); }, KilledBySignal(SIGABRT), "0 || 0");    // implicitly convertible to bool
+
+    // relation + logical operator (more complex expressions on the rhs of the logical operator cannot be decomposed)
+    auto generic_eq_and = [](const auto eq_lhs, const auto eq_rhs, const auto and_rhs) {
+        KASSERT(eq_lhs == eq_rhs && and_rhs);
+    };
+    auto generic_lt_or = [](const auto lt_lhs, const auto lt_rhs, const auto or_rhs) {
+        KASSERT(lt_lhs < lt_rhs || or_rhs);
+    };
+
+    EXPECT_EXIT({ generic_eq_and(1, 2, true); }, KilledBySignal(SIGABRT), "1 == 2 && 1");
+    EXPECT_EXIT({ generic_lt_or(2, 1, false); }, KilledBySignal(SIGABRT), "2 < 1 || 0");
+}
+
 // Test expression expansion of library-supported types
 
 TEST(KassertTest, empty_and_single_int_vector_expansion) {
