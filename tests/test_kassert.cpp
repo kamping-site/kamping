@@ -280,11 +280,19 @@ TEST(KassertTest, unsupported_type_expansion) {
         bool operator==(A const&) const {
             return false;
         }
+
+        bool operator==(int) const {
+            return false;
+        }
     };
 
     auto eq = [] {
         KASSERT(A{} == A{});
     };
+    auto eq_int = [](int const val) {
+        KASSERT(A{} == val);
+    };
 
     EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "<\\?> == <\\?>");
+    EXPECT_EXIT({ eq_int(42); }, KilledBySignal(SIGABRT), "<\\?> == 42");
 }
