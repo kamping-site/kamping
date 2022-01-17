@@ -29,7 +29,7 @@
 /// @param level The level of the assertion (optional arguments, defaults to \c kamping::assert::normal).
 #define KASSERT(...)               \
     KAMPING_KASSERT_VARARG_HELPER( \
-        , ##__VA_ARGS__, KASSERT_3(__VA_ARGS__), KASSERT_2(__VA_ARGS__), KASSERT_1(__VA_ARGS__), ignore)
+        , __VA_ARGS__, KASSERT_3(__VA_ARGS__), KASSERT_2(__VA_ARGS__), KASSERT_1(__VA_ARGS__), ignore)
 
 /// @brief Macro for throwing exceptions inside the KaMPI.ng library. Accepts between one and three parameters.
 /// @param expression Expression that causes the exception to be thrown if it evaluates the \c false
@@ -39,7 +39,7 @@
 /// (optional argument, defaults to \c kamping::assert::KassertException).
 #define KTHROW(...)                \
     KAMPING_KASSERT_VARARG_HELPER( \
-        , ##__VA_ARGS__, KTHROW_3(__VA_ARGS__), KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
+        , __VA_ARGS__, KTHROW_3(__VA_ARGS__), KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
 
 // To decompose expressions, the KAMPING_KASSERT_HPP_ASSERT_IMPL() produces code such as
 //
@@ -95,10 +95,10 @@
 
 // Expands a macro depending on its number of arguments. For instance,
 //
-// #define FOO(...) KAMPING_KASSERT_VARARG_HELPER(, ##__VA_ARGS__, IMPL3, IMPL2, IMPL1, IMPL0)
+// #define FOO(...) KAMPING_KASSERT_VARARG_HELPER(, __VA_ARGS__, IMPL3, IMPL2, IMPL1, dummy)
 //
-// expands to IMPL3 with 3 arguments, IMPL2 with 2 arguments, IMPL1 with 1 argument and IMPL0 with zero arguments.
-// To do this, the macro always expands to its 5th argument. Depending on the number of parameters, ##__VA_ARGS__
+// expands to IMPL3 with 3 arguments, IMPL2 with 2 arguments and IMPL1 with 1 argument.
+// To do this, the macro always expands to its 5th argument. Depending on the number of parameters, __VA_ARGS__
 // pushes the right implementation to the 5th parameter.
 #define KAMPING_KASSERT_VARARG_HELPER(X, Y, Z, W, FUNC, ...) FUNC
 
