@@ -21,7 +21,16 @@
 
 using namespace ::testing;
 
-// Test that macros produce valid code
+// General comment: all KASSERT() and KTHROW() calls with a relation in their expression are placed inside lambdas,
+// which are then called from EXPECT_EXIT(). This indirection is necessary as otherwise, GCC does not suppress the
+// warning on missing parentheses. This happens whenever the KASSERT() call is passed through two levels of macros,
+// i.e.,
+//
+// #defined A(stmt) B(stmt)
+// #defined B(stmt) stmt;
+//
+// A(KASSERT(false)); // warning not suppressed (with GCC only)
+// B(KASSERT(false)); // warning suppress, code ok
 
 TEST(KassertTest, kassert_overloads_compile) {
     // test that all KASSERT overloads compile
@@ -119,12 +128,30 @@ TEST(KassertTest, true_logical_operator_expressions) {
 }
 
 TEST(KassertTest, false_arithmetic_relation_expressions) {
-    EXPECT_EXIT({ KASSERT(1 != 1); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(1 == 2); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(1 < 1); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(1 > 1); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(2 <= 1); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(1 >= 2); }, KilledBySignal(SIGABRT), "");
+    auto eq = [] {
+        KASSERT(1 == 2);
+    };
+    auto neq = [] {
+        KASSERT(1 != 1);
+    };
+    auto lt = [] {
+        KASSERT(1 < 1);
+    };
+    auto gt = [] {
+        KASSERT(1 > 1);
+    };
+    auto le = [] {
+        KASSERT(2 <= 1);
+    };
+    auto ge = [] {
+        KASSERT(1 >= 2);
+    };
+    EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "");
+    EXPECT_EXIT({ neq(); }, KilledBySignal(SIGABRT), "");
+    EXPECT_EXIT({ lt(); }, KilledBySignal(SIGABRT), "");
+    EXPECT_EXIT({ gt(); }, KilledBySignal(SIGABRT), "");
+    EXPECT_EXIT({ le(); }, KilledBySignal(SIGABRT), "");
+    EXPECT_EXIT({ ge(); }, KilledBySignal(SIGABRT), "");
 }
 
 TEST(KassertTest, false_logical_operator_expressions) {
@@ -143,33 +170,55 @@ TEST(KassertTest, false_logical_operator_expressions) {
 TEST(KassertTest, empty_and_single_int_vector_expansion) {
     std::vector<int> lhs = {};
     std::vector<int> rhs = {0};
-    EXPECT_EXIT({ KASSERT(lhs == rhs); }, KilledBySignal(SIGABRT), "\\[\\] == \\[0\\]");
+
+    auto eq = [&] {
+        KASSERT(lhs == rhs);
+    };
+
+    EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "\\[\\] == \\[0\\]");
 }
 
 TEST(KassertTest, multi_element_int_vector_expansion) {
     std::vector<int> lhs = {1, 2, 3};
     std::vector<int> rhs = {1, 2};
-    EXPECT_EXIT({ KASSERT(lhs == rhs); }, KilledBySignal(SIGABRT), "\\[1, 2, 3\\] == \\[1, 2\\]");
+
+    auto eq = [&] {
+        KASSERT(lhs == rhs);
+    };
+
+    EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "\\[1, 2, 3\\] == \\[1, 2\\]");
 }
 
 TEST(KassertTest, int_int_pair_expansion) {
     std::pair<int, int> lhs = {1, 2};
     std::pair<int, int> rhs = {1, 3};
-    EXPECT_EXIT({ KASSERT(lhs == rhs); }, KilledBySignal(SIGABRT), "\\(1, 2\\) == \\(1, 3\\)");
+
+    auto eq = [&] {
+        KASSERT(lhs == rhs);
+    };
+    EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "\\(1, 2\\) == \\(1, 3\\)");
 }
 
 TEST(KassertTest, int_int_pair_vector_expansion) {
     std::vector<std::pair<int, int>> lhs = {{1, 2}, {1, 3}};
     std::vector<std::pair<int, int>> rhs = {{1, 2}, {1, 4}};
-    EXPECT_EXIT(
-        { KASSERT(lhs == rhs); }, KilledBySignal(SIGABRT),
-        "\\[\\(1, 2\\), \\(1, 3\\)\\] == \\[\\(1, 2\\), \\(1, 4\\)\\]");
+
+    auto eq = [&] {
+        KASSERT(lhs == rhs);
+    };
+
+    EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "\\[\\(1, 2\\), \\(1, 3\\)\\] == \\[\\(1, 2\\), \\(1, 4\\)\\]");
 }
 
 TEST(KassertTest, int_vector_int_pair_expensaion) {
     std::pair<std::vector<int>, int> lhs = {{}, 0};
     std::pair<std::vector<int>, int> rhs = {{1}, 1};
-    EXPECT_EXIT({ KASSERT(lhs == rhs); }, KilledBySignal(SIGABRT), "\\(\\[\\], 0\\) == \\(\\[1\\], 1\\)");
+
+    auto eq = [&] {
+        KASSERT(lhs == rhs);
+    };
+
+    EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "\\(\\[\\], 0\\) == \\(\\[1\\], 1\\)");
 }
 
 // Test expansion of unsupported custom type
@@ -181,5 +230,9 @@ TEST(KassertTest, unsupported_type_expansion) {
         }
     };
 
-    EXPECT_EXIT({ KASSERT(A{} == A{}); }, KilledBySignal(SIGABRT), "<\\?> == <\\?>");
+    auto eq = [] {
+        KASSERT(A{} == A{});
+    };
+
+    EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "<\\?> == <\\?>");
 }

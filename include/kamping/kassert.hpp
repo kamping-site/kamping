@@ -35,11 +35,19 @@
     KAMPING_KASSERT_VARARG_HELPER( \
         , ##__VA_ARGS__, KTHROW_3(__VA_ARGS__), KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
 
-/// @brief Creates an instance of \c SourceLocation describing the current location in the source code.
-#define KAMPING_SOURCE_LOCATION                 \
-    kamping::assert::internal::SourceLocation { \
-        __FILE__, __LINE__, __func__            \
-    }
+#if defined(__GNUC__) && !defined(__clang__) // GCC
+    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH               _Pragma("GCC diagnostic push")
+    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_POP                _Pragma("GCC diagnostic pop")
+    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_PARENTHESES _Pragma("GCC diagnostic ignored \"-Wparentheses\"")
+#elif defined(__clang__) // Clang
+    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH               _Pragma("clang diagnostic push")
+    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_POP                _Pragma("clang diagnostic pop")
+    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_PARENTHESES _Pragma("clang diagnostic ignored \"-Wparentheses\"")
+#else // Other compilers -> no supression supported
+    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH
+    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_POP
+    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_PARENTHESES
+#endif
 
 /// @brief Implementation of KASSERTION.
 ///
@@ -51,15 +59,19 @@
 #define KAMPING_ASSERT_IMPL(type, expression, message, level)                                                        \
     do {                                                                                                             \
         if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
+            KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH                                                                      \
+            KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_PARENTHESES                                                        \
             if (!kamping::assert::internal::evaluate_and_print_assertion(                                            \
                     type,                                                                                            \
                     kamping::assert::internal::finalize_expr(kamping::assert::internal::Decomposer{} <= expression), \
-                    KAMPING_SOURCE_LOCATION, #expression)) {                                                         \
+                    KAMPING_KASSERT_HPP_SOURCE_LOCATION, #expression)) {                                             \
                 kamping::assert::Logger<std::ostream&>(std::cerr) << message << "\n";                                \
                 std::abort();                                                                                        \
             }                                                                                                        \
+            KAMPING_KASSERT_HPP_DIAGNOSTIC_POP                                                                       \
         }                                                                                                            \
     } while (false)
+
 
 // Note that expanding the macro into a `do { ... } while(false)` loop is a common trick to make the macro act like a
 // statement.
@@ -105,6 +117,19 @@
 #define KTHROW_1(expression)          KTHROW_2(expression, "")
 
 #define KAMPING_KASSERT_VARARG_HELPER(X, Y, Z, W, FUNC, ...) FUNC
+
+// __PRETTY_FUNCTION__ is a compiler extension supported by GCC and clang that prints more information than __func__
+#if defined(__GNUC__) || defined(__clang__)
+    #define KAMPING_KASSERT_HPP_FUNCTION_NAME __PRETTY_FUNCTION__
+#else
+    #define KAMPING_KASSERT_HPP_FUNCTION_NAME __func__
+#endif
+
+/// @brief Creates an instance of \c SourceLocation describing the current location in the source code.
+#define KAMPING_KASSERT_HPP_SOURCE_LOCATION                   \
+    kamping::assert::internal::SourceLocation {               \
+        __FILE__, __LINE__, KAMPING_KASSERT_HPP_FUNCTION_NAME \
+    }
 
 namespace kamping::assert {
 /// @name Predefined assertion levels
