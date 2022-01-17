@@ -12,7 +12,10 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <iostream>
+#include <mpi.h>
 
-int main() {
+int main(int argc, char *argv[]) {
+    MPI_Init(&argc, &argv);
+    MPI_Abort(MPI_COMM_WORLD, 1);
     std::cout << "example";
 }
