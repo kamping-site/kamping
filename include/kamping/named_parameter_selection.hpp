@@ -31,7 +31,7 @@ namespace internal {
 
 /// @brief Returns position of first argument in Args with Trait trait.
 ///
-/// @tparam Trait trait with which an argument should be found.
+/// @tparam ParameterType to be searched for.
 /// @tparam Index index of current argument to evaluate.
 /// @tparam Arg argument to evaluate.
 /// @tparam Args all remaining arguments.
@@ -44,11 +44,11 @@ constexpr size_t find_pos() {
     else
         return find_pos<parameter_type, Index + 1, Args...>();
 }
-/// @brief Returns parameter with requested trait.
+/// @brief Returns parameter with requested ParameterType.
 ///
-/// @tparam Trait trait with which an argument should be found.
-/// @tparam Args all arguments to be searched.
-/// returns the first parameter whose type has the appropriate par_type.
+/// @tparam ParameterType with which an argument should be found.
+/// @tparam Args All arguments to be searched for an argument with ParameterType parameter_type.
+/// @returns the first parameter whose type has the requested ParameterType.
 ///
 template <ParameterType parameter_type, typename... Args>
 decltype(auto) select_parameter_type(Args&&... args) {
