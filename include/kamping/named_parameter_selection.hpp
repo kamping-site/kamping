@@ -29,20 +29,42 @@ namespace internal {
 /// @{
 
 
+/// @brief Returns the Index parameter if the parameter type of Arg matches the requested parameter type. If not, this
+/// fails to compile.
+///
+/// This is the base case of the recursion.
+///
+/// @tparam Trait trait with which an argument should be found.
+/// @tparam Index index of current argument to evaluate.
+/// @tparam Arg argument to evaluate.
+/// @return the index
+///
+template <ParameterType parameter_type, size_t Index, typename Arg>
+constexpr size_t find_pos() {
+    // when we do not find the parameter type here, it is not given
+    // a we fail to compile with a useful message
+    static_assert(
+        std::remove_reference_t<Arg>::parameter_type == parameter_type, "Could not find the requested parameter type.");
+    return Index;
+}
+
 /// @brief Returns position of first argument in Args with Trait trait.
 ///
 /// @tparam Trait trait with which an argument should be found.
 /// @tparam Index index of current argument to evaluate.
 /// @tparam Arg argument to evaluate.
+/// @tparam Arg2 the next argument.
 /// @tparam Args all remaining arguments.
 /// @return position of first argument with matched trait.
 ///
-template <ParameterType parameter_type, size_t Index, typename Arg, typename... Args>
+template <ParameterType parameter_type, size_t Index, typename Arg, typename Arg2, typename... Args>
 constexpr size_t find_pos() {
     if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type)
         return Index;
     else
-        return find_pos<parameter_type, Index + 1, Args...>();
+        // we need to unpack the next two arguments, so we can unambiguously check for the case
+        // of a single remaining argument
+        return find_pos<parameter_type, Index + 1, Arg2, Args...>();
 }
 /// @brief Returns parameter with requested trait.
 ///
