@@ -389,6 +389,7 @@ public:
         stringify_value(out, _rhs);
     }
 
+    // Overload && and || to return a proxy object that decomposes the rhs of the logical operator
 #define KAMPING_ASSERT_OP(op)                                                     \
     template <typename RhsPrimeT>                                                 \
     friend BinaryExpression<BinaryExpression<LhsT, RhsT>, RhsPrimeT> operator op( \
@@ -458,6 +459,7 @@ public:
         return UnaryExpression<LhsT>{_lhs};
     }
 
+    // Overload binary operators to return a proxy object that decomposes the rhs of the operator.
 #define KAMPING_ASSERT_OP(op)                                                               \
     template <typename RhsT>                                                                \
     friend BinaryExpression<LhsT, RhsT> operator op(LhsExpression&& lhs, RhsT const& rhs) { \

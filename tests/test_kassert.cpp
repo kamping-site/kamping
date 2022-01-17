@@ -205,6 +205,17 @@ TEST(KassertTest, primitive_type_expansion) {
     EXPECT_EXIT({ generic_logical_and(0, 10); }, KilledBySignal(SIGABRT), "0 && 10"); // implicitly convertible to bool
     EXPECT_EXIT({ generic_logical_or(0, 0); }, KilledBySignal(SIGABRT), "0 || 0");    // implicitly convertible to bool
 
+    // more complex expressions
+    auto generic_logical_and_and_and = [](const auto val1, const auto val2, const auto val3, const auto val4) {
+        KASSERT(val1 && val2 && val3 && val4);
+    };
+    auto generic_logical_eq_or_or = [](const auto val1, const auto val2, const auto val3, const auto val4) {
+        KASSERT(val1 == val2 || val3 || val4);
+    };
+
+    EXPECT_EXIT({ generic_logical_and_and_and(true, false, 10, -1); }, KilledBySignal(SIGABRT), "1 && 0 && 10 && -1");
+    EXPECT_EXIT({ generic_logical_eq_or_or(1, 2, false, 0); }, KilledBySignal(SIGABRT), "1 == 2 || 0 || 0");
+
     // relation + logical operator (more complex expressions on the rhs of the logical operator cannot be decomposed)
     auto generic_eq_and = [](const auto eq_lhs, const auto eq_rhs, const auto and_rhs) {
         KASSERT(eq_lhs == eq_rhs && and_rhs);
