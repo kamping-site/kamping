@@ -20,7 +20,7 @@
 #include <cstddef>
 #include <tuple>
 
-#include "parameter_type_definitions.hpp"
+#include "kamping/parameter_type_definitions.hpp"
 
 namespace kamping {
 namespace internal {
