@@ -18,6 +18,7 @@
 #include <complex>
 #include <cstdint>
 #include <type_traits>
+#include <unordered_set>
 
 #include <mpi.h>
 
@@ -145,6 +146,67 @@ template <typename T>
     assert(mpi_type != MPI_DATATYPE_NULL);
 
     return mpi_type;
+}
+
+template <typename T>
+constexpr bool is_mpi_integer() noexcept {
+    auto             type  = mpi_datatype<T>();
+    const std::array types = {MPI_INT,           MPI_LONG,          MPI_UNSIGNED_SHORT,
+                              MPI_UNSIGNED,      MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG,
+                              MPI_LONG_LONG_INT, MPI_LONG_LONG,     MPI_UNSIGNED_LONG_LONG,
+                              MPI_SIGNED_CHAR,   MPI_INT8_T,        MPI_INT16_T,
+                              MPI_INT32_T,       MPI_INT64_T,       MPI_UINT8_T,
+                              MPI_UINT16_T,      MPI_UINT32_T,      MPI_UINT64_T,
+                              MPI_INTEGER};
+    for (auto& elem: types) {
+        if (elem == type) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template <typename T>
+constexpr bool is_mpi_float() noexcept {
+    auto             type  = mpi_datatype<T>();
+    const std::array types = {MPI_FLOAT,       MPI_DOUBLE, MPI_REAL,  MPI_DOUBLE_PRECISION,
+                              MPI_LONG_DOUBLE, MPI_REAL4,  MPI_REAL8, MPI_REAL16};
+    for (auto& elem: types) {
+        if (elem == type) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template <typename T>
+constexpr bool is_mpi_logical() noexcept {
+    auto             type  = mpi_datatype<T>();
+    const std::array types = {MPI_LOGICAL, MPI_C_BOOL, MPI_CXX_BOOL};
+    for (auto& elem: types) {
+        if (elem == type) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template <typename T>
+constexpr bool is_mpi_complex() noexcept {
+    auto             type  = mpi_datatype<T>();
+    const std::array types = {MPI_COMPLEX, MPI_C_COMPLEX, MPI_C_FLOAT_COMPLEX, MPI_C_DOUBLE_COMPLEX, MPI_C_LONG_DOUBLE_COMPLEX, MPI_CXX_FLOAT_COMPLEX, MPI_CXX_DOUBLE_COMPLEX, MPI_CXX_LONG_DOUBLE_COMPLEX, MPI_DOUBLE_COMPLEX, MPI_COMPLEX8, MPI_COMPLEX16, MPI_COMPLEX32};
+    for (auto& elem: types) {
+        if (elem == type) {
+            return true;
+        }
+    }
+    return false;
+}
+
+template <typename T>
+constexpr bool is_mpi_byte() noexcept {
+    auto             type  = mpi_datatype<T>();
+    return type == MPI_BYTE;
 }
 
 /// @}
