@@ -35,7 +35,7 @@
 #include <cstddef>
 #include <memory>
 
-#include "parameter_type_definitions.hpp"
+#include "kamping/parameter_type_definitions.hpp"
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
@@ -106,12 +106,12 @@ public:
     static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
     using value_type                              = typename Container::value_type; ///< Value type of the buffer.
 
-    ///@brief Constructor for ContainerBasedConstBuffer.
-    /// param container Container holding the actual data.
+    /// @brief Constructor for ContainerBasedConstBuffer.
+    /// @param container Container holding the actual data.
     ContainerBasedConstBuffer(const Container& container) : _container(container) {}
 
-    ///@brief Get access to the underlying read-only storage.
-    ///@return Span referring to the underlying read-only storage.
+    /// @brief Get access to the underlying read-only storage.
+    /// @return Span referring to the underlying read-only storage.
     Span<value_type> get() const {
         return {std::data(_container), _container.size()};
     }

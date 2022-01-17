@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "parameter_objects.hpp"
+#include "kamping/parameter_objects.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
