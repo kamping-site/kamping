@@ -300,3 +300,37 @@ TEST(HelpersTest, mpi_datatype_c_array) {
     EXPECT_NE(MPI_C_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
     EXPECT_NE(MPI_C_LONG_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
 }
+
+TEST(HelpersTest, mpi_datatype_custom_pod_type) {
+    struct A {
+        int i;
+    };
+
+    struct B {
+        char c;
+        float f;
+    };
+
+    auto mpi_A = mpi_custom_pod_type<A>();
+    auto mpi_B = mpi_custom_pod_type<B>();
+
+    struct Large {
+        double d1;
+        int i1;
+        float f1;
+        char c1;
+        bool b1;
+        double d2;
+        int i2;
+        float f2;
+        char c2;
+        bool b2;
+        double d3;
+        int i3;
+        float f3;
+        char c3;
+        bool b3;
+    };
+
+    auto mpi_very_large = mpi_custom_pod_type<Large>();
+}

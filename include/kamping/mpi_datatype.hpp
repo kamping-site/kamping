@@ -21,6 +21,8 @@
 
 #include <mpi.h>
 
+#include "boost/pfr.hpp"
+
 namespace kamping {
 
 /// @addtogroup kamping_mpi_utility
@@ -43,6 +45,47 @@ template <size_t NumBytes>
         assert(type != MPI_DATATYPE_NULL);
     }
     // From the second call onwards, re-use the existing type.
+    return type;
+}
+
+namespace internal {
+template<int cur, int to, typename Body>
+constexpr void constexpr_for(Body &&body) {
+    if constexpr (cur < to) {
+        body(std::integral_constant<int, cur>{});
+        constexpr_for<cur + 1, to>(std::forward<Body>(body));
+    }
+}
+}
+
+template <typename T>
+[[nodiscard]] constexpr MPI_Datatype mpi_datatype() noexcept;
+
+    /// @brief Generate custom MPI datatype for POD type
+template <typename T>
+[[nodiscard]] MPI_Datatype mpi_custom_pod_type() noexcept {
+    static MPI_Datatype type = MPI_DATATYPE_NULL;
+    if (type == MPI_DATATYPE_NULL) {
+        constexpr auto count = boost::pfr::tuple_size_v<T>;
+        int block_lengths[count] = {1};
+        MPI_Aint displacements[count];
+        MPI_Datatype types[count];
+
+        T dummy_instance{};
+
+        internal::constexpr_for<0, count>([&](const auto cur_type) {
+            constexpr int cur = cur_type();
+            const auto &field = boost::pfr::get<cur>(dummy_instance);
+            using field_type = std::remove_cv_t<std::remove_reference_t<decltype(field)>>;
+            displacements[cur] = (reinterpret_cast<const char *>(&field) - reinterpret_cast<const char *>(&dummy_instance));
+            types[cur] = mpi_datatype<field_type>();
+
+            std::cout << "Add member: " << typeid(field_type).name() << "@" << displacements[cur] << "\n";
+        });
+
+        MPI_Type_create_struct(count, block_lengths, displacements, types, &type);
+        MPI_Type_commit(&type);
+    }
     return type;
 }
 
