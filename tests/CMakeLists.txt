@@ -5,6 +5,10 @@ include(GoogleTest)
 
 # Registering tests without MPI:
 kamping_register_test(test_checking_casts FILES test_checking_casts.cpp)
+kamping_register_test(test_parameter_factories FILES test_parameter_factories.cpp)
+kamping_register_test(test_parameter_objects FILES test_parameter_objects.cpp)
+kamping_register_test(test_named_parameter_selection FILES test_named_parameter_selection.cpp)
+kamping_register_test(test_mpi_function_wrapper_helpers FILES test_mpi_function_wrapper_helpers.cpp)
 
 # Registering tests with MPI:
 
@@ -16,4 +20,18 @@ kamping_register_compilation_failure_test(
     test_mpi_datatype_unsupported_types
     FILES test_mpi_datatype_unsupported_types.cpp
     SECTIONS "POINTER" "FUNCTION" "UNION" "VOID"
+)
+
+kamping_register_compilation_failure_test(
+  test_mpi_function_wrapper_compilation_failure
+  FILES test_mpi_function_wrapper_helpers_compilation_failures.cpp
+  SECTIONS "RECV_BUFFER_NOT_EXTRACTABLE" "RECV_COUNTS_NOT_EXTRACTABLE" "RECV_DISPLACEMENTS_NOT_EXTRACTABLE" "SEND_DISPLACEMENTS_NOT_EXTRACTABLE"
+  LIBRARIES kamping
+)
+
+kamping_register_compilation_failure_test(
+  test_named_parameter_selection_compilation_failure
+  FILES test_named_parameter_selection_compilation_failures.cpp
+  SECTIONS "REQUESTED_PARAMETER_NOT_GIVEN"
+  LIBRARIES kamping
 )
