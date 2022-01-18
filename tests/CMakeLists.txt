@@ -15,6 +15,7 @@ kamping_register_test(test_mpi_function_wrapper_helpers FILES test_mpi_function_
 # We need MPI for the datatypes test as we are using MPI_Type_continuous which in
 # turn requires MPI_Init() to be completed.
 kamping_register_mpi_test(test_mpi_datatype FILES test_mpi_datatype.cpp CORES 1)
+kamping_register_mpi_test(test_mpi_communicator FILES test_mpi_communicator.cpp CORES 1 2 4)
 
 kamping_register_compilation_failure_test(
     test_mpi_datatype_unsupported_types

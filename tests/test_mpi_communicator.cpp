@@ -39,41 +39,49 @@ TEST_F(CommunicatorTest, EmptyConstructor) {
     EXPECT_EQ(comm.root(), 0);
 }
 
-// TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
-//     Communicator comm(MPI_COMM_SELF);
+TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
+    Communicator comm(MPI_COMM_SELF);
 
-//     int self_rank;
-//     int self_size;
+    int self_rank;
+    int self_size;
 
-//     MPI_Comm_size(MPI_COMM_SELF, &self_size);
-//     MPI_Comm_rank(MPI_COMM_SELF, &self_rank);
+    MPI_Comm_size(MPI_COMM_SELF, &self_size);
+    MPI_Comm_rank(MPI_COMM_SELF, &self_rank);
 
-//     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_SELF);
-//     EXPECT_EQ(comm.rank(), self_rank);
-//     EXPECT_EQ(comm.size(), self_size);
-//     EXPECT_EQ(comm.rank(), 0);
+    EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_SELF);
+    EXPECT_EQ(comm.rank(), self_rank);
+    EXPECT_EQ(comm.size(), self_size);
+    EXPECT_EQ(comm.rank(), 0);
 
-//     EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL), ".*");
-// }
+    /// @todo Replace death tests (which are not working well with MPI) as soon as we have the switch between asserts
+    /// and exceptions. Then test for exception.
+    // EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL), ".*");
+}
 
-// TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
-//     for (int i = -(2 * size); i < (2 * size); ++i) {
-//         if (i < 0 || i >= size) {
-//             EXPECT_DEATH(Communicator comm(MPI_COMM_WORLD, i), ".*");
-//             EXPECT_DEATH(Communicator comm(MPI_COMM_NULL, i), ".*");
-//         } else {
-//             Communicator comm(MPI_COMM_WORLD, i);
-//             ASSERT_EQ(comm.root(), i);
-//             EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL, i), ".*");
-//         }
-//     }
-// }
+TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
+    for (int i = -(2 * size); i < (2 * size); ++i) {
+        if (i < 0 || i >= size) {
+            /// @todo Replace death tests (which are not working well with MPI) as soon as we have the switch between
+            /// asserts and exceptions. Then test for exception.
+            // EXPECT_DEATH(Communicator comm(MPI_COMM_WORLD, i), ".*");
+            // EXPECT_DEATH(Communicator comm(MPI_COMM_NULL, i), ".*");
+        } else {
+            Communicator comm(MPI_COMM_WORLD, i);
+            ASSERT_EQ(comm.root(), i);
+            /// @todo Replace death tests (which are not working well with MPI) as soon as we have the switch between
+            /// asserts and exceptions. Then test for exception.
+            // EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL, i), ".*");
+        }
+    }
+}
 
-TEST_F(CommunicatorTest, SetRankBoundCheck) {
+TEST_F(CommunicatorTest, SetRootkBoundCheck) {
     Communicator comm;
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-            EXPECT_DEATH(comm.root(i), ".*");
+            /// @todo Replace death tests (which are not working well with MPI) as soon as we have the switch between
+            /// asserts and exceptions. Then test for exception.
+            // EXPECT_DEATH(comm.root(i), ".*");
         } else {
             comm.root(i);
             EXPECT_EQ(i, comm.root());
@@ -86,7 +94,9 @@ TEST_F(CommunicatorTest, RankShiftedChecked) {
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i + rank < 0 || i + rank >= size) {
-            EXPECT_DEATH(comm.rank_shifted_checked(i), ".*");
+            /// @todo Replace death tests (which are not working well with MPI) as soon as we have the switch between
+            /// asserts and exceptions. Then test for exception.
+            // EXPECT_DEATH(comm.rank_shifted_checked(i), ".*");
         } else {
             EXPECT_EQ(rank + i, comm.rank_shifted_checked(i));
         }
