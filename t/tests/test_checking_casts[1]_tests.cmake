@@ -1,7 +1,0 @@
-add_test( HelpersTest.in_range /home/daniel/projects/kamping/t/tests/test_checking_casts [==[--gtest_filter=HelpersTest.in_range]==] --gtest_also_run_disabled_tests)
-set_tests_properties( HelpersTest.in_range PROPERTIES WORKING_DIRECTORY /home/daniel/projects/kamping/t/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-add_test( HelpersTest.asserting_cast /home/daniel/projects/kamping/t/tests/test_checking_casts [==[--gtest_filter=HelpersTest.asserting_cast]==] --gtest_also_run_disabled_tests)
-set_tests_properties( HelpersTest.asserting_cast PROPERTIES WORKING_DIRECTORY /home/daniel/projects/kamping/t/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-add_test( HelpersTest.throwing_cast /home/daniel/projects/kamping/t/tests/test_checking_casts [==[--gtest_filter=HelpersTest.throwing_cast]==] --gtest_also_run_disabled_tests)
-set_tests_properties( HelpersTest.throwing_cast PROPERTIES WORKING_DIRECTORY /home/daniel/projects/kamping/t/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
-set( test_checking_casts_TESTS HelpersTest.in_range HelpersTest.asserting_cast HelpersTest.throwing_cast)

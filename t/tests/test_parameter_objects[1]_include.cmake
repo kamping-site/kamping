@@ -1,5 +1,0 @@
-if(EXISTS "/home/daniel/projects/kamping/t/tests/test_parameter_objects[1]_tests.cmake")
-  include("/home/daniel/projects/kamping/t/tests/test_parameter_objects[1]_tests.cmake")
-else()
-  add_test(test_parameter_objects_NOT_BUILT test_parameter_objects_NOT_BUILT)
-endif()

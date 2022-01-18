@@ -1,5 +1,0 @@
-if(EXISTS "/home/daniel/projects/kamping/t/tests/test_mpi_datatype[1]_tests.cmake")
-  include("/home/daniel/projects/kamping/t/tests/test_mpi_datatype[1]_tests.cmake")
-else()
-  add_test(test_mpi_datatype_NOT_BUILT test_mpi_datatype_NOT_BUILT)
-endif()
