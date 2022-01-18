@@ -50,15 +50,14 @@ template <size_t NumBytes>
     return type;
 }
 
-/// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
-/// new custom continuous type.
+/// @brief Translate template parameter T to a a builtin MPI_Datatype. If no corresponding MPI_Datatype exists,
+/// `MPI_DATATYPE_NULL` is returned.
 ///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
 /// @tparam T The type to translate into a MPI_Datatype.
-/// @return The tag identifying the corresponding MPI_Datatype or the newly created type.
-/// @see mpi_custom_continuous_type()
+/// @return The tag identifying the corresponding MPI_Datatype or `MPI_DATATYPE_NULL`
 ///
 template <typename T>
-[[nodiscard]] constexpr MPI_Datatype mpi_datatype() noexcept {
+[[nodiscard]] constexpr MPI_Datatype builtin_mpi_datatype() noexcept {
     // Remove const and volatile qualifiers.
     using T_no_cv = std::remove_cv_t<T>;
 
@@ -77,83 +76,94 @@ template <typename T>
     static_assert(!std::is_void_v<T_no_cv>, "There is no MPI datatype corresponding to void.");
 
     // Check if we got a array type -> create a continuous type.
-    if constexpr (std::is_array_v<T_no_cv>) {
+    if (std::is_array_v<T_no_cv>) {
         // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
         return mpi_custom_continuous_type<sizeof(T_no_cv)>();
     }
 
     // Check if we got a enum type -> use underlying type
     if constexpr (std::is_enum_v<T_no_cv>) {
-        return mpi_datatype<std::underlying_type_t<T_no_cv>>();
+        return builtin_mpi_datatype<std::underlying_type_t<T_no_cv>>();
     }
 
     MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
-    if constexpr (std::is_same_v<T_no_cv, char>) {
+    if (std::is_same_v<T_no_cv, char>) {
         mpi_type = MPI_CHAR;
-    } else if constexpr (std::is_same_v<T_no_cv, signed char>) {
+    } else if (std::is_same_v<T_no_cv, signed char>) {
         mpi_type = MPI_SIGNED_CHAR;
-    } else if constexpr (std::is_same_v<T_no_cv, unsigned char>) {
+    } else if (std::is_same_v<T_no_cv, unsigned char>) {
         mpi_type = MPI_UNSIGNED_CHAR;
-    } else if constexpr (std::is_same_v<T_no_cv, wchar_t>) {
+    } else if (std::is_same_v<T_no_cv, wchar_t>) {
         mpi_type = MPI_WCHAR;
-    } else if constexpr (std::is_same_v<T_no_cv, signed short>) {
+    } else if (std::is_same_v<T_no_cv, signed short>) {
         mpi_type = MPI_SHORT;
-    } else if constexpr (std::is_same_v<T_no_cv, unsigned short>) {
+    } else if (std::is_same_v<T_no_cv, unsigned short>) {
         mpi_type = MPI_UNSIGNED_SHORT;
-    } else if constexpr (std::is_same_v<T_no_cv, signed int>) {
+    } else if (std::is_same_v<T_no_cv, signed int>) {
         mpi_type = MPI_INT;
-    } else if constexpr (std::is_same_v<T_no_cv, unsigned int>) {
+    } else if (std::is_same_v<T_no_cv, unsigned int>) {
         mpi_type = MPI_UNSIGNED;
-    } else if constexpr (std::is_same_v<T_no_cv, signed long int>) {
+    } else if (std::is_same_v<T_no_cv, signed long int>) {
         mpi_type = MPI_LONG;
-    } else if constexpr (std::is_same_v<T_no_cv, unsigned long int>) {
+    } else if (std::is_same_v<T_no_cv, unsigned long int>) {
         mpi_type = MPI_UNSIGNED_LONG;
-    } else if constexpr (std::is_same_v<T_no_cv, signed long long int>) {
+    } else if (std::is_same_v<T_no_cv, signed long long int>) {
         mpi_type = MPI_LONG_LONG;
-    } else if constexpr (std::is_same_v<T_no_cv, unsigned long long int>) {
+    } else if (std::is_same_v<T_no_cv, unsigned long long int>) {
         mpi_type = MPI_UNSIGNED_LONG_LONG;
-    } else if constexpr (std::is_same_v<T_no_cv, float>) {
+    } else if (std::is_same_v<T_no_cv, float>) {
         mpi_type = MPI_FLOAT;
-    } else if constexpr (std::is_same_v<T_no_cv, double>) {
+    } else if (std::is_same_v<T_no_cv, double>) {
         mpi_type = MPI_DOUBLE;
-    } else if constexpr (std::is_same_v<T_no_cv, long double>) {
+    } else if (std::is_same_v<T_no_cv, long double>) {
         mpi_type = MPI_LONG_DOUBLE;
-    } else if constexpr (std::is_same_v<T_no_cv, int8_t>) {
+    } else if (std::is_same_v<T_no_cv, int8_t>) {
         mpi_type = MPI_INT8_T;
-    } else if constexpr (std::is_same_v<T_no_cv, int16_t>) {
+    } else if (std::is_same_v<T_no_cv, int16_t>) {
         mpi_type = MPI_INT16_T;
-    } else if constexpr (std::is_same_v<T_no_cv, int32_t>) {
+    } else if (std::is_same_v<T_no_cv, int32_t>) {
         mpi_type = MPI_INT32_T;
-    } else if constexpr (std::is_same_v<T_no_cv, int64_t>) {
+    } else if (std::is_same_v<T_no_cv, int64_t>) {
         mpi_type = MPI_INT64_T;
-    } else if constexpr (std::is_same_v<T_no_cv, uint8_t>) {
+    } else if (std::is_same_v<T_no_cv, uint8_t>) {
         mpi_type = MPI_UINT8_T;
-    } else if constexpr (std::is_same_v<T_no_cv, uint16_t>) {
+    } else if (std::is_same_v<T_no_cv, uint16_t>) {
         mpi_type = MPI_UINT16_T;
-    } else if constexpr (std::is_same_v<T_no_cv, uint32_t>) {
+    } else if (std::is_same_v<T_no_cv, uint32_t>) {
         mpi_type = MPI_UINT32_T;
-    } else if constexpr (std::is_same_v<T_no_cv, uint64_t>) {
+    } else if (std::is_same_v<T_no_cv, uint64_t>) {
         mpi_type = MPI_UINT64_T;
-    } else if constexpr (std::is_same_v<T_no_cv, bool>) {
-        mpi_type = MPI_C_BOOL;
-    } else if constexpr (std::is_same_v<T_no_cv, std::complex<float>>) {
-        mpi_type = MPI_C_FLOAT_COMPLEX;
-    } else if constexpr (std::is_same_v<T_no_cv, std::complex<double>>) {
-        mpi_type = MPI_C_DOUBLE_COMPLEX;
-    } else if constexpr (std::is_same_v<T_no_cv, std::complex<long double>>) {
-        mpi_type = MPI_C_LONG_DOUBLE_COMPLEX;
-    } else {
-        mpi_type = mpi_custom_continuous_type<sizeof(T)>();
+    } else if (std::is_same_v<T_no_cv, bool>) {
+        mpi_type = MPI_CXX_BOOL;
+    } else if (std::is_same_v<T_no_cv, std::complex<float>>) {
+        mpi_type = MPI_CXX_FLOAT_COMPLEX;
+    } else if (std::is_same_v<T_no_cv, std::complex<double>>) {
+        mpi_type = MPI_CXX_DOUBLE_COMPLEX;
+    } else if (std::is_same_v<T_no_cv, std::complex<long double>>) {
+        mpi_type = MPI_CXX_LONG_DOUBLE_COMPLEX;
     }
-
-    assert(mpi_type != MPI_DATATYPE_NULL);
-
     return mpi_type;
 }
 
+/// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
+/// new custom continuous type.
+///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
+/// @tparam T The type to translate into a MPI_Datatype.
+/// @return The tag identifying the corresponding MPI_Datatype or the newly created type.
+/// @see mpi_custom_continuous_type()
+///
+template <typename T>
+[[nodiscard]] MPI_Datatype mpi_datatype() noexcept {
+    MPI_Datatype mpi_type = builtin_mpi_datatype<T>();
+    if (mpi_type == MPI_DATATYPE_NULL) {
+        mpi_type = mpi_custom_continuous_type<sizeof(T)>();
+    }
+
+    return mpi_type;
+}
 template <typename T>
 constexpr bool is_mpi_integer() noexcept {
-    auto             type  = mpi_datatype<T>();
+    auto             type  = builtin_mpi_datatype<T>();
     const std::array types = {MPI_INT,           MPI_LONG,          MPI_UNSIGNED_SHORT,
                               MPI_UNSIGNED,      MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG,
                               MPI_LONG_LONG_INT, MPI_LONG_LONG,     MPI_UNSIGNED_LONG_LONG,
@@ -171,7 +181,7 @@ constexpr bool is_mpi_integer() noexcept {
 
 template <typename T>
 constexpr bool is_mpi_float() noexcept {
-    auto             type  = mpi_datatype<T>();
+    auto             type  = builtin_mpi_datatype<T>();
     const std::array types = {MPI_FLOAT,       MPI_DOUBLE, MPI_REAL,  MPI_DOUBLE_PRECISION,
                               MPI_LONG_DOUBLE, MPI_REAL4,  MPI_REAL8, MPI_REAL16};
     for (auto& elem: types) {
@@ -184,7 +194,7 @@ constexpr bool is_mpi_float() noexcept {
 
 template <typename T>
 constexpr bool is_mpi_logical() noexcept {
-    auto             type  = mpi_datatype<T>();
+    auto             type  = builtin_mpi_datatype<T>();
     const std::array types = {MPI_LOGICAL, MPI_C_BOOL, MPI_CXX_BOOL};
     for (auto& elem: types) {
         if (elem == type) {
@@ -196,8 +206,20 @@ constexpr bool is_mpi_logical() noexcept {
 
 template <typename T>
 constexpr bool is_mpi_complex() noexcept {
-    auto             type  = mpi_datatype<T>();
-    const std::array types = {MPI_COMPLEX, MPI_C_COMPLEX, MPI_C_FLOAT_COMPLEX, MPI_C_DOUBLE_COMPLEX, MPI_C_LONG_DOUBLE_COMPLEX, MPI_CXX_FLOAT_COMPLEX, MPI_CXX_DOUBLE_COMPLEX, MPI_CXX_LONG_DOUBLE_COMPLEX, MPI_DOUBLE_COMPLEX, MPI_COMPLEX8, MPI_COMPLEX16, MPI_COMPLEX32};
+    auto             type  = builtin_mpi_datatype<T>();
+    const std::array types = {
+        MPI_COMPLEX,
+        MPI_C_COMPLEX,
+        MPI_C_FLOAT_COMPLEX,
+        MPI_C_DOUBLE_COMPLEX,
+        MPI_C_LONG_DOUBLE_COMPLEX,
+        MPI_CXX_FLOAT_COMPLEX,
+        MPI_CXX_DOUBLE_COMPLEX,
+        MPI_CXX_LONG_DOUBLE_COMPLEX,
+        MPI_DOUBLE_COMPLEX,
+        MPI_COMPLEX8,
+        MPI_COMPLEX16,
+        MPI_COMPLEX32};
     for (auto& elem: types) {
         if (elem == type) {
             return true;
@@ -208,7 +230,7 @@ constexpr bool is_mpi_complex() noexcept {
 
 template <typename T>
 constexpr bool is_mpi_byte() noexcept {
-    auto             type  = mpi_datatype<T>();
+    auto type = builtin_mpi_datatype<T>();
     return type == MPI_BYTE;
 }
 

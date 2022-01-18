@@ -115,16 +115,16 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
         possible_mpi_datatypes.push_back(MPI_UINT64_T);
     }
     if constexpr (std::is_same_v<T_no_cv, bool>) {
-        possible_mpi_datatypes.push_back(MPI_C_BOOL);
+        possible_mpi_datatypes.push_back(MPI_CXX_BOOL);
     }
     if constexpr (std::is_same_v<T_no_cv, std::complex<float>>) {
-        possible_mpi_datatypes.push_back(MPI_C_FLOAT_COMPLEX);
+        possible_mpi_datatypes.push_back(MPI_CXX_FLOAT_COMPLEX);
     }
     if constexpr (std::is_same_v<T_no_cv, std::complex<double>>) {
-        possible_mpi_datatypes.push_back(MPI_C_DOUBLE_COMPLEX);
+        possible_mpi_datatypes.push_back(MPI_CXX_DOUBLE_COMPLEX);
     }
     if constexpr (std::is_same_v<T_no_cv, std::complex<long double>>) {
-        possible_mpi_datatypes.push_back(MPI_C_LONG_DOUBLE_COMPLEX);
+        possible_mpi_datatypes.push_back(MPI_CXX_LONG_DOUBLE_COMPLEX);
     }
 
     // If not other type matched, this is a custom datatype.
