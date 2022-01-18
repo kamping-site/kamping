@@ -11,6 +11,10 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+// This file contains tests that rely on active assertions -> explicitly set assertion level
+#undef KAMPING_ASSERTION_LEVEL
+#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
+
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -20,11 +24,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest-death-test.h>
 #include <gtest/gtest.h>
-
-// overwrite default assertion level
-#undef KAMPING_ASSERTION_LEVEL
-#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
-#include "kamping/kassert.hpp"
 
 #include "kamping/checking_casts.hpp"
 
