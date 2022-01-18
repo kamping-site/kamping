@@ -131,9 +131,8 @@ struct is_builtin_mpi_op<
 template <typename T, typename S>
 struct is_builtin_mpi_op<
     kamping::ops::plus<S>, T,
-    typename std::enable_if<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)&&(is_mpi_integer<T>() || is_mpi_float<T>()
-                                                            || is_mpi_complex<T>())>::type> : std::true_type {
+    typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        is_mpi_integer<T>() || is_mpi_float<T>() || is_mpi_complex<T>())>::type> : std::true_type {
     static MPI_Op op() {
         return MPI_SUM;
     }
@@ -142,9 +141,8 @@ struct is_builtin_mpi_op<
 template <typename T, typename S>
 struct is_builtin_mpi_op<
     kamping::ops::multiplies<S>, T,
-    typename std::enable_if<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)&&(is_mpi_integer<T>() || is_mpi_float<T>()
-                                                            || is_mpi_complex<T>())>::type> : std::true_type {
+    typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        is_mpi_integer<T>() || is_mpi_float<T>() || is_mpi_complex<T>())>::type> : std::true_type {
     static MPI_Op op() {
         return MPI_PROD;
     }
