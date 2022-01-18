@@ -1,0 +1,5 @@
+add_test( HelpersTest.select_parameter_type_basics /home/daniel/projects/kamping/t/tests/test_named_parameter_selection [==[--gtest_filter=HelpersTest.select_parameter_type_basics]==] --gtest_also_run_disabled_tests)
+set_tests_properties( HelpersTest.select_parameter_type_basics PROPERTIES WORKING_DIRECTORY /home/daniel/projects/kamping/t/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( HelpersTest.select_parameter_type_duplicates /home/daniel/projects/kamping/t/tests/test_named_parameter_selection [==[--gtest_filter=HelpersTest.select_parameter_type_duplicates]==] --gtest_also_run_disabled_tests)
+set_tests_properties( HelpersTest.select_parameter_type_duplicates PROPERTIES WORKING_DIRECTORY /home/daniel/projects/kamping/t/tests SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( test_named_parameter_selection_TESTS HelpersTest.select_parameter_type_basics HelpersTest.select_parameter_type_duplicates)

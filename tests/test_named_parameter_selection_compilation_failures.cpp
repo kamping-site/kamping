@@ -11,11 +11,19 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <mpi.h>
+#include "kamping/named_parameter_selection.hpp"
 
-int main(int argc, char* argv[]) {
-    MPI_Init(&argc, &argv);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    std::cout << "example";
+#include "helpers_for_testing.hpp"
+
+int main(int /*argc*/, char** /*argv*/) {
+    using namespace ::kamping;
+    using namespace ::kamping::internal;
+    testing::Argument<ParameterType::send_buf> arg0{0};
+    testing::Argument<ParameterType::recv_buf> arg1{1};
+    // if the requested ParameterType is not given, parameter selection should fail to compile.
+#if defined(REQUESTED_PARAMETER_NOT_GIVEN)
+    const auto& selected_arg = select_parameter_type<ParameterType::send_counts>(arg0, arg1);
+#else
+// If none of the above sections is active, this file will compile successfully.
+#endif
 }

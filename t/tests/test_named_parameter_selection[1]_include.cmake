@@ -1,0 +1,5 @@
+if(EXISTS "/home/daniel/projects/kamping/t/tests/test_named_parameter_selection[1]_tests.cmake")
+  include("/home/daniel/projects/kamping/t/tests/test_named_parameter_selection[1]_tests.cmake")
+else()
+  add_test(test_named_parameter_selection_NOT_BUILT test_named_parameter_selection_NOT_BUILT)
+endif()

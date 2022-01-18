@@ -21,6 +21,11 @@
 #include <gtest/gtest-death-test.h>
 #include <gtest/gtest.h>
 
+// overwrite default assertion level
+#undef KAMPING_ASSERTION_LEVEL
+#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
+#include "kamping/kassert.hpp"
+
 #include "kamping/checking_casts.hpp"
 
 using namespace ::testing;
