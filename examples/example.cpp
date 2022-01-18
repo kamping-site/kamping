@@ -11,8 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "kamping/wrapper.hpp"
-
 #include <chrono>
 #include <cstddef>
 #include <iostream>
@@ -23,7 +21,10 @@
 #include <thread>
 #include <vector>
 
+#include "kamping/named_parameter_selection.hpp"
+#include "kamping/parameter_factories.hpp"
 
+/*
 void printResult(int rank, std::vector<int>& recvData, std::string name) {
     std::stringstream ss;
     ss << rank << ": " << name << ": [";
@@ -84,5 +85,11 @@ int main() {
     printResult(ctx.rank(), recvCounts2, static_cast<std::size_t>(ctx.rank() == 1 ? ctx.size() : 0), "counts");
     printResult(ctx.rank(), recvDispls2, "displs");
 
+    MPI_Finalize();
+}
+*/
+
+int main() {
+    MPI_Init(nullptr, nullptr);
     MPI_Finalize();
 }
