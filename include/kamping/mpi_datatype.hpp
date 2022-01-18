@@ -14,6 +14,9 @@
 /// @file
 /// @brief Utility that maps C++ types to types that can be understood by MPI.
 
+
+#pragma once
+
 #include <cassert>
 #include <complex>
 #include <cstdint>

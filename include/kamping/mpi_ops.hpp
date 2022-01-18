@@ -11,126 +11,200 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#pragma once
+
 #include <mpi.h>
 
 #include <algorithm>
 #include <functional>
 #include <type_traits>
 
+#include "kamping/mpi_datatype.hpp"
+
 namespace kamping {
-namespace ops {
+namespace internal {
 template <typename T>
-struct max {
+struct max_impl {
+    constexpr T operator()(const T& lhs, const T& rhs) const {
+        return std::max(lhs, rhs);
+    }
+};
+
+template <>
+struct max_impl<void> {
+    template <typename T>
     constexpr T operator()(const T& lhs, const T& rhs) const {
         return std::max(lhs, rhs);
     }
 };
 
 template <typename T>
-struct min {
+struct min_impl {
     constexpr T operator()(const T& lhs, const T& rhs) const {
         return std::min(lhs, rhs);
     }
 };
 
+template <>
+struct min_impl<void> {
+    template <typename T>
+    constexpr T operator()(const T& lhs, const T& rhs) const {
+        return std::min(lhs, rhs);
+    }
+};
 template <typename T>
-using plus = std::plus<T>;
-
-template <typename T>
-using multiplies = std::multiplies<T>;
-
-template <typename T>
-using logical_and = std::logical_and<T>;
-
-template <typename T>
-using bit_and = std::bit_and<T>;
-
-template <typename T>
-using logical_or = std::logical_or<T>;
-
-template <typename T>
-using bit_or = std::bit_or<T>;
-
-template <typename T>
-struct logical_xor {
+struct logical_xor_impl {
     constexpr bool operator()(const T& lhs, const T& rhs) const {
         return (lhs && !rhs) || (!lhs && rhs);
     }
 };
 
-template <typename T>
+template <>
+struct logical_xor_impl<void> {
+    template <typename T, typename S>
+    constexpr bool operator()(const T& lhs, const S& rhs) const {
+        return (lhs && !rhs) || (!lhs && rhs);
+    }
+};
+} // namespace internal
+namespace ops {
+
+
+template <typename T = void>
+using max = kamping::internal::max_impl<T>;
+
+template <typename T = void>
+using min = kamping::internal::min_impl<T>;
+
+template <typename T = void>
+using plus = std::plus<T>;
+
+template <typename T = void>
+using multiplies = std::multiplies<T>;
+
+template <typename T = void>
+using logical_and = std::logical_and<T>;
+
+template <typename T = void>
+using bit_and = std::bit_and<T>;
+
+template <typename T = void>
+using logical_or = std::logical_or<T>;
+
+template <typename T = void>
+using bit_or = std::bit_or<T>;
+
+template <typename T = void>
+using logical_xor = kamping::internal::logical_xor_impl<T>;
+
+template <typename T = void>
 using bit_xor = std::bit_xor<T>;
+
 } // namespace ops
+
 namespace internal {
-template <typename Op, typename T>
+
+template <typename Op, typename T, typename Enable = void>
 struct is_builtin_mpi_op : std::false_type {};
 
 
-template <typename T>
-struct is_builtin_mpi_op<kamping::ops::max<T>, T> : std::true_type {
+template <typename T, typename S>
+struct is_builtin_mpi_op<
+    kamping::ops::max<S>, T,
+    typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        is_mpi_integer<T>() || is_mpi_float<T>())>::type> : std::true_type {
+    static MPI_Op op() {
+        return MPI_MAX;
+    }
+};
+
+template <typename T, typename S>
+struct is_builtin_mpi_op<
+    kamping::ops::min<S>, T,
+    typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        is_mpi_integer<T>() || is_mpi_float<T>())>::type> : std::true_type {
+    static MPI_Op op() {
+        return MPI_MIN;
+    }
+};
+
+template <typename T, typename S>
+struct is_builtin_mpi_op<
+    kamping::ops::plus<S>, T,
+    typename std::enable_if<
+        (std::is_same_v<S, void> || std::is_same_v<T, S>)&&(is_mpi_integer<T>() || is_mpi_float<T>())
+        || is_mpi_complex<T>()>::type> : std::true_type {
     static MPI_Op op() {
         return MPI_SUM;
     }
 };
 
-template <typename T>
-struct is_builtin_mpi_op<std::plus<T>, T> : std::true_type {
-    static MPI_Op op() {
-        return MPI_SUM;
-    }
-};
-
-template <typename T>
-struct is_builtin_mpi_op<std::plus<>, T> : std::true_type {
-    static MPI_Op op() {
-        return MPI_SUM;
-    }
-};
-
-template <typename T>
-struct is_builtin_mpi_op<std::multiplies<T>, T> : std::true_type {
+template <typename T, typename S>
+struct is_builtin_mpi_op<
+    kamping::ops::multiplies<S>, T,
+    typename std::enable_if<
+        (std::is_same_v<S, void> || std::is_same_v<T, S>)&&(is_mpi_integer<T>() || is_mpi_float<T>())
+        || is_mpi_complex<T>()>::type> : std::true_type {
     static MPI_Op op() {
         return MPI_PROD;
     }
 };
 
-template <typename T>
-struct is_builtin_mpi_op<std::logical_and<T>, T> : std::true_type {
+template <typename T, typename S>
+struct is_builtin_mpi_op<
+    kamping::ops::logical_and<S>, T,
+    typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        is_mpi_integer<T>() || is_mpi_logical<T>())>::type> : std::true_type {
     static MPI_Op op() {
         return MPI_LAND;
     }
 };
 
-template <typename T>
-struct is_builtin_mpi_op<std::bit_and<T>, T> : std::true_type {
-    static MPI_Op op() {
-        return MPI_BAND;
-    }
-};
-
-template <typename T>
-struct is_builtin_mpi_op<std::logical_or<T>, T> : std::true_type {
+template <typename T, typename S>
+struct is_builtin_mpi_op<
+    kamping::ops::logical_or<S>, T,
+    typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        is_mpi_integer<T>() || is_mpi_logical<T>())>::type> : std::true_type {
     static MPI_Op op() {
         return MPI_LOR;
     }
 };
 
-template <typename T>
-struct is_builtin_mpi_op<std::bit_or<T>, T> : std::true_type {
-    static MPI_Op op() {
-        return MPI_BOR;
-    }
-};
-
-template <typename T>
-struct is_builtin_mpi_op<kamping::ops::logical_xor<T>, T> : std::true_type {
+template <typename T, typename S>
+struct is_builtin_mpi_op<
+    kamping::ops::logical_xor<S>, T,
+    typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        is_mpi_integer<T>() || is_mpi_logical<T>())>::type> : std::true_type {
     static MPI_Op op() {
         return MPI_LXOR;
     }
 };
 
-template <typename T>
-struct is_builtin_mpi_op<std::bit_xor<T>, T> : std::true_type {
+template <typename T, typename S>
+struct is_builtin_mpi_op<
+    kamping::ops::bit_and<S>, T,
+    typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        is_mpi_integer<T>() || is_mpi_byte<T>())>::type> : std::true_type {
+    static MPI_Op op() {
+        return MPI_BAND;
+    }
+};
+
+template <typename T, typename S>
+struct is_builtin_mpi_op<
+    kamping::ops::bit_or<S>, T,
+    typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        is_mpi_integer<T>() || is_mpi_byte<T>())>::type> : std::true_type {
+    static MPI_Op op() {
+        return MPI_BOR;
+    }
+};
+
+template <typename T, typename S>
+struct is_builtin_mpi_op<
+    kamping::ops::bit_xor<S>, T,
+    typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        is_mpi_integer<T>() || is_mpi_byte<T>())>::type> : std::true_type {
     static MPI_Op op() {
         return MPI_BXOR;
     }
