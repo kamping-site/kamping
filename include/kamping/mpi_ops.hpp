@@ -132,7 +132,8 @@ template <typename T, typename S>
 struct is_builtin_mpi_op<
     kamping::ops::plus<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float || mpi_type_traits<T>::is_complex)>::type> : std::true_type {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float || mpi_type_traits<T>::is_complex)>::type>
+    : std::true_type {
     static MPI_Op op() {
         return MPI_SUM;
     }
@@ -142,7 +143,8 @@ template <typename T, typename S>
 struct is_builtin_mpi_op<
     kamping::ops::multiplies<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float || mpi_type_traits<T>::is_complex)>::type> : std::true_type {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float || mpi_type_traits<T>::is_complex)>::type>
+    : std::true_type {
     static MPI_Op op() {
         return MPI_PROD;
     }
