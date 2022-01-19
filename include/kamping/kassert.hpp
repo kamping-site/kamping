@@ -24,6 +24,26 @@
 #include <vector>
 
 /// @brief Assertion macro for the KaMPI.ng library. Accepts between one and three parameters.
+///
+/// If the assertion fails, the KASSERT() macro prints an expansion of the expression similar to Catch2. For instance,
+/// in a call
+///     KASSERT(rhs == lhs)
+/// KASSERT() also prints the values of \c rhs and \c lhs. However, this expression expansion is limited and only works
+/// for expressions that do not contain parentheses, but are implicitly left-associative. This is due to its
+/// implementation:
+///     KASSERT(rhs == lhs)
+/// is replaced by
+///     Decomposer{} <= rhs == lhs
+/// which is interpreted by the compiler as
+///     ((Decomposer{} <= rhs) == lhs)
+/// where the first <= relation is overloaded to return a proxy object which in turn overloads other operators. If the
+/// expression is not implicitly left-associative or contains parentheses, this does not work:
+///     KASSERT(rhs1 == lhs1 && rhs2 == lhs2)
+/// is replaced by (with implicit parentheses)
+///     ((Decomposer{} <= rhs1) == lhs1) && (rhs2 == lhs2))
+/// Thus, the left hand side of \c && can only be expanded to the *result* of \code{rhs2 == lhs2}.
+/// This limitation only affects the error message, not the interpretation of the expression itself.
+///
 /// @param expression The assertion expression (mandatory argument).
 /// @param message Error message that is printed in addition to the decomposed expression (optional argument).
 /// @param level The level of the assertion (optional arguments, defaults to \c kamping::assert::normal).
@@ -190,7 +210,7 @@ public:
     /// @param expression The stringified expression that caused this exception to be thrown.
     /// @param message A custom error message.
     explicit KassertException(std::string const& expression, std::string const& message)
-        : _what(build_what(expression, message)) {}
+        : _what(_build_what(expression, message)) {}
 
     /// @brief Prints a description of this exception.
     /// @return A description of this exception.
@@ -201,7 +221,7 @@ public:
 private:
     /// @brief Builds the description of this exception.
     /// @return The description of this exception.
-    static std::string build_what(std::string const& expression, std::string const& message) {
+    static std::string _build_what(std::string const& expression, std::string const& message) {
         using namespace std::string_literals;
         return "FAILED ASSERTION:"s + "\n\t"s + expression + "\n" + message + "\n";
     }

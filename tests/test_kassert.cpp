@@ -226,9 +226,26 @@ TEST(KassertTest, primitive_type_expansion) {
 
     EXPECT_EXIT({ generic_eq_and(1, 2, true); }, KilledBySignal(SIGABRT), "1 == 2 && 1");
     EXPECT_EXIT({ generic_lt_or(2, 1, false); }, KilledBySignal(SIGABRT), "2 < 1 || 0");
+
+    // negation + relation
+//    auto generic_neg_eq = [](const auto lhs_neg, const auto rhs) {
+//        KASSERT(!lhs_neg == rhs);
+//    };
+//
+//    EXPECT_EXIT({ generic_neg_eq(5, 10); }, KilledBySignal(SIGABRT), "!5 == 10");
 }
 
 // Test expression expansion of library-supported types
+
+TEST(KassertTest, true_complex_expanded_types) {
+    std::vector<int> vec_rhs = {1, 2, 3};
+    std::vector<int> vec_lhs = {1, 2, 3};
+    KASSERT(vec_rhs == vec_lhs);
+
+    std::pair<int, std::vector<int>> pair_vec_rhs = {1, {2, 3}};
+    std::pair<int, std::vector<int>> pair_vec_lhs = {1, {2, 3}};
+    KASSERT(pair_vec_rhs == pair_vec_lhs);
+}
 
 TEST(KassertTest, empty_and_single_int_vector_expansion) {
     std::vector<int> lhs = {};
@@ -273,7 +290,7 @@ TEST(KassertTest, int_int_pair_vector_expansion) {
     EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "\\[\\(1, 2\\), \\(1, 3\\)\\] == \\[\\(1, 2\\), \\(1, 4\\)\\]");
 }
 
-TEST(KassertTest, int_vector_int_pair_expensaion) {
+TEST(KassertTest, int_vector_int_pair_expansion) {
     std::pair<std::vector<int>, int> lhs = {{}, 0};
     std::pair<std::vector<int>, int> rhs = {{1}, 1};
 
