@@ -50,21 +50,187 @@ template <size_t NumBytes>
     return type;
 }
 
-enum class DatatypeCategory { integer, floating, complex, logical, byte, custom, none };
-
-struct DatatypeInfo {
-    MPI_Datatype     type     = MPI_DATATYPE_NULL;
-    DatatypeCategory category = DatatypeCategory::custom;
+struct is_builtin_mpi_type_false {
+    static constexpr bool is_builtin = false;
+    static constexpr bool is_integer = false;
+    static constexpr bool is_float   = false;
+    static constexpr bool is_complex = false;
+    static constexpr bool is_logical = false;
+    static constexpr bool is_byte    = false;
 };
 
-/// @brief Translate template parameter T to a a builtin MPI_Datatype. If no corresponding MPI_Datatype exists,
-/// `MPI_DATATYPE_NULL` is returned.
+struct is_builtin_mpi_type_true : is_builtin_mpi_type_false {
+    static constexpr bool is_builtin = true;
+};
+
+template <typename T>
+struct mpi_type_traits_impl : is_builtin_mpi_type_false {};
+
+template <>
+struct mpi_type_traits_impl<char> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CHAR;
+    }
+};
+
+template <>
+struct mpi_type_traits_impl<signed char> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_SIGNED_CHAR;
+    }
+    static constexpr bool is_integer = true;
+};
+
+template <>
+struct mpi_type_traits_impl<unsigned char> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_UNSIGNED_CHAR;
+    }
+    static constexpr bool is_integer = true;
+};
+
+template <>
+struct mpi_type_traits_impl<wchar_t> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_WCHAR;
+    }
+};
+
+template <>
+struct mpi_type_traits_impl<short int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_SHORT;
+    }
+    static constexpr bool is_integer = true;
+};
+
+template <>
+struct mpi_type_traits_impl<unsigned short int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_UNSIGNED_SHORT;
+    }
+    static constexpr bool is_integer = true;
+};
+
+template <>
+struct mpi_type_traits_impl<int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_INT;
+    }
+    static constexpr bool is_integer = true;
+};
+
+template <>
+struct mpi_type_traits_impl<unsigned int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_UNSIGNED;
+    }
+    static constexpr bool is_integer = true;
+};
+
+template <>
+struct mpi_type_traits_impl<long int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_LONG;
+    }
+    static constexpr bool is_integer = true;
+};
+
+template <>
+struct mpi_type_traits_impl<unsigned long int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_UNSIGNED_LONG;
+    }
+    static constexpr bool is_integer = true;
+};
+
+template <>
+struct mpi_type_traits_impl<long long int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_LONG_LONG;
+    }
+    static constexpr bool is_integer = true;
+};
+
+template <>
+struct mpi_type_traits_impl<unsigned long long int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_UNSIGNED_LONG_LONG;
+    }
+    static constexpr bool is_integer = true;
+};
+
+template <>
+struct mpi_type_traits_impl<float> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_FLOAT;
+    }
+    static constexpr bool is_float = true;
+};
+
+template <>
+struct mpi_type_traits_impl<double> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_DOUBLE;
+    }
+    static constexpr bool is_float = true;
+};
+
+template <>
+struct mpi_type_traits_impl<long double> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_LONG_DOUBLE;
+    }
+    static constexpr bool is_float = true;
+};
+
+template <>
+struct mpi_type_traits_impl<bool> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CXX_BOOL;
+    }
+    static constexpr bool is_logical = true;
+};
+template <>
+struct mpi_type_traits_impl<std::complex<float>> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CXX_FLOAT_COMPLEX;
+    }
+    static constexpr bool is_complex = true;
+};
+template <>
+struct mpi_type_traits_impl<std::complex<double>> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CXX_DOUBLE_COMPLEX;
+    }
+    static constexpr bool is_complex = true;
+};
+
+template <>
+struct mpi_type_traits_impl<std::complex<long double>> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CXX_LONG_DOUBLE_COMPLEX;
+    }
+    static constexpr bool is_complex = true;
+};
+
+
+template <typename T>
+struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
+
+/// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
+/// new custom continuous type.
 ///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
 /// @tparam T The type to translate into a MPI_Datatype.
-/// @return The tag identifying the corresponding MPI_Datatype or `MPI_DATATYPE_NULL`
+/// @return The tag identifying the corresponding MPI_Datatype or the newly created type.
+/// @see mpi_custom_continuous_type()
 ///
 template <typename T>
-[[nodiscard]] constexpr DatatypeInfo get_mpi_datatype_info() noexcept {
+[[nodiscard]] constexpr MPI_Datatype mpi_datatype() noexcept {
+    if constexpr (mpi_type_traits<T>::is_builtin) {
+        return mpi_type_traits<T>::data_type();
+    }
+
     // Remove const and volatile qualifiers.
     using T_no_cv = std::remove_cv_t<T>;
 
@@ -83,148 +249,22 @@ template <typename T>
     static_assert(!std::is_void_v<T_no_cv>, "There is no MPI datatype corresponding to void.");
 
     // Check if we got a array type -> create a continuous type.
-    if (std::is_array_v<T_no_cv>) {
+    if constexpr (std::is_array_v<T_no_cv>) {
         // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
-        /// @todo this seems to be wrong
-        return {mpi_custom_continuous_type<sizeof(T_no_cv)>(), DatatypeCategory::custom};
+        return mpi_custom_continuous_type<sizeof(T_no_cv)>();
     }
 
     // Check if we got a enum type -> use underlying type
+    MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
     if constexpr (std::is_enum_v<T_no_cv>) {
-        return get_mpi_datatype_info<std::underlying_type_t<T_no_cv>>();
+        return mpi_datatype<std::underlying_type_t<T_no_cv>>();
+    } else {
+        mpi_type = mpi_custom_continuous_type<sizeof(T)>();
     }
 
-    DatatypeInfo type_info;
-    type_info.type = MPI_DATATYPE_NULL;
-    if (std::is_same_v<T_no_cv, char>) {
-        type_info.type     = MPI_CHAR;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, signed char>) {
-        type_info.type     = MPI_SIGNED_CHAR;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, unsigned char>) {
-        type_info.type     = MPI_UNSIGNED_CHAR;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, wchar_t>) {
-        type_info.type     = MPI_WCHAR;
-        type_info.category = DatatypeCategory::none;
-    } else if (std::is_same_v<T_no_cv, signed short>) {
-        type_info.type     = MPI_SHORT;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, unsigned short>) {
-        type_info.type     = MPI_UNSIGNED_SHORT;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, signed int>) {
-        type_info.type     = MPI_INT;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, unsigned int>) {
-        type_info.type     = MPI_UNSIGNED;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, signed long int>) {
-        type_info.type     = MPI_LONG;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, unsigned long int>) {
-        type_info.type     = MPI_UNSIGNED_LONG;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, signed long long int>) {
-        type_info.type     = MPI_LONG_LONG;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, unsigned long long int>) {
-        type_info.type     = MPI_UNSIGNED_LONG_LONG;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, float>) {
-        type_info.type     = MPI_FLOAT;
-        type_info.category = DatatypeCategory::floating;
-    } else if (std::is_same_v<T_no_cv, double>) {
-        type_info.type     = MPI_DOUBLE;
-        type_info.category = DatatypeCategory::floating;
-    } else if (std::is_same_v<T_no_cv, long double>) {
-        type_info.type     = MPI_LONG_DOUBLE;
-        type_info.category = DatatypeCategory::floating;
-    } else if (std::is_same_v<T_no_cv, int8_t>) {
-        type_info.type     = MPI_INT8_T;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, int16_t>) {
-        type_info.type     = MPI_INT16_T;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, int32_t>) {
-        type_info.type     = MPI_INT32_T;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, int64_t>) {
-        type_info.type     = MPI_INT64_T;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, uint8_t>) {
-        type_info.type     = MPI_UINT8_T;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, uint16_t>) {
-        type_info.type     = MPI_UINT16_T;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, uint32_t>) {
-        type_info.type     = MPI_UINT32_T;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, uint64_t>) {
-        type_info.type     = MPI_UINT64_T;
-        type_info.category = DatatypeCategory::integer;
-    } else if (std::is_same_v<T_no_cv, bool>) {
-        type_info.type     = MPI_CXX_BOOL;
-        type_info.category = DatatypeCategory::logical;
-    } else if (std::is_same_v<T_no_cv, std::complex<float>>) {
-        type_info.type     = MPI_CXX_FLOAT_COMPLEX;
-        type_info.category = DatatypeCategory::complex;
-    } else if (std::is_same_v<T_no_cv, std::complex<double>>) {
-        type_info.type     = MPI_CXX_DOUBLE_COMPLEX;
-        type_info.category = DatatypeCategory::complex;
-    } else if (std::is_same_v<T_no_cv, std::complex<long double>>) {
-        type_info.type     = MPI_CXX_LONG_DOUBLE_COMPLEX;
-        type_info.category = DatatypeCategory::complex;
-    }
-    return type_info;
-}
+    assert(mpi_type != MPI_DATATYPE_NULL);
 
-/// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
-/// new custom continuous type.
-///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
-/// @tparam T The type to translate into a MPI_Datatype.
-/// @return The tag identifying the corresponding MPI_Datatype or the newly created type.
-/// @see mpi_custom_continuous_type()
-///
-template <typename T>
-[[nodiscard]] MPI_Datatype mpi_datatype() noexcept {
-    DatatypeInfo mpi_type = get_mpi_datatype_info<T>();
-    if (mpi_type.type == MPI_DATATYPE_NULL) {
-        mpi_type.type = mpi_custom_continuous_type<sizeof(T)>();
-    }
-
-    return mpi_type.type;
-}
-template <typename T>
-constexpr bool is_mpi_integer() noexcept {
-    auto type = get_mpi_datatype_info<T>();
-    return type.category == DatatypeCategory::integer;
-}
-
-template <typename T>
-constexpr bool is_mpi_float() noexcept {
-    auto type = get_mpi_datatype_info<T>();
-    return type.category == DatatypeCategory::floating;
-}
-
-template <typename T>
-constexpr bool is_mpi_logical() noexcept {
-    auto type = get_mpi_datatype_info<T>();
-    return type.category == DatatypeCategory::logical;
-}
-
-template <typename T>
-constexpr bool is_mpi_complex() noexcept {
-    auto type = get_mpi_datatype_info<T>();
-    return type.category == DatatypeCategory::complex;
-}
-
-template <typename T>
-constexpr bool is_mpi_byte() noexcept {
-    auto type = get_mpi_datatype_info<T>();
-    return type.category == DatatypeCategory::byte;
+    return mpi_type;
 }
 
 /// @}
