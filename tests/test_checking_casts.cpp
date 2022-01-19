@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 
 #include "kamping/checking_casts.hpp"
+#include "kamping/kassert.hpp"
 
 using namespace ::testing;
 using namespace ::kamping;
@@ -87,19 +88,19 @@ TEST(HelpersTest, asserting_cast) {
         },
         ::testing::ExitedWithCode(0), "Still alive");
 
-#ifndef NDEBUG
-    // According to the googletest documentation, throwing an exception is not considered a death.
-    // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
-    EXPECT_DEATH(asserting_cast<int8_t>(u8val), "Assertion `in_range<To>\\(value\\)' failed.");
-#else
-    EXPECT_EXIT(
-        {
-            asserting_cast<int8_t>(u8val);
-            fprintf(stderr, "Still alive!");
-            exit(0);
-        },
-        ::testing::ExitedWithCode(0), "Still alive");
-#endif
+    if constexpr (KAMPING_ASSERTION_LEVEL >= kamping::assert::normal) {
+        // According to the googletest documentation, throwing an exception is not considered a death.
+        // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
+        EXPECT_DEATH(asserting_cast<int8_t>(u8val), "FAILED ASSERTION");
+    } else {
+        EXPECT_EXIT(
+            {
+                asserting_cast<int8_t>(u8val);
+                fprintf(stderr, "Still alive!");
+                exit(0);
+            },
+            ::testing::ExitedWithCode(0), "Still alive");
+    }
 }
 
 TEST(HelpersTest, throwing_cast) {

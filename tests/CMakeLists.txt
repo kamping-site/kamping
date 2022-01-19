@@ -5,6 +5,7 @@ include(GoogleTest)
 
 # Registering tests without MPI:
 kamping_register_test(test_checking_casts FILES test_checking_casts.cpp)
+kamping_register_test(test_kassert FILES test_kassert.cpp)
 kamping_register_test(test_parameter_factories FILES test_parameter_factories.cpp)
 kamping_register_test(test_parameter_objects FILES test_parameter_objects.cpp)
 kamping_register_test(test_named_parameter_selection FILES test_named_parameter_selection.cpp)
