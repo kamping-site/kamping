@@ -165,6 +165,15 @@ TEST(KassertTest, false_logical_operator_expressions) {
     EXPECT_EXIT({ KASSERT(false && !false); }, KilledBySignal(SIGABRT), "");
 }
 
+TEST(KassertTest, true_chained_relation_ops) {
+    KASSERT(1 == 1 == 1);
+    KASSERT(1 == 1 != 0);
+    KASSERT(1 == 1 & 1);
+    KASSERT(5 == 0 | 1);
+    KASSERT(5 == 0 ^ 1);
+    KASSERT(5 == 5 ^ false);
+}
+
 // Test expression expansion of primitive types
 
 TEST(KassertTest, primitive_type_expansion) {
@@ -226,13 +235,66 @@ TEST(KassertTest, primitive_type_expansion) {
 
     EXPECT_EXIT({ generic_eq_and(1, 2, true); }, KilledBySignal(SIGABRT), "1 == 2 && 1");
     EXPECT_EXIT({ generic_lt_or(2, 1, false); }, KilledBySignal(SIGABRT), "2 < 1 || 0");
+}
+
+TEST(KassertTest, primitive_type_expansion_limitations) {
+    // test expression expansion where the expression cannot be fully expanded
+
+    KASSERT(true && false || true);
+    KASSERT(true && true || false);
+    KASSERT(false || true && true);
+    KASSERT(true || true && false);
+    KASSERT(!false || false && false);
+    KASSERT(!true || !false && true);
+
+    auto generic_and_or = [](auto const and_rhs, auto const or_rhs, auto const or_lhs) {
+        KASSERT(and_rhs && or_rhs || or_lhs);
+    };
+    auto generic_or_and = [](auto const or_rhs, auto const and_rhs, auto const and_lhs) {
+        KASSERT(or_rhs || and_rhs && and_lhs);
+    };
+    auto generic_neg_or_and = [](auto const neg, auto const and_rhs, auto const and_lhs) {
+        KASSERT(!neg || and_rhs && and_lhs);
+    };
+    auto generic_and_neg_or = [](auto const and_rhs, auto const neg, auto const or_lhs) {
+        KASSERT(and_rhs && !neg || or_lhs);
+    };
+
+    EXPECT_EXIT({ generic_and_or(true, false, false); }, KilledBySignal(SIGABRT), "1 && 0"); // cannot expand rhs of &&
+    EXPECT_EXIT({ generic_or_and(false, true, false); }, KilledBySignal(SIGABRT), "0 || 0"); // cannot expand rhs of ||
+    EXPECT_EXIT({ generic_neg_or_and(5, 1, 0); }, KilledBySignal(SIGABRT), "0 || 0");     // cannot expand !, rhs of ||
+    EXPECT_EXIT({ generic_and_neg_or(1, 1, false); }, KilledBySignal(SIGABRT), "1 && 0"); // ditto
 
     // negation + relation
-//    auto generic_neg_eq = [](const auto lhs_neg, const auto rhs) {
-//        KASSERT(!lhs_neg == rhs);
-//    };
-//
-//    EXPECT_EXIT({ generic_neg_eq(5, 10); }, KilledBySignal(SIGABRT), "!5 == 10");
+    auto generic_neg_eq = [](const auto lhs_neg, const auto rhs) {
+        KASSERT(!lhs_neg == rhs);
+    };
+
+    EXPECT_EXIT({ generic_neg_eq(5, 10); }, KilledBySignal(SIGABRT), "0 == 10"); // cannot expand !lhs_neg
+}
+
+TEST(KassertTest, chained_rel_ops_expansion) {
+    auto generic_chained_eq = [](auto const val1, auto const val2, auto const val3) {
+        KASSERT(val1 == val2 == val3);
+    };
+    auto generic_chained_eq_neq = [](auto const val1, auto const val2, auto const val3) {
+        KASSERT(val1 == val2 != val3);
+    };
+    auto generic_chained_eq_binary_and = [](auto const val1, auto const val2, auto const val3) {
+        KASSERT(val1 == val2 & val3);
+    };
+    auto generic_chained_eq_binary_or = [](auto const val1, auto const val2, auto const val3) {
+        KASSERT(val1 == val2 | val3);
+    };
+    auto generic_chained_eq_binary_xor = [](auto const val1, auto const val2, auto const val3) {
+        KASSERT(val1 == val2 ^ val3);
+    };
+
+    EXPECT_EXIT({ generic_chained_eq(1, 1, 5); }, KilledBySignal(SIGABRT), "1 == 1 == 5");
+    EXPECT_EXIT({ generic_chained_eq_neq(1, 1, 1); }, KilledBySignal(SIGABRT), "1 == 1 != 1");
+    EXPECT_EXIT({ generic_chained_eq_binary_and(5, 5, 0); }, KilledBySignal(SIGABRT), "5 == 5 & 0");
+    EXPECT_EXIT({ generic_chained_eq_binary_or(5, 4, 0); }, KilledBySignal(SIGABRT), "5 == 4 \\| 0");
+    EXPECT_EXIT({ generic_chained_eq_binary_xor(5, 4, 0); }, KilledBySignal(SIGABRT), "5 == 4 \\^ 0");
 }
 
 // Test expression expansion of library-supported types
