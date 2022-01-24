@@ -21,6 +21,8 @@
 #include <string>
 #include <type_traits>
 
+#include "kamping/kassert.hpp"
+
 namespace kamping {
 
 /// @addtogroup kamping_utility
@@ -101,7 +103,7 @@ constexpr bool in_range(From value) noexcept {
 ///
 template <class To, class From>
 constexpr To asserting_cast(From value) noexcept {
-    assert(in_range<To>(value));
+    KASSERT(in_range<To>(value));
     return static_cast<To>(value);
 }
 
