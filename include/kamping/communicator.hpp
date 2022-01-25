@@ -33,8 +33,10 @@ public:
     /// @brief Constructor where an MPI communicator and the default root have to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
     /// @param root Default root that is used by MPI operations requiring a root.
-    explicit Communicator(MPI_Comm comm, int root) : _rank(get_mpi_rank(comm)), _size(get_mpi_size(comm)), _comm(comm) {
-        KASSERT(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
+    explicit Communicator(MPI_Comm comm, int root)
+        : _rank((check_communicator(comm), get_mpi_rank(comm))), // check communicator before calling any MPI functions
+          _size(get_mpi_size(comm)),
+          _comm(comm) {
         this->root(root);
     }
 
@@ -59,7 +61,7 @@ public:
     /// @brief Set a new root for MPI operations that require a root.
     /// @param new_root The new default root.
     void root(int const new_root) {
-        KASSERT(is_valid_rank(new_root), "invalid root rank " << new_root << " in communicator of size " << size());
+        KTHROW(is_valid_rank(new_root), "invalid root rank " << new_root << " in communicator of size " << size());
         _root = new_root;
     }
 
@@ -112,7 +114,7 @@ public:
     /// @return Rank if rank is in [0, size of communicator) and ASSERT/EXCEPTION? otherwise.
     [[nodiscard]] int rank_shifted_checked(int const distance) const {
         int const result = _rank + distance;
-        KASSERT(is_valid_rank(result), "invalid shifted rank " << result);
+        KTHROW(is_valid_rank(result), "invalid shifted rank " << result);
         return result;
     }
 
@@ -134,6 +136,10 @@ public:
     }
 
 private:
+    void check_communicator(MPI_Comm comm) const {
+        KTHROW(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
+    }
+
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
     /// @return Rank of the current MPI process in the communicator.
     int get_mpi_rank(MPI_Comm comm) const {
