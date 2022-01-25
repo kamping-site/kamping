@@ -635,5 +635,12 @@ tags
 # Softwipe Output files
 softwipe_*
 
+### CLion ###
+# IDE files
+.idea/
+
+# Default build directories
+cmake-build-*/
+
 # Doxygen HTML documentation
 docs/html/**

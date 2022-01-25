@@ -11,7 +11,13 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include <gmock/gmock.h>
+// overwrite build options and set assertion level to normal, enable exceptions
+#undef KAMPING_ASSERTION_LEVEL
+#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
+#ifndef KAMPING_EXCEPTION_MODE
+    #define KAMPING_EXCEPTION_MODE
+#endif // KAMPING_EXCEPTION_MODE
+
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -53,24 +59,19 @@ TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
     EXPECT_EQ(comm.size(), self_size);
     EXPECT_EQ(comm.rank(), 0);
 
-    /// @todo Replace death tests (which are not working well with MPI) as soon as we have the switch between asserts
-    /// and exceptions. Then test for exception.
-    // EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL), ".*");
+    EXPECT_THROW(Communicator(MPI_COMM_NULL), assert::KassertException);
 }
 
 TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-            /// @todo Replace death tests (which are not working well with MPI) as soon as we have the switch between
-            /// asserts and exceptions. Then test for exception.
-            // EXPECT_DEATH(Communicator comm(MPI_COMM_WORLD, i), ".*");
-            // EXPECT_DEATH(Communicator comm(MPI_COMM_NULL, i), ".*");
+            EXPECT_THROW(Communicator(MPI_COMM_WORLD, i), assert::KassertException);
+            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), assert::KassertException);
         } else {
             Communicator comm(MPI_COMM_WORLD, i);
             ASSERT_EQ(comm.root(), i);
-            /// @todo Replace death tests (which are not working well with MPI) as soon as we have the switch between
-            /// asserts and exceptions. Then test for exception.
-            // EXPECT_DEATH(Communicator comm2(MPI_COMM_NULL, i), ".*");
+
+            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), assert::KassertException);
         }
     }
 }
@@ -79,9 +80,7 @@ TEST_F(CommunicatorTest, SetRootkBoundCheck) {
     Communicator comm;
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-            /// @todo Replace death tests (which are not working well with MPI) as soon as we have the switch between
-            /// asserts and exceptions. Then test for exception.
-            // EXPECT_DEATH(comm.root(i), ".*");
+            EXPECT_THROW(comm.root(i), assert::KassertException);
         } else {
             comm.root(i);
             EXPECT_EQ(i, comm.root());
@@ -94,9 +93,7 @@ TEST_F(CommunicatorTest, RankShiftedChecked) {
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i + rank < 0 || i + rank >= size) {
-            /// @todo Replace death tests (which are not working well with MPI) as soon as we have the switch between
-            /// asserts and exceptions. Then test for exception.
-            // EXPECT_DEATH(comm.rank_shifted_checked(i), ".*");
+            EXPECT_THROW(((void)comm.rank_shifted_checked(i)), assert::KassertException);
         } else {
             EXPECT_EQ(rank + i, comm.rank_shifted_checked(i));
         }
