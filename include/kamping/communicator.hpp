@@ -33,10 +33,7 @@ public:
     /// @brief Constructor where an MPI communicator and the default root have to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
     /// @param root Default root that is used by MPI operations requiring a root.
-    explicit Communicator(MPI_Comm comm, int root)
-        : _rank((check_communicator(comm), get_mpi_rank(comm))), // check communicator before calling any MPI functions
-          _size(get_mpi_size(comm)),
-          _comm(comm) {
+    explicit Communicator(MPI_Comm comm, int root) : _rank(get_mpi_rank(comm)), _size(get_mpi_size(comm)), _comm(comm) {
         this->root(root);
     }
 
@@ -136,15 +133,11 @@ public:
     }
 
 private:
-    /// @brief Check that `comm` is not null. If it is, throws an exception.
-    /// @param comm MPI communicator that should not be null.
-    void check_communicator(MPI_Comm comm) const {
-        KTHROW(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
-    }
-
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
     /// @return Rank of the current MPI process in the communicator.
     int get_mpi_rank(MPI_Comm comm) const {
+        KTHROW(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
+
         int rank;
         MPI_Comm_rank(comm, &rank);
         return rank;
@@ -153,6 +146,8 @@ private:
     /// @brief Compute the number of MPI processes in this communicator using \c MPI_Comm_size.
     /// @return Size of the communicator.
     int get_mpi_size(MPI_Comm comm) const {
+        KTHROW(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
+
         int size;
         MPI_Comm_size(comm, &size);
         return size;
