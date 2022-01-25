@@ -136,6 +136,8 @@ public:
     }
 
 private:
+    /// @brief Check that `comm` is not null. If it is, throws an exception.
+    /// @param comm MPI communicator that should not be null.
     void check_communicator(MPI_Comm comm) const {
         KTHROW(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
     }
