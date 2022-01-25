@@ -1,3 +1,7 @@
 add_executable(examples_named_parameter_selection examples_named_parameter_selection.cpp)
 target_link_libraries(examples_named_parameter_selection kamping)
 target_compile_options(examples_named_parameter_selection PRIVATE ${KAMPING_WARNING_FLAGS})
+
+add_executable(example_quicksort quicksort_example.cpp)
+target_link_libraries(example_quicksort kamping)
+target_compile_options(example_quicksort PRIVATE ${KAMPING_WARNING_FLAGS})
