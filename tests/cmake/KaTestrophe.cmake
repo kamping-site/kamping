@@ -1,7 +1,6 @@
 if (NOT DEFINED KATESTROPHE_INCLUDED)
   set(KATESTROPHE_INCLUDED TRUE)
   add_subdirectory("${PROJECT_SOURCE_DIR}/extern/googletest" "extern/googletest")
-  list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
   include (MPIGoogleTest)
 
@@ -28,7 +27,7 @@ if (NOT DEFINED KATESTROPHE_INCLUDED)
   katestrophe_has_oversubscribe(MPIEXEC_OVERSUBSCRIBE_FLAG)
 
   # register the test main class
-  add_library(mpi-gtest-main EXCLUDE_FROM_ALL mpi-gtest-main.cpp)
+  add_library(mpi-gtest-main EXCLUDE_FROM_ALL mpi_gtest_main.cpp)
   target_link_libraries(mpi-gtest-main PUBLIC gtest-mpi-listener)
 
   # keep the cache clean
