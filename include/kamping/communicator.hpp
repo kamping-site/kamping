@@ -15,13 +15,15 @@
 
 #include <mpi.h>
 
+#include "kamping/kassert.hpp"
+
 namespace kamping {
 
 /// @brief Wrapper for MPI communicator providing access to \ref rank() and \ref size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPI.ng.
 class Communicator {
 public:
-    /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMMM_WORLD by default.
+    /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
     Communicator() : Communicator(MPI_COMM_WORLD) {}
 
     /// @brief Constructor where an MPI communicator has to be specified.
@@ -32,44 +34,38 @@ public:
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
     /// @param root Default root that is used by MPI operations requiring a root.
     explicit Communicator(MPI_Comm comm, int root) : _rank(get_mpi_rank(comm)), _size(get_mpi_size(comm)), _comm(comm) {
-        if (comm == MPI_COMM_NULL) {
-            /// @todo Throw or assert
-            std::abort();
-        }
+        KASSERT(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
         this->root(root);
     }
 
     /// @brief Rank of the current MPI process in the communicator.
     /// @return Rank of the current MPI process in the communicator.
-    int rank() const {
+    [[nodiscard]] int rank() const {
         return _rank;
     }
 
     /// @brief Number of MPI processes in this communicator.
     /// @return Number of MPI processes in this communicator.
-    int size() const {
+    [[nodiscard]] int size() const {
         return _size;
     }
 
     /// @brief MPI communicator corresponding to this communicator.
     /// @return MPI communicator corresponding to this communicator.
-    MPI_Comm mpi_communicator() const {
+    [[nodiscard]] MPI_Comm mpi_communicator() const {
         return _comm;
     }
 
     /// @brief Set a new root for MPI operations that require a root.
     /// @param new_root The new default root.
     void root(int const new_root) {
-        /// @todo Assert or Throw if not all MPI processes in this communicator have the same root.
-        if (!is_valid_rank(new_root)) {
-            std::abort();
-        }
+        KASSERT(is_valid_rank(new_root), "invalid root rank " << new_root << " in communicator of size " << size());
         _root = new_root;
     }
 
     /// @brief Default root for MPI operations that require a root.
     /// @return Default root for MPI operations that require a root.
-    int root() const {
+    [[nodiscard]] int root() const {
         return _root;
     }
 
@@ -78,7 +74,7 @@ public:
     /// @param key By default, ranks in the new communicator are determined by the underlying MPI library (if \c key is
     /// 0). Otherwise, ranks are ordered the same way the keys are ordered.
     /// @return \ref Communicator wrapping the newly split MPI communicator.
-    Communicator split(int const color, int const key = 0) const {
+    [[nodiscard]] Communicator split(int const color, int const key = 0) const {
         MPI_Comm new_comm;
         MPI_Comm_split(_comm, color, key, &new_comm);
         return Communicator(new_comm);
@@ -88,7 +84,7 @@ public:
     /// @param rank The rank in this communicator
     /// @param other_comm The communicator to convert the rank to
     /// @return The rank in other_comm
-    int convert_rank_to_communicator(int const rank, Communicator const& other_comm) const {
+    [[nodiscard]] int convert_rank_to_communicator(int const rank, Communicator const& other_comm) const {
         MPI_Group my_group;
         MPI_Comm_group(_comm, &my_group);
         MPI_Group other_group;
@@ -102,7 +98,7 @@ public:
     /// @param rank The rank in other_comm
     /// @param other_comm The communicator to convert the rank from
     /// @return The rank in this communicator
-    int convert_rank_from_communicator(int const rank, Communicator const& other_comm) const {
+    [[nodiscard]] int convert_rank_from_communicator(int const rank, Communicator const& other_comm) const {
         return other_comm.convert_rank_to_communicator(rank, *this);
     }
 
@@ -114,12 +110,10 @@ public:
     /// resulting rank is not valid.
     /// @param distance Amount current rank is decreased or increased by.
     /// @return Rank if rank is in [0, size of communicator) and ASSERT/EXCEPTION? otherwise.
-    int rank_shifted_checked(int const distance) const {
-        if (int result = _rank + distance; is_valid_rank(result)) {
-            return result;
-        }
-        /// @todo Make use of our assert/exception functionality.
-        std::abort();
+    [[nodiscard]] int rank_shifted_checked(int const distance) const {
+        int const result = _rank + distance;
+        KASSERT(is_valid_rank(result), "invalid shifted rank " << result);
+        return result;
     }
 
     /// @brief Computes a rank that is some ranks apart from this MPI thread's rank modulo the communicator's size.
@@ -129,13 +123,13 @@ public:
     /// rank, as it computes the rank in a circular fashion, i.e., \f$ new\_rank=(rank + distance) \% size \f$.
     /// @param distance Distance of the new rank to the rank of this MPI thread.
     /// @return The circular rank that is \c distance ranks apart from this MPI threads rank.
-    int rank_shifted_cyclic(int const distance) const {
+    [[nodiscard]] int rank_shifted_cyclic(int const distance) const {
         return (_rank + distance) % _size;
     }
 
     /// @brief Checks if a rank is a valid rank for this communicator, i.e., if the rank is in [0, size).
     /// @return \c true if rank in [0,size) and \c false otherwise.
-    bool is_valid_rank(int const rank) const {
+    [[nodiscard]] bool is_valid_rank(int const rank) const {
         return rank >= 0 && rank < _size;
     }
 
