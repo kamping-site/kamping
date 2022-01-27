@@ -44,19 +44,23 @@
 /// Thus, the left hand side of \c && can only be expanded to the *result* of \code{rhs2 == lhs2}.
 /// This limitation only affects the error message, not the interpretation of the expression itself.
 ///
-/// @param expression The assertion expression (mandatory argument).
-/// @param message Error message that is printed in addition to the decomposed expression (optional argument).
-/// @param level The level of the assertion (optional arguments, defaults to \c kamping::assert::normal).
+/// @param expression The assertion expression (mandatory).
+/// @param message Error message that is printed in addition to the decomposed expression (optional).
+/// @param level The level of the assertion (optional, default: `assert::normal`).
+///
 #define KASSERT(...)               \
     KAMPING_KASSERT_VARARG_HELPER( \
         , __VA_ARGS__, KASSERT_3(__VA_ARGS__), KASSERT_2(__VA_ARGS__), KASSERT_1(__VA_ARGS__), ignore)
 
 /// @brief Macro for throwing exceptions inside the KaMPI.ng library. Accepts between one and three parameters.
-/// @param expression Expression that causes the exception to be thrown if it evaluates the \c false
-/// (mandatory argument).
-/// @param message Error message that is added to the exception (optional argument).
-/// @param assertion_type Type of the exception that should be thrown
-/// (optional argument, defaults to \c kamping::assert::KassertException).
+///
+/// Exceptions are only used in exception mode, which is enabled by using the CMake option
+/// `-DKAMPING_EXCEPTION_MODE=On`. Otherwise, the macro generates a KASSERT with assertion level `assert::exception`
+/// (lowest level).
+///
+/// @param expression Expression that causes the exception to be thrown if it evaluates to \c false (mandatory).
+/// @param message Error message that is added to the exception (optional).
+/// @param assertion_type Type of the exception that should be thrown (optional, default: KassertException).
 #define KTHROW(...)                \
     KAMPING_KASSERT_VARARG_HELPER( \
         , __VA_ARGS__, KTHROW_3(__VA_ARGS__), KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
@@ -97,20 +101,19 @@
 //   dead loop).
 // - `evaluate_and_print_assertion` evaluates the assertion and prints an error message if it failed.
 // - The call to `std::abort()` is not wrapped in a function to keep the stack trace clean.
-#define KAMPING_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level)                                           \
-    do {                                                                                                             \
-        if constexpr (kamping::assert::internal::assertion_enabled(level)) {                                         \
-            KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH                                                                      \
-            KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_PARENTHESES                                                        \
-            if (!kamping::assert::internal::evaluate_and_print_assertion(                                            \
-                    type,                                                                                            \
-                    kamping::assert::internal::finalize_expr(kamping::assert::internal::Decomposer{} <= expression), \
-                    KAMPING_KASSERT_HPP_SOURCE_LOCATION, #expression)) {                                             \
-                kamping::assert::Logger<std::ostream&>(std::cerr) << message << "\n";                                \
-                std::abort();                                                                                        \
-            }                                                                                                        \
-            KAMPING_KASSERT_HPP_DIAGNOSTIC_POP                                                                       \
-        }                                                                                                            \
+#define KAMPING_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level)                                 \
+    do {                                                                                                   \
+        if constexpr (kamping::internal::assertion_enabled(level)) {                                       \
+            KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH                                                            \
+            KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_PARENTHESES                                              \
+            if (!kamping::internal::evaluate_and_print_assertion(                                          \
+                    type, kamping::internal::finalize_expr(kamping::internal::Decomposer{} <= expression), \
+                    KAMPING_KASSERT_HPP_SOURCE_LOCATION, #expression)) {                                   \
+                kamping::Logger<std::ostream&>(std::cerr) << message << "\n";                              \
+                std::abort();                                                                              \
+            }                                                                                              \
+            KAMPING_KASSERT_HPP_DIAGNOSTIC_POP                                                             \
+        }                                                                                                  \
     } while (false)
 
 // Expands a macro depending on its number of arguments. For instance,
@@ -131,17 +134,13 @@
 // In KAMPING_EXCEPTION_MODE, we throw an exception similar to the implementation of KASSERT(), although expression
 // decomposition in exceptions is currently unsupported. Otherwise, the macro delegates to KASSERT().
 #ifdef KAMPING_EXCEPTION_MODE
-    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)                              \
-        do {                                                                                                  \
-            if constexpr (kamping::assert::internal::assertion_enabled(kamping::assert::exception)) {         \
-                if (!(expression)) {                                                                          \
-                    throw assertion_type(                                                                     \
-                        #expression,                                                                          \
-                        (kamping::assert::internal::RrefOStringstreamLogger{std::ostringstream{}} << message) \
-                            .stream()                                                                         \
-                            .str());                                                                          \
-                }                                                                                             \
-            }                                                                                                 \
+    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)                                   \
+        do {                                                                                                       \
+            if (!(expression)) {                                                                                   \
+                throw assertion_type(                                                                              \
+                    #expression,                                                                                   \
+                    (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str()); \
+            }                                                                                                      \
         } while (false)
 #else
     #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type) \
@@ -151,7 +150,7 @@
 // KTHROW() chooses the right implementation depending on its number of arguments.
 #define KTHROW_3(expression, message, assertion_type) \
     KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)
-#define KTHROW_2(expression, message) KTHROW_3(expression, message, kamping::assert::KassertException)
+#define KTHROW_2(expression, message) KTHROW_3(expression, message, kamping::KassertException)
 #define KTHROW_1(expression)          KTHROW_2(expression, "")
 
 // __PRETTY_FUNCTION__ is a compiler extension supported by GCC and clang that prints more information than __func__
@@ -163,11 +162,12 @@
 
 // Represents the static location in the source code.
 #define KAMPING_KASSERT_HPP_SOURCE_LOCATION                   \
-    kamping::assert::internal::SourceLocation {               \
+    kamping::internal::SourceLocation {                       \
         __FILE__, __LINE__, KAMPING_KASSERT_HPP_FUNCTION_NAME \
     }
 
-namespace kamping::assert {
+namespace kamping {
+namespace assert {
 /// @name Predefined assertion levels
 /// Assertion levels that can be used with the KASSERT macro.
 /// @{
@@ -180,10 +180,9 @@ constexpr int normal = 3;
 /// @brief Assertion level for heavyweight assertions.
 constexpr int heavy = 4;
 /// @}
+} // namespace assert
 
 namespace internal {
-/// @internal
-
 // If partially specialized template is not applicable, set value to false.
 template <typename, typename, typename = void>
 struct IsStreamableTypeImpl : std::false_type {};
@@ -198,8 +197,6 @@ struct IsStreamableTypeImpl<StreamT, ValueT, std::void_t<decltype(std::declval<S
 /// @tparam ValueT A value type that may or may not be used with \c StreamT::operator<<.
 template <typename StreamT, typename ValueT>
 constexpr bool IsStreamableType = IsStreamableTypeImpl<StreamT, ValueT>::value;
-
-/// @endinternal
 } // namespace internal
 
 /// @brief The default exception type used together with \c KTHROW. Reports the erroneous expression together with a
@@ -267,8 +264,6 @@ private:
 };
 
 namespace internal {
-/// @internal
-
 /// @brief Stringify a value using the given assertion logger. If the value cannot be streamed into the logger, print
 /// \c <?> instead.
 /// @tparam StreamT The underlying streaming object of the assertion logger.
@@ -292,8 +287,6 @@ using OStreamLogger = Logger<std::ostream&>;
 /// @brief Logger writing all output to a rvalue \c std::ostringstream. This specialization is used to generate the
 /// custom error message for KTHROW exceptions.
 using RrefOStringstreamLogger = Logger<std::ostringstream&&>;
-
-/// @endinternal
 } // namespace internal
 
 /// @brief Stringification of \c std::vector<T> in assertions.
@@ -338,8 +331,6 @@ Logger<StreamT>& operator<<(Logger<StreamT>& logger, std::pair<Key, Value> const
 }
 
 namespace internal {
-/// @internal
-
 /// @name Expression expansion
 ///
 /// Implements the decomposition and expansion of expressions. Example usage:
@@ -574,7 +565,5 @@ bool evaluate_and_print_assertion(
     }
     return expr.result();
 }
-
-/// @endinternal
 } // namespace internal
-} // namespace kamping::assert
+} // namespace kamping

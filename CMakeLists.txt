@@ -104,8 +104,8 @@ endif()
 
 # The assertion level controls which assertions are enabled during runtime:
 #
-# Level 0: Disable all assertions *and exceptions*
-# Level 1: Exception assertions = only enable exceptions.
+# Level 0: Disable all assertions
+# Level 1: Exception assertions = only enable exceptions (if not in exception mode)
 # Level 2: Light assertions = assertions that do not affect the running time of library operations significantly.
 # Level 3: Normal assertions = assertions that might slow down some operations of the library by a constant factor.
 #          Should only be used in debug mode.

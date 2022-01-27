@@ -59,19 +59,19 @@ TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
     EXPECT_EQ(comm.size(), self_size);
     EXPECT_EQ(comm.rank(), 0);
 
-    EXPECT_THROW(Communicator(MPI_COMM_NULL), assert::KassertException);
+    EXPECT_THROW(Communicator(MPI_COMM_NULL), KassertException);
 }
 
 TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-            EXPECT_THROW(Communicator(MPI_COMM_WORLD, i), assert::KassertException);
-            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), assert::KassertException);
+            EXPECT_THROW(Communicator(MPI_COMM_WORLD, i), KassertException);
+            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), KassertException);
         } else {
             Communicator comm(MPI_COMM_WORLD, i);
             ASSERT_EQ(comm.root(), i);
 
-            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), assert::KassertException);
+            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), KassertException);
         }
     }
 }
@@ -80,7 +80,7 @@ TEST_F(CommunicatorTest, SetRootkBoundCheck) {
     Communicator comm;
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-            EXPECT_THROW(comm.root(i), assert::KassertException);
+            EXPECT_THROW(comm.root(i), KassertException);
         } else {
             comm.root(i);
             EXPECT_EQ(i, comm.root());
@@ -93,7 +93,7 @@ TEST_F(CommunicatorTest, RankShiftedChecked) {
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i + rank < 0 || i + rank >= size) {
-            EXPECT_THROW(((void)comm.rank_shifted_checked(i)), assert::KassertException);
+            EXPECT_THROW(((void)comm.rank_shifted_checked(i)), KassertException);
         } else {
             EXPECT_EQ(rank + i, comm.rank_shifted_checked(i));
         }
