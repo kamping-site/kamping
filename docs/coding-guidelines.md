@@ -19,7 +19,7 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 * Use `.cpp` and `.hpp` as file endings. File names are lowercase and separate word using an underscore. For example `sparse_all2all.hpp`.
 * Name local variables with full names. If a name would get too long, write a comment explaining the full meaning of the variable. Use acronyms very sparingly. Some allowed acronyms: `len` for `length (of)`, `num` for `number (of)`, `mpi`.
 * Use informative names for templated types. "T1" etc. is only allowed for very general code. Template names are in CamelCase (like classes), e.g. `GeneratorFunction`.
-* Types defined with `using` inherit the naming rules of the type they are aliasing. For example `using MessageChecker = MessageContainer<...>::MessageChecker` for a class or struct alias.
+* Types defined with `using` inherit the naming rules of the type they are aliasing.
 
 # Writing Tests
 For details on how to write tests see the [Testing Guidelines](testing_guidelines.md).
