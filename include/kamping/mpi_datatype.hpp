@@ -27,7 +27,7 @@ namespace kamping {
 
 /// @addtogroup kamping_mpi_utility
 /// @{
-///
+
 /// @brief Creates a custom continuous MPI datatype.
 ///
 /// @tparam NumBytes The number of bytes for the new type.
