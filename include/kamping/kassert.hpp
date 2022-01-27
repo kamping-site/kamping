@@ -44,9 +44,10 @@
 /// Thus, the left hand side of \c && can only be expanded to the *result* of `rhs2 == lhs2`.
 /// This limitation only affects the error message, not the interpretation of the expression itself.
 ///
-/// @param expression The assertion expression (mandatory).
-/// @param message Error message that is printed in addition to the decomposed expression (optional).
-/// @param level The level of the assertion (optional, default: `assert::normal`).
+/// The macro accepts 1 to 3 parameters:
+/// 1. The assertion expression (mandatory).
+/// 2. Error message that is printed in addition to the decomposed expression (optional).
+/// 3. The level of the assertion (optional, default: `assert::normal`).
 #define KASSERT(...)               \
     KAMPING_KASSERT_VARARG_HELPER( \
         , __VA_ARGS__, KASSERT_3(__VA_ARGS__), KASSERT_2(__VA_ARGS__), KASSERT_1(__VA_ARGS__), ignore)
@@ -57,12 +58,15 @@
 /// `-DKAMPING_EXCEPTION_MODE=On`. Otherwise, the macro generates a KASSERT with assertion level `assert::exception`
 /// (lowest level).
 ///
-/// @param expression Expression that causes the exception to be thrown if it evaluates to \c false (mandatory).
-/// @param message Error message that is added to the exception (optional).
-/// @param assertion_type Type of the exception that should be thrown (optional, default: KassertException).
+/// The macro accepts 1 to 3 parameters:
+/// 1. Expression that causes the exception to be thrown if it evaluates to \c false (mandatory).
+/// 2. Error message that is added to the exception (optional).
+/// 3. Type of the exception that should be thrown (optional, default: KassertException).
 #define KTHROW(...)                \
     KAMPING_KASSERT_VARARG_HELPER( \
         , __VA_ARGS__, KTHROW_3(__VA_ARGS__), KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
+
+/// @cond IMPLEMENTATION
 
 // To decompose expressions, the KAMPING_KASSERT_HPP_ASSERT_IMPL() produces code such as
 //
@@ -164,6 +168,8 @@
     kamping::internal::SourceLocation {                       \
         __FILE__, __LINE__, KAMPING_KASSERT_HPP_FUNCTION_NAME \
     }
+
+/// @endcond
 
 namespace kamping {
 namespace assert {
@@ -269,7 +275,6 @@ namespace internal {
 /// @tparam ValueT The type of the value to be stringified.
 /// @param out The assertion logger.
 /// @param value The value to be stringified.
-/// @return The stringification of \c value, or \c <?> if the value cannot be stringified by the logger.
 template <typename StreamT, typename ValueT>
 void stringify_value(Logger<StreamT>& out, ValueT const& value) {
     if constexpr (IsStreamableType<Logger<StreamT>, ValueT>) {
@@ -399,6 +404,8 @@ public:
         stringify_value(out, _rhs);
     }
 
+    /// @cond IMPLEMENTATION
+
     // Overload operators to return a proxy object that decomposes the rhs of the logical operator
 #define KAMPING_ASSERT_OP(op)                                                     \
     template <typename RhsPrimeT>                                                 \
@@ -418,6 +425,8 @@ public:
     KAMPING_ASSERT_OP(!=)
 
 #undef KAMPING_ASSERT_OP
+
+    /// @endcond
 
 private:
     /// @brief Boolean result of this expression.
@@ -474,6 +483,8 @@ public:
         return UnaryExpression<LhsT>{_lhs};
     }
 
+    /// @cond IMPLEMENTATION
+
     // Overload binary operators to return a proxy object that decomposes the rhs of the operator.
 #define KAMPING_ASSERT_OP(op)                                                               \
     template <typename RhsT>                                                                \
@@ -495,6 +506,8 @@ public:
     KAMPING_ASSERT_OP(^)
 
 #undef KAMPING_ASSERT_OP
+
+    /// @endcond
 
 private:
     /// @brief The wrapped expression.
