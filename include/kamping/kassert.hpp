@@ -41,13 +41,12 @@
 ///     KASSERT(rhs1 == lhs1 && rhs2 == lhs2)
 /// is replaced by (with implicit parentheses)
 ///     ((Decomposer{} <= rhs1) == lhs1) && (rhs2 == lhs2))
-/// Thus, the left hand side of \c && can only be expanded to the *result* of \code{rhs2 == lhs2}.
+/// Thus, the left hand side of \c && can only be expanded to the *result* of `rhs2 == lhs2`.
 /// This limitation only affects the error message, not the interpretation of the expression itself.
 ///
 /// @param expression The assertion expression (mandatory).
 /// @param message Error message that is printed in addition to the decomposed expression (optional).
 /// @param level The level of the assertion (optional, default: `assert::normal`).
-///
 #define KASSERT(...)               \
     KAMPING_KASSERT_VARARG_HELPER( \
         , __VA_ARGS__, KASSERT_3(__VA_ARGS__), KASSERT_2(__VA_ARGS__), KASSERT_1(__VA_ARGS__), ignore)
