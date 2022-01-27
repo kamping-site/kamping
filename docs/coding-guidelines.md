@@ -25,7 +25,7 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 For details on how to write tests see the [Testing Guidelines](testing_guidelines.md).
 
 # Rules for functions
-TODO @Demian @Matthias: Rules for API
+TODO \@Demian \@Matthias: Rules for API
 * For internal functions: Return output only values via the `return` statement, even multiple return values.
 * For internal functions: Return in-output values via a reference argument.
 * Mark the parameters as `const` where possible.
@@ -112,7 +112,7 @@ endif()
 
 # Tooling and Workflow
 * Use "modern" CMake as build system
-* Use Doxygen for documentation. TODO @Florian: Which style?
+* Use Doxygen for documentation. TODO \@Florian: Which style?
 * Use `git submodule` to include dependencies. TODO: Explain in the README, how to work with git submodules.
 * Commit only corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `fix-` branches and merge them to the `main` branch using a Pull Request.
 * Write *many* unit tests for your code. If there is no unit test for it, it does not exist. Also check for nonsensical inputs and edge cases.
