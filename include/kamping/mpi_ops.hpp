@@ -46,5 +46,5 @@ struct CustomFunction {
     MPI_Op mpi_op;
 
     /// @brief obsolete by Niklas PR
-    Op     op;
+    Op op;
 };

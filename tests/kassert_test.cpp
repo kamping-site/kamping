@@ -43,9 +43,7 @@ TEST(KassertTest, kassert_overloads_compile) {
 
 TEST(KassertTest, kthrow_overloads_compile) {
     // test that all KTHROW() overloads compile
-    EXPECT_THROW(
-        { KTHROW(false, "__false_is_false_3__", kamping::KassertException); },
-        kamping::KassertException);
+    EXPECT_THROW({ KTHROW(false, "__false_is_false_3__", kamping::KassertException); }, kamping::KassertException);
     EXPECT_THROW({ KTHROW(false, "__false_is_false_2__"); }, kamping::KassertException);
     EXPECT_THROW({ KTHROW(false); }, kamping::KassertException);
 }
