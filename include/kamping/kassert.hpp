@@ -27,20 +27,32 @@
 ///
 /// If the assertion fails, the KASSERT() macro prints an expansion of the expression similar to Catch2. For instance,
 /// in a call
-///     KASSERT(rhs == lhs)
+/// ```
+/// KASSERT(rhs == lhs)
+/// ```
 /// KASSERT() also prints the values of \c rhs and \c lhs. However, this expression expansion is limited and only works
 /// for expressions that do not contain parentheses, but are implicitly left-associative. This is due to its
 /// implementation:
-///     KASSERT(rhs == lhs)
+/// ```
+/// KASSERT(rhs == lhs)
+/// ```
 /// is replaced by
-///     Decomposer{} <= rhs == lhs
+/// ```
+/// Decomposer{} <= rhs == lhs
+/// ```
 /// which is interpreted by the compiler as
-///     ((Decomposer{} <= rhs) == lhs)
+/// ```
+/// ((Decomposer{} <= rhs) == lhs)
+/// ```
 /// where the first <= relation is overloaded to return a proxy object which in turn overloads other operators. If the
 /// expression is not implicitly left-associative or contains parentheses, this does not work:
-///     KASSERT(rhs1 == lhs1 && rhs2 == lhs2)
+/// ```
+/// KASSERT(rhs1 == lhs1 && rhs2 == lhs2)
+/// ```
 /// is replaced by (with implicit parentheses)
-///     ((Decomposer{} <= rhs1) == lhs1) && (rhs2 == lhs2))
+/// ```
+/// ((Decomposer{} <= rhs1) == lhs1) && (rhs2 == lhs2))
+/// ```
 /// Thus, the left hand side of \c && can only be expanded to the *result* of `rhs2 == lhs2`.
 /// This limitation only affects the error message, not the interpretation of the expression itself.
 ///
