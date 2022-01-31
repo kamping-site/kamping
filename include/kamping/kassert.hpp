@@ -73,7 +73,7 @@
 /// The macro accepts 1 to 3 parameters:
 /// 1. Expression that causes the exception to be thrown if it evaluates to \c false (mandatory).
 /// 2. Error message that is added to the exception (optional).
-/// 3. Type of the exception that should be thrown (optional, default: KassertException).
+/// 3. Type of the exception that should be thrown (optional, default: kamping::KassertException).
 #define KTHROW(...)                \
     KAMPING_KASSERT_VARARG_HELPER( \
         , __VA_ARGS__, KTHROW_3(__VA_ARGS__), KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
