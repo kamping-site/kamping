@@ -42,7 +42,7 @@
 ///
 /// Exceptions are only used in exception mode, which is enabled by using the CMake option
 /// `-DKAMPING_EXCEPTION_MODE=On`. Otherwise, the macro generates a KASSERT() with assertion level
-/// `kamping::assert::kthrow` (lowest level) (see @ref assertion-levels).
+/// `kamping::assert::kthrow` (lowest level).
 ///
 /// The macro accepts 1 to 3 parameters:
 /// 1. Expression that causes the exception to be thrown if it evaluates to \c false (mandatory).
