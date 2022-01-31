@@ -68,7 +68,7 @@ public:
         return _root;
     }
 
-    /// @brief Split the communicator in different \colors.
+    /// @brief Split the communicator in different colors.
     /// @param color All ranks that have the same color will be in the same new communicator.
     /// @param key By default, ranks in the new communicator are determined by the underlying MPI library (if \c key is
     /// 0). Otherwise, ranks are ordered the same way the keys are ordered.
