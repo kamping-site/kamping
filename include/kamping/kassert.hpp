@@ -25,8 +25,11 @@
 
 /// @brief Assertion macro for the KaMPI.ng library. Accepts between one and three parameters.
 ///
-/// If the assertion fails, the KASSERT() macro prints an expansion of the expression similar to Catch2. For instance,
-/// in a call
+/// Assertions are enabled or disabled by setting a compile-time assertion level (`-DKAMPING_ASSERTION_LEVEL=<int>`).
+/// For predefined assertion levels, see @ref assertion-levels.
+///
+/// If an assertion is enabled and fails, the KASSERT() macro prints an expansion of the expression similar to Catch2.
+/// For instance, in a call
 /// ```
 /// KASSERT(rhs == lhs)
 /// ```
@@ -59,7 +62,7 @@
 /// The macro accepts 1 to 3 parameters:
 /// 1. The assertion expression (mandatory).
 /// 2. Error message that is printed in addition to the decomposed expression (optional).
-/// 3. The level of the assertion (optional, default: `assert::normal`).
+/// 3. The level of the assertion (optional, default: `kamping::assert::normal`, see @ref assertion-levels).
 #define KASSERT(...)               \
     KAMPING_KASSERT_VARARG_HELPER( \
         , __VA_ARGS__, KASSERT_3(__VA_ARGS__), KASSERT_2(__VA_ARGS__), KASSERT_1(__VA_ARGS__), ignore)
@@ -159,7 +162,7 @@
         } while (false)
 #else
     #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type) \
-        KAMPING_KASSERT_HPP_KASSERT_IMPL(#assertion_type, expression, message, kamping::assert::exception)
+        KAMPING_KASSERT_HPP_KASSERT_IMPL(#assertion_type, expression, message, kamping::assert::kthrow)
 #endif
 
 // KTHROW() chooses the right implementation depending on its number of arguments.
@@ -185,17 +188,22 @@
 
 namespace kamping {
 namespace assert {
-/// @name Predefined assertion levels
-/// Assertion levels that can be used with the KASSERT macro.
+/// @defgroup assertion-levels Assertion levels
+/// Predefined assertion levels.
 /// @{
+
 /// @brief Assertion level for exceptions if exception mode is disabled.
-constexpr int exception = 1;
+constexpr int kthrow = 1;
+
 /// @brief Assertion level for lightweight assertions.
 constexpr int light = 2;
+
 /// @brief Default assertion level. This level is used if no assertion level is specified.
 constexpr int normal = 3;
+
 /// @brief Assertion level for heavyweight assertions.
 constexpr int heavy = 4;
+
 /// @}
 } // namespace assert
 
