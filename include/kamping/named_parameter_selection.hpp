@@ -11,7 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.:
 
-
 /// @file
 /// @brief Template magic to implement named parameters in cpp
 
