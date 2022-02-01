@@ -18,6 +18,7 @@
 #pragma once
 
 #include <cstddef>
+#include <limits>
 #include <tuple>
 
 #include "kamping/parameter_type_definitions.hpp"
@@ -31,22 +32,21 @@ namespace kamping::internal {
 ///
 /// This is the base case of the recursion.
 ///
-/// @tparam ParameterType to be searched for.
+/// @tparam parameter_type to be searched for.
 /// @tparam Index index of current argument to evaluate.
 /// @tparam Arg argument to evaluate.
 /// @return the index
 template <ParameterType parameter_type, size_t Index, typename Arg>
 constexpr size_t find_pos() {
+    constexpr bool found_arg = std::remove_reference_t<Arg>::parameter_type == parameter_type;
     // when we do not find the parameter type here, it is not given
     // a we fail to compile with a useful message
-    static_assert(
-        std::remove_reference_t<Arg>::parameter_type == parameter_type, "Could not find the requested parameter type.");
-    return Index;
+    return found_arg ? Index : std::numeric_limits<std::size_t>::max();
 }
 
 /// @brief Returns position of first argument in Args with Trait trait.
 ///
-/// @tparam ParameterType to be searched for.
+/// @tparam parameter_type to be searched for.
 /// @tparam Index index of current argument to evaluate.
 /// @tparam Arg argument to evaluate.
 /// @tparam Arg2 the next argument.
@@ -63,17 +63,21 @@ constexpr size_t find_pos() {
 }
 /// @brief Returns parameter with requested ParameterType.
 ///
-/// @tparam ParameterType with which an argument should be found.
-/// @tparam Args All arguments to be searched for an argument with ParameterType parameter_type.
-/// @returns the first parameter whose type has the requested ParameterType.
+/// @tparam parameter_type with which an argument should be found.
+/// @tparam Args all parameter types to be searched for type `parameter_type`.
+/// @param args all parameters from which a parameter with the correct type is selected.
+/// @returns the first parameter whose type has the requested parameter type.
 template <ParameterType parameter_type, typename... Args>
 decltype(auto) select_parameter_type(Args&&... args) {
     constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
-    using SelectedType              = typename std::tuple_element<selected_index, std::tuple<Args...>>::type;
+    static_assert(selected_index < sizeof...(args), "Could not find the requested parameter type.");
+
+    using SelectedType = typename std::tuple_element<selected_index, std::tuple<Args...>>::type;
     // TODO is this ok or too restricting?
     static_assert(
         std::is_lvalue_reference<SelectedType>::value,
         "Function does only accept lvalues, as it would produce dangling reference if called with temporaries");
+
     return std::forward<SelectedType>(std::get<selected_index>(std::forward_as_tuple(args...)));
 }
 
