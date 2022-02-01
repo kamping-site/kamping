@@ -61,6 +61,7 @@ constexpr size_t find_pos() {
         // of a single remaining argument
         return find_pos<parameter_type, Index + 1, Arg2, Args...>();
 }
+
 /// @brief Returns parameter with requested parameter type.
 ///
 /// @tparam parameter_type with which a parameter should be found.
@@ -68,17 +69,10 @@ constexpr size_t find_pos() {
 /// @param args all parameters from which a parameter with the correct type is selected.
 /// @returns the first parameter whose type has the requested parameter type.
 template <ParameterType parameter_type, typename... Args>
-decltype(auto) select_parameter_type(Args&&... args) {
+auto& select_parameter_type(Args&... args) {
     constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
     static_assert(selected_index < sizeof...(args), "Could not find the requested parameter type.");
-
-    using SelectedType = typename std::tuple_element<selected_index, std::tuple<Args...>>::type;
-    // TODO is this ok or too restricting?
-    static_assert(
-        std::is_lvalue_reference<SelectedType>::value,
-        "Function does only accept lvalues, as it would produce dangling reference if called with temporaries");
-
-    return std::forward<SelectedType>(std::get<selected_index>(std::forward_as_tuple(args...)));
+    return std::get<selected_index>(std::forward_as_tuple(args...));
 }
 
 /// @brief Checks if parameter with requested parameter type exists.
@@ -88,7 +82,7 @@ decltype(auto) select_parameter_type(Args&&... args) {
 /// @param args all parameter values.
 /// @return whether `Args` contains a parameter of type `parameter_type`.
 template <ParameterType parameter_type, typename... Args>
-bool has_parameter_type(Args&&... args) {
+bool has_parameter_type(Args&... args) {
     return find_pos<parameter_type, 0, Args...>() < sizeof...(args);
 }
 
