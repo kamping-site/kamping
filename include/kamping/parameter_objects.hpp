@@ -36,6 +36,7 @@
 #include <memory>
 
 #include "kamping/parameter_type_definitions.hpp"
+
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
