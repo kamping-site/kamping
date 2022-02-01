@@ -22,12 +22,9 @@
 
 #include "kamping/parameter_type_definitions.hpp"
 
-namespace kamping {
-namespace internal {
-
+namespace kamping::internal {
 /// @addtogroup kamping_utility
 /// @{
-
 
 /// @brief Returns the Index parameter if the parameter type of Arg matches the requested parameter type. If not, this
 /// fails to compile.
@@ -38,7 +35,6 @@ namespace internal {
 /// @tparam Index index of current argument to evaluate.
 /// @tparam Arg argument to evaluate.
 /// @return the index
-///
 template <ParameterType parameter_type, size_t Index, typename Arg>
 constexpr size_t find_pos() {
     // when we do not find the parameter type here, it is not given
@@ -56,7 +52,6 @@ constexpr size_t find_pos() {
 /// @tparam Arg2 the next argument.
 /// @tparam Args all remaining arguments.
 /// @return position of first argument with matched trait.
-///
 template <ParameterType parameter_type, size_t Index, typename Arg, typename Arg2, typename... Args>
 constexpr size_t find_pos() {
     if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type)
@@ -71,7 +66,6 @@ constexpr size_t find_pos() {
 /// @tparam ParameterType with which an argument should be found.
 /// @tparam Args All arguments to be searched for an argument with ParameterType parameter_type.
 /// @returns the first parameter whose type has the requested ParameterType.
-///
 template <ParameterType parameter_type, typename... Args>
 decltype(auto) select_parameter_type(Args&&... args) {
     constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
@@ -83,6 +77,5 @@ decltype(auto) select_parameter_type(Args&&... args) {
     return std::forward<SelectedType>(std::get<selected_index>(std::forward_as_tuple(args...)));
 }
 
-///@}
-} // namespace internal
-} // namespace kamping
+/// @}
+} // namespace kamping::internal
