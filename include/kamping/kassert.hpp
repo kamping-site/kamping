@@ -17,8 +17,8 @@
 #pragma once
 
 #include <iostream>
-#include <sstream>
 #include <ostream>
+#include <sstream>
 #include <string_view>
 #include <type_traits>
 #include <utility>

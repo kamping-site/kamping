@@ -23,8 +23,8 @@ public:
         static_assert(
             std::is_same_v<send_value_type, recv_value_type>, "Types of send and receive buffers do not match.");
         auto default_root = kamping::root(comm.root());
-        auto root = internal::select_parameter_type<internal::ParameterType::root>(args..., default_root);
-        auto operation = internal::select_parameter_type<internal::ParameterType::op>(args...)
+        auto root         = internal::select_parameter_type<internal::ParameterType::root>(args..., default_root);
+        auto operation    = internal::select_parameter_type<internal::ParameterType::op>(args...)
                              .template build_operation<send_value_type>();
         MPI_Datatype type = mpi_datatype<send_value_type>();
         MPI_Reduce(

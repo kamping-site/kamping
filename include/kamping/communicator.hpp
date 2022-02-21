@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include <mpi.h>
 #include <cstdlib>
+#include <mpi.h>
 
 #include "kamping/kassert.hpp"
 
