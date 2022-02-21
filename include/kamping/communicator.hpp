@@ -14,6 +14,7 @@
 #pragma once
 
 #include <mpi.h>
+#include <cstdlib>
 
 namespace kamping {
 

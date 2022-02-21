@@ -233,12 +233,13 @@ private:
     int _rank; ///< Rank of the root PE.
 };
 
+
 template <typename T, typename Op, class Enable = void>
 class ReduceOperation {
 public:
     ReduceOperation(Op&& op) : _operation(std::move(op)) {}
     static constexpr ParameterType parameter_type = ParameterType::op;
-    static constexpr bool          is_builtin      = false;
+    static constexpr bool          is_builtin     = false;
     MPI_Op                         op() {
         return _operation.get_mpi_op();
     }
@@ -252,7 +253,7 @@ class ReduceOperation<T, Op, typename std::enable_if<is_builtin_mpi_op<Op, T>::v
 public:
     ReduceOperation(Op&& op [[maybe_unused]]){};
     static constexpr ParameterType parameter_type = ParameterType::op;
-    static constexpr bool          is_builtin      = true;
+    static constexpr bool          is_builtin     = true;
     MPI_Op                         op() {
         return is_builtin_mpi_op<Op, T>::op();
     }
@@ -281,6 +282,18 @@ public:
 
 private:
     UserOperationPtr<true> _operation;
+};
+
+template <typename Op>
+struct OperationFactory {
+    static constexpr ParameterType parameter_type = ParameterType::op;
+    OperationFactory(Op&& op) : _op(op) {}
+    template <typename T>
+    ReduceOperation<T, Op> build_operation() {
+        static_assert(std::is_invocable_r_v<T, Op, T, T>, "Type of custom operation does not match.");
+        return ReduceOperation<T, Op>(std::move(_op));
+    }
+    Op                     _op;
 };
 
 
