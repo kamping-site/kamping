@@ -1,0 +1,21 @@
+name: Doxygen Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  doxygen-check:
+    name: Doxygen Check
+    runs-on: self-hosted
+    container:
+      image: "localhost:5000/kamping-ci"
+    steps:
+      - name: cmake
+        run: cmake -B build
+      - name: run-doxygen
+        run: cmake --build build/ --target docs

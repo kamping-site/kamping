@@ -20,34 +20,34 @@
 
 namespace kamping {
 namespace internal {
-
-
 // https://stackoverflow.com/a/9154394 TODO license?
-///@brief Helper to implement has_extract_v
+/// @brief Helper to implement has_extract_v
 template <typename>
 struct true_type : std::true_type {};
+
+/// @brief Helper to implement has_extract_v
 template <typename T>
 auto test_extract(int) -> true_type<decltype(std::declval<T>().extract())>;
-///@brief Helper to implement has_extract_v
-///
+
+/// @brief Helper to implement has_extract_v
 template <typename T>
 auto test_extract(...) -> std::false_type;
-///@brief Helper to implement has_extract_v
-///
+
+/// @brief Helper to implement has_extract_v
 template <typename T>
 struct has_extract : decltype(internal::test_extract<T>(0)) {};
-///@brief has_extract_v is \c true iff type T has a member function \c extract().
+
+/// @brief has_extract_v is \c true iff type T has a member function \c extract().
 ///
 /// @tparam T Type which is tested for the existance of a member function.
 template <typename T>
 inline constexpr bool has_extract_v = has_extract<T>::value;
 
-
-///@brief Use this type if one of the template parameters of MPIResult is not used for a specific wrapped \c MPI call.
+/// @brief Use this type if one of the template parameters of MPIResult is not used for a specific wrapped \c MPI call.
 struct BufferCategoryNotUsed {};
 } // namespace internal
 
-///@brief MPIResult contains the result of a \c MPI call wrapped by KaMPI.ng.
+/// @brief MPIResult contains the result of a \c MPI call wrapped by KaMPI.ng.
 ///
 /// A wrapped \c MPI call can have multiple different results such as the \c
 /// recv_buffer, \c recv_counts, \c recv_displs etc. If the buffers where these
@@ -57,15 +57,15 @@ struct BufferCategoryNotUsed {};
 /// Note that not all below-listed buffer categories needs to be used by every wrapped \c MPI call.
 /// If a specific call does not use a buffer category, you have to provide BufferCategoryNotUsed instead.
 ///
-///@tparam RecBuf Buffer type containing the received elements.
-///@tparam RecCounts Buffer type containing the numbers of received elements.
-///@tparam RecDispls Buffer type containing the displacements of the received elements.
-///@tparam SendDispls Buffer type containing the displacements of the sent elements.
-///@tparam MPIStatusObject Buffer type containing the \c MPI status object(s).
+/// @tparam RecBuf Buffer type containing the received elements.
+/// @tparam RecCounts Buffer type containing the numbers of received elements.
+/// @tparam RecDispls Buffer type containing the displacements of the received elements.
+/// @tparam SendDispls Buffer type containing the displacements of the sent elements.
+/// @tparam MPIStatusObject Buffer type containing the \c MPI status object(s).
 template <class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls>
 class MPIResult {
 public:
-    ///@brief Constructor of MPIResult.
+    /// @brief Constructor of MPIResult.
     ///
     /// If any of the buffer categories are not used by the wrapped \c MPI call or if the caller has provided (and still
     /// owns) the memory for the associated results, the empty placeholder type BufferCategoryNotUsed must be passed to
@@ -76,47 +76,47 @@ public:
           _recv_displs(std::forward<RecvDispls>(recv_displs)),
           _send_displs(std::forward<SendDispls>(send_displs)) {}
 
-    ///@brief Extracts the \c recv_buffer from the MPIResult object.
+    /// @brief Extracts the \c recv_buffer from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    ///@tparam RecvBuf_ Template parameter helper only needed to remove this function if RecvBuf does not possess a
+    /// @tparam RecvBuf_ Template parameter helper only needed to remove this function if RecvBuf does not possess a
     /// member function \c extract().
-    ///@return Returns the underlying storage containing the received elements.
+    /// @return Returns the underlying storage containing the received elements.
     template <typename RecvBuf_ = RecvBuf, std::enable_if_t<kamping::internal::has_extract_v<RecvBuf_>, bool> = true>
     decltype(auto) extract_recv_buffer() {
         return _recv_buffer.extract();
     }
 
-    ///@brief Extracts the \c recv_counts from the MPIResult object.
+    /// @brief Extracts the \c recv_counts from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    ///@tparam RecvCounts_ Template parameter helper only needed to remove this function if RecvCounts does not possess
+    /// @tparam RecvCounts_ Template parameter helper only needed to remove this function if RecvCounts does not possess
     /// a member function \c extract().
-    ///@return Returns the underlying storage containing the receive counts.
+    /// @return Returns the underlying storage containing the receive counts.
     template <
         typename RecvCounts_ = RecvCounts, std::enable_if_t<kamping::internal::has_extract_v<RecvCounts_>, bool> = true>
     decltype(auto) extract_recv_counts() {
         return _recv_counts.extract();
     }
 
-    ///@brief Extracts the \c recv_displs from the MPIResult object.
+    /// @brief Extracts the \c recv_displs from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    ///@tparam RecvDispls_ Template parameter helper only needed to remove this function if RecvDispls does not possess
+    /// @tparam RecvDispls_ Template parameter helper only needed to remove this function if RecvDispls does not possess
     /// a member function \c extract().
-    ///@return Returns the underlying storage containing the receive displacements.
+    /// @return Returns the underlying storage containing the receive displacements.
     template <
         typename RecvDispls_ = RecvDispls, std::enable_if_t<kamping::internal::has_extract_v<RecvDispls_>, bool> = true>
     decltype(auto) extract_recv_displs() {
         return _recv_displs.extract();
     }
 
-    ///@brief Extracts the \c send_displs from the MPIResult object.
+    /// @brief Extracts the \c send_displs from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    ///@tparam SendDispls_ Template parameter helper only needed to remove this function if SendDispls does not possess
+    /// @tparam SendDispls_ Template parameter helper only needed to remove this function if SendDispls does not possess
     /// a member function \c extract().
-    ///@return Returns the underlying storage containing the send displacements.
+    /// @return Returns the underlying storage containing the send displacements.
     template <
         typename SendDispls_ = SendDispls, std::enable_if_t<kamping::internal::has_extract_v<SendDispls_>, bool> = true>
     decltype(auto) extract_send_displs() {

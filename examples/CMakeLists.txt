@@ -1,4 +1,4 @@
-add_executable(examples_named_parameter_selection examples_named_parameter_selection.cpp)
+add_executable(examples_named_parameter_selection named_parameter_selection_example.cpp)
 target_link_libraries(examples_named_parameter_selection kamping)
 target_compile_options(examples_named_parameter_selection PRIVATE ${KAMPING_WARNING_FLAGS})
 

@@ -39,6 +39,7 @@
 
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
+
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{

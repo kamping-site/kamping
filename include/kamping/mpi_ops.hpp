@@ -217,6 +217,8 @@ struct UserOperation {
     UserOperation(Op&& op [[maybe_unused]]) {
         MPI_Op_create(UserOperation<is_commutative, Op, T>::execute, is_commutative, &mpi_op);
     }
+
+    /// @brief obsolete by Niklas PR
     static void execute(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
         T* invec_    = static_cast<T*>(invec);
         T* inoutvec_ = static_cast<T*>(inoutvec);
@@ -243,9 +245,13 @@ struct UserOperationPtr {
     ~UserOperationPtr() {
         MPI_Op_free(&mpi_op);
     }
+
+    /// @brief obsolete by Niklas PR
     MPI_Op& get_mpi_op() {
         return mpi_op;
     }
+
+    /// @brief obsolete by Niklas PR
     MPI_Op mpi_op;
 };
 
