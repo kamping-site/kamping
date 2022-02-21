@@ -234,11 +234,14 @@ private:
     int _rank; ///< Rank of the root PE.
 };
 
-
-template <typename T, typename Op, class Enable = void>
+template <typename T, typename Op, typename Commutative, class Enable = void>
 class ReduceOperation {
+    static_assert(
+        std::is_same_v<Commutative, commutative> || std::is_same_v<Commutative, non_commutative>,
+        "For custom operations you have to specify whether they are commutative.");
+
 public:
-    ReduceOperation(Op&& op) : _operation(std::move(op)) {}
+    ReduceOperation(Op&& op, Commutative&& commute [[maybe_unused]]) : _operation(std::move(op)) {}
     static constexpr ParameterType parameter_type = ParameterType::op;
     static constexpr bool          is_builtin     = false;
     MPI_Op                         op() {
@@ -246,13 +249,17 @@ public:
     }
 
 private:
-    UserOperation<true, Op, T> _operation;
+    UserOperation<std::is_same_v<Commutative, commutative>, Op, T> _operation;
 };
 
-template <typename T, typename Op>
-class ReduceOperation<T, Op, typename std::enable_if<is_builtin_mpi_op<Op, T>::value>::type> {
+template <typename T, typename Op, typename Commutative>
+class ReduceOperation<T, Op, Commutative, typename std::enable_if<is_builtin_mpi_op<Op, T>::value>::type> {
+    static_assert(
+        std::is_same_v<Commutative, undefined_commutative>,
+        "For builtin operations you don't need to specify whether they are commutative.");
+
 public:
-    ReduceOperation(Op&& op [[maybe_unused]]){};
+    ReduceOperation(Op&& op [[maybe_unused]], Commutative&& commute [[maybe_unused]]){};
     static constexpr ParameterType parameter_type = ParameterType::op;
     static constexpr bool          is_builtin     = true;
     MPI_Op                         op() {
@@ -260,10 +267,14 @@ public:
     }
 };
 
-template <typename T, typename Op>
-class ReduceOperation<T, Op, typename std::enable_if<!std::is_default_constructible_v<Op>>::type> {
+template <typename T, typename Op, typename Commutative>
+class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_default_constructible_v<Op>>::type> {
+    static_assert(
+        std::is_same_v<Commutative, commutative> || std::is_same_v<Commutative, non_commutative>,
+        "For custom operations you have to specify whether they are commutative.");
+
 public:
-    ReduceOperation(Op&& op) : _operation(nullptr) {
+    ReduceOperation(Op&& op, Commutative&& commute [[maybe_unused]]) : _operation(nullptr) {
         static Op func = op;
 
         UserOperationPtr<true>::mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len,
@@ -282,21 +293,20 @@ public:
     }
 
 private:
-    UserOperationPtr<true> _operation;
+    UserOperationPtr<std::is_same_v<Commutative, commutative>> _operation;
 };
 
-template <typename Op>
+template <typename Op, typename Commutative>
 struct OperationFactory {
     static constexpr ParameterType parameter_type = ParameterType::op;
-    OperationFactory(Op&& op) : _op(op) {}
+    OperationFactory(Op&& op, Commutative&& commutative [[maybe_unused]]) : _op(op) {}
     template <typename T>
-    ReduceOperation<T, Op> build_operation() {
+    auto build_operation() {
         static_assert(std::is_invocable_r_v<T, Op, T, T>, "Type of custom operation does not match.");
-        return ReduceOperation<T, Op>(std::move(_op));
+        return ReduceOperation<T, Op, Commutative>(std::move(_op), Commutative{});
     }
-    Op                     _op;
+    Op _op;
 };
-
 
 } // namespace internal
 

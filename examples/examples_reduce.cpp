@@ -2,6 +2,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_factories.hpp"
+#include "kamping/parameter_objects.hpp"
 #include <iostream>
 #include <mpi.h>
 #include <vector>
@@ -29,16 +30,16 @@ int main() {
     std::vector<double>   output;
     using namespace kamping;
 
-    auto result0 =
-        reducer.reduce(comm, kamping::send_buf(input), kamping::op(kamping::ops::plus<>())).extract_recv_buffer();
+    auto result0 = reducer.reduce(comm, send_buf(input), op(ops::plus<>())).extract_recv_buffer();
     print_result(result0, comm);
-    auto result1 =
-        reducer.reduce(comm, kamping::send_buf(input), kamping::op(kamping::ops::plus<int>())).extract_recv_buffer();
+    auto result1 = reducer.reduce(comm, send_buf(input), op(ops::plus<double>())).extract_recv_buffer();
     print_result(result1, comm);
-    auto result2 = reducer.reduce(comm, kamping::send_buf(input), kamping::op(my_plus{})).extract_recv_buffer();
+    auto result2 =
+        reducer.reduce(comm, kamping::send_buf(input), kamping::op(my_plus{}, commutative())).extract_recv_buffer();
     print_result(result2, comm);
     reducer.reduce(
-        comm, kamping::send_buf(input), kamping::recv_buf(output), kamping::op([](auto a, auto b) { return a + b; }));
+        comm, kamping::send_buf(input), kamping::recv_buf(output),
+        kamping::op([](auto a, auto b) { return a + b; }, non_commutative()));
     print_result(output, comm);
 
     MPI_Finalize();
