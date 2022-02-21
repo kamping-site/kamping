@@ -48,6 +48,12 @@ target_include_directories(kamping INTERFACE include)
 # set C++ standard to C++17
 target_compile_features(kamping INTERFACE cxx_std_17)
 target_link_libraries(kamping INTERFACE MPI::MPI_CXX)
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  # gcc does not require the compiler -std=c++17 flag to support C++17
+  # but if the flag is omitted, it is not used in compile_command.json
+  # which leads to errors related to C++17 when using IDE-like featur:es
+  target_compile_options(kamping INTERFACE -std=c++17)
+endif()
 
 list(
   APPEND KAMPING_WARNING_FLAGS
@@ -126,4 +132,5 @@ if(
   CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR KAMPING_BUILD_EXAMPLES_AND_TESTS
 )
   add_subdirectory(tests)
+  add_subdirectory(examples)
 endif()
