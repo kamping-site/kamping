@@ -34,7 +34,10 @@
 
 #include <cstddef>
 #include <memory>
+#include <mpi.h>
+#include <type_traits>
 
+#include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -62,6 +65,7 @@ namespace internal {
 /// @tparam T type for which the span is defined.
 template <typename T>
 struct Span {
+    using value_type = T;
     const T* ptr;  ///< Pointer to the data referred to by Span.
     size_t   size; ///< Number of elements of type T referred to by Span.
 };
@@ -116,6 +120,10 @@ public:
         return {std::data(_container), _container.size()};
     }
 
+    size_t size() const {
+        return _container.size();
+    }
+
 private:
     const Container& _container; ///< Container which holds the actual data.
 };
@@ -158,6 +166,10 @@ public:
         return _container.data();
     }
 
+    size_t size() const {
+        return _container.size();
+    }
+
 private:
     Container& _container; ///< Container which holds the actual data.
 };
@@ -195,6 +207,10 @@ public:
         return std::move(_container);
     }
 
+    size_t size() const {
+        return _container.size();
+    }
+
 private:
     Container _container; ///< Container which holds the actual data.
 };
@@ -216,6 +232,58 @@ public:
 private:
     int _rank; ///< Rank of the root PE.
 };
+
+template <typename T, typename Op, class Enable = void>
+class ReduceOperation {
+public:
+    ReduceOperation(Op&& op) : _operation(std::move(op)) {}
+    static constexpr ParameterType parameter_type = ParameterType::op;
+    static constexpr bool          is_builtin      = false;
+    MPI_Op                         op() {
+        return _operation.get_mpi_op();
+    }
+
+private:
+    UserOperation<true, Op, T> _operation;
+};
+
+template <typename T, typename Op>
+class ReduceOperation<T, Op, typename std::enable_if<is_builtin_mpi_op<Op, T>::value>::type> {
+public:
+    ReduceOperation(Op&& op [[maybe_unused]]){};
+    static constexpr ParameterType parameter_type = ParameterType::op;
+    static constexpr bool          is_builtin      = true;
+    MPI_Op                         op() {
+        return is_builtin_mpi_op<Op, T>::op();
+    }
+};
+
+template <typename T, typename Op>
+class ReduceOperation<T, Op, typename std::enable_if<!std::is_default_constructible_v<Op>>::type> {
+public:
+    ReduceOperation(Op&& op) : _operation(nullptr) {
+        static Op func = op;
+
+        UserOperationPtr<true>::mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len,
+                                                                   MPI_Datatype* /*datatype*/) {
+            T* invec_    = static_cast<T*>(invec);
+            T* inoutvec_ = static_cast<T*>(inoutvec);
+            std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, func);
+        };
+        _operation = {ptr};
+    };
+    static constexpr ParameterType parameter_type = ParameterType::op;
+    using lambda_type                             = Op;
+    static constexpr bool is_lambda               = true;
+    MPI_Op                op() {
+        return _operation.get_mpi_op();
+    }
+
+private:
+    UserOperationPtr<true> _operation;
+};
+
+
 } // namespace internal
 
 /// @}

@@ -214,7 +214,7 @@ struct is_builtin_mpi_op<
 
 template <int is_commutative, typename Op, typename T>
 struct UserOperation {
-    UserOperation() {
+    UserOperation(Op&& op [[maybe_unused]]) {
         MPI_Op_create(UserOperation<is_commutative, Op, T>::execute, is_commutative, &mpi_op);
     }
     static void execute(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
@@ -229,8 +229,24 @@ struct UserOperation {
     MPI_Op& get_mpi_op() {
         return mpi_op;
     }
+    //static func_type func_op;
+    MPI_Op           mpi_op;
+};
+
+template <int is_commutative>
+struct UserOperationPtr {
+    using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
+    UserOperationPtr(mpi_custom_operation_type ptr) {
+        MPI_Op_create(ptr, is_commutative, &mpi_op);
+    }
+
+    ~UserOperationPtr() {
+        MPI_Op_free(&mpi_op);
+    }
+    MPI_Op& get_mpi_op() {
+        return mpi_op;
+    }
     MPI_Op mpi_op;
-    Op     op;
 };
 
 } // namespace internal

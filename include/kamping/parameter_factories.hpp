@@ -191,5 +191,11 @@ inline auto root(int rank) {
     return internal::Root(rank);
 }
 
+template <typename T, typename Op>
+internal::ReduceOperation<T, Op> op(Op&& op) {
+    // TODO: commutative
+        return internal::ReduceOperation<T, Op>(op);
+}
+
 /// @}
 } // namespace kamping
