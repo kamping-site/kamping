@@ -182,6 +182,7 @@ class KassertException : public std::exception {
 public:
     /// @brief Constructs the exception based on the erroneous expression and a custom error message.
     /// @param expression The stringified expression that caused this exception to be thrown.
+    /// @param where Location where the error occured.
     /// @param message A custom error message.
     explicit KassertException(std::string const& expression, internal::SourceLocation where, std::string const& message)
         : _what(_build_what(expression, where, message)) {}
