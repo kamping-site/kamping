@@ -283,6 +283,8 @@ struct is_builtin_mpi_op<
 
 template <int is_commutative, typename Op, typename T>
 struct UserOperation {
+    void operator=(UserOperation<is_commutative, Op, T>&) = delete;
+    void operator=(UserOperation<is_commutative, Op, T>&&) = delete;
     UserOperation(Op&& op [[maybe_unused]]) {
         MPI_Op_create(UserOperation<is_commutative, Op, T>::execute, is_commutative, &mpi_op);
     }
@@ -304,15 +306,28 @@ struct UserOperation {
     MPI_Op mpi_op;
 };
 
+using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
+
 template <int is_commutative>
 struct UserOperationPtr {
-    using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
-    UserOperationPtr(mpi_custom_operation_type ptr) {
+    void operator=(UserOperationPtr<is_commutative>&) = delete;
+    void operator                                     =(UserOperationPtr<is_commutative>&& other_op) {
+        this->mpi_op   = other_op.mpi_op;
+        this->no_op    = other_op.no_op;
+        other_op.no_op = true;
+    }
+    UserOperationPtr() : no_op(true) {
+        mpi_op = MPI_OP_NULL;
+    }
+    UserOperationPtr(mpi_custom_operation_type ptr) : no_op(false) {
+        KASSERT(ptr != nullptr);
         MPI_Op_create(ptr, is_commutative, &mpi_op);
     }
 
     ~UserOperationPtr() {
-        MPI_Op_free(&mpi_op);
+        if (!no_op) {
+            MPI_Op_free(&mpi_op);
+        }
     }
 
     /// @brief obsolete by Niklas PR
@@ -321,6 +336,7 @@ struct UserOperationPtr {
     }
 
     /// @brief obsolete by Niklas PR
+    bool   no_op;
     MPI_Op mpi_op;
 };
 

@@ -277,7 +277,7 @@ public:
     ReduceOperation(Op&& op, Commutative&& commute [[maybe_unused]]) : _operation(nullptr) {
         static Op func = op;
 
-        UserOperationPtr<true>::mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len,
+        mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len,
                                                                    MPI_Datatype* /*datatype*/) {
             T* invec_    = static_cast<T*>(invec);
             T* inoutvec_ = static_cast<T*>(inoutvec);
