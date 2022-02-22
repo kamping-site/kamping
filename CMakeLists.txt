@@ -125,6 +125,5 @@ add_library(kamping::kamping ALIAS kamping)
 if(
   CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR KAMPING_BUILD_EXAMPLES_AND_TESTS
 )
-  add_subdirectory(examples)
   add_subdirectory(tests)
 endif()
