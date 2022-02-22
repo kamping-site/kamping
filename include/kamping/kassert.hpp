@@ -25,9 +25,10 @@
 #include <vector>
 
 #ifndef KAMPING_ASSERTION_LEVEL
-#warning "Assertion level was not set explicitly; using default assertion level." 
-#define KAMPING_ASSERTION_LEVEL 3
-#endif 	
+    #warning "Assertion level was not set explicitly; using default assertion level."
+    /// @brief Default assertion level to `kamping::kassert::default` if not set explicitly.
+    #define KAMPING_ASSERTION_LEVEL 3
+#endif
 
 /// @brief Assertion macro for the KaMPI.ng library. Accepts between one and three parameters.
 ///
