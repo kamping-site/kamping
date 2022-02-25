@@ -24,6 +24,12 @@
 #include <utility>
 #include <vector>
 
+#ifndef KAMPING_ASSERTION_LEVEL
+    #warning "Assertion level was not set explicitly; using default assertion level."
+    /// @brief Default assertion level to `kamping::kassert::default` if not set explicitly.
+    #define KAMPING_ASSERTION_LEVEL 3
+#endif
+
 /// @brief Assertion macro for the KaMPI.ng library. Accepts between one and three parameters.
 ///
 /// Assertions are enabled or disabled by setting a compile-time assertion level (`-DKAMPING_ASSERTION_LEVEL=<int>`).
@@ -128,7 +134,7 @@
         do {                                                                                                       \
             if (!(expression)) {                                                                                   \
                 throw assertion_type(                                                                              \
-                    #expression,                                                                                   \
+                    #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION,                                              \
                     (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str()); \
             }                                                                                                      \
         } while (false)
@@ -159,15 +165,28 @@
 /// @endcond
 
 namespace kamping {
+namespace internal {
+/// @brief Describes a source code location.
+struct SourceLocation {
+    /// @brief Filename.
+    char const* file;
+    /// @brief Line number.
+    unsigned row;
+    /// @brief Function name.
+    char const* function;
+};
+} // namespace internal
+
 /// @brief The default exception type used together with \c KTHROW. Reports the erroneous expression together with a
 /// custom error message.
 class KassertException : public std::exception {
 public:
     /// @brief Constructs the exception based on the erroneous expression and a custom error message.
     /// @param expression The stringified expression that caused this exception to be thrown.
+    /// @param where Location where the error occured.
     /// @param message A custom error message.
-    explicit KassertException(std::string const& expression, std::string const& message)
-        : _what(_build_what(expression, message)) {}
+    explicit KassertException(std::string const& expression, internal::SourceLocation where, std::string const& message)
+        : _what(_build_what(expression, where, message)) {}
 
     /// @brief Prints a description of this exception.
     /// @return A description of this exception.
@@ -177,10 +196,15 @@ public:
 
 private:
     /// @brief Builds the description of this exception.
+    /// @param expression Expression that caused this exception to be thrown.
+    /// @param where Source code location where the exception was thrown.
+    /// @param message User message describing this exception.
     /// @return The description of this exception.
-    static std::string _build_what(std::string const& expression, std::string const& message) {
+    static std::string
+    _build_what(std::string const& expression, internal::SourceLocation where, std::string const& message) {
         using namespace std::string_literals;
-        return "FAILED ASSERTION:"s + "\n\t"s + expression + "\n" + message + "\n";
+        return "\n"s + where.file + ": In function '" + where.function + "':\n" + where.file + ": "
+               + std::to_string(where.row) + ": FAILED ASSERTION\n" + "\t" + expression + "\n" + message + "\n";
     }
 
     /// @brief The description of this exception.
@@ -571,16 +595,6 @@ decltype(auto) finalize_expr(ExprT&& expr) {
 /// @}
 
 namespace internal {
-
-/// @brief Describes a source code location.
-struct SourceLocation {
-    /// @brief Filename.
-    char const* file;
-    /// @brief Line number.
-    unsigned row;
-    /// @brief Function name.
-    char const* function;
-};
 
 /// @brief Checks if a assertion of the given level is enabled. This is controlled by the CMake option
 /// \c KAMPING_ASSERTION_LEVEL.
