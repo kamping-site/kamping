@@ -24,21 +24,24 @@ struct my_plus {
 
 int main() {
     MPI_Init(NULL, NULL);
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
     kamping::Reduce       reducer;
     kamping::Communicator comm;
     std::vector<double>   input = {1, 2, 3};
     std::vector<double>   output;
     using namespace kamping;
 
-    auto result0 = reducer.reduce(comm, send_buf(input), op(ops::plus<>())).extract_recv_buffer();
+    auto my_send_buf = send_buf(input);
+    auto result0 = reducer.reduce(comm, my_send_buf, op(ops::plus<>()), root(0)).extract_recv_buffer();
     print_result(result0, comm);
-    auto result1 = reducer.reduce(comm, send_buf(input), op(ops::plus<double>())).extract_recv_buffer();
+    auto result1 = reducer.reduce(comm, my_send_buf, op(ops::plus<double>())).extract_recv_buffer();
     print_result(result1, comm);
     auto result2 =
-        reducer.reduce(comm, kamping::send_buf(input), kamping::op(my_plus{}, commutative())).extract_recv_buffer();
+        reducer.reduce(comm, my_send_buf, kamping::op(my_plus{}, commutative())).extract_recv_buffer();
     print_result(result2, comm);
+
     reducer.reduce(
-        comm, kamping::send_buf(input), kamping::recv_buf(output),
+        comm, my_send_buf, kamping::recv_buf(output),
         kamping::op([](auto a, auto b) { return a + b; }, non_commutative()));
     print_result(output, comm);
 

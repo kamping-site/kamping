@@ -274,11 +274,10 @@ class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_defau
         "For custom operations you have to specify whether they are commutative.");
 
 public:
-    ReduceOperation(Op&& op, Commutative&& commute [[maybe_unused]]) : _operation(nullptr) {
+    ReduceOperation(Op&& op, Commutative&& commute [[maybe_unused]]) : _operation() {
         static Op func = op;
 
-        mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len,
-                                                                   MPI_Datatype* /*datatype*/) {
+        mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
             T* invec_    = static_cast<T*>(invec);
             T* inoutvec_ = static_cast<T*>(inoutvec);
             std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, func);
