@@ -133,5 +133,4 @@ if(
 )
   add_subdirectory(examples)
   add_subdirectory(tests)
-  add_subdirectory(examples)
 endif()
