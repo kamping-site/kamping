@@ -167,11 +167,24 @@ using bit_xor = std::bit_xor<T>;
 
 } // namespace ops
 
+/// @brief tag for a commutative reduce operation
 struct commutative {};
+/// @brief tag for a non-commutative reduce operation
 struct non_commutative {};
+/// @brief tag for a reduce operation without manually declared commutativity (this is only used
+/// internally for builtin reduce operations)
 struct undefined_commutative {};
 
 namespace internal {
+
+
+#ifdef KAMPING_DOXYGEN_ONLY
+template <typename Op, typename T>
+struct is_builtin_mpi_op {
+    constexpr bool value;
+    static MPI_Op op();
+};
+#else
 
 template <typename Op, typename T, typename Enable = void>
 struct is_builtin_mpi_op : std::false_type {};
@@ -278,6 +291,7 @@ struct is_builtin_mpi_op<
         return MPI_BXOR;
     }
 };
+#endif
 
 ///@todo support for MPI_MAXLOC and MPI_MINLOC
 
