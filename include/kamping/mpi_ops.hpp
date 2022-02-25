@@ -195,7 +195,7 @@ namespace internal {
 /// @tparam Op type of the operation
 /// @tparam Datatype type to apply the operation to
 template <typename Op, typename Datatype>
-struct is_builtin_mpi_op {
+struct mpi_operation_traits {
     /// @brief \c true if the operation defined by \c Op is a builtin MPI operation for the type \c Datatype
     ///
     /// Note that this is only true if the \c MPI_Datatype corresponding to the C++ datatype \c Datatype supports the
@@ -203,7 +203,7 @@ struct is_builtin_mpi_op {
     /// defined in \c kamping::ops and there corresponding type-aliased equivalents in the standard library.
     ///
     ///
-    constexpr bool value;
+    static constexpr bool is_builtin;
     /// @brief get the MPI_Op for a builtin type
     ///
     /// This member is only defined if \c value is \c true. It can then be used to query the predefined constant of
@@ -215,107 +215,117 @@ struct is_builtin_mpi_op {
 #else
 
 template <typename Op, typename T, typename Enable = void>
-struct is_builtin_mpi_op : std::false_type {};
+struct mpi_operation_traits {
+    static constexpr bool is_builtin = false;
+};
 
 
 template <typename T, typename S>
-struct is_builtin_mpi_op<
+struct mpi_operation_traits<
     kamping::ops::max<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float)>::type> : std::true_type {
-    static MPI_Op op() {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float)>::type> {
+    static constexpr bool is_builtin = true;
+    static MPI_Op         op() {
         return MPI_MAX;
     }
 };
 
 template <typename T, typename S>
-struct is_builtin_mpi_op<
+struct mpi_operation_traits<
     kamping::ops::min<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float)>::type> : std::true_type {
-    static MPI_Op op() {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float)>::type> {
+    static constexpr bool is_builtin = true;
+    static MPI_Op         op() {
         return MPI_MIN;
     }
 };
 
 template <typename T, typename S>
-struct is_builtin_mpi_op<
+struct mpi_operation_traits<
     kamping::ops::plus<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float || mpi_type_traits<T>::is_complex)>::type>
-    : std::true_type {
-    static MPI_Op op() {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float || mpi_type_traits<T>::is_complex)>::type> {
+    static constexpr bool is_builtin = true;
+    static MPI_Op         op() {
         return MPI_SUM;
     }
 };
 
 template <typename T, typename S>
-struct is_builtin_mpi_op<
+struct mpi_operation_traits<
     kamping::ops::multiplies<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float || mpi_type_traits<T>::is_complex)>::type>
-    : std::true_type {
-    static MPI_Op op() {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float || mpi_type_traits<T>::is_complex)>::type> {
+    static constexpr bool is_builtin = true;
+    static MPI_Op         op() {
         return MPI_PROD;
     }
 };
 
 template <typename T, typename S>
-struct is_builtin_mpi_op<
+struct mpi_operation_traits<
     kamping::ops::logical_and<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_logical)>::type> : std::true_type {
-    static MPI_Op op() {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_logical)>::type> {
+    static constexpr bool is_builtin = true;
+    static MPI_Op         op() {
         return MPI_LAND;
     }
 };
 
 template <typename T, typename S>
-struct is_builtin_mpi_op<
+struct mpi_operation_traits<
     kamping::ops::logical_or<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_logical)>::type> : std::true_type {
-    static MPI_Op op() {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_logical)>::type> {
+    static constexpr bool is_builtin = true;
+    static MPI_Op         op() {
         return MPI_LOR;
     }
 };
 
 template <typename T, typename S>
-struct is_builtin_mpi_op<
+struct mpi_operation_traits<
     kamping::ops::logical_xor<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_logical)>::type> : std::true_type {
-    static MPI_Op op() {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_logical)>::type> {
+    static constexpr bool is_builtin = true;
+    static MPI_Op         op() {
         return MPI_LXOR;
     }
 };
 
 template <typename T, typename S>
-struct is_builtin_mpi_op<
+struct mpi_operation_traits<
     kamping::ops::bit_and<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_byte)>::type> : std::true_type {
-    static MPI_Op op() {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_byte)>::type> {
+    static constexpr bool is_builtin = true;
+    static MPI_Op         op() {
         return MPI_BAND;
     }
 };
 
 template <typename T, typename S>
-struct is_builtin_mpi_op<
+struct mpi_operation_traits<
     kamping::ops::bit_or<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_byte)>::type> : std::true_type {
-    static MPI_Op op() {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_byte)>::type> {
+    static constexpr bool is_builtin = true;
+    static MPI_Op         op() {
         return MPI_BOR;
     }
 };
 
 template <typename T, typename S>
-struct is_builtin_mpi_op<
+struct mpi_operation_traits<
     kamping::ops::bit_xor<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_byte)>::type> : std::true_type {
-    static MPI_Op op() {
+        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_byte)>::type> {
+    static constexpr bool is_builtin = true;
+    static MPI_Op         op() {
         return MPI_BXOR;
     }
 };
@@ -328,21 +338,22 @@ using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
 
 /// @brief Wrapper for a user defined reduction operation based on a functor object.
 ///
-/// Internally, this creates an \c MPI_Op frees it upon destruction.
+/// Internally, this creates an \c MPI_Op which is freed upon destruction.
 /// @tparam is_commutative whether the operation is commutative or not
 /// @tparam Op type of the functor object to wrap
 /// @tparam T the type to apply the operation to.
 template <int is_commutative, typename Op, typename T>
-struct UserOperation {
+class UserOperationWrapper {
+public:
     static_assert(
         std::is_default_constructible_v<Op>,
         "This wrapper only works with default constructible functors, i.e. not with lambdas.");
-    void operator=(UserOperation<is_commutative, Op, T>&) = delete;
-    void operator=(UserOperation<is_commutative, Op, T>&&) = delete;
+    void operator=(UserOperationWrapper<is_commutative, Op, T>&) = delete;
+    void operator=(UserOperationWrapper<is_commutative, Op, T>&&) = delete;
     /// @brief creates an MPI operation for the specified functor
-    /// @param Op the functor to call for reduction
-    UserOperation(Op&& op [[maybe_unused]]) {
-        MPI_Op_create(UserOperation<is_commutative, Op, T>::execute, is_commutative, &mpi_op);
+    /// @param the functor to call for reduction
+    UserOperationWrapper(Op&&) {
+        MPI_Op_create(UserOperationWrapper<is_commutative, Op, T>::execute, is_commutative, &mpi_op);
     }
 
     /// @brief wrapper around the provided functor which is called by MPI
@@ -352,7 +363,7 @@ struct UserOperation {
         Op op{};
         std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, op);
     }
-    ~UserOperation() {
+    ~UserOperationWrapper() {
         MPI_Op_free(&mpi_op);
     }
     /// @returns the \c MPI_Op constructed for the provided functor.
@@ -362,41 +373,100 @@ struct UserOperation {
     MPI_Op& get_mpi_op() {
         return mpi_op;
     }
+
+private:
     MPI_Op mpi_op; ///< the \c MPI_Op referencing the user defined operation
 };
 
 
 template <int is_commutative>
-struct UserOperationPtr {
-    void operator=(UserOperationPtr<is_commutative>&) = delete;
-    void operator                                     =(UserOperationPtr<is_commutative>&& other_op) {
-        this->mpi_op   = other_op.mpi_op;
-        this->no_op    = other_op.no_op;
-        other_op.no_op = true;
+class UserOperationPtrWrapper {
+public:
+    void operator=(UserOperationPtrWrapper<is_commutative>&) = delete;
+    void operator                                            =(UserOperationPtrWrapper<is_commutative>&& other_op) {
+        this->_mpi_op   = other_op._mpi_op;
+        this->_no_op    = other_op._no_op;
+        other_op._no_op = true;
     }
-    UserOperationPtr() : no_op(true) {
-        mpi_op = MPI_OP_NULL;
+    UserOperationPtrWrapper() : _no_op(true) {
+        _mpi_op = MPI_OP_NULL;
     }
-    UserOperationPtr(mpi_custom_operation_type ptr) : no_op(false) {
+    UserOperationPtrWrapper(mpi_custom_operation_type ptr) : _no_op(false) {
         KASSERT(ptr != nullptr);
-        MPI_Op_create(ptr, is_commutative, &mpi_op);
+        MPI_Op_create(ptr, is_commutative, &_mpi_op);
     }
 
-    ~UserOperationPtr() {
-        if (!no_op) {
-            MPI_Op_free(&mpi_op);
+    ~UserOperationPtrWrapper() {
+        if (!_no_op) {
+            MPI_Op_free(&_mpi_op);
         }
     }
 
-    /// @brief obsolete by Niklas PR
     MPI_Op& get_mpi_op() {
-        return mpi_op;
+        return _mpi_op;
     }
 
-    /// @brief obsolete by Niklas PR
-    bool   no_op;
-    MPI_Op mpi_op;
+private:
+    bool   _no_op;
+    MPI_Op _mpi_op;
 };
 
+template <typename T, typename Op, typename Commutative, class Enable = void>
+class ReduceOperation {
+    static_assert(
+        std::is_same_v<Commutative, commutative> || std::is_same_v<Commutative, non_commutative>,
+        "For custom operations you have to specify whether they are commutative.");
+
+public:
+    ReduceOperation(Op&& op, Commutative&&) : _operation(std::move(op)) {}
+    static constexpr bool is_builtin = false;
+    MPI_Op                op() {
+        return _operation.get_mpi_op();
+    }
+
+private:
+    UserOperationWrapper<std::is_same_v<Commutative, commutative>, Op, T> _operation;
+};
+
+template <typename T, typename Op, typename Commutative>
+class ReduceOperation<T, Op, Commutative, typename std::enable_if<mpi_operation_traits<Op, T>::is_builtin>::type> {
+    static_assert(
+        std::is_same_v<Commutative, undefined_commutative>,
+        "For builtin operations you don't need to specify whether they are commutative.");
+
+public:
+    ReduceOperation(Op&&, Commutative&&){};
+    static constexpr bool is_builtin = true;
+    MPI_Op                op() {
+        return mpi_operation_traits<Op, T>::op();
+    }
+};
+
+template <typename T, typename Op, typename Commutative>
+class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_default_constructible_v<Op>>::type> {
+    static_assert(
+        std::is_same_v<Commutative, commutative> || std::is_same_v<Commutative, non_commutative>,
+        "For custom operations you have to specify whether they are commutative.");
+
+public:
+    ReduceOperation(Op&& op, Commutative&&) : _operation() {
+        static Op func = op;
+
+        mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
+            T* invec_    = static_cast<T*>(invec);
+            T* inoutvec_ = static_cast<T*>(inoutvec);
+            std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, func);
+        };
+        _operation = {ptr};
+    };
+    using lambda_type               = Op;
+    static constexpr bool is_lambda = true;
+    MPI_Op                op() {
+        return _operation.get_mpi_op();
+    }
+
+private:
+    UserOperationPtrWrapper<std::is_same_v<Commutative, commutative>> _operation;
+};
 } // namespace internal
 } // namespace kamping

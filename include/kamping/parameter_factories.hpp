@@ -193,8 +193,8 @@ inline auto root(int rank) {
 }
 
 template <typename Op, typename Commutative = undefined_commutative>
-internal::OperationFactory<Op, Commutative> op(Op&& op, Commutative&& commutative = undefined_commutative{}) {
-    return internal::OperationFactory<Op, Commutative>(std::move(op), std::move(commutative));
+internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative&& commutative = undefined_commutative{}) {
+    return internal::OperationBuilder<Op, Commutative>(std::move(op), std::move(commutative));
 }
 
 /// @}

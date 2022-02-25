@@ -222,72 +222,12 @@ private:
     int _rank; ///< Rank of the root PE.
 };
 
-template <typename T, typename Op, typename Commutative, class Enable = void>
-class ReduceOperation {
-    static_assert(
-        std::is_same_v<Commutative, commutative> || std::is_same_v<Commutative, non_commutative>,
-        "For custom operations you have to specify whether they are commutative.");
-
-public:
-    ReduceOperation(Op&& op, Commutative&&) : _operation(std::move(op)) {}
-    static constexpr ParameterType parameter_type = ParameterType::op;
-    static constexpr bool          is_builtin     = false;
-    MPI_Op                         op() {
-        return _operation.get_mpi_op();
-    }
-
-private:
-    UserOperation<std::is_same_v<Commutative, commutative>, Op, T> _operation;
-};
-
-template <typename T, typename Op, typename Commutative>
-class ReduceOperation<T, Op, Commutative, typename std::enable_if<is_builtin_mpi_op<Op, T>::value>::type> {
-    static_assert(
-        std::is_same_v<Commutative, undefined_commutative>,
-        "For builtin operations you don't need to specify whether they are commutative.");
-
-public:
-    ReduceOperation(Op&&, Commutative&&){};
-    static constexpr ParameterType parameter_type = ParameterType::op;
-    static constexpr bool          is_builtin     = true;
-    MPI_Op                         op() {
-        return is_builtin_mpi_op<Op, T>::op();
-    }
-};
-
-template <typename T, typename Op, typename Commutative>
-class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_default_constructible_v<Op>>::type> {
-    static_assert(
-        std::is_same_v<Commutative, commutative> || std::is_same_v<Commutative, non_commutative>,
-        "For custom operations you have to specify whether they are commutative.");
-
-public:
-    ReduceOperation(Op&& op, Commutative&&) : _operation() {
-        static Op func = op;
-
-        mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
-            T* invec_    = static_cast<T*>(invec);
-            T* inoutvec_ = static_cast<T*>(inoutvec);
-            std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, func);
-        };
-        _operation = {ptr};
-    };
-    static constexpr ParameterType parameter_type = ParameterType::op;
-    using lambda_type                             = Op;
-    static constexpr bool is_lambda               = true;
-    MPI_Op                op() {
-        return _operation.get_mpi_op();
-    }
-
-private:
-    UserOperationPtr<std::is_same_v<Commutative, commutative>> _operation;
-};
 
 template <typename Op, typename Commutative>
-class OperationFactory {
+class OperationBuilder {
 public:
     static constexpr ParameterType parameter_type = ParameterType::op;
-    OperationFactory(Op&& op, Commutative&&) : _op(op) {}
+    OperationBuilder(Op&& op, Commutative&&) : _op(op) {}
     template <typename T>
     auto build_operation() {
         static_assert(std::is_invocable_r_v<T, Op, T, T>, "Type of custom operation does not match.");
