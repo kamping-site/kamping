@@ -52,6 +52,33 @@ template <size_t NumBytes>
     return type;
 }
 
+#ifdef KAMPING_DOXYGEN_ONLY
+/// @brief maps C++ types to builtin \c MPI_Datatypes
+///
+/// the members specify which group the datatype belongs to according to the type groups specified in Section 5.9.2 of
+/// the MPI 3.1 standard.
+/// @tparam T type to map to a \c MPI_Datatype
+template <typename T>
+struct mpi_type_traits {
+    /// @brief true, if the type maps to a builtin \c MPI_Datatype
+    static constexpr bool is_builtin;
+    /// @brief true, if the type is an integer value according to the MPI standard
+    static constexpr bool is_integer;
+    /// @brief true, if the type is a floating point value according to the MPI standard
+    static constexpr bool is_float;
+    /// @brief true, if the type is a complex value according to the MPI standard
+    static constexpr bool is_complex;
+    /// @brief true, if the type is a logical value according to the MPI standard
+    static constexpr bool is_logical;
+    /// @brief true, if the type is of type MPI_BYTE
+    static constexpr bool is_byte;
+    /// @brief this member function is only defined if \c is_builtin is true. If this is the case, it to the \c
+    /// MPI_Datatype
+    /// @returns the constant of type \c MPI_Datatype mapping to type \c T according the the MPI standard.
+    static MPI_Datatype data_type();
+};
+#else
+/// @brief base type for non-builtin types
 struct is_builtin_mpi_type_false {
     static constexpr bool is_builtin = false;
     static constexpr bool is_integer = false;
@@ -61,12 +88,16 @@ struct is_builtin_mpi_type_false {
     static constexpr bool is_byte    = false;
 };
 
+/// @brief base type for builtin types
 struct is_builtin_mpi_type_true : is_builtin_mpi_type_false {
     static constexpr bool is_builtin = true;
 };
 
+/// @brief base template for implementation
 template <typename T>
 struct mpi_type_traits_impl : is_builtin_mpi_type_false {};
+
+// template specializations of mpi_type_traits_impl
 
 template <>
 struct mpi_type_traits_impl<char> : is_builtin_mpi_type_true {
@@ -217,8 +248,10 @@ struct mpi_type_traits_impl<std::complex<long double>> : is_builtin_mpi_type_tru
 };
 
 
+/// @brief wrapper for \c mpi_type_traits_impl which removes const and volatile qualifiers
 template <typename T>
 struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
+#endif
 
 /// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
 /// new custom continuous type.

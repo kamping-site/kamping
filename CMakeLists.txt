@@ -51,7 +51,7 @@ target_link_libraries(kamping INTERFACE MPI::MPI_CXX)
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   # gcc does not require the compiler -std=c++17 flag to support C++17
   # but if the flag is omitted, it is not used in compile_command.json
-  # which leads to errors related to C++17 when using IDE-like featur:es
+  # which leads to errors related to C++17 when using IDE-like features
   target_compile_options(kamping INTERFACE -std=c++17)
 endif()
 

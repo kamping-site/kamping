@@ -32,12 +32,11 @@ int main() {
     using namespace kamping;
 
     auto my_send_buf = send_buf(input);
-    auto result0 = reducer.reduce(comm, my_send_buf, op(ops::plus<>()), root(0)).extract_recv_buffer();
+    auto result0     = reducer.reduce(comm, my_send_buf, op(ops::plus<>()), root(0)).extract_recv_buffer();
     print_result(result0, comm);
     auto result1 = reducer.reduce(comm, my_send_buf, op(ops::plus<double>())).extract_recv_buffer();
     print_result(result1, comm);
-    auto result2 =
-        reducer.reduce(comm, my_send_buf, kamping::op(my_plus{}, commutative())).extract_recv_buffer();
+    auto result2 = reducer.reduce(comm, my_send_buf, kamping::op(my_plus{}, commutative())).extract_recv_buffer();
     print_result(result2, comm);
 
     reducer.reduce(

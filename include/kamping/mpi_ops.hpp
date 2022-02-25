@@ -40,7 +40,7 @@ struct max_impl {
     /// @param lhs the first operand
     /// @param rhs the second operand
     /// @return the maximum
-    constexpr T operator()(const T& lhs, const T& rhs) const {
+    constexpr T& operator()(const T& lhs, const T& rhs) const {
         return std::max(lhs, rhs);
     }
 };
@@ -55,7 +55,7 @@ struct max_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T operator()(const T& lhs, const T& rhs) const {
+    constexpr T& operator()(const T& lhs, const T& rhs) const {
         return std::max(lhs, rhs);
     }
 };
@@ -72,7 +72,7 @@ struct min_impl {
     /// @param lhs the first operand
     /// @param rhs the second operand
     /// @return the maximum
-    constexpr T operator()(const T& lhs, const T& rhs) const {
+    constexpr T& operator()(const T& lhs, const T& rhs) const {
         return std::min(lhs, rhs);
     }
 };
@@ -87,7 +87,7 @@ struct min_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T operator()(const T& lhs, const T& rhs) const {
+    constexpr T& operator()(const T& lhs, const T& rhs) const {
         return std::min(lhs, rhs);
     }
 };
@@ -179,9 +179,37 @@ namespace internal {
 
 
 #ifdef KAMPING_DOXYGEN_ONLY
-template <typename Op, typename T>
+/// @brief Type trait for checking whether a functor is a builtin MPI reduction operation and query corresponding \c
+/// MPI_Op.
+///
+/// Example:
+/// @code
+/// is_builtin_mpi_op<kamping::ops::plus<>, int>::value // true
+/// is_builtin_mpi_op<kamping::ops::plus<>, int>::op()  // MPI_SUM
+/// is_builtin_mpi_op<std::plus<>, int>::value          // true
+/// is_builtin_mpi_op<std::plus<>, int>::op()           // MPI_SUM
+/// is_builtin_mpi_op<std::minus<>, int>::value         // false
+/// //is_builtin_mpi_op<std::minus<>, int>::op()        // error: fails to compile because op is not defined
+/// @endcode
+///
+/// @tparam Op type of the operation
+/// @tparam Datatype type to apply the operation to
+template <typename Op, typename Datatype>
 struct is_builtin_mpi_op {
+    /// @brief \c true if the operation defined by \c Op is a builtin MPI operation for the type \c Datatype
+    ///
+    /// Note that this is only true if the \c MPI_Datatype corresponding to the C++ datatype \c Datatype supports the
+    /// operation according to the standard. If MPI supports the operation for this type, then this is true for functors
+    /// defined in \c kamping::ops and there corresponding type-aliased equivalents in the standard library.
+    ///
+    ///
     constexpr bool value;
+    /// @brief get the MPI_Op for a builtin type
+    ///
+    /// This member is only defined if \c value is \c true. It can then be used to query the predefined constant of
+    /// type \c MPI_OP matching the functor defined by type \c Op, e.g. returns \c MPI_SUM if \c Op is \c
+    /// kamping::ops::plus<>.
+    /// @returns the builtin \c MPI_Op constant
     static MPI_Op op();
 };
 #else
@@ -295,15 +323,29 @@ struct is_builtin_mpi_op<
 
 ///@todo support for MPI_MAXLOC and MPI_MINLOC
 
+/// @brief type used by user-defined operations passed to \c MPI_Op_create
+using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
+
+/// @brief Wrapper for a user defined reduction operation based on a functor object.
+///
+/// Internally, this creates an \c MPI_Op frees it upon destruction.
+/// @tparam is_commutative whether the operation is commutative or not
+/// @tparam Op type of the functor object to wrap
+/// @tparam T the type to apply the operation to.
 template <int is_commutative, typename Op, typename T>
 struct UserOperation {
+    static_assert(
+        std::is_default_constructible_v<Op>,
+        "This wrapper only works with default constructible functors, i.e. not with lambdas.");
     void operator=(UserOperation<is_commutative, Op, T>&) = delete;
     void operator=(UserOperation<is_commutative, Op, T>&&) = delete;
+    /// @brief creates an MPI operation for the specified functor
+    /// @param Op the functor to call for reduction
     UserOperation(Op&& op [[maybe_unused]]) {
         MPI_Op_create(UserOperation<is_commutative, Op, T>::execute, is_commutative, &mpi_op);
     }
 
-    /// @brief obsolete by Niklas PR
+    /// @brief wrapper around the provided functor which is called by MPI
     static void execute(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
         T* invec_    = static_cast<T*>(invec);
         T* inoutvec_ = static_cast<T*>(inoutvec);
@@ -313,14 +355,16 @@ struct UserOperation {
     ~UserOperation() {
         MPI_Op_free(&mpi_op);
     }
+    /// @returns the \c MPI_Op constructed for the provided functor.
+    ///
+    /// Do not free this operation manually, because the destructor calls it. Some MPI implementations silently segfault
+    /// if an \c MPI_Op is freed multiple times.
     MPI_Op& get_mpi_op() {
         return mpi_op;
     }
-    // static func_type func_op;
-    MPI_Op mpi_op;
+    MPI_Op mpi_op; ///< the \c MPI_Op referencing the user defined operation
 };
 
-using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
 
 template <int is_commutative>
 struct UserOperationPtr {

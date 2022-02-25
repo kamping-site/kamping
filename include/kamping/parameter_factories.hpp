@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_objects.hpp"
 
 namespace kamping {
@@ -191,14 +192,9 @@ inline auto root(int rank) {
     return internal::Root(rank);
 }
 
-template <typename Op, typename Commutative>
-internal::OperationFactory<Op, Commutative> op(Op&& op, Commutative&& commutative) {
+template <typename Op, typename Commutative = undefined_commutative>
+internal::OperationFactory<Op, Commutative> op(Op&& op, Commutative&& commutative = undefined_commutative{}) {
     return internal::OperationFactory<Op, Commutative>(std::move(op), std::move(commutative));
-}
-
-template <typename Op>
-internal::OperationFactory<Op, undefined_commutative> op(Op&& op) {
-    return internal::OperationFactory<Op, undefined_commutative>(std::move(op), undefined_commutative{});
 }
 
 /// @}

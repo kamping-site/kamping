@@ -17,7 +17,7 @@ namespace kamping {
 class Reduce {
 public:
     template <typename... Args>
-    auto reduce(Communicator& comm, Args&&... args) {
+    auto reduce(const Communicator& comm, Args&&... args) {
         static_assert(
             internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
             "Missing required parameter send_buf.");
@@ -35,7 +35,7 @@ public:
         static_assert(
             std::is_same_v<send_value_type, recv_value_type>, "Types of send and receive buffers do not match.");
         auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
-            std::tuple(0), args...);
+            std::tuple(comm.root()), args...);
         auto&        operation_param = internal::select_parameter_type<internal::ParameterType::op>(args...);
         auto         operation       = operation_param.template build_operation<send_value_type>();
         MPI_Datatype type            = mpi_datatype<send_value_type>();
