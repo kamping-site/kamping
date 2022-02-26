@@ -207,10 +207,10 @@ TEST(KassertTest, primitive_type_expansion) {
     };
 
     EXPECT_EXIT({ generic_logical_and(true, false); }, KilledBySignal(SIGABRT), "1 && 0");
-    EXPECT_EXIT({ generic_logical_or(false, false); }, KilledBySignal(SIGABRT), "0 || 0");
+    EXPECT_EXIT({ generic_logical_or(false, false); }, KilledBySignal(SIGABRT), "0 \\|\\| 0");
 
     EXPECT_EXIT({ generic_logical_and(0, 10); }, KilledBySignal(SIGABRT), "0 && 10"); // implicitly convertible to bool
-    EXPECT_EXIT({ generic_logical_or(0, 0); }, KilledBySignal(SIGABRT), "0 || 0");    // implicitly convertible to bool
+    EXPECT_EXIT({ generic_logical_or(0, 0); }, KilledBySignal(SIGABRT), "0 \\|\\| 0");    // implicitly convertible to bool
 
     // more complex expressions
     auto generic_logical_and_and_and = [](auto const val1, auto const val2, auto const val3, auto const val4) {
@@ -221,7 +221,7 @@ TEST(KassertTest, primitive_type_expansion) {
     };
 
     EXPECT_EXIT({ generic_logical_and_and_and(true, false, 10, -1); }, KilledBySignal(SIGABRT), "1 && 0 && 10 && -1");
-    EXPECT_EXIT({ generic_logical_eq_or_or(1, 2, false, 0); }, KilledBySignal(SIGABRT), "1 == 2 || 0 || 0");
+    EXPECT_EXIT({ generic_logical_eq_or_or(1, 2, false, 0); }, KilledBySignal(SIGABRT), "1 == 2 \\|\\| 0 \\|\\| 0");
 
     // relation + logical operator (more complex expressions on the rhs of the logical operator cannot be decomposed)
     auto generic_eq_and = [](auto const eq_lhs, auto const eq_rhs, auto const and_rhs) {
@@ -232,7 +232,7 @@ TEST(KassertTest, primitive_type_expansion) {
     };
 
     EXPECT_EXIT({ generic_eq_and(1, 2, true); }, KilledBySignal(SIGABRT), "1 == 2 && 1");
-    EXPECT_EXIT({ generic_lt_or(2, 1, false); }, KilledBySignal(SIGABRT), "2 < 1 || 0");
+    EXPECT_EXIT({ generic_lt_or(2, 1, false); }, KilledBySignal(SIGABRT), "2 < 1 \\|\\| 0");
 }
 
 TEST(KassertTest, primitive_type_expansion_limitations) {
@@ -259,8 +259,8 @@ TEST(KassertTest, primitive_type_expansion_limitations) {
     };
 
     EXPECT_EXIT({ generic_and_or(true, false, false); }, KilledBySignal(SIGABRT), "1 && 0"); // cannot expand rhs of &&
-    EXPECT_EXIT({ generic_or_and(false, true, false); }, KilledBySignal(SIGABRT), "0 || 0"); // cannot expand rhs of ||
-    EXPECT_EXIT({ generic_neg_or_and(5, 1, 0); }, KilledBySignal(SIGABRT), "0 || 0");     // cannot expand !, rhs of ||
+    EXPECT_EXIT({ generic_or_and(false, true, false); }, KilledBySignal(SIGABRT), "0 \\|\\| 0"); // cannot expand rhs of ||
+    EXPECT_EXIT({ generic_neg_or_and(5, 1, 0); }, KilledBySignal(SIGABRT), "0 \\|\\| 0");     // cannot expand !, rhs of ||
     EXPECT_EXIT({ generic_and_neg_or(1, 1, false); }, KilledBySignal(SIGABRT), "1 && 0"); // ditto
 
     // negation + relation
