@@ -209,8 +209,8 @@ TEST(KassertTest, primitive_type_expansion) {
     EXPECT_EXIT({ generic_logical_and(true, false); }, KilledBySignal(SIGABRT), "1 && 0");
     EXPECT_EXIT({ generic_logical_or(false, false); }, KilledBySignal(SIGABRT), "0 \\|\\| 0");
 
-    EXPECT_EXIT({ generic_logical_and(0, 10); }, KilledBySignal(SIGABRT), "0 && 10"); // implicitly convertible to bool
-    EXPECT_EXIT({ generic_logical_or(0, 0); }, KilledBySignal(SIGABRT), "0 \\|\\| 0");    // implicitly convertible to bool
+    EXPECT_EXIT({ generic_logical_and(0, 10); }, KilledBySignal(SIGABRT), "0 && 10");  // implicitly convertible to bool
+    EXPECT_EXIT({ generic_logical_or(0, 0); }, KilledBySignal(SIGABRT), "0 \\|\\| 0"); // implicitly convertible to bool
 
     // more complex expressions
     auto generic_logical_and_and_and = [](auto const val1, auto const val2, auto const val3, auto const val4) {
@@ -259,8 +259,9 @@ TEST(KassertTest, primitive_type_expansion_limitations) {
     };
 
     EXPECT_EXIT({ generic_and_or(true, false, false); }, KilledBySignal(SIGABRT), "1 && 0"); // cannot expand rhs of &&
-    EXPECT_EXIT({ generic_or_and(false, true, false); }, KilledBySignal(SIGABRT), "0 \\|\\| 0"); // cannot expand rhs of ||
-    EXPECT_EXIT({ generic_neg_or_and(5, 1, 0); }, KilledBySignal(SIGABRT), "0 \\|\\| 0");     // cannot expand !, rhs of ||
+    EXPECT_EXIT(
+        { generic_or_and(false, true, false); }, KilledBySignal(SIGABRT), "0 \\|\\| 0");  // cannot expand rhs of ||
+    EXPECT_EXIT({ generic_neg_or_and(5, 1, 0); }, KilledBySignal(SIGABRT), "0 \\|\\| 0"); // cannot expand !, rhs of ||
     EXPECT_EXIT({ generic_and_neg_or(1, 1, false); }, KilledBySignal(SIGABRT), "1 && 0"); // ditto
 
     // negation + relation
