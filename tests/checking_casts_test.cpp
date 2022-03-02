@@ -116,13 +116,13 @@ TEST(HelpersTest, throwing_cast) {
     try {
         throwing_cast<int8_t>(1337);
     } catch (std::exception& e) {
-        EXPECT_EQ(e.what(), std::string("1337 is not not representable the target type."));
+        EXPECT_THAT(e.what(), HasSubstr("1337 is not not representable the target type."));
     }
 
     // ... for negative values.
     try {
         throwing_cast<uint8_t>(-42);
     } catch (std::exception& e) {
-        EXPECT_EQ(e.what(), std::string("-42 is not not representable the target type."));
+        EXPECT_THAT(e.what(), HasSubstr("-42 is not not representable the target type."));
     }
 }
