@@ -189,7 +189,6 @@ build_what(std::string const& expression, SourceLocation const where, std::strin
 }
 } // namespace internal
 
-
 /// @brief The default exception type used together with \c KTHROW. Reports the erroneous expression together with a
 /// custom error message.
 class KassertException : public std::exception {
@@ -225,8 +224,14 @@ constexpr int light = 2;
 /// @brief Default assertion level. This level is used if no assertion level is specified.
 constexpr int normal = 3;
 
+/// @brief Assertions that perform lightweight communication.
+constexpr int light_communication = 4;
+
+/// @brief Assertions that perform heavyweight communication.
+constexpr int heavy_communication = 5;
+
 /// @brief Assertion level for heavyweight assertions.
-constexpr int heavy = 4;
+constexpr int heavy = 6;
 
 /// @}
 } // namespace assert
