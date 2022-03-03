@@ -196,7 +196,7 @@ class KassertException : public std::exception {
 public:
     /// @brief Constructs the exception
     /// @param message A custom error message.
-    explicit KassertException(std::string const& message) : _what(message) {}
+    explicit KassertException(std::string message) : _what(std::move(message)) {}
 
     /// @brief Prints a description of this exception.
     /// @return A description of this exception.
