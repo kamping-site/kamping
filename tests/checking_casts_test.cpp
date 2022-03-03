@@ -103,8 +103,16 @@ TEST(HelpersTest, asserting_cast) {
     }
 }
 
-template <typename lambda>
-void checkThrowOrAssert(lambda&& callable, [[maybe_unused]] std::string const& what = std::string()) {
+///
+/// @brief Checks if a functions fails with a std::range_error exception if exception mode is enabled and an assertion
+/// when exception mode is disabled using google test.
+///
+/// @tparam Lambda Function to check for failures.
+/// @param callable Function to check for failures.
+/// @param what Substring that should be contained in the output of what() of the thrown exception. Ignored if empty.
+///
+template <typename Lambda>
+void checkThrowOrAssert(Lambda&& callable, [[maybe_unused]] std::string const& what = std::string()) {
 #ifndef KAMPING_EXCEPTION_MODE
     if constexpr (KAMPING_ASSERTION_LEVEL >= kamping::assert::kthrow) {
         EXPECT_DEATH(callable(), "FAILED");
