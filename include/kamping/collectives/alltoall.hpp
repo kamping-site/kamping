@@ -32,7 +32,8 @@ class Alltoall {
 public:
     template <typename... Args>
     auto alltoall(const Communicator& comm, Args&&... args) {
-        /// @todo Replace with Niklas' implementation once that is merged
+        // Get all parameters
+        /// @todo Replace with Niklas' implementation once that is merged (has_parameter_type())
         static_assert(
             internal::find_pos<internal::ParameterType::send_buf, 0, Args...>() < sizeof...(Args),
             "Missing required parameter send_buf.");
@@ -43,7 +44,7 @@ public:
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
 
         using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
-        /// @todo replace with Niklas' implementation once that is merged
+        /// @todo replace with Niklas' implementation once that is merged (select_parameter_type_or_default)
         auto&& recv_buf = [&]() {
             if constexpr (internal::find_pos<internal::ParameterType::recv_buf, 0, Args...>() < sizeof...(Args)) {
                 constexpr size_t selected_index = internal::find_pos<internal::ParameterType::recv_buf, 0, Args...>();
@@ -55,18 +56,21 @@ public:
         using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
         MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
+        // Get the send and receive counts
         int send_count = throwing_cast<int>(send_buf.size / asserting_cast<size_t>(comm.size()));
         /// @todo test
         KTHROW(
             ((send_buf.size * sizeof(send_value_type)) % sizeof(recv_value_type)) == 0,
             "The specified receive type does not fit the supplied number of elements of the send type.");
+        // Weird calculation because the user might use a different type for sending and receiving. For "normal" usage
+        // this should be just send_buf.size
         size_t recv_buf_size = send_buf.size * sizeof(send_value_type) / sizeof(recv_value_type);
         int    recv_count    = throwing_cast<int>(recv_buf_size / asserting_cast<size_t>(comm.size()));
 
         int err = MPI_Alltoall(
             send_buf.ptr, send_count, mpi_send_type, recv_buf.get_ptr(recv_buf_size), recv_count, mpi_recv_type,
             comm.mpi_communicator());
-        // @todo throw correct Exception with propagated error code
+        // @todo throw correct exception with propagated error code
         KTHROW(err == MPI_SUCCESS);
         return MPIResult(
             std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
