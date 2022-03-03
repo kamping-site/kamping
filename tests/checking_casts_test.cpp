@@ -103,6 +103,32 @@ TEST(HelpersTest, asserting_cast) {
     }
 }
 
+template <typename lambda>
+void checkThrowOrAssert(lambda&& callable, [[maybe_unused]] std::string const& what = std::string()) {
+#ifndef KAMPING_EXCEPTION_MODE
+    if constexpr (KAMPING_ASSERTION_LEVEL >= kamping::assert::kthrow) {
+        EXPECT_DEATH(callable(), "FAILED");
+    } else {
+        EXPECT_EXIT(
+            {
+                callable();
+                fprintf(stderr, "Still alive!");
+                exit(0);
+            },
+            ::testing::ExitedWithCode(0), "Still alive");
+    }
+#else
+    EXPECT_THROW(callable(), std::range_error);
+    if (!what.empty()) {
+        try {
+            callable();
+        } catch (std::exception& e) {
+            EXPECT_THAT(e.what(), HasSubstr(what));
+        }
+    }
+#endif
+}
+
 TEST(HelpersTest, throwing_cast) {
     uint8_t u8val = 200;
 
@@ -110,19 +136,11 @@ TEST(HelpersTest, throwing_cast) {
     EXPECT_NO_THROW(throwing_cast<uint8_t>(u8val));
 
     // An invalid cast throws an exception.
-    EXPECT_THROW(throwing_cast<int8_t>(u8val), std::range_error);
+    checkThrowOrAssert([&]() { return throwing_cast<int8_t>(u8val); });
 
     // Check the error messages.
-    try {
-        throwing_cast<int8_t>(1337);
-    } catch (std::exception& e) {
-        EXPECT_THAT(e.what(), HasSubstr("1337 is not not representable the target type."));
-    }
+    checkThrowOrAssert([&]() { return throwing_cast<int8_t>(1337); }, "1337 is not representable by the target type.");
 
     // ... for negative values.
-    try {
-        throwing_cast<uint8_t>(-42);
-    } catch (std::exception& e) {
-        EXPECT_THAT(e.what(), HasSubstr("-42 is not not representable the target type."));
-    }
+    checkThrowOrAssert([&]() { return throwing_cast<uint8_t>(-42); }, "-42 is not representable by the target type.");
 }
