@@ -1,3 +1,16 @@
+// This file is part of KaMPI.ng.
+//
+// Copyright 2021 The KaMPI.ng Authors
+//
+// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
 /// @file
 /// @brief Utility that maps C++ types to types that can be understood by MPI.
 
@@ -8,11 +21,13 @@
 
 #include <mpi.h>
 
+#include "kamping/kassert.hpp"
+
 namespace kamping {
 
 /// @addtogroup kamping_mpi_utility
 /// @{
-///
+
 /// @brief Creates a custom continuous MPI datatype.
 ///
 /// @tparam NumBytes The number of bytes for the new type.
@@ -129,7 +144,7 @@ template <typename T>
         mpi_type = mpi_custom_continuous_type<sizeof(T)>();
     }
 
-    assert(mpi_type != MPI_DATATYPE_NULL);
+    KASSERT(mpi_type != MPI_DATATYPE_NULL);
 
     return mpi_type;
 }

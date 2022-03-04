@@ -54,7 +54,7 @@ class RunningExample {
 ```
 
 For members a brief inline documentation is sufficient.
-Note that both public *and* private members and functions (see [example](#example-of-minimal-documentation-style)) have to be documented.
+Note that both public *and* private members and functions (see [example](@ref example-of-minimal-documentation-style)) have to be documented.
 
 ```cpp
 ///
@@ -130,9 +130,9 @@ We can document the return value of functions using the `@return` keyword.
 If multiple cases of return values are documented, `@return` can be used for each case to improve readability of the documentation in the code.
 They are automatically concatenated in the documentation.
 With this keyword, we finally have everything we need to obtain the minimal documentation that is required for everything in the KaMPI.ng code base (as shown in the example below).
-We say *minimal* because the documentation can be improved by using special formatting, cross-references, and many more features, which we discuss further [below](#formatting-and-references).
+We say *minimal* because the documentation can be improved by using special formatting, cross-references, and many more features, which we discuss further [below](@ref formatting-and-references).
 
-# Example of Minimal Documentation Style
+# Example of Minimal Documentation Style {#example-of-minimal-documentation-style}
 
 ```cpp
 /// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
@@ -200,6 +200,7 @@ Here *Yes* means that the keyword has to be used, *(Yes)* means that the keyword
 | enum                             | Yes      | Optional             | -         | -        | -         | -                          |
 | struct                           | Yes      | Yes                  | (Yes)     | -        | -         | -                          |
 
+
 # TODOs
 While all code should be finalized (finished and polished) before it is merged into the main branch of the KaMPI.ng repository, sometimes there are open *todos* that cannot yet be fixed or may be fixed later as part of a bigger update.
 To better keep up with this type of todo, we want to create a list of these them.
@@ -221,7 +222,7 @@ void example_function() {
 
 ```
 
-# Formatting and References
+# Formatting and References {#formatting-and-references}
 
 As mentioned above, the documentation can be formatted with different commands.
 Due to better readability of the unprocessed documentation, we use a backslash `\` to enable formatting commands similar to how LaTeX works.
@@ -251,7 +252,7 @@ Due to better readability of the unprocessed documentation, we use a backslash `
 
   Resources can also be cited using BibTeX.
   To this end, the reference has to be placed in the global [literature.bib] file.
-  Please read the [following section](#references) on how to format the BibTeX entry.
+  Please read the [following section](@ref references) on how to format the BibTeX entry.
   Then, it can be cited by using the `\cite <BibTeX key>` command.
 
 # Structuring the Documentation
@@ -268,7 +269,7 @@ Documentation can be added to a group via the `@addtogroup` command, e.g.,
 /// @}
 ```
 All groups have to be defined somewhere.
-To this end, we use the main file of our documentation [main.dox], see [below](#main-page).
+To this end, we use the main file of our documentation [main.dox], see [below](@ref main-page).
 Here, we can define the group using the following commands.
 
 ```
@@ -279,7 +280,7 @@ Here, we can define the group using the following commands.
 # Additional (Non-Code) Material
 Since a good documentation does not only document each class and function of the library, we also want to include additional resources, e.g., examples and guides, within out documentation.
 
-## Main Page
+## Main Page {#main-page}
 The main page (starting page) of the documentation is [main.dox].
 Here, general information and links to additional resources should be added.
 Additionally, we can add a brief description of all groups here.
@@ -289,7 +290,7 @@ Additionally, we can add a brief description of all groups here.
 Guides and examples should be added in form of Markdown files and linked in [main.dox].
 See this file for an example.
 
-## References
+## References {#references}
 All references have to be added as BibTeX entry in [literature.bib].
 There are two cases: either the reference is available in [dblp] or not.
 If its available in [dblp], please just copy the *condensed* BibTeX entry to [literature.bib] and add the *DOI* if available.

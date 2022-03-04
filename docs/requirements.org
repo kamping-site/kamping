@@ -1,5 +1,5 @@
 #+STARTUP: beamer
-#+TITLE:    Requirements of KaMPIng 
+#+TITLE:    Requirements of KaMPI.ng 
 #+AUTHOR: The MPI Hyperedge
 #+OPTIONS:  H:2 toc:nil
 #+LATEX_CLASS_OPTIONS: [10pt]
@@ -136,7 +136,7 @@
              // That is, if customClass is no trivially serializable but has a .serialize() and .deserialize() function, I can still use it in all the above functions.
      
              // Fault tolerance and chaos monkeys etc, compile time enabled
-             auto ctx = KaMPIng::MPI_Context<tag enable for example fault-tolerance>(MPI_COMM_WORLD);
+             auto ctx = KaMPI.ng::MPI_Context<tag enable for example fault-tolerance>(MPI_COMM_WORLD);
      
      // For Fault-Tolerance, invalidating communicators is necessary, also updating communicators, ideally callbacks which are invoked when a communicator is
      // detected as faulty and one if an operation should happen on a revoked comm.

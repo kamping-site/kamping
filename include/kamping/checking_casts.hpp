@@ -1,3 +1,16 @@
+// This file is part of KaMPI.ng.
+//
+// Copyright 2021 The KaMPI.ng Authors
+//
+// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
 /// @file
 /// @brief Helper functions that make casts safer.
 
@@ -7,6 +20,8 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+
+#include "kamping/kassert.hpp"
 
 namespace kamping {
 
@@ -88,7 +103,7 @@ constexpr bool in_range(From value) noexcept {
 ///
 template <class To, class From>
 constexpr To asserting_cast(From value) noexcept {
-    assert(in_range<To>(value));
+    KASSERT(in_range<To>(value));
     return static_cast<To>(value);
 }
 
@@ -108,11 +123,8 @@ constexpr To asserting_cast(From value) noexcept {
 ///
 template <class To, class From>
 constexpr To throwing_cast(From value) {
-    if (!in_range<To>(value)) {
-        throw std::range_error(std::to_string(value) + " is not not representable the target type.");
-    } else {
-        return static_cast<To>(value);
-    }
+    KTHROW(in_range<To>(value), std::to_string(value) + " is not representable by the target type.", std::range_error);
+    return static_cast<To>(value);
 }
 
 ///@}

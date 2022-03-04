@@ -19,28 +19,13 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 * Use `.cpp` and `.hpp` as file endings. File names are lowercase and separate word using an underscore. For example `sparse_all2all.hpp`.
 * Name local variables with full names. If a name would get too long, write a comment explaining the full meaning of the variable. Use acronyms very sparingly. Some allowed acronyms: `len` for `length (of)`, `num` for `number (of)`, `mpi`.
 * Use informative names for templated types. "T1" etc. is only allowed for very general code. Template names are in CamelCase (like classes), e.g. `GeneratorFunction`.
-* Types defined with `using` inherit the naming rules of the type they are aliasing. For example `using MessageChecker = MessageContainer<...>::MessageChecker` for a class or struct alias.
+* Types defined with `using` inherit the naming rules of the type they are aliasing.
 
-# Naming and organizing tests.
-Name your unit test files `test_corresponding_filename_of_code.cpp`. Inside this file, add tests using the following naming scheme: `TEST(Test_ClassName, function_<description>)`, where `<description>` could for example be: `basics`, `invalid_parameters`, `typedefs_and_using` or many others.
-
-The tests for the global helper function `mpi_datatype<T>()` are in `tests/test_mpi_datatype.cpp` and for example includes the folling tests:
-
-```cpp
-TEST(Test_Helpers, mpi_datatype_basics) {
-// ...
-TEST(Test_Helpers, mpi_datatype_typedefs_and_using) {
-// ...
-TEST(Test_Helpers, mpi_datatype_size_t) {
-// ...
-TEST(Test_Helpers, mpi_datatype_enum) {
-// ...
-```
-As `mpi_datatype<T>()` is not part of any class, we use the organizatorial unit `Helpers` as the class name.
-TODO @Lukas Add a section explaining the usage of compilation failure tests.
+# Writing Tests
+For details on how to write tests see the [Testing Guidelines](testing_guidelines.md).
 
 # Rules for functions
-TODO @Demian @Matthias: Rules for API
+TODO \@Demian \@Matthias: Rules for API
 * For internal functions: Return output only values via the `return` statement, even multiple return values.
 * For internal functions: Return in-output values via a reference argument.
 * Mark the parameters as `const` where possible.
@@ -72,6 +57,8 @@ TODO @Demian @Matthias: Rules for API
 * Prefer smart pointers over raw pointers.
 * Avoid `std::bind`, use lambda functions instead as they result in better readability and allow the compiler to inline better.
 * Use the subset of `C++` which compiles in `gcc10`, `clang10` and `icc19`.
+* Use the `KASSERT()` macro with the appropriate assertion level to validate the internal state of your code.
+* Use the `KTHROW()` macro to validate super-supplied data.
 
 # Warnings
 Code *should* compile with `clang` and `gcc` (not `icc`) without warning with the warning flags given below. If you want to submit code which throws warnings, at least two other persons have to agree. Possible reasons for this are: False-positive warnings.
@@ -125,7 +112,7 @@ endif()
 
 # Tooling and Workflow
 * Use "modern" CMake as build system
-* Use Doxygen for documentation. TODO @Florian: Which style?
+* Use Doxygen for documentation. TODO \@Florian: Which style?
 * Use `git submodule` to include dependencies. TODO: Explain in the README, how to work with git submodules.
 * Commit only corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `fix-` branches and merge them to the `main` branch using a Pull Request.
 * Write *many* unit tests for your code. If there is no unit test for it, it does not exist. Also check for nonsensical inputs and edge cases.

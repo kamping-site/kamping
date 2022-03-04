@@ -1,3 +1,16 @@
+// This file is part of KaMPI.ng.
+//
+// Copyright 2021 The KaMPI.ng Authors
+//
+// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -9,6 +22,7 @@
 #include <gtest/gtest.h>
 
 #include "kamping/checking_casts.hpp"
+#include "kamping/kassert.hpp"
 
 using namespace ::testing;
 using namespace ::kamping;
@@ -74,18 +88,52 @@ TEST(HelpersTest, asserting_cast) {
         },
         ::testing::ExitedWithCode(0), "Still alive");
 
-#ifndef NDEBUG
-    // According to the googletest documentation, throwing an exception is not considered a death.
-    // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
-    EXPECT_DEATH(asserting_cast<int8_t>(u8val), "Assertion `in_range<To>\\(value\\)' failed.");
+    if constexpr (KAMPING_ASSERTION_LEVEL >= kamping::assert::normal) {
+        // According to the googletest documentation, throwing an exception is not considered a death.
+        // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
+        EXPECT_DEATH(asserting_cast<int8_t>(u8val), "FAILED ASSERTION");
+    } else {
+        EXPECT_EXIT(
+            {
+                asserting_cast<int8_t>(u8val);
+                fprintf(stderr, "Still alive!");
+                exit(0);
+            },
+            ::testing::ExitedWithCode(0), "Still alive");
+    }
+}
+
+///
+/// @brief Checks if a functions fails with a std::range_error exception if exception mode is enabled and an assertion
+/// when exception mode is disabled using google test.
+///
+/// @tparam Lambda Function to check for failures.
+/// @param callable Function to check for failures.
+/// @param what Substring that should be contained in the output of what() of the thrown exception. Ignored if empty.
+///
+template <typename Lambda>
+void checkThrowOrAssert(Lambda&& callable, [[maybe_unused]] std::string const& what = std::string()) {
+#ifndef KAMPING_EXCEPTION_MODE
+    if constexpr (KAMPING_ASSERTION_LEVEL >= kamping::assert::kthrow) {
+        EXPECT_DEATH(callable(), "FAILED");
+    } else {
+        EXPECT_EXIT(
+            {
+                callable();
+                fprintf(stderr, "Still alive!");
+                exit(0);
+            },
+            ::testing::ExitedWithCode(0), "Still alive");
+    }
 #else
-    EXPECT_EXIT(
-        {
-            asserting_cast<int8_t>(u8val);
-            fprintf(stderr, "Still alive!");
-            exit(0);
-        },
-        ::testing::ExitedWithCode(0), "Still alive");
+    EXPECT_THROW(callable(), std::range_error);
+    if (!what.empty()) {
+        try {
+            callable();
+        } catch (std::exception& e) {
+            EXPECT_THAT(e.what(), HasSubstr(what));
+        }
+    }
 #endif
 }
 
@@ -96,19 +144,11 @@ TEST(HelpersTest, throwing_cast) {
     EXPECT_NO_THROW(throwing_cast<uint8_t>(u8val));
 
     // An invalid cast throws an exception.
-    EXPECT_THROW(throwing_cast<int8_t>(u8val), std::range_error);
+    checkThrowOrAssert([&]() { return throwing_cast<int8_t>(u8val); });
 
     // Check the error messages.
-    try {
-        throwing_cast<int8_t>(1337);
-    } catch (std::exception& e) {
-        EXPECT_EQ(e.what(), std::string("1337 is not not representable the target type."));
-    }
+    checkThrowOrAssert([&]() { return throwing_cast<int8_t>(1337); }, "1337 is not representable by the target type.");
 
     // ... for negative values.
-    try {
-        throwing_cast<uint8_t>(-42);
-    } catch (std::exception& e) {
-        EXPECT_EQ(e.what(), std::string("-42 is not not representable the target type."));
-    }
+    checkThrowOrAssert([&]() { return throwing_cast<uint8_t>(-42); }, "-42 is not representable by the target type.");
 }
