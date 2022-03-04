@@ -66,8 +66,8 @@ public:
 };
 
 TEST(KassertTest, kthrow_custom_compiles) {
-    EXPECT_THROW({ KTHROW_CUSTOM(false, ZeroArgException); }, ZeroArgException);
-    EXPECT_THROW({ KTHROW_CUSTOM(false, SingleArgException, 42); }, SingleArgException);
+    EXPECT_THROW({ KTHROW_CUSTOM(false, ZeroArgException, ""); }, ZeroArgException);
+    EXPECT_THROW({ KTHROW_CUSTOM(false, SingleArgException, "", 42); }, SingleArgException);
 }
 
 // Test that expressions are evaluated as expected

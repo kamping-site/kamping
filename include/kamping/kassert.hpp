@@ -64,8 +64,8 @@
 /// expression as its first argument.
 ///
 /// Any other exception is passed to the constructor of the exception class.
-#define KTHROW_CUSTOM(expression, exception_type, ...) \
-    KAMPING_KASSERT_HPP_KTHROW_CUSTOM_IMPL(expression, exception_type, ##__VA_ARGS__)
+#define KTHROW_CUSTOM(expression, exception_type, message, ...) \
+    KAMPING_KASSERT_HPP_KTHROW_CUSTOM_IMPL(expression, exception_type, message, ##__VA_ARGS__)
 
 /// @cond IMPLEMENTATION
 
@@ -162,10 +162,13 @@
             #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION, \
             (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str()))
 
-#define KAMPING_KASSERT_HPP_KTHROW_CUSTOM_IMPL(expression, exception_type, ...) \
-    KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(                                   \
-        expression, exception_type,                                             \
-        kamping::internal::build_what(#expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION, ""), ##__VA_ARGS__)
+#define KAMPING_KASSERT_HPP_KTHROW_CUSTOM_IMPL(expression, exception_type, message, ...)                   \
+    KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(                                                              \
+        expression, exception_type,                                                                        \
+        kamping::internal::build_what(                                                                     \
+            #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION,                                              \
+            (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str()), \
+        ##__VA_ARGS__)
 
 // KTHROW() chooses the right implementation depending on its number of arguments.
 #define KTHROW_2(expression, message) KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message)

@@ -123,7 +123,7 @@ constexpr To asserting_cast(From value) noexcept {
 ///
 template <class To, class From>
 constexpr To throwing_cast(From value) {
-    KTHROW(in_range<To>(value), std::to_string(value) + " is not representable by the target type.", std::range_error);
+    KTHROW_CUSTOM(in_range<To>(value), std::range_error, value << " is not representable by the target type.");
     return static_cast<To>(value);
 }
 
