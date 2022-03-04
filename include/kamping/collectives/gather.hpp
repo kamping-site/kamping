@@ -25,6 +25,19 @@
 
 namespace kamping {
 
+/// @brief Wrapper for \c MPI_Gather
+///
+/// This wrapper for \c MPI_Gather sends the same amount of data from each rank to a root. The following buffers are
+/// required:
+/// - \ref kamping::send_buf() containing the data that is sent to the root. This buffer has to be the same size at each
+/// rank. See TODO gather_v if the amounts differ. The following buffers are optional:
+/// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator is
+/// used, see root().
+/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, at the root, this buffer will contain all
+/// data from all send buffers. At all other ranks, the buffer will have size 0.
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described above.
+/// @return Result type wrapping the output buffer if not specified as input parameter.
 template <typename... Args>
 auto Communicator::gather(Args&&... args) {
     auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
