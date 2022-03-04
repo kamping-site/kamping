@@ -204,7 +204,7 @@ Here *Yes* means that the keyword has to be used, *(Yes)* means that the keyword
 While all code should be finalized (finished and polished) before it is merged into the main branch of the KaMPI.ng repository, sometimes there are open *todos* that cannot yet be fixed or may be fixed later as part of a bigger update.
 To better keep up with this type of todo, we want to create a list of these them.
 Fortunately, [Doxygen] provides an easy aggregation of all *todos* in the code.
-To this end, we have to mark all todos using the `@todo` command.
+To this end, we have to mark all todos using the `@todo` command, where we summarize the todo.Small steps needed to complete it can be described using `\\ TODO`.
 This way, we can easily keep track of open todos in our documentation.
 
 ```cpp
@@ -212,6 +212,8 @@ This way, we can easily keep track of open todos in our documentation.
 void example_function() {
     if (dummy_value > 0) {
         /// @todo Throw an exception instead of simply aborting as soon as our exception handling is included.
+        // TODO throw exception here and
+        // TODO handle it in all places where this function is called.
         std::abort();
     }
     // do stuff here
