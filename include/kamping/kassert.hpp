@@ -146,8 +146,13 @@
             }                                                                                  \
         } while (false)
 #else
-    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type) \
-        KAMPING_KASSERT_HPP_KASSERT_IMPL(#assertion_type, expression, message, kamping::assert::kthrow)
+    #define KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(expression, exception_type, message, ...)                        \
+        do {                                                                                                          \
+            if constexpr (kamping::internal::assertion_enabled(kamping::assert::kthrow)) {                            \
+                kamping::Logger<std::ostream&>(std::cerr) << (exception_type(message, ##__VA_ARGS__).what()) << "\n"; \
+                std::abort();                                                                                         \
+            }                                                                                                         \
+        } while (false)
 #endif
 
 #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message)  \
