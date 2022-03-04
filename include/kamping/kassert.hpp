@@ -93,18 +93,14 @@
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH               _Pragma("GCC diagnostic push")
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_POP                _Pragma("GCC diagnostic pop")
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_PARENTHESES _Pragma("GCC diagnostic ignored \"-Wparentheses\"")
-    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_GNU_EXTENSION
 #elif defined(__clang__) // Clang
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH               _Pragma("clang diagnostic push")
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_POP                _Pragma("clang diagnostic pop")
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_PARENTHESES _Pragma("clang diagnostic ignored \"-Wparentheses\"")
-    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_GNU_EXTENSION \
-        _Pragma("clang diagnostic ignored \"-Wno-gnu-zero-variadic-macro-arguments\"")
 #else // Other compilers -> no supression supported
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_PUSH
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_POP
     #define KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_PARENTHESES
-    #define KAMPING_KASSERT_HPP_DIAGNOSTIC_IGNORE_GNU_EXTENSION
 #endif
 
 // This is the actual implementation of the KASSERT() macro.
