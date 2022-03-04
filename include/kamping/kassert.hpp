@@ -30,7 +30,7 @@
     #define KAMPING_ASSERTION_LEVEL 3
 #endif
 
-// We use the zero variadic macro argument extension, which is supported by every major C++ compiler 
+// We use the zero variadic macro argument extension, which is supported by every major C++ compiler
 // Disable warning for macro declarations in this file
 #if defined(__clang__)
     #pragma clang diagnostic push
