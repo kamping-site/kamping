@@ -31,8 +31,8 @@
 #endif
 
 #if defined(__clang__)
-#pragma clang diagnostic push 
-#pragma clang diagnostic ignored "-Wno-gnu-zero-variadic-macro-arguments"
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
 #endif
 
 /// @brief Assertion macro for the KaMPI.ng library. Accepts between one and three parameters.
@@ -183,9 +183,10 @@
 #define KTHROW_2(expression, message) KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message)
 #define KTHROW_1(expression)          KTHROW_2(expression, "")
 
+// Re-enable Clang warning for GNU extension
 #if defined(__clang__)
-#pragma clang diagnostic pop
-#endif 
+    #pragma clang diagnostic pop
+#endif
 
 // __PRETTY_FUNCTION__ is a compiler extension supported by GCC and clang that prints more information than __func__
 #if defined(__GNUC__) || defined(__clang__)
