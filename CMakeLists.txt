@@ -69,7 +69,6 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     "-Wcast-align"
     "-Wnull-dereference"
     "-Wpedantic"
-    "-Wno-gnu-zero-variadic-macro-arguments"
   )
 endif()
 
