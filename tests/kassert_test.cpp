@@ -43,9 +43,31 @@ TEST(KassertTest, kassert_overloads_compile) {
 
 TEST(KassertTest, kthrow_overloads_compile) {
     // test that all KTHROW() overloads compile
-    EXPECT_THROW({ KTHROW(false, "__false_is_false_3__", kamping::KassertException); }, kamping::KassertException);
     EXPECT_THROW({ KTHROW(false, "__false_is_false_2__"); }, kamping::KassertException);
     EXPECT_THROW({ KTHROW(false); }, kamping::KassertException);
+}
+
+class ZeroArgException : public std::exception {
+public:
+    ZeroArgException(std::string) {}
+
+    const char* what() const throw() final {
+        return "";
+    }
+};
+
+class SingleArgException : public std::exception {
+public:
+    SingleArgException(std::string, int) {}
+
+    const char* what() const throw() final {
+        return "";
+    }
+};
+
+TEST(KassertTest, kthrow_custom_compiles) {
+    EXPECT_THROW({ KTHROW_CUSTOM(false, ZeroArgException); }, ZeroArgException);
+    EXPECT_THROW({ KTHROW_CUSTOM(false, SingleArgException, 42); }, SingleArgException);
 }
 
 // Test that expressions are evaluated as expected
