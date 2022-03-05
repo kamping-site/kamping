@@ -34,6 +34,7 @@ TEST(GatherTest, GatherSingleElementNoReceiveBuffer) {
     auto result = comm.gather(send_buf(value)).extract_recv_buffer();
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(comm.root(), 0);
+        EXPECT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)], i);
         }
@@ -46,6 +47,7 @@ TEST(GatherTest, GatherSingleElementNoReceiveBuffer) {
     result = comm.gather(send_buf(value)).extract_recv_buffer();
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(comm.root(), comm.size() - 1);
+        EXPECT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)], i);
         }
@@ -58,6 +60,7 @@ TEST(GatherTest, GatherSingleElementNoReceiveBuffer) {
         result = comm.gather(send_buf(value), root(i)).extract_recv_buffer();
         if (comm.rank() == i) {
             EXPECT_EQ(comm.root(), comm.size() - 1);
+            EXPECT_EQ(result.size(), comm.size());
             for (auto j = 0; j < comm.size(); ++j) {
                 EXPECT_EQ(result[asserting_cast<size_t>(j)], j);
             }
@@ -85,6 +88,7 @@ TEST(GatherTest, GatherSingleCustomElementNoReceiveBuffer) {
     auto result = comm.gather(send_buf(value)).extract_recv_buffer();
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(comm.root(), 0);
+        EXPECT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)].rank, i);
             EXPECT_EQ(result[asserting_cast<size_t>(i)].additional_value, comm.size() - i);
@@ -98,6 +102,7 @@ TEST(GatherTest, GatherSingleCustomElementNoReceiveBuffer) {
     result = comm.gather(send_buf(value)).extract_recv_buffer();
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(comm.root(), comm.size() - 1);
+        EXPECT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)].rank, i);
             EXPECT_EQ(result[asserting_cast<size_t>(i)].additional_value, comm.size() - i);
@@ -111,6 +116,7 @@ TEST(GatherTest, GatherSingleCustomElementNoReceiveBuffer) {
         result = comm.gather(send_buf(value), root(i)).extract_recv_buffer();
         if (comm.rank() == i) {
             EXPECT_EQ(comm.root(), comm.size() - 1);
+            EXPECT_EQ(result.size(), comm.size());
             for (auto j = 0; j < comm.size(); ++j) {
                 EXPECT_EQ(result[asserting_cast<size_t>(j)].rank, j);
                 EXPECT_EQ(result[asserting_cast<size_t>(j)].additional_value, comm.size() - j);
@@ -135,6 +141,7 @@ TEST(GatherTest, GatherSingleElementWithReceiveBuffer) {
     comm.gather(send_buf(value), recv_buf(result));
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(comm.root(), 0);
+        EXPECT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)], i);
         }
@@ -147,6 +154,7 @@ TEST(GatherTest, GatherSingleElementWithReceiveBuffer) {
     comm.gather(send_buf(value), recv_buf(result));
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(comm.root(), comm.size() - 1);
+        EXPECT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)], i);
         }
@@ -159,6 +167,7 @@ TEST(GatherTest, GatherSingleElementWithReceiveBuffer) {
         comm.gather(send_buf(value), recv_buf(result), root(i));
         if (comm.rank() == i) {
             EXPECT_EQ(comm.root(), comm.size() - 1);
+            EXPECT_EQ(result.size(), comm.size());
             for (auto j = 0; j < comm.size(); ++j) {
                 EXPECT_EQ(result[asserting_cast<size_t>(j)], j);
             }
@@ -170,6 +179,25 @@ TEST(GatherTest, GatherSingleElementWithReceiveBuffer) {
     // Check if invalid roots are identified
     for (auto i = 0; i < comm.size(); ++i) {
         EXPECT_THROW(comm.gather(send_buf(value), recv_buf(result), root(comm.size() + i)), KassertException);
+    }
+
+    comm.root(0);
+
+    // receive with feasible smaller type
+    std::vector<short> short_result(0);
+    comm.gather(send_buf(value), recv_buf(short_result));
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(comm.root(), 0);
+        EXPECT_EQ(short_result.size(), 2 * comm.size());
+        for (auto i = 0; i < 2 * comm.size(); ++i) {
+            if (i % 2 == 0) {
+                EXPECT_EQ(short_result[asserting_cast<size_t>(i)], i / 2);
+            } else {
+                EXPECT_EQ(short_result[asserting_cast<size_t>(i)], 0);
+            }
+        }
+    } else {
+        EXPECT_EQ(short_result.size(), 0);
     }
 }
 
