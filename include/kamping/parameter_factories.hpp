@@ -21,6 +21,18 @@ namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
 
+namespace internal {
+/// @brief Boolean value helping to decide if data type has \c .data() method.
+/// @return \c true if class has \c .data() method and \c false otherwise.
+template <typename, typename = void>
+constexpr bool has_data_member_v{};
+
+/// @brief Boolean value helping to decide if data type has \c .data() method.
+/// @return \c true if class has \c .data() method and \c false otherwise.
+template <typename T>
+constexpr bool has_data_member_v<T, std::void_t<decltype(std::declval<T>().data())>> = true;
+} // namespace internal
+
 ///@brief Generates buffer wrapper based on a container for the send buffer, i.e. the underlying storage must contain
 /// the data elements to send.
 ///
@@ -31,7 +43,11 @@ namespace kamping {
 ///@return Object referring to the storage containing the data elements to send.
 template <typename Container>
 auto send_buf(const Container& container) {
-    return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_buf>(container);
+    if constexpr (internal::has_data_member_v<Container>) {
+        return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_buf>(container);
+    } else {
+        return internal::SingleElementConstBuffer<Container, internal::ParameterType::send_buf>(container);
+    }
 }
 
 ///@brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must contain

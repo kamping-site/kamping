@@ -132,3 +132,17 @@ TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_containers_other_tha
         EXPECT_EQ(underlying_container[i], static_cast<int>(last_resize - i));
     }
 }
+
+TEST(Test_SingleElementConstBuffer, get_basics) {
+    constexpr ParameterType              ptype = ParameterType::send_counts;
+    int                                  value = 5;
+    SingleElementConstBuffer<int, ptype> int_buffer(value);
+
+    EXPECT_EQ(int_buffer.get().size, 1);
+    EXPECT_EQ(*(int_buffer.get().ptr), 5);
+
+    EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
+    EXPECT_FALSE(int_buffer.is_modifiable);
+
+    static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
+}
