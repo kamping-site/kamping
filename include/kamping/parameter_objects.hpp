@@ -148,14 +148,15 @@ public:
     /// param container Container providing storage for data that may be written.
     UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
 
-    ///@brief Request memory sufficient to hold at least \c size elements of \c value_type.
+    ///@brief Request memory sufficient to hold exactly \c size elements of \c value_type.
     ///
-    /// If the underlying container does not provide enough memory it will be resized.
+    /// If the underlying container does not provide enough or too much memory it will be resized.
     ///@param size Number of elements for which memory is requested.
     ///@return Pointer to enough memory for \c size elements of type \c value_type.
     value_type* get_ptr(size_t size) {
-        if (_container.size() < size)
+        if (_container.size() != size) {
             _container.resize(size);
+        }
         return _container.data();
     }
 
