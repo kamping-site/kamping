@@ -46,7 +46,9 @@
 ///
 /// The macro accepts 1 to 3 parameters:
 /// 1. The assertion expression (mandatory).
-/// 2. Error message that is printed in addition to the decomposed expression (optional).
+/// 2. Error message that is printed in addition to the decomposed expression (optional). The message is piped into
+/// a logger object. Thus, one can use the `<<` operator to build the error message similar to how one would use
+/// `std::cout`.
 /// 3. The level of the assertion (optional, default: `kamping::assert::normal`, see @ref assertion-levels).
 #define KASSERT(...)                 \
     KAMPING_KASSERT_VARARG_HELPER_3( \
@@ -60,18 +62,21 @@
 ///
 /// The macro accepts 1 to 2 parameters:
 /// 1. Expression that causes the exception to be thrown if it evaluates to \c false (mandatory).
-/// 2. Error message that is added to the exception (optional).
+/// 2. Error message that is printed in addition to the decomposed expression (optional). The message is piped into
+/// a logger object. Thus, one can use the `<<` operator to build the error message similar to how one would use
+/// `std::cout`.
 #define KTHROW(...) KAMPING_KASSERT_VARARG_HELPER_2(, __VA_ARGS__, KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
 
 /// @brief Macro for throwing custom exception inside the KaMPI.ng library.
 ///
 /// The macro requires at least 2 parameters:
 /// 1. Expression that causes the exception to be thrown if it evaluates to \c false (mandatory).
-/// 2. Type of the exception to be thrown (mandatory). Its constructor must take a string containing the stringified
-/// expression as its first argument.
+/// 2. Error message that is printed in addition to the decomposed expression (optional). The message is piped into
+/// a logger object. Thus, one can use the `<<` operator to build the error message similar to how one would use
+/// `std::cout`.
 ///
-/// Any other exception is passed to the constructor of the exception class.
-#define KTHROW_CUSTOM(expression, exception_type, message, ...) \
+/// Any other parameter is passed to the constructor of the exception class.
+#define KTHROW_SPECIFIED(expression, message, exception_type, ...) \
     KAMPING_KASSERT_HPP_KTHROW_CUSTOM_IMPL(expression, exception_type, message, ##__VA_ARGS__)
 
 /// @cond IMPLEMENTATION

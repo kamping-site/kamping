@@ -47,18 +47,18 @@ TEST(KassertTest, kthrow_overloads_compile) {
     EXPECT_THROW({ KTHROW(false); }, kamping::KassertException);
 }
 
-class ZeroArgException : public std::exception {
+class ZeroCustomArgException : public std::exception {
 public:
-    ZeroArgException(std::string) {}
+    ZeroCustomArgException(std::string) {}
 
     const char* what() const throw() final {
         return "";
     }
 };
 
-class SingleArgException : public std::exception {
+class SingleCustomArgException : public std::exception {
 public:
-    SingleArgException(std::string, int) {}
+    SingleCustomArgException(std::string, int) {}
 
     const char* what() const throw() final {
         return "";
@@ -66,8 +66,8 @@ public:
 };
 
 TEST(KassertTest, kthrow_custom_compiles) {
-    EXPECT_THROW({ KTHROW_CUSTOM(false, ZeroArgException, ""); }, ZeroArgException);
-    EXPECT_THROW({ KTHROW_CUSTOM(false, SingleArgException, "", 42); }, SingleArgException);
+    EXPECT_THROW({ KTHROW_SPECIFIED(false, "", ZeroCustomArgException); }, ZeroCustomArgException);
+    EXPECT_THROW({ KTHROW_SPECIFIED(false, "", SingleCustomArgException, 42); }, SingleCustomArgException);
 }
 
 // Test that expressions are evaluated as expected
