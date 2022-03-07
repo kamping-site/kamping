@@ -82,8 +82,8 @@ auto& select_parameter_type(Args&... args) {
 /// @param args all parameter values.
 /// @return whether `Args` contains a parameter of type `parameter_type`.
 template <ParameterType parameter_type, typename... Args>
-bool has_parameter_type(const Args&...) {
-    return find_pos<parameter_type, 0, Args...>() < sizeof...(Args);
+bool has_parameter_type(const Args&... args) {
+    return find_pos<parameter_type, 0, Args...>() < sizeof...(args);
 }
 
 /// @brief Checks if parameter with requested parameter type exists at compile time.

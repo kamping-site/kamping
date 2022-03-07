@@ -192,6 +192,15 @@ inline auto root(int rank) {
     return internal::Root(rank);
 }
 
+///@brief generates a parameter object for a reduce operation.
+///
+///@tparam Op the type of the operation
+///@tparam Communtative tag whether the operation is commutative
+///@param op the operation
+///@param commutative the commutativity tag
+///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only supported
+///     for builtin operations. This is used to streamline the interface so that the use does not have to provide
+///     commutativity info when the operation is builtin.
 template <typename Op, typename Commutative = undefined_commutative>
 internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative&& commutative = undefined_commutative{}) {
     return internal::OperationBuilder<Op, Commutative>(std::move(op), std::move(commutative));

@@ -351,9 +351,11 @@ public:
     void operator=(UserOperationWrapper<is_commutative, Op, T>&) = delete;
     void operator=(UserOperationWrapper<is_commutative, Op, T>&&) = delete;
     /// @brief creates an MPI operation for the specified functor
-    /// @param the functor to call for reduction
-    UserOperationWrapper(Op&&) {
-        MPI_Op_create(UserOperationWrapper<is_commutative, Op, T>::execute, is_commutative, &mpi_op);
+    /// @param op the functor to call for reduction.
+    ///  this has to be a binary function applicable to two arguments of type \c T which return a result of type  \c T
+    UserOperationWrapper(Op&& op [[maybe_unused]]) {
+        static_assert(std::is_invocable_r_v<T, Op, T, T>, "Type of custom operation does not match.");
+        MPI_Op_create(UserOperationWrapper<is_commutative, Op, T>::execute, is_commutative, &_mpi_op);
     }
 
     /// @brief wrapper around the provided functor which is called by MPI
@@ -364,33 +366,43 @@ public:
         std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, op);
     }
     ~UserOperationWrapper() {
-        MPI_Op_free(&mpi_op);
+        MPI_Op_free(&_mpi_op);
     }
     /// @returns the \c MPI_Op constructed for the provided functor.
     ///
     /// Do not free this operation manually, because the destructor calls it. Some MPI implementations silently segfault
     /// if an \c MPI_Op is freed multiple times.
     MPI_Op& get_mpi_op() {
-        return mpi_op;
+        return _mpi_op;
     }
 
 private:
-    MPI_Op mpi_op; ///< the \c MPI_Op referencing the user defined operation
+    MPI_Op _mpi_op; ///< the \c MPI_Op referencing the user defined operation
 };
 
 
+/// @brief Wrapper for a user defined reduction operation based on a function pointer.
+///
+/// Internally, this creates an \c MPI_Op which is freed upon destruction.
+/// @tparam is_commutative whether the operation is commutative or not
 template <int is_commutative>
 class UserOperationPtrWrapper {
 public:
     void operator=(UserOperationPtrWrapper<is_commutative>&) = delete;
-    void operator                                            =(UserOperationPtrWrapper<is_commutative>&& other_op) {
+    ///@brief move constructor
+    void operator=(UserOperationPtrWrapper<is_commutative>&& other_op) {
         this->_mpi_op   = other_op._mpi_op;
         this->_no_op    = other_op._no_op;
         other_op._no_op = true;
     }
+    ///@brief creates an empty operation wrapper
     UserOperationPtrWrapper() : _no_op(true) {
         _mpi_op = MPI_OP_NULL;
     }
+    /// @brief creates an MPI operation for the specified function pointer
+    /// @param ptr the functor to call for reduction
+    /// this parameter must match the semantics of the function pointer passed to \c MPI_Op_create according to the MPI
+    /// standard.
     UserOperationPtrWrapper(mpi_custom_operation_type ptr) : _no_op(false) {
         KASSERT(ptr != nullptr);
         MPI_Op_create(ptr, is_commutative, &_mpi_op);
@@ -402,14 +414,42 @@ public:
         }
     }
 
+    /// @returns the \c MPI_Op constructed for the provided functor.
+    ///
+    /// Do not free this operation manually, because the destructor calls it. Some MPI implementations silently segfault
+    /// if an \c MPI_Op is freed multiple times.
     MPI_Op& get_mpi_op() {
         return _mpi_op;
     }
 
 private:
-    bool   _no_op;
-    MPI_Op _mpi_op;
+    bool _no_op;    ///< indicates if this operation is empty or was moved, so we can avoid freeing the same operation
+                    ///< multiple times upon destruction
+    MPI_Op _mpi_op; ///< the \c MPI_Op referencing the user defined operation
 };
+
+#ifdef KAMPING_DOXYGEN_ONLY
+
+///@brief Wraps an operation and translates it to a builtin \c MPI_Op or constructs a custom operation.
+///@tparam T the argument type of the operation
+///@tparam Op the type of the operation
+///@tparam Commutative tag indicating if this type is commutative
+template <typename T, typename Op, typename Commutative>
+class ReduceOperation {
+public:
+    ///@brief Constructs on operation wrapper
+    ///@param op the operation
+    /// maybe a function object a lambda or a \c std::function
+    ///@param commutative
+    /// May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
+    /// supported for builtin operations.
+    ReduceOperation(Op&& op, Commutative&& commutative);
+    static constexpr bool is_builtin; ///< indicates if this is a builtin operation
+    /// @returns the \c MPI_Op associated with this operation
+    MPI_Op op();
+};
+
+#else
 
 template <typename T, typename Op, typename Commutative, class Enable = void>
 class ReduceOperation {
@@ -443,13 +483,16 @@ public:
 };
 
 template <typename T, typename Op, typename Commutative>
-class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_default_constructible_v<Op>>::type> {
+class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_default_constructible_v<Op> >::type> {
     static_assert(
         std::is_same_v<Commutative, commutative> || std::is_same_v<Commutative, non_commutative>,
         "For custom operations you have to specify whether they are commutative.");
 
 public:
     ReduceOperation(Op&& op, Commutative&&) : _operation() {
+        // A lambda is may not be default constructed nor copied, so we need so hacks to deal with them.
+        // Because each lambda has a distinct type we initiate the static Op here and can access it from the static
+        // context of function pointer crated afterwards.
         static Op func = op;
 
         mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
@@ -459,14 +502,14 @@ public:
         };
         _operation = {ptr};
     };
-    using lambda_type               = Op;
-    static constexpr bool is_lambda = true;
+    static constexpr bool is_builtin = true;
     MPI_Op                op() {
         return _operation.get_mpi_op();
     }
 
 private:
-    UserOperationPtrWrapper<std::is_same_v<Commutative, commutative>> _operation;
+    UserOperationPtrWrapper<std::is_same_v<Commutative, commutative> > _operation;
 };
+#endif
 } // namespace internal
 } // namespace kamping
