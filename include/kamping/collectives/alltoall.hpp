@@ -18,7 +18,6 @@
 #include <type_traits>
 
 #include "kamping/checking_casts.hpp"
-#include "kamping/communicator.hpp"
 #include "kamping/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
@@ -28,10 +27,12 @@
 #include "kamping/parameter_type_definitions.hpp"
 
 namespace kamping {
+template <typename Communicator>
 class Alltoall {
 public:
     template <typename... Args>
-    auto alltoall(const Communicator& comm, Args&&... args) {
+    auto alltoall(Args&&... args) {
+        Communicator& comm = static_cast<Communicator&>(*this);
         // Get all parameters
         /// @todo Replace with Niklas' implementation once that is merged (has_parameter_type())
         static_assert(
@@ -76,5 +77,8 @@ public:
             std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
             internal::BufferCategoryNotUsed{});
     }
+
+protected:
+    Alltoall() {}
 };
 } // namespace kamping

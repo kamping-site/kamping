@@ -15,13 +15,14 @@
 
 #include <mpi.h>
 
+#include "kamping/collectives/alltoall.hpp"
 #include "kamping/kassert.hpp"
 
 namespace kamping {
 
 /// @brief Wrapper for MPI communicator providing access to \ref rank() and \ref size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPI.ng.
-class Communicator {
+class Communicator : public Alltoall<Communicator> {
 public:
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
     Communicator() : Communicator(MPI_COMM_WORLD) {}
