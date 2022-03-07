@@ -53,12 +53,13 @@ constexpr size_t find_pos() {
 /// @return position of first argument with matched trait.
 template <ParameterType parameter_type, size_t Index, typename Arg, typename Arg2, typename... Args>
 constexpr size_t find_pos() {
-    if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type)
+    if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type) {
         return Index;
-    else
+    } else {
         // we need to unpack the next two arguments, so we can unambiguously check for the case
         // of a single remaining argument
         return find_pos<parameter_type, Index + 1, Arg2, Args...>();
+    }
 }
 
 /// @brief Returns parameter with requested parameter type.
@@ -81,9 +82,38 @@ auto& select_parameter_type(Args&... args) {
 /// @param args all parameter values.
 /// @return whether `Args` contains a parameter of type `parameter_type`.
 template <ParameterType parameter_type, typename... Args>
-bool has_parameter_type(Args&... args) {
-    return find_pos<parameter_type, 0, Args...>() < sizeof...(args);
+bool has_parameter_type(const Args&...) {
+    return find_pos<parameter_type, 0, Args...>() < sizeof...(Args);
 }
 
+/// @brief Checks if parameter with requested parameter type exists at compile time.
+///
+/// @tparam parameter_type with which a parameter should be found.
+/// @tparam Args all parameter types to be searched.
+/// @return whether `Args` contains a parameter of type `parameter_type`.
+template <ParameterType parameter_type, typename... Args>
+constexpr bool has_parameter_type() {
+    return find_pos<parameter_type, 0, Args...>() < sizeof...(Args);
+}
+
+/// @brief Checks if parameter with requested parameter type exists, if not constructs a default value.
+///
+/// @tparam parameter_type with which a parameter should be found.
+/// @tparam Args all parameter types to be searched.
+/// @tparam DefaultParameterType the type of the default parameter to be constructed.
+/// @tparam DefaultArguments the types of parameters passed to the constructor \c DefaultParameterType.
+/// @param default_arguments tuple of the arguments passed to the constructor of \c DefaultParameterType.
+/// @param args all parameters from which a parameter with the correct type is selected.
+/// @returns the first parameter whose type has the requested parameter type or the constructed default parameter if
+/// none is found.
+template <ParameterType parameter_type, typename DefaultParameterType, typename... DefaultArguments, typename... Args>
+decltype(auto) select_parameter_type_or_default(std::tuple<DefaultArguments...> default_arguments, Args&... args) {
+    if constexpr (has_parameter_type<parameter_type, Args...>()) {
+        constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
+        return std::get<selected_index>(std::forward_as_tuple(args...));
+    } else {
+        return std::make_from_tuple<DefaultParameterType>(std::move(default_arguments));
+    }
+}
 /// @}
 } // namespace kamping::internal
