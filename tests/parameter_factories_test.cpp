@@ -150,6 +150,21 @@ TEST(HelpersTest, send_buf_single_element) {
     }
 }
 
+TEST(HelpersTest, send_buf_switch) {
+    uint8_t              value  = 0;
+    std::vector<uint8_t> values = {0, 0, 0, 0, 0, 0};
+
+    [[maybe_unused]] auto gen_single_element_buffer = send_buf(value);
+    [[maybe_unused]] auto gen_int_vec_buffer        = send_buf(values);
+
+    bool const single_result =
+        std::is_same_v<decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_buf>>;
+    EXPECT_TRUE(single_result);
+    bool const vec_result = std::is_same_v<
+        decltype(gen_int_vec_buffer), ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
+    EXPECT_TRUE(vec_result);
+}
+
 TEST(HelpersTest, send_counts_basics_int_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto             gen_via_int_vec = send_counts(int_vec);
