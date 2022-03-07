@@ -25,7 +25,7 @@ namespace internal {
 /// @brief Boolean value helping to decide if data type has \c .data() method.
 /// @return \c true if class has \c .data() method and \c false otherwise.
 template <typename, typename = void>
-constexpr bool has_data_member_v{};
+constexpr bool has_data_member_v = false;
 
 /// @brief Boolean value helping to decide if data type has \c .data() method.
 /// @return \c true if class has \c .data() method and \c false otherwise.
