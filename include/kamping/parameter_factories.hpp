@@ -33,20 +33,22 @@ template <typename T>
 constexpr bool has_data_member_v<T, std::void_t<decltype(std::declval<T>().data())>> = true;
 } // namespace internal
 
-///@brief Generates buffer wrapper based on a container for the send buffer, i.e. the underlying storage must contain
-/// the data elements to send.
+///@brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
+/// the data element(s) to send.
 ///
-/// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
-///@tparam Container Container type which contains the elements to send.
-///@param container Container which contains the elements to send
+/// If the underlying container provides \c data(), it is assumed that it is a container and all elements in the
+/// container are considered for the operation. In this case, the container has to provide a \c size() member functions
+/// and expose the contained \c value_type. If no \c data() member function exists, a single element is wrapped in the
+/// send buffer.
+///@tparam Data Data type representing the element(s) to send.
+///@param data Data (either a container which contains the elements or the element directly) to send
 ///@return Object referring to the storage containing the data elements to send.
-template <typename Container>
-auto send_buf(const Container& container) {
-    if constexpr (internal::has_data_member_v<Container>) {
-        return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_buf>(container);
+template <typename Data>
+auto send_buf(const Data& data) {
+    if constexpr (internal::has_data_member_v<Data>) {
+        return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_buf>(data);
     } else {
-        return internal::SingleElementConstBuffer<Container, internal::ParameterType::send_buf>(container);
+        return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_buf>(data);
     }
 }
 
