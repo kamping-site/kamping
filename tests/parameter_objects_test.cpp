@@ -64,6 +64,7 @@ TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_basics) {
     auto resize_write_check = [&](size_t requested_size) {
         int* ptr = buffer_based_on_int_vector.get_ptr(requested_size);
         EXPECT_EQ(ptr, int_vec.data());
+        EXPECT_EQ(int_vec.size(), requested_size);
         for (size_t i = 0; i < requested_size; ++i) {
             ptr[i] = static_cast<int>(requested_size - i);
             EXPECT_EQ(ptr[i], int_vec[i]);
@@ -83,6 +84,7 @@ TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_containers_other_than_vecto
     auto resize_write_check = [&](size_t requested_size) {
         int* ptr = buffer_based_on_own_container.get_ptr(requested_size);
         EXPECT_EQ(ptr, own_container.data());
+        EXPECT_EQ(own_container.size(), requested_size);
         for (size_t i = 0; i < requested_size; ++i) {
             ptr[i] = static_cast<int>(requested_size - i);
             EXPECT_EQ(ptr[i], own_container[i]);
