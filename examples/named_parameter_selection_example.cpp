@@ -25,6 +25,12 @@ struct Argument {
     std::size_t id;
 };
 
+struct DefaultArgument {
+    DefaultArgument(int value, std::string message) : _value(value), _message(message) {}
+    int         _value;
+    std::string _message;
+};
+
 
 } // namespace kamping
 
@@ -55,6 +61,15 @@ int main() {
         const auto& selected_arg =
             internal::select_parameter_type<internal::ParameterType::send_buf>(arg_id_2, arg_id_1, arg_id_3, arg_id_4);
         std::cout << "Id of selected Argument: " << selected_arg.id << std::endl;
+    }
+    {
+        // We can provide default arguments which are only constructed if the parameter is not given
+        // arguments to the default parameter are passed as a tuple
+        auto&& selected_arg =
+            internal::select_parameter_type_or_default<internal::ParameterType::root, DefaultArgument>(
+                std::tuple(42, "KaMPI.ng"), arg_id_2, arg_id_1, arg_id_3, arg_id_4);
+        std::cout << "parameters of default argument: " << selected_arg._value << " " << selected_arg._message
+                  << std::endl;
     }
     return 0;
 }
