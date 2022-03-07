@@ -29,8 +29,8 @@ int main(int /*argc*/, char** /*argv*/) {
     const auto& selected_arg = select_parameter_type<ParameterType::send_counts>(arg0, arg1);
 #elif defined(DEFAULT_ARGUMENTS_DO_NOT_MATCH)
     // if the default argument cannot be constructed from the given parameters this should fail to compile
-    auto&& selected_args =
-        select_parameter_type_or_default<ParameterType::send_counts, DefaultArgument>(std::tuple("Hello World"), arg0, arg1);
+    auto&& selected_args = select_parameter_type_or_default<ParameterType::send_counts, DefaultArgument>(
+        std::tuple("Hello World"), arg0, arg1);
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif
