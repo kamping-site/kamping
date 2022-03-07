@@ -223,10 +223,14 @@ private:
 };
 
 
+/// @brief Parameter wrapping an operation passed to reduce-like MPI collectives.
+/// @tparam Op type of the operation (may be a function object or a lambda)
+/// @tparam Commutative tag specifying if the operation is commutative
 template <typename Op, typename Commutative>
 class OperationBuilder {
 public:
-    static constexpr ParameterType parameter_type = ParameterType::op;
+    static constexpr ParameterType parameter_type =
+        ParameterType::op; ///< The type of parameter this object encapsulates.
     OperationBuilder(Op&& op, Commutative&&) : _op(op) {}
     template <typename T>
     auto build_operation() {

@@ -53,12 +53,13 @@ constexpr size_t find_pos() {
 /// @return position of first argument with matched trait.
 template <ParameterType parameter_type, size_t Index, typename Arg, typename Arg2, typename... Args>
 constexpr size_t find_pos() {
-    if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type)
+    if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type) {
         return Index;
-    else
+    } else {
         // we need to unpack the next two arguments, so we can unambiguously check for the case
         // of a single remaining argument
         return find_pos<parameter_type, Index + 1, Arg2, Args...>();
+    }
 }
 
 /// @brief Returns parameter with requested parameter type.
