@@ -26,7 +26,7 @@
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 
-namespace kamping {
+namespace kamping::internal {
 template <typename Communicator>
 class Alltoall {
 public:
@@ -81,4 +81,4 @@ public:
 protected:
     Alltoall() {}
 };
-} // namespace kamping
+} // namespace kamping::internal
