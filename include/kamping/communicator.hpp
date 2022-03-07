@@ -17,6 +17,7 @@
 #include <mpi.h>
 
 #include "kamping/kassert.hpp"
+#include "kamping/collectives/reduce.hpp"
 
 namespace kamping {
 
@@ -131,6 +132,12 @@ public:
     /// @return \c true if rank in [0,size) and \c false otherwise.
     [[nodiscard]] bool is_valid_rank(int const rank) const {
         return rank >= 0 && rank < _size;
+    }
+
+
+    template<typename... Args>
+    [[nodiscard]] auto reduce(Args&&... args) const {
+        return internal::reduce(*this, std::forward<Args>(args)...);
     }
 
 private:
