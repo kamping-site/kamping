@@ -20,8 +20,15 @@
 
 using namespace ::kamping::internal;
 
-// Simple container to test KaMPI.ng's buffers with containers other than std::vector
+// Test our minimal span implementation
+TEST(Test_Span, basic_functionality) {
+    std::vector<int> values   = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    Span<int>        int_span = {values.data(), values.size()};
 
+    EXPECT_EQ(values.size(), int_span.size);
+    EXPECT_EQ(values.data(), int_span.data());
+    EXPECT_EQ(int_span.ptr, int_span.data());
+}
 
 // Tests the basic functionality of ContainerBasedConstBuffer (i.e. its only public function get())
 TEST(Test_ContainerBasedConstBuffer, get_basics) {

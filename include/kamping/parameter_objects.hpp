@@ -65,6 +65,15 @@ template <typename T>
 struct Span {
     const T* ptr;  ///< Pointer to the data referred to by Span.
     size_t   size; ///< Number of elements of type T referred to by Span.
+
+    /// @brief Get access to the underlying read-only memory.
+    ///
+    /// While the data can be accessed directly using the member, this member function provides a more STL-like
+    /// interface.
+    /// @return Pointer to the underlying read-only memory.
+    T const* data() const {
+        return ptr;
+    }
 };
 
 
