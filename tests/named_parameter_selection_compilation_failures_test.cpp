@@ -20,6 +20,7 @@ int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping::internal;
     testing::Argument<ParameterType::send_buf> arg0{0};
     testing::Argument<ParameterType::recv_buf> arg1{1};
+    /// @brief dummy default argument
     struct DefaultArgument {
         DefaultArgument(int member) : _member(member){};
         int _member;
