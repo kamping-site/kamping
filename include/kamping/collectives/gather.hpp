@@ -63,6 +63,24 @@ auto Communicator::gather(Args&&... args) {
     KTHROW(is_valid_rank(root.rank()), "Invalid rank as root.");
     KTHROW(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
+    [[maybe_unused]] auto check_equal_sizes = [&]() {
+        std::vector<size_t> result(asserting_cast<size_t>(_size), 0);
+        size_t              local_size = asserting_cast<size_t>(send_buf.size);
+        MPI_Gather(
+            &local_size, 1, mpi_datatype<size_t>(), result.data(), 1, mpi_datatype<size_t>(), root.rank(), _comm);
+        for (size_t i = 1; i < result.size(); ++i) {
+            if (result[i] != result[i - 1]) {
+                return false;
+            }
+        }
+        return true;
+    };
+    KASSERT(
+        check_equal_sizes(),
+        "All PEs have to send the same number of elements. Use gatherv, if you want to send a different number of "
+        "elements.",
+        4);
+
     // error code can be unused if KTHROW is removed at compile time
     [[maybe_unused]] int err = MPI_Gather(
         send_buf.ptr, asserting_cast<int>(send_buf.size), mpi_send_type, recv_buf.get_ptr(recv_buf_size),

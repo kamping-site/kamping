@@ -11,9 +11,9 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-// overwrite build options and set assertion level to normal, enable exceptions
+// overwrite build options and set assertion level to light_communication, enable exceptions
 #undef KAMPING_ASSERTION_LEVEL
-#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
+#define KAMPING_ASSERTION_LEVEL kamping::assert::light_communication
 #ifndef KAMPING_EXCEPTION_MODE
     #define KAMPING_EXCEPTION_MODE
 #endif // KAMPING_EXCEPTION_MODE
@@ -182,10 +182,23 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
     }
 }
 
-TEST(GatherTest, GatherMultipleElements) {
+TEST(GatherTest, gather_send_different_number_with_gather) {
     Communicator comm;
+    if (comm.size() > 1) {
+        std::vector<int> values(asserting_cast<size_t>(comm.rank()) + 1, comm.size());
+        EXPECT_THROW(comm.gather(send_buf(values)), KassertException);
+    }
+}
 
+TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
+    Communicator     comm;
     std::vector<int> values = {comm.rank(), comm.rank(), comm.rank(), comm.rank()};
+    auto             result = comm.gather(send_buf(values)).extract_recv_buffer();
 
-    auto result = comm.gather(send_buf(values));
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), values.size() * comm.size());
+        for (size_t i = 0; i < result.size(); ++i) {
+            EXPECT_EQ(result[i], i / values.size());
+        }
+    }
 }
