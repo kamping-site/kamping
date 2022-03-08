@@ -34,9 +34,8 @@ public:
     auto alltoall(Args&&... args) {
         Communicator& comm = static_cast<Communicator&>(*this);
         // Get all parameters
-        /// @todo Replace with Niklas' implementation once that is merged (has_parameter_type())
         static_assert(
-            internal::find_pos<internal::ParameterType::send_buf, 0, Args...>() < sizeof...(Args),
+            internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
             "Missing required parameter send_buf.");
 
         auto& send_buf_param       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
@@ -45,15 +44,9 @@ public:
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
 
         using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
-        /// @todo replace with Niklas' implementation once that is merged (select_parameter_type_or_default)
-        auto&& recv_buf = [&]() {
-            if constexpr (internal::find_pos<internal::ParameterType::recv_buf, 0, Args...>() < sizeof...(Args)) {
-                constexpr size_t selected_index = internal::find_pos<internal::ParameterType::recv_buf, 0, Args...>();
-                return std::get<selected_index>(std::forward_as_tuple(args...));
-            } else {
-                return default_recv_buf_type();
-            }
-        }();
+        auto&& recv_buf =
+            internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
+                std::tuple(), args...);
         using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
         MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
