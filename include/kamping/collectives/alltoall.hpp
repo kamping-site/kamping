@@ -65,7 +65,7 @@ public:
         int err = MPI_Alltoall(
             send_buf.ptr, send_count, mpi_send_type, recv_buf.get_ptr(recv_buf_size), recv_count, mpi_recv_type,
             comm.mpi_communicator());
-        // @todo throw correct exception with propagated error code
+        /// @todo throw correct exception with propagated error code
         KTHROW(err == MPI_SUCCESS);
         return MPIResult(
             std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
