@@ -58,6 +58,7 @@ public:
         MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
         // Get the send and receive counts
+        // TODO Use MPI_Type_size
         int send_count = throwing_cast<int>(send_buf.size / asserting_cast<size_t>(comm.size()));
         /// @todo test
         KTHROW(
