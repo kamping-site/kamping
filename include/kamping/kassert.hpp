@@ -130,13 +130,13 @@
 // In KAMPING_EXCEPTION_MODE, we throw an exception similar to the implementation of KASSERT(), although expression
 // decomposition in exceptions is currently unsupported. Otherwise, the macro delegates to KASSERT().
 #ifdef KAMPING_EXCEPTION_MODE
-    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)                                   \
-        do {                                                                                                       \
-            if (!(expression)) {                                                                                   \
-                throw assertion_type(                                                                              \
-                    #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION,                                              \
-                    (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str()); \
-            }                                                                                                      \
+    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)                                    \
+        do {                                                                                                        \
+            if (!(expression)) {                                                                                    \
+                throw assertion_type(kamping::internal::build_what(                                                 \
+                    #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION,                                               \
+                    (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str())); \
+            }                                                                                                       \
         } while (false)
 #else
     #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type) \
@@ -175,18 +175,28 @@ struct SourceLocation {
     /// @brief Function name.
     char const* function;
 };
+
+/// @brief Builds the description for an exception.
+/// @param expression Expression that caused this exception to be thrown.
+/// @param where Source code location where the exception was thrown.
+/// @param message User message describing this exception.
+/// @return The description of this exception.
+[[maybe_unused]] std::string
+build_what(std::string const& expression, SourceLocation const where, std::string const& message) {
+    using namespace std::string_literals;
+    return "\n"s + where.file + ": In function '" + where.function + "':\n" + where.file + ": "
+           + std::to_string(where.row) + ": FAILED ASSERTION\n" + "\t" + expression + "\n" + message + "\n";
+}
 } // namespace internal
+
 
 /// @brief The default exception type used together with \c KTHROW. Reports the erroneous expression together with a
 /// custom error message.
 class KassertException : public std::exception {
 public:
-    /// @brief Constructs the exception based on the erroneous expression and a custom error message.
-    /// @param expression The stringified expression that caused this exception to be thrown.
-    /// @param where Location where the error occured.
+    /// @brief Constructs the exception
     /// @param message A custom error message.
-    explicit KassertException(std::string const& expression, internal::SourceLocation where, std::string const& message)
-        : _what(_build_what(expression, where, message)) {}
+    explicit KassertException(std::string const& message) : _what(message) {}
 
     /// @brief Prints a description of this exception.
     /// @return A description of this exception.
@@ -195,18 +205,6 @@ public:
     }
 
 private:
-    /// @brief Builds the description of this exception.
-    /// @param expression Expression that caused this exception to be thrown.
-    /// @param where Source code location where the exception was thrown.
-    /// @param message User message describing this exception.
-    /// @return The description of this exception.
-    static std::string
-    _build_what(std::string const& expression, internal::SourceLocation where, std::string const& message) {
-        using namespace std::string_literals;
-        return "\n"s + where.file + ": In function '" + where.function + "':\n" + where.file + ": "
-               + std::to_string(where.row) + ": FAILED ASSERTION\n" + "\t" + expression + "\n" + message + "\n";
-    }
-
     /// @brief The description of this exception.
     std::string _what;
 };

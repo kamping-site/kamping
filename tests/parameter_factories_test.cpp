@@ -81,6 +81,20 @@ void test_library_allocated_buffer(
     std::ignore = generated_buffer.get_ptr(5);
 }
 
+template <typename ExpectedValueType, typename GeneratedBuffer>
+void test_single_element_buffer(
+    GeneratedBuffer const& generatedbuffer, kamping::internal::ParameterType expected_parameter_type,
+    ExpectedValueType const value) {
+    static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
+
+    EXPECT_FALSE(GeneratedBuffer::is_modifiable);
+    EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
+
+    auto get_result = generatedbuffer.get();
+    EXPECT_EQ(get_result.size, 1);
+    EXPECT_EQ(*(get_result.ptr), value);
+}
+
 } // namespace testing
 
 TEST(HelpersTest, send_buf_basics_int_vector) {
@@ -97,6 +111,58 @@ TEST(HelpersTest, send_buf_basics_const_int_vector) {
     Span<int>              expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::send_buf, expected_span);
+}
+
+TEST(HelpersTest, send_buf_single_element) {
+    {
+        uint8_t value                     = 11;
+        auto    gen_single_element_buffer = send_buf(value);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_buf, value);
+    }
+    {
+        uint16_t value                     = 4211;
+        auto     gen_single_element_buffer = send_buf(value);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_buf, value);
+    }
+    {
+        uint32_t value                     = 4096;
+        auto     gen_single_element_buffer = send_buf(value);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_buf, value);
+    }
+    {
+        uint64_t value                     = 555555;
+        auto     gen_single_element_buffer = send_buf(value);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_buf, value);
+    }
+    {
+        struct CustomType {
+            uint64_t v1;
+            int      v2;
+            char     v3;
+
+            bool operator==(CustomType const& other) const {
+                return std::tie(v1, v2, v3) == std::tie(other.v1, other.v2, other.v3);
+            }
+        }; // struct CustomType
+        CustomType value                     = {843290834, -482, 'a'};
+        auto       gen_single_element_buffer = send_buf(value);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_buf, value);
+    }
+}
+
+TEST(HelpersTest, send_buf_switch) {
+    uint8_t              value  = 0;
+    std::vector<uint8_t> values = {0, 0, 0, 0, 0, 0};
+
+    [[maybe_unused]] auto gen_single_element_buffer = send_buf(value);
+    [[maybe_unused]] auto gen_int_vec_buffer        = send_buf(values);
+
+    bool const single_result =
+        std::is_same_v<decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_buf>>;
+    EXPECT_TRUE(single_result);
+    bool const vec_result = std::is_same_v<
+        decltype(gen_int_vec_buffer), ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
+    EXPECT_TRUE(vec_result);
 }
 
 TEST(HelpersTest, send_counts_basics_int_vector) {

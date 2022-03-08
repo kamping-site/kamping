@@ -67,8 +67,17 @@ namespace internal {
 template <typename T>
 struct Span {
     using value_type = T; ///< Value type of the underlying pointer
-    const T* ptr;         ///< Pointer to the data referred to by Span.
-    size_t   size;        ///< Number of elements of type T referred to by Span.
+    const T* ptr;  ///< Pointer to the data referred to by Span.
+    size_t   size; ///< Number of elements of type T referred to by Span.
+
+    /// @brief Get access to the underlying read-only memory.
+    ///
+    /// While the data can be accessed directly using the member, this member function provides a more STL-like
+    /// interface.
+    /// @return Pointer to the underlying read-only memory.
+    T const* data() const {
+        return ptr;
+    }
 };
 
 
@@ -125,6 +134,33 @@ private:
     const Container& _container; ///< Container which holds the actual data.
 };
 
+/// @brief Constant buffer for a single type, i.e., not a container.
+///
+/// SingleElementConstBuffer wraps a read-only value and is used instead of \ref ContainerBasedConstBuffer if only a
+/// single element is sent or received and no container is needed.
+/// @tparam DataType Type of the element wrapped.
+/// @tparam ParameterType Parameter type represented by this buffer.
+template <typename DataType, ParameterType type>
+class SingleElementConstBuffer {
+public:
+    static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
+    using value_type                              = DataType; ///< Value type of the buffer.
+
+    /// @brief Constructor for SingleElementConstBuffer.
+    /// @param element Element holding that is wrapped.
+    SingleElementConstBuffer(DataType const& element) : _element(element) {}
+
+    /// @brief Get access to the underlaying read-only value.
+    /// @return Span referring to the underlying read-only storage.
+    Span<value_type> get() const {
+        return {&_element, 1};
+    }
+
+private:
+    DataType const& _element; ///< Reference to the actual data.
+};
+
 /// @brief Struct containing some definitions used by all modifiable buffers.
 ///
 /// @tparam ParameterType (parameter) type represented by this buffer
@@ -152,14 +188,13 @@ public:
     /// param container Container providing storage for data that may be written.
     UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
 
-    ///@brief Request memory sufficient to hold at least \c size elements of \c value_type.
+    ///@brief Request memory sufficient to hold \c size elements of \c value_type.
     ///
-    /// If the underlying container does not provide enough memory it will be resized.
+    /// If the underlying container does not provide enough it will be resized.
     ///@param size Number of elements for which memory is requested.
-    ///@return Pointer to enough memory for \c size elements of type \c value_type.
+    ///@return Pointer to container of size \c size.
     value_type* get_ptr(size_t size) {
-        if (_container.size() < size)
-            _container.resize(size);
+        _container.resize(size);
         return _container.data();
     }
 
