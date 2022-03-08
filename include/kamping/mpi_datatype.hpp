@@ -149,6 +149,19 @@ template <typename T>
     return mpi_type;
 }
 
+/// @brief Gets the size of an MPI datatype in bytes
+///
+/// @param mpi_datatype The MPI datatype to get the size of.
+/// @return The size of the MPI datatype
+///
+int mpi_datatype_size(MPI_Datatype mpi_datatype) {
+    int                  result;
+    [[maybe_unused]] int err = MPI_Type_size(mpi_datatype, &result);
+    // @todo throw correct exception with propagated error code
+    KTHROW(err == MPI_SUCCESS);
+    return result;
+}
+
 /// @}
 
 } // namespace kamping
