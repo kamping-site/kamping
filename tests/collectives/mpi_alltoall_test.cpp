@@ -107,7 +107,7 @@ TEST(AlltoallTest, alltoall_custom_type) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AlltoallTest, alltoall_mismatching_types) {
+TEST(AlltoallTest, alltoall_mismatched_types) {
     Communicator comm;
 
     const int num_elements_per_processor_pair = 4;
