@@ -31,7 +31,7 @@ TEST(Test_Span, basic_functionality) {
 }
 
 // Tests the basic functionality of ContainerBasedConstBuffer (i.e. its only public function get())
-TEST(Test_ContainerBasedConstBuffer, get_basics) {
+TEST(ContainerBasedConstBufferTest, get_basics) {
     std::vector<int>       int_vec{1, 2, 3};
     std::vector<int> const int_vec_const{1, 2, 3, 4};
 
@@ -48,7 +48,7 @@ TEST(Test_ContainerBasedConstBuffer, get_basics) {
     static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.get().ptr), const int*>);
 }
 
-TEST(Test_ContainerBasedConstBuffer, get_containers_other_than_vector) {
+TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
     std::string                                                  str = "I am underlying storage";
     testing::OwnContainer<int>                                   own_container;
     constexpr ParameterType                                      ptype = ParameterType::send_counts;
@@ -62,7 +62,7 @@ TEST(Test_ContainerBasedConstBuffer, get_containers_other_than_vector) {
     EXPECT_EQ(buffer_based_on_own_container.get().ptr, own_container.data());
 }
 
-TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_basics) {
+TEST(UserAllocatedContainerBasedBufferTest, get_ptr_basics) {
     std::vector<int> int_vec{1, 2, 3, 2, 1};
 
     constexpr ParameterType                                    ptype = ParameterType::send_counts;
@@ -82,7 +82,7 @@ TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_basics) {
     resize_write_check(9);
 }
 
-TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_containers_other_than_vector) {
+TEST(UserAllocatedContainerBasedBufferTest, get_ptr_containers_other_than_vector) {
     testing::OwnContainer<int> own_container;
 
     constexpr ParameterType                                              ptype = ParameterType::recv_counts;
@@ -102,7 +102,7 @@ TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_containers_other_than_vecto
     resize_write_check(9);
 }
 
-TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_basics) {
+TEST(LibAllocatedContainerBasedBufferTest, get_ptr_extract_basics) {
     constexpr ParameterType                                   ptype = ParameterType::recv_counts;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer_based_on_int_vector;
 
@@ -122,7 +122,7 @@ TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_basics) {
     }
 }
 
-TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_containers_other_than_vector) {
+TEST(LibAllocatedContainerBasedBufferTest, get_ptr_extract_containers_other_than_vector) {
     constexpr ParameterType                                             ptype = ParameterType::recv_counts;
     LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container;
 
@@ -142,7 +142,7 @@ TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_containers_other_tha
     }
 }
 
-TEST(Test_SingleElementConstBuffer, get_basics) {
+TEST(SingleElementConstBufferTest, get_basics) {
     constexpr ParameterType              ptype = ParameterType::send_counts;
     int                                  value = 5;
     SingleElementConstBuffer<int, ptype> int_buffer(value);
