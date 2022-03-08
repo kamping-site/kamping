@@ -143,6 +143,9 @@ public:
         return rank >= 0 && rank < _size;
     }
 
+    template <typename... Args>
+    auto gather(Args&&... args);
+
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
     /// @return Rank of the current MPI process in the communicator.
@@ -172,3 +175,5 @@ private:
 };             // class communicator
 
 } // namespace kamping
+
+#include "kamping/collectives/gather.hpp"
