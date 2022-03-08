@@ -35,6 +35,7 @@ namespace kamping::internal {
 /// @tparam Index Index of current argument to evaluate.
 /// @tparam Arg Argument to evaluate.
 /// @return The index
+/// @return \c std::numeric_limits<std::size_t>::max() if not found
 template <ParameterType parameter_type, size_t Index, typename Arg>
 constexpr size_t find_pos() {
     constexpr bool found_arg = std::remove_reference_t<Arg>::parameter_type == parameter_type;
@@ -51,6 +52,7 @@ constexpr size_t find_pos() {
 /// @tparam Arg2 The next argument.
 /// @tparam Args All remaining arguments.
 /// @return Position of first argument with matched trait.
+/// @return \c std::numeric_limits<std::size_t>::max() if not found
 template <ParameterType parameter_type, size_t Index, typename Arg, typename Arg2, typename... Args>
 constexpr size_t find_pos() {
     if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type) {
