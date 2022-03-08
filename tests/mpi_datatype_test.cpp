@@ -303,7 +303,7 @@ TEST(MpiDataTypeTest, mpi_datatype_c_array) {
     EXPECT_EQ(mpi_datatype_size(mpi_datatype<decltype(c_array)>()), 3 * sizeof(int));
 }
 
-TEST(HelpersTest, mpi_datatype_size) {
+TEST(MpiDataTypeTest, mpi_datatype_size) {
     EXPECT_EQ(mpi_datatype_size(MPI_INT), sizeof(int));
     EXPECT_EQ(mpi_datatype_size(MPI_CHAR), sizeof(char));
     EXPECT_EQ(mpi_datatype_size(MPI_INT16_T), 2);
