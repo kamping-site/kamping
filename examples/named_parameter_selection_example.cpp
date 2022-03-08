@@ -25,6 +25,7 @@ struct Argument {
     std::size_t id;
 };
 
+/// @brief dummy default argument
 struct DefaultArgument {
     DefaultArgument(int value, std::string message) : _value(value), _message(message) {}
     int         _value;
