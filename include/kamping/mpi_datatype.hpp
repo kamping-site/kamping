@@ -48,6 +48,197 @@ template <size_t NumBytes>
     return type;
 }
 
+enum class TypeCategory { integer, floating, complex, logical, byte, undefined };
+
+#ifdef KAMPING_DOXYGEN_ONLY
+/// @brief maps C++ types to builtin \c MPI_Datatypes
+///
+/// the members specify which group the datatype belongs to according to the type groups specified in Section 5.9.2 of
+/// the MPI 3.1 standard.
+/// @tparam T type to map to a \c MPI_Datatype
+template <typename T>
+struct mpi_type_traits {
+    /// @brief true, if the type maps to a builtin \c MPI_Datatype
+    static constexpr bool is_builtin;
+    /// @brief true, if the type is an integer value according to the MPI standard
+    static constexpr TypeCategory category;
+    /// @brief this member function is only defined if \c is_builtin is true. If this is the case, it to the \c
+    /// MPI_Datatype
+    /// @returns the constant of type \c MPI_Datatype mapping to type \c T according the the MPI standard.
+    static MPI_Datatype data_type();
+};
+#else
+/// @brief base type for non-builtin types
+struct is_builtin_mpi_type_false {
+    static constexpr bool         is_builtin = false;
+    static constexpr TypeCategory category   = TypeCategory::undefined;
+};
+
+/// @brief base type for builtin types
+struct is_builtin_mpi_type_true : is_builtin_mpi_type_false {
+    static constexpr bool is_builtin = true;
+};
+
+/// @brief base template for implementation
+template <typename T>
+struct mpi_type_traits_impl : is_builtin_mpi_type_false {};
+
+// template specializations of mpi_type_traits_impl
+
+template <>
+struct mpi_type_traits_impl<char> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CHAR;
+    }
+};
+
+template <>
+struct mpi_type_traits_impl<signed char> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_SIGNED_CHAR;
+    }
+    static constexpr TypeCategory category = TypeCategory::integer;
+};
+
+template <>
+struct mpi_type_traits_impl<unsigned char> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_UNSIGNED_CHAR;
+    }
+    static constexpr TypeCategory category = TypeCategory::integer;
+};
+
+template <>
+struct mpi_type_traits_impl<wchar_t> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_WCHAR;
+    }
+};
+
+template <>
+struct mpi_type_traits_impl<short int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_SHORT;
+    }
+    static constexpr TypeCategory category = TypeCategory::integer;
+};
+
+template <>
+struct mpi_type_traits_impl<unsigned short int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_UNSIGNED_SHORT;
+    }
+    static constexpr TypeCategory category = TypeCategory::integer;
+};
+
+template <>
+struct mpi_type_traits_impl<int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_INT;
+    }
+    static constexpr TypeCategory category = TypeCategory::integer;
+};
+
+template <>
+struct mpi_type_traits_impl<unsigned int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_UNSIGNED;
+    }
+    static constexpr TypeCategory category = TypeCategory::integer;
+};
+
+template <>
+struct mpi_type_traits_impl<long int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_LONG;
+    }
+    static constexpr TypeCategory category = TypeCategory::integer;
+};
+
+template <>
+struct mpi_type_traits_impl<unsigned long int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_UNSIGNED_LONG;
+    }
+    static constexpr TypeCategory category = TypeCategory::integer;
+};
+
+template <>
+struct mpi_type_traits_impl<long long int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_LONG_LONG;
+    }
+    static constexpr TypeCategory category = TypeCategory::integer;
+};
+
+template <>
+struct mpi_type_traits_impl<unsigned long long int> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_UNSIGNED_LONG_LONG;
+    }
+    static constexpr TypeCategory category = TypeCategory::integer;
+};
+
+template <>
+struct mpi_type_traits_impl<float> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_FLOAT;
+    }
+    static constexpr TypeCategory category = TypeCategory::floating;
+};
+
+template <>
+struct mpi_type_traits_impl<double> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_DOUBLE;
+    }
+    static constexpr TypeCategory category = TypeCategory::floating;
+};
+
+template <>
+struct mpi_type_traits_impl<long double> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_LONG_DOUBLE;
+    }
+    static constexpr TypeCategory category = TypeCategory::floating;
+};
+
+template <>
+struct mpi_type_traits_impl<bool> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CXX_BOOL;
+    }
+    static constexpr TypeCategory category = TypeCategory::logical;
+};
+template <>
+struct mpi_type_traits_impl<std::complex<float>> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CXX_FLOAT_COMPLEX;
+    }
+    static constexpr TypeCategory category = TypeCategory::logical;
+};
+template <>
+struct mpi_type_traits_impl<std::complex<double>> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CXX_DOUBLE_COMPLEX;
+    }
+    static constexpr TypeCategory category = TypeCategory::complex;
+};
+
+template <>
+struct mpi_type_traits_impl<std::complex<long double>> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CXX_LONG_DOUBLE_COMPLEX;
+    }
+    static constexpr TypeCategory category = TypeCategory::complex;
+};
+
+
+/// @brief wrapper for \c mpi_type_traits_impl which removes const and volatile qualifiers
+template <typename T>
+struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
+#endif
+
 /// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
 /// new custom continuous type.
 ///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
@@ -57,6 +248,10 @@ template <size_t NumBytes>
 ///
 template <typename T>
 [[nodiscard]] constexpr MPI_Datatype mpi_datatype() noexcept {
+    if constexpr (mpi_type_traits<T>::is_builtin) {
+        return mpi_type_traits<T>::data_type();
+    }
+
     // Remove const and volatile qualifiers.
     using T_no_cv = std::remove_cv_t<T>;
 
@@ -81,65 +276,9 @@ template <typename T>
     }
 
     // Check if we got a enum type -> use underlying type
+    MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
     if constexpr (std::is_enum_v<T_no_cv>) {
         return mpi_datatype<std::underlying_type_t<T_no_cv>>();
-    }
-
-    MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
-    if constexpr (std::is_same_v<T_no_cv, char>) {
-        mpi_type = MPI_CHAR;
-    } else if constexpr (std::is_same_v<T_no_cv, signed char>) {
-        mpi_type = MPI_SIGNED_CHAR;
-    } else if constexpr (std::is_same_v<T_no_cv, unsigned char>) {
-        mpi_type = MPI_UNSIGNED_CHAR;
-    } else if constexpr (std::is_same_v<T_no_cv, wchar_t>) {
-        mpi_type = MPI_WCHAR;
-    } else if constexpr (std::is_same_v<T_no_cv, signed short>) {
-        mpi_type = MPI_SHORT;
-    } else if constexpr (std::is_same_v<T_no_cv, unsigned short>) {
-        mpi_type = MPI_UNSIGNED_SHORT;
-    } else if constexpr (std::is_same_v<T_no_cv, signed int>) {
-        mpi_type = MPI_INT;
-    } else if constexpr (std::is_same_v<T_no_cv, unsigned int>) {
-        mpi_type = MPI_UNSIGNED;
-    } else if constexpr (std::is_same_v<T_no_cv, signed long int>) {
-        mpi_type = MPI_LONG;
-    } else if constexpr (std::is_same_v<T_no_cv, unsigned long int>) {
-        mpi_type = MPI_UNSIGNED_LONG;
-    } else if constexpr (std::is_same_v<T_no_cv, signed long long int>) {
-        mpi_type = MPI_LONG_LONG;
-    } else if constexpr (std::is_same_v<T_no_cv, unsigned long long int>) {
-        mpi_type = MPI_UNSIGNED_LONG_LONG;
-    } else if constexpr (std::is_same_v<T_no_cv, float>) {
-        mpi_type = MPI_FLOAT;
-    } else if constexpr (std::is_same_v<T_no_cv, double>) {
-        mpi_type = MPI_DOUBLE;
-    } else if constexpr (std::is_same_v<T_no_cv, long double>) {
-        mpi_type = MPI_LONG_DOUBLE;
-    } else if constexpr (std::is_same_v<T_no_cv, int8_t>) {
-        mpi_type = MPI_INT8_T;
-    } else if constexpr (std::is_same_v<T_no_cv, int16_t>) {
-        mpi_type = MPI_INT16_T;
-    } else if constexpr (std::is_same_v<T_no_cv, int32_t>) {
-        mpi_type = MPI_INT32_T;
-    } else if constexpr (std::is_same_v<T_no_cv, int64_t>) {
-        mpi_type = MPI_INT64_T;
-    } else if constexpr (std::is_same_v<T_no_cv, uint8_t>) {
-        mpi_type = MPI_UINT8_T;
-    } else if constexpr (std::is_same_v<T_no_cv, uint16_t>) {
-        mpi_type = MPI_UINT16_T;
-    } else if constexpr (std::is_same_v<T_no_cv, uint32_t>) {
-        mpi_type = MPI_UINT32_T;
-    } else if constexpr (std::is_same_v<T_no_cv, uint64_t>) {
-        mpi_type = MPI_UINT64_T;
-    } else if constexpr (std::is_same_v<T_no_cv, bool>) {
-        mpi_type = MPI_C_BOOL;
-    } else if constexpr (std::is_same_v<T_no_cv, std::complex<float>>) {
-        mpi_type = MPI_C_FLOAT_COMPLEX;
-    } else if constexpr (std::is_same_v<T_no_cv, std::complex<double>>) {
-        mpi_type = MPI_C_DOUBLE_COMPLEX;
-    } else if constexpr (std::is_same_v<T_no_cv, std::complex<long double>>) {
-        mpi_type = MPI_C_LONG_DOUBLE_COMPLEX;
     } else {
         mpi_type = mpi_custom_continuous_type<sizeof(T)>();
     }
