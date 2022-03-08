@@ -65,6 +65,15 @@ template <typename T>
 struct Span {
     const T* ptr;  ///< Pointer to the data referred to by Span.
     size_t   size; ///< Number of elements of type T referred to by Span.
+
+    /// @brief Get access to the underlying read-only memory.
+    ///
+    /// While the data can be accessed directly using the member, this member function provides a more STL-like
+    /// interface.
+    /// @return Pointer to the underlying read-only memory.
+    T const* data() const {
+        return ptr;
+    }
 };
 
 
@@ -119,6 +128,33 @@ public:
 
 private:
     const Container& _container; ///< Container which holds the actual data.
+};
+
+/// @brief Constant buffer for a single type, i.e., not a container.
+///
+/// SingleElementConstBuffer wraps a read-only value and is used instead of \ref ContainerBasedConstBuffer if only a
+/// single element is sent or received and no container is needed.
+/// @tparam DataType Type of the element wrapped.
+/// @tparam ParameterType Parameter type represented by this buffer.
+template <typename DataType, ParameterType type>
+class SingleElementConstBuffer {
+public:
+    static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
+    using value_type                              = DataType; ///< Value type of the buffer.
+
+    /// @brief Constructor for SingleElementConstBuffer.
+    /// @param element Element holding that is wrapped.
+    SingleElementConstBuffer(DataType const& element) : _element(element) {}
+
+    /// @brief Get access to the underlaying read-only value.
+    /// @return Span referring to the underlying read-only storage.
+    Span<value_type> get() const {
+        return {&_element, 1};
+    }
+
+private:
+    DataType const& _element; ///< Reference to the actual data.
 };
 
 /// @brief Struct containing some definitions used by all modifiable buffers.

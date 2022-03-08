@@ -31,10 +31,11 @@ namespace kamping::internal {
 ///
 /// This is the base case of the recursion.
 ///
-/// @tparam parameter_type to be searched for.
-/// @tparam Index index of current argument to evaluate.
-/// @tparam Arg argument to evaluate.
-/// @return the index
+/// @tparam parameter_type The parameter type which to be searched for.
+/// @tparam Index Index of current argument to evaluate.
+/// @tparam Arg Argument to evaluate.
+/// @return The index
+/// @return \c std::numeric_limits<std::size_t>::max() if not found
 template <ParameterType parameter_type, size_t Index, typename Arg>
 constexpr size_t find_pos() {
     constexpr bool found_arg = std::remove_reference_t<Arg>::parameter_type == parameter_type;
@@ -45,28 +46,30 @@ constexpr size_t find_pos() {
 
 /// @brief Returns position of first argument in Args with Trait trait.
 ///
-/// @tparam parameter_type to be searched for.
-/// @tparam Index index of current argument to evaluate.
-/// @tparam Arg argument to evaluate.
-/// @tparam Arg2 the next argument.
-/// @tparam Args all remaining arguments.
-/// @return position of first argument with matched trait.
+/// @tparam parameter_type The parameter type which to be searched for.
+/// @tparam Index Index of current argument to evaluate.
+/// @tparam Arg Argument to evaluate.
+/// @tparam Arg2 The next argument.
+/// @tparam Args All remaining arguments.
+/// @return Position of first argument with matched trait.
+/// @return \c std::numeric_limits<std::size_t>::max() if not found
 template <ParameterType parameter_type, size_t Index, typename Arg, typename Arg2, typename... Args>
 constexpr size_t find_pos() {
-    if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type)
+    if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type) {
         return Index;
-    else
+    } else {
         // we need to unpack the next two arguments, so we can unambiguously check for the case
         // of a single remaining argument
         return find_pos<parameter_type, Index + 1, Arg2, Args...>();
+    }
 }
 
 /// @brief Returns parameter with requested parameter type.
 ///
-/// @tparam parameter_type with which a parameter should be found.
-/// @tparam Args all parameter types to be searched for type `parameter_type`.
-/// @param args all parameters from which a parameter with the correct type is selected.
-/// @returns the first parameter whose type has the requested parameter type.
+/// @tparam parameter_type The parameter type with which a parameter should be found.
+/// @tparam Args All parameter types to be searched for type `parameter_type`.
+/// @param args All parameters from which a parameter with the correct type is selected.
+/// @returns The first parameter whose type has the requested parameter type.
 template <ParameterType parameter_type, typename... Args>
 auto& select_parameter_type(Args&... args) {
     constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
@@ -76,14 +79,46 @@ auto& select_parameter_type(Args&... args) {
 
 /// @brief Checks if parameter with requested parameter type exists.
 ///
-/// @tparam parameter_type with which a parameter should be found.
-/// @tparam Args all parameter types to be searched.
-/// @param args all parameter values.
-/// @return whether `Args` contains a parameter of type `parameter_type`.
+/// @tparam parameter_type The parameter type with which a parameter should be found.
+/// @tparam Args All parameter types to be searched.
+/// @param args All parameter values.
+/// @return \c true iff. `Args` contains a parameter of type `parameter_type`.
 template <ParameterType parameter_type, typename... Args>
-bool has_parameter_type(Args&... args) {
+bool has_parameter_type(Args const&... args) {
     return find_pos<parameter_type, 0, Args...>() < sizeof...(args);
 }
 
+/// @brief Checks if parameter with requested parameter type exists.
+///
+/// @tparam parameter_type The parameter type with which a parameter should be found.
+/// @tparam Args All parameter types to be searched.
+/// @return \c true iff. `Args` contains a parameter of type `parameter_type`.
+template <ParameterType parameter_type, typename... Args>
+constexpr bool has_parameter_type() {
+    return find_pos<parameter_type, 0, Args...>() < sizeof...(Args);
+}
+
+/// @brief Checks if parameter with requested parameter type exists, if not constructs a default value.
+///
+/// @tparam parameter_type The parameter type with which a parameter should be found.
+/// @tparam Args All parameter types to be searched.
+/// @tparam DefaultParameterType The type of the default parameter to be constructed.
+/// @tparam DefaultArguments The types of parameters passed to the constructor \c DefaultParameterType.
+/// @param default_arguments Tuple of the arguments passed to the constructor of \c DefaultParameterType.
+/// @param args All parameters from which a parameter with the correct type is selected.
+/// @return The first parameter whose type has the requested parameter type or the constructed default parameter if
+/// none is found.
+template <ParameterType parameter_type, typename DefaultParameterType, typename... DefaultArguments, typename... Args>
+decltype(auto) select_parameter_type_or_default(std::tuple<DefaultArguments...> default_arguments, Args&... args) {
+    static_assert(
+        std::is_constructible_v<DefaultParameterType, DefaultArguments...>,
+        "The default parameter cannot be constructed from the provided arguments");
+    if constexpr (has_parameter_type<parameter_type, Args...>()) {
+        constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
+        return std::get<selected_index>(std::forward_as_tuple(args...));
+    } else {
+        return std::make_from_tuple<DefaultParameterType>(std::move(default_arguments));
+    }
+}
 /// @}
 } // namespace kamping::internal
