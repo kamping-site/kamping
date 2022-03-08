@@ -20,8 +20,15 @@
 
 using namespace ::kamping::internal;
 
-// Simple container to test KaMPI.ng's buffers with containers other than std::vector
+// Test our minimal span implementation
+TEST(Test_Span, basic_functionality) {
+    std::vector<int> values   = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    Span<int>        int_span = {values.data(), values.size()};
 
+    EXPECT_EQ(values.size(), int_span.size);
+    EXPECT_EQ(values.data(), int_span.data());
+    EXPECT_EQ(int_span.ptr, int_span.data());
+}
 
 // Tests the basic functionality of ContainerBasedConstBuffer (i.e. its only public function get())
 TEST(Test_ContainerBasedConstBuffer, get_basics) {
@@ -64,6 +71,7 @@ TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_basics) {
     auto resize_write_check = [&](size_t requested_size) {
         int* ptr = buffer_based_on_int_vector.get_ptr(requested_size);
         EXPECT_EQ(ptr, int_vec.data());
+        EXPECT_EQ(int_vec.size(), requested_size);
         for (size_t i = 0; i < requested_size; ++i) {
             ptr[i] = static_cast<int>(requested_size - i);
             EXPECT_EQ(ptr[i], int_vec[i]);
@@ -83,6 +91,7 @@ TEST(Test_UserAllocatedContainerBasedBuffer, get_ptr_containers_other_than_vecto
     auto resize_write_check = [&](size_t requested_size) {
         int* ptr = buffer_based_on_own_container.get_ptr(requested_size);
         EXPECT_EQ(ptr, own_container.data());
+        EXPECT_EQ(own_container.size(), requested_size);
         for (size_t i = 0; i < requested_size; ++i) {
             ptr[i] = static_cast<int>(requested_size - i);
             EXPECT_EQ(ptr[i], own_container[i]);
@@ -131,4 +140,18 @@ TEST(Test_LibAllocatedContainerBasedBuffer, get_ptr_extract_containers_other_tha
     for (size_t i = 0; i < last_resize; ++i) {
         EXPECT_EQ(underlying_container[i], static_cast<int>(last_resize - i));
     }
+}
+
+TEST(Test_SingleElementConstBuffer, get_basics) {
+    constexpr ParameterType              ptype = ParameterType::send_counts;
+    int                                  value = 5;
+    SingleElementConstBuffer<int, ptype> int_buffer(value);
+
+    EXPECT_EQ(int_buffer.get().size, 1);
+    EXPECT_EQ(*(int_buffer.get().ptr), 5);
+
+    EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
+    EXPECT_FALSE(int_buffer.is_modifiable);
+
+    static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
 }

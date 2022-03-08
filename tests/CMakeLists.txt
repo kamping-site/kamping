@@ -35,6 +35,6 @@ kamping_register_compilation_failure_test(
 kamping_register_compilation_failure_test(
   test_named_parameter_selection_compilation_failure
   FILES named_parameter_selection_compilation_failures_test.cpp
-  SECTIONS "REQUESTED_PARAMETER_NOT_GIVEN"
+  SECTIONS "REQUESTED_PARAMETER_NOT_GIVEN" "DEFAULT_ARGUMENTS_DO_NOT_MATCH"
   LIBRARIES kamping
 )
