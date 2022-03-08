@@ -51,16 +51,13 @@ public:
         MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
         // Get the send and receive counts
-        // TODO Use MPI_Type_size
         int send_count = throwing_cast<int>(send_buf.size / asserting_cast<size_t>(comm.size()));
         /// @todo test
-        KTHROW(
-            ((send_buf.size * sizeof(send_value_type)) % sizeof(recv_value_type)) == 0,
-            "The specified receive type does not fit the supplied number of elements of the send type.");
-        // Weird calculation because the user might use a different type for sending and receiving. For "normal" usage
-        // this should be just send_buf.size
-        size_t recv_buf_size = send_buf.size * sizeof(send_value_type) / sizeof(recv_value_type);
+        KTHROW(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
+
+        size_t recv_buf_size = send_buf.size;
         int    recv_count    = throwing_cast<int>(recv_buf_size / asserting_cast<size_t>(comm.size()));
+        KASSERT(send_count == recv_count);
 
         int err = MPI_Alltoall(
             send_buf.ptr, send_count, mpi_send_type, recv_buf.get_ptr(recv_buf_size), recv_count, mpi_recv_type,
