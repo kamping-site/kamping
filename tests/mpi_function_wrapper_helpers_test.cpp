@@ -105,7 +105,7 @@ void test_send_displs_in_MPIResult() {
 } // namespace testing
 
 
-TEST(HelpersTest, has_extract_v_basics) {
+TEST(MpiResultTest, has_extract_v_basics) {
     static_assert(
         has_extract_v<testing::StructWithExtract>,
         "StructWithExtract contains extract() member function -> needs to be detected.");
@@ -114,34 +114,34 @@ TEST(HelpersTest, has_extract_v_basics) {
         "StructWithoutExtract does not contain extract() member function.");
 }
 
-TEST(Test_MPIResult, extract_recv_buffer_basics) {
+TEST(MpiResultTest, extract_recv_buffer_basics) {
     testing::test_recv_buffer_in_MPIResult<std::vector<int>>();
 }
 
-TEST(Test_MPIResult, extract_recv_buffer_basics_own_container) {
+TEST(MpiResultTest, extract_recv_buffer_basics_own_container) {
     testing::test_recv_buffer_in_MPIResult<testing::OwnContainer<int>>();
 }
 
-TEST(Test_MPIResult, extract_recv_counts_basics) {
+TEST(MpiResultTest, extract_recv_counts_basics) {
     testing::test_recv_counts_in_MPIResult<std::vector<int>>();
 }
 
-TEST(Test_MPIResult, extract_recv_counts_basics_own_container) {
+TEST(MpiResultTest, extract_recv_counts_basics_own_container) {
     testing::test_recv_counts_in_MPIResult<testing::OwnContainer<int>>();
 }
 
-TEST(Test_MPIResult, extract_recv_displs_basics) {
+TEST(MpiResultTest, extract_recv_displs_basics) {
     testing::test_recv_displs_in_MPIResult<std::vector<int>>();
 }
 
-TEST(Test_MPIResult, extract_recv_displs_basics_own_container) {
+TEST(MpiResultTest, extract_recv_displs_basics_own_container) {
     testing::test_recv_displs_in_MPIResult<testing::OwnContainer<int>>();
 }
 
-TEST(Test_MPIResult, extract_send_displs_basics) {
+TEST(MpiResultTest, extract_send_displs_basics) {
     testing::test_send_displs_in_MPIResult<std::vector<int>>();
 }
 
-TEST(Test_MPIResult, extract_send_displs_basics_own_container) {
+TEST(MpiResultTest, extract_send_displs_basics_own_container) {
     testing::test_send_displs_in_MPIResult<testing::OwnContainer<int>>();
 }
