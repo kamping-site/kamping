@@ -26,7 +26,7 @@
 using namespace ::kamping;
 using namespace ::testing;
 
-TEST(GatherTest, GatherSingleElementNoReceiveBuffer) {
+TEST(GatherTest, gather_single_element_no_receive_buffer) {
     Communicator comm;
     auto         value = comm.rank();
 
@@ -75,7 +75,7 @@ TEST(GatherTest, GatherSingleElementNoReceiveBuffer) {
     }
 }
 
-TEST(GatherTest, GatherSingleCustomElementNoReceiveBuffer) {
+TEST(GatherTest, gather_single_custom_element_no_receive_buffer) {
     Communicator comm;
     struct CustomDataType {
         int rank;
@@ -132,7 +132,7 @@ TEST(GatherTest, GatherSingleCustomElementNoReceiveBuffer) {
     }
 }
 
-TEST(GatherTest, GatherSingleElementWithReceiveBuffer) {
+TEST(GatherTest, gather_single_element_with_receive_buffer) {
     Communicator                 comm;
     auto                         value = comm.rank();
     std::vector<decltype(value)> result(0);
