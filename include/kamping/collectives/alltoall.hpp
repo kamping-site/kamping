@@ -52,7 +52,6 @@ public:
 
         // Get the send and receive counts
         int send_count = throwing_cast<int>(send_buf.size / asserting_cast<size_t>(comm.size()));
-        /// @todo test
         KTHROW(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
         size_t recv_buf_size = send_buf.size;
