@@ -27,9 +27,28 @@
 #include "kamping/parameter_type_definitions.hpp"
 
 namespace kamping::internal {
+
+/// @brief CRTP mixin class for \c MPI_Alltoall.
+///
+/// This class is only to be used as a super class of kamping::Communicator
 template <typename Communicator>
 class Alltoall {
 public:
+    /// @brief Wrapper for \c MPI_Alltoall
+    ///
+    /// This wrapper for \c MPI_Alltoall sends the same amount of data from each rank to each rank. The following
+    /// buffers are required:
+    /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
+    /// each rank and divisible the size of the communicator. Each rank receives the same amount of elements from this
+    /// buffer. Rank 0 receives the first \<buffer size\>/\<communicator size\> elements, rank 1 the next, and so on.
+    /// See
+    /// TODO alltoallv if the amounts differ. The following buffers are optional:
+    /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
+    /// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
+    /// received from rank 1, and so on.
+    /// @tparam Args Automatically deducted template parameters.
+    /// @param args All required and any number of the optional buffers described above.
+    /// @return Result type wrapping the output buffer if not specified as input parameter.
     template <typename... Args>
     auto alltoall(Args&&... args) {
         Communicator& comm = static_cast<Communicator&>(*this);
