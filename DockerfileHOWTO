@@ -1,0 +1,10 @@
+Open shell in current docker image:
+
+docker run --rm -it --entrypoint bash <image>
+
+Push new docker image:
+
+docker build -t localhost:5000/kamping-ci .
+docker push localhost:5000/kamping-ci
+docker image rm localhost:5000/kamping-ci
+
