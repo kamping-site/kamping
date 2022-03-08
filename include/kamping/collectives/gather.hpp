@@ -50,31 +50,23 @@ auto Communicator::gather(Args&&... args) {
             std::tuple(), args...);
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
-    KTHROW(
-        (sizeof(send_value_type) % sizeof(recv_value_type) == 0)
-            || (sizeof(recv_value_type) % sizeof(send_value_type) == 0),
-        "If different send and receive data types are used, the sent data has to fit into an integer amount of the "
-        "received data type for each PE.");
-
     auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
         std::tuple(_root), args...);
 
+    auto mpi_send_type = mpi_datatype<send_value_type>();
+    auto mpi_recv_type = mpi_datatype<recv_value_type>();
+
+    size_t recv_size     = (_rank == root.rank()) ? send_buf.size : 0;
+    size_t recv_buf_size = asserting_cast<size_t>(_size) * recv_size;
+
     // Check if the root is valid, before we try any communication
     KTHROW(is_valid_rank(root.rank()), "Invalid rank as root.");
-
-    // only the root will receive data
-    size_t const receive_factor_data_types =
-        (root.rank() == _rank) ? std::max(
-            sizeof(send_value_type) / sizeof(recv_value_type), sizeof(recv_value_type) / sizeof(send_value_type))
-                               : 0;
-    size_t const total_receive_size_at_root =
-        (root.rank() == _rank) ? receive_factor_data_types * (send_buf.size * asserting_cast<size_t>(_size)) : 0;
+    KTHROW(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
     // error code can be unused if KTHROW is removed at compile time
     [[maybe_unused]] int err = MPI_Gather(
-        send_buf.ptr, asserting_cast<int>(send_buf.size), mpi_datatype<send_value_type>(),
-        recv_buf.get_ptr(total_receive_size_at_root), asserting_cast<int>(receive_factor_data_types * send_buf.size),
-        mpi_datatype<recv_value_type>(), root.rank(), _comm);
+        send_buf.ptr, asserting_cast<int>(send_buf.size), mpi_send_type, recv_buf.get_ptr(recv_buf_size),
+        asserting_cast<int>(recv_size), mpi_recv_type, root.rank(), _comm);
     KTHROW(err == MPI_SUCCESS);
     return MPIResult(
         std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},

@@ -180,25 +180,6 @@ TEST(GatherTest, GatherSingleElementWithReceiveBuffer) {
     for (auto i = 0; i < comm.size(); ++i) {
         EXPECT_THROW(comm.gather(send_buf(value), recv_buf(result), root(comm.size() + i)), KassertException);
     }
-
-    comm.root(0);
-
-    // receive with feasible smaller type
-    std::vector<short> short_result(0);
-    comm.gather(send_buf(value), recv_buf(short_result));
-    if (comm.rank() == comm.root()) {
-        EXPECT_EQ(comm.root(), 0);
-        EXPECT_EQ(short_result.size(), 2 * comm.size());
-        for (auto i = 0; i < 2 * comm.size(); ++i) {
-            if (i % 2 == 0) {
-                EXPECT_EQ(short_result[asserting_cast<size_t>(i)], i / 2);
-            } else {
-                EXPECT_EQ(short_result[asserting_cast<size_t>(i)], 0);
-            }
-        }
-    } else {
-        EXPECT_EQ(short_result.size(), 0);
-    }
 }
 
 TEST(GatherTest, GatherMultipleElements) {
