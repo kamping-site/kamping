@@ -16,6 +16,8 @@ jobs:
       image: "localhost:5000/kamping-ci"
     steps:
       - uses: actions/checkout@v2
+      - name: version
+        run: doxygen --version
       - name: cmake
         run: cmake -B build
       - name: run-doxygen
