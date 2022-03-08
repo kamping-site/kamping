@@ -55,7 +55,7 @@ struct max_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T& operator()(const T& lhs, const T& rhs) const {
+    constexpr T const& operator()(const T& lhs, const T& rhs) const {
         return std::max(lhs, rhs);
     }
 };
@@ -72,7 +72,7 @@ struct min_impl {
     /// @param lhs the first operand
     /// @param rhs the second operand
     /// @return the maximum
-    constexpr T& operator()(const T& lhs, const T& rhs) const {
+    constexpr T const& operator()(const T& lhs, const T& rhs) const {
         return std::min(lhs, rhs);
     }
 };
@@ -354,7 +354,7 @@ public:
     /// @param op the functor to call for reduction.
     ///  this has to be a binary function applicable to two arguments of type \c T which return a result of type  \c T
     UserOperationWrapper(Op&& op [[maybe_unused]]) {
-        static_assert(std::is_invocable_r_v<T, Op, T, T>, "Type of custom operation does not match.");
+        static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
         MPI_Op_create(UserOperationWrapper<is_commutative, Op, T>::execute, is_commutative, &_mpi_op);
     }
 

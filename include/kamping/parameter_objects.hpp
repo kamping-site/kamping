@@ -243,7 +243,7 @@ public:
     ///@tparam T argument type of the reduction operation
     template <typename T>
     auto build_operation() {
-        static_assert(std::is_invocable_r_v<T, Op, T, T>, "Type of custom operation does not match.");
+        static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
         return ReduceOperation<T, Op, Commutative>(std::move(_op), Commutative{});
     }
 
