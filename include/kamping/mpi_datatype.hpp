@@ -48,6 +48,8 @@ template <size_t NumBytes>
     return type;
 }
 
+/// @brief the members specify which group the datatype belongs to according to the type groups specified in Section 5.9.2 of
+/// the MPI 3.1 standard.
 enum class TypeCategory { integer, floating, complex, logical, byte, undefined };
 
 #ifdef KAMPING_DOXYGEN_ONLY
@@ -58,11 +60,11 @@ enum class TypeCategory { integer, floating, complex, logical, byte, undefined }
 /// @tparam T type to map to a \c MPI_Datatype
 template <typename T>
 struct mpi_type_traits {
-    /// @brief true, if the type maps to a builtin \c MPI_Datatype
+    /// @brief \c true, if the type maps to a builtin \c MPI_Datatype
     static constexpr bool is_builtin;
-    /// @brief true, if the type is an integer value according to the MPI standard
+    /// @brief the category the type belongs to according to the MPI standard.
     static constexpr TypeCategory category;
-    /// @brief this member function is only defined if \c is_builtin is true. If this is the case, it to the \c
+    /// @brief this member function is only defined if \c is_builtin is true. If this is the case, it returns the \c
     /// MPI_Datatype
     /// @returns the constant of type \c MPI_Datatype mapping to type \c T according the the MPI standard.
     static MPI_Datatype data_type();
