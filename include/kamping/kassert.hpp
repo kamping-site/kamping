@@ -74,8 +74,8 @@
 /// 2. Error message that is printed in addition to the decomposed expression (optional). The message is piped into
 /// a logger object. Thus, one can use the `<<` operator to build the error message similar to how one would use
 /// `std::cout`.
-/// 3. Type of the exception to be used. The exception type must have a ctor that takes a `std::string` as its 
-/// first argument, followed by any additional parameters passed to this macro. 
+/// 3. Type of the exception to be used. The exception type must have a ctor that takes a `std::string` as its
+/// first argument, followed by any additional parameters passed to this macro.
 /// 4, 5, 6, ... Parameters that are forwarded to the exception type's ctor.
 ///
 /// Any other parameter is passed to the constructor of the exception class.
