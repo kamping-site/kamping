@@ -27,7 +27,7 @@
 using namespace ::testing;
 using namespace ::kamping;
 
-TEST(HelpersTest, in_range) {
+TEST(CheckingCastTest, in_range) {
     uint8_t u8val = 200;
     EXPECT_TRUE(in_range<uint8_t>(u8val));
     EXPECT_TRUE(in_range<uint16_t>(u8val));
@@ -74,7 +74,7 @@ TEST(HelpersTest, in_range) {
     EXPECT_FALSE(in_range<int32_t>(std::numeric_limits<int64_t>::min()));
 }
 
-TEST(HelpersTest, asserting_cast) {
+TEST(CheckingCastTest, asserting_cast) {
     uint8_t u8val = 200;
 
     // Verify that asserting_cast does not crash
@@ -137,7 +137,7 @@ void checkThrowOrAssert(Lambda&& callable, [[maybe_unused]] std::string const& w
 #endif
 }
 
-TEST(HelpersTest, throwing_cast) {
+TEST(CheckingCastTest, throwing_cast) {
     uint8_t u8val = 200;
 
     // A valid cast does not throw an exception.
