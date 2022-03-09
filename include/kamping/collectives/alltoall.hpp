@@ -78,9 +78,9 @@ public:
         KASSERT(send_count == recv_count, assert::light);
 
         // These KASSERTs are required to avoid a false warning from g++ in release mode
-        auto send_buf_ptr = send_buf.ptr;
+        auto* send_buf_ptr = send_buf.ptr;
         KASSERT(send_buf_ptr != nullptr);
-        auto recv_buf_ptr = recv_buf.get_ptr(recv_buf_size);
+        auto* recv_buf_ptr = recv_buf.get_ptr(recv_buf_size);
         KASSERT(recv_buf_ptr != nullptr);
 
         int err = MPI_Alltoall(
