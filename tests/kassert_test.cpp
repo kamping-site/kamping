@@ -400,8 +400,8 @@ TEST(KassertTest, int_vector_int_pair_expansion) {
 // Test expansion of unsupported custom type
 
 TEST(KassertTest, unsupported_type_expansion) {
-    struct A {
-        bool operator==(A const&) const {
+    struct CustomType {
+        bool operator==(CustomType const&) const {
             return false;
         }
 
@@ -411,10 +411,10 @@ TEST(KassertTest, unsupported_type_expansion) {
     };
 
     auto eq = [] {
-        KASSERT(A{} == A{});
+        KASSERT(CustomType{} == CustomType{});
     };
     auto eq_int = [](int const val) {
-        KASSERT(A{} == val);
+        KASSERT(CustomType{} == val);
     };
 
     EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "<\\?> == <\\?>");
