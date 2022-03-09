@@ -84,7 +84,7 @@ TEST(KassertTest, kthrow_custom_compiles) {
 }
 
 // Check that KTHROW does nothing if the expression evaluates to true.
-TEST(KassertTest, kthrow_evaluates_expression) {
+TEST(KassertTest, kthrow_does_nothing_on_true_expression) {
     KTHROW(true);
     KTHROW(true, "");
     KTHROW_SPECIFIED(true, "", ZeroCustomArgException);
