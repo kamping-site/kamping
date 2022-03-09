@@ -18,7 +18,6 @@
 
 #include <utility>
 
-
 namespace kamping {
 namespace internal {
 // https://stackoverflow.com/a/9154394 TODO license?
