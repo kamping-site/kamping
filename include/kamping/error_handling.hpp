@@ -28,12 +28,12 @@
 /// 1. The error code returned by the MPI call (mandatory).
 /// 2. The MPI function that returned the error code (mandatory).
 #define THROW_IF_MPI_ERROR(error_code, function) \
-    KTHROW_SPECIFIED(error_code == MPI_SUCCESS, #function, MpiErrorException, error_code);
+    KTHROW_SPECIFIED(error_code == MPI_SUCCESS, #function << " failed.", MpiErrorException, error_code);
 
 namespace kamping {
 /// @brief The exception type used when an MPI call did not return MPI_SUCCESS.
 /// When using this with KTHROW you should call it like this: `KTHROW_SPECIFIED(err == MPI_SUCCESS, "<MPI function that
-/// failled>", MpiErrorException, err);`
+/// failled> failed", MpiErrorException, err);`
 class MpiErrorException : public std::exception {
 public:
     /// @brief Constructs the exception

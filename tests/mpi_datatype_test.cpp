@@ -320,7 +320,7 @@ TEST(MpiDataTypeTest, mpi_datatype_size) {
         has_thrown = true;
         EXPECT_EQ(e.mpi_error_code(), MPI_ERR_TYPE);
         EXPECT_THAT(e.what(), HasSubstr("Failed with the following error message:"));
-        EXPECT_THAT(e.what(), HasSubstr("MPI_Type_size"));
+        EXPECT_THAT(e.what(), HasSubstr("MPI_Type_size failed"));
     }
     EXPECT_TRUE(has_thrown);
 }
