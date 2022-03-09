@@ -44,9 +44,9 @@ public:
         char errorString[MPI_MAX_ERROR_STRING];
         int  err = MPI_Error_string(_mpi_error_code, errorString, &errorStringLen);
         if (err == MPI_SUCCESS) {
-            _what = message + "\nFailed with the following error message:\n" + errorString;
+            _what = message + "\nFailed with the following error message:\n" + std::string(errorString) + "\n";
         } else {
-            _what = message + "\nError message could not be retrieved";
+            _what = message + "\nError message could not be retrieved\n";
         }
     }
 
