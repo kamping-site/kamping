@@ -20,7 +20,6 @@
 #include <mpi.h>
 
 #include "kamping/mpi_datatype.hpp"
-#include "kamping/mpi_function_wrapper_helpers.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
