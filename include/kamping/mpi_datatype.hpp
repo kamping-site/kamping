@@ -21,8 +21,8 @@
 
 #include <mpi.h>
 
+#include "kamping/error_handling.hpp"
 #include "kamping/kassert.hpp"
-#include "kamping/mpi_function_wrapper_helpers.hpp"
 
 namespace kamping {
 
