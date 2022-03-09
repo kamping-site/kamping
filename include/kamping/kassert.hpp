@@ -333,7 +333,7 @@ struct is_streamable_type_impl<
 /// @tparam StreamT An output stream overloading the \c << operator.
 /// @tparam ValueT A value type that may or may not be used with \c StreamT::operator<<.
 template <typename StreamT, typename ValueT>
-constexpr bool IsStreamableType = is_streamable_type_impl<StreamT, ValueT>::value;
+constexpr bool is_streamable_type = is_streamable_type_impl<StreamT, ValueT>::value;
 } // namespace internal
 
 /// @brief Simple wrapper for output streams that is used to stringify values in assertions and exceptions.
@@ -355,7 +355,7 @@ public:
     /// @brief Forward all values for which \c StreamT::operator<< is defined to the underlying streaming object.
     /// @param value Value to be stringified.
     /// @tparam ValueT Type of the value to be stringified.
-    template <typename ValueT, std::enable_if_t<internal::IsStreamableType<std::ostream, ValueT>, int> = 0>
+    template <typename ValueT, std::enable_if_t<internal::is_streamable_type<std::ostream, ValueT>, int> = 0>
     Logger<StreamT>& operator<<(ValueT&& value) {
         _out << std::forward<ValueT>(value);
         return *this;
@@ -384,7 +384,7 @@ namespace internal {
 /// @param value The value to be stringified.
 template <typename StreamT, typename ValueT>
 void stringify_value(Logger<StreamT>& out, ValueT const& value) {
-    if constexpr (IsStreamableType<Logger<StreamT>, ValueT>) {
+    if constexpr (is_streamable_type<Logger<StreamT>, ValueT>) {
         out << value;
     } else {
         out << "<?>";
