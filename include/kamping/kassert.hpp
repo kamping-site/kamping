@@ -321,19 +321,19 @@ constexpr int heavy = 6;
 namespace internal {
 // If partially specialized template is not applicable, set value to false.
 template <typename, typename, typename = void>
-struct IsStreamableTypeImpl : std::false_type {};
+struct is_streamable_type_impl : std::false_type {};
 
 // Partially specialize template if StreamT::operator<<(ValueT) is valid.
 template <typename StreamT, typename ValueT>
-struct IsStreamableTypeImpl<StreamT, ValueT, std::void_t<decltype(std::declval<StreamT&>() << std::declval<ValueT>())>>
-    : std::true_type {};
+struct is_streamable_type_impl<
+    StreamT, ValueT, std::void_t<decltype(std::declval<StreamT&>() << std::declval<ValueT>())>> : std::true_type {};
 
 /// @brief Determines whether a value of type \c ValueT can be streamed into an output stream of type \c StreamT.
 /// @ingroup expression-expansion
 /// @tparam StreamT An output stream overloading the \c << operator.
 /// @tparam ValueT A value type that may or may not be used with \c StreamT::operator<<.
 template <typename StreamT, typename ValueT>
-constexpr bool IsStreamableType = IsStreamableTypeImpl<StreamT, ValueT>::value;
+constexpr bool IsStreamableType = is_streamable_type_impl<StreamT, ValueT>::value;
 } // namespace internal
 
 /// @brief Simple wrapper for output streams that is used to stringify values in assertions and exceptions.
