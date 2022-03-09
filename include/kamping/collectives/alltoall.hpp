@@ -77,6 +77,7 @@ public:
         int    recv_count    = throwing_cast<int>(recv_buf_size / asserting_cast<size_t>(comm.size()));
         KASSERT(send_count == recv_count);
 
+        // These KASSERTs are required to avoid a false warning from g++ in release mode
         auto send_buf_ptr = send_buf.ptr;
         KASSERT(send_buf_ptr != nullptr);
         auto recv_buf_ptr = recv_buf.get_ptr(recv_buf_size);
