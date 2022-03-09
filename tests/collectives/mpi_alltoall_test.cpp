@@ -12,23 +12,19 @@
 // <https://www.gnu.org/licenses/>.
 
 // overwrite build options and set assertion level to normal, enable exceptions
-#include "kamping/kassert.hpp"
-#include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
-#include <algorithm>
-#include <bits/stdint-uintn.h>
 #undef KAMPING_ASSERTION_LEVEL
 #define KAMPING_ASSERTION_LEVEL kamping::assert::normal
 #ifndef KAMPING_EXCEPTION_MODE
     #define KAMPING_EXCEPTION_MODE
 #endif // KAMPING_EXCEPTION_MODE
 
+#include <algorithm>
 #include <gtest/gtest.h>
-#include <mpi.h>
 #include <numeric>
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
+
 
 using namespace ::kamping;
 using namespace ::testing;

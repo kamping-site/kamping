@@ -23,8 +23,6 @@
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
-#include "kamping/parameter_type_definitions.hpp"
 
 namespace kamping::internal {
 
