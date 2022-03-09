@@ -52,6 +52,9 @@ public:
     T& operator[](size_t i) {
         return _vec[i];
     }
+    bool operator==(const OwnContainer<T>& other) const {
+        return _vec == other._vec;
+    }
 
 private:
     std::vector<T> _vec;

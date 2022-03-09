@@ -13,6 +13,8 @@
 
 // overwrite build options and set assertion level to normal, enable exceptions
 #include "kamping/kassert.hpp"
+#include "kamping/parameter_factories.hpp"
+#include "kamping/parameter_objects.hpp"
 #include <algorithm>
 #include <bits/stdint-uintn.h>
 #undef KAMPING_ASSERTION_LEVEL
@@ -25,6 +27,7 @@
 #include <mpi.h>
 #include <numeric>
 
+#include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
@@ -80,7 +83,7 @@ TEST(AlltoallTest, alltoall_multiple_elements) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AlltoallTest, alltoall_custom_type) {
+TEST(AlltoallTest, alltoall_custom_type_custom_container) {
     Communicator comm;
 
     struct CustomType {
@@ -91,16 +94,17 @@ TEST(AlltoallTest, alltoall_custom_type) {
         }
     };
 
-    std::vector<CustomType> input(asserting_cast<size_t>(comm.size()));
+    OwnContainer<CustomType> input(asserting_cast<size_t>(comm.size()));
     for (size_t i = 0; i < input.size(); ++i) {
         input[i] = {comm.rank(), asserting_cast<int>(i)};
     }
 
-    auto result = comm.alltoall(send_buf(input)).extract_recv_buffer();
+    auto result =
+        comm.alltoall(send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{})).extract_recv_buffer();
 
     EXPECT_EQ(result.size(), comm.size());
 
-    std::vector<CustomType> expected_result(asserting_cast<size_t>(comm.size()));
+    OwnContainer<CustomType> expected_result(asserting_cast<size_t>(comm.size()));
     for (size_t i = 0; i < expected_result.size(); ++i) {
         expected_result[i] = {asserting_cast<int>(i), comm.rank()};
     }
