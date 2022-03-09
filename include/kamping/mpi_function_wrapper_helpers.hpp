@@ -19,6 +19,8 @@
 #include <string>
 #include <utility>
 
+#include <mpi.h>
+
 namespace kamping {
 namespace internal {
 // https://stackoverflow.com/a/9154394 TODO license?
@@ -136,14 +138,23 @@ private:
 };
 
 /// @brief The exception type used when an MPI call did not return MPI_SUCCESS.
+/// When using this with KTHROW you should call it like this: `KTHROW_SPECIFIED(err == MPI_SUCCESS, "<MPI function that
+/// failled>", MpiErrorException, err);`
 class MpiErrorException : public std::exception {
 public:
     /// @brief Constructs the exception
     /// @param message A custom error message.
     /// @param mpi_error_code The error code returned by the MPI call.
-    explicit MpiErrorException(std::string message, int mpi_error_code)
-        : _what(std::move(message)),
-          _mpi_error_code(mpi_error_code) {}
+    explicit MpiErrorException(std::string message, int mpi_error_code) : _mpi_error_code(mpi_error_code) {
+        int  errorStringLen;
+        char errorString[MPI_MAX_ERROR_STRING];
+        int  err = MPI_Error_string(_mpi_error_code, errorString, &errorStringLen);
+        if (err == MPI_SUCCESS) {
+            _what = message + "\n Failed with the following error message: " + errorString;
+        } else {
+            _what = message + "\n Error message could not be retrieved";
+        }
+    }
 
     /// @brief Gets a description of this exception.
     /// @return A description of this exception.
