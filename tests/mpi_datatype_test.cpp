@@ -20,6 +20,7 @@
 #include <mpi.h>
 
 #include "kamping/mpi_datatype.hpp"
+#include "kamping/mpi_function_wrapper_helpers.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -307,4 +308,17 @@ TEST(MpiDataTypeTest, mpi_datatype_size) {
     EXPECT_EQ(mpi_datatype_size(MPI_INT), sizeof(int));
     EXPECT_EQ(mpi_datatype_size(MPI_CHAR), sizeof(char));
     EXPECT_EQ(mpi_datatype_size(MPI_INT16_T), 2);
+
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+    MPI_Datatype null_type = MPI_DATATYPE_NULL;
+    EXPECT_THROW(mpi_datatype_size(null_type), kamping::MpiErrorException);
+
+    bool has_thrown = false;
+    try {
+        mpi_datatype_size(null_type);
+    } catch (kamping::MpiErrorException& e) {
+        has_thrown = true;
+        EXPECT_EQ(e.mpi_error_code(), MPI_ERR_TYPE);
+    }
+    EXPECT_TRUE(has_thrown);
 }

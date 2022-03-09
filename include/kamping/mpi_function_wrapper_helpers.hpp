@@ -16,6 +16,7 @@
 /// @file
 /// @brief Some functions and types simplifying/enabling the development of wrapped \c MPI calls in KaMPI.ng.
 
+#include <string>
 #include <utility>
 
 namespace kamping {
@@ -132,6 +133,35 @@ private:
                              ///< displacements have been written into storage owned by the caller of KaMPI.ng.
     SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if the send
                              ///< displacements have been written into storage owned by the caller of KaMPI.ng.
+};
+
+/// @brief The exception type used when an MPI call did not return MPI_SUCCESS.
+class MpiErrorException : public std::exception {
+public:
+    /// @brief Constructs the exception
+    /// @param message A custom error message.
+    /// @param mpi_error_code The error code returned by the MPI call.
+    explicit MpiErrorException(std::string message, int mpi_error_code)
+        : _what(std::move(message)),
+          _mpi_error_code(mpi_error_code) {}
+
+    /// @brief Prints a description of this exception.
+    /// @return A description of this exception.
+    [[nodiscard]] char const* what() const noexcept final {
+        return _what.c_str();
+    }
+
+    /// @brief Gets the error code returned by the MPI call.
+    /// @return The error code returned by the MPI call.
+    [[nodiscard]] int mpi_error_code() {
+        return _mpi_error_code;
+    }
+
+private:
+    /// @brief The description of this exception.
+    std::string _what;
+    /// @brief The error code returned by the MPI call.
+    int _mpi_error_code;
 };
 
 } // namespace kamping

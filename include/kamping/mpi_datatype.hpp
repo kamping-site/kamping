@@ -22,6 +22,7 @@
 #include <mpi.h>
 
 #include "kamping/kassert.hpp"
+#include "kamping/mpi_function_wrapper_helpers.hpp"
 
 namespace kamping {
 
@@ -158,7 +159,7 @@ int mpi_datatype_size(MPI_Datatype mpi_datatype) {
     int                  result;
     [[maybe_unused]] int err = MPI_Type_size(mpi_datatype, &result);
     /// @todo throw correct exception with propagated error code
-    KTHROW(err == MPI_SUCCESS);
+    KTHROW_SPECIFIED(err == MPI_SUCCESS, "MPI_Type_size returned error code " << err, MpiErrorException, err);
     return result;
 }
 
