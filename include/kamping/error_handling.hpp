@@ -28,7 +28,7 @@
 /// 1. The error code returned by the MPI call (mandatory).
 /// 2. The MPI function that returned the error code (mandatory).
 #define THROW_IF_MPI_ERROR(error_code, function) \
-    KTHROW_SPECIFIED(error_code == MPI_SUCCESS, #function << " failed.", MpiErrorException, error_code);
+    KTHROW_SPECIFIED(error_code == MPI_SUCCESS, #function << " failed!", MpiErrorException, error_code);
 
 namespace kamping {
 /// @brief The exception type used when an MPI call did not return MPI_SUCCESS.
