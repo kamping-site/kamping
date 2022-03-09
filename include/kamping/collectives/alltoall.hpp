@@ -77,6 +77,11 @@ public:
         int    recv_count    = throwing_cast<int>(recv_buf_size / asserting_cast<size_t>(comm.size()));
         KASSERT(send_count == recv_count);
 
+        auto send_buf_ptr = send_buf.ptr;
+        KASSERT(send_buf_ptr != 0);
+        auto recv_buf_ptr = recv_buf.get_ptr(recv_buf_size);
+        KASSERT(recv_buf_ptr != 0);
+
         int err = MPI_Alltoall(
             send_buf.ptr, send_count, mpi_send_type, recv_buf.get_ptr(recv_buf_size), recv_count, mpi_recv_type,
             comm.mpi_communicator());
