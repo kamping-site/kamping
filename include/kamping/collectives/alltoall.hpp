@@ -88,6 +88,7 @@ public:
             comm.mpi_communicator());
         /// @todo throw correct exception with propagated error code
         KTHROW(err == MPI_SUCCESS);
+        /// @todo `std::move(recv_buf)` will probably lead to bugs when recv_buf is passed as lvalue reference
         return MPIResult(
             std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
             internal::BufferCategoryNotUsed{});
