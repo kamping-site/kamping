@@ -39,9 +39,9 @@ public:
     /// This wrapper for \c MPI_Alltoall sends the same amount of data from each rank to each rank. The following
     /// buffers are required:
     /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
-    /// each rank and divisible the size of the communicator. Each rank receives the same amount of elements from this
-    /// buffer. Rank 0 receives the first \<buffer size\>/\<communicator size\> elements, rank 1 the next, and so on.
-    /// See
+    /// each rank and divisible by the size of the communicator. Each rank receives the same number of elements from
+    /// this buffer. Rank 0 receives the first `<buffer size>/<communicator size>` elements, rank 1 the next, and so
+    /// on. See
     /// TODO alltoallv if the amounts differ. The following buffers are optional:
     /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
     /// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
