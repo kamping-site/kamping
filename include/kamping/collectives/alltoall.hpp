@@ -78,9 +78,9 @@ public:
         KASSERT(send_count == recv_count);
 
         auto send_buf_ptr = send_buf.ptr;
-        KASSERT(send_buf_ptr != 0);
+        KASSERT(send_buf_ptr != nullptr);
         auto recv_buf_ptr = recv_buf.get_ptr(recv_buf_size);
-        KASSERT(recv_buf_ptr != 0);
+        KASSERT(recv_buf_ptr != nullptr);
 
         int err = MPI_Alltoall(
             send_buf.ptr, send_count, mpi_send_type, recv_buf.get_ptr(recv_buf_size), recv_count, mpi_recv_type,
