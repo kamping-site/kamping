@@ -109,13 +109,17 @@ endif()
 # Level 2: Light assertions = assertions that do not affect the running time of library operations significantly.
 # Level 3: Normal assertions = assertions that might slow down some operations of the library by a constant factor.
 #          Should only be used in debug mode.
-# Level 4: Heavy assertions = assertions that introduce overhead which renders some library operations infeasible when
+# Level 4: Light communication assertions = assertions that perform additional communication causing small running
+#          time overheads.
+# Level 5: Heavy communication assertions = assertions that perform additional communication causing significant
+#          running time overheads.
+# Level 6: Heavy assertions = assertions that introduce overhead which renders some library operations infeasible when
 #          invoked with any significant work load.
 #
 # Assertion levels can be set explicitly using the -DKAMPING_ASSERTION_LEVEL=... flag. If no level is set explicitly,
 # we set it to 1 (exceptions only) in Release mode and 3 (up to normal assertions) in Debug mode.
 set(KAMPING_ASSERTION_LEVEL $<IF:$<CONFIG:Debug>,3,1> CACHE STRING "Higher values enable more complex assertions. To disable all runtime checks, set to '0'.")
-set_property(CACHE KAMPING_ASSERTION_LEVEL PROPERTY STRINGS 0 1 2 3 4)
+set_property(CACHE KAMPING_ASSERTION_LEVEL PROPERTY STRINGS 0 1 2 3 4 5 6)
 target_compile_definitions(kamping INTERFACE -DKAMPING_ASSERTION_LEVEL=${KAMPING_ASSERTION_LEVEL})
 
 add_library(kamping::kamping ALIAS kamping)

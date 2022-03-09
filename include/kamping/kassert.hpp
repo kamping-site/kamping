@@ -30,6 +30,13 @@
     #define KAMPING_ASSERTION_LEVEL 3
 #endif
 
+// We use the zero variadic macro argument extension, which is supported by every major C++ compiler
+// Disable warning for macro declarations in this file
+#if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 /// @brief Assertion macro for the KaMPI.ng library. Accepts between one and three parameters.
 ///
 /// Assertions are enabled or disabled by setting a compile-time assertion level (`-DKAMPING_ASSERTION_LEVEL=<int>`).
@@ -39,10 +46,12 @@
 ///
 /// The macro accepts 1 to 3 parameters:
 /// 1. The assertion expression (mandatory).
-/// 2. Error message that is printed in addition to the decomposed expression (optional).
+/// 2. Error message that is printed in addition to the decomposed expression (optional). The message is piped into
+/// a logger object. Thus, one can use the `<<` operator to build the error message similar to how one would use
+/// `std::cout`.
 /// 3. The level of the assertion (optional, default: `kamping::assert::normal`, see @ref assertion-levels).
-#define KASSERT(...)               \
-    KAMPING_KASSERT_VARARG_HELPER( \
+#define KASSERT(...)                 \
+    KAMPING_KASSERT_VARARG_HELPER_3( \
         , __VA_ARGS__, KASSERT_3(__VA_ARGS__), KASSERT_2(__VA_ARGS__), KASSERT_1(__VA_ARGS__), ignore)
 
 /// @brief Macro for throwing exceptions inside the KaMPI.ng library. Accepts between one and three parameters.
@@ -51,13 +60,27 @@
 /// `-DKAMPING_EXCEPTION_MODE=On`. Otherwise, the macro generates a KASSERT() with assertion level
 /// `kamping::assert::kthrow` (lowest level).
 ///
-/// The macro accepts 1 to 3 parameters:
+/// The macro accepts 1 to 2 parameters:
 /// 1. Expression that causes the exception to be thrown if it evaluates to \c false (mandatory).
-/// 2. Error message that is added to the exception (optional).
-/// 3. Type of the exception that should be thrown (optional, default: `kamping::KassertException`).
-#define KTHROW(...)                \
-    KAMPING_KASSERT_VARARG_HELPER( \
-        , __VA_ARGS__, KTHROW_3(__VA_ARGS__), KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
+/// 2. Error message that is printed in addition to the decomposed expression (optional). The message is piped into
+/// a logger object. Thus, one can use the `<<` operator to build the error message similar to how one would use
+/// `std::cout`.
+#define KTHROW(...) KAMPING_KASSERT_VARARG_HELPER_2(, __VA_ARGS__, KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
+
+/// @brief Macro for throwing custom exception inside the KaMPI.ng library.
+///
+/// The macro requires at least 2 parameters:
+/// 1. Expression that causes the exception to be thrown if it evaluates to \c false (mandatory).
+/// 2. Error message that is printed in addition to the decomposed expression (optional). The message is piped into
+/// a logger object. Thus, one can use the `<<` operator to build the error message similar to how one would use
+/// `std::cout`.
+/// 3. Type of the exception to be used. The exception type must have a ctor that takes a `std::string` as its
+/// first argument, followed by any additional parameters passed to this macro.
+/// 4, 5, 6, ... Parameters that are forwarded to the exception type's ctor.
+///
+/// Any other parameter is passed to the constructor of the exception class.
+#define KTHROW_SPECIFIED(expression, message, exception_type, ...) \
+    KAMPING_KASSERT_HPP_KTHROW_CUSTOM_IMPL(expression, exception_type, message, ##__VA_ARGS__)
 
 /// @cond IMPLEMENTATION
 
@@ -114,12 +137,13 @@
 
 // Expands a macro depending on its number of arguments. For instance,
 //
-// #define FOO(...) KAMPING_KASSERT_VARARG_HELPER(, __VA_ARGS__, IMPL3, IMPL2, IMPL1, dummy)
+// #define FOO(...) KAMPING_KASSERT_VARARG_HELPER_3(, __VA_ARGS__, IMPL3, IMPL2, IMPL1, dummy)
 //
 // expands to IMPL3 with 3 arguments, IMPL2 with 2 arguments and IMPL1 with 1 argument.
 // To do this, the macro always expands to its 5th argument. Depending on the number of parameters, __VA_ARGS__
 // pushes the right implementation to the 5th parameter.
-#define KAMPING_KASSERT_VARARG_HELPER(X, Y, Z, W, FUNC, ...) FUNC
+#define KAMPING_KASSERT_VARARG_HELPER_3(X, Y, Z, W, FUNC, ...) FUNC
+#define KAMPING_KASSERT_VARARG_HELPER_2(X, Y, Z, FUNC, ...)    FUNC
 
 // KASSERT() chooses the right implementation depending on its number of arguments.
 #define KASSERT_3(expression, message, level) KAMPING_KASSERT_HPP_KASSERT_IMPL("ASSERTION", expression, message, level)
@@ -130,24 +154,45 @@
 // In KAMPING_EXCEPTION_MODE, we throw an exception similar to the implementation of KASSERT(), although expression
 // decomposition in exceptions is currently unsupported. Otherwise, the macro delegates to KASSERT().
 #ifdef KAMPING_EXCEPTION_MODE
-    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)                                    \
-        do {                                                                                                        \
-            if (!(expression)) {                                                                                    \
-                throw assertion_type(kamping::internal::build_what(                                                 \
-                    #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION,                                               \
-                    (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str())); \
-            }                                                                                                       \
+    #define KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(expression, exception_type, message, ...) \
+        do {                                                                                   \
+            if (!(expression)) {                                                               \
+                throw exception_type(message, ##__VA_ARGS__);                                  \
+            }                                                                                  \
         } while (false)
 #else
-    #define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type) \
-        KAMPING_KASSERT_HPP_KASSERT_IMPL(#assertion_type, expression, message, kamping::assert::kthrow)
+    #define KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(expression, exception_type, message, ...)                        \
+        do {                                                                                                          \
+            if constexpr (kamping::internal::assertion_enabled(kamping::assert::kthrow)) {                            \
+                kamping::Logger<std::ostream&>(std::cerr) << (exception_type(message, ##__VA_ARGS__).what()) << "\n"; \
+                std::abort();                                                                                         \
+            }                                                                                                         \
+        } while (false)
 #endif
 
+#define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message)  \
+    KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(                 \
+        expression, kamping::KassertException,                \
+        kamping::internal::build_what(                        \
+            #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION, \
+            (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str()))
+
+#define KAMPING_KASSERT_HPP_KTHROW_CUSTOM_IMPL(expression, exception_type, message, ...)                   \
+    KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(                                                              \
+        expression, exception_type,                                                                        \
+        kamping::internal::build_what(                                                                     \
+            #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION,                                              \
+            (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str()), \
+        ##__VA_ARGS__)
+
 // KTHROW() chooses the right implementation depending on its number of arguments.
-#define KTHROW_3(expression, message, assertion_type) \
-    KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message, assertion_type)
-#define KTHROW_2(expression, message) KTHROW_3(expression, message, kamping::KassertException)
+#define KTHROW_2(expression, message) KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message)
 #define KTHROW_1(expression)          KTHROW_2(expression, "")
+
+// Re-enable Clang warning for GNU extension
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
 
 // __PRETTY_FUNCTION__ is a compiler extension supported by GCC and clang that prints more information than __func__
 #if defined(__GNUC__) || defined(__clang__)
@@ -189,14 +234,13 @@ build_what(std::string const& expression, SourceLocation const where, std::strin
 }
 } // namespace internal
 
-
 /// @brief The default exception type used together with \c KTHROW. Reports the erroneous expression together with a
 /// custom error message.
 class KassertException : public std::exception {
 public:
     /// @brief Constructs the exception
     /// @param message A custom error message.
-    explicit KassertException(std::string const& message) : _what(message) {}
+    explicit KassertException(std::string message) : _what(std::move(message)) {}
 
     /// @brief Prints a description of this exception.
     /// @return A description of this exception.
@@ -225,8 +269,14 @@ constexpr int light = 2;
 /// @brief Default assertion level. This level is used if no assertion level is specified.
 constexpr int normal = 3;
 
+/// @brief Assertions that perform lightweight communication.
+constexpr int light_communication = 4;
+
+/// @brief Assertions that perform heavyweight communication.
+constexpr int heavy_communication = 5;
+
 /// @brief Assertion level for heavyweight assertions.
-constexpr int heavy = 4;
+constexpr int heavy = 6;
 
 /// @}
 } // namespace assert
