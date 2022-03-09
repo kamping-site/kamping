@@ -242,7 +242,7 @@ public:
     /// @param message A custom error message.
     explicit KassertException(std::string message) : _what(std::move(message)) {}
 
-    /// @brief Prints a description of this exception.
+    /// @brief Gets a description of this exception.
     /// @return A description of this exception.
     [[nodiscard]] char const* what() const noexcept final {
         return _what.c_str();
