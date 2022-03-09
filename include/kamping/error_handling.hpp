@@ -44,7 +44,7 @@ public:
         char errorString[MPI_MAX_ERROR_STRING];
         int  err = MPI_Error_string(_mpi_error_code, errorString, &errorStringLen);
         if (err == MPI_SUCCESS) {
-            _what = message + "\n Failed with the following error message: " + errorString;
+            _what = message + "\n Failed with the following error message:\n" + errorString;
         } else {
             _what = message + "\n Error message could not be retrieved";
         }
