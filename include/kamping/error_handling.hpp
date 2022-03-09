@@ -25,8 +25,8 @@
 /// Throws an MpiErrorException if the supplied error code is not MPI_SUCCESS
 ///
 /// The macro accepts 2 parameters:
-/// 1. The error code returned by the MPI call (mandatory).
-/// 2. The MPI function that returned the error code (mandatory).
+/// 1. The error code returned by the MPI call.
+/// 2. The MPI function that returned the error code.
 #define THROW_IF_MPI_ERROR(error_code, function) \
     KTHROW_SPECIFIED(error_code == MPI_SUCCESS, #function << " failed!", MpiErrorException, error_code);
 
