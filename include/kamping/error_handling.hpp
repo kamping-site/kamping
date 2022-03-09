@@ -56,10 +56,18 @@ public:
         return _what.c_str();
     }
 
-    /// @brief Gets the error code returned by the MPI call.
-    /// @return The error code returned by the MPI call.
+    /// @brief Gets the error code returned by the mpi call.
+    /// @return The error code returned by the mpi call.
     [[nodiscard]] int mpi_error_code() const {
         return _mpi_error_code;
+    }
+
+    /// @brief Gets the error class corresponding to the error code.
+    /// @return The error class corresponding to the error code.
+    [[nodiscard]] int mpi_error_class() const {
+        int error_class;
+        MPI_Error_class(_mpi_error_code, &error_class);
+        return error_class;
     }
 
 private:
