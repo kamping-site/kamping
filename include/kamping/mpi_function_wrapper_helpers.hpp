@@ -145,7 +145,7 @@ public:
     /// @brief Constructs the exception
     /// @param message A custom error message.
     /// @param mpi_error_code The error code returned by the MPI call.
-    explicit MpiErrorException(std::string message, int mpi_error_code) : _mpi_error_code(mpi_error_code) {
+    MpiErrorException(std::string message, int mpi_error_code) : _mpi_error_code(mpi_error_code) {
         int  errorStringLen;
         char errorString[MPI_MAX_ERROR_STRING];
         int  err = MPI_Error_string(_mpi_error_code, errorString, &errorStringLen);
@@ -164,7 +164,7 @@ public:
 
     /// @brief Gets the error code returned by the MPI call.
     /// @return The error code returned by the MPI call.
-    [[nodiscard]] int mpi_error_code() {
+    [[nodiscard]] int mpi_error_code() const {
         return _mpi_error_code;
     }
 
