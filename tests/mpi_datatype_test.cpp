@@ -319,6 +319,7 @@ TEST(MpiDataTypeTest, mpi_datatype_size) {
     } catch (kamping::MpiErrorException& e) {
         has_thrown = true;
         EXPECT_EQ(e.mpi_error_code(), MPI_ERR_TYPE);
+        EXPECT_THAT(e.what(), HasSubstr("MPI_Type_size returned error code " + MPI_ERR_TYPE));
     }
     EXPECT_TRUE(has_thrown);
 }
