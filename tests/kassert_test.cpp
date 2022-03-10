@@ -38,7 +38,7 @@ TEST(KassertTest, kassert_overloads_compile) {
 }
 
 TEST(KassertTest, kthrow_overloads_compile) {
-#if KAMPING_EXCEPTION_MODE
+#ifdef KAMPING_EXCEPTION_MODE
     // test that all KTHROW() overloads compile
     EXPECT_THROW({ KTHROW(false, "__false_is_false_2__"); }, kamping::KassertException);
     EXPECT_THROW({ KTHROW(false); }, kamping::KassertException);
@@ -67,7 +67,7 @@ public:
 };
 
 TEST(KassertTest, kthrow_custom_compiles) {
-#if KAMPING_EXCEPTION_MODE
+#ifdef KAMPING_EXCEPTION_MODE
     EXPECT_THROW({ KTHROW_SPECIFIED(false, "", ZeroCustomArgException); }, ZeroCustomArgException);
     EXPECT_THROW({ KTHROW_SPECIFIED(false, "", SingleCustomArgException, 43); }, SingleCustomArgException);
 #else  // KAMPING_EXCEPTION_MODE

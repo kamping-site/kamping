@@ -14,10 +14,8 @@ function(kamping_set_kassert_flags KAMPING_TARGET_NAME)
   target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_ASSERTION_LEVEL=${KAMPING_HIGHEST_ASSERTION_LEVEL})
 
   # Explicitly specify exception mode for tests, default to no exception mode
-  if (KAMPING_NO_EXCEPTION_MODE)
-    target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_EXCEPTION_MODE=0)
-  else ()
-    target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_EXCEPTION_MODE=1)
+  if (NOT KAMPING_NO_EXCEPTION_MODE)
+    target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_EXCEPTION_MODE)
   endif ()
 endfunction()
 
