@@ -1,6 +1,6 @@
 // This file is part of KaMPI.ng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021-2022 The KaMPI.ng Authors
 //
 // KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -307,4 +307,20 @@ TEST(MpiDataTypeTest, mpi_datatype_size) {
     EXPECT_EQ(mpi_datatype_size(MPI_INT), sizeof(int));
     EXPECT_EQ(mpi_datatype_size(MPI_CHAR), sizeof(char));
     EXPECT_EQ(mpi_datatype_size(MPI_INT16_T), 2);
+
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+    MPI_Datatype null_type = MPI_DATATYPE_NULL;
+    EXPECT_THROW(mpi_datatype_size(null_type), kamping::MpiErrorException);
+
+    bool has_thrown = false;
+    try {
+        mpi_datatype_size(null_type);
+    } catch (kamping::MpiErrorException& e) {
+        has_thrown = true;
+        EXPECT_EQ(e.mpi_error_code(), MPI_ERR_TYPE);
+        EXPECT_EQ(e.mpi_error_class(), MPI_ERR_TYPE);
+        EXPECT_THAT(e.what(), HasSubstr("Failed with the following error message:"));
+        EXPECT_THAT(e.what(), HasSubstr("MPI_Type_size failed"));
+    }
+    EXPECT_TRUE(has_thrown);
 }

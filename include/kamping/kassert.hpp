@@ -1,6 +1,6 @@
 // This file is part of KaMPI.ng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021-2022 The KaMPI.ng Authors
 //
 // KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -245,7 +245,7 @@ public:
     /// @param message A custom error message.
     explicit KassertException(std::string message) : _what(std::move(message)) {}
 
-    /// @brief Prints a description of this exception.
+    /// @brief Gets a description of this exception.
     /// @return A description of this exception.
     [[nodiscard]] char const* what() const noexcept final {
         return _what.c_str();
