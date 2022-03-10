@@ -154,9 +154,9 @@ private:
         return size;
     }
 
-    int const      _rank; ///< Rank of the MPI process in this communicator.
-    int const      _size; ///< Number of MPI processes in this communicator.
-    MPI_Comm const _comm; ///< Corresponding MPI communicator.
+    int      _rank; ///< Rank of the MPI process in this communicator.
+    int      _size; ///< Number of MPI processes in this communicator.
+    MPI_Comm _comm; ///< Corresponding MPI communicator.
 
     int _root; ///< Default root for MPI operations that require a root.
 };             // class communicator
