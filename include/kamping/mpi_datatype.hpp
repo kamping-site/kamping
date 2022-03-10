@@ -49,8 +49,8 @@ template <size_t NumBytes>
     return type;
 }
 
-/// @brief the members specify which group the datatype belongs to according to the type groups specified in Section 5.9.2 of
-/// the MPI 3.1 standard.
+/// @brief the members specify which group the datatype belongs to according to the type groups specified in
+/// Section 5.9.2 of the MPI 3.1 standard.
 enum class TypeCategory { integer, floating, complex, logical, byte, undefined };
 
 #ifdef KAMPING_DOXYGEN_ONLY
