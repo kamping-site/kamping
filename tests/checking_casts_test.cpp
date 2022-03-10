@@ -11,6 +11,10 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+// Explicitly enable normal assertions
+#undef KAMPING_ASSERTION_LEVEL
+#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
+
 #include <cstddef>
 #include <cstdint>
 #include <limits>
