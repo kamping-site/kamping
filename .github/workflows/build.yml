@@ -34,7 +34,7 @@ jobs:
             build-mode: Debug
             exception-mode: ON
             assertion-level: 6
-            run-tests: ON
+            run-tests: OFF
           - compiler: { name: Clang, cc: clang, cxx: clang++}
             build-mode: Release
             exception-mode: ON
