@@ -11,6 +11,10 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+// Overwrite build option and set assertion level to normal
+#undef KAMPING_ASSERTION_LEVEL
+#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
+
 #include "kamping/kassert.hpp"
 
 #include <gmock/gmock.h>
@@ -35,6 +39,15 @@ TEST(KassertTest, kassert_overloads_compile) {
         "__false_is_false_3__");
     EXPECT_EXIT({ KASSERT(false, "__false_is_false_2__"); }, KilledBySignal(SIGABRT), "__false_is_false_2__");
     EXPECT_EXIT({ KASSERT(false); }, KilledBySignal(SIGABRT), "");
+}
+
+// Since we explicitly set the assertion level to normal, heavier assertions should not trigger.
+TEST(KassertTest, kassert_respects_assertion_level) {
+    EXPECT_EXIT({ KASSERT(false, "", kamping::assert::light); }, KilledBySignal(SIGABRT), "");
+    EXPECT_EXIT({ KASSERT(false, "", kamping::assert::normal); }, KilledBySignal(SIGABRT), "");
+    KASSERT(false, "", kamping::assert::light_communication);
+    KASSERT(false, "", kamping::assert::heavy_communication);
+    KASSERT(false, "", kamping::assert::heavy);
 }
 
 TEST(KassertTest, kthrow_overloads_compile) {
