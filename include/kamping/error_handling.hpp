@@ -16,7 +16,6 @@
 /// @file
 /// @brief Code for error handling.
 
-#include <array>
 #include <string>
 
 #include <mpi.h>
