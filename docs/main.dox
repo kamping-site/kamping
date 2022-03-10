@@ -15,6 +15,7 @@ namespace kamping {
   - \subpage coding_guidelines
   - \subpage documentation_guidelines
   - \subpage testing_guidelines
+  - \subpage contribution_guidelines
 
   */
 
