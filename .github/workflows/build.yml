@@ -76,4 +76,5 @@ jobs:
         echo OMPI_ALLOW_RUN_AS_ROOT=1 >> $GITHUB_ENV
         echo OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 >> $GITHUB_ENV
     - name: run tests
+      if: matrix.run-tests == 'ON'
       run: ctest --output-on-failure --test-dir build/
