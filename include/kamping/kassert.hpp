@@ -65,7 +65,9 @@
 /// 2. Error message that is printed in addition to the decomposed expression (optional). The message is piped into
 /// a logger object. Thus, one can use the `<<` operator to build the error message similar to how one would use
 /// `std::cout`.
-#define KTHROW(...) KAMPING_KASSERT_VARARG_HELPER_2(, __VA_ARGS__, KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
+#define THROWING_KASSERT(...)        \
+    KAMPING_KASSERT_VARARG_HELPER_2( \
+        , __VA_ARGS__, THROWING_KASSERT_2(__VA_ARGS__), THROWING_KASSERT_1(__VA_ARGS__), ignore)
 
 /// @brief Macro for throwing custom exception inside the KaMPI.ng library.
 ///
@@ -79,8 +81,8 @@
 /// 4, 5, 6, ... Parameters that are forwarded to the exception type's ctor.
 ///
 /// Any other parameter is passed to the constructor of the exception class.
-#define KTHROW_SPECIFIED(expression, message, exception_type, ...) \
-    KAMPING_KASSERT_HPP_KTHROW_CUSTOM_IMPL(expression, exception_type, message, ##__VA_ARGS__)
+#define THROWING_KASSERT_SPECIFIED(expression, message, exception_type, ...) \
+    KAMPING_KASSERT_HPP_THROWING_KASSERT_CUSTOM_IMPL(expression, exception_type, message, ##__VA_ARGS__)
 
 /// @cond IMPLEMENTATION
 
@@ -150,47 +152,47 @@
 #define KASSERT_2(expression, message)        KASSERT_3(expression, message, kamping::assert::normal)
 #define KASSERT_1(expression)                 KASSERT_2(expression, "")
 
-// Implementation of the KTHROW() macro.
+// Implementation of the THROWING_KASSERT() macro.
 // In KAMPING_EXCEPTION_MODE, we throw an exception similar to the implementation of KASSERT(), although expression
 // decomposition in exceptions is currently unsupported. Otherwise, the macro delegates to KASSERT().
 #ifdef KAMPING_EXCEPTION_MODE
-    #define KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(expression, exception_type, message, ...) \
-        do {                                                                                   \
-            if (!(expression)) {                                                               \
-                throw exception_type(message, ##__VA_ARGS__);                                  \
-            }                                                                                  \
+    #define KAMPING_KASSERT_HPP_THROWING_KASSERT_IMPL_INTERNAL(expression, exception_type, message, ...) \
+        do {                                                                                             \
+            if (!(expression)) {                                                                         \
+                throw exception_type(message, ##__VA_ARGS__);                                            \
+            }                                                                                            \
         } while (false)
 #else
-    #define KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(expression, exception_type, message, ...) \
-        do {                                                                                   \
-            if constexpr (kamping::internal::assertion_enabled(kamping::assert::kthrow)) {     \
-                if (!(expression)) {                                                           \
-                    kamping::Logger<std::ostream&>(std::cerr)                                  \
-                        << (exception_type(message, ##__VA_ARGS__).what()) << "\n";            \
-                    std::abort();                                                              \
-                }                                                                              \
-            }                                                                                  \
+    #define KAMPING_KASSERT_HPP_THROWING_KASSERT_IMPL_INTERNAL(expression, exception_type, message, ...) \
+        do {                                                                                             \
+            if constexpr (kamping::internal::assertion_enabled(kamping::assert::kthrow)) {               \
+                if (!(expression)) {                                                                     \
+                    kamping::Logger<std::ostream&>(std::cerr)                                            \
+                        << (exception_type(message, ##__VA_ARGS__).what()) << "\n";                      \
+                    std::abort();                                                                        \
+                }                                                                                        \
+            }                                                                                            \
         } while (false)
 #endif
 
-#define KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message)  \
-    KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(                 \
-        expression, kamping::KassertException,                \
-        kamping::internal::build_what(                        \
-            #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION, \
+#define KAMPING_KASSERT_HPP_THROWING_KASSERT_IMPL(expression, message) \
+    KAMPING_KASSERT_HPP_THROWING_KASSERT_IMPL_INTERNAL(                \
+        expression, kamping::KassertException,                         \
+        kamping::internal::build_what(                                 \
+            #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION,          \
             (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str()))
 
-#define KAMPING_KASSERT_HPP_KTHROW_CUSTOM_IMPL(expression, exception_type, message, ...)                   \
-    KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(                                                              \
+#define KAMPING_KASSERT_HPP_THROWING_KASSERT_CUSTOM_IMPL(expression, exception_type, message, ...)         \
+    KAMPING_KASSERT_HPP_THROWING_KASSERT_IMPL_INTERNAL(                                                    \
         expression, exception_type,                                                                        \
         kamping::internal::build_what(                                                                     \
             #expression, KAMPING_KASSERT_HPP_SOURCE_LOCATION,                                              \
             (kamping::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str()), \
         ##__VA_ARGS__)
 
-// KTHROW() chooses the right implementation depending on its number of arguments.
-#define KTHROW_2(expression, message) KAMPING_KASSERT_HPP_KTHROW_IMPL(expression, message)
-#define KTHROW_1(expression)          KTHROW_2(expression, "")
+// THROWING_KASSERT() chooses the right implementation depending on its number of arguments.
+#define THROWING_KASSERT_2(expression, message) KAMPING_KASSERT_HPP_THROWING_KASSERT_IMPL(expression, message)
+#define THROWING_KASSERT_1(expression)          THROWING_KASSERT_2(expression, "")
 
 // Re-enable Clang warning for GNU extension
 #if defined(__clang__)
@@ -237,8 +239,8 @@ build_what(std::string const& expression, SourceLocation const where, std::strin
 }
 } // namespace internal
 
-/// @brief The default exception type used together with \c KTHROW. Reports the erroneous expression together with a
-/// custom error message.
+/// @brief The default exception type used together with \c THROWING_KASSERT. Reports the erroneous expression together
+/// with a custom error message.
 class KassertException : public std::exception {
 public:
     /// @brief Constructs the exception
@@ -399,7 +401,7 @@ void stringify_value(Logger<StreamT>& out, ValueT const& value) {
 using OStreamLogger = Logger<std::ostream&>;
 
 /// @brief Logger writing all output to a rvalue \c std::ostringstream. This specialization is used to generate the
-/// custom error message for KTHROW exceptions.
+/// custom error message for THROWING_KASSERT exceptions.
 using RrefOStringstreamLogger = Logger<std::ostringstream&&>;
 
 /// @}
