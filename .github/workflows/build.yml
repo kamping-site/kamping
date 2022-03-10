@@ -23,10 +23,19 @@ jobs:
         build-mode: [Debug, Release]
         exception-mode: [ON]
         assertion-level: [6]
+        run-tests: [OFF]
         include:
           - compiler: GNU
             build-mode: Debug
             exception-mode: OFF
+            run-tests: ON
+          - compiler: GNU
+            build-mode: Debug
+            exception-mode: ON
+            run-tests: ON
+          - compiler: clang
+            build-mode: Release
+            run-tests: ON
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v2
