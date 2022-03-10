@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include <array>
 #include <mpi.h>
 
 /// @brief Wrapper around KTHROW for MPI errors.
