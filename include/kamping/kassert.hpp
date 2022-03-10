@@ -24,6 +24,11 @@
 #include <utility>
 #include <vector>
 
+#ifndef KAMPING_EXCEPTION_MODE
+    /// @brief If exception mode flag is not set, explicitly set it to 0.
+    #define KAMPING_EXCEPTION_MODE 0
+#endif
+
 #ifndef KAMPING_ASSERTION_LEVEL
     #warning "Assertion level was not set explicitly; using default assertion level."
     /// @brief Default assertion level to `kamping::kassert::default` if not set explicitly.
@@ -153,7 +158,7 @@
 // Implementation of the KTHROW() macro.
 // In KAMPING_EXCEPTION_MODE, we throw an exception similar to the implementation of KASSERT(), although expression
 // decomposition in exceptions is currently unsupported. Otherwise, the macro delegates to KASSERT().
-#ifdef KAMPING_EXCEPTION_MODE
+#if KAMPING_EXCEPTION_MODE
     #define KAMPING_KASSERT_HPP_KTHROW_IMPL_INTERNAL(expression, exception_type, message, ...) \
         do {                                                                                   \
             if (!(expression)) {                                                               \
