@@ -25,28 +25,28 @@ jobs:
         assertion-level: [6]
         run-tests: [OFF]
         include:
-          - compiler: GNU
+          - compiler: { name: GNU, cc: gcc, cxx: g++}
             build-mode: Debug
             exception-mode: OFF
             assertion-level: 6
             run-tests: ON
-          - compiler: GNU
+          - compiler: { name: GNU, cc: gcc, cxx: g++}
             build-mode: Debug
             exception-mode: ON
             assertion-level: 6
             run-tests: ON
-          - compiler: clang
+          - compiler: { name: Clang, cc: clang, cxx: clang++}
             build-mode: Release
             exception-mode: ON
             assertion-level: 6
             run-tests: ON
         exclude:
-          - compiler: GNU
+          - compiler: { name: GNU, cc: gcc, cxx: g++}
             build-mode: Debug
             exception-mode: ON
             assertion-level: 6
             run-tests: OFF
-          - compiler: clang
+          - compiler: { name: Clang, cc: clang, cxx: clang++}
             build-mode: Release
             exception-mode: ON
             assertion-level: 6
