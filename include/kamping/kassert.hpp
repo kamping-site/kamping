@@ -50,8 +50,8 @@
 /// a logger object. Thus, one can use the `<<` operator to build the error message similar to how one would use
 /// `std::cout`.
 /// 3. The level of the assertion (optional, default: `kamping::assert::normal`, see @ref assertion-levels).
-#define KASSERT(...)                     \
-    KAMPING_KASSERT_HPP_VARARG_HELPER_3( \
+#define KASSERT(...)                 \
+    KAMPING_KASSERT_VARARG_HELPER_3( \
         , __VA_ARGS__, KASSERT_3(__VA_ARGS__), KASSERT_2(__VA_ARGS__), KASSERT_1(__VA_ARGS__), ignore)
 
 /// @brief Macro for throwing exceptions inside the KaMPI.ng library. Accepts between one and three parameters.
@@ -65,8 +65,7 @@
 /// 2. Error message that is printed in addition to the decomposed expression (optional). The message is piped into
 /// a logger object. Thus, one can use the `<<` operator to build the error message similar to how one would use
 /// `std::cout`.
-#define KTHROW(...) \
-    KAMPING_KASSERT_HPP_VARARG_HELPER_2(, __VA_ARGS__, KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
+#define KTHROW(...) KAMPING_KASSERT_VARARG_HELPER_2(, __VA_ARGS__, KTHROW_2(__VA_ARGS__), KTHROW_1(__VA_ARGS__), ignore)
 
 /// @brief Macro for throwing custom exception inside the KaMPI.ng library.
 ///
@@ -138,13 +137,13 @@
 
 // Expands a macro depending on its number of arguments. For instance,
 //
-// #define FOO(...) KAMPING_KASSERT_HPP_VARARG_HELPER_3(, __VA_ARGS__, IMPL3, IMPL2, IMPL1, dummy)
+// #define FOO(...) KAMPING_KASSERT_VARARG_HELPER_3(, __VA_ARGS__, IMPL3, IMPL2, IMPL1, dummy)
 //
 // expands to IMPL3 with 3 arguments, IMPL2 with 2 arguments and IMPL1 with 1 argument.
 // To do this, the macro always expands to its 5th argument. Depending on the number of parameters, __VA_ARGS__
 // pushes the right implementation to the 5th parameter.
-#define KAMPING_KASSERT_HPP_VARARG_HELPER_3(X, Y, Z, W, FUNC, ...) FUNC
-#define KAMPING_KASSERT_HPP_VARARG_HELPER_2(X, Y, Z, FUNC, ...)    FUNC
+#define KAMPING_KASSERT_VARARG_HELPER_3(X, Y, Z, W, FUNC, ...) FUNC
+#define KAMPING_KASSERT_VARARG_HELPER_2(X, Y, Z, FUNC, ...)    FUNC
 
 // KASSERT() chooses the right implementation depending on its number of arguments.
 #define KASSERT_3(expression, message, level) KAMPING_KASSERT_HPP_KASSERT_IMPL("ASSERTION", expression, message, level)
