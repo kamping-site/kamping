@@ -11,13 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-// overwrite build options and set assertion level to normal, enable exceptions
-#undef KAMPING_ASSERTION_LEVEL
-#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
-#ifndef KAMPING_EXCEPTION_MODE
-    #define KAMPING_EXCEPTION_MODE
-#endif // KAMPING_EXCEPTION_MODE
-
 #include <gtest/gtest.h>
 #include <mpi.h>
 

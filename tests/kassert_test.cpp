@@ -11,10 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-// overwrite build options and set assertion level to normal
-#undef KAMPING_ASSERTION_LEVEL
-#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
-
 #include "kamping/kassert.hpp"
 
 #include <gmock/gmock.h>
