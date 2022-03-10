@@ -11,19 +11,15 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-// overwrite build options and set assertion level to normal
-#undef KAMPING_ASSERTION_LEVEL
-#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
-
 #include "kamping/kassert.hpp"
 
 #include <gmock/gmock.h>
 
 using namespace ::testing;
 
-// General comment: all KASSERT() and KTHROW() calls with a relation in their expression are placed inside lambdas,
-// which are then called from EXPECT_EXIT(). This indirection is necessary as otherwise, GCC does not suppress the
-// warning on missing parentheses. This happens whenever the KASSERT() call is passed through two levels of macros,
+// General comment: all KASSERT() and THROWING_KASSERT() calls with a relation in their expression are placed inside
+// lambdas, which are then called from EXPECT_EXIT(). This indirection is necessary as otherwise, GCC does not suppress
+// the warning on missing parentheses. This happens whenever the KASSERT() call is passed through two levels of macros,
 // i.e.,
 //
 // #defined A(stmt) B(stmt)
@@ -42,10 +38,53 @@ TEST(KassertTest, kassert_overloads_compile) {
 }
 
 TEST(KassertTest, kthrow_overloads_compile) {
-    // test that all KTHROW() overloads compile
-    EXPECT_THROW({ KTHROW(false, "__false_is_false_3__", kamping::KassertException); }, kamping::KassertException);
-    EXPECT_THROW({ KTHROW(false, "__false_is_false_2__"); }, kamping::KassertException);
-    EXPECT_THROW({ KTHROW(false); }, kamping::KassertException);
+#ifdef KAMPING_EXCEPTION_MODE
+    // test that all THROWING_KASSERT() overloads compile
+    EXPECT_THROW({ THROWING_KASSERT(false, "__false_is_false_2__"); }, kamping::KassertException);
+    EXPECT_THROW({ THROWING_KASSERT(false); }, kamping::KassertException);
+#else  // KAMPING_EXCEPTION_MODE
+    EXPECT_EXIT({ THROWING_KASSERT(false, "__false_is_false_2__"); }, KilledBySignal(SIGABRT), "__false_is_false_2__");
+    EXPECT_EXIT({ THROWING_KASSERT(false); }, KilledBySignal(SIGABRT), "");
+#endif // KAMPING_EXCEPTION_MODE
+}
+
+class ZeroCustomArgException : public std::exception {
+public:
+    ZeroCustomArgException(std::string) {}
+
+    const char* what() const throw() final {
+        return "ZeroCustomArgException";
+    }
+};
+
+class SingleCustomArgException : public std::exception {
+public:
+    SingleCustomArgException(std::string, int) {}
+
+    const char* what() const throw() final {
+        return "SingleCustomArgException";
+    }
+};
+
+TEST(KassertTest, kthrow_custom_compiles) {
+#ifdef KAMPING_EXCEPTION_MODE
+    EXPECT_THROW({ THROWING_KASSERT_SPECIFIED(false, "", ZeroCustomArgException); }, ZeroCustomArgException);
+    EXPECT_THROW({ THROWING_KASSERT_SPECIFIED(false, "", SingleCustomArgException, 43); }, SingleCustomArgException);
+#else  // KAMPING_EXCEPTION_MODE
+    EXPECT_EXIT(
+        { THROWING_KASSERT_SPECIFIED(false, "", ZeroCustomArgException); }, KilledBySignal(SIGABRT),
+        "ZeroCustomArgException");
+    EXPECT_EXIT(
+        { THROWING_KASSERT_SPECIFIED(false, "", SingleCustomArgException, 43); }, KilledBySignal(SIGABRT),
+        "SingleCustomArgException");
+#endif // KAMPING_EXCEPTION_MODE
+}
+
+// Check that THROWING_KASSERT does nothing if the expression evaluates to true.
+TEST(KassertTest, kthrow_does_nothing_on_true_expression) {
+    THROWING_KASSERT(true);
+    THROWING_KASSERT(true, "");
+    THROWING_KASSERT_SPECIFIED(true, "", ZeroCustomArgException);
 }
 
 // Test that expressions are evaluated as expected
@@ -365,8 +404,8 @@ TEST(KassertTest, int_vector_int_pair_expansion) {
 // Test expansion of unsupported custom type
 
 TEST(KassertTest, unsupported_type_expansion) {
-    struct A {
-        bool operator==(A const&) const {
+    struct CustomType {
+        bool operator==(CustomType const&) const {
             return false;
         }
 
@@ -376,10 +415,10 @@ TEST(KassertTest, unsupported_type_expansion) {
     };
 
     auto eq = [] {
-        KASSERT(A{} == A{});
+        KASSERT(CustomType{} == CustomType{});
     };
     auto eq_int = [](int const val) {
-        KASSERT(A{} == val);
+        KASSERT(CustomType{} == val);
     };
 
     EXPECT_EXIT({ eq(); }, KilledBySignal(SIGABRT), "<\\?> == <\\?>");

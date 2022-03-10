@@ -58,7 +58,7 @@ TODO \@Demian \@Matthias: Rules for API
 * Avoid `std::bind`, use lambda functions instead as they result in better readability and allow the compiler to inline better.
 * Use the subset of `C++` which compiles in `gcc10`, `clang10` and `icc19`.
 * Use the `KASSERT()` macro with the appropriate assertion level to validate the internal state of your code.
-* Use the `KTHROW()` macro to validate super-supplied data.
+* Use the `THROWING_KASSERT()` macro to validate user-supplied data.
 
 # Warnings
 Code *should* compile with `clang` and `gcc` (not `icc`) without warning with the warning flags given below. If you want to submit code which throws warnings, at least two other persons have to agree. Possible reasons for this are: False-positive warnings.

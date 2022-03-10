@@ -1,6 +1,24 @@
 include(KaTestrophe)
 include(GoogleTest)
 
+function(kamping_set_kassert_flags KAMPING_TARGET_NAME)
+  cmake_parse_arguments(
+    "KAMPING"
+    "NO_EXCEPTION_MODE"
+    ""
+    ""
+    ${ARGN}
+    )
+
+  # Always run tests with all assertions enabled
+  target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_ASSERTION_LEVEL=${KAMPING_HIGHEST_ASSERTION_LEVEL})
+
+  # Explicitly specify exception mode for tests, default to no exception mode
+  if (NOT KAMPING_NO_EXCEPTION_MODE)
+    target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_EXCEPTION_MODE)
+  endif ()
+endfunction()
+
 # Convenience wrapper for adding tests for KaMPI.ng
 # this creates the target, links googletest and kamping, enables warnings and registers the test
 #
@@ -11,15 +29,16 @@ include(GoogleTest)
 function(kamping_register_test KAMPING_TARGET_NAME)
   cmake_parse_arguments(
     "KAMPING"
-    ""
+    "NO_EXCEPTION_MODE"
     ""
     "FILES"
     ${ARGN}
     )
   add_executable(${KAMPING_TARGET_NAME} ${KAMPING_FILES})
-  target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE gtest gtest_main gmock kamping)
+  target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE gtest gtest_main gmock kamping_base)
   target_compile_options(${KAMPING_TARGET_NAME} PRIVATE ${KAMPING_WARNING_FLAGS})
   gtest_discover_tests(${KAMPING_TARGET_NAME} WORKING_DIRECTORY ${PROJECT_DIR})
+  kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN}) 
 endfunction()
 
 # Convenience wrapper for adding tests for KaMPI.ng which rely on MPI
@@ -32,15 +51,16 @@ endfunction()
 # example: kamping_register_mpi_test(mytarget FILES mytarget.cpp CORES 1 2 4 8)
 function(kamping_register_mpi_test KAMPING_TARGET_NAME)
   cmake_parse_arguments(
-   "KAMPING"
-    ""
+    "KAMPING"
+    "NO_EXCEPTION_MODE"
     ""
     "FILES;CORES"
     ${ARGN}
     )
   katestrophe_add_test_executable(${KAMPING_TARGET_NAME} FILES ${KAMPING_FILES})
-  target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE kamping)
+  target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE kamping_base)
   katestrophe_add_mpi_test(${KAMPING_TARGET_NAME} CORES ${KAMPING_CORES} DISCOVER_TESTS)
+  kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN}) 
 endfunction()
 
 # Convenience wrapper for registering a set of tests that should fail to compile and require KaMPI.ng to be linked.
@@ -52,7 +72,7 @@ endfunction()
 function(kamping_register_compilation_failure_test KAMPING_TARGET_NAME)
   cmake_parse_arguments(
     "KAMPING"
-    ""
+    "NO_EXCEPTION_MODE"
     ""
     "FILES;SECTIONS"
     ${ARGN}
@@ -61,6 +81,7 @@ function(kamping_register_compilation_failure_test KAMPING_TARGET_NAME)
     TARGET ${KAMPING_TARGET_NAME}
     FILES ${KAMPING_FILES}
     SECTIONS ${KAMPING_SECTIONS}
-    LIBRARIES kamping
+    LIBRARIES kamping_base
     )
+  kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN}) 
 endfunction()
