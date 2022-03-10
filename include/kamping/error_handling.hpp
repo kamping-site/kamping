@@ -41,11 +41,11 @@ public:
     /// @param message A custom error message.
     /// @param mpi_error_code The error code returned by the MPI call.
     MpiErrorException(std::string message, int mpi_error_code) : _mpi_error_code(mpi_error_code) {
-        int  errorStringLen;
-        char errorString[MPI_MAX_ERROR_STRING];
-        int  err = MPI_Error_string(_mpi_error_code, errorString, &errorStringLen);
+        int                                    errorStringLen;
+        std::array<char, MPI_MAX_ERROR_STRING> errorString;
+        int err = MPI_Error_string(_mpi_error_code, errorString.data(), &errorStringLen);
         if (err == MPI_SUCCESS) {
-            _what = message + "Failed with the following error message:\n" + std::string(errorString) + "\n";
+            _what = message + "Failed with the following error message:\n" + std::string(errorString.data()) + "\n";
         } else {
             _what = message + "Error message could not be retrieved\n";
         }
