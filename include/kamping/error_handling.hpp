@@ -20,9 +20,9 @@
 
 #include <mpi.h>
 
-/// @brief Wrapper around KTHROW for MPI errors
+/// @brief Wrapper around KTHROW for MPI errors.
 ///
-/// Throws an MpiErrorException if the supplied error code is not MPI_SUCCESS
+/// Throws an MpiErrorException if the supplied error code is not \c MPI_SUCCESS.
 ///
 /// The macro accepts 2 parameters:
 /// 1. The error code returned by the MPI call.
@@ -31,7 +31,8 @@
     KTHROW_SPECIFIED(error_code == MPI_SUCCESS, #function << " failed!", MpiErrorException, error_code);
 
 namespace kamping {
-/// @brief The exception type used when an MPI call did not return MPI_SUCCESS.
+/// @brief The exception type used when an MPI call did not return \c MPI_SUCCESS.
+
 /// When using this with KTHROW you should call it like this: `KTHROW_SPECIFIED(err == MPI_SUCCESS, "<MPI function that
 /// failed> failed", MpiErrorException, err);`
 class MpiErrorException : public std::exception {
