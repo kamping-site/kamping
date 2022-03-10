@@ -15,6 +15,7 @@
 
 #include <mpi.h>
 
+#include "error_handling.hpp"
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/kassert.hpp"
 

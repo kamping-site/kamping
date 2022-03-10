@@ -83,6 +83,13 @@ TEST(KassertTest, kthrow_custom_compiles) {
 #endif // KAMPING_EXCEPTION_MODE
 }
 
+// Check that KTHROW does nothing if the expression evaluates to true.
+TEST(KassertTest, kthrow_does_nothing_on_true_expression) {
+    KTHROW(true);
+    KTHROW(true, "");
+    KTHROW_SPECIFIED(true, "", ZeroCustomArgException);
+}
+
 // Test that expressions are evaluated as expected
 // The following tests do not check the expression expansion!
 
