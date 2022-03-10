@@ -16,9 +16,9 @@
 /// @file
 /// @brief Code for error handling.
 
+#include <array>
 #include <string>
 
-#include <array>
 #include <mpi.h>
 
 /// @brief Wrapper around KTHROW for MPI errors.
