@@ -8,6 +8,8 @@
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
+#include "kamping/error_handling.hpp"
+
 #include <mpi.h>
 #include <tuple>
 #include <type_traits>
@@ -40,7 +42,7 @@ auto reduce(const Communicator& comm, Args&&... args) {
                              send_buf.ptr, recv_buf.get_ptr(send_buf.size), asserting_cast<int>(send_buf.size), type, operation.op(),
                              root.rank(), comm.mpi_communicator());
     // TODO throw correct Exception with propagated error code
-    KTHROW(err == MPI_SUCCESS);
+    THROW_IF_MPI_ERROR(err, MPI_Reduce);
     return MPIResult(
         std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
         internal::BufferCategoryNotUsed{});

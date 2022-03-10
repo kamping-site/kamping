@@ -58,7 +58,7 @@ TODO \@Demian \@Matthias: Rules for API
 * Avoid `std::bind`, use lambda functions instead as they result in better readability and allow the compiler to inline better.
 * Use the subset of `C++` which compiles in `gcc10`, `clang10` and `icc19`.
 * Use the `KASSERT()` macro with the appropriate assertion level to validate the internal state of your code.
-* Use the `KTHROW()` macro to validate super-supplied data.
+* Use the `THROWING_KASSERT()` macro to validate user-supplied data.
 
 # Warnings
 Code *should* compile with `clang` and `gcc` (not `icc`) without warning with the warning flags given below. If you want to submit code which throws warnings, at least two other persons have to agree. Possible reasons for this are: False-positive warnings.
@@ -114,6 +114,4 @@ endif()
 * Use "modern" CMake as build system
 * Use Doxygen for documentation. TODO \@Florian: Which style?
 * Use `git submodule` to include dependencies. TODO: Explain in the README, how to work with git submodules.
-* Commit only corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `fix-` branches and merge them to the `main` branch using a Pull Request.
 * Write *many* unit tests for your code. If there is no unit test for it, it does not exist. Also check for nonsensical inputs and edge cases.
-* Each Pull Request has to be reviewed by at least one person who is not the author of the code. Everyone involved in a discussion, including the pull request's author, can close a discussion once its matter is resolved. Avoid writing "Done" etc. when resolving a discussion, as this generates a lot of low-entropy mails; simply close the discussion if the matter is resolved completely. If unsure, leave the discussion open and ask the reviewer if the change is sufficient. Resolving a discussion might for example include moving the discussion to a new issue or implementing the requested changes. Once all discussions are closed, all CI checks are successful, and there are no more rejecting reviews, it is the pull request's author's responsibility to merge the changes into the main branch. Use squash and merge to merge a pull request back into the main branch.

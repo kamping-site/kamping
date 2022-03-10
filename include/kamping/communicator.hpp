@@ -1,6 +1,6 @@
 // This file is part of KaMPI.ng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021-2022 The KaMPI.ng Authors
 //
 // KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <mpi.h>
 
+#include "error_handling.hpp"
 #include "kamping/kassert.hpp"
 #include "kamping/collectives/reduce.hpp"
 
@@ -60,7 +61,8 @@ public:
     /// @brief Set a new root for MPI operations that require a root.
     /// @param new_root The new default root.
     void root(int const new_root) {
-        KTHROW(is_valid_rank(new_root), "invalid root rank " << new_root << " in communicator of size " << size());
+        THROWING_KASSERT(
+            is_valid_rank(new_root), "invalid root rank " << new_root << " in communicator of size " << size());
         _root = new_root;
     }
 
@@ -113,7 +115,7 @@ public:
     /// @return Rank if rank is in [0, size of communicator) and ASSERT/EXCEPTION? otherwise.
     [[nodiscard]] int rank_shifted_checked(int const distance) const {
         int const result = _rank + distance;
-        KTHROW(is_valid_rank(result), "invalid shifted rank " << result);
+        THROWING_KASSERT(is_valid_rank(result), "invalid shifted rank " << result);
         return result;
     }
 
@@ -144,7 +146,7 @@ private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
     /// @return Rank of the current MPI process in the communicator.
     int get_mpi_rank(MPI_Comm comm) const {
-        KTHROW(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
+        THROWING_KASSERT(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
 
         int rank;
         MPI_Comm_rank(comm, &rank);
@@ -154,16 +156,16 @@ private:
     /// @brief Compute the number of MPI processes in this communicator using \c MPI_Comm_size.
     /// @return Size of the communicator.
     int get_mpi_size(MPI_Comm comm) const {
-        KTHROW(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
+        THROWING_KASSERT(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
 
         int size;
         MPI_Comm_size(comm, &size);
         return size;
     }
 
-    int const      _rank; ///< Rank of the MPI process in this communicator.
-    int const      _size; ///< Number of MPI processes in this communicator.
-    MPI_Comm const _comm; ///< Corresponding MPI communicator.
+    int      _rank; ///< Rank of the MPI process in this communicator.
+    int      _size; ///< Number of MPI processes in this communicator.
+    MPI_Comm _comm; ///< Corresponding MPI communicator.
 
     int _root; ///< Default root for MPI operations that require a root.
 };             // class communicator

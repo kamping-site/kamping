@@ -42,18 +42,12 @@ find_package(MPI REQUIRED)
 
 add_subdirectory(extern)
 
-add_library(kamping INTERFACE)
-target_include_directories(kamping INTERFACE include)
+add_library(kamping_base INTERFACE)
+target_include_directories(kamping_base INTERFACE include)
 
 # set C++ standard to C++17
-target_compile_features(kamping INTERFACE cxx_std_17)
-target_link_libraries(kamping INTERFACE MPI::MPI_CXX)
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  # gcc does not require the compiler -std=c++17 flag to support C++17
-  # but if the flag is omitted, it is not used in compile_command.json
-  # which leads to errors related to C++17 when using IDE-like features
-  target_compile_options(kamping INTERFACE -std=c++17)
-endif()
+target_compile_features(kamping_base INTERFACE cxx_std_17)
+target_link_libraries(kamping_base INTERFACE MPI::MPI_CXX)
 
 list(
   APPEND KAMPING_WARNING_FLAGS
@@ -99,6 +93,10 @@ if(KAMPING_WARNINGS_ARE_ERRORS)
   )
 endif()
 
+# Target for user-code
+add_library(kamping INTERFACE)
+target_link_libraries(kamping INTERFACE kamping_base)
+
 # If enabled, use exceptions, otherwise use KASSERT()
 option(KAMPING_EXCEPTION_MODE "Use exceptions to report recoverable errors." ON)
 if (KAMPING_EXCEPTION_MODE)
@@ -115,14 +113,21 @@ endif()
 # Level 2: Light assertions = assertions that do not affect the running time of library operations significantly.
 # Level 3: Normal assertions = assertions that might slow down some operations of the library by a constant factor.
 #          Should only be used in debug mode.
-# Level 4: Heavy assertions = assertions that introduce overhead which renders some library operations infeasible when
+# Level 4: Light communication assertions = assertions that perform additional communication causing small running
+#          time overheads.
+# Level 5: Heavy communication assertions = assertions that perform additional communication causing significant
+#          running time overheads.
+# Level 6: Heavy assertions = assertions that introduce overhead which renders some library operations infeasible when
 #          invoked with any significant work load.
 #
 # Assertion levels can be set explicitly using the -DKAMPING_ASSERTION_LEVEL=... flag. If no level is set explicitly,
 # we set it to 1 (exceptions only) in Release mode and 3 (up to normal assertions) in Debug mode.
 set(KAMPING_ASSERTION_LEVEL $<IF:$<CONFIG:Debug>,3,1> CACHE STRING "Higher values enable more complex assertions. To disable all runtime checks, set to '0'.")
-set_property(CACHE KAMPING_ASSERTION_LEVEL PROPERTY STRINGS 0 1 2 3 4)
+set_property(CACHE KAMPING_ASSERTION_LEVEL PROPERTY STRINGS 0 1 2 3 4 5 6)
 target_compile_definitions(kamping INTERFACE -DKAMPING_ASSERTION_LEVEL=${KAMPING_ASSERTION_LEVEL})
+
+# Constant for the highest assertion level used by KaMPI.ng
+set(KAMPING_HIGHEST_ASSERTION_LEVEL 6)
 
 add_library(kamping::kamping ALIAS kamping)
 

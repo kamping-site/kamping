@@ -1,6 +1,6 @@
 // This file is part of KaMPI.ng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021-2022 The KaMPI.ng Authors
 //
 // KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -136,7 +136,7 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
     return possible_mpi_datatypes;
 }
 
-TEST(HelpersTest, mpi_datatype_basics) {
+TEST(MpiDataTypeTest, mpi_datatype_basics) {
     // Check using the equivalent_mpi_datatypes() helper.
     EXPECT_THAT(possible_mpi_datatypes<char>(), Contains(mpi_datatype<char>()));
     EXPECT_THAT(possible_mpi_datatypes<unsigned char>(), Contains(mpi_datatype<unsigned char>()));
@@ -171,14 +171,14 @@ TEST(HelpersTest, mpi_datatype_basics) {
         possible_mpi_datatypes<std::complex<long double>>(), Contains(mpi_datatype<std::complex<long double>>()));
 }
 
-TEST(HelpersTest, mpi_datatype_const_and_volatile) {
+TEST(MpiDataTypeTest, mpi_datatype_const_and_volatile) {
     // Ignore const and volatile qualifiers.
     EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<const int8_t>()));
     EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<volatile int8_t>()));
     EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<const volatile int8_t>()));
 }
 
-TEST(HelpersTest, mpi_datatype_typedefs_and_using) {
+TEST(MpiDataTypeTest, mpi_datatype_typedefs_and_using) {
     // typedefs and using directives.
     typedef int myInt;
     EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(mpi_datatype<myInt>()));
@@ -187,7 +187,7 @@ TEST(HelpersTest, mpi_datatype_typedefs_and_using) {
     EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(mpi_datatype<myFloat>()));
 }
 
-TEST(HelpersTest, mpi_datatype_size_t) {
+TEST(MpiDataTypeTest, mpi_datatype_size_t) {
     // size_t, which should be one of the unsigned integer types with at least 16 bits (as of C++11).
     EXPECT_THAT(
         (std::array{MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG}),
@@ -199,7 +199,7 @@ TEST(HelpersTest, mpi_datatype_size_t) {
         Contains(mpi_datatype<std::size_t>()));
 }
 
-TEST(HelpersTest, mpi_datatype_enum) {
+TEST(MpiDataTypeTest, mpi_datatype_enum) {
     // Calling mpi_datatype with a enum type should use the underlying type.
 
     // Unscoped enum
@@ -225,7 +225,7 @@ TEST(HelpersTest, mpi_datatype_enum) {
     EXPECT_THAT(possible_mpi_datatypes<int64_t>(), Contains(mpi_datatype<scopedEnumInt64_t>()));
 }
 
-TEST(HelpersTest, mpi_datatype_continuous_type) {
+TEST(MpiDataTypeTest, mpi_datatype_continuous_type) {
     struct TestStruct {
         int a;
         int b;
@@ -262,9 +262,10 @@ TEST(HelpersTest, mpi_datatype_continuous_type) {
     EXPECT_NE(MPI_C_FLOAT_COMPLEX, mpi_datatype<TestStruct>());
     EXPECT_NE(MPI_C_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
     EXPECT_NE(MPI_C_LONG_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
+    EXPECT_EQ(mpi_datatype_size(mpi_datatype<TestStruct>()), 2 * sizeof(int));
 }
 
-TEST(HelpersTest, mpi_datatype_c_array) {
+TEST(MpiDataTypeTest, mpi_datatype_c_array) {
     // Calling mpi_datatype with an array should return a continuous datatype.
     int c_array[3];
 
@@ -299,4 +300,34 @@ TEST(HelpersTest, mpi_datatype_c_array) {
     EXPECT_NE(MPI_C_FLOAT_COMPLEX, mpi_datatype<decltype(c_array)>());
     EXPECT_NE(MPI_C_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
     EXPECT_NE(MPI_C_LONG_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
+    EXPECT_EQ(mpi_datatype_size(mpi_datatype<decltype(c_array)>()), 3 * sizeof(int));
+}
+
+TEST(MpiDataTypeTest, mpi_datatype_size) {
+    EXPECT_EQ(mpi_datatype_size(MPI_INT), sizeof(int));
+    EXPECT_EQ(mpi_datatype_size(MPI_CHAR), sizeof(char));
+    EXPECT_EQ(mpi_datatype_size(MPI_INT16_T), 2);
+
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+    MPI_Datatype null_type = MPI_DATATYPE_NULL;
+    EXPECT_THROW(mpi_datatype_size(null_type), kamping::MpiErrorException);
+
+    bool has_thrown = false;
+    try {
+        mpi_datatype_size(null_type);
+    } catch (kamping::MpiErrorException& e) {
+        has_thrown = true;
+
+        // The error code is implementation dependent, so we get the error class and test that.
+        int error_code = e.mpi_error_code();
+        int error_class;
+        MPI_Error_class(error_code, &error_class);
+        EXPECT_EQ(error_class, MPI_ERR_TYPE);
+
+        EXPECT_EQ(e.mpi_error_class(), MPI_ERR_TYPE);
+
+        EXPECT_THAT(e.what(), HasSubstr("Failed with the following error message:"));
+        EXPECT_THAT(e.what(), HasSubstr("MPI_Type_size failed"));
+    }
+    EXPECT_TRUE(has_thrown);
 }
