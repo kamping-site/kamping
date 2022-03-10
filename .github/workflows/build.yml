@@ -28,7 +28,7 @@ jobs:
           - compiler: { name: GNU, cc: gcc, cxx: g++}
             build-mode: Debug
             exception-mode: OFF
-            assertion-level: 6
+            assertion-level: 0
             run-tests: ON
           - compiler: { name: GNU, cc: gcc, cxx: g++}
             build-mode: Debug
