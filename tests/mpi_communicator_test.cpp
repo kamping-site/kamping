@@ -36,7 +36,7 @@ struct CommunicatorTest : Test {
     int size;
 };
 
-TEST_F(CommunicatorTest, EmptyConstructor) {
+TEST_F(CommunicatorTest, empty_constructor) {
     Communicator comm;
 
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_WORLD);
@@ -45,7 +45,7 @@ TEST_F(CommunicatorTest, EmptyConstructor) {
     EXPECT_EQ(comm.root(), 0);
 }
 
-TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
+TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
     Communicator comm(MPI_COMM_SELF);
 
     int self_rank;
@@ -62,7 +62,7 @@ TEST_F(CommunicatorTest, ConstructorWithMPICommunicator) {
     EXPECT_THROW(Communicator(MPI_COMM_NULL), KassertException);
 }
 
-TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
+TEST_F(CommunicatorTest, constructor_with_mpi_communicator_and_root) {
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
             EXPECT_THROW(Communicator(MPI_COMM_WORLD, i), KassertException);
@@ -76,7 +76,7 @@ TEST_F(CommunicatorTest, ConstructorWithMPICommunicatorAndRoot) {
     }
 }
 
-TEST_F(CommunicatorTest, SetRootkBoundCheck) {
+TEST_F(CommunicatorTest, set_root_bound_check) {
     Communicator comm;
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
@@ -88,7 +88,7 @@ TEST_F(CommunicatorTest, SetRootkBoundCheck) {
     }
 }
 
-TEST_F(CommunicatorTest, RankShiftedChecked) {
+TEST_F(CommunicatorTest, rank_shifted_checked) {
     Communicator comm;
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
@@ -100,7 +100,7 @@ TEST_F(CommunicatorTest, RankShiftedChecked) {
     }
 }
 
-TEST_F(CommunicatorTest, RankShiftedeCyclic) {
+TEST_F(CommunicatorTest, rank_shifted_cyclic) {
     Communicator comm;
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
@@ -108,7 +108,7 @@ TEST_F(CommunicatorTest, RankShiftedeCyclic) {
     }
 }
 
-TEST_F(CommunicatorTest, ValidRank) {
+TEST_F(CommunicatorTest, valid_rank) {
     Communicator comm;
 
     int mpi_size;
@@ -119,7 +119,7 @@ TEST_F(CommunicatorTest, ValidRank) {
     }
 }
 
-TEST_F(CommunicatorTest, SplitAndRankConversion) {
+TEST_F(CommunicatorTest, split_and_rank_conversion) {
     Communicator comm;
 
     // Test split with any number of reasonable colors
