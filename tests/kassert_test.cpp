@@ -21,9 +21,9 @@
 
 using namespace ::testing;
 
-// General comment: all KASSERT() and KTHROW() calls with a relation in their expression are placed inside lambdas,
-// which are then called from EXPECT_EXIT(). This indirection is necessary as otherwise, GCC does not suppress the
-// warning on missing parentheses. This happens whenever the KASSERT() call is passed through two levels of macros,
+// General comment: all KASSERT() and THROWING_KASSERT() calls with a relation in their expression are placed inside
+// lambdas, which are then called from EXPECT_EXIT(). This indirection is necessary as otherwise, GCC does not suppress
+// the warning on missing parentheses. This happens whenever the KASSERT() call is passed through two levels of macros,
 // i.e.,
 //
 // #defined A(stmt) B(stmt)
@@ -43,12 +43,12 @@ TEST(KassertTest, kassert_overloads_compile) {
 
 TEST(KassertTest, kthrow_overloads_compile) {
 #ifdef KAMPING_EXCEPTION_MODE
-    // test that all KTHROW() overloads compile
-    EXPECT_THROW({ KTHROW(false, "__false_is_false_2__"); }, kamping::KassertException);
-    EXPECT_THROW({ KTHROW(false); }, kamping::KassertException);
+    // test that all THROWING_KASSERT() overloads compile
+    EXPECT_THROW({ THROWING_KASSERT(false, "__false_is_false_2__"); }, kamping::KassertException);
+    EXPECT_THROW({ THROWING_KASSERT(false); }, kamping::KassertException);
 #else  // KAMPING_EXCEPTION_MODE
-    EXPECT_EXIT({ KTHROW(false, "__false_is_false_2__"); }, KilledBySignal(SIGABRT), "__false_is_false_2__");
-    EXPECT_EXIT({ KTHROW(false); }, KilledBySignal(SIGABRT), "");
+    EXPECT_EXIT({ THROWING_KASSERT(false, "__false_is_false_2__"); }, KilledBySignal(SIGABRT), "__false_is_false_2__");
+    EXPECT_EXIT({ THROWING_KASSERT(false); }, KilledBySignal(SIGABRT), "");
 #endif // KAMPING_EXCEPTION_MODE
 }
 
@@ -72,22 +72,23 @@ public:
 
 TEST(KassertTest, kthrow_custom_compiles) {
 #ifdef KAMPING_EXCEPTION_MODE
-    EXPECT_THROW({ KTHROW_SPECIFIED(false, "", ZeroCustomArgException); }, ZeroCustomArgException);
-    EXPECT_THROW({ KTHROW_SPECIFIED(false, "", SingleCustomArgException, 43); }, SingleCustomArgException);
+    EXPECT_THROW({ THROWING_KASSERT_SPECIFIED(false, "", ZeroCustomArgException); }, ZeroCustomArgException);
+    EXPECT_THROW({ THROWING_KASSERT_SPECIFIED(false, "", SingleCustomArgException, 43); }, SingleCustomArgException);
 #else  // KAMPING_EXCEPTION_MODE
     EXPECT_EXIT(
-        { KTHROW_SPECIFIED(false, "", ZeroCustomArgException); }, KilledBySignal(SIGABRT), "ZeroCustomArgException");
+        { THROWING_KASSERT_SPECIFIED(false, "", ZeroCustomArgException); }, KilledBySignal(SIGABRT),
+        "ZeroCustomArgException");
     EXPECT_EXIT(
-        { KTHROW_SPECIFIED(false, "", SingleCustomArgException, 43); }, KilledBySignal(SIGABRT),
+        { THROWING_KASSERT_SPECIFIED(false, "", SingleCustomArgException, 43); }, KilledBySignal(SIGABRT),
         "SingleCustomArgException");
 #endif // KAMPING_EXCEPTION_MODE
 }
 
-// Check that KTHROW does nothing if the expression evaluates to true.
+// Check that THROWING_KASSERT does nothing if the expression evaluates to true.
 TEST(KassertTest, kthrow_does_nothing_on_true_expression) {
-    KTHROW(true);
-    KTHROW(true, "");
-    KTHROW_SPECIFIED(true, "", ZeroCustomArgException);
+    THROWING_KASSERT(true);
+    THROWING_KASSERT(true, "");
+    THROWING_KASSERT_SPECIFIED(true, "", ZeroCustomArgException);
 }
 
 // Test that expressions are evaluated as expected
