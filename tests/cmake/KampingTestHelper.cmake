@@ -6,7 +6,7 @@ function(kamping_set_kassert_flags KAMPING_TARGET_NAME)
     "KAMPING"
     "NO_EXCEPTION_MODE"
     ""
-    "FILES"
+    ""
     ${ARGN}
     )
 
