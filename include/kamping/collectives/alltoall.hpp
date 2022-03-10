@@ -84,8 +84,8 @@ public:
         [[maybe_unused]] int err = MPI_Alltoall(
             send_buf.ptr, send_count, mpi_send_type, recv_buf.get_ptr(recv_buf_size), recv_count, mpi_recv_type,
             comm.mpi_communicator());
-        /// @todo throw correct exception with propagated error code
-        KTHROW(err == MPI_SUCCESS);
+
+        THROW_IF_MPI_ERROR(err, MPI_Alltoall);
         return MPIResult(
             std::forward<std::remove_reference_t<decltype(recv_buf)>>(recv_buf), internal::BufferCategoryNotUsed{},
             internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{});
