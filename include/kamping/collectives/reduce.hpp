@@ -1,6 +1,25 @@
+// This file is part of KaMPI.ng.
+//
+// Copyright 2022 The KaMPI.ng Authors
+//
+// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
 #pragma once
 
+#include <tuple>
+#include <type_traits>
+
+#include <mpi.h>
+
 #include "kamping/checking_casts.hpp"
+#include "kamping/error_handling.hpp"
 #include "kamping/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
@@ -8,11 +27,6 @@
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
-#include "kamping/error_handling.hpp"
-
-#include <mpi.h>
-#include <tuple>
-#include <type_traits>
 
 namespace kamping {
 namespace internal {
@@ -41,11 +55,10 @@ auto reduce(const Communicator& comm, Args&&... args) {
     int          err             = MPI_Reduce(
                              send_buf.ptr, recv_buf.get_ptr(send_buf.size), asserting_cast<int>(send_buf.size), type, operation.op(),
                              root.rank(), comm.mpi_communicator());
-    // TODO throw correct Exception with propagated error code
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
     return MPIResult(
-        std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
-        internal::BufferCategoryNotUsed{});
+        std::forward<std::remove_reference_t<decltype(recv_buf)>>(recv_buf), internal::BufferCategoryNotUsed{},
+        internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{});
 }
 } // namespace internal
 } // namespace kamping

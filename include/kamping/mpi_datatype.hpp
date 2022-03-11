@@ -73,13 +73,13 @@ struct mpi_type_traits {
     static constexpr bool is_logical;
     /// @brief true, if the type is of type MPI_BYTE
     static constexpr bool is_byte;
-    /// @brief this member function is only defined if \c is_builtin is true. If this is the case, it to the \c
+    /// @brief This member function is only available if \c is_builtin is true. If this is the case, it returns the \c
     /// MPI_Datatype
-    /// @returns the constant of type \c MPI_Datatype mapping to type \c T according the the MPI standard.
+    /// @returns Constant of type \c MPI_Datatype mapping to type \c T according the the MPI standard.
     static MPI_Datatype data_type();
 };
 #else
-/// @brief base type for non-builtin types
+/// @brief Base type for non-builtin types.
 struct is_builtin_mpi_type_false {
     static constexpr bool is_builtin = false;
     static constexpr bool is_integer = false;
@@ -89,12 +89,12 @@ struct is_builtin_mpi_type_false {
     static constexpr bool is_byte    = false;
 };
 
-/// @brief base type for builtin types
+/// @brief Base type for builtin types.
 struct is_builtin_mpi_type_true : is_builtin_mpi_type_false {
     static constexpr bool is_builtin = true;
 };
 
-/// @brief base template for implementation
+/// @brief Base template for implementation.
 template <typename T>
 struct mpi_type_traits_impl : is_builtin_mpi_type_false {};
 
@@ -254,15 +254,16 @@ template <typename T>
 struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
 #endif
 
-/// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
+/// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create a
 /// new custom continuous type.
 ///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
+/// For determining if a type \c T maps to a builtin MPI datatype at compile time, use \c mpi_type_traits.
 /// @tparam T The type to translate into a MPI_Datatype.
 /// @return The tag identifying the corresponding MPI_Datatype or the newly created type.
 /// @see mpi_custom_continuous_type()
 ///
 template <typename T>
-[[nodiscard]] constexpr MPI_Datatype mpi_datatype() noexcept {
+[[nodiscard]] MPI_Datatype mpi_datatype() noexcept {
     if constexpr (mpi_type_traits<T>::is_builtin) {
         return mpi_type_traits<T>::data_type();
     }

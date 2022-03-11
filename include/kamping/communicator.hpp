@@ -17,8 +17,8 @@
 #include <mpi.h>
 
 #include "error_handling.hpp"
-#include "kamping/kassert.hpp"
 #include "kamping/collectives/reduce.hpp"
+#include "kamping/kassert.hpp"
 
 namespace kamping {
 
@@ -137,7 +137,7 @@ public:
     }
 
 
-    template<typename... Args>
+    template <typename... Args>
     [[nodiscard]] auto reduce(Args&&... args) const {
         return internal::reduce(*this, std::forward<Args>(args)...);
     }
