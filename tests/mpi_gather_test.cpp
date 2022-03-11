@@ -161,11 +161,6 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
             EXPECT_EQ(result.size(), 0);
         }
     }
-
-    // Check if invalid roots are identified
-    for (auto i = 0; i < comm.size(); ++i) {
-        EXPECT_THROW(comm.gather(send_buf(value), recv_buf(result), root(comm.size() + i)), KassertException);
-    }
 }
 
 
@@ -174,10 +169,83 @@ TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
     std::vector<int> values = {comm.rank(), comm.rank(), comm.rank(), comm.rank()};
     auto             result = comm.gather(send_buf(values)).extract_recv_buffer();
 
+    // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), values.size() * comm.size());
         for (size_t i = 0; i < result.size(); ++i) {
             EXPECT_EQ(result[i], i / values.size());
+        }
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+
+    // Change default root and test with communicator's default root again
+    comm.root(comm.size() - 1);
+    result = comm.gather(send_buf(values)).extract_recv_buffer();
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), values.size() * comm.size());
+        for (size_t i = 0; i < result.size(); ++i) {
+            EXPECT_EQ(result[i], i / values.size());
+        }
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+
+    // Pass any possible root to gather
+    for (auto i = 0; i < comm.size(); ++i) {
+        result = comm.gather(send_buf(values), root(i)).extract_recv_buffer();
+        if (comm.rank() == i) {
+            EXPECT_EQ(comm.root(), comm.size() - 1);
+            EXPECT_EQ(result.size(), values.size() * comm.size());
+            for (size_t j = 0; j < result.size(); ++j) {
+                EXPECT_EQ(result[j], j / values.size());
+            }
+        } else {
+            EXPECT_EQ(result.size(), 0);
+        }
+    }
+}
+
+TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
+    Communicator     comm;
+    std::vector<int> values = {comm.rank(), comm.rank(), comm.rank(), comm.rank()};
+    std::vector<int> result(0);
+
+    comm.gather(send_buf(values), recv_buf(result));
+
+    // Test default root of communicator
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), values.size() * comm.size());
+        for (size_t i = 0; i < result.size(); ++i) {
+            EXPECT_EQ(result[i], i / values.size());
+        }
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+
+    // Change default root and test with communicator's default root again
+    comm.root(comm.size() - 1);
+    comm.gather(send_buf(values), recv_buf(result));
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), values.size() * comm.size());
+        for (size_t i = 0; i < result.size(); ++i) {
+            EXPECT_EQ(result[i], i / values.size());
+        }
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+
+    // Pass any possible root to gather
+    for (auto i = 0; i < comm.size(); ++i) {
+        comm.gather(send_buf(values), root(i), recv_buf(result));
+        if (comm.rank() == i) {
+            EXPECT_EQ(comm.root(), comm.size() - 1);
+            EXPECT_EQ(result.size(), values.size() * comm.size());
+            for (size_t j = 0; j < result.size(); ++j) {
+                EXPECT_EQ(result[j], j / values.size());
+            }
+        } else {
+            EXPECT_EQ(result.size(), 0);
         }
     }
 }
