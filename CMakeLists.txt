@@ -69,6 +69,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     "-Wcast-align"
     "-Wnull-dereference"
     "-Wpedantic"
+    "-Wextra-semi"
   )
 endif()
 
@@ -132,7 +133,7 @@ set(KAMPING_HIGHEST_ASSERTION_LEVEL 6)
 add_library(kamping::kamping ALIAS kamping)
 
 # Testing and examples are only built if this is the main project
-# or of KAMPING_BUILD_EXAMPLES_AND_TESTS is set (OFF by default)
+# or if KAMPING_BUILD_EXAMPLES_AND_TESTS is set (OFF by default)
 if(
   CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR KAMPING_BUILD_EXAMPLES_AND_TESTS
 )
