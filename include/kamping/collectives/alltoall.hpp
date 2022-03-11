@@ -87,8 +87,8 @@ public:
 
         THROW_IF_MPI_ERROR(err, MPI_Alltoall);
         return MPIResult(
-            std::forward<std::remove_reference_t<decltype(recv_buf)>>(recv_buf), internal::BufferCategoryNotUsed{},
-            internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{});
+            std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
+            internal::BufferCategoryNotUsed{});
     }
 
 protected:
