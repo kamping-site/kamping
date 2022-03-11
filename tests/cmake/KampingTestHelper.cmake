@@ -10,8 +10,8 @@ function(kamping_set_kassert_flags KAMPING_TARGET_NAME)
     ${ARGN}
     )
 
-  # Always run tests with all assertions enabled
-  target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_ASSERTION_LEVEL=${KAMPING_HIGHEST_ASSERTION_LEVEL})
+  # Use global assertion level
+  target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_ASSERTION_LEVEL=${KAMPING_ASSERTION_LEVEL})
 
   # Explicitly specify exception mode for tests, default to no exception mode
   if (NOT KAMPING_NO_EXCEPTION_MODE)
