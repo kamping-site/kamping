@@ -171,7 +171,7 @@ TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
 
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
-      EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
+        EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
         for (size_t i = 0; i < result.size(); ++i) {
             EXPECT_EQ(result[i], i / values.size());
         }
