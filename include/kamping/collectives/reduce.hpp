@@ -62,12 +62,12 @@ public:
                                  root.rank(), this->underlying().mpi_communicator());
         THROW_IF_MPI_ERROR(err, MPI_Reduce);
         return MPIResult(
-            std::move(recv_buf), internal::BufferCategoryNotUsed{},
-            internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{});
+            std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
+            internal::BufferCategoryNotUsed{});
     }
 
 protected:
-    Reduce(){};
+    Reduce() {}
 };
 } // namespace internal
 } // namespace kamping
