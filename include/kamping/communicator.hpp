@@ -20,12 +20,13 @@
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/collectives/reduce.hpp"
 #include "kamping/kassert.hpp"
+#include "kamping/collectives/gather.hpp"
 
 namespace kamping {
 
 /// @brief Wrapper for MPI communicator providing access to \ref rank() and \ref size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPI.ng.
-class Communicator : public internal::Alltoall<Communicator>, public internal::Reduce<Communicator> {
+  class Communicator : public internal::Alltoall<Communicator>, public internal::Gather<Communicator>, public internal::Reduce<Communicator> {
 public:
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
     Communicator() : Communicator(MPI_COMM_WORLD) {}
@@ -143,9 +144,6 @@ public:
         return rank >= 0 && rank < _size;
     }
 
-    template <typename... Args>
-    auto gather(Args&&... args);
-
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
     /// @return Rank of the current MPI process in the communicator.
@@ -175,5 +173,3 @@ private:
 };             // class communicator
 
 } // namespace kamping
-
-#include "kamping/collectives/gather.hpp"
