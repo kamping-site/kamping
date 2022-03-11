@@ -218,7 +218,7 @@ struct mpi_type_traits_impl<std::complex<float>> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_CXX_FLOAT_COMPLEX;
     }
-    static constexpr TypeCategory category = TypeCategory::logical;
+    static constexpr TypeCategory category = TypeCategory::complex;
 };
 template <>
 struct mpi_type_traits_impl<std::complex<double>> : is_builtin_mpi_type_true {
