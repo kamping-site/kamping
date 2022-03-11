@@ -28,38 +28,66 @@
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 
-namespace kamping {
-namespace internal {
+namespace kamping::internal {
+
+/// @brief CRTP mixin class for \c MPI_Reduce.
+///
+/// This class is only to be used as a super class of kamping::Communicator
 template <typename Communicator>
 class Reduce : public CRTPHelper<Communicator, Reduce> {
 public:
+    /// @brief Wrapper for \c MPI_Reduce
+    ///
+    /// This wrapper for \c MPI_Reduce sends the same amount of data from each rank to each rank. The following
+    /// parameters are required:
+    /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
+    /// each rank.
+    /// - \ref kamping::op() wrapping the operation to apply to the input.
+    ///
+    /// The following parameters are optional:
+    /// - \ref kamping::recv_buf() containing a buffer for the output.
+    /// - \ref kamping::root() the root rank. If not set, the default root process of the communicator will be used.
+    /// @tparam Args Automatically deducted template parameters.
+    /// @param args All required and any number of the optional buffers described above.
+    /// @return Result type wrapping the output buffer if not specified as input parameter.
     template <typename... Args>
     auto reduce(Args&&... args) {
-        static_assert(all_parameters_are_rvalues<Args...>);
+        static_assert(
+            all_parameters_are_rvalues<Args...>,
+            "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
+            "returned by the named parameter helper functions like recv_buf().");
         static_assert(
             internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
             "Missing required parameter send_buf.");
         static_assert(
             internal::has_parameter_type<internal::ParameterType::op, Args...>(), "Missing required parameter op.");
 
-        auto& send_buf_param        = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
-        auto  send_buf              = send_buf_param.get();
-        using send_value_type       = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+        // Get all parameters
+        auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
+            std::tuple(this->underlying().root()), args...);
+
+        auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
+        auto  send_buf        = send_buf_param.get();
+        using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+
         using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
         auto&& recv_buf =
             internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
                 std::tuple(), args...);
         using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
+
+        auto& operation_param = internal::select_parameter_type<internal::ParameterType::op>(args...);
+        auto  operation       = operation_param.template build_operation<send_value_type>();
+
+        // Check if types match
         static_assert(
             std::is_same_v<send_value_type, recv_value_type>, "Types of send and receive buffers do not match.");
-        auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
-            std::tuple(this->underlying().root()), args...);
-        auto&        operation_param = internal::select_parameter_type<internal::ParameterType::op>(args...);
-        auto         operation       = operation_param.template build_operation<send_value_type>();
-        MPI_Datatype type            = mpi_datatype<send_value_type>();
-        int          err             = MPI_Reduce(
-                                 send_buf.ptr, recv_buf.get_ptr(send_buf.size), asserting_cast<int>(send_buf.size), type, operation.op(),
-                                 root.rank(), this->underlying().mpi_communicator());
+        MPI_Datatype type = mpi_datatype<send_value_type>();
+
+        [[maybe_unused]] int err = MPI_Reduce(
+            send_buf.ptr, recv_buf.get_ptr(send_buf.size), asserting_cast<int>(send_buf.size), type, operation.op(),
+            root.rank(), this->underlying().mpi_communicator());
+
         THROW_IF_MPI_ERROR(err, MPI_Reduce);
         return MPIResult(
             std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
@@ -69,5 +97,4 @@ public:
 protected:
     Reduce() {}
 };
-} // namespace internal
-} // namespace kamping
+} // namespace kamping::internal

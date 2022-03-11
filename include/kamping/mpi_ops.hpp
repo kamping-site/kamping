@@ -485,7 +485,7 @@ class ReduceOperation<T, Op, Commutative, typename std::enable_if<mpi_operation_
         "For builtin operations you don't need to specify whether they are commutative.");
 
 public:
-    ReduceOperation(Op&&, Commutative&&){};
+    ReduceOperation(Op&&, Commutative&&) {}
     static constexpr bool is_builtin = true;
     MPI_Op                op() {
         return mpi_operation_traits<Op, T>::op();
