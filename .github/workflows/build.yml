@@ -30,7 +30,7 @@ jobs:
             build-mode: Debug
             # Exception mode has no influence on how tests are run. This only affects the examples.
             exception-mode: OFF
-            # Assertion level is ignored in KASSERT-Tests. This is to ensure that other tests don;t rely on side effects in assertions.
+            # Assertion level is ignored in KASSERT-Tests. This is to ensure that other tests don't rely on side effects in assertions.
             assertion-level: 0
             run-tests: ON
           - compiler: { name: GNU, cc: gcc, cxx: g++}
