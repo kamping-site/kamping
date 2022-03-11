@@ -116,3 +116,21 @@ TEST(NamedParameterTest, select_parameter_type_duplicates) {
         EXPECT_EQ(selected_arg._i, 0);
     }
 }
+
+// @brief This dummy ressembles the interface of a collective operation, so we can simulate the check for rvalue
+// parameters
+template <typename... Args>
+bool dummy_collective_operation(Args&&... args [[maybe_unused]]) {
+    return all_parameters_are_rvalues<Args...>;
+};
+
+TEST(NamedParameterTest, parameter_rvalue_check) {
+    testing::Argument<ParameterType::send_buf> arg0{0};
+    testing::Argument<ParameterType::recv_buf> arg1{1};
+    {
+        EXPECT_FALSE(dummy_collective_operation(arg0, arg1));
+        EXPECT_FALSE(dummy_collective_operation(decltype(arg0){0}, arg1));
+        EXPECT_FALSE(dummy_collective_operation(arg0, decltype(arg1){1}));
+        EXPECT_TRUE(dummy_collective_operation(decltype(arg0){0}, decltype(arg1){1}));
+    }
+}
