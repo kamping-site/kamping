@@ -49,6 +49,7 @@ public:
     /// @return Result type wrapping the output buffer if not specified as input parameter.
     template <typename... Args>
     auto alltoall(Args&&... args) {
+        /// @todo Use new functionality from #169 once that is implemented
         static_assert(
             all_parameters_are_rvalues<Args...>,
             "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
