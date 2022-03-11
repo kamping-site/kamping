@@ -30,16 +30,17 @@ int main() {
     std::vector<double>   output;
     using namespace kamping;
 
-    auto result0     = comm.reduce(send_buf(input), op(ops::plus<>()), root(0)).extract_recv_buffer();
-    // print_result(result0, comm);
+    auto result0 = comm.reduce(send_buf(input), op(ops::plus<>()), root(0)).extract_recv_buffer();
+    print_result(result0, comm);
     auto result1 = comm.reduce(send_buf(input), op(ops::plus<double>())).extract_recv_buffer();
-    // print_result(result1, comm);
+    print_result(result1, comm);
     auto result2 = comm.reduce(send_buf(input), kamping::op(my_plus{}, commutative())).extract_recv_buffer();
-    // print_result(result2, comm);
+    print_result(result2, comm);
 
     auto result3 [[maybe_unused]] = comm.reduce(
-        send_buf(input), kamping::recv_buf(output), kamping::op([](auto a, auto b) { return a + b; }, non_commutative()));
-    // print_result(output, comm);
+        send_buf(input), kamping::recv_buf(output),
+        kamping::op([](auto a, auto b) { return a + b; }, non_commutative()));
+    print_result(output, comm);
 
     std::vector<std::pair<int, double>> input2 = {{3, 0.25}};
 

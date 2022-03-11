@@ -511,7 +511,7 @@ public:
             std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, func);
         };
         _operation = {ptr};
-    };
+    }
     static constexpr bool is_builtin = true;
     MPI_Op                op() {
         return _operation.get_mpi_op();
