@@ -7,8 +7,10 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 
 # Scoping and Naming
 * We are working in the `kamping` (KaMPI.ng) namespace to avoid polluting the user's namespace with trivial names as `in`, `out`, or `root`.
+* Everything that is nor user facing lives in the `internal` namespace.
 * Classes and structs start with an Upper case letter and are using CamelCase.
 * Start variables, attributes, functions, and members with a lower case letter. Use `snake_case`, that is, separate words by an underscore (\_). Write acronyms in lower case letters, e.g., `partitioned_msa` and `generate_mpi_failure`. This also applies to KaMPI.ng -> `kamping`.
+* Use the above naming scheme for wrapped MPI functions without adding underscores where the corresponding MPI function doesn't have one.
 * `struct`s have only trivial methods if at all, everything more complicated has to be a `class`. `struct`s are always forbidden to have private members or functions.
 * `std::pair` leads to hard to read code. Use named pairs (`struct`s) instead.
 * Private attributes and member functions *start* with an underscore, e.g., `_name` or `_clear_cache()`.
@@ -30,7 +32,8 @@ TODO \@Demian \@Matthias: Rules for API
 * For internal functions: Return in-output values via a reference argument.
 * Mark the parameters as `const` where possible.
 * Mark member functions as `const` where possible. Use `mutable` for caches to be able to keep getters `const`. 
-* For now, we avoid inheritance until somebody needs it. We can then think about rules for using it.
+* Add MPI wrapper functions to `Communicator` using [CRTP](https://www.fluentcpp.com/2017/05/16/what-the-crtp-brings-to-code/) mixins: Create a new class with protected constructor, without any member variables, and `Communicator` as template parameter where you implement your functionality. Then let `Communicator` inherit from your new class.
+* Implement related MPI functions in the same class (like `send`, `recv`, and `sendrecv`).
 * Use templated methods instead of passing a function pointer etc. as this allows the compiler to inline the function. Use `static_assert` to check the signature of the function being passed as an argument.
 * Implicit conversions are forbidden, constructors with only one parameter have to be marked as `explicit`.
 * Is one of the following functions declared, either implement, `default`, or `delete` all the others: Constructor, copy constructor, move constructor, copy assignment operator, move assignment operator, destructor. If you don't need some of them and don't want to think about if they would be easy to implement, `delete` them. Either way, write a comment explaining either why you think they should not be implemented, are hard to implement, or that you don't need them and didn't want to bother implementing them.
@@ -57,8 +60,8 @@ TODO \@Demian \@Matthias: Rules for API
 * Prefer smart pointers over raw pointers.
 * Avoid `std::bind`, use lambda functions instead as they result in better readability and allow the compiler to inline better.
 * Use the subset of `C++` which compiles in `gcc10`, `clang10` and `icc19`.
-* Use the `KASSERT()` macro with the appropriate assertion level to validate the internal state of your code.
-* Use the `THROWING_KASSERT()` macro to validate user-supplied data.
+* Use the `KASSERT()` macro with the appropriate assertion level to validate the internal state of your code or user supplied data.
+* Use the `THROW_IF_MPI_ERROR()` for MPI errors.
 
 # Warnings
 Code *should* compile with `clang` and `gcc` (not `icc`) without warning with the warning flags given below. If you want to submit code which throws warnings, at least two other persons have to agree. Possible reasons for this are: False-positive warnings.
@@ -110,7 +113,7 @@ if(WARNINGS_ARE_ERRORS)
 endif()
 ```
 
-# Tooling and Workflow
+# Tooling
 * Use "modern" CMake as build system
 * Use Doxygen for documentation. TODO \@Florian: Which style?
 * Use `git submodule` to include dependencies. TODO: Explain in the README, how to work with git submodules.
