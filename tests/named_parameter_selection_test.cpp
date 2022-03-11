@@ -122,7 +122,7 @@ TEST(NamedParameterTest, select_parameter_type_duplicates) {
 template <typename... Args>
 bool dummy_collective_operation(Args&&... args [[maybe_unused]]) {
     return all_parameters_are_rvalues<Args...>;
-};
+}
 
 TEST(NamedParameterTest, all_parameters_are_rvalues) {
     testing::Argument<ParameterType::send_buf> arg0{0};
