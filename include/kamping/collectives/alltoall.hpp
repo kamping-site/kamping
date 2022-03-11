@@ -49,6 +49,7 @@ public:
     /// @return Result type wrapping the output buffer if not specified as input parameter.
     template <typename... Args>
     auto alltoall(Args&&... args) {
+        static_assert(all_parameters_are_rvalues<Args...>);
         Communicator& comm = static_cast<Communicator&>(*this);
         // Get all parameters
         static_assert(
