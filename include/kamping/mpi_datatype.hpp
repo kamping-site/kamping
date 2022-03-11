@@ -61,7 +61,7 @@ enum class TypeCategory { integer, floating, complex, logical, byte, undefined }
 /// @tparam T Type to map to a \c MPI_Datatype.
 template <typename T>
 struct mpi_type_traits {
-    /// @brief \c true, if the type maps to a builtin \c MPI_Datatype
+    /// @brief \c true, if the type maps to a builtin \c MPI_Datatype.
     static constexpr bool is_builtin;
     /// @brief the category the type belongs to according to the MPI standard.
     static constexpr TypeCategory category;
