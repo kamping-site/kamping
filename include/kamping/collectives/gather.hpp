@@ -25,6 +25,9 @@
 
 namespace kamping::internal {
 
+/// @brief CRTP mixin class for \c MPI_Gather.
+///
+/// This class is only to be used as a super class of kamping::Communicator
 template <typename Communicator>
 class Gather : public CRTPHelper<Communicator, Gather> {
 public:
@@ -43,6 +46,16 @@ public:
     /// @return Result type wrapping the output buffer if not specified as input parameter.
     template <typename... Args>
     auto gather(Args&&... args) {
+        /// @todo Use new functionality from #169 once that is implemented
+        static_assert(
+            all_parameters_are_rvalues<Args...>,
+            "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
+            "returned by the named parameter helper functions like recv_buf().");
+        // Get all parameters
+        static_assert(
+            internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
+            "Missing required parameter send_buf.");
+
         auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
         auto  send_buf        = send_buf_param.get();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;

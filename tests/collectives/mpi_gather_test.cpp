@@ -171,7 +171,7 @@ TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
 
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
-        EXPECT_EQ(result.size(), values.size() * comm.size());
+      EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
         for (size_t i = 0; i < result.size(); ++i) {
             EXPECT_EQ(result[i], i / values.size());
         }
@@ -183,7 +183,7 @@ TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
     comm.root(comm.size() - 1);
     result = comm.gather(send_buf(values)).extract_recv_buffer();
     if (comm.rank() == comm.root()) {
-        EXPECT_EQ(result.size(), values.size() * comm.size());
+        EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
         for (size_t i = 0; i < result.size(); ++i) {
             EXPECT_EQ(result[i], i / values.size());
         }
@@ -196,7 +196,7 @@ TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
         result = comm.gather(send_buf(values), root(i)).extract_recv_buffer();
         if (comm.rank() == i) {
             EXPECT_EQ(comm.root(), comm.size() - 1);
-            EXPECT_EQ(result.size(), values.size() * comm.size());
+            EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
             for (size_t j = 0; j < result.size(); ++j) {
                 EXPECT_EQ(result[j], j / values.size());
             }
@@ -215,7 +215,7 @@ TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
 
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
-        EXPECT_EQ(result.size(), values.size() * comm.size());
+        EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
         for (size_t i = 0; i < result.size(); ++i) {
             EXPECT_EQ(result[i], i / values.size());
         }
@@ -227,7 +227,7 @@ TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
     comm.root(comm.size() - 1);
     comm.gather(send_buf(values), recv_buf(result));
     if (comm.rank() == comm.root()) {
-        EXPECT_EQ(result.size(), values.size() * comm.size());
+        EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
         for (size_t i = 0; i < result.size(); ++i) {
             EXPECT_EQ(result[i], i / values.size());
         }
@@ -240,7 +240,7 @@ TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
         comm.gather(send_buf(values), root(i), recv_buf(result));
         if (comm.rank() == i) {
             EXPECT_EQ(comm.root(), comm.size() - 1);
-            EXPECT_EQ(result.size(), values.size() * comm.size());
+            EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
             for (size_t j = 0; j < result.size(); ++j) {
                 EXPECT_EQ(result[j], j / values.size());
             }
