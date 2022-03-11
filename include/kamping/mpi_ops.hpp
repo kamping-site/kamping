@@ -224,7 +224,8 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::max<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float)>::type> {
+        mpi_type_traits<T>::category == TypeCategory::integer
+        || mpi_type_traits<T>::category == TypeCategory::floating)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
         return MPI_MAX;
@@ -235,7 +236,8 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::min<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float)>::type> {
+        mpi_type_traits<T>::category == TypeCategory::integer
+        || mpi_type_traits<T>::category == TypeCategory::floating)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
         return MPI_MIN;
@@ -246,7 +248,8 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::plus<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float || mpi_type_traits<T>::is_complex)>::type> {
+        mpi_type_traits<T>::category == TypeCategory::integer || mpi_type_traits<T>::category == TypeCategory::floating
+        || mpi_type_traits<T>::category == TypeCategory::complex)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
         return MPI_SUM;
@@ -257,7 +260,8 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::multiplies<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_float || mpi_type_traits<T>::is_complex)>::type> {
+        mpi_type_traits<T>::category == TypeCategory::integer || mpi_type_traits<T>::category == TypeCategory::floating
+        || mpi_type_traits<T>::category == TypeCategory::complex)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
         return MPI_PROD;
@@ -268,7 +272,8 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::logical_and<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_logical)>::type> {
+        mpi_type_traits<T>::category == TypeCategory::integer
+        || mpi_type_traits<T>::category == TypeCategory::logical)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
         return MPI_LAND;
@@ -279,7 +284,8 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::logical_or<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_logical)>::type> {
+        mpi_type_traits<T>::category == TypeCategory::integer
+        || mpi_type_traits<T>::category == TypeCategory::logical)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
         return MPI_LOR;
@@ -290,7 +296,8 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::logical_xor<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_logical)>::type> {
+        mpi_type_traits<T>::category == TypeCategory::integer
+        || mpi_type_traits<T>::category == TypeCategory::logical)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
         return MPI_LXOR;
@@ -301,7 +308,8 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::bit_and<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_byte)>::type> {
+        mpi_type_traits<T>::category == TypeCategory::integer
+        || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
         return MPI_BAND;
@@ -312,7 +320,8 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::bit_or<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_byte)>::type> {
+        mpi_type_traits<T>::category == TypeCategory::integer
+        || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
         return MPI_BOR;
@@ -323,7 +332,8 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::bit_xor<S>, T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
-        mpi_type_traits<T>::is_integer || mpi_type_traits<T>::is_byte)>::type> {
+        mpi_type_traits<T>::category == TypeCategory::integer
+        || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
         return MPI_BXOR;

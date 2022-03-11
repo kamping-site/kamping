@@ -258,10 +258,10 @@ TEST(MpiDataTypeTest, mpi_datatype_continuous_type) {
     EXPECT_NE(MPI_UINT16_T, mpi_datatype<TestStruct>());
     EXPECT_NE(MPI_UINT32_T, mpi_datatype<TestStruct>());
     EXPECT_NE(MPI_UINT64_T, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_C_BOOL, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_C_FLOAT_COMPLEX, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_C_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_C_LONG_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
+    EXPECT_NE(MPI_CXX_BOOL, mpi_datatype<TestStruct>());
+    EXPECT_NE(MPI_CXX_FLOAT_COMPLEX, mpi_datatype<TestStruct>());
+    EXPECT_NE(MPI_CXX_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
+    EXPECT_NE(MPI_CXX_LONG_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
     EXPECT_EQ(mpi_datatype_size(mpi_datatype<TestStruct>()), 2 * sizeof(int));
 }
 
@@ -296,11 +296,56 @@ TEST(MpiDataTypeTest, mpi_datatype_c_array) {
     EXPECT_NE(MPI_UINT16_T, mpi_datatype<decltype(c_array)>());
     EXPECT_NE(MPI_UINT32_T, mpi_datatype<decltype(c_array)>());
     EXPECT_NE(MPI_UINT64_T, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_C_BOOL, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_C_FLOAT_COMPLEX, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_C_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_C_LONG_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
+    EXPECT_NE(MPI_CXX_BOOL, mpi_datatype<decltype(c_array)>());
+    EXPECT_NE(MPI_CXX_FLOAT_COMPLEX, mpi_datatype<decltype(c_array)>());
+    EXPECT_NE(MPI_CXX_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
+    EXPECT_NE(MPI_CXX_LONG_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
     EXPECT_EQ(mpi_datatype_size(mpi_datatype<decltype(c_array)>()), 3 * sizeof(int));
+}
+
+TEST(MPIDataTypeTest, test_type_groups) {
+    struct DummyType {
+        int  a;
+        char b;
+    };
+    EXPECT_EQ(kamping::mpi_type_traits<int>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<signed int>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<long>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<signed long>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<short>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<signed short>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<unsigned short>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<unsigned>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<unsigned int>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<unsigned long>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<long long int>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<long long>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<signed long long>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<unsigned long long>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<signed char>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<unsigned char>::category, kamping::TypeCategory::integer);
+
+    EXPECT_EQ(kamping::mpi_type_traits<int8_t>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<int16_t>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<int32_t>::category, kamping::TypeCategory::integer);
+
+    EXPECT_EQ(kamping::mpi_type_traits<uint8_t>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<uint16_t>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(kamping::mpi_type_traits<uint32_t>::category, kamping::TypeCategory::integer);
+
+    EXPECT_EQ(kamping::mpi_type_traits<float>::category, kamping::TypeCategory::floating);
+    EXPECT_EQ(kamping::mpi_type_traits<double>::category, kamping::TypeCategory::floating);
+    EXPECT_EQ(kamping::mpi_type_traits<long double>::category, kamping::TypeCategory::floating);
+
+    EXPECT_EQ(kamping::mpi_type_traits<bool>::category, kamping::TypeCategory::logical);
+
+    EXPECT_EQ(kamping::mpi_type_traits<std::complex<float>>::category, kamping::TypeCategory::complex);
+    EXPECT_EQ(kamping::mpi_type_traits<std::complex<double>>::category, kamping::TypeCategory::complex);
+    EXPECT_EQ(kamping::mpi_type_traits<std::complex<long double>>::category, kamping::TypeCategory::complex);
+
+    EXPECT_EQ(kamping::mpi_type_traits<std::complex<int>>::category, kamping::TypeCategory::undefined);
+    EXPECT_EQ(kamping::mpi_type_traits<char>::category, kamping::TypeCategory::undefined);
+    EXPECT_EQ(kamping::mpi_type_traits<DummyType>::category, kamping::TypeCategory::undefined);
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_size) {

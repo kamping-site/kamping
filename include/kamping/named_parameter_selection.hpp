@@ -120,5 +120,12 @@ decltype(auto) select_parameter_type_or_default(std::tuple<DefaultArguments...> 
         return std::make_from_tuple<DefaultParameterType>(std::move(default_arguments));
     }
 }
+
+/// @brief checks if all named parameters are passed as rvalues.
+/// @tparam Args The types of the arguments to validate.
+template <typename... Args>
+constexpr bool all_parameters_are_rvalues =
+    std::conjunction<std::bool_constant<!std::is_lvalue_reference_v<Args>>...>::value;
+
 /// @}
 } // namespace kamping::internal

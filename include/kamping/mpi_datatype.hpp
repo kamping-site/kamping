@@ -53,26 +53,22 @@ template <size_t NumBytes>
     return type;
 }
 
+/// @brief the members specify which group the datatype belongs to according to the type groups specified in
+/// Section 5.9.2 of the MPI 3.1 standard.
+enum class TypeCategory { integer, floating, complex, logical, byte, undefined };
+
 #ifdef KAMPING_DOXYGEN_ONLY
 /// @brief maps C++ types to builtin \c MPI_Datatypes
 ///
 /// the members specify which group the datatype belongs to according to the type groups specified in Section 5.9.2 of
 /// the MPI 3.1 standard.
-/// @tparam T type to map to a \c MPI_Datatype
+/// @tparam T Type to map to a \c MPI_Datatype.
 template <typename T>
 struct mpi_type_traits {
-    /// @brief true, if the type maps to a builtin \c MPI_Datatype
+    /// @brief \c true, if the type maps to a builtin \c MPI_Datatype.
     static constexpr bool is_builtin;
-    /// @brief true, if the type is an integer value according to the MPI standard
-    static constexpr bool is_integer;
-    /// @brief true, if the type is a floating point value according to the MPI standard
-    static constexpr bool is_float;
-    /// @brief true, if the type is a complex value according to the MPI standard
-    static constexpr bool is_complex;
-    /// @brief true, if the type is a logical value according to the MPI standard
-    static constexpr bool is_logical;
-    /// @brief true, if the type is of type MPI_BYTE
-    static constexpr bool is_byte;
+    /// @brief Category the type belongs to according to the MPI standard.
+    static constexpr TypeCategory category;
     /// @brief This member function is only available if \c is_builtin is true. If this is the case, it returns the \c
     /// MPI_Datatype
     /// @returns Constant of type \c MPI_Datatype mapping to type \c T according the the MPI standard.
@@ -81,12 +77,8 @@ struct mpi_type_traits {
 #else
 /// @brief Base type for non-builtin types.
 struct is_builtin_mpi_type_false {
-    static constexpr bool is_builtin = false;
-    static constexpr bool is_integer = false;
-    static constexpr bool is_float   = false;
-    static constexpr bool is_complex = false;
-    static constexpr bool is_logical = false;
-    static constexpr bool is_byte    = false;
+    static constexpr bool         is_builtin = false;
+    static constexpr TypeCategory category   = TypeCategory::undefined;
 };
 
 /// @brief Base type for builtin types.
@@ -112,7 +104,7 @@ struct mpi_type_traits_impl<signed char> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_SIGNED_CHAR;
     }
-    static constexpr bool is_integer = true;
+    static constexpr TypeCategory category = TypeCategory::integer;
 };
 
 template <>
@@ -120,7 +112,7 @@ struct mpi_type_traits_impl<unsigned char> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_CHAR;
     }
-    static constexpr bool is_integer = true;
+    static constexpr TypeCategory category = TypeCategory::integer;
 };
 
 template <>
@@ -135,7 +127,7 @@ struct mpi_type_traits_impl<short int> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_SHORT;
     }
-    static constexpr bool is_integer = true;
+    static constexpr TypeCategory category = TypeCategory::integer;
 };
 
 template <>
@@ -143,7 +135,7 @@ struct mpi_type_traits_impl<unsigned short int> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_SHORT;
     }
-    static constexpr bool is_integer = true;
+    static constexpr TypeCategory category = TypeCategory::integer;
 };
 
 template <>
@@ -151,7 +143,7 @@ struct mpi_type_traits_impl<int> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_INT;
     }
-    static constexpr bool is_integer = true;
+    static constexpr TypeCategory category = TypeCategory::integer;
 };
 
 template <>
@@ -159,7 +151,7 @@ struct mpi_type_traits_impl<unsigned int> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED;
     }
-    static constexpr bool is_integer = true;
+    static constexpr TypeCategory category = TypeCategory::integer;
 };
 
 template <>
@@ -167,7 +159,7 @@ struct mpi_type_traits_impl<long int> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_LONG;
     }
-    static constexpr bool is_integer = true;
+    static constexpr TypeCategory category = TypeCategory::integer;
 };
 
 template <>
@@ -175,7 +167,7 @@ struct mpi_type_traits_impl<unsigned long int> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_LONG;
     }
-    static constexpr bool is_integer = true;
+    static constexpr TypeCategory category = TypeCategory::integer;
 };
 
 template <>
@@ -183,7 +175,7 @@ struct mpi_type_traits_impl<long long int> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_LONG_LONG;
     }
-    static constexpr bool is_integer = true;
+    static constexpr TypeCategory category = TypeCategory::integer;
 };
 
 template <>
@@ -191,7 +183,7 @@ struct mpi_type_traits_impl<unsigned long long int> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_LONG_LONG;
     }
-    static constexpr bool is_integer = true;
+    static constexpr TypeCategory category = TypeCategory::integer;
 };
 
 template <>
@@ -199,7 +191,7 @@ struct mpi_type_traits_impl<float> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_FLOAT;
     }
-    static constexpr bool is_float = true;
+    static constexpr TypeCategory category = TypeCategory::floating;
 };
 
 template <>
@@ -207,7 +199,7 @@ struct mpi_type_traits_impl<double> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_DOUBLE;
     }
-    static constexpr bool is_float = true;
+    static constexpr TypeCategory category = TypeCategory::floating;
 };
 
 template <>
@@ -215,7 +207,7 @@ struct mpi_type_traits_impl<long double> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_LONG_DOUBLE;
     }
-    static constexpr bool is_float = true;
+    static constexpr TypeCategory category = TypeCategory::floating;
 };
 
 template <>
@@ -223,21 +215,21 @@ struct mpi_type_traits_impl<bool> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_CXX_BOOL;
     }
-    static constexpr bool is_logical = true;
+    static constexpr TypeCategory category = TypeCategory::logical;
 };
 template <>
 struct mpi_type_traits_impl<std::complex<float>> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_CXX_FLOAT_COMPLEX;
     }
-    static constexpr bool is_complex = true;
+    static constexpr TypeCategory category = TypeCategory::complex;
 };
 template <>
 struct mpi_type_traits_impl<std::complex<double>> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_CXX_DOUBLE_COMPLEX;
     }
-    static constexpr bool is_complex = true;
+    static constexpr TypeCategory category = TypeCategory::complex;
 };
 
 template <>
@@ -245,7 +237,7 @@ struct mpi_type_traits_impl<std::complex<long double>> : is_builtin_mpi_type_tru
     static MPI_Datatype data_type() {
         return MPI_CXX_LONG_DOUBLE_COMPLEX;
     }
-    static constexpr bool is_complex = true;
+    static constexpr TypeCategory category = TypeCategory::complex;
 };
 
 
@@ -254,10 +246,10 @@ template <typename T>
 struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
 #endif
 
-/// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create a
+/// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
 /// new custom continuous type.
 ///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
-/// For determining if a type \c T maps to a builtin MPI datatype at compile time, use \c mpi_type_traits.
+/// To check if type \c T maps to a builtin \c MPI_Datatype at compile-time, use \c mpi_type_traits.
 /// @tparam T The type to translate into a MPI_Datatype.
 /// @return The tag identifying the corresponding MPI_Datatype or the newly created type.
 /// @see mpi_custom_continuous_type()

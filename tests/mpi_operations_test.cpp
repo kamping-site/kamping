@@ -21,62 +21,13 @@ using MyTypes =
     ::testing::Types<int32_t, u_int32_t, int64_t, u_int64_t, float, double, std::complex<double>, DummyType>;
 TYPED_TEST_SUITE(TypedOperationsTest, MyTypes, );
 
-TEST(TypeGroupsTest, test_type_groups) {
-    EXPECT_TRUE(kamping::mpi_type_traits<int32_t>::is_integer);
-    EXPECT_FALSE(kamping::mpi_type_traits<int32_t>::is_float);
-    EXPECT_FALSE(kamping::mpi_type_traits<int32_t>::is_logical);
-    EXPECT_FALSE(kamping::mpi_type_traits<int32_t>::is_complex);
-    EXPECT_FALSE(kamping::mpi_type_traits<int32_t>::is_byte);
-
-    EXPECT_TRUE(kamping::mpi_type_traits<u_int32_t>::is_integer);
-    EXPECT_FALSE(kamping::mpi_type_traits<u_int32_t>::is_float);
-    EXPECT_FALSE(kamping::mpi_type_traits<u_int32_t>::is_logical);
-    EXPECT_FALSE(kamping::mpi_type_traits<u_int32_t>::is_complex);
-    EXPECT_FALSE(kamping::mpi_type_traits<u_int32_t>::is_byte);
-
-    EXPECT_TRUE(kamping::mpi_type_traits<int64_t>::is_integer);
-    EXPECT_FALSE(kamping::mpi_type_traits<int64_t>::is_float);
-    EXPECT_FALSE(kamping::mpi_type_traits<int64_t>::is_logical);
-    EXPECT_FALSE(kamping::mpi_type_traits<int64_t>::is_complex);
-    EXPECT_FALSE(kamping::mpi_type_traits<int64_t>::is_byte);
-
-    EXPECT_TRUE(kamping::mpi_type_traits<u_int64_t>::is_integer);
-    EXPECT_FALSE(kamping::mpi_type_traits<u_int64_t>::is_float);
-    EXPECT_FALSE(kamping::mpi_type_traits<u_int64_t>::is_logical);
-    EXPECT_FALSE(kamping::mpi_type_traits<u_int64_t>::is_complex);
-    EXPECT_FALSE(kamping::mpi_type_traits<u_int64_t>::is_byte);
-
-    EXPECT_FALSE(kamping::mpi_type_traits<float>::is_integer);
-    EXPECT_TRUE(kamping::mpi_type_traits<float>::is_float);
-    EXPECT_FALSE(kamping::mpi_type_traits<float>::is_logical);
-    EXPECT_FALSE(kamping::mpi_type_traits<float>::is_complex);
-    EXPECT_FALSE(kamping::mpi_type_traits<float>::is_byte);
-
-    EXPECT_FALSE(kamping::mpi_type_traits<double>::is_integer);
-    EXPECT_TRUE(kamping::mpi_type_traits<double>::is_float);
-    EXPECT_FALSE(kamping::mpi_type_traits<double>::is_logical);
-    EXPECT_FALSE(kamping::mpi_type_traits<double>::is_complex);
-    EXPECT_FALSE(kamping::mpi_type_traits<double>::is_byte);
-
-    EXPECT_FALSE(kamping::mpi_type_traits<std::complex<double>>::is_integer);
-    EXPECT_FALSE(kamping::mpi_type_traits<std::complex<double>>::is_float);
-    EXPECT_FALSE(kamping::mpi_type_traits<std::complex<double>>::is_logical);
-    EXPECT_TRUE(kamping::mpi_type_traits<std::complex<double>>::is_complex);
-    EXPECT_FALSE(kamping::mpi_type_traits<std::complex<double>>::is_byte);
-
-    EXPECT_FALSE(kamping::mpi_type_traits<DummyType>::is_integer);
-    EXPECT_FALSE(kamping::mpi_type_traits<DummyType>::is_float);
-    EXPECT_FALSE(kamping::mpi_type_traits<DummyType>::is_logical);
-    EXPECT_FALSE(kamping::mpi_type_traits<DummyType>::is_complex);
-    EXPECT_FALSE(kamping::mpi_type_traits<DummyType>::is_byte);
-}
-
-
 TYPED_TEST(TypedOperationsTest, test_builtin_operations) {
     using namespace kamping::internal;
     using T = typename TestFixture::operation_type;
 
-    if constexpr (kamping::mpi_type_traits<T>::is_integer || kamping::mpi_type_traits<T>::is_float) {
+    if constexpr (
+        kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer
+        || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::floating) {
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::max<T>, T>::is_builtin));
         EXPECT_EQ((mpi_operation_traits<kamping::ops::max<T>, T>::op()), MPI_MAX);
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::max<>, T>::is_builtin));
@@ -91,8 +42,9 @@ TYPED_TEST(TypedOperationsTest, test_builtin_operations) {
     }
 
     if constexpr (
-        kamping::mpi_type_traits<T>::is_integer || kamping::mpi_type_traits<T>::is_float
-        || kamping::mpi_type_traits<T>::is_complex) {
+        kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer
+        || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::floating
+        || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::complex) {
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::plus<T>, T>::is_builtin));
         EXPECT_EQ((mpi_operation_traits<kamping::ops::plus<T>, T>::op()), MPI_SUM);
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::plus<>, T>::is_builtin));
@@ -111,7 +63,9 @@ TYPED_TEST(TypedOperationsTest, test_builtin_operations) {
         EXPECT_FALSE((mpi_operation_traits<kamping::ops::multiplies<std::complex<int>>, T>::is_builtin));
     }
 
-    if constexpr (kamping::mpi_type_traits<T>::is_integer || kamping::mpi_type_traits<T>::is_logical) {
+    if constexpr (
+        kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer
+        || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::logical) {
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::logical_and<T>, T>::is_builtin));
         EXPECT_EQ((mpi_operation_traits<kamping::ops::logical_and<T>, T>::op()), MPI_LAND);
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::logical_and<>, T>::is_builtin));
@@ -135,7 +89,9 @@ TYPED_TEST(TypedOperationsTest, test_builtin_operations) {
         EXPECT_FALSE((mpi_operation_traits<kamping::ops::logical_xor<std::complex<int>>, T>::is_builtin));
     }
 
-    if constexpr (kamping::mpi_type_traits<T>::is_integer || kamping::mpi_type_traits<T>::is_byte) {
+    if constexpr (
+        kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer
+        || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::byte) {
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::bit_and<T>, T>::is_builtin));
         EXPECT_EQ((mpi_operation_traits<kamping::ops::bit_and<T>, T>::op()), MPI_BAND);
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::bit_and<>, T>::is_builtin));
