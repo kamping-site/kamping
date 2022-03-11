@@ -235,6 +235,26 @@ private:
     Container _container; ///< Container which holds the actual data.
 };
 
+/// @brief Encapsulates the recv count in a collective operation.
+class RecvCount {
+public:
+    ///< The tag of the parameter that this object encapsulates.
+    static constexpr ParameterType parameter_type = ParameterType::recv_count;
+
+    /// @brief Constructor for encapsulated recv count.
+    /// @param recv_count Encapsulated recv count.
+    RecvCount(int const recv_count) : _recv_count{recv_count} {}
+
+    /// @brief Returns the encapsulated recv count.
+    /// @returns The encapsulated recv count.
+    int recv_count() const {
+        return _recv_count;
+    }
+
+private:
+    int _recv_count; ///< Encapsulated recv count.
+};
+
 ///@brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
 class Root {
 public:

@@ -78,6 +78,13 @@ auto recv_counts_in(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
 }
 
+/// @brief Generates a wrapper for a recv count input parameter.
+/// @param recv_count The recv count to be encapsulated.
+/// @return Wrapper around the given recv count.
+auto recv_count(int const recv_count) {
+    return internal::RecvCount(recv_count);
+}
+
 ///@brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage must
 /// contain the send displacements to each relevant PE.
 ///
