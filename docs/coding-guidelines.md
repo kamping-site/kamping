@@ -32,7 +32,7 @@ TODO \@Demian \@Matthias: Rules for API
 * For internal functions: Return in-output values via a reference argument.
 * Mark the parameters as `const` where possible.
 * Mark member functions as `const` where possible. Use `mutable` for caches to be able to keep getters `const`. 
-* Add MPI wrapper functions to `Communicator` using [CRTP](https://www.fluentcpp.com/2017/05/16/what-the-crtp-brings-to-code/) mixins: Create a new class with protected constructor, without any member variables, and `Communicator` as template parameter where you implement your functionality. Then let `Communicator` inherit from your new class.
+* Add MPI wrapper functions to `Communicator` using [CRTP](https://www.fluentcpp.com/2017/05/16/what-the-crtp-brings-to-code/) mixins: Create a new class that inherits from `CRTPHelper` with protected constructor, without any member variables, and `Communicator` as template parameter where you implement your functionality. Then let `Communicator` inherit from your new class. See [the corresponding test](tests/mpi_function_wrapper_helpers_test.cpp) for an example.
 * Implement related MPI functions in the same class (like `send`, `recv`, and `sendrecv`).
 * Use templated methods instead of passing a function pointer etc. as this allows the compiler to inline the function. Use `static_assert` to check the signature of the function being passed as an argument.
 * Implicit conversions are forbidden, constructors with only one parameter have to be marked as `explicit`.
