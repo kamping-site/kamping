@@ -21,6 +21,42 @@ jobs:
           - { name: Clang, cc: clang, cxx: clang++}
           - { name: GNU, cc: gcc, cxx: g++}
         build-mode: [Debug, Release]
+        # Exception mode has no influence on how tests are run. This only affects the examples.
+        exception-mode: [ON]
+        assertion-level: [6]
+        run-tests: [OFF]
+        include:
+          - compiler: { name: GNU, cc: gcc, cxx: g++}
+            build-mode: Debug
+            # Exception mode has no influence on how tests are run. This only affects the examples.
+            exception-mode: OFF
+            # Assertion level is ignored in KASSERT-Tests. This is to ensure that other tests don't rely on side effects in assertions.
+            assertion-level: 0
+            run-tests: ON
+          - compiler: { name: GNU, cc: gcc, cxx: g++}
+            build-mode: Debug
+            # Exception mode has no influence on how tests are run. This only affects the examples.
+            exception-mode: ON
+            assertion-level: 6
+            run-tests: ON
+          - compiler: { name: Clang, cc: clang, cxx: clang++}
+            build-mode: Release
+            # Exception mode has no influence on how tests are run. This only affects the examples.
+            exception-mode: ON
+            assertion-level: 6
+            run-tests: ON
+        exclude:
+          - compiler: { name: GNU, cc: gcc, cxx: g++}
+            build-mode: Debug
+            exception-mode: ON
+            assertion-level: 6
+            run-tests: OFF
+          - compiler: { name: Clang, cc: clang, cxx: clang++}
+            build-mode: Release
+            exception-mode: ON
+            assertion-level: 6
+            run-tests: OFF
+
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v2
@@ -37,7 +73,7 @@ jobs:
     - name: print-mpicxx-flags
       run: mpicxx -show
     - name: cmake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DKAMPING_WARNINGS_ARE_ERRORS=ON
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DKAMPING_WARNINGS_ARE_ERRORS=ON -DKAMPING_EXCEPTION_MODE=${{ matrix.exception-mode }} -DKAMPING_ASSERTION_LEVEL=${{ matrix.assertion-level }}
     - name: build
       run: cmake --build build/ --parallel 2
     - name: Allow-running-mpi
@@ -45,4 +81,5 @@ jobs:
         echo OMPI_ALLOW_RUN_AS_ROOT=1 >> $GITHUB_ENV
         echo OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 >> $GITHUB_ENV
     - name: run tests
+      if: matrix.run-tests == 'ON'
       run: ctest --output-on-failure --test-dir build/
