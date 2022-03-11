@@ -32,7 +32,7 @@ namespace kamping::internal {
 template <typename Communicator>
 class Alltoall : public CRTPHelper<Communicator, Alltoall> {
 public:
-    /// @brief Wrapper for \c MPI_Alltoall
+    /// @brief Wrapper for \c MPI_Alltoall.
     ///
     /// This wrapper for \c MPI_Alltoall sends the same amount of data from each rank to each rank. The following
     /// buffers are required:
@@ -72,7 +72,7 @@ public:
 
         // Get the send and receive counts
         int send_count = throwing_cast<int>(send_buf.size / asserting_cast<size_t>(this->underlying().size()));
-        THROWING_KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
+        KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
         size_t recv_buf_size = send_buf.size;
         int    recv_count    = throwing_cast<int>(recv_buf_size / asserting_cast<size_t>(this->underlying().size()));

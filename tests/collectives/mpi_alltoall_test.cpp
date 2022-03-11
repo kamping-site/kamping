@@ -99,19 +99,3 @@ TEST(AlltoallTest, alltoall_custom_type_custom_container) {
     }
     EXPECT_EQ(result, expected_result);
 }
-
-TEST(AlltoallTest, alltoall_mismatched_types) {
-    Communicator comm;
-
-    const int num_elements_per_processor_pair = 4;
-
-    std::vector<int> input(asserting_cast<size_t>(comm.size() * num_elements_per_processor_pair));
-    std::iota(input.begin(), input.end(), 0);
-    std::transform(input.begin(), input.end(), input.begin(), [](const int element) -> int {
-        return element / num_elements_per_processor_pair;
-    });
-
-    std::vector<float> result;
-
-    EXPECT_THROW(comm.alltoall(send_buf(input), recv_buf(result)), KassertException);
-}
