@@ -11,13 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-// overwrite build options and set assertion level to light_communication, enable exceptions
-#undef KAMPING_ASSERTION_LEVEL
-#define KAMPING_ASSERTION_LEVEL kamping::assert::light_communication
-#ifndef KAMPING_EXCEPTION_MODE
-    #define KAMPING_EXCEPTION_MODE
-#endif // KAMPING_EXCEPTION_MODE
-
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -25,6 +18,9 @@
 
 using namespace ::kamping;
 using namespace ::testing;
+
+#undef KAMPING_ASSERTION_LEVEL
+#define KAMPING_ASSERTION_LEVEL kamping::assert::light_communication;
 
 TEST(GatherTest, gather_single_element_no_receive_buffer) {
     Communicator comm;
@@ -67,11 +63,6 @@ TEST(GatherTest, gather_single_element_no_receive_buffer) {
         } else {
             EXPECT_EQ(result.size(), 0);
         }
-    }
-
-    // Check if invalid roots are identified
-    for (auto i = 0; i < comm.size(); ++i) {
-        EXPECT_THROW(comm.gather(send_buf(value), root(comm.size() + i)), KassertException);
     }
 }
 
@@ -125,11 +116,6 @@ TEST(GatherTest, gather_single_custom_element_no_receive_buffer) {
             EXPECT_EQ(result.size(), 0);
         }
     }
-
-    // Check if invalid roots are identified
-    for (auto i = 0; i < comm.size(); ++i) {
-        EXPECT_THROW(comm.gather(send_buf(value), root(comm.size() + i)), KassertException);
-    }
 }
 
 TEST(GatherTest, gather_single_element_with_receive_buffer) {
@@ -182,13 +168,6 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
     }
 }
 
-TEST(GatherTest, gather_send_different_number_with_gather) {
-    Communicator comm;
-    if (comm.size() > 1) {
-        std::vector<int> values(asserting_cast<size_t>(comm.rank()) + 1, comm.size());
-        EXPECT_THROW(comm.gather(send_buf(values)), KassertException);
-    }
-}
 
 TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
     Communicator     comm;

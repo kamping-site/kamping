@@ -18,9 +18,9 @@
 
 #include "error_handling.hpp"
 #include "kamping/collectives/alltoall.hpp"
+#include "kamping/collectives/gather.hpp"
 #include "kamping/collectives/reduce.hpp"
 #include "kamping/kassert.hpp"
-#include "kamping/collectives/gather.hpp"
 
 namespace kamping {
 

@@ -25,79 +25,79 @@
 
 namespace kamping::internal {
 
-  template <typename Communicator>
-  class Gather : public CRTPHelper<Communicator, Gather> {
-  public:
-  
-  
-/// @brief Wrapper for \c MPI_Gather
-///
-/// This wrapper for \c MPI_Gather sends the same amount of data from each rank to a root. The following buffers are
-/// required:
-/// - \ref kamping::send_buf() containing the data that is sent to the root. This buffer has to be the same size at each
-/// rank. See TODO gather_v if the amounts differ. The following buffers are optional:
-/// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator is
-/// used, see root().
-/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, at the root, this buffer will contain all
-/// data from all send buffers. At all other ranks, the buffer will have size 0.
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
-template <typename... Args>
-auto gather(Args&&... args) {
-    auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
-    auto  send_buf        = send_buf_param.get();
-    using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
+template <typename Communicator>
+class Gather : public CRTPHelper<Communicator, Gather> {
+public:
+    /// @brief Wrapper for \c MPI_Gather
+    ///
+    /// This wrapper for \c MPI_Gather sends the same amount of data from each rank to a root. The following buffers are
+    /// required:
+    /// - \ref kamping::send_buf() containing the data that is sent to the root. This buffer has to be the same size at
+    /// each rank. See TODO gather_v if the amounts differ. The following buffers are optional:
+    /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator
+    /// is used, see root().
+    /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, at the root, this buffer will contain
+    /// all data from all send buffers. At all other ranks, the buffer will have size 0.
+    /// @tparam Args Automatically deducted template parameters.
+    /// @param args All required and any number of the optional buffers described above.
+    /// @return Result type wrapping the output buffer if not specified as input parameter.
+    template <typename... Args>
+    auto gather(Args&&... args) {
+        auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
+        auto  send_buf        = send_buf_param.get();
+        using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
 
-    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
-    auto&& recv_buf =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
-            std::tuple(), args...);
-    using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
+        using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
+        auto&& recv_buf =
+            internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
+                std::tuple(), args...);
+        using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
-    auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
-                                                                                                            std::tuple(this->underlying().root()), args...);
+        auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
+            std::tuple(this->underlying().root()), args...);
 
-    auto mpi_send_type = mpi_datatype<send_value_type>();
-    auto mpi_recv_type = mpi_datatype<recv_value_type>();
+        auto mpi_send_type = mpi_datatype<send_value_type>();
+        auto mpi_recv_type = mpi_datatype<recv_value_type>();
 
-    size_t recv_size     = (this->underlying().rank() == root.rank()) ? send_buf.size : 0;
-    size_t recv_buf_size = asserting_cast<size_t>(this->underlying().size()) * recv_size;
+        size_t recv_size     = (this->underlying().rank() == root.rank()) ? send_buf.size : 0;
+        size_t recv_buf_size = asserting_cast<size_t>(this->underlying().size()) * recv_size;
 
-    // Check if the root is valid, before we try any communication
-    KASSERT(this->underlying().is_valid_rank(root.rank()), "Invalid rank as root.");
-    KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
+        // Check if the root is valid, before we try any communication
+        KASSERT(this->underlying().is_valid_rank(root.rank()), "Invalid rank as root.");
+        KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
-    KASSERT(
-        check_equal_sizes(send_buf.size),
-        "All PEs have to send the same number of elements. Use gatherv, if you want to send a different number of "
-        "elements.",
-        4);
+        KASSERT(
+            check_equal_sizes(send_buf.size),
+            "All PEs have to send the same number of elements. Use gatherv, if you want to send a different number of "
+            "elements.",
+            assert::light_communication);
 
-    // error code can be unused if KTHROW is removed at compile time
-    [[maybe_unused]] int err = MPI_Gather(
-        send_buf.ptr, asserting_cast<int>(send_buf.size), mpi_send_type, recv_buf.get_ptr(recv_buf_size),
-        asserting_cast<int>(recv_size), mpi_recv_type, root.rank(), this->underlying().mpi_communicator());
-    THROW_IF_MPI_ERROR(err, MPI_Gather);
-    return MPIResult(
-        std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
-        internal::BufferCategoryNotUsed{});
-}
-  protected:
+        // error code can be unused if KTHROW is removed at compile time
+        [[maybe_unused]] int err = MPI_Gather(
+            send_buf.ptr, asserting_cast<int>(send_buf.size), mpi_send_type, recv_buf.get_ptr(recv_buf_size),
+            asserting_cast<int>(recv_size), mpi_recv_type, root.rank(), this->underlying().mpi_communicator());
+        THROW_IF_MPI_ERROR(err, MPI_Gather);
+        return MPIResult(
+            std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
+            internal::BufferCategoryNotUsed{});
+    }
+
+protected:
     Gather() {}
 
-  private:
+private:
     bool check_equal_sizes(size_t local_size) const {
-      std::vector<size_t> result(asserting_cast<size_t>(this->underlying().size()), 0);
-      MPI_Gather(
-                 &local_size, 1, mpi_datatype<size_t>(), result.data(), 1, mpi_datatype<size_t>(), this->underlying().root(), this->underlying().mpi_communicator());
-      for (size_t i = 1; i < result.size(); ++i) {
-        if (result[i] != result[i - 1]) {
-          return false;
+        std::vector<size_t> result(asserting_cast<size_t>(this->underlying().size()), 0);
+        MPI_Gather(
+            &local_size, 1, mpi_datatype<size_t>(), result.data(), 1, mpi_datatype<size_t>(), this->underlying().root(),
+            this->underlying().mpi_communicator());
+        for (size_t i = 1; i < result.size(); ++i) {
+            if (result[i] != result[i - 1]) {
+                return false;
+            }
         }
-      }
-      return true;
+        return true;
     }
-  }; // class Gather
+}; // class Gather
 
-} // namespace kamping
+} // namespace kamping::internal
