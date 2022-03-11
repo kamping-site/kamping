@@ -63,7 +63,7 @@ template <typename T>
 struct mpi_type_traits {
     /// @brief \c true, if the type maps to a builtin \c MPI_Datatype.
     static constexpr bool is_builtin;
-    /// @brief the category the type belongs to according to the MPI standard.
+    /// @brief Category the type belongs to according to the MPI standard.
     static constexpr TypeCategory category;
     /// @brief this member function is only defined if \c is_builtin is true. If this is the case, it returns the \c
     /// MPI_Datatype
