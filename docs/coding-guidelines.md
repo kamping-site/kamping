@@ -7,7 +7,7 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 
 # Scoping and Naming
 * We are working in the `kamping` (KaMPI.ng) namespace to avoid polluting the user's namespace with trivial names as `in`, `out`, or `root`.
-* Everything that is nor user facing lives in the `internal` namespace.
+* Everything that is not user facing lives in the `internal` namespace.
 * Classes and structs start with an Upper case letter and are using CamelCase.
 * Start variables, attributes, functions, and members with a lower case letter. Use `snake_case`, that is, separate words by an underscore (\_). Write acronyms in lower case letters, e.g., `partitioned_msa` and `generate_mpi_failure`. This also applies to KaMPI.ng -> `kamping`.
 * Use the above naming scheme for wrapped MPI functions without adding underscores where the corresponding MPI function doesn't have one.
