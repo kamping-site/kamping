@@ -371,8 +371,15 @@ TEST(MpiDataTypeTest, mpi_datatype_size) {
         mpi_datatype_size(null_type);
     } catch (kamping::MpiErrorException& e) {
         has_thrown = true;
-        EXPECT_EQ(e.mpi_error_code(), MPI_ERR_TYPE);
+
+        // The error code is implementation dependent, so we get the error class and test that.
+        int error_code = e.mpi_error_code();
+        int error_class;
+        MPI_Error_class(error_code, &error_class);
+        EXPECT_EQ(error_class, MPI_ERR_TYPE);
+
         EXPECT_EQ(e.mpi_error_class(), MPI_ERR_TYPE);
+
         EXPECT_THAT(e.what(), HasSubstr("Failed with the following error message:"));
         EXPECT_THAT(e.what(), HasSubstr("MPI_Type_size failed"));
     }
