@@ -30,7 +30,7 @@ namespace kamping::internal {
 ///
 /// This class is only to be used as a super class of kamping::Communicator
 template <typename Communicator>
-class Alltoall {
+class Alltoall : public CRTPHelper<Communicator, Alltoall> {
 public:
     /// @brief Wrapper for \c MPI_Alltoall
     ///
@@ -49,8 +49,10 @@ public:
     /// @return Result type wrapping the output buffer if not specified as input parameter.
     template <typename... Args>
     auto alltoall(Args&&... args) {
-        static_assert(all_parameters_are_rvalues<Args...>);
-        Communicator& comm = static_cast<Communicator&>(*this);
+        static_assert(
+            all_parameters_are_rvalues<Args...>,
+            "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
+            "returned by the named parameter helper functions like recv_buf().");
         // Get all parameters
         static_assert(
             internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
@@ -69,11 +71,11 @@ public:
         MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
         // Get the send and receive counts
-        int send_count = throwing_cast<int>(send_buf.size / asserting_cast<size_t>(comm.size()));
+        int send_count = throwing_cast<int>(send_buf.size / asserting_cast<size_t>(this->underlying().size()));
         THROWING_KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
         size_t recv_buf_size = send_buf.size;
-        int    recv_count    = throwing_cast<int>(recv_buf_size / asserting_cast<size_t>(comm.size()));
+        int    recv_count    = throwing_cast<int>(recv_buf_size / asserting_cast<size_t>(this->underlying().size()));
         KASSERT(send_count == recv_count, assert::light);
 
         // These KASSERTs are required to avoid a false warning from g++ in release mode
@@ -84,7 +86,7 @@ public:
 
         [[maybe_unused]] int err = MPI_Alltoall(
             send_buf.ptr, send_count, mpi_send_type, recv_buf.get_ptr(recv_buf_size), recv_count, mpi_recv_type,
-            comm.mpi_communicator());
+            this->underlying().mpi_communicator());
 
         THROW_IF_MPI_ERROR(err, MPI_Alltoall);
         return MPIResult(
