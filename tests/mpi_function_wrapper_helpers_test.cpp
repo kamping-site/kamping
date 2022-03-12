@@ -164,12 +164,28 @@ public:
     }
 };
 
+
+/// @brief Mixin for Changing the root
+template <class Communicator>
+class RootChanger : public CRTPHelper<Communicator, RootChanger> {
+public:
+    void change_root(int new_root) {
+        return this->underlying().root(new_root);
+    }
+};
+
 /// @brief dummy communicator for testing CRTPHelper
-class DummyCommunicator : public Adder<DummyCommunicator>, public Multiplier<DummyCommunicator> {
+class DummyCommunicator : public Adder<DummyCommunicator>,
+                          public Multiplier<DummyCommunicator>,
+                          public RootChanger<DummyCommunicator> {
 public:
     DummyCommunicator(int root) : _root(root) {}
     int root() const {
         return _root;
+    }
+
+    void root(int new_root) {
+        _root = new_root;
     }
 
 private:
@@ -179,7 +195,19 @@ private:
 
 TEST(CRTPHelperTest, crtp_works) {
     DummyCommunicator comm{42};
+    // Check that constructor and getting the root actually works
     EXPECT_EQ(comm.root(), 42);
+    // Check that const-access mixins work
     EXPECT_EQ(comm.root_plus(3), 42 + 3);
     EXPECT_EQ(comm.root_times(3), 42 * 3);
+
+    // Check that changing the root works (this is directly from DummyCommunicator)
+    comm.root(0);
+    EXPECT_EQ(comm.root(), 0);
+
+    // Check that non-const-access mixins work (this is implemented in RootChanger)
+    comm.change_root(69);
+    EXPECT_EQ(comm.root(), 69);
+    EXPECT_EQ(comm.root_plus(2), 69 + 2);
+    EXPECT_EQ(comm.root_times(2), 69 * 2);
 }
