@@ -63,8 +63,9 @@ namespace internal {
 /// @tparam T type for which the span is defined.
 template <typename T>
 struct Span {
-    const T* ptr;  ///< Pointer to the data referred to by Span.
-    size_t   size; ///< Number of elements of type T referred to by Span.
+    using value_type = T; ///< Value type of the underlying pointer
+    const T* ptr;         ///< Pointer to the data referred to by Span.
+    size_t   size;        ///< Number of elements of type T referred to by Span.
 
     /// @brief Get access to the underlying read-only memory.
     ///

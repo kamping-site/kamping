@@ -145,3 +145,41 @@ TEST(MpiResultTest, extract_send_displs_basics) {
 TEST(MpiResultTest, extract_send_displs_basics_own_container) {
     testing::test_send_displs_in_MPIResult<testing::OwnContainer<int>>();
 }
+
+/// @brief Mixin for addition operation
+template <class Communicator>
+class Adder : public CRTPHelper<Communicator, Adder> {
+public:
+    int root_plus(int x) const {
+        return this->underlying().root() + x;
+    }
+};
+
+/// @brief Mixin for multiplication operation
+template <class Communicator>
+class Multiplier : public CRTPHelper<Communicator, Multiplier> {
+public:
+    int root_times(int x) const {
+        return this->underlying().root() * x;
+    }
+};
+
+/// @brief dummy communicator for testing CRTPHelper
+class DummyCommunicator : public Adder<DummyCommunicator>, public Multiplier<DummyCommunicator> {
+public:
+    DummyCommunicator(int root) : _root(root) {}
+    int root() const {
+        return _root;
+    }
+
+private:
+    int _root;
+};
+
+
+TEST(CRTPHelperTest, crtp_works) {
+    DummyCommunicator comm{42};
+    EXPECT_EQ(comm.root(), 42);
+    EXPECT_EQ(comm.root_plus(3), 42 + 3);
+    EXPECT_EQ(comm.root_times(3), 42 * 3);
+}
