@@ -1,7 +1,7 @@
 #include <complex>
 #include <cstdint>
+
 #include <gtest/gtest.h>
-#include <sys/types.h>
 
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
@@ -116,12 +116,28 @@ TYPED_TEST(TypedOperationsTest, test_builtin_operations) {
     }
 }
 
-TYPED_TEST(TypedOperationsTest, user_defined_operation_is_not_builtin) {
+TYPED_TEST(TypedOperationsTest, user_defined_operation_is_not_builtin_lambda) {
     using T = typename TestFixture::operation_type;
     auto op = [](auto a, auto b [[maybe_unused]]) {
         return a;
     };
     EXPECT_FALSE((kamping::internal::mpi_operation_traits<decltype(op), T>::is_builtin));
+}
+
+TYPED_TEST(TypedOperationsTest, user_defined_operation_is_not_builtin_function_object) {
+    using T = typename TestFixture::operation_type;
+    struct MyOperation {
+        T const& operator()(const T& a, const T& b [[maybe_unused]]) {
+            return a;
+        }
+    };
+    EXPECT_FALSE((kamping::internal::mpi_operation_traits<MyOperation, T>::is_builtin));
+}
+
+TYPED_TEST(TypedOperationsTest, user_defined_operation_is_not_builtin_unsupported_stl_operation) {
+    using T = typename TestFixture::operation_type;
+    EXPECT_FALSE((kamping::internal::mpi_operation_traits<std::minus<>, T>::is_builtin));
+    EXPECT_FALSE((kamping::internal::mpi_operation_traits<std::divides<>, T>::is_builtin));
 }
 
 

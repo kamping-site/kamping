@@ -350,22 +350,22 @@ using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
 ///
 /// Internally, this creates an \c MPI_Op which is freed upon destruction.
 /// @tparam is_commutative whether the operation is commutative or not
-/// @tparam Op type of the functor object to wrap
 /// @tparam T the type to apply the operation to.
-template <int is_commutative, typename Op, typename T>
+/// @tparam Op type of the functor object to wrap
+template <int is_commutative, typename T, typename Op>
 class UserOperationWrapper {
 public:
     static_assert(
         std::is_default_constructible_v<Op>,
         "This wrapper only works with default constructible functors, i.e. not with lambdas.");
-    void operator=(UserOperationWrapper<is_commutative, Op, T>&) = delete;
-    void operator=(UserOperationWrapper<is_commutative, Op, T>&&) = delete;
+    void operator=(UserOperationWrapper<is_commutative, T, Op>&) = delete;
+    void operator=(UserOperationWrapper<is_commutative, T, Op>&&) = delete;
     /// @brief creates an MPI operation for the specified functor
     /// @param op the functor to call for reduction.
     ///  this has to be a binary function applicable to two arguments of type \c T which return a result of type  \c T
     UserOperationWrapper(Op&& op [[maybe_unused]]) {
         static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
-        MPI_Op_create(UserOperationWrapper<is_commutative, Op, T>::execute, is_commutative, &_mpi_op);
+        MPI_Op_create(UserOperationWrapper<is_commutative, T, Op>::execute, is_commutative, &_mpi_op);
     }
 
     /// @brief wrapper around the provided functor which is called by MPI
@@ -475,7 +475,7 @@ public:
     }
 
 private:
-    UserOperationWrapper<std::is_same_v<Commutative, commutative>, Op, T> _operation;
+    UserOperationWrapper<std::is_same_v<Commutative, commutative>, T, Op> _operation;
 };
 
 template <typename T, typename Op, typename Commutative>
@@ -512,7 +512,7 @@ public:
         };
         _operation = {ptr};
     }
-    static constexpr bool is_builtin = true;
+    static constexpr bool is_builtin = false;
     MPI_Op                op() {
         return _operation.get_mpi_op();
     }
