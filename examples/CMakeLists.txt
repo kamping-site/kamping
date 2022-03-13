@@ -5,3 +5,7 @@ target_compile_options(examples_named_parameter_selection PRIVATE ${KAMPING_WARN
 add_executable(examples_reduce reduce_example.cpp)
 target_link_libraries(examples_reduce kamping)
 target_compile_options(examples_reduce PRIVATE ${KAMPING_WARNING_FLAGS})
+
+add_executable(example_alltoall alltoall_example.cpp)
+target_link_libraries(example_alltoall kamping)
+target_compile_options(example_alltoall PRIVATE ${KAMPING_WARNING_FLAGS})

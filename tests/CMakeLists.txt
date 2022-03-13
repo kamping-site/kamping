@@ -19,6 +19,7 @@ kamping_register_test(test_mpi_operations FILES mpi_operations_test.cpp)
 # turn requires MPI_Init() to be completed.
 kamping_register_mpi_test(test_mpi_datatype FILES mpi_datatype_test.cpp CORES 1)
 kamping_register_mpi_test(test_mpi_communicator FILES mpi_communicator_test.cpp CORES 1 2 4)
+kamping_register_mpi_test(test_mpi_alltoall FILES collectives/mpi_alltoall_test.cpp CORES 1 2 4)
 
 
 kamping_register_compilation_failure_test(
