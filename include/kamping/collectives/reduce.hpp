@@ -38,8 +38,8 @@ class Reduce : public CRTPHelper<Communicator, Reduce> {
 public:
     /// @brief Wrapper for \c MPI_Reduce
     ///
-    /// This wrapper for \c MPI_Reduce sends the same amount of data from each rank to each rank. The following
-    /// parameters are required:
+    /// This wraps \c MPI_Reduce. The operation combines the elements in the input buffer provided via \c
+    /// kamping::send_buf() and returns the combined value on the root rank. The following parameters are required:
     /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
     /// each rank.
     /// - \ref kamping::op() wrapping the operation to apply to the input.
