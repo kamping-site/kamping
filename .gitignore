@@ -644,3 +644,6 @@ cmake-build-*/
 
 # Doxygen HTML documentation
 docs/html/**
+
+# MacOS files
+.DS_Store
