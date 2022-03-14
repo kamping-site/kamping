@@ -79,14 +79,20 @@ public:
         auto& operation_param = internal::select_parameter_type<internal::ParameterType::op>(args...);
         auto  operation       = operation_param.template build_operation<send_value_type>();
 
-        // Check if types match
+        // Check parameters
         static_assert(
             std::is_same_v<send_value_type, recv_value_type>, "Types of send and receive buffers do not match.");
         MPI_Datatype type = mpi_datatype<send_value_type>();
 
+        KASSERT(this->underlying().is_valid_rank(root.rank()), "The provided root rank is invalid.");
+
+        send_value_type* recv_buf_ptr = nullptr;
+        if (this->underlying().rank() == root.rank()) {
+            recv_buf_ptr = recv_buf.get_ptr(send_buf.size);
+        }
         [[maybe_unused]] int err = MPI_Reduce(
-            send_buf.ptr, recv_buf.get_ptr(send_buf.size), asserting_cast<int>(send_buf.size), type, operation.op(),
-            root.rank(), this->underlying().mpi_communicator());
+            send_buf.ptr, recv_buf_ptr, asserting_cast<int>(send_buf.size), type, operation.op(), root.rank(),
+            this->underlying().mpi_communicator());
 
         THROW_IF_MPI_ERROR(err, MPI_Reduce);
         return MPIResult(
