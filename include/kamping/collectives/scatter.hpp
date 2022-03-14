@@ -41,16 +41,17 @@ public:
 
         // Compute sendcount based on the size of the sendbuf
         KASSERT(
-            send_buf.size % this->comm().size() == 0,
+            send_buf.size % static_cast<std::size_t>(this->comm().size()) == 0,
             "Size of the send buffer (" << send_buf.size << ") is not divisible by the number of PEs (" << comm().size()
                                         << ") in the communicator.");
-        int const send_count = asserting_cast<int>(send_buf.size / comm().size());
+        int const send_count = asserting_cast<int>(send_buf.size / static_cast<std::size_t>(comm().size()));
 
         // Optional parameter: root()
         // Default: communicator root
-        int const root = internal::select_parameter_type_or_default<internal::ParameterType::root>(
+	using root_param_type = decltype(kamping::root(0));
+        int const root = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
                              std::tuple(comm().root()), args...)
-                             .root();
+                             .rank();
 
         // Optional parameter: recv_buf()
         // Default: allocate new container
@@ -65,7 +66,7 @@ public:
         // Default: compute value based on send_buf.size on root
         int recv_count = 0;
 
-        if (internal::has_parameter_type<internal::ParameterType::recv_count>(args...)) {
+        if constexpr (internal::has_parameter_type<internal::ParameterType::recv_count>(args...)) {
             recv_count = internal::select_parameter_type<internal::ParameterType::recv_count>(args...).recv_count();
 
             // Validate against send_count
