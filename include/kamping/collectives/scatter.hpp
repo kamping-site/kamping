@@ -49,7 +49,7 @@ public:
     /// - \ref kamping::recv_buf() containing the received data. If omitted, a new buffer is allocated and returned.
     ///
     /// @tparam Args Deduced template parameters.
-    /// @param Required and optionally optional parameters.
+    /// @param args Required and optionally optional parameters.
     /// @return Result type wrapping the output buffer if not specified as an input parameter.
     template <typename... Args>
     auto scatter(Args&&... args) {
