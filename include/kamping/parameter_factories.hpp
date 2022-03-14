@@ -222,8 +222,8 @@ inline auto root(int rank) {
 ///     for builtin operations. This is used to streamline the interface so that the use does not have to provide
 ///     commutativity info when the operation is builtin.
 template <typename Op, typename Commutative = internal::undefined_commutative_tag>
-internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative&& commute = internal::undefined_commutative_tag{}) {
-    return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), std::forward<Commutative>(commute));
+internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = internal::undefined_commutative_tag{}) {
+    return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);
 }
 
 /// @}

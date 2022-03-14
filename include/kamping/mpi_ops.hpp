@@ -373,7 +373,7 @@ using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
 /// @tparam is_commutative whether the operation is commutative or not
 /// @tparam T the type to apply the operation to.
 /// @tparam Op type of the functor object to wrap
-template <int is_commutative, typename T, typename Op>
+template <bool is_commutative, typename T, typename Op>
 class UserOperationWrapper {
 public:
     static_assert(
@@ -396,14 +396,16 @@ public:
         Op op{};
         std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, op);
     }
+
     ~UserOperationWrapper() {
         MPI_Op_free(&_mpi_op);
     }
+
     /// @returns the \c MPI_Op constructed for the provided functor.
     ///
     /// Do not free this operation manually, because the destructor calls it. Some MPI implementations silently segfault
     /// if an \c MPI_Op is freed multiple times.
-    MPI_Op& get_mpi_op() {
+    MPI_Op get_mpi_op() {
         return _mpi_op;
     }
 
@@ -416,12 +418,21 @@ private:
 ///
 /// Internally, this creates an \c MPI_Op which is freed upon destruction.
 /// @tparam is_commutative whether the operation is commutative or not
-template <int is_commutative>
+template <bool is_commutative>
 class UserOperationPtrWrapper {
 public:
     void operator=(UserOperationPtrWrapper<is_commutative>&) = delete;
+
+    ///@brief move assignement
+    UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative>&& other_op) {
+        this->_mpi_op   = other_op._mpi_op;
+        this->_no_op    = other_op._no_op;
+        other_op._no_op = true;
+        return *this;
+    }
+
     ///@brief move constructor
-    void operator=(UserOperationPtrWrapper<is_commutative>&& other_op) {
+    UserOperationPtrWrapper<is_commutative>(UserOperationPtrWrapper<is_commutative>&& other_op) {
         this->_mpi_op   = other_op._mpi_op;
         this->_no_op    = other_op._no_op;
         other_op._no_op = true;
@@ -449,7 +460,7 @@ public:
     ///
     /// Do not free this operation manually, because the destructor calls it. Some MPI implementations silently segfault
     /// if an \c MPI_Op is freed multiple times.
-    MPI_Op& get_mpi_op() {
+    MPI_Op get_mpi_op() {
         return _mpi_op;
     }
 
@@ -487,17 +498,15 @@ template <typename T, typename Op, typename Commutative, class Enable = void>
 class ReduceOperation {
     static_assert(
         std::is_same_v<
-            std::remove_reference_t<Commutative>,
-            kamping::internal::
-                commutative_tag> || std::is_same_v<std::remove_reference_t<Commutative>, kamping::internal::non_commutative_tag>,
+            Commutative,
+            kamping::internal::commutative_tag> || std::is_same_v<Commutative, kamping::internal::non_commutative_tag>,
         "For custom operations you have to specify whether they are commutative.");
 
 public:
-    ReduceOperation(Op&& op, Commutative&&) : _operation(std::move(op)) {}
-    static constexpr bool is_builtin = false;
-    static constexpr bool commutative =
-        std::is_same_v<std::remove_reference_t<Commutative>, kamping::internal::commutative_tag>;
-    MPI_Op op() {
+    ReduceOperation(Op&& op, Commutative) : _operation(std::move(op)) {}
+    static constexpr bool is_builtin  = false;
+    static constexpr bool commutative = std::is_same_v<Commutative, kamping::internal::commutative_tag>;
+    MPI_Op                op() {
         return _operation.get_mpi_op();
     }
 
@@ -508,11 +517,11 @@ private:
 template <typename T, typename Op, typename Commutative>
 class ReduceOperation<T, Op, Commutative, typename std::enable_if<mpi_operation_traits<Op, T>::is_builtin>::type> {
     static_assert(
-        std::is_same_v<std::remove_reference_t<Commutative>, kamping::internal::undefined_commutative_tag>,
+        std::is_same_v<Commutative, kamping::internal::undefined_commutative_tag>,
         "For builtin operations you don't need to specify whether they are commutative.");
 
 public:
-    ReduceOperation(Op&&, Commutative&&) {}
+    ReduceOperation(Op&&, Commutative) {}
     static constexpr bool is_builtin  = true;
     static constexpr bool commutative = true; // builtin operations are always commutative
     MPI_Op                op() {
@@ -524,14 +533,13 @@ template <typename T, typename Op, typename Commutative>
 class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_default_constructible_v<Op> >::type> {
     static_assert(
         std::is_same_v<
-            std::remove_reference_t<Commutative>,
-            kamping::internal::
-                commutative_tag> || std::is_same_v<std::remove_reference_t<Commutative>, kamping::internal::non_commutative_tag>,
+            Commutative,
+            kamping::internal::commutative_tag> || std::is_same_v<Commutative, kamping::internal::non_commutative_tag>,
         "For custom operations you have to specify whether they are commutative.");
 
 public:
-    ReduceOperation(Op&& op, Commutative&&) : _operation() {
-        // A lambda is may not be default constructed nor copied, so we need so hacks to deal with them.
+    ReduceOperation(Op&& op, Commutative) : _operation() {
+        // A lambda is may not be default constructed nor copied, so we need some hacks to deal with them.
         // Because each lambda has a distinct type we initiate the static Op here and can access it from the static
         // context of function pointer crated afterwards.
         static Op func = op;
@@ -543,10 +551,9 @@ public:
         };
         _operation = {ptr};
     }
-    static constexpr bool is_builtin = false;
-    static constexpr bool commutative =
-        std::is_same_v<std::remove_reference_t<Commutative>, kamping::internal::commutative_tag>;
-    MPI_Op op() {
+    static constexpr bool is_builtin  = false;
+    static constexpr bool commutative = std::is_same_v<Commutative, kamping::internal::commutative_tag>;
+    MPI_Op                op() {
         return _operation.get_mpi_op();
     }
 

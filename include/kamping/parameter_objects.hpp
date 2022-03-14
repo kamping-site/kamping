@@ -273,14 +273,13 @@ public:
     ///@brief constructs an Operation builder
     ///@param op the operation
     ///@param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
-    OperationBuilder(Op&& op, Commutative&& commutative_tag [[maybe_unused]]) : _op(op) {}
+    OperationBuilder(Op&& op, Commutative commutative_tag [[maybe_unused]]) : _op(op) {}
     ///@brief constructs an operation for the given type T
     ///@tparam T argument type of the reduction operation
     template <typename T>
     [[nodiscard]] auto build_operation() {
         static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
-        return ReduceOperation<T, Op, std::remove_reference_t<Commutative>>(
-            std::forward<Op>(_op), std::remove_reference_t<Commutative>{});
+        return ReduceOperation<T, Op, Commutative>(std::forward<Op>(_op), Commutative{});
     }
 
 private:

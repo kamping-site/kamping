@@ -112,9 +112,8 @@ TEST(UserOperationPtrWrapper, test_local_reduction_with_wrapped_function_ptr) {
 }
 
 template <typename T, typename Op, typename Commutative>
-auto make_op(Op&& op, Commutative&& commutative) {
-    return kamping::internal::ReduceOperation<T, Op, Commutative>(
-        std::move(op), std::forward<Commutative>(commutative));
+auto make_op(Op&& op, Commutative commutative) {
+    return kamping::internal::ReduceOperation<T, Op, Commutative>(std::move(op), commutative);
 }
 
 TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) {
