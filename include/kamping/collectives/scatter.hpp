@@ -75,6 +75,9 @@ public:
         int const root = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
                              std::tuple(comm().root()), args...)
                              .rank();
+        KASSERT(
+            comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
+            assert::light);
 
         // Optional parameter: recv_buf()
         // Default: allocate new container
