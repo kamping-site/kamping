@@ -81,7 +81,7 @@ auto recv_counts_in(const Container& container) {
 /// @brief Generates a wrapper for a recv count input parameter.
 /// @param recv_count The recv count to be encapsulated.
 /// @return Wrapper around the given recv count.
-auto recv_count(int const recv_count) {
+inline auto recv_count(int const recv_count) {
     return internal::RecvCount(recv_count);
 }
 

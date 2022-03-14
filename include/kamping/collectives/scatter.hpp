@@ -25,9 +25,32 @@
 #include "kamping/parameter_factories.hpp"
 
 namespace kamping::internal {
+/// @brief CRTP mixin class for \c MPI_Scatter.
+///
+/// This class is only to be used as a super class of kamping::Communicator.
 template <typename Communicator>
-class Scatter {
+class Scatter : public CRTPHelper<Communicator, Scatter> {
 public:
+    /// @brief Wrapper for \c MPI_Scatter.
+    ///
+    /// This wrapper for \c MPI_Scatter distributes data on the root PE evenly across all PEs in the current
+    /// communicator.
+    ///
+    /// The following parameters are mandatory:
+    /// - (root only) \ref kamping::send_buf() containing the data to be evenly distributed across all PEs. The size of
+    /// this buffer must be divisible by the number of PEs in the current communicator.
+    ///
+    /// The following parameters are optional:
+    /// - \ref kamping::recv_count() specifying the number of elements sent to each PE. If this parameter is omitted,
+    /// the number of elements sent to each PE is computed based on the size of the \ref kamping::send_buf() on the root
+    /// PE and broadcasted to other PEs.
+    /// - \ref kamping::root() specifying the rank of the root PE. If omitted, the default root PE of the communicator
+    /// is used instead.
+    /// - \ref kamping::recv_buf() containing the received data. If omitted, a new buffer is allocated and returned.
+    ///
+    /// @tparam Args Deduced template parameters.
+    /// @param Required and optionally optional parameters.
+    /// @return Result type wrapping the output buffer if not specified as an input parameter.
     template <typename... Args>
     auto scatter(Args&&... args) {
         // Required parameter: send_buf()
@@ -91,7 +114,12 @@ public:
             internal::BufferCategoryNotUsed{});
     }
 
+protected:
+    // Prevent class instantiation by making the ctor protected.
+    Scatter() = default;
+
 private:
+    // Broadcast recv count from root PE to all PEs.
     int bcast_recv_count(int const bcast_value, int root) {
         int                        bcast_result = bcast_value;
         [[maybe_unused]] int const result       = MPI_Bcast(&bcast_result, 1, MPI_INT, root, comm().mpi_communicator());
@@ -99,8 +127,9 @@ private:
         return bcast_result;
     }
 
+    // Return communicator.
     Communicator const& comm() const {
-        return static_cast<Communicator const&>(*this);
+        return this->underlying();
     }
 };
 } // namespace kamping::internal
