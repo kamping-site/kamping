@@ -14,17 +14,17 @@
 #include "kamping/communicator.hpp"
 
 int main() {
-	using namespace kamping;
+    using namespace kamping;
 
-	MPI_Init(NULL, NULL);
-	MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
+    MPI_Init(NULL, NULL);
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
 
-	std::vector<int> in(10);
-	std::vector<int> out;
+    std::vector<int> in(10);
+    std::vector<int> out;
 
-	kamping::Communicator comm;
-	comm.scatter(send_buf(in), recv_buf(out));
+    kamping::Communicator comm;
+    comm.scatter(send_buf(in), recv_buf(out));
 
-	MPI_Finalize();
-	return 0;
+    MPI_Finalize();
+    return 0;
 }
