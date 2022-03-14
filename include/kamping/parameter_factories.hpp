@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <type_traits>
+
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_objects.hpp"
 
@@ -215,13 +217,13 @@ inline auto root(int rank) {
 ///@tparam Op the type of the operation
 ///@tparam Communtative tag whether the operation is commutative
 ///@param op the operation
-///@param commutative the commutativity tag
+///@param commute the commutativity tag
 ///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only supported
 ///     for builtin operations. This is used to streamline the interface so that the use does not have to provide
 ///     commutativity info when the operation is builtin.
-template <typename Op, typename Commutative = undefined_commutative>
-internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative&& commutative = undefined_commutative{}) {
-    return internal::OperationBuilder<Op, Commutative>(std::move(op), std::move(commutative));
+template <typename Op, typename Commutative = internal::undefined_commutative_tag>
+internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative&& commute = internal::undefined_commutative_tag{}) {
+    return internal::OperationBuilder<Op, Commutative>(std::move(op), std::forward<Commutative>(commute));
 }
 
 /// @}

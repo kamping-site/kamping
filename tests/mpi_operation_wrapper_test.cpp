@@ -1,4 +1,5 @@
 #include <array>
+#include <type_traits>
 
 #include <gtest/gtest.h>
 #include <mpi.h>
@@ -99,7 +100,8 @@ TEST(UserOperationPtrWrapper, test_local_reduction_with_wrapped_function_ptr) {
 
 template <typename T, typename Op, typename Commutative>
 auto make_op(Op&& op, Commutative&& commutative) {
-    return kamping::internal::ReduceOperation<T, Op, Commutative>(std::move(op), std::move(commutative));
+    return kamping::internal::ReduceOperation<T, Op, Commutative>(
+        std::move(op), std::forward<Commutative>(commutative));
 }
 
 TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) {
@@ -111,7 +113,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     };
 
     {
-        auto op = make_op<int>(std::plus<>{}, kamping::undefined_commutative{});
+        auto op = make_op<int>(std::plus<>{}, kamping::internal::undefined_commutative_tag{});
         EXPECT_EQ(op.op(), MPI_SUM);
         EXPECT_TRUE(decltype(op)::is_builtin);
 
@@ -120,24 +122,14 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.op());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
-    }
-    {
-        auto op = make_op<WrappedInt>(std::plus<>{}, kamping::commutative{});
-        EXPECT_NE(op.op(), MPI_SUM);
-        EXPECT_FALSE(decltype(op)::is_builtin);
 
-        std::array<int, 2> a = {42, 69};
-        std::array<int, 2> b = {24, 96};
-        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.op());
-        std::array<int, 2> expected_result = {42 + 24, 69 + 96};
-        EXPECT_EQ(b, expected_result);
-
+        EXPECT_TRUE(decltype(op)::commutative);
         int commute;
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_TRUE(commute);
     }
     {
-        auto op = make_op<WrappedInt>(std::plus<>{}, kamping::non_commutative{});
+        auto op = make_op<WrappedInt>(std::plus<>{}, kamping::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
@@ -147,12 +139,29 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
+        EXPECT_TRUE(decltype(op)::commutative);
+        int commute;
+        MPI_Op_commutative(op.op(), &commute);
+        EXPECT_TRUE(commute);
+    }
+    {
+        auto op = make_op<WrappedInt>(std::plus<>{}, kamping::non_commutative);
+        EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_FALSE(decltype(op)::is_builtin);
+
+        std::array<int, 2> a = {42, 69};
+        std::array<int, 2> b = {24, 96};
+        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.op());
+        std::array<int, 2> expected_result = {42 + 24, 69 + 96};
+        EXPECT_EQ(b, expected_result);
+
+        EXPECT_FALSE(decltype(op)::commutative);
         int commute;
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_FALSE(commute);
     }
     {
-        auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::commutative{});
+        auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
@@ -162,12 +171,13 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
+        EXPECT_TRUE(decltype(op)::commutative);
         int commute;
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_TRUE(commute);
     }
     {
-        auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::non_commutative{});
+        auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
@@ -177,12 +187,13 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
+        EXPECT_FALSE(decltype(op)::commutative);
         int commute;
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_FALSE(commute);
     }
     {
-        auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::commutative{});
+        auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
@@ -192,12 +203,13 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
+        EXPECT_TRUE(decltype(op)::commutative);
         int commute;
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_TRUE(commute);
     }
     {
-        auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::non_commutative{});
+        auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
@@ -207,6 +219,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
+        EXPECT_FALSE(decltype(op)::commutative);
         int commute;
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_FALSE(commute);

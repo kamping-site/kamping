@@ -279,7 +279,8 @@ public:
     template <typename T>
     auto build_operation() {
         static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
-        return ReduceOperation<T, Op, Commutative>(std::move(_op), Commutative{});
+        return ReduceOperation<T, Op, std::remove_reference_t<Commutative>>(
+            std::move(_op), std::remove_reference_t<Commutative>{});
     }
 
 private:
