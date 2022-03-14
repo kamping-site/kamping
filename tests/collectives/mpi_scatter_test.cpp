@@ -76,5 +76,5 @@ TEST(ScatterTest, scatter_multiple_elements) {
     auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
 
     ASSERT_EQ(result.size(), elements_per_pe);
-    EXPECT_THAT(result, ElementsAre(comm.rank()));
+    EXPECT_THAT(result, Each(comm.rank()));
 }
