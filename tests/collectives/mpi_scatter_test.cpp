@@ -11,6 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <numeric>
 #include <vector>
@@ -18,6 +19,7 @@
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
+using namespace ::testing;
 
 namespace {
 std::vector<int> create_input_vector_on_root(Communicator const& comm, int const elements_per_pe) {
@@ -63,4 +65,16 @@ TEST(ScatterTest, scatter_single_element_with_recv_count) {
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
+}
+
+TEST(ScatterTest, scatter_multiple_elements) {
+    int const elements_per_pe = 4;
+
+    Communicator comm;
+
+    auto const input  = create_input_vector_on_root(comm, elements_per_pe);
+    auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
+
+    ASSERT_EQ(result.size(), elements_per_pe);
+    EXPECT_THAT(result, ElementsAre(comm.rank()));
 }
