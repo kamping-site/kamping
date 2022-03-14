@@ -1,6 +1,6 @@
 // This file is part of KaMPI.ng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021-2022 The KaMPI.ng Authors
 //
 // KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -16,11 +16,12 @@
 
 #pragma once
 
-#include <mpi.h>
 
 #include <algorithm>
 #include <functional>
 #include <type_traits>
+
+#include <mpi.h>
 
 #include "kamping/mpi_datatype.hpp"
 
@@ -32,6 +33,7 @@ namespace internal {
 ///
 /// Other than the operators defined in `<functional>` like \c std::plus, \c std::max is a function and not a function
 /// object. To enable template matching for detection of builtin MPI operations we therefore need to wrap it.
+/// The actual implementation is used in case that the operation is a builtin operation for the given datatype.
 ///
 /// @tparam T the type of the operands
 template <typename T>
@@ -47,6 +49,8 @@ struct max_impl {
 
 /// @brief Template specialization for \c kamping::internal::max_impl without type parameter, which leaves the operand
 /// type to be deduced.
+///
+/// The actual implementation is used in case that the operation is a builtin operation for the given datatype.
 template <>
 struct max_impl<void> {
     /// @brief Returns the maximum of the two parameters
@@ -64,6 +68,7 @@ struct max_impl<void> {
 ///
 /// Other than the operators defined in `<functional>` like \c std::plus, \c std::min is a function and not a function
 /// object. To enable template matching for detection of builtin MPI operations we therefore need to wrap it.
+/// The actual implementation is used in case that the operation is a builtin operation for the given datatype.
 ///
 /// @tparam T the type of the operands
 template <typename T>
@@ -79,6 +84,7 @@ struct min_impl {
 
 /// @brief Template specialization for \c kamping::internal::min_impl without type parameter, which leaves the operand
 /// type to be deduced.
+/// The actual implementation is used in case that the operation is a builtin operation for the given datatype.
 template <>
 struct min_impl<void> {
     /// @brief Returns the maximum of the two parameters
@@ -93,6 +99,9 @@ struct min_impl<void> {
 };
 
 /// @brief Wrapper struct for logical xor, as the standard library does not provided a function object for it.
+///
+/// The actual implementation is used in case that the operation is a builtin operation for the given datatype.
+///
 /// @tparam T type of the operands
 template <typename T>
 struct logical_xor_impl {
@@ -107,6 +116,7 @@ struct logical_xor_impl {
 
 /// @brief Template specialization for \c kamping::internal::logical_xor_impl without type parameter, which leaves to
 /// operand type to be deduced.
+/// The actual implementation is used in case that the operation is a builtin operation for the given datatype.
 template <>
 struct logical_xor_impl<void> {
     /// @brief Returns the logical xor of the two parameters
@@ -122,6 +132,13 @@ struct logical_xor_impl<void> {
 };
 } // namespace internal
 
+/// @brief this namespace contains all builtin operations supported by MPI.
+///
+/// You can either use them by passing their STL counterparts like \c std::plus<>, \c std::multiplies<> etc. or using
+/// the aliases \c kamping::ops::plus, \c kamping::ops::multiplies, \c kamping::ops::max(), ...
+/// You can either use them without a template parameter (\c std::plus<>) or explicitly specify the type (\c
+/// std::plus<int>). In the latter case, the type must match the datatype of the buffer the operation shall be applied
+/// to.
 namespace ops {
 
 
