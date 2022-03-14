@@ -41,14 +41,14 @@ public:
 
         // Compute sendcount based on the size of the sendbuf
         KASSERT(
-            send_buf.size % static_cast<std::size_t>(this->comm().size()) == 0,
+            send_buf.size % static_cast<std::size_t>(this->comm().size()) == 0u,
             "Size of the send buffer (" << send_buf.size << ") is not divisible by the number of PEs (" << comm().size()
                                         << ") in the communicator.");
         int const send_count = asserting_cast<int>(send_buf.size / static_cast<std::size_t>(comm().size()));
 
         // Optional parameter: root()
         // Default: communicator root
-	using root_param_type = decltype(kamping::root(0));
+        using root_param_type = decltype(kamping::root(0));
         int const root = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
                              std::tuple(comm().root()), args...)
                              .rank();
@@ -66,7 +66,7 @@ public:
         // Default: compute value based on send_buf.size on root
         int recv_count = 0;
 
-        if constexpr (internal::has_parameter_type<internal::ParameterType::recv_count>(args...)) {
+        if constexpr (internal::has_parameter_type<internal::ParameterType::recv_count, Args...>()) {
             recv_count = internal::select_parameter_type<internal::ParameterType::recv_count>(args...).recv_count();
 
             // Validate against send_count
@@ -79,7 +79,7 @@ public:
         }
 
         auto* send_buf_ptr = send_buf.ptr;
-        auto* recv_buf_ptr = recv_buf.get_ptr(recv_count);
+        auto* recv_buf_ptr = recv_buf.get_ptr(static_cast<std::size_t>(recv_count));
 
         [[maybe_unused]] int const err = MPI_Scatter(
             send_buf_ptr, send_count, mpi_send_type, recv_buf_ptr, recv_count, mpi_recv_type, root,
