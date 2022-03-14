@@ -193,8 +193,8 @@ struct non_commutative_tag {};
 struct undefined_commutative_tag {};
 } // namespace internal
 
-[[maybe_unused]] static internal::commutative_tag     commutative{};     ///< global tag for commutativity
-[[maybe_unused]] static internal::non_commutative_tag non_commutative{}; ///< global tag for non-commutativity
+[[maybe_unused]] constexpr internal::commutative_tag     commutative{};     ///< global tag for commutativity
+[[maybe_unused]] constexpr internal::non_commutative_tag non_commutative{}; ///< global tag for non-commutativity
 
 namespace internal {
 
@@ -378,7 +378,7 @@ class UserOperationWrapper {
 public:
     static_assert(
         std::is_default_constructible_v<Op>,
-        "This wrapper only works with default constructible functors, i.e. not with lambdas.");
+        "This wrapper only works with default constructible functors, i.e., not with lambdas.");
     void operator=(UserOperationWrapper<is_commutative, T, Op>&) = delete;
     void operator=(UserOperationWrapper<is_commutative, T, Op>&&) = delete;
     /// @brief creates an MPI operation for the specified functor
