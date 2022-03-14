@@ -421,7 +421,7 @@ private:
 template <bool is_commutative>
 class UserOperationPtrWrapper {
 public:
-    void operator=(UserOperationPtrWrapper<is_commutative>&) = delete;
+    UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative> const&) = delete;
 
     ///@brief move assignement
     UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative>&& other_op) {
@@ -431,6 +431,7 @@ public:
         return *this;
     }
 
+    UserOperationPtrWrapper<is_commutative>(UserOperationPtrWrapper<is_commutative> const&) = delete;
     ///@brief move constructor
     UserOperationPtrWrapper<is_commutative>(UserOperationPtrWrapper<is_commutative>&& other_op) {
         this->_mpi_op   = other_op._mpi_op;
@@ -443,8 +444,8 @@ public:
     }
     /// @brief creates an MPI operation for the specified function pointer
     /// @param ptr the functor to call for reduction
-    /// this parameter must match the semantics of the function pointer passed to \c MPI_Op_create according to the MPI
-    /// standard.
+    /// this parameter must match the semantics of the function pointer passed to \c MPI_Op_create according to the
+    /// MPI standard.
     UserOperationPtrWrapper(mpi_custom_operation_type ptr) : _no_op(false) {
         KASSERT(ptr != nullptr);
         MPI_Op_create(ptr, is_commutative, &_mpi_op);
@@ -458,8 +459,8 @@ public:
 
     /// @returns the \c MPI_Op constructed for the provided functor.
     ///
-    /// Do not free this operation manually, because the destructor calls it. Some MPI implementations silently segfault
-    /// if an \c MPI_Op is freed multiple times.
+    /// Do not free this operation manually, because the destructor calls it. Some MPI implementations silently
+    /// segfault if an \c MPI_Op is freed multiple times.
     MPI_Op get_mpi_op() {
         return _mpi_op;
     }
@@ -485,7 +486,7 @@ public:
     ///@param commutative
     /// May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
     /// supported for builtin operations.
-    ReduceOperation(Op&& op, Commutative&& commutative);
+    ReduceOperation(Op&& op, Commutative commutative);
     static constexpr bool is_builtin;  ///< indicates if this is a builtin operation
     static constexpr bool commutative; ///< indicates if this operation is commutative
     /// @returns the \c MPI_Op associated with this operation
@@ -541,7 +542,7 @@ public:
     ReduceOperation(Op&& op, Commutative) : _operation() {
         // A lambda is may not be default constructed nor copied, so we need some hacks to deal with them.
         // Because each lambda has a distinct type we initiate the static Op here and can access it from the static
-        // context of function pointer crated afterwards.
+        // context of function pointer created afterwards.
         static Op func = op;
 
         mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {

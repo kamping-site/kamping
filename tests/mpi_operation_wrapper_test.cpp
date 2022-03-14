@@ -123,7 +123,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
             return {this->value + a.value};
         }
     };
-
+    // builtin operation
     {
         auto op = make_op<int>(std::plus<>{}, kamping::internal::undefined_commutative_tag{});
         EXPECT_EQ(op.op(), MPI_SUM);
@@ -140,6 +140,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_TRUE(commute);
     }
+    // builtin operation on non-builtin type commutative
     {
         auto op = make_op<WrappedInt>(std::plus<>{}, kamping::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
@@ -156,6 +157,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_TRUE(commute);
     }
+    // builtin operation on non-builtin type non-commutative
     {
         auto op = make_op<WrappedInt>(std::plus<>{}, kamping::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
@@ -172,6 +174,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_FALSE(commute);
     }
+    // lambda on builtin type commutative
     {
         auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
@@ -188,6 +191,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_TRUE(commute);
     }
+    // lambda on builtin type non-commutative
     {
         auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
@@ -204,6 +208,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_FALSE(commute);
     }
+    // lambda on custom type commutative
     {
         auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
@@ -220,6 +225,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_TRUE(commute);
     }
+    // lambda on custom type non-commutative
     {
         auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
