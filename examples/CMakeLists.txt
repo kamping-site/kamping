@@ -2,6 +2,10 @@ add_executable(example_named_parameter_selection named_parameter_selection_examp
 target_link_libraries(example_named_parameter_selection kamping)
 target_compile_options(example_named_parameter_selection PRIVATE ${KAMPING_WARNING_FLAGS})
 
+add_executable(example_reduce reduce_example.cpp)
+target_link_libraries(example_reduce kamping)
+target_compile_options(example_reduce PRIVATE ${KAMPING_WARNING_FLAGS})
+
 add_executable(example_scatter scatter_example.cpp)
 target_link_libraries(example_scatter kamping)
 target_compile_options(example_scatter PRIVATE ${KAMPING_WARNING_FLAGS})
