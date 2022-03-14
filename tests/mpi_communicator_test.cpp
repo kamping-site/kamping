@@ -77,6 +77,9 @@ TEST_F(CommunicatorTest, set_root_bound_check) {
         } else {
             comm.root(i);
             EXPECT_EQ(i, comm.root());
+            if (comm.rank() == i) {
+                EXPECT_TRUE(comm.is_root());
+            }
         }
     }
 }
