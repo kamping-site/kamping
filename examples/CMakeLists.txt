@@ -1,10 +1,10 @@
-add_executable(examples_named_parameter_selection named_parameter_selection_example.cpp)
-target_link_libraries(examples_named_parameter_selection kamping)
-target_compile_options(examples_named_parameter_selection PRIVATE ${KAMPING_WARNING_FLAGS})
+add_executable(example_named_parameter_selection named_parameter_selection_example.cpp)
+target_link_libraries(example_named_parameter_selection kamping)
+target_compile_options(example_named_parameter_selection PRIVATE ${KAMPING_WARNING_FLAGS})
 
-add_executable(examples_reduce reduce_example.cpp)
-target_link_libraries(examples_reduce kamping)
-target_compile_options(examples_reduce PRIVATE ${KAMPING_WARNING_FLAGS})
+add_executable(example_reduce reduce_example.cpp)
+target_link_libraries(example_reduce kamping)
+target_compile_options(example_reduce PRIVATE ${KAMPING_WARNING_FLAGS})
 
 add_executable(example_alltoall alltoall_example.cpp)
 target_link_libraries(example_alltoall kamping)
