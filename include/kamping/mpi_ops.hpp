@@ -378,7 +378,7 @@ class UserOperationWrapper {
 public:
     static_assert(
         std::is_default_constructible_v<Op>,
-        "This wrapper only works with default constructible functors, i.e. not with lambdas.");
+        "This wrapper only works with default constructible functors, i.e., not with lambdas.");
     void operator=(UserOperationWrapper<is_commutative, T, Op>&) = delete;
     void operator=(UserOperationWrapper<is_commutative, T, Op>&&) = delete;
     /// @brief creates an MPI operation for the specified functor
