@@ -45,6 +45,7 @@ enum class ParameterType {
     send_displs, ///< Tag used to represent a send displacements buffer, i.e. a buffer containing the send displacements
                  ///< from the involved PEs.
     sender,      ///< Tag used to represent the sending PE in a \c MPI call.
+    op,          ///< Tag used to represent a reduce operation in a \c MPI call.
     receiver,    ///< Tag used to represent the receiving PE in a \c MPI call.
     root         ///< Tag used to represent the root PE in a \c MPI collectives call.
 };

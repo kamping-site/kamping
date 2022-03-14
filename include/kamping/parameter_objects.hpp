@@ -34,7 +34,10 @@
 
 #include <cstddef>
 #include <memory>
+#include <mpi.h>
+#include <type_traits>
 
+#include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 
 namespace kamping {
@@ -253,6 +256,36 @@ public:
 private:
     int _rank; ///< Rank of the root PE.
 };
+
+
+///@brief Parameter wrapping an operation passed to reduce-like MPI collectives.
+/// This wraps an MPI operation without the argument of the operation specified. This enables the user to construct such
+/// wrapper using the parameter factory \c kamping::op without passing the type of the operation.
+/// The library developer may then construct the actual operation wrapper with a given type later.
+///
+///@tparam Op type of the operation (may be a function object or a lambda)
+///@tparam Commutative tag specifying if the operation is commutative
+template <typename Op, typename Commutative>
+class OperationBuilder {
+public:
+    static constexpr ParameterType parameter_type =
+        ParameterType::op; ///< The type of parameter this object encapsulates.
+    ///@brief constructs an Operation builder
+    ///@param op the operation
+    ///@param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
+    OperationBuilder(Op&& op, Commutative commutative_tag [[maybe_unused]]) : _op(op) {}
+    ///@brief constructs an operation for the given type T
+    ///@tparam T argument type of the reduction operation
+    template <typename T>
+    [[nodiscard]] auto build_operation() {
+        static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
+        return ReduceOperation<T, Op, Commutative>(std::forward<Op>(_op), Commutative{});
+    }
+
+private:
+    Op _op; ///< the operation which is encapsulated
+};
+
 } // namespace internal
 
 /// @}
