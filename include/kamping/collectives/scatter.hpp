@@ -23,6 +23,7 @@
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/parameter_factories.hpp"
+#include "kamping/parameter_objects.hpp"
 
 namespace kamping::internal {
 /// @brief CRTP mixin class for \c MPI_Scatter.
@@ -63,9 +64,17 @@ public:
             internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
             "Missing required parameter send_buf.");
 
-        auto send_buf              = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+        using default_send_param_type = internal::NullConstBuffer<internal::ParameterType::send_buf>;
+        auto send_buf =
+            internal::select_parameter_type_or_default<internal::ParameterType::send_buf, default_send_param_type>(
+                std::tuple(), args...)
+                .get();
         using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
+        auto const*  send_buf_ptr  = send_buf.data();
+        KASSERT(
+            !this->comm().is_root() || send_buf_ptr != nullptr, "Send buffer must be specified on root.",
+            assert::light);
 
         // Compute sendcount based on the size of the sendbuf
         KASSERT(
@@ -113,7 +122,6 @@ public:
             recv_count = this->bcast_recv_count(send_count, root);
         }
 
-        auto* send_buf_ptr = send_buf.ptr;
         auto* recv_buf_ptr = recv_buf.get_ptr(static_cast<std::size_t>(recv_count));
 
         [[maybe_unused]] int const err = MPI_Scatter(
