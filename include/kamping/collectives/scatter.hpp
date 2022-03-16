@@ -53,6 +53,11 @@ public:
     /// @return Result type wrapping the output buffer if not specified as an input parameter.
     template <typename... Args>
     auto scatter(Args&&... args) {
+        static_assert(
+            all_parameters_are_rvalues<Args...>,
+            "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
+            "returned by the named parameter helper functions like send_buf().");
+
         // Required parameter: send_buf()
         static_assert(
             internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
