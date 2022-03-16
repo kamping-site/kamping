@@ -30,10 +30,8 @@ int main(int argc, char* argv[]) {
     std::iota(in.begin(), in.end(), 0);
 
     comm.scatter(send_buf(in), recv_buf(out));
-
     print_result(out, comm);
 
     MPI_Finalize();
-    
     return 0;
 }
