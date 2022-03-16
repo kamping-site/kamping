@@ -32,7 +32,7 @@ int main() {
     std::vector<int> output;
 
     comm.alltoall(send_buf(input), recv_buf(output));
-    print_result(output, comm);
+    print_result_on_root(output, comm);
 
     MPI_Finalize();
     return 0;

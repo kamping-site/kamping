@@ -17,12 +17,17 @@
 
 namespace kamping {
 template <typename T>
-void print_result(std::vector<T> const& result, Communicator comm) {
-    if (comm.rank() == 0) {
-        for (auto const& elem: result) {
-            std::cout << elem << "\n";
-        }
-        std::cout << std::flush;
+void print_result(std::vector<T> const& result, Communicator const& comm) {
+    for (auto const& elem: result) {
+        std::cout << "[PE " << comm.rank() << "] " << elem << "\n";
+    }
+    std::cout << std::flush;
+}
+
+template <typename T>
+void print_result_on_root(std::vector<T> const& result, Communicator const& comm) {
+    if (comm.is_root()) {
+        print_result(result, comm);
     }
 }
 } // namespace kamping
