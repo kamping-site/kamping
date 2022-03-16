@@ -1,3 +1,17 @@
+// This file is part of KaMPI.ng.
+//
+// Copyright 2022 The KaMPI.ng Authors
+//
+// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
+#include "helpers_for_examples.hpp"
 #include "kamping/collectives/reduce.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/mpi_ops.hpp"
@@ -7,14 +21,6 @@
 #include <mpi.h>
 #include <vector>
 
-template <typename T>
-void print_result(std::vector<T>& result, kamping::Communicator comm) {
-    if (comm.rank() == 0) {
-        for (auto elem: result) {
-            std::cout << elem << std::endl;
-        }
-    }
-}
 struct my_plus {
     template <typename T>
     auto operator()(T a, T b) {
@@ -23,28 +29,29 @@ struct my_plus {
 };
 
 int main() {
+    using namespace kamping;
+
     MPI_Init(NULL, NULL);
     MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
-    kamping::Communicator comm;
-    std::vector<double>   input = {1, 2, 3};
-    std::vector<double>   output;
-    using namespace kamping;
+    Communicator        comm;
+    std::vector<double> input = {1, 2, 3};
+    std::vector<double> output;
 
     auto result0 = comm.reduce(send_buf(input), op(ops::plus<>()), root(0)).extract_recv_buffer();
     print_result(result0, comm);
     auto result1 = comm.reduce(send_buf(input), op(ops::plus<double>())).extract_recv_buffer();
     print_result(result1, comm);
-    auto result2 = comm.reduce(send_buf(input), kamping::op(my_plus{}, commutative)).extract_recv_buffer();
+    auto result2 = comm.reduce(send_buf(input), op(my_plus{}, commutative)).extract_recv_buffer();
     print_result(result2, comm);
 
-    auto result3 [[maybe_unused]] = comm.reduce(
-        send_buf(input), kamping::recv_buf(output), kamping::op([](auto a, auto b) { return a + b; }, non_commutative));
+    auto result3 [[maybe_unused]] =
+        comm.reduce(send_buf(input), recv_buf(output), op([](auto a, auto b) { return a + b; }, non_commutative));
     print_result(output, comm);
 
     std::vector<std::pair<int, double>> input2 = {{3, 0.25}};
 
     auto result4 = comm.reduce(
-                           send_buf(input2), kamping::op(
+                           send_buf(input2), op(
                                                  [](auto a, auto b) {
                                                      // dummy
                                                      return std::pair(a.first + b.first, a.second + b.second);
@@ -72,7 +79,7 @@ int main() {
         input3[1].y = 0.75;
     }
 
-    auto result5 = comm.reduce(send_buf(input3), kamping::op(ops::max<>(), commutative)).extract_recv_buffer();
+    auto result5 = comm.reduce(send_buf(input3), op(ops::max<>(), commutative)).extract_recv_buffer();
     if (comm.rank() == 0) {
         for (auto& elem: result5) {
             std::cout << elem.x << " " << elem.y << " " << elem.z << std::endl;
