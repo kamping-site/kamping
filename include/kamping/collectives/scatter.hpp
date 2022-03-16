@@ -72,9 +72,9 @@ public:
         // Optional parameter: root()
         // Default: communicator root
         using root_param_type = decltype(kamping::root(0));
-        int const root = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
-                             std::tuple(comm().root()), args...)
-                             .rank();
+        auto&& root_param = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
+            std::tuple(comm().root()), args...);
+        int const root = root_param.rank();
         KASSERT(
             comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
             assert::light);
@@ -87,6 +87,10 @@ public:
                 std::tuple(), args...);
         using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
         MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
+
+        // Make sure that send and recv buffers use the same type
+        static_assert(
+            std::is_same_v<send_value_type, recv_value_type>, "Mismatching send and receive buffer value types");
 
         // Optional parameter: recv_count()
         // Default: compute value based on send_buf.size on root
