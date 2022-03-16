@@ -11,20 +11,29 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "helpers_for_examples.hpp"
 #include "kamping/communicator.hpp"
+#include <mpi.h>
+#include <numeric>
+#include <vector>
 
-int main() {
+int main(int argc, char* argv[]) {
     using namespace kamping;
 
-    MPI_Init(NULL, NULL);
+    MPI_Init(&argc, &argv);
     MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
 
-    std::vector<int> in(10);
+    Communicator     comm;
+    std::vector<int> in(static_cast<std::size_t>(comm.size()));
     std::vector<int> out;
 
-    kamping::Communicator comm;
+    std::iota(in.begin(), in.end(), 0);
+
     comm.scatter(send_buf(in), recv_buf(out));
 
+    print_result(out, comm);
+
     MPI_Finalize();
+    
     return 0;
 }
