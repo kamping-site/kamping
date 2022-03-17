@@ -16,11 +16,11 @@
 
 #pragma once
 
+#include "kamping/parameter_type_definitions.hpp"
+
 #include <cstddef>
 #include <limits>
 #include <tuple>
-
-#include "kamping/parameter_type_definitions.hpp"
 
 namespace kamping::internal {
 /// @addtogroup kamping_utility
