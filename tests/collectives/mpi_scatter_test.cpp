@@ -104,3 +104,34 @@ TEST(ScatterTest, scatter_with_send_buf_only_on_root) {
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
 }
+
+TEST(ScatterTest, scatter_with_root_arg) {
+    Communicator comm;
+    int const    root = comm.size() - 1; // use last PE as root
+
+    std::vector<int> input(static_cast<std::size_t>(comm.size()));
+    if (comm.rank() == root) {
+        std::iota(input.begin(), input.end(), 0);
+    }
+
+    auto const result = comm.scatter(send_buf(input), kamping::root(root)).extract_recv_buffer();
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+}
+
+TEST(ScatterTest, scatter_with_nonzero_root_comm) {
+    Communicator dummy_comm;
+    int const    root = dummy_comm.size() - 1; // use last PE as root
+    Communicator comm(MPI_COMM_WORLD, root);
+
+    std::vector<int> input(static_cast<std::size_t>(comm.size()));
+    if (comm.rank() == root) {
+        std::iota(input.begin(), input.end(), 0);
+    }
+
+    auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+}
