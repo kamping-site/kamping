@@ -34,7 +34,28 @@ constexpr bool has_data_member_v = false;
 /// @return \c true if class has \c .data() method and \c false otherwise.
 template <typename T>
 constexpr bool has_data_member_v<T, std::void_t<decltype(std::declval<T>().data())>> = true;
+
+/// @brief Tag type for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
+template <typename T>
+struct ignore_t {};
 } // namespace internal
+
+/// @brief Tag for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
+template <typename T>
+constexpr internal::ignore_t<T> ignore{};
+
+/// @brief Generates a dummy send buf that wraps a \c nullptr.
+///
+/// This is useful for operations where a send_buf is required on some PEs, such as the root PE,
+/// but not all PEs that participate in the collective communication.
+///
+/// @tparam Data Data type for elements in the send buffer. This must be the same type as in the actual send_buf.
+/// @param ignore Tag parameter for overload dispatching, pass in `kamping::ignore<Data>`.
+/// @return Object wrapping a \c nullptr as a send buffer.
+template <typename Data>
+auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
+    return internal::EmptyBuffer<Data, internal::ParameterType::send_buf>();
+}
 
 ///@brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
 /// the data element(s) to send.

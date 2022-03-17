@@ -136,13 +136,13 @@ private:
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
-template <ParameterType type>
-class NullConstBuffer {
+template <typename Data, ParameterType type>
+class EmptyBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
         false;               ///< This pseudo buffer is not modifiable since it represents no actual buffer.
-    using value_type = void; ///< Value type of the buffer.
+    using value_type = Data; ///< Value type of the buffer.
 
     /// @brief Returns a span containing a nullptr.
     /// @return Span containing a nullptr.

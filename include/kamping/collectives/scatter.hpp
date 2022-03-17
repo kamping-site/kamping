@@ -59,16 +59,8 @@ public:
             "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
             "returned by the named parameter helper functions like send_buf().");
 
-        // Required parameter: send_buf()
-        static_assert(
-            internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
-            "Missing required parameter send_buf.");
-
-        using default_send_param_type = internal::NullConstBuffer<internal::ParameterType::send_buf>;
-        auto send_buf =
-            internal::select_parameter_type_or_default<internal::ParameterType::send_buf, default_send_param_type>(
-                std::tuple(), args...)
-                .get();
+        // Parameter send_buf(): required on root, optional/ignored otherwise
+        auto send_buf              = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
         using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
         auto const*  send_buf_ptr  = send_buf.data();
