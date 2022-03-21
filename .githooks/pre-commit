@@ -1,12 +1,6 @@
 #!/bin/sh
-
-while read local_ref local_sha remote_ref remote_sha
-do
-     if [ "$remote_ref" = "refs/heads/add-hooks" ]; then
-        echo "Pushing to branch \"add-hooks\" is forbidden"
-        exit 1
-     fi
+for file in $(git diff --cached --name-only | grep -E '.*\.(c|cpp|h|hpp)\b'); do 
+	clang-format --dry-run --Werror "$file" || exit 1
 done
 
 exit 0
-
