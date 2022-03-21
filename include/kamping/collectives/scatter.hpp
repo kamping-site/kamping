@@ -156,7 +156,28 @@ public:
     /// @return Result type wrapping the output buffer if not specified as an input parameter.
     template <typename... Args>
     auto scatterv(Args&&... args) {
-        return 0;
+        static_assert(
+            all_parameters_are_rvalues<Args...>,
+            "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
+            "returned by the named parameter helper functions like send_buf().");
+
+        // Parameter send_buf(): mandatory parameter
+        static_assert(
+            internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
+            "Missing required parameter send_buf.");
+
+        auto send_buf              = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+        using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+        MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
+        auto const*  send_buf_ptr  = send_buf.data();
+        KASSERT(
+            !this->comm().is_root() || send_buf_ptr != nullptr, "Send buffer must be specified on root.",
+            assert::light);
+
+        // Parameter send_displs(): mandatory parameter
+        static_assert(
+            internal::has_parameter_type<internal::ParameterType::send_displs, Args...>(),
+            "Missing required parameter send_displs.");
     }
 
 protected:
