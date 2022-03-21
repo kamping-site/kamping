@@ -98,22 +98,27 @@ public:
 
         // Make sure that send and recv buffers use the same type
         static_assert(
-            std::is_same_v<send_value_type, recv_value_type>, "Mismatching send and receive buffer value types");
+            std::is_same_v<send_value_type, recv_value_type>, "Mismatching send_buf() and recv_buf() value types.");
 
         // Optional parameter: recv_count()
         // Default: compute value based on send_buf.size on root
-        int recv_count = 0;
+        constexpr bool has_recv_count_param =
+            internal::has_parameter_type<internal::ParameterType::recv_count, Args...>();
+        KASSERT(
+            has_recv_count_param == bcast_value(has_recv_count_param, root),
+            "recv_count() parameter is specified on some PEs, but not on all PEs.", assert::light_communication);
 
-        if constexpr (internal::has_parameter_type<internal::ParameterType::recv_count, Args...>()) {
+        int recv_count = 0;
+        if constexpr (has_recv_count_param) {
             recv_count = internal::select_parameter_type<internal::ParameterType::recv_count>(args...).recv_count();
 
             // Validate against send_count
             KASSERT(
-                recv_count == bcast_recv_count(send_count, root), "Specified recv count does not match the send count.",
+                recv_count == bcast_value(send_count, root), "Specified recv_count() does not match the send count.",
                 assert::light_communication);
         } else {
             // Broadcast send_count to get recv_count
-            recv_count = this->bcast_recv_count(send_count, root);
+            recv_count = this->bcast_value(send_count, root);
         }
 
         auto* recv_buf_ptr = recv_buf.get_ptr(static_cast<std::size_t>(recv_count));
@@ -159,15 +164,16 @@ protected:
     Scatter() = default;
 
 private:
-    // Broadcast recv count from root PE to all PEs.
-    int bcast_recv_count(int const bcast_value, int root) {
-        int                        bcast_result = bcast_value;
+    // Broadcasts a value from on PE to all PEs.
+    template <typename Value>
+    Value bcast_value(Value const bcast_value, int const root) {
+        Value                      bcast_result = bcast_value;
         [[maybe_unused]] int const result       = MPI_Bcast(&bcast_result, 1, MPI_INT, root, comm().mpi_communicator());
         THROW_IF_MPI_ERROR(result, MPI_Bcast);
         return bcast_result;
     }
 
-    // Return communicator.
+    // Returns the underlying communicator.
     Communicator const& comm() const {
         return this->underlying();
     }
