@@ -1,6 +1,4 @@
-// This file is part of KaMPI.ng
-//
-// Copyright 2022 The KaMPI.ng Authors
+// This file is part of KaMPI.ng Copyright 2022 The KaMPI.ng Authors
 //
 // KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -128,6 +126,32 @@ public:
         return MPIResult(
             std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
             internal::BufferCategoryNotUsed{});
+    }
+
+    /// @brief Wrapper for \c MPI_Scatterv.
+    ///
+    /// This wrapper for \c MPI_Scatterv distributes data on the root PE across all PEs in the current
+    /// communicator. The amount of data send to each PE is specified as a displacement in the send buffer.
+    ///
+    /// The following parameters are mandatory:
+    /// - \ref kamping::send_buf() containing the data to be evenly distributed across all PEs. The buffer is only
+    /// used on the root PE. Other PEs can \ref kamping::ignored this parameter.
+    /// - \ref kamping::displacement() specifying the amount of data send to each PE. The size of this buffer must be
+    /// at least as large as the number of PEs in the communicator.
+    ///
+    /// The following parameters are optional:
+    /// - \ref kamping::recv_count() specifying the number of elements send to *this* PE. If omitted, the value is
+    /// scattered from the displacement vector on the root PE.
+    /// - \ref kamping::root() specifying the rank of the root PE. If omitted, the default root PE of the communicator
+    /// is used instead.
+    /// - \ref kamping::recv_buf() containing the received data. If omitted, a new buffer is allocated and returned.
+    ///
+    /// @tparam Args Deduced template parameters.
+    /// @param args Required and optionally optional parameters.
+    /// @return Result type wrapping the output buffer if not specified as an input parameter.
+    template <typename... Args>
+    auto scatterv(Args&&... args) {
+        return 0;
     }
 
 protected:
