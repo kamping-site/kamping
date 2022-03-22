@@ -142,9 +142,9 @@ public:
     /// communicator. The amount of data send to each PE is specified as a displacement in the send buffer.
     ///
     /// The following parameters are mandatory:
-    /// - \ref kamping::send_buf() containing the data to be evenly distributed across all PEs. The buffer is only
-    /// used on the root PE. Other PEs can \ref kamping::ignored this parameter.
-    /// - \ref kamping::displacement() specifying the amount of data send to each PE. The size of this buffer must be
+    /// - \c kamping::send_buf() containing the data to be evenly distributed across all PEs. The buffer is only
+    /// used on the root PE. Other PEs can \c kamping::ignored this parameter.
+    /// - \c kamping::displacement() specifying the amount of data send to each PE. The size of this buffer must be
     /// at least as large as the number of PEs in the communicator.
     ///
     /// The following parameters are optional:
