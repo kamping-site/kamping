@@ -22,6 +22,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "kamping/parameter_type_definitions.hpp"
 
 namespace kamping::internal {
 /// @brief CRTP mixin class for \c MPI_Scatter.
@@ -73,19 +74,19 @@ public:
         // Compute sendcount based on the size of the sendbuf
         KASSERT(
             send_buf.size % static_cast<std::size_t>(this->comm().size()) == 0u,
-            "Size of the send buffer (" << send_buf.size << ") is not divisible by the number of PEs (" << comm().size()
-                                        << ") in the communicator.");
-        int const send_count = asserting_cast<int>(send_buf.size / static_cast<std::size_t>(comm().size()));
+            "Size of the send buffer (" << send_buf.size << ") is not divisible by the number of PEs ("
+                                        << this->comm().size() << ") in the communicator.");
+        int const send_count = asserting_cast<int>(send_buf.size / static_cast<std::size_t>(this->comm().size()));
 
         // Optional parameter: root()
         // Default: communicator root
         using root_param_type = decltype(kamping::root(0));
         auto&& root_param = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
-            std::tuple(comm().root()), args...);
+            std::tuple(this->comm().root()), args...);
         int const root = root_param.rank();
         KASSERT(
-            comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
-            assert::light);
+            this->comm().is_valid_rank(root),
+            "Invalid root rank " << root << " in communicator of size " << this->comm().size(), assert::light);
 
         // Optional parameter: recv_buf()
         // Default: allocate new container
@@ -125,7 +126,7 @@ public:
 
         [[maybe_unused]] int const err = MPI_Scatter(
             send_buf_ptr, send_count, mpi_send_type, recv_buf_ptr, recv_count, mpi_recv_type, root,
-            comm().mpi_communicator());
+            this->comm().mpi_communicator());
         THROW_IF_MPI_ERROR(err, MPI_Scatter);
 
         return MPIResult(
@@ -174,10 +175,64 @@ public:
             !this->comm().is_root() || send_buf_ptr != nullptr, "Send buffer must be specified on root.",
             assert::light);
 
+        // Parameter send_counts(): mandatory parameter
+        static_assert(
+            internal::has_parameter_type<internal::ParameterType::send_counts, Args...>(),
+            "Missing required parameter send_counts.");
+        auto send_counts_buf = internal::select_parameter_type<internal::ParameterType::send_counts>(args...).get();
+        auto const* send_counts_ptr = send_counts_buf.data();
+
         // Parameter send_displs(): mandatory parameter
         static_assert(
             internal::has_parameter_type<internal::ParameterType::send_displs, Args...>(),
             "Missing required parameter send_displs.");
+        auto send_displs_buf = internal::select_parameter_type<internal::ParameterType::send_displs>(args...).get();
+        auto const* send_displs_ptr = send_displs_buf.data();
+
+        // Parameter root(): optional parameter
+        using root_param_type = decltype(kamping::root(0));
+        auto&& root_param = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
+            std::tuple(comm().root()), args...);
+        int const root = root_param.rank();
+        KASSERT(
+            comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
+            assert::light);
+
+        // Parameter recv_buf(): optional parameter
+        using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
+        auto&& recv_buf =
+            internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
+                std::tuple(), args...);
+        using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
+        static_assert(
+            std::is_same_v<send_value_type, recv_value_type>, "Mismatching send_buf() and recv_buf() value types.");
+        MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
+
+        // Parameter recv_count(): deducible parameter
+        constexpr bool has_recv_count_param =
+            internal::has_parameter_type<internal::ParameterType::recv_count, Args...>();
+        KASSERT(
+            has_recv_count_param == bcast_value(has_recv_count_param, root),
+            "recv_count() parameter is specified on some PEs, but not on all PEs.", assert::light_communication);
+
+        int recv_count = 0;
+        if constexpr (has_recv_count_param) {
+            recv_count = internal::select_parameter_type<internal::ParameterType::recv_count>(args...).recv_count();
+
+            // Validate against send_displs() on root
+        } else {
+            // Scatter recv_count() from send_displs() on root
+        }
+
+        auto*                      recv_buf_ptr = recv_buf.get_ptr(static_cast<std::size_t>(recv_count));
+        [[maybe_unused]] int const err          = MPI_Scatter(
+                     send_buf_ptr, send_counts_ptr, send_displs_ptr, mpi_send_type, recv_buf_ptr, &recv_count, mpi_recv_type,
+                     root, comm().mpi_communicator());
+        THROW_IF_MPI_ERROR(err, MPI_Scatterv);
+
+        return MPIResult(
+            std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
+            internal::BufferCategoryNotUsed{});
     }
 
 protected:
