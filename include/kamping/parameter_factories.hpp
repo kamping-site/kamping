@@ -89,6 +89,29 @@ auto send_counts(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_counts>(container);
 }
 
+/// @brief Generates buffer wrapper based on a container for the send counts, i.e., the underlying storage
+/// which will contain the send counts when the \c MPI call has been completed.
+/// The underlying container must providate a \c data(), \c resize() and \c size() member function and expose the
+/// contained \c value_type.
+/// @tparam Container Container type which contains the send counts.
+/// @return Object referring to the storage containing the send counts.
+template <typename Container>
+auto send_counts_out(Container& container) {
+    return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_counts>(container);
+}
+
+/// @brief Generates buffer wrapper based on a container for the send counts, i.e., the underlying storage
+/// which will contain the send counts when the \c MPI call has been completed.
+/// The storage is allocated by the library and encapsulated in a container of type \c Container.
+/// The underlying container must providate a \c data(), \c resize() and \c size() member function and expose the
+/// contained \c value_type.
+/// @tparam Container Container type which contains the send counts.
+/// @return Object referring to the storage containing the send counts.
+template <typename Container>
+auto send_counts_out(NewContainer<Container>&&) {
+    return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_counts>();
+}
+
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must contain
 /// the recv counts from each relevant PE.
 ///

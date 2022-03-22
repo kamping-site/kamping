@@ -11,7 +11,9 @@
 
 #pragma once
 
+#include <algorithm>
 #include <mpi.h>
+#include <numeric>
 #include <type_traits>
 
 #include "kamping/checking_casts.hpp"
@@ -162,6 +164,15 @@ public:
             "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
             "returned by the named parameter helper functions like send_buf().");
 
+        // Parameter root(): optional parameter
+        using root_param_type = decltype(kamping::root(0));
+        auto&& root_param = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
+            std::tuple(comm().root()), args...);
+        int const root = root_param.rank();
+        KASSERT(
+            comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
+            assert::light);
+
         // Parameter send_buf(): mandatory parameter
         static_assert(
             internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
@@ -172,31 +183,74 @@ public:
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
         auto const*  send_buf_ptr  = send_buf.data();
         KASSERT(
-            !this->comm().is_root() || send_buf_ptr != nullptr, "Send buffer must be specified on root.",
+            this->comm().rank() != root || send_buf_ptr != nullptr, "Send buffer must be specified on root.",
             assert::light);
+
+        std::size_t const comm_size = static_cast<std::size_t>(this->comm().size());
 
         // Parameter send_counts(): mandatory parameter
         static_assert(
             internal::has_parameter_type<internal::ParameterType::send_counts, Args...>(),
             "Missing required parameter send_counts.");
-        auto send_counts_buf = internal::select_parameter_type<internal::ParameterType::send_counts>(args...).get();
-        auto const* send_counts_ptr = send_counts_buf.data();
+        auto        send_counts     = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
+        auto const* send_counts_ptr = send_counts.get().data();
 
-        // Parameter send_displs(): mandatory parameter
-        static_assert(
-            internal::has_parameter_type<internal::ParameterType::send_displs, Args...>(),
-            "Missing required parameter send_displs.");
-        auto send_displs_buf = internal::select_parameter_type<internal::ParameterType::send_displs>(args...).get();
-        auto const* send_displs_ptr = send_displs_buf.data();
-
-        // Parameter root(): optional parameter
-        using root_param_type = decltype(kamping::root(0));
-        auto&& root_param = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
-            std::tuple(comm().root()), args...);
-        int const root = root_param.rank();
+        // Make sure that the buffer is large enough
         KASSERT(
-            comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
-            assert::light);
+            this->comm().rank() != root || send_counts.size >= comm_size,
+            "send_counts() buffer on root PE does not hold enough entries.");
+
+        // Make sure that counts *could* be valid -- final check after we have send_displs()
+        KASSERT(
+            this->comm().rank() != root
+                || std::all_of(
+                    send_counts_ptr, send_counts_ptr + comm_size,
+                    [&](int const& count) { return count >= 0 && count <= send_buf.size; }),
+            "Invalid send_counts() on root PE: some counts are negative or out-of-bound.");
+
+        // Parameter send_displs(): optional parameter
+        using default_send_displs_type = decltype(kamping::send_displs_out(NewContainer<std::vector<int>>{}));
+        auto send_displs =
+            internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
+                std::tuple(comm_size), args...);
+        constexpr bool send_displs_modifiable = std::remove_reference_t<decltype(send_displs)>::is_modifiable;
+
+        // Compute send_displs() based on send_counts()
+        auto* send_displs_ptr = send_displs_modifiable ? send_displs.get_ptr(comm_size) : send_displs.get().data();
+
+        if constexpr (send_displs_modifiable) {
+            // Compute send_displs() on root PE
+            if (this->comm().rank() == root) {
+                KASSERT(
+                    std::accumulate(send_counts_ptr, send_counts_ptr + comm_size, 0) >= send_buf.size,
+                    "Sum of send_counts() is larger than the number of elements in the send_buf().");
+
+                int displacment = 0;
+                for (int pe = 0; pe < this->comm().size(); ++pe) {
+                    send_displs_ptr[pe] = displacment;
+                    displacment += send_counts_ptr[pe];
+                }
+            }
+        } else {
+            KASSERT(
+                this->comm().rank() != root
+                    || std::all_of(
+                        send_displs_ptr, send_displs_ptr + comm_size,
+                        [&](int const& displs) { return displs >= 0 && displs <= send_buf.size; }),
+                "send_displs() out of bound.");
+
+            KASSERT(
+                this->comm().rank() != root ||
+                    [&] {
+                        for (int pe = 0; pe < this->comm().size(); ++pe) {
+                            KASSERT(
+                                send_displs_ptr[pe] + send_counts_ptr[pe] <= send_buf.size,
+                                "Data span for PE " << pe << " out-of-bound.");
+                        }
+                    }(),
+                "send_displs() + send_counts() out of bound.");
+        }
+
 
         // Parameter recv_buf(): optional parameter
         using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
@@ -218,10 +272,11 @@ public:
         int recv_count = 0;
         if constexpr (has_recv_count_param) {
             recv_count = internal::select_parameter_type<internal::ParameterType::recv_count>(args...).recv_count();
-
-            // Validate against send_displs() on root
+            KASSERT(
+                recv_count == scatter_send_counts(send_counts_ptr),
+                "recv_count() differs from send_counts() on root PE", assert::light_communication);
         } else {
-            // Scatter recv_count() from send_displs() on root
+            recv_count = scatter_send_counts(send_counts_ptr);
         }
 
         auto*                      recv_buf_ptr = recv_buf.get_ptr(static_cast<std::size_t>(recv_count));
@@ -247,6 +302,12 @@ private:
         [[maybe_unused]] int const result       = MPI_Bcast(&bcast_result, 1, MPI_INT, root, comm().mpi_communicator());
         THROW_IF_MPI_ERROR(result, MPI_Bcast);
         return bcast_result;
+    }
+
+    int scatter_send_counts(int const* send_counts, int const root) {
+        int result;
+        MPI_Scatter(send_counts, 1, MPI_INT, &result, 1, MPI_INT, root, this->comm().mpi_communicator());
+        return result;
     }
 
     // Returns the underlying communicator.

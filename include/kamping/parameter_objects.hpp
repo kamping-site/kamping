@@ -49,6 +49,7 @@ namespace kamping {
 /// This types needs to be used to select internal::LibAllocContainerBasedBuffer as buffer type.
 template <typename Container>
 struct NewContainer {};
+
 /// @brief Type used for tag dispatching.
 ///
 /// This types needs to be used to select internal::LibAllocUniquePtrBasedBuffer as buffer type.
@@ -58,7 +59,6 @@ struct NewPtr {};
 namespace internal {
 
 
-///
 /// @brief Object referring to a contiguous sequence of size objects.
 ///
 /// Since KaMPI.ng needs to be C++17 compatible and std::span is part of C++20, we need our own implementation of the
