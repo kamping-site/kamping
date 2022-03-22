@@ -130,6 +130,16 @@ public:
         return {std::data(_container), _container.size()};
     }
 
+    /// @brief Get direct access to the underlying read-only storage with the same interface as modifiable containers.
+    /// @param required_size Assert that the container is large enough to hold at least this many elements.
+    /// @return Pointer to the underlying read-only storage.
+    const value_type* get_ptr(std::size_t const required_size [[maybe_unused]]) {
+        KASSERT(
+            required_size <= _container.size(), "Container is smaller than the requested container size.",
+            assert::light);
+        return std::data(_container);
+    }
+
 private:
     const Container& _container; ///< Container which holds the actual data.
 };
@@ -148,6 +158,14 @@ public:
     /// @return Span containing a nullptr.
     Span<value_type> get() const {
         return {nullptr, 0};
+    }
+
+    /// @brief Get direct access to the underlying read-only storage with the same interface as modifiable containers.
+    /// @param required_size Assert that the container is large enough to hold at least this many elements.
+    /// @return Pointer to the underlying read-only storage.
+    const value_type* get_ptr(std::size_t const required_size [[maybe_unused]]) {
+        KASSERT(required_size == 0, "Empty buffer does not hold any data.", assert::light);
+        return nullptr;
     }
 };
 
@@ -172,6 +190,14 @@ public:
     /// @return Span referring to the underlying read-only storage.
     Span<value_type> get() const {
         return {&_element, 1};
+    }
+
+    /// @brief Get direct access to the underlying read-only storage with the same interface as modifiable containers.
+    /// @param required_size Assert that the container is large enough to hold at least this many elements.
+    /// @return Pointer to the underlying read-only storage.
+    const value_type* get_ptr(std::size_t const required_size [[maybe_unused]]) {
+        KASSERT(required_size == 1, "Buffer only holds on element.", assert::light);
+        return &_element;
     }
 
 private:

@@ -135,3 +135,17 @@ TEST(ScatterTest, scatter_with_nonzero_root_comm) {
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
 }
+
+TEST(ScatterTest, scatterv_with_one_element_per_pe) {
+    Communicator comm;
+
+    auto const             input = create_input_vector_on_root(comm, 1);
+    std::vector<int> const counts(static_cast<std::size_t>(comm.size()), 1);
+    std::vector<int>       displs(static_cast<std::size_t>(comm.size()));
+    std::iota(displs.begin(), displs.end(), 0);
+
+    auto const result = comm.scatterv(send_buf(input), send_counts(counts), send_displs(displs)).extract_recv_buffer();
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+}

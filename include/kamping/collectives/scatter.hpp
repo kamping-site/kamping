@@ -212,11 +212,11 @@ public:
         using default_send_displs_type = decltype(kamping::send_displs_out(NewContainer<std::vector<int>>{}));
         auto send_displs =
             internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
-                std::tuple(comm_size), args...);
+                std::tuple(), args...);
         constexpr bool send_displs_modifiable = std::remove_reference_t<decltype(send_displs)>::is_modifiable;
 
         // Compute send_displs() based on send_counts()
-        auto* send_displs_ptr = send_displs_modifiable ? send_displs.get_ptr(comm_size) : send_displs.get().data();
+        auto const* send_displs_ptr = send_displs.get_ptr(comm_size);
 
         if constexpr (send_displs_modifiable) {
             // Compute send_displs() on root PE
@@ -273,15 +273,15 @@ public:
         if constexpr (has_recv_count_param) {
             recv_count = internal::select_parameter_type<internal::ParameterType::recv_count>(args...).recv_count();
             KASSERT(
-                recv_count == scatter_send_counts(send_counts_ptr),
+                recv_count == scatter_send_counts(send_counts_ptr, root),
                 "recv_count() differs from send_counts() on root PE", assert::light_communication);
         } else {
-            recv_count = scatter_send_counts(send_counts_ptr);
+            recv_count = scatter_send_counts(send_counts_ptr, root);
         }
 
         auto*                      recv_buf_ptr = recv_buf.get_ptr(static_cast<std::size_t>(recv_count));
-        [[maybe_unused]] int const err          = MPI_Scatter(
-                     send_buf_ptr, send_counts_ptr, send_displs_ptr, mpi_send_type, recv_buf_ptr, &recv_count, mpi_recv_type,
+        [[maybe_unused]] int const err          = MPI_Scatterv(
+                     send_buf_ptr, send_counts_ptr, send_displs_ptr, mpi_send_type, recv_buf_ptr, recv_count, mpi_recv_type,
                      root, comm().mpi_communicator());
         THROW_IF_MPI_ERROR(err, MPI_Scatterv);
 
