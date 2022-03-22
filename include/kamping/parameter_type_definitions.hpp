@@ -17,7 +17,7 @@
 #pragma once
 
 namespace kamping {
-///@brief Internal namespace marking the code that is not user-facing.
+/// @brief Internal namespace marking the code that is not user-facing.
 ///
 namespace internal {
 
@@ -25,7 +25,7 @@ namespace internal {
 /// @{
 
 
-///@brief Each input parameter to one of the \c MPI calls wrapped by KaMPI.ng needs to has one of the following tags.
+/// @brief Each input parameter to one of the \c MPI calls wrapped by KaMPI.ng needs to has one of the following tags.
 ///
 /// The \c MPI calls wrapped by KaMPI.ng do not rely on the restricting positional parameter paradigm but use named
 /// parameters instead. The ParameterTypes defined in this enum are necessary to implement this approach, as KaMPI.ng
@@ -51,6 +51,6 @@ enum class ParameterType {
     receiver,    ///< Tag used to represent the receiving PE in a \c MPI call.
     root         ///< Tag used to represent the root PE in a \c MPI collectives call.
 };
-///@}
+/// @}
 } // namespace internal
 } // namespace kamping
