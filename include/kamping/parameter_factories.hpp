@@ -77,7 +77,7 @@ auto send_counts(const Container& container) {
 /// @param container Container which contains the recv counts.
 /// @return Object referring to the storage containing the recv counts.
 template <typename Container>
-auto recv_counts_in(const Container& container) {
+auto recv_counts(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
 }
 
@@ -90,7 +90,7 @@ auto recv_counts_in(const Container& container) {
 /// @param container Container which contains the send displacements.
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
-auto send_displs_in(const Container& container) {
+auto send_displs(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_displs>(container);
 }
 
@@ -103,7 +103,7 @@ auto send_displs_in(const Container& container) {
 /// @param container Container type which contains the recv displacements.
 /// @return Object referring to the storage containing the recv displacements.
 template <typename Container>
-auto recv_displs_in(const Container& container) {
+auto recv_displs(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_displs>(container);
 }
 
