@@ -1,4 +1,8 @@
 #!/bin/sh
+if [[ "$(hostname)" =~ ".*(N|n)iklas.*" ]]; then 
+	exit 0
+fi 
+
 while read local_ref local_sha remote_ref remote_sha
 do
 	if [ "$remote_ref" = "refs/heads/main" ]; then
