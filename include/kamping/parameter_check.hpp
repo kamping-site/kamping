@@ -24,8 +24,15 @@
 
 namespace kamping::internal {
 
+/// @brief Wrapper to pass (possibly empty) list of parameters as required parameters to \c KAMPING_CHECK_PARAMETERS.
 #define KAMPING_REQUIRED_PARAMETERS(...) typename parameter_types_to_integral_constants<__VA_ARGS__>::type
+/// @brief Wrapper to pass (possibly empty) list of parameters as optional parameters to \c KAMPING_CHECK_PARAMETERS.
 #define KAMPING_OPTIONAL_PARAMETERS(...) typename parameter_types_to_integral_constants<__VA_ARGS__>::type
+/// @brief Assertion macro that checks if passed parameters are correct, i.e., all parameter types are unique, all
+/// required parameters are provided, and on unused parameter is passed.
+///
+/// The \c REQUIRED parameter should be passed as \c KAMPING_REQUIRED_PARAMETERS and the \c OPTIONAL parameter should be
+/// passed as KAMPING_OPTIONAL_PARAMETERS.
 #define KAMPING_CHECK_PARAMETERS(REQUIRED, OPTIONAL)                                                    \
     do {                                                                                                \
         using required_buffer_types = REQUIRED;                                                         \
@@ -38,8 +45,8 @@ namespace kamping::internal {
             has_no_unused_parameters<required_buffer_types, optional_buffer_types, Args...>::assertion, \
             "There are unused parameters.");                                                            \
         static_assert(all_unique_v<buffer_types>, "There are duplicate buffer types.");                 \
-        \
-                                                                                                                                                                                            \
+                                                                                                        \
+                                                                                                        \
     } while (false)
 
 /// @brief Struct wrapping a check that verifies that all required parameters are part of the arguments.
