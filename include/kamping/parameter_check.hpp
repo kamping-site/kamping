@@ -24,6 +24,24 @@
 
 namespace kamping::internal {
 
+#define KAMPING_REQUIRED_PARAMETERS(...) typename parameter_types_to_integral_constants<__VA_ARGS__>::type
+#define KAMPING_OPTIONAL_PARAMETERS(...) typename parameter_types_to_integral_constants<__VA_ARGS__>::type
+#define KAMPING_CHECK_PARAMETERS(REQUIRED, OPTIONAL)                                                    \
+    do {                                                                                                \
+        using required_buffer_types = REQUIRED;                                                         \
+        using optional_buffer_types = OPTIONAL;                                                         \
+        using buffer_types          = typename parameters_to_integral_constant<Args...>::type;          \
+        static_assert(                                                                                  \
+            has_all_required_parameters<required_buffer_types, Args...>::assertion,                     \
+            "Not all required parameters are provided.");                                               \
+        static_assert(                                                                                  \
+            has_no_unused_parameters<required_buffer_types, optional_buffer_types, Args...>::assertion, \
+            "There are unused parameters.");                                                            \
+        static_assert(all_unique_v<buffer_types>, "There are duplicate buffer types.");                 \
+        \
+                                                                                                                                                                                            \
+    } while (false)
+
 /// @brief Struct wrapping a check that verifies that all required parameters are part of the arguments.
 ///
 /// @tparam ParametersTuple All required kamping::internal::ParameterType passed as \c std::integral_constant in an \c

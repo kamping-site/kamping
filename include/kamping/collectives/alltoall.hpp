@@ -53,17 +53,9 @@ public:
     auto alltoall(Args&&... args) {
         /// @todo Use new functionality from #169 once that is implemented
 
-        using required_buffer_types = typename parameter_types_to_integral_constants<ParameterType::send_buf>::type;
-        using optional_buffer_types = typename parameter_types_to_integral_constants<ParameterType::recv_buf>::type;
-        using buffer_types          = typename parameters_to_integral_constant<Args...>::type;
-
-        static_assert(
-            has_all_required_parameters<required_buffer_types, Args...>::assertion,
-            "Not all required parameters are provided in alltoall.");
-        static_assert(
-            has_no_unused_parameters<required_buffer_types, optional_buffer_types, Args...>::assertion,
-            "There are unused parameters in alltoall.");
-        static_assert(all_unique_v<buffer_types>, "There are duplicate buffer types.");
+        KAMPING_CHECK_PARAMETERS(
+            KAMPING_REQUIRED_PARAMETERS(ParameterType::send_buf),
+            KAMPING_OPTIONAL_PARAMETERS(ParameterType::recv_buf));
 
         static_assert(
             all_parameters_are_rvalues<Args...>,
