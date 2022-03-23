@@ -97,8 +97,8 @@ struct Span {
 //
 //     PtrBasedConstBuffer(const T* ptr, size_t size) : _span{ptr, size} {}
 //
-//     ///@brief Get access to the underlying read-only storage.
-//     ///@return Span referring to the underlying read-only storage.
+//     /// @brief Get access to the underlying read-only storage.
+//     /// @return Span referring to the underlying read-only storage.
 //     Span<T> get() const {
 //         return _span;
 //     }
@@ -179,7 +179,6 @@ private:
 };
 
 /// @brief Struct containing some definitions used by all modifiable buffers.
-///
 /// @tparam ParameterType (parameter) type represented by this buffer
 /// @tparam is_consumable_ indicates whether this buffer already contains useable data
 template <ParameterType type>
@@ -201,15 +200,15 @@ class UserAllocatedContainerBasedBuffer : public BufferParameterType<parameter_t
 public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
 
-    ///@brief Constructor for UserAllocatedContainerBasedBuffer.
+    /// @brief Constructor for UserAllocatedContainerBasedBuffer.
     /// param container Container providing storage for data that may be written.
     UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
 
-    ///@brief Request memory sufficient to hold \c size elements of \c value_type.
+    /// @brief Request memory sufficient to hold \c size elements of \c value_type.
     ///
     /// If the underlying container does not provide enough it will be resized.
-    ///@param size Number of elements for which memory is requested.
-    ///@return Pointer to container of size \c size.
+    /// @param size Number of elements for which memory is requested.
+    /// @return Pointer to container of size \c size.
     value_type* get_ptr(size_t size) {
         _container.resize(size);
         return _container.data();
@@ -230,24 +229,24 @@ template <typename Container, ParameterType type>
 class LibAllocatedContainerBasedBuffer : public BufferParameterType<type> {
 public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
-    ///@brief Constructor for LibAllocatedContainerBasedBuffer.
+    /// @brief Constructor for LibAllocatedContainerBasedBuffer.
     ///
     LibAllocatedContainerBasedBuffer() {}
 
-    ///@brief Request memory sufficient to hold at least \c size elements of \c value_type.
+    /// @brief Request memory sufficient to hold at least \c size elements of \c value_type.
     ///
     /// If the underlying container does not provide enough memory it will be resized.
-    ///@param size Number of elements for which memory is requested.
-    ///@return Pointer to enough memory for \c size elements of type \c value_type.
+    /// @param size Number of elements for which memory is requested.
+    /// @return Pointer to enough memory for \c size elements of type \c value_type.
     value_type* get_ptr(size_t size) {
         _container.resize(size);
         return std::data(_container);
     }
 
-    ///@brief Extract the underlying container. This will leave LibAllocatedContainerBasedBuffer in an unspecified
+    /// @brief Extract the underlying container. This will leave LibAllocatedContainerBasedBuffer in an unspecified
     /// state.
     ///
-    ///@return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
+    /// @return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
     Container extract() {
         return std::move(_container);
     }
@@ -276,16 +275,18 @@ private:
     int _recv_count; ///< Encapsulated recv count.
 };
 
-///@brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
+/// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
 class Root {
 public:
     static constexpr ParameterType parameter_type =
         ParameterType::root; ///< The type of parameter this object encapsulates.
-    ///@ Constructor for Root.
-    ///@param rank Rank of the root PE.
+
+    /// @ Constructor for Root.
+    /// @param rank Rank of the root PE.
     Root(int rank) : _rank{rank} {}
-    ///@brief Returns the rank of the root.
-    ///@returns Rank of the root.
+
+    /// @brief Returns the rank of the root.
+    /// @returns Rank of the root.
     int rank() const {
         return _rank;
     }
@@ -295,24 +296,26 @@ private:
 };
 
 
-///@brief Parameter wrapping an operation passed to reduce-like MPI collectives.
+/// @brief Parameter wrapping an operation passed to reduce-like MPI collectives.
 /// This wraps an MPI operation without the argument of the operation specified. This enables the user to construct such
 /// wrapper using the parameter factory \c kamping::op without passing the type of the operation.
 /// The library developer may then construct the actual operation wrapper with a given type later.
 ///
-///@tparam Op type of the operation (may be a function object or a lambda)
-///@tparam Commutative tag specifying if the operation is commutative
+/// @tparam Op type of the operation (may be a function object or a lambda)
+/// @tparam Commutative tag specifying if the operation is commutative
 template <typename Op, typename Commutative>
 class OperationBuilder {
 public:
     static constexpr ParameterType parameter_type =
         ParameterType::op; ///< The type of parameter this object encapsulates.
-    ///@brief constructs an Operation builder
-    ///@param op the operation
-    ///@param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
+
+    /// @brief constructs an Operation builder
+    /// @param op the operation
+    /// @param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
     OperationBuilder(Op&& op, Commutative commutative_tag [[maybe_unused]]) : _op(op) {}
-    ///@brief constructs an operation for the given type T
-    ///@tparam T argument type of the reduction operation
+
+    /// @brief constructs an operation for the given type T
+    /// @tparam T argument type of the reduction operation
     template <typename T>
     [[nodiscard]] auto build_operation() {
         static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
