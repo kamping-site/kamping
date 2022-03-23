@@ -54,7 +54,7 @@ public:
         /// @todo Use new functionality from #169 once that is implemented
 
         KAMPING_CHECK_PARAMETERS(
-            KAMPING_REQUIRED_PARAMETERS(ParameterType::send_buf), KAMPING_OPTIONAL_PARAMETERS(ParameterType::recv_buf));
+            KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
         static_assert(
             all_parameters_are_rvalues<Args...>,

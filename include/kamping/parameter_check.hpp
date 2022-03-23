@@ -24,15 +24,49 @@
 
 namespace kamping::internal {
 
+#define P1(x1)                                           kamping::internal::ParameterType::x1
+#define P2(x1, x2)                                       P1(x1), kamping::internal::ParameterType::x2
+#define P3(x1, x2, x3)                                   P2(x1, x2), kamping::internal::ParameterType::x3
+#define P4(x1, x2, x3, x4)                               P3(x1, x2, x3), kamping::internal::ParameterType::x4
+#define P5(x1, x2, x3, x4, x5)                           P4(x1, x2, x3, x4), kamping::internal::ParameterType::x5
+#define P6(x1, x2, x3, x4, x5, x6)                       P5(x1, x2, x3, x4, x5), kamping::internal::ParameterType::x6
+#define P7(x1, x2, x3, x4, x5, x6, x7)                   P6(x1, x2, x3, x4, x5, x6), kamping::internal::ParameterType::x7
+#define P8(x1, x2, x3, x4, x5, x6, x7, x8)               P7(x1, x2, x3, x4, x5, x6, x7), kamping::internal::ParameterType::x8
+#define P9(x1, x2, x3, x4, x5, x6, x7, x8, x9)           P8(x1, x2, x3, x4, x5, x6, x7, x8), kamping::internal::ParameterType::x9
+#define H(x, x1, x2, x3, x4, x5, x6, x7, x8, x9, y, ...) y
+#define PREFIX(...)                                                                                       \
+    H(, __VA_ARGS__, P9(__VA_ARGS__), P8(__VA_ARGS__), P7(__VA_ARGS__), P6(__VA_ARGS__), P5(__VA_ARGS__), \
+      P4(__VA_ARGS__), P3(__VA_ARGS__), P2(__VA_ARGS__), P1(__VA_ARGS__), ignore)
+
+#define KAMPING_REQUIRED_PARAMETERS(...) __VA_ARGS__
+#define KAMPING_OPTIONAL_PARAMETERS(...) __VA_ARGS__
+#define EVAL(...)                        #__VA_ARGS__
+
+#define KAMPING_CHECK_PARAMETERS(required, optional)                                                              \
+    do {                                                                                                          \
+        using required_parameters_types = typename parameter_types_to_integral_constants<PREFIX(required)>::type; \
+        using optional_parameters_types = typename parameter_types_to_integral_constants<PREFIX(optional)>::type; \
+        using parameter_types           = typename parameters_to_integral_constant<Args...>::type;                \
+        static_assert(                                                                                            \
+            has_all_required_parameters<required_parameters_types, Args...>::assertion,                           \
+            "Not all required parameters are provided, required parameters: " EVAL(required));                    \
+        static_assert(                                                                                            \
+            has_no_unused_parameters<required_parameters_types, optional_parameters_types, Args...>::assertion,   \
+            "There are unsupported parameters, only support required parameters " EVAL(                           \
+                required) " and optional parameters " EVAL(optional));                                            \
+        static_assert(all_unique_v<parameter_types>, "There are duplicate parameter types.");                     \
+    } while (false)
+
 /// @brief Wrapper to pass (possibly empty) list of parameters as required parameters to \c KAMPING_CHECK_PARAMETERS.
-#define KAMPING_REQUIRED_PARAMETERS(...) typename parameter_types_to_integral_constants<__VA_ARGS__>::type
+//#define KAMPING_REQUIRED_PARAMETERS(...) typename parameter_types_to_integral_constants<__VA_ARGS__>::type
 /// @brief Wrapper to pass (possibly empty) list of parameters as optional parameters to \c KAMPING_CHECK_PARAMETERS.
-#define KAMPING_OPTIONAL_PARAMETERS(...) typename parameter_types_to_integral_constants<__VA_ARGS__>::type
+//#define KAMPING_OPTIONAL_PARAMETERS(...) typename parameter_types_to_integral_constants<__VA_ARGS__>::type
 /// @brief Assertion macro that checks if passed parameters are correct, i.e., all parameter types are unique, all
 /// required parameters are provided, and on unused parameter is passed.
 ///
 /// The \c REQUIRED parameter should be passed as \c KAMPING_REQUIRED_PARAMETERS and the \c OPTIONAL parameter should be
 /// passed as KAMPING_OPTIONAL_PARAMETERS.
+/*
 #define KAMPING_CHECK_PARAMETERS(REQUIRED, OPTIONAL)                                                            \
     do {                                                                                                        \
         using required_parameters_types = REQUIRED;                                                             \
@@ -48,6 +82,7 @@ namespace kamping::internal {
                                                                                                                 \
                                                                                                                 \
     } while (false)
+    */
 
 /// @brief Struct wrapping a check that verifies that all required parameters are part of the arguments.
 ///
