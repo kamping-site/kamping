@@ -11,6 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <gmock/gmock-matchers.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <numeric>
@@ -148,4 +149,67 @@ TEST(ScatterTest, scatterv_with_one_element_per_pe) {
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
+}
+
+TEST(ScatterTest, scatterv_with_one_element_per_pe_deduce_displs) {
+    Communicator comm;
+
+    auto const             input = create_input_vector_on_root(comm, 1);
+    std::vector<int> const counts(static_cast<std::size_t>(comm.size()), 1);
+
+    auto const result = comm.scatterv(send_buf(input), send_counts(counts)).extract_recv_buffer();
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+}
+
+// 1 element on PE 0, 2 elements on PE 1, 3 elements on PE 2, ...
+std::vector<int> create_triangle_input_vector_on_root(Communicator const& comm) {
+    std::vector<int> input;
+
+    for (int pe = 0; pe < comm.size(); ++pe) {
+        for (int date = 0; date < pe + 1; ++date) {
+            input.push_back(date);
+        }
+    }
+
+    return input;
+}
+
+TEST(ScatterTest, scatterv_with_unequal_number_of_elements_per_pe) {
+    Communicator comm;
+
+    auto const input = create_triangle_input_vector_on_root(comm);
+
+    std::vector<int> counts(static_cast<std::size_t>(comm.size()));
+    std::iota(counts.begin(), counts.end(), 1);
+
+    std::vector<int> displs(static_cast<std::size_t>(comm.size()));
+    for (std::size_t pe = 1; pe < static_cast<std::size_t>(comm.size()); ++pe) {
+        displs[pe] = displs[pe - 1] + static_cast<int>(pe);
+    }
+
+    auto const result = comm.scatterv(send_buf(input), send_counts(counts), send_displs(displs)).extract_recv_buffer();
+
+    ASSERT_EQ(result.size(), comm.rank() + 1);
+
+    std::vector<int> expected_result(static_cast<std::size_t>(comm.rank() + 1));
+    std::iota(expected_result.begin(), expected_result.end(), 0);
+    EXPECT_EQ(result, expected_result);
+}
+
+TEST(ScatterTest, scatterv_with_unequal_number_of_elements_per_pe_deduce_displs) {
+    Communicator comm;
+
+    auto const input = create_triangle_input_vector_on_root(comm);
+
+    std::vector<int> counts(static_cast<std::size_t>(comm.size()));
+    std::iota(counts.begin(), counts.end(), 1);
+
+    auto const result = comm.scatterv(send_buf(input), send_counts(counts)).extract_recv_buffer();
+
+    ASSERT_EQ(result.size(), comm.rank() + 1);
+
+    std::vector<int> expected_result(static_cast<std::size_t>(comm.rank() + 1));
+    std::iota(expected_result.begin(), expected_result.end(), 0);
+    EXPECT_EQ(result, expected_result);
 }

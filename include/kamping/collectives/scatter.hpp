@@ -216,7 +216,7 @@ public:
         constexpr bool send_displs_modifiable = std::remove_reference_t<decltype(send_displs)>::is_modifiable;
 
         // Compute send_displs() based on send_counts()
-        auto const* send_displs_ptr = send_displs.get_ptr(comm_size);
+        auto* send_displs_ptr = send_displs.get_ptr(comm_size);
 
         if constexpr (send_displs_modifiable) {
             // Compute send_displs() on root PE
