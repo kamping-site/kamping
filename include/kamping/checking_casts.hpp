@@ -128,6 +128,6 @@ constexpr To throwing_cast(From value) {
     return static_cast<To>(value);
 }
 
-///@}
+/// @}
 
 } // namespace kamping

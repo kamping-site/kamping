@@ -362,7 +362,7 @@ struct mpi_operation_traits<
 };
 #endif
 
-///@todo support for MPI_MAXLOC and MPI_MINLOC
+/// @todo support for MPI_MAXLOC and MPI_MINLOC
 
 /// @brief type used by user-defined operations passed to \c MPI_Op_create
 using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
@@ -423,7 +423,7 @@ class UserOperationPtrWrapper {
 public:
     UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative> const&) = delete;
 
-    ///@brief move assignement
+    /// @brief move assignement
     UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative>&& other_op) {
         this->_mpi_op   = other_op._mpi_op;
         this->_no_op    = other_op._no_op;
@@ -432,13 +432,13 @@ public:
     }
 
     UserOperationPtrWrapper<is_commutative>(UserOperationPtrWrapper<is_commutative> const&) = delete;
-    ///@brief move constructor
+    /// @brief move constructor
     UserOperationPtrWrapper<is_commutative>(UserOperationPtrWrapper<is_commutative>&& other_op) {
         this->_mpi_op   = other_op._mpi_op;
         this->_no_op    = other_op._no_op;
         other_op._no_op = true;
     }
-    ///@brief creates an empty operation wrapper
+    /// @brief creates an empty operation wrapper
     UserOperationPtrWrapper() : _no_op(true) {
         _mpi_op = MPI_OP_NULL;
     }
@@ -473,23 +473,25 @@ private:
 
 #ifdef KAMPING_DOXYGEN_ONLY
 
-///@brief Wraps an operation and translates it to a builtin \c MPI_Op or constructs a custom operation.
-///@tparam T the argument type of the operation
-///@tparam Op the type of the operation
-///@tparam Commutative tag indicating if this type is commutative
+/// @brief Wraps an operation and translates it to a builtin \c MPI_Op or constructs a custom operation.
+/// @tparam T the argument type of the operation
+/// @tparam Op the type of the operation
+/// @tparam Commutative tag indicating if this type is commutative
 template <typename T, typename Op, typename Commutative>
 class ReduceOperation {
 public:
-    ///@brief Constructs on operation wrapper
-    ///@param op the operation
+    /// @brief Constructs on operation wrapper
+    /// @param op the operation
     /// maybe a function object a lambda or a \c std::function
-    ///@param commutative
+    /// @param commutative
     /// May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
     /// supported for builtin operations.
     ReduceOperation(Op&& op, Commutative commutative);
+
     static constexpr bool is_builtin;  ///< indicates if this is a builtin operation
     static constexpr bool commutative; ///< indicates if this operation is commutative
-    /// @returns the \c MPI_Op associated with this operation
+
+    ///  @returns the \c MPI_Op associated with this operation
     MPI_Op op();
 };
 

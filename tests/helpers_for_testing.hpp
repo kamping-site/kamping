@@ -24,34 +24,40 @@
 #include "kamping/parameter_type_definitions.hpp"
 
 namespace testing {
-///@brief Simple Container type. Can be used to test library function with containers other than vector.
+/// @brief Simple Container type. Can be used to test library function with containers other than vector.
 ///
 template <typename T>
-class OwnContainer
-
-{
+class OwnContainer {
 public:
     using value_type = T;
-    OwnContainer()   = default;
+
+    OwnContainer() = default;
     OwnContainer(size_t size) : _vec(size) {}
+
     T* data() noexcept {
         return _vec.data();
     }
+
     const T* data() const noexcept {
         return _vec.data();
     }
+
     std::size_t size() const {
         return _vec.size();
     }
+
     void resize(std::size_t new_size) {
         _vec.resize(new_size);
     }
+
     const T& operator[](size_t i) const {
         return _vec[i];
     }
+
     T& operator[](size_t i) {
         return _vec[i];
     }
+
     bool operator==(const OwnContainer<T>& other) const {
         return _vec == other._vec;
     }
@@ -60,7 +66,7 @@ private:
     std::vector<T> _vec;
 };
 
-///@ Mock argument for wrapped \c MPI calls.
+/// @ Mock argument for wrapped \c MPI calls.
 template <kamping::internal::ParameterType _parameter_type>
 struct Argument {
     static constexpr kamping::internal::ParameterType parameter_type = _parameter_type;
@@ -68,5 +74,5 @@ struct Argument {
     int _i;
 };
 
-///@}
+/// @}
 } // namespace testing
