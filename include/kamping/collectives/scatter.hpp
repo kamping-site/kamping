@@ -197,7 +197,7 @@ public:
 
         // Make sure that the buffer is large enough
         KASSERT(
-            this->comm().rank() != root || send_counts.size >= comm_size,
+            this->comm().rank() != root || send_counts.get().size >= comm_size,
             "send_counts() buffer on root PE does not hold enough entries.");
 
         // Make sure that counts *could* be valid -- final check after we have send_displs()
@@ -205,7 +205,7 @@ public:
             this->comm().rank() != root
                 || std::all_of(
                     send_counts_ptr, send_counts_ptr + comm_size,
-                    [&](int const& count) { return count >= 0 && count <= send_buf.size; }),
+                    [&](int const& count) { return count >= 0 && count <= static_cast<int>(send_buf.size); }),
             "Invalid send_counts() on root PE: some counts are negative or out-of-bound.");
 
         // Parameter send_displs(): optional parameter
@@ -222,7 +222,7 @@ public:
             // Compute send_displs() on root PE
             if (this->comm().rank() == root) {
                 KASSERT(
-                    std::accumulate(send_counts_ptr, send_counts_ptr + comm_size, 0) >= send_buf.size,
+                    std::accumulate(send_counts_ptr, send_counts_ptr + comm_size, 0) >= static_cast<int>(send_buf.size),
                     "Sum of send_counts() is larger than the number of elements in the send_buf().");
 
                 int displacment = 0;
@@ -236,7 +236,7 @@ public:
                 this->comm().rank() != root
                     || std::all_of(
                         send_displs_ptr, send_displs_ptr + comm_size,
-                        [&](int const& displs) { return displs >= 0 && displs <= send_buf.size; }),
+                        [&](int const& displs) { return displs >= 0 && displs <= static_cast<int>(send_buf.size); }),
                 "send_displs() out of bound.");
 
             KASSERT(
@@ -244,9 +244,10 @@ public:
                     [&] {
                         for (int pe = 0; pe < this->comm().size(); ++pe) {
                             KASSERT(
-                                send_displs_ptr[pe] + send_counts_ptr[pe] <= send_buf.size,
+                                send_displs_ptr[pe] + send_counts_ptr[pe] <= static_cast<int>(send_buf.size),
                                 "Data span for PE " << pe << " out-of-bound.");
                         }
+                        return true;
                     }(),
                 "send_displs() + send_counts() out of bound.");
         }
