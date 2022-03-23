@@ -15,6 +15,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
+
 #include <iostream>
 #include <mpi.h>
 #include <numeric>
@@ -39,6 +40,7 @@ int main() {
     std::vector<int> output;
 
     comm.alltoall(send_buf(input), recv_buf(output));
+
     print_result(output, comm);
 
     MPI_Finalize();

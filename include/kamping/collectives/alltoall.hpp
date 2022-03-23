@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <mpi.h>
 #include <tuple>
 #include <type_traits>
@@ -22,6 +23,7 @@
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_selection.hpp"
+#include "kamping/parameter_check.hpp"
 #include "kamping/parameter_factories.hpp"
 
 namespace kamping::internal {
@@ -50,6 +52,19 @@ public:
     template <typename... Args>
     auto alltoall(Args&&... args) {
         /// @todo Use new functionality from #169 once that is implemented
+
+        using required_buffer_types = typename parameters_to_integral_constants<ParameterType::send_buf>::type;
+        using optional_buffer_types = typename parameters_to_integral_constants<ParameterType::recv_buf>::type;
+        using buffer_types          = typename buffers_to_parameter_integral_constant<Args...>::type;
+
+        static_assert(
+            has_all_required_parameters<required_buffer_types, Args...>::assertion,
+            "Not all required parameters are provided in alltoall.");
+        static_assert(
+            has_no_unused_parameters<required_buffer_types, optional_buffer_types, Args...>::assertion,
+            "There are unused parameters in alltoall.");
+        static_assert(all_unique_v<buffer_types>, "There are duplicate buffer types.");
+
         static_assert(
             all_parameters_are_rvalues<Args...>,
             "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
