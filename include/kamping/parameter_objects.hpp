@@ -243,6 +243,7 @@ class Root {
 public:
     static constexpr ParameterType parameter_type =
         ParameterType::root; ///< The type of parameter this object encapsulates.
+
     /// @ Constructor for Root.
     /// @param rank Rank of the root PE.
     Root(int rank) : _rank{rank} {}
@@ -270,6 +271,7 @@ class OperationBuilder {
 public:
     static constexpr ParameterType parameter_type =
         ParameterType::op; ///< The type of parameter this object encapsulates.
+
     /// @brief constructs an Operation builder
     /// @param op the operation
     /// @param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
