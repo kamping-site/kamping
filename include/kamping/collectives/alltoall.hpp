@@ -53,9 +53,9 @@ public:
     auto alltoall(Args&&... args) {
         /// @todo Use new functionality from #169 once that is implemented
 
-        using required_buffer_types = typename parameters_to_integral_constants<ParameterType::send_buf>::type;
-        using optional_buffer_types = typename parameters_to_integral_constants<ParameterType::recv_buf>::type;
-        using buffer_types          = typename buffers_to_parameter_integral_constant<Args...>::type;
+        using required_buffer_types = typename parameter_types_to_integral_constants<ParameterType::send_buf>::type;
+        using optional_buffer_types = typename parameter_types_to_integral_constants<ParameterType::recv_buf>::type;
+        using buffer_types          = typename parameters_to_integral_constant<Args...>::type;
 
         static_assert(
             has_all_required_parameters<required_buffer_types, Args...>::assertion,

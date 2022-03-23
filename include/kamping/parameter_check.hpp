@@ -11,6 +11,9 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+/// @file
+/// @brief Template magic to check named parameters passed to wrappers at compile time.
+
 #pragma once
 
 #include <tuple>
@@ -21,8 +24,24 @@
 
 namespace kamping::internal {
 
+/// @brief Struct wrapping a check that verifies that all required parameters are part of the arguments.
+///
+/// @tparam ParametersTuple All required kamping::internal::ParameterType passed as \c std::integral_constant in an \c
+/// std::tuple.
+/// @tparam Args Arguments passed to the function that calls this check, i.e., the different parameters.
 template <typename ParametersTuple, typename... Args>
 struct has_all_required_parameters {
+    /// @brief Get number of required parameters passed as argument in \c Args.
+    ///
+    /// To compute the number, we "iterate" over all required template parameters and check if the parameter can be
+    /// found (using has_parameter_type() on the arguments \c Args). If this is the case, we add a tuple with the given
+    /// parameter type to the result, otherwise, we add a tuple without a type. In the end, we have added a parameter
+    /// type for each parameter type that we have found in \c Args. Hence, the size of the resulting tuple is the number
+    /// of found parameters.
+    ///
+    /// @tparam Indices Index sequence used to unpack all required parameters in \c ParametersTuple.
+    /// @param N.N. The parameter is only required to deduce the template parameter.
+    /// @return The number of required parameters found in \c Args.
     template <size_t... Indices>
     static constexpr auto number_of_required(std::index_sequence<Indices...>) {
         return std::tuple_size_v<decltype(std::tuple_cat(
@@ -31,15 +50,33 @@ struct has_all_required_parameters {
                 std::tuple<std::tuple_element_t<Indices, ParametersTuple>>, std::tuple<>>{}...))>;
     }
 
+    /// @brief \c true if and only if all required parameters can be found in \c Args.
     static constexpr bool assertion =
         (std::tuple_size_v<
              ParametersTuple> == number_of_required(std::make_index_sequence<std::tuple_size_v<ParametersTuple>>{}));
 }; // struct has_all_required_parameters
 
+/// @brief Struct wrapping a check that verifies that no unused parameters are part of the arguments.
+///
+/// @tparam RequiredParametersTuple All required kamping::internal::ParameterType passed as \c std::integral_constant in
+/// an \c std::tuple.
+/// @tparam OptionalParametersTuple All optional kamping::internal::ParameterType passed as \c std::integral_constant in
+/// an \c std::tuple.
+/// @tparam Args Arguments passed to the function that calls this check, i.e., the different parameters.
 template <typename RequiredParametersTuple, typename OptionalParametersTuple, typename... Args>
 struct has_no_unused_parameters {
     using all_available_parameters = decltype(std::tuple_cat(RequiredParametersTuple{}, OptionalParametersTuple{}));
 
+    /// @brief Get total number of different parameters (passed, required, and optional).
+    ///
+    /// This check works similar to has_all_required_parameters. Here, we "iterate" over all parameters, i.e., \c
+    /// RequiredParametersTuple and \c OptionalParametersTuple and check which parameters are not(!) passed as \c Args.
+    /// Then, we add this number to the size of Args. If this number is greater than the total number of (required and
+    /// optional) parameters, there are unused parameters.
+    ///
+    /// @tparam Indices Index sequence used to unpack all required parameters in \c ParametersTuple.
+    /// @param N.N. The parameter is only required to deduce the template parameter.
+    /// @return The number of different parameters (passed, optional, and required).
     template <size_t... Indices>
     static constexpr auto total_number_of_parameter(std::index_sequence<Indices...>) {
         return std::tuple_size_v<decltype(std::tuple_cat(
@@ -49,37 +86,59 @@ struct has_no_unused_parameters {
                        std::tuple<>>{}...))> + sizeof...(Args);
     }
 
+    /// @brief \c true if and only if no unused parameter can be found in \c Args.
     static constexpr bool assertion =
         (std::tuple_size_v<all_available_parameters> >= total_number_of_parameter(
              std::make_index_sequence<std::tuple_size_v<all_available_parameters>>{}));
 
 }; // struct has_no_unused_parameters
 
+/// @brief Base wrapper (\c std::integral_constant) to test if all types of a tuple are unique.
+/// @tparam Tuple Tuple for which is it checked whether all types are unique.
 template <typename Tuple>
 struct all_unique : std::true_type {};
 
+/// @brief Recursive wrapper (\c std::integral_constant) to test if all types of a tuple are unique.
+/// This is done by checking for each type whether the type occurs in the types of the tuple to the right. If this is
+/// true for any type/position, the types in the tuple are not unique.
+///
+/// @tparam T Parameter for which we check whether it is contained in the remaining tuple.
+/// @tparam Ts Remaining types of the tuple.
 template <typename T, typename... Ts>
 struct all_unique<std::tuple<T, Ts...>>
     : std::conjunction<std::negation<std::disjunction<std::is_same<T, Ts>...>>, all_unique<std::tuple<Ts...>>> {};
 
+/// @brief \c true if and only if all types of the tuple are unique.
 template <typename Tuple>
 static constexpr bool all_unique_v = all_unique<Tuple>::value;
 
-template <ParameterType parameter_type>
-struct parameter_types_to_integral_constant {
-    using type = std::integral_constant<ParameterType, parameter_type>;
+/// @brief Wrapper to get an \c std::integral_constant for a kamping::internal::ParameterType.
+/// @tparam T kamping::internal::ParameterType that is converted to an \c std::integral_constant.
+template <ParameterType T>
+struct parameter_type_to_integral_constant {
+    /// @brief kamping::internal::ParameterType as \c std::integral_constant.
+    using type = std::integral_constant<ParameterType, T>;
 };
 
-template <typename... Containers>
-struct buffers_to_parameter_integral_constant {
-    using type = decltype(std::tuple_cat(
-        std::tuple<typename parameter_types_to_integral_constant<Containers::parameter_type>::type>{}...));
-};
-
+/// @brief Wrapper to get a tuple of \c std::integral_constant for each kamping::internal::ParameterType passed as
+/// template parameter that are extracted as tuple of \c std::integral_constant.
+/// @tparam Parameters Passed kamping::internal::ParameterType.
 template <ParameterType... ParameterTypes>
-struct parameters_to_integral_constants {
+struct parameter_types_to_integral_constants {
+    /// @brief Type of the tuple.
     using type =
-        decltype(std::tuple_cat(std::tuple<typename parameter_types_to_integral_constant<ParameterTypes>::type>{}...));
+        decltype(std::tuple_cat(std::tuple<typename parameter_type_to_integral_constant<ParameterTypes>::type>{}...));
+};
+
+/// @brief Wrapper to get a tuple of \c std::integral_constant for each kamping::internal::ParameterType of the
+/// parameters.
+/// @tparam Parameters Passed parameters for which the kamping::internal::ParameterType are extracted as \c
+/// std::integral_constant in a tuple.
+template <typename... Parameters>
+struct parameters_to_integral_constant {
+    /// @brief Type of the tuple.
+    using type = decltype(std::tuple_cat(
+        std::tuple<typename parameter_type_to_integral_constant<Parameters::parameter_type>::type>{}...));
 };
 
 } // namespace kamping::internal
