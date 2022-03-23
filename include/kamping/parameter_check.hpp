@@ -33,20 +33,20 @@ namespace kamping::internal {
 ///
 /// The \c REQUIRED parameter should be passed as \c KAMPING_REQUIRED_PARAMETERS and the \c OPTIONAL parameter should be
 /// passed as KAMPING_OPTIONAL_PARAMETERS.
-#define KAMPING_CHECK_PARAMETERS(REQUIRED, OPTIONAL)                                                    \
-    do {                                                                                                \
-        using required_buffer_types = REQUIRED;                                                         \
-        using optional_buffer_types = OPTIONAL;                                                         \
-        using buffer_types          = typename parameters_to_integral_constant<Args...>::type;          \
-        static_assert(                                                                                  \
-            has_all_required_parameters<required_buffer_types, Args...>::assertion,                     \
-            "Not all required parameters are provided.");                                               \
-        static_assert(                                                                                  \
-            has_no_unused_parameters<required_buffer_types, optional_buffer_types, Args...>::assertion, \
-            "There are unused parameters.");                                                            \
-        static_assert(all_unique_v<buffer_types>, "There are duplicate buffer types.");                 \
-                                                                                                        \
-                                                                                                        \
+#define KAMPING_CHECK_PARAMETERS(REQUIRED, OPTIONAL)                                                            \
+    do {                                                                                                        \
+        using required_parameters_types = REQUIRED;                                                             \
+        using optional_parameters_types = OPTIONAL;                                                             \
+        using parameters_types          = typename parameters_to_integral_constant<Args...>::type;              \
+        static_assert(                                                                                          \
+            has_all_required_parameters<required_parameters_types, Args...>::assertion,                         \
+            "Not all required parameters are provided.");                                                       \
+        static_assert(                                                                                          \
+            has_no_unused_parameters<required_parameters_types, optional_parameters_types, Args...>::assertion, \
+            "There are unused parameters.");                                                                    \
+        static_assert(all_unique_v<parameters_types>, "There are duplicate parameters types.");                 \
+                                                                                                                \
+                                                                                                                \
     } while (false)
 
 /// @brief Struct wrapping a check that verifies that all required parameters are part of the arguments.
