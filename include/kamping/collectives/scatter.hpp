@@ -70,7 +70,7 @@ public:
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
         auto const*  send_buf_ptr  = send_buf.data();
         KASSERT(
-            !this->comm().is_root() || send_buf_ptr != nullptr, "Send buffer must be specified on root.",
+            (!this->comm().is_root() || send_buf_ptr != nullptr), "Send buffer must be specified on root.",
             assert::light);
 
         // Compute sendcount based on the size of the sendbuf
@@ -183,7 +183,7 @@ public:
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
         auto const*  send_buf_ptr  = send_buf.data();
         KASSERT(
-            this->comm().rank() != root || send_buf_ptr != nullptr, "Send buffer must be specified on root.",
+            (this->comm().rank() != root || send_buf_ptr != nullptr), "Send buffer must be specified on root.",
             assert::light);
 
         std::size_t const comm_size = static_cast<std::size_t>(this->comm().size());
@@ -197,15 +197,15 @@ public:
 
         // Make sure that the buffer is large enough
         KASSERT(
-            this->comm().rank() != root || send_counts.get().size >= comm_size,
+            (this->comm().rank() != root || send_counts.get().size >= comm_size),
             "send_counts() buffer on root PE does not hold enough entries.");
 
         // Make sure that counts *could* be valid -- final check after we have send_displs()
         KASSERT(
-            this->comm().rank() != root
-                || std::all_of(
-                    send_counts_ptr, send_counts_ptr + comm_size,
-                    [&](int const& count) { return count >= 0 && count <= static_cast<int>(send_buf.size); }),
+            (this->comm().rank() != root
+             || std::all_of(
+                 send_counts_ptr, send_counts_ptr + comm_size,
+                 [&](int const& count) { return count >= 0 && count <= static_cast<int>(send_buf.size); })),
             "Invalid send_counts() on root PE: some counts are negative or out-of-bound.");
 
         // Parameter send_displs(): optional parameter
@@ -233,22 +233,22 @@ public:
             }
         } else {
             KASSERT(
-                this->comm().rank() != root
-                    || std::all_of(
-                        send_displs_ptr, send_displs_ptr + comm_size,
-                        [&](int const& displs) { return displs >= 0 && displs <= static_cast<int>(send_buf.size); }),
+                (this->comm().rank() != root
+                 || std::all_of(
+                     send_displs_ptr, send_displs_ptr + comm_size,
+                     [&](int const& displs) { return displs >= 0 && displs <= static_cast<int>(send_buf.size); })),
                 "send_displs() out of bound.");
 
             KASSERT(
-                this->comm().rank() != root ||
-                    [&] {
-                        for (int pe = 0; pe < this->comm().size(); ++pe) {
-                            KASSERT(
-                                send_displs_ptr[pe] + send_counts_ptr[pe] <= static_cast<int>(send_buf.size),
-                                "Data span for PE " << pe << " out-of-bound.");
-                        }
-                        return true;
-                    }(),
+                (this->comm().rank() != root ||
+                 [&] {
+                     for (int pe = 0; pe < this->comm().size(); ++pe) {
+                         KASSERT(
+                             send_displs_ptr[pe] + send_counts_ptr[pe] <= static_cast<int>(send_buf.size),
+                             "Data span for PE " << pe << " out-of-bound.");
+                     }
+                     return true;
+                 }()),
                 "send_displs() + send_counts() out of bound.");
         }
 
