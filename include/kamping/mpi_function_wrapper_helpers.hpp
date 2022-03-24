@@ -142,8 +142,8 @@ private:
 /// BaseClass.
 template <typename BaseClass, template <typename> class MixinClass>
 struct CRTPHelper {
-    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the members.
 private:
+    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the members.
     /// @return Reference to the underlying base class.
     BaseClass& underlying() {
         return static_cast<BaseClass&>(*this);
