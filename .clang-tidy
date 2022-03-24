@@ -28,10 +28,8 @@ CheckOptions:
   - key:             modernize-loop-convert.NamingStyle
     value:           lower_case
   - key:             modernize-pass-by-value.IncludeStyle
-    value:           llvm
+    value:           google
   - key:             modernize-replace-auto-ptr.IncludeStyle
-    value:           llvm
-  - key:             modernize-use-nullptr.NullMacros
-    value:           'NULL'
+    value:           google
 ...
 
