@@ -153,7 +153,7 @@ private:
     }
 
     CRTPHelper() {}               ///< private constructor
-    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the constructor.
+    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the members.
 };
 
 } // namespace kamping
