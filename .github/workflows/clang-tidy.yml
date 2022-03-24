@@ -6,7 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
+      with:
+        submodules: 'recursive'
     - uses: ZedThree/clang-tidy-review@v0.8.2
       id: review 
       with:
