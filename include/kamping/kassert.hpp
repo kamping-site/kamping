@@ -1,4 +1,4 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPI.ng. 
 //
 // Copyright 2021-2022 The KaMPI.ng Authors
 //
