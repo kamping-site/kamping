@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPIng Authors
+// Copyright 2021-2022 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -142,18 +142,19 @@ private:
 /// BaseClass.
 template <typename BaseClass, template <typename> class MixinClass>
 struct CRTPHelper {
+private:
+    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the members.
     /// @return Reference to the underlying base class.
     BaseClass& underlying() {
         return static_cast<BaseClass&>(*this);
     }
+
     /// @return const-reference to the underlying base class.
     BaseClass const& underlying() const {
         return static_cast<BaseClass const&>(*this);
     }
 
-private:
-    CRTPHelper() {}               ///< private constructor
-    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the constructor.
+    CRTPHelper() {} ///< private constructor
 };
 
 } // namespace kamping
