@@ -1,5 +1,7 @@
 name: clang-tidy Review
-on: [pull_request]
+on:
+  pull_request:
+    types: [opened, ready_for_review, review_requested]
 
 jobs:
   build:
@@ -11,5 +13,6 @@ jobs:
       id: review 
       with:
         cmake_command: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=on
+        apt_packages: libopenmpi-dev
         build_dir: build
   
