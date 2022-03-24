@@ -142,6 +142,7 @@ private:
 /// BaseClass.
 template <typename BaseClass, template <typename> class MixinClass>
 struct CRTPHelper {
+protected:
     /// @return Reference to the underlying base class.
     BaseClass& underlying() {
         return static_cast<BaseClass&>(*this);
