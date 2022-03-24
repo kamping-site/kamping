@@ -41,7 +41,7 @@ TODO \@Demian \@Matthias: Rules for API
 # Header files and includes
 * Use `#pragma once` instead of include guards, as it is available on all important compilers.
 * Include all used headers, don't rely on transitive inclusions. Maybe use `include-what-you-use` to check.
-* The `#include` statements will be automatically sorted by clang-format inside blocks separated by a whitespace. Use the following, whitespace-separated blocks: 1. System header, 2. STL header, 3. External library header, 4. Project header.
+* The `#include` statements will be automatically grouped and sorted by clang-format: project headers come first, then system and library headers.
 * Do not use `using namespace` in header files as this would then also apply to all files including this header file.
 * Use the `kamping/` prefix when including our own header files.
 
