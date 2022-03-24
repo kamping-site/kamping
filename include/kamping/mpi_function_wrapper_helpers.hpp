@@ -147,6 +147,7 @@ private:
     BaseClass& underlying() {
         return static_cast<BaseClass&>(*this);
     }
+
     /// @return const-reference to the underlying base class.
     BaseClass const& underlying() const {
         return static_cast<BaseClass const&>(*this);
