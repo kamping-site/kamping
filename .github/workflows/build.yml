@@ -76,7 +76,7 @@ jobs:
       uses: SimenB/github-actions-cpu-cores@v1
       id: cpu-count
     - name: print-cpu-cores
-      run: echo "${{ steps.cpu-cores.outputs.count }}"
+      run: echo ${{ steps.cpu-cores.outputs.count }}
     - name: cmake
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DKAMPING_WARNINGS_ARE_ERRORS=ON -DKAMPING_EXCEPTION_MODE=${{ matrix.exception-mode }} -DKAMPING_ASSERTION_LEVEL=${{ matrix.assertion-level }}
     - name: build
