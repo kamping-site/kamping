@@ -16,4 +16,3 @@ jobs:
         cmake_command: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=on
         apt_packages: libopenmpi-dev
         build_dir: build
-  
