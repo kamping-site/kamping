@@ -19,7 +19,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
       message(WARNING "Doxygen must be version 1.9.2 or newer. Documentation may not be displayed correctly.")
     endif()
     add_custom_target(docs
-      COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/Doxyfile
+      COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/docs/Doxyfile
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
       COMMENT "Generating Documentation"
       VERBATIM)
