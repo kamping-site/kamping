@@ -142,6 +142,7 @@ private:
 /// BaseClass.
 template <typename BaseClass, template <typename> class MixinClass>
 struct CRTPHelper {
+    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the members.
 private:
     /// @return Reference to the underlying base class.
     BaseClass& underlying() {
@@ -153,8 +154,7 @@ private:
         return static_cast<BaseClass const&>(*this);
     }
 
-    CRTPHelper() {}               ///< private constructor
-    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the members.
+    CRTPHelper() {} ///< private constructor
 };
 
 } // namespace kamping
