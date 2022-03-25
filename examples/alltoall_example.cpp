@@ -39,6 +39,7 @@ int main() {
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> output;
 
+//    comm.alltoall(send_buf(input), recv_buf(output));
     comm.alltoall(send_buf(input), recv_buf(output));
 
     print_result(output, comm);
