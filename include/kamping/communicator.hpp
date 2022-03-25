@@ -26,7 +26,9 @@ namespace kamping {
 
 /// @brief Wrapper for MPI communicator providing access to \ref rank() and \ref size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPI.ng.
-  class Communicator : public internal::Alltoall<Communicator>, public internal::Gather<Communicator>, public internal::Reduce<Communicator> {
+class Communicator : public internal::Alltoall<Communicator>,
+                     public internal::Gather<Communicator>,
+                     public internal::Reduce<Communicator> {
 public:
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
     Communicator() : Communicator(MPI_COMM_WORLD) {}
