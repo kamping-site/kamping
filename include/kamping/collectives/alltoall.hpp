@@ -14,17 +14,15 @@
 #pragma once
 
 
-
-
 #include "kamping/checking_casts.hpp"
 #include "kamping/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
-#include <tuple>
-#include <type_traits>
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/parameter_factories.hpp"
 #include <mpi.h>
+#include <tuple>
+#include <type_traits>
 
 namespace kamping::internal {
 
