@@ -30,16 +30,16 @@ void test_const_buffer(
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
 
     auto span = generated_buffer.get();
-    static_assert(std::is_pointer_v<decltype(span.ptr)>, "Member ptr of internal::Span is not a pointer.");
+    static_assert(std::is_pointer_v<decltype(span.data())>, "Member ptr of internal::Span is not a pointer.");
     static_assert(
-        std::is_const_v<std::remove_pointer_t<decltype(span.ptr)>>,
-        "Member ptr of internal::Span does not point to const memory.");
+        std::is_const_v<std::remove_pointer_t<decltype(span.data())>>,
+        "Member data() of internal::Span does not point to const memory.");
 
-    EXPECT_EQ(span.ptr, expected_span.ptr);
-    EXPECT_EQ(span.size, expected_span.size);
+    EXPECT_EQ(span.data(), expected_span.data());
+    EXPECT_EQ(span.size(), expected_span.size());
     // TODO redundant?
-    for (size_t i = 0; i < expected_span.size; ++i) {
-        EXPECT_EQ(span.ptr[i], expected_span.ptr[i]);
+    for (size_t i = 0; i < expected_span.size(); ++i) {
+        EXPECT_EQ(span.data()[i], expected_span.data()[i]);
     }
 }
 
@@ -54,7 +54,8 @@ void test_user_allocated_buffer(
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
 
     auto resize_write_check = [&](size_t nb_elements) {
-        ExpectedValueType* ptr = generated_buffer.get_ptr(nb_elements);
+        generated_buffer.resize(nb_elements);
+        ExpectedValueType* ptr = generated_buffer.data();
         EXPECT_EQ(ptr, std::data(underlying_container));
         for (size_t i = 0; i < nb_elements; ++i) {
             ptr[i] = static_cast<ExpectedValueType>(nb_elements - i);
@@ -76,9 +77,10 @@ void test_library_allocated_buffer(
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
 
     // TODO how to test this?
-    std::ignore = generated_buffer.get_ptr(10);
-    std::ignore = generated_buffer.get_ptr(30);
-    std::ignore = generated_buffer.get_ptr(5);
+    for (size_t size: std::vector<size_t>{10, 30, 5}) {
+        generated_buffer.resize(size);
+        std::ignore = generated_buffer.data();
+    }
 }
 
 template <typename ExpectedValueType, typename GeneratedBuffer>
@@ -91,8 +93,8 @@ void test_single_element_buffer(
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
 
     auto get_result = generatedbuffer.get();
-    EXPECT_EQ(get_result.size, 1);
-    EXPECT_EQ(*(get_result.ptr), value);
+    EXPECT_EQ(get_result.size(), 1);
+    EXPECT_EQ(*(get_result.data()), value);
 }
 
 } // namespace testing
@@ -108,7 +110,7 @@ TEST(ParameterFactoriesTest, send_buf_basics_int_vector) {
 TEST(ParameterFactoriesTest, send_buf_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = send_buf(const_int_vec);
-    Span<int>              expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::send_buf, expected_span);
 }
@@ -176,7 +178,7 @@ TEST(ParameterFactoriesTest, send_counts_basics_int_vector) {
 TEST(ParameterFactoriesTest, send_counts_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = send_counts(const_int_vec);
-    Span<int>              expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::send_counts, expected_span);
 }
@@ -192,7 +194,7 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_int_vector) {
 TEST(ParameterFactoriesTest, recv_counts_in_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = recv_counts(const_int_vec);
-    Span<int>              expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::recv_counts, expected_span);
 }
@@ -208,7 +210,7 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_int_vector) {
 TEST(ParameterFactoriesTest, send_displs_in_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = send_displs(const_int_vec);
-    Span<int>              expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::send_displs, expected_span);
 }
@@ -224,7 +226,7 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_int_vector) {
 TEST(ParameterFactoriesTest, recv_displs_in_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = recv_displs(const_int_vec);
-    Span<int>              expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::recv_displs, expected_span);
 }
