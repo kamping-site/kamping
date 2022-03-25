@@ -22,7 +22,7 @@
 /// The modifiable buffers:
 /// - UserAllocatedContainerBasedBuffer
 /// - UserAllocatedUniquePtrBasedBuffer
-/// - LibAllocatedUniquePtrBasedBuffer
+/// - LibAllocatedContainerBasedBuffer
 /// - LibAllocatedUniquePtrBasedBuffer
 /// - MovedContainerBasedBuffer
 /// provide memory to store the result of \c MPI calls and (intermediate information needed to complete an \c MPI call

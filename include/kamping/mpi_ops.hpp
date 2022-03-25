@@ -423,7 +423,7 @@ class UserOperationPtrWrapper {
 public:
     UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative> const&) = delete;
 
-    /// @brief move assignement
+    /// @brief move assignment
     UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative>&& other_op) {
         this->_mpi_op   = other_op._mpi_op;
         this->_no_op    = other_op._no_op;

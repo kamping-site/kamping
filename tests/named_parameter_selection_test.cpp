@@ -111,13 +111,13 @@ TEST(NamedParameterTest, select_parameter_type_duplicates) {
     testing::Argument<ParameterType::send_counts> arg2{2};
     testing::Argument<ParameterType::send_buf>    arg3{3};
     {
-        // if two arguments have the same ParameterType the first occurence in the argument list is selected
+        // If two arguments have the same ParameterType the first occurrence in the argument list is selected.
         const auto& selected_arg = select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2, arg3);
         EXPECT_EQ(selected_arg._i, 0);
     }
 }
 
-// @brief This dummy ressembles the interface of a collective operation, so we can simulate the check for rvalue
+// @brief This dummy resembles the interface of a collective operation, so we can simulate the check for rvalue
 // parameters.
 template <typename... Args>
 bool dummy_collective_operation(Args&&... args [[maybe_unused]]) {
