@@ -231,8 +231,8 @@ struct SourceLocation {
 /// @param where Source code location where the exception was thrown.
 /// @param message User message describing this exception.
 /// @return The description of this exception.
-[[maybe_unused]] std::string
-build_what(std::string const& expression, SourceLocation const where, std::string const& message) {
+[[maybe_unused]] std::string inline build_what(
+    std::string const& expression, SourceLocation const where, std::string const& message) {
     using namespace std::string_literals;
     return "\n"s + where.file + ": In function '" + where.function + "':\n" + where.file + ": "
            + std::to_string(where.row) + ": FAILED ASSERTION\n" + "\t" + expression + "\n" + message + "\n";
