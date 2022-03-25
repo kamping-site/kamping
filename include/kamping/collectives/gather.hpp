@@ -59,8 +59,14 @@ public:
         auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
         auto  send_buf        = send_buf_param.get();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
+        KASSERT(
+            check_equal_sizes(send_buf.size),
+            "All PEs have to send the same number of elements. Use gatherv, if you want to send a different number of "
+            "elements.",
+            assert::light_communication);
 
         using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
+
         auto&& recv_buf =
             internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
                 std::tuple(), args...);
@@ -68,22 +74,14 @@ public:
 
         auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
             std::tuple(this->underlying().root()), args...);
+        KASSERT(this->underlying().is_valid_rank(root.rank()), "Invalid rank as root.");
 
         auto mpi_send_type = mpi_datatype<send_value_type>();
         auto mpi_recv_type = mpi_datatype<recv_value_type>();
+        KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
         size_t recv_size     = (this->underlying().rank() == root.rank()) ? send_buf.size : 0;
         size_t recv_buf_size = asserting_cast<size_t>(this->underlying().size()) * recv_size;
-
-        // Check if the root is valid, before we try any communication
-        KASSERT(this->underlying().is_valid_rank(root.rank()), "Invalid rank as root.");
-        KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
-
-        KASSERT(
-            check_equal_sizes(send_buf.size),
-            "All PEs have to send the same number of elements. Use gatherv, if you want to send a different number of "
-            "elements.",
-            assert::light_communication);
 
         // error code can be unused if KTHROW is removed at compile time
         [[maybe_unused]] int err = MPI_Gather(
