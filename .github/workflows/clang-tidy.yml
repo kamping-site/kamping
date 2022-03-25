@@ -1,0 +1,19 @@
+name: clang-tidy Review
+on:
+  pull_request:
+    types: [opened, edited, review_requested]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - uses: ZedThree/clang-tidy-review@v0.8.2
+      id: review 
+      with:
+        cmake_command: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=on
+        apt_packages: libopenmpi-dev
+        build_dir: build
+
