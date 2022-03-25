@@ -59,7 +59,7 @@ public:
             internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
             "Missing required parameter send_buf.");
 
-        const auto& send_buf  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+        auto const& send_buf  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
         using default_recv_value_type = std::remove_const_t<send_value_type>;
         MPI_Datatype mpi_send_type    = mpi_datatype<send_value_type>();
