@@ -39,7 +39,7 @@ struct has_extract : decltype(internal::test_extract<T>(0)) {};
 
 /// @brief has_extract_v is \c true iff type T has a member function \c extract().
 ///
-/// @tparam T Type which is tested for the existance of a member function.
+/// @tparam T Type which is tested for the existence of a member function.
 template <typename T>
 inline constexpr bool has_extract_v = has_extract<T>::value;
 
@@ -52,7 +52,7 @@ struct BufferCategoryNotUsed {};
 /// A wrapped \c MPI call can have multiple different results such as the \c
 /// recv_buffer, \c recv_counts, \c recv_displs etc. If the buffers where these
 /// results have been written to by the library call has been allocated
-/// by/transfered to KaMPI.ng, the content of the buffers can be extracted using
+/// by/transferred to KaMPI.ng, the content of the buffers can be extracted using
 /// extract_<result>.
 /// Note that not all below-listed buffer categories needs to be used by every wrapped \c MPI call.
 /// If a specific call does not use a buffer category, you have to provide BufferCategoryNotUsed instead.
