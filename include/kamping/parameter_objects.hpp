@@ -58,7 +58,12 @@ struct NewPtr {};
 namespace internal {
 
 
-///
+  template <typename, typename = void>
+  constexpr bool is_resizable_v = false;
+
+  template <typename T>
+  constexpr bool is_resizable_v<T, std::void_t<decltype(std::declval<T>().resize(0))>> = true;
+
 /// @brief Object referring to a contiguous sequence of size objects.
 ///
 /// Since KaMPI.ng needs to be C++17 compatible and std::span is part of C++20, we need our own implementation of the
@@ -67,7 +72,7 @@ namespace internal {
 template <typename T>
 struct Span {
     using value_type = T; ///< Value type of the underlying pointer
-    const T* ptr;         ///< Pointer to the data referred to by Span.
+    T*  ptr;         ///< Pointer to the data referred to by Span.
     size_t   size;        ///< Number of elements of type T referred to by Span.
 
     /// @brief Get access to the underlying read-only memory.
@@ -75,11 +80,10 @@ struct Span {
     /// While the data can be accessed directly using the member, this member function provides a more STL-like
     /// interface.
     /// @return Pointer to the underlying read-only memory.
-    T const* data() const {
+    T * data() const {
         return ptr;
     }
 };
-
 
 //@todo enable once the tests have been written
 ///// @brief Constant buffer based on a pointer.
@@ -187,17 +191,29 @@ public:
     /// param container Container providing storage for data that may be written.
     UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
 
+  value_type* get_ptr(size_t size) {
+    return get_ptr<Container>(size);
+  }
+
+
+private:
     /// @brief Request memory sufficient to hold \c size elements of \c value_type.
     ///
     /// If the underlying container does not provide enough it will be resized.
     /// @param size Number of elements for which memory is requested.
     /// @return Pointer to container of size \c size.
-    value_type* get_ptr(size_t size) {
+  template <typename T>
+  typename std::enable_if_t<is_resizable_v<T>, value_type*> get_ptr(size_t size) {
         _container.resize(size);
         return _container.data();
     }
 
-private:
+  template <typename T>
+    typename std::enable_if_t<!is_resizable_v<T>, value_type*> get_ptr(size_t size) {
+        return _container.data();
+    }
+
+  
     Container& _container; ///< Container which holds the actual data.
 };
 
@@ -222,7 +238,9 @@ public:
     /// @param size Number of elements for which memory is requested.
     /// @return Pointer to enough memory for \c size elements of type \c value_type.
     value_type* get_ptr(size_t size) {
+      if constexpr (!is_resizable_v<Container>) {
         _container.resize(size);
+      }
         return std::data(_container);
     }
 

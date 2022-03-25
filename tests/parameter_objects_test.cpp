@@ -102,6 +102,27 @@ TEST(UserAllocatedContainerBasedBufferTest, get_ptr_containers_other_than_vector
     resize_write_check(9);
 }
 
+TEST(UserAllocatedContainerBasedBuffer, get_ptr_span) {
+  std::vector<int> buffer(100, 0);
+  Span<int> container{buffer.data(), buffer.size()};
+  constexpr ParameterType ptype = ParameterType::recv_buf;
+
+  UserAllocatedContainerBasedBuffer<Span<int>, ptype> buffer_based_on_own_container(container);
+  
+  auto no_resize_write_check = [&](size_t requested_size) {
+    int* ptr = buffer_based_on_own_container.get_ptr(requested_size);
+    EXPECT_EQ(ptr, container.data());
+    EXPECT_EQ(container.size(), 100);
+    for (size_t i = 0; i < 100; ++i) {
+      ptr[i] =  static_cast<int>(100 - i);
+      EXPECT_EQ(ptr[i], container[i]);
+    }
+    for (size_t i = 100; i < 200; ++i) {
+      EXPECT_EXIT(ptr[i] = static_cast<int>(i),::testing::KilledBySignal(SIGSEGV),".*");
+    }
+  }
+}
+
 TEST(LibAllocatedContainerBasedBufferTest, get_ptr_extract_basics) {
     constexpr ParameterType                                   ptype = ParameterType::recv_counts;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer_based_on_int_vector;
