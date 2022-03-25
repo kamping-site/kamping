@@ -16,7 +16,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   find_package(Doxygen)
   if(DOXYGEN_FOUND)
     if (DOXYGEN_VERSION VERSION_LESS "1.9.2")
-      message(WARNING "Doxygen must be version 1.9.2 or newer. Documentation may not be displayed correctly.")
+        message(WARNING "Doxygen must be version 1.9.2 or newer. Documentation may not be displayed correctly. You will also see different warnings and errors than in the workflow; you will thus be unable to verify locally if your commits will pass all CI checks.")
     endif()
     add_custom_target(docs
       COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/docs/Doxyfile
