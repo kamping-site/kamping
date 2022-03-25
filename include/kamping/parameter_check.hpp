@@ -22,7 +22,43 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 
-namespace kamping::internal {
+/// @brief Wrapper to pass (possibly empty) list of parameters as required parameters to \c KAMPING_CHECK_PARAMETERS.
+#define KAMPING_REQUIRED_PARAMETERS(...) __VA_ARGS__
+
+/// @brief Wrapper to pass (possibly empty) list of parameters as optional parameters to \c KAMPING_CHECK_PARAMETERS.
+#define KAMPING_OPTIONAL_PARAMETERS(...) __VA_ARGS__
+
+#define KAMPING_EVAL_STRINGIFY(...) #__VA_ARGS__
+
+/// @brief Assertion macro that checks if passed parameters are correct, i.e., all parameter types are unique, all
+/// required parameters are provided, and on unused parameter is passed.
+///
+/// The \c REQUIRED parameter should be passed as \c KAMPING_REQUIRED_PARAMETERS and the \c OPTIONAL parameter should be
+/// passed as KAMPING_OPTIONAL_PARAMETERS.
+#define KAMPING_CHECK_PARAMETERS(required, optional)                                                            \
+    do {                                                                                                        \
+        KAMPING_ASSERT_REQUIRED_PARAMETERS(required);                                                           \
+                                                                                                                \
+        using required_parameters_types =                                                                       \
+            typename parameter_types_to_integral_constants<KAMPING_PREFIX_PARAMETERS(required)>::type;          \
+        using optional_parameters_types =                                                                       \
+            typename parameter_types_to_integral_constants<KAMPING_PREFIX_PARAMETERS(optional)>::type;          \
+        using parameter_types = typename parameters_to_integral_constant<Args...>::type;                        \
+        static_assert(                                                                                          \
+            has_no_unused_parameters<required_parameters_types, optional_parameters_types, Args...>::assertion, \
+            "There are unsupported parameters, only support required parameters " KAMPING_EVAL_STRINGIFY(       \
+                required) " and optional parameters " KAMPING_EVAL_STRINGIFY(optional));                        \
+        static_assert(all_unique_v<parameter_types>, "There are duplicate parameter types.");                   \
+    } while (false)
+
+#define KAMPING_SELECT10(x, x1, x2, x3, x4, x5, x6, x7, x8, x9, y, ...) y
+
+#define KAMPING_PREFIX_PARAMETERS(...)                                                                             \
+    KAMPING_SELECT10(                                                                                              \
+        , ##__VA_ARGS__, KAMPING_PREFIX9(__VA_ARGS__), KAMPING_PREFIX8(__VA_ARGS__), KAMPING_PREFIX7(__VA_ARGS__), \
+        KAMPING_PREFIX6(__VA_ARGS__), KAMPING_PREFIX5(__VA_ARGS__), KAMPING_PREFIX4(__VA_ARGS__),                  \
+        KAMPING_PREFIX3(__VA_ARGS__), KAMPING_PREFIX2(__VA_ARGS__), KAMPING_PREFIX1(__VA_ARGS__), ignore)
+
 #define KAMPING_PREFIX1(x1)                             kamping::internal::ParameterType::x1
 #define KAMPING_PREFIX2(x1, x2)                         KAMPING_PREFIX1(x1), KAMPING_PREFIX1(x2)
 #define KAMPING_PREFIX3(x1, x2, x3)                     KAMPING_PREFIX2(x1, x2), KAMPING_PREFIX1(x3)
@@ -34,13 +70,13 @@ namespace kamping::internal {
 #define KAMPING_PREFIX9(x1, x2, x3, x4, x5, x6, x7, x8, x9) \
     KAMPING_PREFIX8(x1, x2, x3, x4, x5, x6, x7, x8), KAMPING_PREFIX1(x9)
 
-#define KAMPING_SELECT10(x, x1, x2, x3, x4, x5, x6, x7, x8, x9, y, ...) y
-
-#define KAMPING_PREFIX_PARAMETERS(...)                                                                           \
-    KAMPING_SELECT10(                                                                                            \
-        , __VA_ARGS__, KAMPING_PREFIX9(__VA_ARGS__), KAMPING_PREFIX8(__VA_ARGS__), KAMPING_PREFIX7(__VA_ARGS__), \
-        KAMPING_PREFIX6(__VA_ARGS__), KAMPING_PREFIX5(__VA_ARGS__), KAMPING_PREFIX4(__VA_ARGS__),                \
-        KAMPING_PREFIX3(__VA_ARGS__), KAMPING_PREFIX2(__VA_ARGS__), KAMPING_PREFIX1(__VA_ARGS__), ignore)
+#define KAMPING_ASSERT_REQUIRED_PARAMETERS(...)                                                           \
+    KAMPING_SELECT10(                                                                                     \
+        , ##__VA_ARGS__, KAMPING_ASSERT_REQUIRED_PARAMETER9(__VA_ARGS__),                                 \
+        KAMPING_ASSERT_REQUIRED_PARAMETER8(__VA_ARGS__), KAMPING_ASSERT_REQUIRED_PARAMETER7(__VA_ARGS__), \
+        KAMPING_ASSERT_REQUIRED_PARAMETER6(__VA_ARGS__), KAMPING_ASSERT_REQUIRED_PARAMETER5(__VA_ARGS__), \
+        KAMPING_ASSERT_REQUIRED_PARAMETER4(__VA_ARGS__), KAMPING_ASSERT_REQUIRED_PARAMETER3(__VA_ARGS__), \
+        KAMPING_ASSERT_REQUIRED_PARAMETER2(__VA_ARGS__), KAMPING_ASSERT_REQUIRED_PARAMETER1(__VA_ARGS__), ignore)
 
 #define KAMPING_ASSERT_REQUIRED_PARAMETER1(x1)                                                                    \
     static_assert(                                                                                                \
@@ -73,42 +109,7 @@ namespace kamping::internal {
     KAMPING_ASSERT_REQUIRED_PARAMETER8(x1, x2, x3, x4, x5, x6, x7, x8);        \
     KAMPING_ASSERT_REQUIRED_PARAMETER1(x9)
 
-#define KAMPING_ASSERT_REQUIRED_PARAMETERS(...)                                                           \
-    KAMPING_SELECT10(                                                                                     \
-        , __VA_ARGS__, KAMPING_ASSERT_REQUIRED_PARAMETER9(__VA_ARGS__),                                   \
-        KAMPING_ASSERT_REQUIRED_PARAMETER8(__VA_ARGS__), KAMPING_ASSERT_REQUIRED_PARAMETER7(__VA_ARGS__), \
-        KAMPING_ASSERT_REQUIRED_PARAMETER6(__VA_ARGS__), KAMPING_ASSERT_REQUIRED_PARAMETER5(__VA_ARGS__), \
-        KAMPING_ASSERT_REQUIRED_PARAMETER4(__VA_ARGS__), KAMPING_ASSERT_REQUIRED_PARAMETER3(__VA_ARGS__), \
-        KAMPING_ASSERT_REQUIRED_PARAMETER2(__VA_ARGS__), KAMPING_ASSERT_REQUIRED_PARAMETER1(__VA_ARGS__), ignore)
-
-/// @brief Wrapper to pass (possibly empty) list of parameters as required parameters to \c KAMPING_CHECK_PARAMETERS.
-#define KAMPING_REQUIRED_PARAMETERS(...) __VA_ARGS__
-/// @brief Wrapper to pass (possibly empty) list of parameters as optional parameters to \c KAMPING_CHECK_PARAMETERS.
-#define KAMPING_OPTIONAL_PARAMETERS(...) __VA_ARGS__
-
-#define KAMPING_EVAL_STRINGIFY(...)      #__VA_ARGS__
-
-/// @brief Assertion macro that checks if passed parameters are correct, i.e., all parameter types are unique, all
-/// required parameters are provided, and on unused parameter is passed.
-///
-/// The \c REQUIRED parameter should be passed as \c KAMPING_REQUIRED_PARAMETERS and the \c OPTIONAL parameter should be
-/// passed as KAMPING_OPTIONAL_PARAMETERS.
-#define KAMPING_CHECK_PARAMETERS(required, optional)                                                            \
-    do {                                                                                                        \
-        KAMPING_ASSERT_REQUIRED_PARAMETERS(required);                                                           \
-                                                                                                                \
-        using required_parameters_types =                                                                       \
-            typename parameter_types_to_integral_constants<KAMPING_PREFIX_PARAMETERS(required)>::type;          \
-        using optional_parameters_types =                                                                       \
-            typename parameter_types_to_integral_constants<KAMPING_PREFIX_PARAMETERS(optional)>::type;          \
-        using parameter_types = typename parameters_to_integral_constant<Args...>::type;                        \
-        static_assert(                                                                                          \
-            has_no_unused_parameters<required_parameters_types, optional_parameters_types, Args...>::assertion, \
-            "There are unsupported parameters, only support required parameters " KAMPING_EVAL_STRINGIFY(       \
-                required) " and optional parameters " KAMPING_EVAL_STRINGIFY(optional));                        \
-        static_assert(all_unique_v<parameter_types>, "There are duplicate parameter types.");                   \
-    } while (false)
-
+namespace kamping::internal {
 /// @brief Struct wrapping a check that verifies that all required parameters are part of the arguments.
 ///
 /// @tparam ParametersTuple All required kamping::internal::ParameterType passed as \c std::integral_constant in an \c
@@ -129,10 +130,10 @@ struct has_all_required_parameters {
     /// @return The number of required parameters found in \c Args.
     template <size_t... Indices>
     static constexpr auto number_of_required(std::index_sequence<Indices...>) {
-        return std::tuple_size_v<decltype(std::tuple_cat(
-            std::conditional_t<
-                has_parameter_type<std::tuple_element_t<Indices, ParametersTuple>::value, Args...>(),
-                std::tuple<std::tuple_element_t<Indices, ParametersTuple>>, std::tuple<>>{}...))>;
+        return std::tuple_size_v<decltype(
+            std::tuple_cat(std::conditional_t<
+                           has_parameter_type<std::tuple_element_t<Indices, ParametersTuple>::value, Args...>(),
+                           std::tuple<std::tuple_element_t<Indices, ParametersTuple>>, std::tuple<>>{}...))>;
     }
 
     /// @brief \c true if and only if all required parameters can be found in \c Args.
