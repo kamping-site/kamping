@@ -135,7 +135,7 @@ auto recv_buf(NewContainer<Container>&&) {
 /// will contained the send displacements when the \c MPI call has been completed.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
-/// @tparam Container Container type which contains the send displacments.
+/// @tparam Container Container type which contains the send displacements.
 /// @param container Container which will contain the send displacements.
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
@@ -148,7 +148,7 @@ auto send_displs_out(Container& container) {
 /// The storage is allocated by the library and encapsulated in a container of type Container.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
-/// @tparam Container Container type which contains the send displacments.
+/// @tparam Container Container type which contains the send displacements.
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
 auto send_displs_out(NewContainer<Container>&&) {
@@ -167,13 +167,13 @@ auto recv_counts_out(Container& container) {
     return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>(container);
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
+///@brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
 /// will contained the receive counts when the \c MPI call has been completed.
 /// The storage is allocated by the library and encapsulated in a container of type Container.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
-/// @tparam Container Container type which contains the send displacments.
-/// @return Object referring to the storage containing the receive counts.
+///@tparam Container Container type which contains the send displacements.
+///@return Object referring to the storage containing the receive counts.
 template <typename Container>
 auto recv_counts_out(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_counts>();
@@ -191,13 +191,13 @@ auto recv_displs_out(Container& container) {
     return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>(container);
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive displacments, i.e. the underlying storage
-/// will contained the receive displacments when the \c MPI call has been completed.
+/// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying storage
+/// will contained the receive displacements when the \c MPI call has been completed.
 /// The storage is allocated by the library and encapsulated in a container of type Container.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
-/// @tparam Container Container type which contains the send displacments.
-/// @return Object referring to the storage containing the receive displacments.
+/// @tparam Container Container type which contains the send displacements.
+/// @return Object referring to the storage containing the receive displacements.
 template <typename Container>
 auto recv_displs_out(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>();
@@ -215,7 +215,7 @@ inline auto root(int rank) {
 /// @brief generates a parameter object for a reduce operation.
 ///
 /// @tparam Op the type of the operation
-/// @tparam Communtative tag whether the operation is commutative
+/// @tparam Commutative tag whether the operation is commutative
 /// @param op the operation
 /// @param commute the commutativity tag
 ///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only supported
