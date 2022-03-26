@@ -19,9 +19,6 @@
 using namespace ::kamping;
 using namespace ::testing;
 
-#undef KAMPING_ASSERTION_LEVEL
-#define KAMPING_ASSERTION_LEVEL kamping::assert::light_communication;
-
 TEST(GatherTest, gather_single_element_no_receive_buffer) {
     Communicator comm;
     auto         value = comm.rank();
