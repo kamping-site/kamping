@@ -102,12 +102,7 @@ private:
         MPI_Gather(
             &local_size, 1, mpi_datatype<size_t>(), result.data(), 1, mpi_datatype<size_t>(), this->underlying().root(),
             this->underlying().mpi_communicator());
-        for (size_t i = 1; i < result.size(); ++i) {
-            if (result[i] != result[i - 1]) {
-                return false;
-            }
-        }
-        return true;
+        return std::equal(result.begin() + 1, result.end(), result.begin());
     }
 }; // class Gather
 
