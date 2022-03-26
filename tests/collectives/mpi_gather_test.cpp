@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
@@ -25,9 +26,9 @@ TEST(GatherTest, gather_single_element_no_receive_buffer) {
 
     // Test default root of communicator
     auto result = comm.gather(send_buf(value)).extract_recv_buffer();
+    EXPECT_EQ(comm.root(), 0);
     if (comm.rank() == comm.root()) {
-        EXPECT_EQ(comm.root(), 0);
-        EXPECT_EQ(result.size(), comm.size());
+        ASSERT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)], i);
         }
@@ -38,9 +39,9 @@ TEST(GatherTest, gather_single_element_no_receive_buffer) {
     // Change default root and test with communicator's default root again
     comm.root(comm.size() - 1);
     result = comm.gather(send_buf(value)).extract_recv_buffer();
+    EXPECT_EQ(comm.root(), comm.size() - 1);
     if (comm.rank() == comm.root()) {
-        EXPECT_EQ(comm.root(), comm.size() - 1);
-        EXPECT_EQ(result.size(), comm.size());
+        ASSERT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)], i);
         }
@@ -51,9 +52,9 @@ TEST(GatherTest, gather_single_element_no_receive_buffer) {
     // Pass any possible root to gather
     for (auto i = 0; i < comm.size(); ++i) {
         result = comm.gather(send_buf(value), root(i)).extract_recv_buffer();
+        EXPECT_EQ(comm.root(), comm.size() - 1);
         if (comm.rank() == i) {
-            EXPECT_EQ(comm.root(), comm.size() - 1);
-            EXPECT_EQ(result.size(), comm.size());
+            ASSERT_EQ(result.size(), comm.size());
             for (auto j = 0; j < comm.size(); ++j) {
                 EXPECT_EQ(result[asserting_cast<size_t>(j)], j);
             }
@@ -74,9 +75,9 @@ TEST(GatherTest, gather_single_custom_element_no_receive_buffer) {
 
     // Test default root of communicator
     auto result = comm.gather(send_buf(value)).extract_recv_buffer();
+    EXPECT_EQ(comm.root(), 0);
     if (comm.rank() == comm.root()) {
-        EXPECT_EQ(comm.root(), 0);
-        EXPECT_EQ(result.size(), comm.size());
+        ASSERT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)].rank, i);
             EXPECT_EQ(result[asserting_cast<size_t>(i)].additional_value, comm.size() - i);
@@ -88,9 +89,9 @@ TEST(GatherTest, gather_single_custom_element_no_receive_buffer) {
     // Change default root and test with communicator's default root again
     comm.root(comm.size() - 1);
     result = comm.gather(send_buf(value)).extract_recv_buffer();
+    EXPECT_EQ(comm.root(), comm.size() - 1);
     if (comm.rank() == comm.root()) {
-        EXPECT_EQ(comm.root(), comm.size() - 1);
-        EXPECT_EQ(result.size(), comm.size());
+        ASSERT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)].rank, i);
             EXPECT_EQ(result[asserting_cast<size_t>(i)].additional_value, comm.size() - i);
@@ -102,9 +103,9 @@ TEST(GatherTest, gather_single_custom_element_no_receive_buffer) {
     // Pass any possible root to gather
     for (auto i = 0; i < comm.size(); ++i) {
         result = comm.gather(send_buf(value), root(i)).extract_recv_buffer();
+        EXPECT_EQ(comm.root(), comm.size() - 1);
         if (comm.rank() == i) {
-            EXPECT_EQ(comm.root(), comm.size() - 1);
-            EXPECT_EQ(result.size(), comm.size());
+            ASSERT_EQ(result.size(), comm.size());
             for (auto j = 0; j < comm.size(); ++j) {
                 EXPECT_EQ(result[asserting_cast<size_t>(j)].rank, j);
                 EXPECT_EQ(result[asserting_cast<size_t>(j)].additional_value, comm.size() - j);
@@ -122,9 +123,9 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
 
     // Test default root of communicator
     comm.gather(send_buf(value), recv_buf(result));
+    EXPECT_EQ(comm.root(), 0);
     if (comm.rank() == comm.root()) {
-        EXPECT_EQ(comm.root(), 0);
-        EXPECT_EQ(result.size(), comm.size());
+        ASSERT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)], i);
         }
@@ -135,9 +136,9 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
     // Change default root and test with communicator's default root again
     comm.root(comm.size() - 1);
     comm.gather(send_buf(value), recv_buf(result));
+    EXPECT_EQ(comm.root(), comm.size() - 1);
     if (comm.rank() == comm.root()) {
-        EXPECT_EQ(comm.root(), comm.size() - 1);
-        EXPECT_EQ(result.size(), comm.size());
+        ASSERT_EQ(result.size(), comm.size());
         for (auto i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(result[asserting_cast<size_t>(i)], i);
         }
@@ -148,9 +149,9 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
     // Pass any possible root to gather
     for (auto i = 0; i < comm.size(); ++i) {
         comm.gather(send_buf(value), recv_buf(result), root(i));
+        EXPECT_EQ(comm.root(), comm.size() - 1);
         if (comm.rank() == i) {
-            EXPECT_EQ(comm.root(), comm.size() - 1);
-            EXPECT_EQ(result.size(), comm.size());
+            ASSERT_EQ(result.size(), comm.size());
             for (auto j = 0; j < comm.size(); ++j) {
                 EXPECT_EQ(result[asserting_cast<size_t>(j)], j);
             }
@@ -191,8 +192,8 @@ TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
     // Pass any possible root to gather
     for (auto i = 0; i < comm.size(); ++i) {
         result = comm.gather(send_buf(values), root(i)).extract_recv_buffer();
+        EXPECT_EQ(comm.root(), comm.size() - 1);
         if (comm.rank() == i) {
-            EXPECT_EQ(comm.root(), comm.size() - 1);
             EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
             for (size_t j = 0; j < result.size(); ++j) {
                 EXPECT_EQ(result[j], j / values.size());
@@ -235,8 +236,8 @@ TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
     // Pass any possible root to gather
     for (auto i = 0; i < comm.size(); ++i) {
         comm.gather(send_buf(values), root(i), recv_buf(result));
+        EXPECT_EQ(comm.root(), comm.size() - 1);
         if (comm.rank() == i) {
-            EXPECT_EQ(comm.root(), comm.size() - 1);
             EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
             for (size_t j = 0; j < result.size(); ++j) {
                 EXPECT_EQ(result[j], j / values.size());
@@ -244,5 +245,63 @@ TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
         } else {
             EXPECT_EQ(result.size(), 0);
         }
+    }
+}
+
+TEST(GatherTest, gather_receive_custom_container) {
+    Communicator      comm;
+    std::vector<int>  values = {comm.rank(), comm.rank(), comm.rank(), comm.rank()};
+    OwnContainer<int> result;
+
+    comm.gather(send_buf(values), recv_buf(result));
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
+        for (size_t i = 0; i < result.size(); ++i) {
+            EXPECT_EQ(result[i], i / values.size());
+        }
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+
+TEST(GatherTest, gather_send_custom_container) {
+    Communicator      comm;
+    OwnContainer<int> values(4);
+    for (size_t i = 0; i < values.size(); ++i) {
+        values[i] = comm.rank();
+    }
+    std::vector<int> result;
+
+    comm.gather(send_buf(values), recv_buf(result));
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
+        for (size_t i = 0; i < result.size(); ++i) {
+            EXPECT_EQ(result[i], i / values.size());
+        }
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(GatherTest, gather_send_and_receive_custom_container) {
+    Communicator      comm;
+    OwnContainer<int> values(4);
+    for (size_t i = 0; i < values.size(); ++i) {
+        values[i] = comm.rank();
+    }
+    OwnContainer<int> result;
+
+    comm.gather(send_buf(values), recv_buf(result));
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), values.size() * asserting_cast<size_t>(comm.size()));
+        for (size_t i = 0; i < result.size(); ++i) {
+            EXPECT_EQ(result[i], i / values.size());
+        }
+    } else {
+        EXPECT_EQ(result.size(), 0);
     }
 }
