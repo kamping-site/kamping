@@ -8,10 +8,12 @@ namespace kamping {
   - \ref kamping_utility : advanced \ref asserting_cast() and \ref throwing_cast()
   - \ref kamping_mpi_utility : \ref mpi_datatype() "automatic C++ to MPI type conversion"
 
+
   ## Dependencies
   - Building this documentation requires `Doxygen 1.9.2`.
 
   ## Guidelines
+  - \subpage user_guides
   - \subpage coding_guidelines
   - \subpage documentation_guidelines
   - \subpage testing_guidelines
