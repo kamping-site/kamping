@@ -59,6 +59,16 @@ public:
             "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
             "returned by the named parameter helper functions like send_buf().");
 
+        // Optional parameter: root()
+        // Default: communicator root
+        using root_param_type = decltype(kamping::root(0));
+        auto&& root_param = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
+            std::tuple(comm().root()), args...);
+        int const root = root_param.rank();
+        KASSERT(
+            comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
+            assert::light);
+
         // Parameter send_buf(): required on root, optional/ignored otherwise
         static_assert(
             internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
@@ -69,7 +79,7 @@ public:
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
         auto const*  send_buf_ptr  = send_buf.data();
         KASSERT(
-            !this->comm().is_root() || send_buf_ptr != nullptr, "Send buffer must be specified on root.",
+            (this->comm().root() != root || send_buf_ptr != nullptr), "Send buffer must be specified on root.",
             assert::light);
 
         // Compute sendcount based on the size of the sendbuf
@@ -78,16 +88,6 @@ public:
             "Size of the send buffer (" << send_buf.size << ") is not divisible by the number of PEs (" << comm().size()
                                         << ") in the communicator.");
         int const send_count = asserting_cast<int>(send_buf.size / static_cast<std::size_t>(comm().size()));
-
-        // Optional parameter: root()
-        // Default: communicator root
-        using root_param_type = decltype(kamping::root(0));
-        auto&& root_param = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
-            std::tuple(comm().root()), args...);
-        int const root = root_param.rank();
-        KASSERT(
-            comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
-            assert::light);
 
         // Optional parameter: recv_buf()
         // Default: allocate new container
