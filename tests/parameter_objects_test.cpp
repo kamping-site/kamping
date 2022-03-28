@@ -29,7 +29,6 @@ TEST(Test_Span, basic_functionality) {
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_span.size_bytes());
     EXPECT_FALSE(int_span.empty());
     EXPECT_EQ(values.data(), int_span.data());
-    EXPECT_EQ(int_span.data(), int_span.data());
 
     Span<int> tuple_constructed_span(std::tuple<int*, size_t>{values.data(), values.size()});
     EXPECT_EQ(values.size(), tuple_constructed_span.size());
@@ -135,12 +134,16 @@ TEST(UserAllocatedContainerBasedBufferTest, get_ptr_basics) {
 
     constexpr ParameterType                                    ptype = ParameterType::send_counts;
     UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer_based_on_int_vector(int_vec);
+    EXPECT_EQ(int_vec.size(), buffer_based_on_int_vector.get().size());
+    EXPECT_EQ(int_vec.data(), buffer_based_on_int_vector.get().data());
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_int_vector.resize(requested_size);
         int* ptr = buffer_based_on_int_vector.data();
         EXPECT_EQ(ptr, int_vec.data());
+        EXPECT_EQ(int_vec.data(), buffer_based_on_int_vector.get().data());
         EXPECT_EQ(int_vec.size(), requested_size);
+        EXPECT_EQ(int_vec.size(), buffer_based_on_int_vector.get().size());
         for (size_t i = 0; i < requested_size; ++i) {
             ptr[i] = static_cast<int>(requested_size - i);
             EXPECT_EQ(ptr[i], int_vec[i]);
@@ -178,6 +181,8 @@ TEST(LibAllocatedContainerBasedBufferTest, get_ptr_extract_basics) {
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_int_vector.resize(requested_size);
+        EXPECT_EQ(buffer_based_on_int_vector.size(), requested_size);
+        EXPECT_EQ(buffer_based_on_int_vector.get().size(), requested_size);
         int* ptr = buffer_based_on_int_vector.data();
         for (size_t i = 0; i < requested_size; ++i) {
             ptr[i] = static_cast<int>(requested_size - i);
@@ -187,7 +192,17 @@ TEST(LibAllocatedContainerBasedBufferTest, get_ptr_extract_basics) {
     resize_write_check(50);
     const size_t last_resize = 9;
     resize_write_check(last_resize);
+
+    // The buffer will be in an invalid state after extraction; that's why we have to access these attributes beforehand.
+    const auto size_of_buffer = buffer_based_on_int_vector.size(); 
+    const auto data_of_buffer = buffer_based_on_int_vector.data();
+    const auto size_of_get_of_buffer = buffer_based_on_int_vector.get().size();
+    const auto data_of_get_of_buffer = buffer_based_on_int_vector.get().data();
     std::vector<int> underlying_container = buffer_based_on_int_vector.extract();
+    EXPECT_EQ(underlying_container.size(), size_of_buffer);
+    EXPECT_EQ(underlying_container.size(), size_of_get_of_buffer);
+    EXPECT_EQ(underlying_container.data(), data_of_buffer);
+    EXPECT_EQ(underlying_container.data(), data_of_get_of_buffer);
     for (size_t i = 0; i < last_resize; ++i) {
         EXPECT_EQ(underlying_container[i], static_cast<int>(last_resize - i));
     }
