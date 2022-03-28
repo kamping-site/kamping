@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include "helpers_for_testing.hpp"
+#include "kamping/crtp_helper.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/parameter_factories.hpp"
 

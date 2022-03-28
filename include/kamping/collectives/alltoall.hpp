@@ -18,6 +18,8 @@
 #include <type_traits>
 
 #include "kamping/checking_casts.hpp"
+#include "kamping/communicator.hpp"
+#include "kamping/crtp_helper.hpp"
 #include "kamping/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
@@ -72,11 +74,16 @@ public:
         MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
         // Get the send and receive counts
-        int send_count = throwing_cast<int>(send_buf.size / asserting_cast<size_t>(this->underlying().size()));
+        int send_count = asserting_cast<int>(send_buf.size / asserting_cast<size_t>(this->underlying().size()));
+        KASSERT(
+            this->check_equal_sizes(asserting_cast<size_t>(send_count)),
+            "The size of the send buffer has to be dividable by the number of PEs in the communicator. If this is not "
+            "the case, use alltoallv.",
+            assert::light_communication);
         KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
         size_t recv_buf_size = send_buf.size;
-        int    recv_count    = throwing_cast<int>(recv_buf_size / asserting_cast<size_t>(this->underlying().size()));
+        int    recv_count    = asserting_cast<int>(recv_buf_size / asserting_cast<size_t>(this->underlying().size()));
         KASSERT(send_count == recv_count, assert::light);
 
         // These KASSERTs are required to avoid a false warning from g++ in release mode

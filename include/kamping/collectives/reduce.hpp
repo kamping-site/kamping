@@ -19,6 +19,7 @@
 #include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
+#include "kamping/crtp_helper.hpp"
 #include "kamping/error_handling.hpp"
 #include "kamping/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"

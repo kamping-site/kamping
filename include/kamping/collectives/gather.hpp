@@ -15,6 +15,7 @@
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/crtp_helper.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -60,7 +61,7 @@ public:
         auto  send_buf        = send_buf_param.get();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
         KASSERT(
-            check_equal_sizes(send_buf.size),
+            this->check_equal_sizes(send_buf.size),
             "All PEs have to send the same number of elements. Use gatherv, if you want to send a different number of "
             "elements.",
             assert::light_communication);
@@ -96,14 +97,6 @@ public:
 protected:
     Gather() {}
 
-private:
-    bool check_equal_sizes(size_t local_size) const {
-        std::vector<size_t> result(asserting_cast<size_t>(this->underlying().size()), 0);
-        MPI_Gather(
-            &local_size, 1, mpi_datatype<size_t>(), result.data(), 1, mpi_datatype<size_t>(), this->underlying().root(),
-            this->underlying().mpi_communicator());
-        return std::equal(result.begin() + 1, result.end(), result.begin());
-    }
 }; // class Gather
 
 } // namespace kamping::internal
