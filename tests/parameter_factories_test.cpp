@@ -100,7 +100,8 @@ void test_library_allocated_buffer(
     EXPECT_TRUE(GeneratedBuffer::is_modifiable);
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
 
-    // TODO How can we test if the underlying storage resizes correctly to x elements when calling generated_buffer.resize(x)?
+    // TODO How can we test if the underlying storage resizes correctly to x elements when calling
+    // generated_buffer.resize(x)?
     for (size_t size: std::vector<size_t>{10, 30, 5}) {
         generated_buffer.resize(size);
         std::ignore = generated_buffer.data();
@@ -360,12 +361,12 @@ TEST(ParameterFactoriesTest, send_recv_buf_single_element) {
     }
     {
         const uint32_t value                     = 4096;
-        auto     gen_single_element_buffer = send_recv_buf(value);
+        auto           gen_single_element_buffer = send_recv_buf(value);
         testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_recv_buf, value, false);
     }
     {
         const uint64_t value                     = 555555;
-        auto     gen_single_element_buffer = send_recv_buf(value);
+        auto           gen_single_element_buffer = send_recv_buf(value);
         testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_recv_buf, value, false);
     }
     {
@@ -391,8 +392,8 @@ TEST(ParameterFactoriesTest, send_recv_const_buf_switch) {
     [[maybe_unused]] auto gen_single_element_buffer = send_recv_buf(value);
     [[maybe_unused]] auto gen_int_vec_buffer        = send_recv_buf(values);
 
-    bool const single_result =
-        std::is_same_v<decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_recv_buf>>;
+    bool const single_result = std::is_same_v<
+        decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_recv_buf>>;
     EXPECT_TRUE(single_result);
     bool const vec_result = std::is_same_v<
         decltype(gen_int_vec_buffer), ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_recv_buf>>;
@@ -406,11 +407,12 @@ TEST(ParameterFactoriesTest, send_recv_modifiable_buf_switch) {
     [[maybe_unused]] auto gen_single_element_buffer = send_recv_buf(value);
     [[maybe_unused]] auto gen_int_vec_buffer        = send_recv_buf(values);
 
-    bool const single_result =
-        std::is_same_v<decltype(gen_single_element_buffer), SingleElementModifiableBuffer<uint8_t, ParameterType::send_recv_buf>>;
+    bool const single_result = std::is_same_v<
+        decltype(gen_single_element_buffer), SingleElementModifiableBuffer<uint8_t, ParameterType::send_recv_buf>>;
     EXPECT_TRUE(single_result);
     bool const vec_result = std::is_same_v<
-        decltype(gen_int_vec_buffer), UserAllocatedContainerBasedBuffer<std::vector<uint8_t>, ParameterType::send_recv_buf>>;
+        decltype(gen_int_vec_buffer),
+        UserAllocatedContainerBasedBuffer<std::vector<uint8_t>, ParameterType::send_recv_buf>>;
     EXPECT_TRUE(vec_result);
 }
 

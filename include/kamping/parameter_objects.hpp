@@ -68,7 +68,7 @@ class Span {
 public:
     using element_type    = T;                   ///< Element type; i.e. \c T.
     using value_type      = std::remove_cv_t<T>; ///< Value type; i.e. \c T with volatile and const qualifiers removed.
-    using size_type       = size_t;         ///< The type used for the size of the span.
+    using size_type       = size_t;              ///< The type used for the size of the span.
     using difference_type = std::ptrdiff_t;      ///< The type used for the difference between two elements in the span.
     using pointer         = T*;                  ///< The type of a pointer to a single elements in the span.
     using const_pointer   = const T*;            ///< The type of a const pointer to a single elements in the span.
@@ -359,7 +359,7 @@ public:
 
 private:
     Container _container; ///< Container which holds the actual data.
-    bool extracted = false;
+    bool      extracted = false;
 };
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.

@@ -193,12 +193,13 @@ TEST(LibAllocatedContainerBasedBufferTest, get_ptr_extract_basics) {
     const size_t last_resize = 9;
     resize_write_check(last_resize);
 
-    // The buffer will be in an invalid state after extraction; that's why we have to access these attributes beforehand.
-    const auto size_of_buffer = buffer_based_on_int_vector.size(); 
-    const auto data_of_buffer = buffer_based_on_int_vector.data();
-    const auto size_of_get_of_buffer = buffer_based_on_int_vector.get().size();
-    const auto data_of_get_of_buffer = buffer_based_on_int_vector.get().data();
-    std::vector<int> underlying_container = buffer_based_on_int_vector.extract();
+    // The buffer will be in an invalid state after extraction; that's why we have to access these attributes
+    // beforehand.
+    const auto       size_of_buffer        = buffer_based_on_int_vector.size();
+    const auto       data_of_buffer        = buffer_based_on_int_vector.data();
+    const auto       size_of_get_of_buffer = buffer_based_on_int_vector.get().size();
+    const auto       data_of_get_of_buffer = buffer_based_on_int_vector.get().data();
+    std::vector<int> underlying_container  = buffer_based_on_int_vector.extract();
     EXPECT_EQ(underlying_container.size(), size_of_buffer);
     EXPECT_EQ(underlying_container.size(), size_of_get_of_buffer);
     EXPECT_EQ(underlying_container.data(), data_of_buffer);
