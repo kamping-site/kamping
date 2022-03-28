@@ -79,10 +79,10 @@ public:
             mpi_send_type == mpi_recv_type, "The MPI receive type does not match the MPI send type.", assert::light);
 
         // Get the send and receive counts
-        int send_count = throwing_cast<int>(send_buf.size() / asserting_cast<size_t>(this->underlying().size()));
+        int send_count = asserting_cast<int>(send_buf.size() / asserting_cast<size_t>(this->underlying().size()));
 
         size_t recv_buf_size = send_buf.size();
-        int    recv_count    = throwing_cast<int>(recv_buf_size / asserting_cast<size_t>(this->underlying().size()));
+        int    recv_count    = asserting_cast<int>(recv_buf_size / asserting_cast<size_t>(this->underlying().size()));
         KASSERT(send_count == recv_count, assert::light);
         recv_buf.resize(recv_buf_size);
 
