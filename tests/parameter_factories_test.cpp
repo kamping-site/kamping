@@ -100,7 +100,7 @@ void test_library_allocated_buffer(
     EXPECT_TRUE(GeneratedBuffer::is_modifiable);
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
 
-    // TODO how to test this?
+    // TODO How can we test if the underlying storage resizes correctly to x elements when calling generated_buffer.resize(x)?
     for (size_t size: std::vector<size_t>{10, 30, 5}) {
         generated_buffer.resize(size);
         std::ignore = generated_buffer.data();
