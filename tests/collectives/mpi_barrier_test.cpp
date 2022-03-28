@@ -19,21 +19,45 @@
 
 #include "kamping/communicator.hpp"
 
-
 using namespace ::kamping;
 using namespace ::testing;
 
 TEST(BarrierTest, barrier) {
-    const uint64_t sleep_for_ms = 10;
-    Communicator   comm;
+    Communicator comm;
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    auto start = std::chrono::high_resolution_clock::now();
-    if (comm.is_root()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
-    }
-    comm.barrier();
-    auto end       = std::chrono::high_resolution_clock::now();
-    auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    EXPECT_GE(time_diff, sleep_for_ms);
+    // Test the given barrier implementation. Returns true, if the test passes, false otherwise.
+    auto test_the_barrier = [&comm](auto barrierImpl) -> bool {
+        const long sleep_for_ms = 10;
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        auto start = std::chrono::high_resolution_clock::now();
+
+        if (comm.is_root()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
+        }
+
+        barrierImpl();
+
+        auto end                 = std::chrono::high_resolution_clock::now();
+        auto time_diff           = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        bool i_slept_long_enough = time_diff >= sleep_for_ms;
+        bool everyone_slept_long_enough;
+        MPI_Reduce(
+            &i_slept_long_enough,        // send buffer
+            &everyone_slept_long_enough, // receive buffer
+            1,                           // count
+            MPI_CXX_BOOL,                // datatype
+            MPI_LAND,                    // operation
+            0,                           // root
+            MPI_COMM_WORLD               // communicator
+        );
+        return everyone_slept_long_enough;
+    };
+
+    EXPECT_FALSE(test_the_barrier([] { return; }));
+    EXPECT_TRUE(test_the_barrier([&comm] { comm.barrier(); }));
+    // This will not correctly detect all broken barrier implementations; e.g. the following will pass:
+    EXPECT_TRUE(test_the_barrier([] { std::this_thread::sleep_for(std::chrono::milliseconds(10)); }));
+    // On the other hand, detecting if a given implementation is a valid barrier implementation is equal to solving the
+    // halting problem.
 }
