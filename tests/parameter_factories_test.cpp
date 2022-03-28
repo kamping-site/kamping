@@ -191,6 +191,12 @@ TEST(ParameterFactoriesTest, send_buf_switch) {
     EXPECT_TRUE(vec_result);
 }
 
+TEST(ParameterFactoriesTest, send_buf_ignored) {
+    auto ignored_send_buf = send_buf(ignore<int>);
+    EXPECT_EQ(ignored_send_buf.get().data(), nullptr);
+    EXPECT_EQ(ignored_send_buf.get().size(), 0);
+}
+
 TEST(ParameterFactoriesTest, send_counts_basics_int_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto             gen_via_int_vec = send_counts(int_vec);
