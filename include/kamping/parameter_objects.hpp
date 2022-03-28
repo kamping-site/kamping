@@ -276,6 +276,12 @@ public:
         return {_container.data(), _container.size()};
     }
 
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() {
+        return _container.size();
+    }
+
 private:
     Container& _container; ///< Container which holds the actual data.
 };
@@ -321,6 +327,13 @@ public:
     /// @return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
     Container extract() {
         return std::move(_container);
+    }
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() {
+        KASSERT(!extracted, "Cannot get the size of a buffer that has already been extracted", assert::light);
+        return _container.size();
     }
 
 private:
