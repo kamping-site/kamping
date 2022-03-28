@@ -327,7 +327,7 @@ In case that the reference is not available in the [dbpl], try to emulate the Bi
 
 [Doxygen]: https://www.doxygen.nl/
 [automatic link generation]: https://www.doxygen.nl/manual/autolink.html#linkfunc
-[coding guidelines]: coding-guidelines.md
+[coding guidelines]: coding_guidelines.md
 [dblp]: https://dblp.uni-trier.de/
 [group]: https://www.doxygen.nl/manual/grouping.html
 [literature.bib]: literature.bib
