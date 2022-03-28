@@ -437,6 +437,12 @@ Logger<StreamT>& operator<<(Logger<StreamT>& logger, std::pair<Key, Value> const
 }
 
 namespace internal {
+/// @brief Type trait that is always false, to implement static_asserts that always fail, thus preventing a
+/// template function from being instanciated. Used to forbid calling the overloads of && and ||.
+/// @tparam T Some template parameter of the template that should never be instantiated.
+template <typename T>
+struct AlwaysFalse : public std::false_type {};
+
 /// @addtogroup expression-expansion
 /// @{
 
@@ -497,6 +503,23 @@ public:
 
     /// @cond IMPLEMENTATION
 
+    // Since we cannot implement && and || while preserving short-circuit evaluation, we forbid it
+#define KAMPING_ASSERT_OP_FORBIDDEN(op)                                                                  \
+    template <typename RhsPrimeT>                                                                        \
+    friend BinaryExpression<BinaryExpression<LhsT, RhsT>, RhsPrimeT> operator op(                        \
+        BinaryExpression<LhsT, RhsT>&&, RhsPrimeT const&) {                                              \
+        static_assert(                                                                                   \
+            AlwaysFalse<RhsPrimeT>::value,                                                               \
+            "Operator " #op " is not allowed inside a KASSERT expression."                               \
+            " Instead, you have to add a second pair of parentheses around your expression, i.e., write" \
+            " KASSERT((lhs " #op " rhs))");                                                              \
+    }
+
+    KAMPING_ASSERT_OP_FORBIDDEN(&&)
+    KAMPING_ASSERT_OP_FORBIDDEN(||)
+
+#undef KAMPING_ASSERT_OP_FORBIDDEN
+
     // Overload operators to return a proxy object that decomposes the rhs of the logical operator
 #define KAMPING_ASSERT_OP(op)                                                     \
     template <typename RhsPrimeT>                                                 \
@@ -507,8 +530,6 @@ public:
             lhs.result() op rhs_prime, lhs, #op##sv, rhs_prime);                  \
     }
 
-    KAMPING_ASSERT_OP(&&)
-    KAMPING_ASSERT_OP(||)
     KAMPING_ASSERT_OP(&)
     KAMPING_ASSERT_OP(|)
     KAMPING_ASSERT_OP(^)
@@ -576,6 +597,22 @@ public:
 
     /// @cond IMPLEMENTATION
 
+    // Since we cannot implement && and || while preserving short-circuit evaluation, we forbid it
+#define KAMPING_ASSERT_OP_FORBIDDEN(op)                                                                  \
+    template <typename RhsT>                                                                             \
+    friend BinaryExpression<LhsT, RhsT> operator op(LhsExpression&&, RhsT const&) {                      \
+        static_assert(                                                                                   \
+            AlwaysFalse<RhsT>::value,                                                                    \
+            "Operator " #op " is not allowed inside a KASSERT expression."                               \
+            " Instead, you have to add a second pair of parentheses around your expression, i.e., write" \
+            " KASSERT((lhs " #op " rhs))");                                                              \
+    }
+
+    KAMPING_ASSERT_OP_FORBIDDEN(&&)
+    KAMPING_ASSERT_OP_FORBIDDEN(||)
+
+#undef KAMPING_ASSERT_OP_FORBIDDEN
+
     // Overload binary operators to return a proxy object that decomposes the rhs of the operator.
 #define KAMPING_ASSERT_OP(op)                                                               \
     template <typename RhsT>                                                                \
@@ -586,8 +623,6 @@ public:
 
     KAMPING_ASSERT_OP(==)
     KAMPING_ASSERT_OP(!=)
-    KAMPING_ASSERT_OP(&&)
-    KAMPING_ASSERT_OP(||)
     KAMPING_ASSERT_OP(<)
     KAMPING_ASSERT_OP(<=)
     KAMPING_ASSERT_OP(>)
