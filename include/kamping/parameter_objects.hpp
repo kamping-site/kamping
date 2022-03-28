@@ -306,18 +306,21 @@ public:
     /// If the underlying container does not provide enough memory it will be resized.
     /// @param size Number of elements for which memory is requested.
     void resize(size_t size) {
+        KASSERT(!extracted, "Cannot resize a buffer that has already been extracted", assert::light);
         _container.resize(size);
     }
 
     /// @brief Get writable access to the underlaying container.
     /// @return Reference to the underlying container.
     Span<value_type> get() {
+        KASSERT(!extracted, "Cannot get a buffer that has already been extracted", assert::light);
         return {_container.data(), _container.size()};
     }
 
     /// @brief Get writable access to the underlaying container.
     /// @return Reference to the underlying container.
     value_type* data() {
+        KASSERT(!extracted, "Cannot get a pointer to a buffer that has already been extracted", assert::light);
         return _container.data();
     }
 
@@ -326,6 +329,7 @@ public:
     ///
     /// @return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
     Container extract() {
+        KASSERT(!extracted, "Cannot extract a buffer that has already been extracted", assert::light);
         return std::move(_container);
     }
 
@@ -338,6 +342,7 @@ public:
 
 private:
     Container _container; ///< Container which holds the actual data.
+    bool extracted = false;
 };
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
