@@ -76,11 +76,11 @@ KASSERT(!pe_is_root() || [&]{
 ```
 
 This is impossible to fix since C++ does not allow us to overload the `&&` and `||` operators while preserving short-circuit evaluation.
-Therefore, avoid 
+Therefore, it is not allowed to write
 ```cpp
 KASSERT(false && true);
 ```
-and instead use
+Instead, add an extra pair of parenthesis:
 ```cpp
 KASSERT((false && true));
 ```
