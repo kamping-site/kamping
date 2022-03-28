@@ -56,8 +56,6 @@ template <typename T>
 struct NewPtr {};
 
 namespace internal {
-
-
 ///
 /// @brief Object referring to a contiguous sequence of size objects.
 ///
