@@ -256,14 +256,22 @@ private:
 };
 
 /// @brief Encapsulates the recv count in a collective operation.
+/// @tparam Value type or reference type, depending on whether this is an input- our output parameter.
+template <typename T>
 class RecvCount {
 public:
-    ///< The tag of the parameter that this object encapsulates.
-    static constexpr ParameterType parameter_type = ParameterType::recv_count;
+    static_assert(
+        std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, int>,
+        "Underlaying recv count value type must be int.");
+
+    static constexpr ParameterType parameter_type =
+        ParameterType::recv_count; ///< The tag of the parameter that this object encapsulates.
+    static constexpr bool is_modifiable =
+        !std::is_const_v<T> && std::is_reference_v<T>; ///< Whether this is an input parameter or an output parameter.
 
     /// @brief Constructor for encapsulated recv count.
     /// @param recv_count Encapsulated recv count.
-    RecvCount(int const recv_count) : _recv_count{recv_count} {}
+    RecvCount(T recv_count) : _recv_count{recv_count} {}
 
     /// @brief Returns the encapsulated recv count.
     /// @returns The encapsulated recv count.
@@ -271,8 +279,15 @@ public:
         return _recv_count;
     }
 
+    /// @brief Updates the recv count (only if used to wrap an output parameter).
+    /// @param recv_count New recv count.
+    template <bool modifiable = is_modifiable, std::enable_if_t<modifiable, bool> = true>
+    void set_recv_count(int const recv_count) {
+        _recv_count = recv_count;
+    }
+
 private:
-    int _recv_count; ///< Encapsulated recv count.
+    T _recv_count; ///< Encapsulated recv count.
 };
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.

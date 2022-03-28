@@ -79,7 +79,7 @@ public:
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
         auto const*  send_buf_ptr  = send_buf.data();
         KASSERT(
-            (this->comm().root() != root || send_buf_ptr != nullptr), "Send buffer must be specified on root.",
+            (this->comm().rank() != root || send_buf_ptr != nullptr), "Send buffer must be specified on root.",
             assert::light);
 
         // Compute sendcount based on the size of the sendbuf
@@ -112,7 +112,19 @@ public:
 
         int recv_count = 0;
         if constexpr (has_recv_count_param) {
-            recv_count = internal::select_parameter_type<internal::ParameterType::recv_count>(args...).recv_count();
+            auto&& recv_count_param = internal::select_parameter_type<internal::ParameterType::recv_count>(args...);
+            constexpr bool is_output_parameter = std::remove_reference_t<decltype(recv_count_param)>::is_modifiable;
+            KASSERT(
+                is_output_parameter == bcast_value(is_output_parameter, root),
+                "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.",
+                assert::light_communication);
+
+            // If it is an output parameter, broadcast send_count to get recv_count
+            if constexpr (is_output_parameter) {
+                recv_count_param.set_recv_count(this->bcast_value(send_count, root));
+            }
+
+            recv_count = recv_count_param.recv_count();
 
             // Validate against send_count
             KASSERT(

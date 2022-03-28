@@ -135,3 +135,14 @@ TEST(ScatterTest, scatter_with_nonzero_root_comm) {
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
 }
+
+TEST(ScatterTest, scatter_with_recv_count_out) {
+    Communicator comm;
+
+    auto const input = create_input_vector_on_root(comm, 2);
+    int        recv_count;
+    auto const result = comm.scatter(send_buf(input), recv_count_out(recv_count)).extract_recv_buffer();
+
+    EXPECT_EQ(result.size(), 2);
+    EXPECT_EQ(recv_count, 2);
+}
