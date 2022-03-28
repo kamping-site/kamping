@@ -204,12 +204,12 @@ private:
 
 /// @brief Buffer based on a single element type that has been allocated by the user.
 ///
-/// SingleElementModifyableBuffer wraps modifiable single-element buffer storage that has already been allocated by the
+/// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by the
 /// user.
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
-class SingleElementModifyableBuffer {
+class SingleElementModifiableBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable  = true; ///< Indicates whether the underlying storage is modifiable.
@@ -217,7 +217,7 @@ public:
 
     /// @brief Constructor for SingleElementConstBuffer.
     /// @param element Element holding that is wrapped.
-    SingleElementModifyableBuffer(DataType& element) : _element(element) {}
+    SingleElementModifiableBuffer(DataType& element) : _element(element) {}
 
     /// @brief Get writable access to the underlaying value.
     /// @return Reference to the underlying storage.
