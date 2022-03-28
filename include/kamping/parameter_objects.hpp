@@ -273,7 +273,7 @@ public:
     /// @brief Get writable access to the underlaying container.
     /// @return Reference to the underlying container.
     Span<value_type> get() {
-        return {_container.data(), 1};
+        return {_container.data(), _container.size()};
     }
 
 private:
@@ -306,7 +306,7 @@ public:
     /// @brief Get writable access to the underlaying container.
     /// @return Reference to the underlying container.
     Span<value_type> get() {
-        return {_container.data(), 1};
+        return {_container.data(), _container.size()};
     }
 
     /// @brief Get writable access to the underlaying container.

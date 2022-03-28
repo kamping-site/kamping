@@ -85,6 +85,7 @@ public:
         int    recv_count    = asserting_cast<int>(recv_buf_size / asserting_cast<size_t>(this->underlying().size()));
         KASSERT(send_count == recv_count, assert::light);
         recv_buf.resize(recv_buf_size);
+        KASSERT(recv_buf_size == recv_buf.size(), assert::light);
 
         // These KASSERTs are required to avoid a false warning from g++ in release mode
         KASSERT(send_buf.data() != nullptr, assert::light);
