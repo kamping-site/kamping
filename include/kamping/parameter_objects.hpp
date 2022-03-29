@@ -316,7 +316,6 @@ public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
 
     /// @brief Constructor for LibAllocatedContainerBasedBuffer.
-    ///
     LibAllocatedContainerBasedBuffer() {}
 
     /// @brief Request memory sufficient to hold at least \c size elements of \c value_type.
@@ -324,21 +323,18 @@ public:
     /// If the underlying container does not provide enough memory it will be resized.
     /// @param size Number of elements for which memory is requested.
     void resize(size_t size) {
-        KASSERT(!extracted, "Cannot resize a buffer that has already been extracted", assert::light);
         _container.resize(size);
     }
 
     /// @brief Get writable access to the underlaying container.
     /// @return Reference to the underlying container.
     Span<value_type> get() {
-        KASSERT(!extracted, "Cannot get a buffer that has already been extracted", assert::light);
         return {_container.data(), _container.size()};
     }
 
     /// @brief Get writable access to the underlaying container.
     /// @return Reference to the underlying container.
     value_type* data() {
-        KASSERT(!extracted, "Cannot get a pointer to a buffer that has already been extracted", assert::light);
         return _container.data();
     }
 
@@ -347,20 +343,17 @@ public:
     ///
     /// @return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
     Container extract() {
-        KASSERT(!extracted, "Cannot extract a buffer that has already been extracted", assert::light);
         return std::move(_container);
     }
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
     size_t size() {
-        KASSERT(!extracted, "Cannot get the size of a buffer that has already been extracted", assert::light);
         return _container.size();
     }
 
 private:
     Container _container; ///< Container which holds the actual data.
-    bool      extracted = false;
 };
 
 /// @brief Encapsulates the recv count in a collective operation.
