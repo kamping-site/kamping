@@ -59,8 +59,12 @@ TEST(BarrierTest, barrier) {
         return everyone_slept_long_enough;
     };
 
-    // It is nonsensical to test a barrier implementation on a single rank.
-    if (comm.size() > 1) {
+    // On a single rank, there is no such thing as an _invalid_ barrier implementation (expect something that crashes,
+    // deadlocks, or does not compile).
+    if (comm.size() == 1) {
+        // Test that our barrier() compiles, does crash, and doesnot deadlock.
+        EXPECT_TRUE(test_the_barrier([&comm]() { comm.barrier(); }, 10));
+    } else {
         // If the scheduling is such, that the non-root processes are not scheduled for longer than the root process
         // sleep()s, a broken barrier implementation might yield a false positive. We therefore have to test multiple
         // sleep durations until the test fails.
