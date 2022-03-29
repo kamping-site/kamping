@@ -23,38 +23,45 @@
 #include "kamping/parameter_type_definitions.hpp"
 
 /// @brief Wrapper to pass (possibly empty) list of parameters as required parameters to \c KAMPING_CHECK_PARAMETERS.
-#define KAMPING_REQUIRED_PARAMETERS(...) __VA_ARGS__
+#define KAMPING_REQUIRED_PARAMETERS(...) , ##__VA_ARGS__
 
 /// @brief Wrapper to pass (possibly empty) list of parameters as optional parameters to \c KAMPING_CHECK_PARAMETERS.
-#define KAMPING_OPTIONAL_PARAMETERS(...) __VA_ARGS__
-
-#define KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(...) #__VA_ARGS__
+#define KAMPING_OPTIONAL_PARAMETERS(...) , ##__VA_ARGS__
 
 /// @brief Assertion macro that checks if passed parameters are correct, i.e., all parameter types are unique, all
-/// required parameters are provided, and on unused parameter is passed.
+/// required parameters are provided, and on unused parameter is passed. Also checks that all parameter types are
+/// r-value references.
 ///
 /// The \c REQUIRED parameter should be passed as \c KAMPING_REQUIRED_PARAMETERS and the \c OPTIONAL parameter should be
 /// passed as KAMPING_OPTIONAL_PARAMETERS.
-#define KAMPING_CHECK_PARAMETERS(args, required, optional)                                                      \
-    do {                                                                                                        \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(args, required);                                 \
-                                                                                                                \
-        using required_parameters_types =                                                                       \
-            typename parameter_types_to_integral_constants<KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(       \
-                required)>::type;                                                                               \
-        using optional_parameters_types =                                                                       \
-            typename parameter_types_to_integral_constants<KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(       \
-                optional)>::type;                                                                               \
-        using parameter_types = typename parameters_to_integral_constant<args...>::type;                        \
-        static_assert(                                                                                          \
-            has_no_unused_parameters<required_parameters_types, optional_parameters_types, args...>::assertion, \
-            "There are unsupported parameters, only support required "                                          \
-            "parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(                                           \
-                required) " and optional parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(optional));    \
-        static_assert(all_unique_v<parameter_types>, "There are duplicate parameter types.");                   \
+#define KAMPING_CHECK_PARAMETERS(args, required, optional)                                                         \
+    do {                                                                                                           \
+        static_assert(                                                                                             \
+            kamping::internal::all_parameters_are_rvalues<args...>,                                                \
+            "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable " \
+            "returned by the named parameter helper functions like recv_buf().");                                  \
+                                                                                                                   \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(args, required);                                    \
+                                                                                                                   \
+        using required_parameters_types = typename kamping::internal::parameter_types_to_integral_constants<       \
+            KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(required)>::type;                                        \
+        using optional_parameters_types = typename kamping::internal::parameter_types_to_integral_constants<       \
+            KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(optional)>::type;                                        \
+        using parameter_types = typename kamping::internal::parameters_to_integral_constant<args...>::type;        \
+        static_assert(                                                                                             \
+            kamping::internal::has_no_unused_parameters<                                                           \
+                required_parameters_types, optional_parameters_types, args...>::assertion,                         \
+            "There are unsupported parameters, only support required "                                             \
+            "parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(                                              \
+                required) " and optional parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(optional));       \
+        static_assert(kamping::internal::all_unique_v<parameter_types>, "There are duplicate parameter types.");   \
     } while (false)
 
 /// @cond IMPLEMENTATION
+
+// Used to stringify variadic parameters:
+// KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(a, b, c) returns the string "a, b, c"
+#define KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(...) #__VA_ARGS__
 
 // In the following, we implement variadic macros that do something for each of their arguments:
 // - KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(...) prepends each argument by "internal::kamping::ParameterType::"
@@ -155,59 +162,71 @@
 //
 // `__VA_OPT__(x)` expands to `x` iff. `__VA_ARGS__` expands to a non-empty token sequence.
 
+// DISPATCH helper macro as described above
 #define KAMPING_PARAMETER_CHECK_HPP_SELECT10(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, y, ...) y
 
+// Adds the prefix "kamping::internal::ParameterType::" to each of its arguments (up to 10 arguments)
+// I.e., turns "send_buf, recv_buf" into "kamping::internal::ParameterType::send_buf,
+// kamping::internal::ParameterType::recv_buf"
+//
+// We need to implement the check, but to generate the error messages, we also need the category name with prefix.
 #define KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(...)                                                  \
     KAMPING_PARAMETER_CHECK_HPP_SELECT10(                                                                   \
-        , ##__VA_ARGS__, KAMPING_PARAMETER_CHECK_HPP_PREFIX9(__VA_ARGS__),                                  \
+        __VA_ARGS__, KAMPING_PARAMETER_CHECK_HPP_PREFIX9(__VA_ARGS__),                                      \
         KAMPING_PARAMETER_CHECK_HPP_PREFIX8(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX7(__VA_ARGS__), \
         KAMPING_PARAMETER_CHECK_HPP_PREFIX6(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX5(__VA_ARGS__), \
         KAMPING_PARAMETER_CHECK_HPP_PREFIX4(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX3(__VA_ARGS__), \
         KAMPING_PARAMETER_CHECK_HPP_PREFIX2(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(__VA_ARGS__), \
-        KAMPING_PARAMETER_CHECK_HPP_PREFIX0)
+        KAMPING_PARAMETER_CHECK_HPP_PREFIX0(__VA_ARGS__), ignore)
 
-#define KAMPING_PARAMETER_CHECK_HPP_PREFIX0
-#define KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x1) kamping::internal::ParameterType::x1
-#define KAMPING_PARAMETER_CHECK_HPP_PREFIX2(x1, x2) \
-    KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x1), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x2)
-#define KAMPING_PARAMETER_CHECK_HPP_PREFIX3(x1, x2, x3) \
-    KAMPING_PARAMETER_CHECK_HPP_PREFIX2(x1, x2), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x3)
-#define KAMPING_PARAMETER_CHECK_HPP_PREFIX4(x1, x2, x3, x4) \
-    KAMPING_PARAMETER_CHECK_HPP_PREFIX3(x1, x2, x3), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x4)
-#define KAMPING_PARAMETER_CHECK_HPP_PREFIX5(x1, x2, x3, x4, x5) \
-    KAMPING_PARAMETER_CHECK_HPP_PREFIX4(x1, x2, x3, x4), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x5)
-#define KAMPING_PARAMETER_CHECK_HPP_PREFIX6(x1, x2, x3, x4, x5, x6) \
-    KAMPING_PARAMETER_CHECK_HPP_PREFIX5(x1, x2, x3, x4, x5), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x6)
-#define KAMPING_PARAMETER_CHECK_HPP_PREFIX7(x1, x2, x3, x4, x5, x6, x7) \
-    KAMPING_PARAMETER_CHECK_HPP_PREFIX6(x1, x2, x3, x4, x5, x6), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x7)
-#define KAMPING_PARAMETER_CHECK_HPP_PREFIX8(x1, x2, x3, x4, x5, x6, x7, x8) \
-    KAMPING_PARAMETER_CHECK_HPP_PREFIX7(x1, x2, x3, x4, x5, x6, x7), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x8)
-#define KAMPING_PARAMETER_CHECK_HPP_PREFIX9(x1, x2, x3, x4, x5, x6, x7, x8, x9) \
-    KAMPING_PARAMETER_CHECK_HPP_PREFIX8(x1, x2, x3, x4, x5, x6, x7, x8), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x9)
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX0(ignore)
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x1) kamping::internal::ParameterType::x1
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX2(ignore, x1, x2) \
+    KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x1), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x2)
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX3(ignore, x1, x2, x3) \
+    KAMPING_PARAMETER_CHECK_HPP_PREFIX2(ignore, x1, x2), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x3)
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX4(ignore, x1, x2, x3, x4) \
+    KAMPING_PARAMETER_CHECK_HPP_PREFIX3(ignore, x1, x2, x3), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x4)
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX5(ignore, x1, x2, x3, x4, x5) \
+    KAMPING_PARAMETER_CHECK_HPP_PREFIX4(ignore, x1, x2, x3, x4), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x5)
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX6(ignore, x1, x2, x3, x4, x5, x6) \
+    KAMPING_PARAMETER_CHECK_HPP_PREFIX5(ignore, x1, x2, x3, x4, x5), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x6)
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX7(ignore, x1, x2, x3, x4, x5, x6, x7) \
+    KAMPING_PARAMETER_CHECK_HPP_PREFIX6(ignore, x1, x2, x3, x4, x5, x6), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x7)
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX8(ignore, x1, x2, x3, x4, x5, x6, x7, x8) \
+    KAMPING_PARAMETER_CHECK_HPP_PREFIX7(ignore, x1, x2, x3, x4, x5, x6, x7),        \
+        KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x8)
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX9(ignore, x1, x2, x3, x4, x5, x6, x7, x8, x9) \
+    KAMPING_PARAMETER_CHECK_HPP_PREFIX8(ignore, x1, x2, x3, x4, x5, x6, x7, x8),        \
+        KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x9)
 
-#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(args, ...)                           \
-    KAMPING_PARAMETER_CHECK_HPP_SELECT10(                                                           \
-        , ##__VA_ARGS__, KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER9(args, __VA_ARGS__), \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER8(args, __VA_ARGS__),                  \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER7(args, __VA_ARGS__),                  \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER6(args, __VA_ARGS__),                  \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER5(args, __VA_ARGS__),                  \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER4(args, __VA_ARGS__),                  \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER3(args, __VA_ARGS__),                  \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER2(args, __VA_ARGS__),                  \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, __VA_ARGS__),                  \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0)
+// Generate code that checks that each of the given parameter types are present in args...
+// Usage: KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(Args, send_buf, recv_buf)
+// Checks that Args... has parameters for kamping::internal::ParameterType::send_buf and
+// kamping::internal::ParameterType::recv_buf
+#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(args, ...)                       \
+    KAMPING_PARAMETER_CHECK_HPP_SELECT10(                                                       \
+        __VA_ARGS__, KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER9(args, __VA_ARGS__), \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER8(args, __VA_ARGS__),              \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER7(args, __VA_ARGS__),              \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER6(args, __VA_ARGS__),              \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER5(args, __VA_ARGS__),              \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER4(args, __VA_ARGS__),              \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER3(args, __VA_ARGS__),              \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER2(args, __VA_ARGS__),              \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, __VA_ARGS__),              \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0(args, __VA_ARGS__), ignore)
 
-#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0
-#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, x1)                                          \
+#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0(args, ignore)
+#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, ignore, x1)                                  \
     static_assert(                                                                                                \
         kamping::internal::has_all_required_parameters<                                                           \
             kamping::internal::parameter_types_to_integral_constants<kamping::internal::ParameterType::x1>::type, \
             args...>::assertion,                                                                                  \
         "Missing required parameter " #x1);
-#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER2(args, x1, x2) \
-    KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, x1);        \
-    KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, x2)
+#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER2(args, ignore, x1, x2) \
+    KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, ignore, x1);        \
+    KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, ignore, x2)
 #define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER3(args, x1, x2, x3) \
     KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER2(args, x1, x2);        \
     KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, x3)
@@ -351,4 +370,9 @@ struct parameters_to_integral_constant {
         std::tuple<typename parameter_type_to_integral_constant<Parameters::parameter_type>::type>{}...));
 };
 
+/// @brief checks if all named parameters are passed as rvalues.
+/// @tparam Args The types of the arguments to validate.
+template <typename... Args>
+constexpr bool all_parameters_are_rvalues =
+    std::conjunction<std::bool_constant<!std::is_lvalue_reference_v<Args>>...>::value;
 } // namespace kamping::internal

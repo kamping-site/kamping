@@ -12,6 +12,7 @@ kamping_register_test(test_parameter_objects FILES parameter_objects_test.cpp)
 kamping_register_test(test_named_parameter_selection FILES named_parameter_selection_test.cpp)
 kamping_register_test(test_mpi_function_wrapper_helpers FILES mpi_function_wrapper_helpers_test.cpp)
 kamping_register_test(test_mpi_operations FILES mpi_operations_test.cpp)
+kamping_register_test(test_parameter_check FILES parameter_check_test.cpp)
 
 # Registering tests with MPI:
 

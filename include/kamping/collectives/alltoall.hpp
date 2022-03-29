@@ -53,15 +53,6 @@ public:
     auto alltoall(Args&&... args) {
         KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
-        static_assert(
-            all_parameters_are_rvalues<Args...>,
-            "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
-            "returned by the named parameter helper functions like recv_buf().");
-        // Get all parameters
-        static_assert(
-            internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
-            "Missing required parameter send_buf.");
-
         auto& send_buf_param       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
         auto  send_buf             = send_buf_param.get();
         using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
