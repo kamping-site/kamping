@@ -385,7 +385,7 @@ TEST(ParameterFactoriesTest, send_recv_buf_single_element) {
     }
 }
 
-TEST(ParameterFactoriesTest, send_recv_const_buf_switch) {
+TEST(ParameterFactoriesTest, single_and_multiple_element_const_send_recv_buffer_type) {
     const uint8_t              value  = 0;
     const std::vector<uint8_t> values = {0, 0, 0, 0, 0, 0};
 
@@ -400,7 +400,7 @@ TEST(ParameterFactoriesTest, send_recv_const_buf_switch) {
     EXPECT_TRUE(vec_result);
 }
 
-TEST(ParameterFactoriesTest, send_recv_modifiable_buf_switch) {
+TEST(ParameterFactoriesTest, single_and_multiple_element_modifiable_send_recv_buffer_type) {
     uint8_t              value  = 0;
     std::vector<uint8_t> values = {0, 0, 0, 0, 0, 0};
 
