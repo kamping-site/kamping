@@ -29,7 +29,11 @@ public:
     ///
     /// Perform a \c MPI_Barrier on this communicator.
     /// buffers are required:
-    void barrier() {
+    template <typename... Args>
+    void barrier(Args&&... args) {
+        // We decided to keep the parameter pack such that this function does not compile if not used.
+        static_assert(sizeof...(args) == 0, "You may not pass any arguments to barrier().");
+
         [[maybe_unused]] int err = MPI_Barrier(this->underlying().mpi_communicator());
         THROW_IF_MPI_ERROR(err, MPI_Barrier);
     }
