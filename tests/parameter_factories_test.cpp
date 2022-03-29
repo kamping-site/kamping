@@ -389,8 +389,8 @@ TEST(ParameterFactoriesTest, send_recv_const_buf_switch) {
     const uint8_t              value  = 0;
     const std::vector<uint8_t> values = {0, 0, 0, 0, 0, 0};
 
-    [[maybe_unused]] auto gen_single_element_buffer = send_recv_buf(value);
-    [[maybe_unused]] auto gen_int_vec_buffer        = send_recv_buf(values);
+    auto gen_single_element_buffer = send_recv_buf(value);
+    auto gen_int_vec_buffer        = send_recv_buf(values);
 
     bool const single_result = std::is_same_v<
         decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_recv_buf>>;
@@ -404,8 +404,8 @@ TEST(ParameterFactoriesTest, send_recv_modifiable_buf_switch) {
     uint8_t              value  = 0;
     std::vector<uint8_t> values = {0, 0, 0, 0, 0, 0};
 
-    [[maybe_unused]] auto gen_single_element_buffer = send_recv_buf(value);
-    [[maybe_unused]] auto gen_int_vec_buffer        = send_recv_buf(values);
+    auto gen_single_element_buffer = send_recv_buf(value);
+    auto gen_int_vec_buffer        = send_recv_buf(values);
 
     bool const single_result = std::is_same_v<
         decltype(gen_single_element_buffer), SingleElementModifiableBuffer<uint8_t, ParameterType::send_recv_buf>>;
