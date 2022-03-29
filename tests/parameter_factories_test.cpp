@@ -104,7 +104,7 @@ void test_library_allocated_buffer(
     // generated_buffer.resize(x)?
     for (size_t size: std::vector<size_t>{10, 30, 5}) {
         generated_buffer.resize(size);
-        std::ignore = generated_buffer.data();
+        EXPECT_EQ(generated_buffer.size(), size);
     }
 }
 
