@@ -13,6 +13,7 @@
 
 #include <gtest/gtest.h>
 
+#include "helpers_for_testing.hpp"
 #include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping;
@@ -445,6 +446,13 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_type_library_alloc) {
 
     auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<std::vector<CustomType>>{});
     using ExpectedValueType                   = CustomType;
+    testing::test_library_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf);
+}
+
+TEST(ParameterFactoriesTest, send_recv_buf_custom_container_library_alloc) {
+    auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<testing::OwnContainer<int>>{});
+    using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf);
 }
