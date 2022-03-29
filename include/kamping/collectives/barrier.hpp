@@ -27,7 +27,9 @@ class Barrier : public CRTPHelper<Communicator, Barrier> {
 public:
     /// @brief Perform a \c MPI_Barrier on this communicator.
     ///
-    /// You are not allowed to pass any arguments. The parameter pack prohibits the compiler form compiling this
+    /// Barrier takes no parameters. Any parameters passed will cause a compilation error.
+    ///
+    /// The parameter pack prohibits the compiler form compiling this
     /// function even when it's not used.
     template <typename... Args>
     void barrier(Args&&... args) {
