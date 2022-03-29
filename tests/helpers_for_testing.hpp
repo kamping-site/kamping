@@ -74,5 +74,11 @@ struct Argument {
     int _i;
 };
 
+/// @brief Custom expectation for testing if a KASSERT fails.
+#define EXPECT_KASSERT_FAILS(CODE, FAILURE_MESSAGE) EXPECT_EXIT({ CODE; }, KilledBySignal(SIGABRT), FAILURE_MESSAGE);
+
+/// @brief Custom assertion for testing if a KASSERT fails.
+#define ASSERT_KASSERT_FAILS(CODE, FAILURE_MESSAGE) ASSERT_EXIT({ CODE; }, KilledBySignal(SIGABRT), FAILURE_MESSAGE);
+
 /// @}
 } // namespace testing
