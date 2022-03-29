@@ -61,7 +61,7 @@
 
 // Used to stringify variadic parameters:
 // KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(a, b, c) returns the string "a, b, c"
-#define KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(...) #__VA_ARGS__
+#define KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(ignore, ...) #__VA_ARGS__
 
 // In the following, we implement variadic macros that do something for each of their arguments:
 // - KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(...) prepends each argument by "internal::kamping::ParameterType::"

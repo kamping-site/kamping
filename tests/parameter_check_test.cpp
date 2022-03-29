@@ -37,29 +37,7 @@ void test_required_send_buf_optional_recv_buf(Args&&...) {
 
 template <typename... Args>
 void test_optional_recv_buf(Args&&...) {
-    // KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
-    //
-    // generates the following broken code:
-    do {
-        static_assert(
-            kamping::internal::all_parameters_are_rvalues<Args...>,
-            "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
-            "returned by the named parameter helper functions like recv_buf().");
-        ;
-        using required_parameters_types = typename kamping::internal::parameter_types_to_integral_constants<>::type;
-        using optional_parameters_types = typename kamping::internal::parameter_types_to_integral_constants<
-            kamping::internal::ParameterType::recv_buf>::type;
-        using parameter_types = typename kamping::internal::parameters_to_integral_constant<Args...>::type;
-        static_assert(
-            kamping::internal::has_no_unused_parameters<
-                required_parameters_types, optional_parameters_types, Args...>::assertion,
-            "There are unsupported parameters, only support required "
-            "parameters "
-            ""
-            " and optional parameters "
-            ",recv_buf");
-        static_assert(kamping::internal::all_unique_v<parameter_types>, "There are duplicate parameter types.");
-    } while (false);
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 }
 } // namespace
 
