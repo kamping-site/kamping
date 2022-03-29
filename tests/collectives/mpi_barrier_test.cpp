@@ -62,8 +62,8 @@ TEST(BarrierTest, barrier) {
     // It is nonsensical to test a barrier implementation on a single rank.
     if (comm.size() > 1) {
         // If the scheduling is such, that the non-root processes are not scheduled for longer than the root process
-        // sleep()s, a broken barrier implementation might yield a false positive. We therefore have to test multiple sleep
-        // durations until the test fails.
+        // sleep()s, a broken barrier implementation might yield a false positive. We therefore have to test multiple
+        // sleep durations until the test fails.
         bool test_failed  = false;
         long sleep_for_ms = 10;
         while (!test_failed) {
@@ -73,9 +73,9 @@ TEST(BarrierTest, barrier) {
         }
         ASSERT_TRUE(test_failed);
 
-        // Even with this empirically determined sleep duration, we still get some false-negative test results for a valid
-        // barrier implementation. As this test can't be false positive, we can re-run it a given number of times or until
-        // it succeeds to get more reliable results. (See also the comment marked with ! above.)
+        // Even with this empirically determined sleep duration, we still get some false-negative test results for a
+        // valid barrier implementation. As this test can't be false positive, we can re-run it a given number of times
+        // or until it succeeds to get more reliable results. (See also the comment marked with ! above.)
         const uint32_t max_tries      = 8;
         bool           test_succeeded = false;
         for (uint32_t i = 0; i < max_tries && !test_succeeded; ++i) {
