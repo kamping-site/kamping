@@ -55,6 +55,13 @@ TEST(ParameterCheckTest, check_two_optional_parameters) {
     testing::test_optional_send_recv_buf();
 }
 
+TEST(ParameterCheckTest, check_many_required_parameters) {
+    using namespace kamping;
+    std::vector<int> v;
+    testing::test_require_many_parameters(
+        send_buf(v), recv_buf(v), root(0), recv_count(0), recv_counts(v), send_counts(v));
+}
+
 namespace {
 // This dummy resembles the interface of a collective operation, so we can simulate the check for rvalue
 // parameters.
