@@ -51,8 +51,6 @@ public:
     /// @return Result type wrapping the output buffer if not specified as input parameter.
     template <typename... Args>
     auto alltoall(Args&&... args) {
-        /// @todo Use new functionality from #169 once that is implemented
-
         KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
         static_assert(

@@ -67,46 +67,106 @@
 //   and generates the same code as a "for each" loop would generate for these i arguments.
 // - A dispatch macro chooses the right Xi macro depending on the number of arguments passed to the dispatch macro.
 //
-// Note that Xi is short for
-// - KAMPING_PARAMETER_CHECK_HPP_PREFIXi
-// or
-// - KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERi
+// First, we define the macros for various number of arguments:
 //
-// For instance, KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(a, b, c) would dispatch to
-// KAMPING_PARAMETER_CHECK_HPP_PREFIX3(a, b, c), which in turn prefixes its 3 arguments as described above.
+// ```
+// #define X0 [...]
+// #define X1(a) [...]
+// #define X2(a, b) [...]
+// ```
 //
-// This works through the helper macro KAMPING_PARAMETER_CHECK_HPP_SELECT10, which takes at least 11 arguments
-// and always "returns" its 11-th argument.
-// Thus, do implement the dispatch macro, we use the following hack:
-// - Take variadic arguments; those are available in __VA_ARGS__
-// - Call KAMPING_PARAMETER_CHECK_HPP_SELECT10 with the following arguments:
-//   * __VA_ARGS__ = all variadic parameters
-//   * X9(__VA_ARGS__)
-//   * X8(__VA_ARGS__)
-//   * ...
-//   * X1(__VA_ARGS__)
-// - Thus, the "11-th argument of KAMPING_PARAMETER_CHECK_HPP_SELECT10" depends on the number of arguments
-//   __VA_ARGS__ expands to -- and thus, on the number of arguments passed to the dispatch macro.
-// - In other words, we "push" the right implementation to the right parameter position of
-//   KAMPING_PARAMETER_CHECK_HPP_SELECT10.
+// Now, we need a "dispatch" macro `X` that can take 0, 1 or 2 arguments and resolve to `X0`, `X1` or `X2`. While we
+// can't make the macro to take between 0 and 2 arguments, we can define it as a variadic macro:
 //
-// That's all there is do it -- in theory. In practice, we need another hack:
-// - We always pass "ignore" as a last argument to KAMPING_PARAMETER_CHECK_HPP_SELECT10. Otherwise, if the
-//   dispatch macro was called with just one argument, we would call KAMPING_PARAMETER_CHECK_HPP_SELECT10
-//   with exactly 11 arguments (1 empty argument + 1 variadic argument + X1 + ... + X9), thus leaving the
-//   "..." of KAMPING_PARAMETER_CHECK_SELECT10 empty. But this is not allowed, even if the macro ignores
-//   its variadic arguments.
+// ```
+// #define X(...) [... magic that expands to X2, X1 or X0 depending on the number of arguments passed to X ...]
+// ```
+//
+// To implement this macro, we first need a helper:
+//
+// ```
+// #define DISPATCH(x2, x1, x, ...) x
+// ```
+//
+// `DISPATCH` takes at least 3 arguments and substitutes to whatever we pass as 3rd argument, e.g.:
+//
+// ```
+// DISPATCH(a, b, c, d, e, f) // becomes c
+// DISPATCH(0, 1, X2(0, 1), X1(0, 1), X0) // becomes X2(0, 1)
+// DISPATCH(0, X2(0), X1(0), X0) // becomes X1(0)
+// DISPATCH(X2(), X1(), X0) // becomes X0
+// ```
+//
+// We can use that to implement `X`:
+//
+// ```
+// #define X(...) DISPATCH(__VA_ARGS__, X2(__VA_ARGS__), X1(__VA_ARGS__), X0)
+// ```
+//
+// `__VA_ARGS__` expands to whatever arguments we pass to `X`. Thus, if we pass 2 arguments to `X`, it also expands to
+// two arguments. If we pass 1 argument to `X`, it expands to 1 argument. Thus, we can "move" the correct implementation
+// for `X` to be the 3rd argument passed to `DISPATCH`:
+//
+// * `X(0, 1)` becomes `DISPATCH(0, 1, X2(0, 1), X1(0, 1), X0)` becomes `X2(0, 1)` -- nice
+//
+// * `X(0)` becomes `DISPATCH(0, X2(0), X1(0), X0)` becomes `X1(0)` -- nice
+//
+// * `X()` becomes `DISPATCH(, X2(), X1(), X0)` becomes `X1()` -- wait, what?
+//
+// Unfortunately, we still have the `,` token after the first `__VA_ARGS__` in the definition of `X`. Since the
+// preprocessor is perfectly fine with empty arguments, this counts as the first argument passed to `DISPATCH`.
+//
+// That's where we use a GNU extension. With GCC (and all other compilers that we support), we can write:
+//
+// ```
+// #define X(...) DISPATCH(, ##__VA_ARGS__, X2(__VA_ARGS__), X1(__VA_ARGS__), X0)
+// ```
+//
+// The semantic of `, ##__VA_ARGS__` is as follows:
+//
+// * If `__VA_ARGS__` expands to a non-empty token sequence, this is `, [tokens]` (as expected)
+//
+// * If `__VA_ARGS__` expands to an empty token sequence, it swallows the preceding comma and expands to thin air
+//
+// Thus, we get new substitutions for `X`:
+//
+// * `X(0, 1)` becomes `DISPATCH(, 0, 1, X2(0, 1), X1(0, 1), X0)`
+//
+// * `X(0)` becomes `DISPATCH(, 0, X2(0), X1(0), X0)`
+//
+// * `X()` becomes `DISPATCH(, X2(), X1(), X0)`  -- note that the comma preceding the `__VA_ARGS__` expansion vanished
+//
+// Thus, the 4th argument of `DISPATCH` is always the correct implementation; thus, we can alter the definition of
+// `DISPATCH` to return its 4th parameter:
+//
+// ```
+// #define DISPATCH(dummy, x2, x1, x, ...) x
+// ```
+//
+// And we are done.
+//
+// ---
+//
+// Once we switch to C++ 20, we can go back to standard C++ by replacing the definition with
+//
+// ```
+// #define X(...) DISPATCH(__VA_OPT__(,) __VA_ARGS__, X2(__VA_ARGS__), X1(__VA_ARGS__), X0)
+// ```
+//
+// `__VA_OPT__(x)` expands to `x` iff. `__VA_ARGS__` expands to a non-empty token sequence.
 
-#define KAMPING_PARAMETER_CHECK_HPP_SELECT10(x1, x2, x3, x4, x5, x6, x7, x8, x9, y, ...) y
+#define KAMPING_PARAMETER_CHECK_HPP_SELECT10(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, y, ...) y
 
 #define KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(...)                                                  \
     KAMPING_PARAMETER_CHECK_HPP_SELECT10(                                                                   \
-        __VA_ARGS__, KAMPING_PARAMETER_CHECK_HPP_PREFIX9(__VA_ARGS__),                                      \
+        , ##__VA_ARGS__, KAMPING_PARAMETER_CHECK_HPP_PREFIX9(__VA_ARGS__),                                  \
         KAMPING_PARAMETER_CHECK_HPP_PREFIX8(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX7(__VA_ARGS__), \
         KAMPING_PARAMETER_CHECK_HPP_PREFIX6(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX5(__VA_ARGS__), \
         KAMPING_PARAMETER_CHECK_HPP_PREFIX4(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX3(__VA_ARGS__), \
-        KAMPING_PARAMETER_CHECK_HPP_PREFIX2(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(__VA_ARGS__), ignore)
+        KAMPING_PARAMETER_CHECK_HPP_PREFIX2(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(__VA_ARGS__), \
+        KAMPING_PARAMETER_CHECK_HPP_PREFIX0)
 
+#define KAMPING_PARAMETER_CHECK_HPP_PREFIX0
 #define KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x1) kamping::internal::ParameterType::x1
 #define KAMPING_PARAMETER_CHECK_HPP_PREFIX2(x1, x2) \
     KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x1), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x2)
@@ -125,18 +185,20 @@
 #define KAMPING_PARAMETER_CHECK_HPP_PREFIX9(x1, x2, x3, x4, x5, x6, x7, x8, x9) \
     KAMPING_PARAMETER_CHECK_HPP_PREFIX8(x1, x2, x3, x4, x5, x6, x7, x8), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(x9)
 
-#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(args, ...)                       \
-    KAMPING_PARAMETER_CHECK_HPP_SELECT10(                                                       \
-        __VA_ARGS__, KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER9(args, __VA_ARGS__), \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER8(args, __VA_ARGS__),              \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER7(args, __VA_ARGS__),              \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER6(args, __VA_ARGS__),              \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER5(args, __VA_ARGS__),              \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER4(args, __VA_ARGS__),              \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER3(args, __VA_ARGS__),              \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER2(args, __VA_ARGS__),              \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, __VA_ARGS__), ignore)
+#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(args, ...)                           \
+    KAMPING_PARAMETER_CHECK_HPP_SELECT10(                                                           \
+        , ##__VA_ARGS__, KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER9(args, __VA_ARGS__), \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER8(args, __VA_ARGS__),                  \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER7(args, __VA_ARGS__),                  \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER6(args, __VA_ARGS__),                  \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER5(args, __VA_ARGS__),                  \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER4(args, __VA_ARGS__),                  \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER3(args, __VA_ARGS__),                  \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER2(args, __VA_ARGS__),                  \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, __VA_ARGS__),                  \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0)
 
+#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0
 #define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, x1)                                          \
     static_assert(                                                                                                \
         kamping::internal::has_all_required_parameters<                                                           \
@@ -173,28 +235,28 @@
 namespace kamping::internal {
 /// @brief Struct wrapping a check that verifies that all required parameters are part of the arguments.
 ///
-/// @tparam ParametersTuple All required kamping::internal::ParameterType passed as \c std::integral_constant in an \c
-/// std::tuple.
+/// @tparam ParametersTuple All required kamping::internal::ParameterType passed as \c
+/// std::integral_constant in an \c std::tuple.
 /// @tparam Args Arguments passed to the function that calls this check, i.e., the different parameters.
 template <typename ParametersTuple, typename... Args>
 struct has_all_required_parameters {
     /// @brief Get number of required parameters passed as argument in \c Args.
     ///
-    /// To compute the number, we "iterate" over all required template parameters and check if the parameter can be
-    /// found (using has_parameter_type() on the arguments \c Args). If this is the case, we add a tuple with the given
-    /// parameter type to the result, otherwise, we add a tuple without a type. In the end, we have added a parameter
-    /// type for each parameter type that we have found in \c Args. Hence, the size of the resulting tuple is the number
-    /// of found parameters.
+    /// To compute the number, we "iterate" over all required template parameters and check if the
+    /// parameter can be found (using has_parameter_type() on the arguments \c Args). If this is the
+    /// case, we add a tuple with the given parameter type to the result, otherwise, we add a tuple
+    /// without a type. In the end, we have added a parameter type for each parameter type that we have
+    /// found in \c Args. Hence, the size of the resulting tuple is the number of found parameters.
     ///
     /// @tparam Indices Index sequence used to unpack all required parameters in \c ParametersTuple.
     /// @param N.N. The parameter is only required to deduce the template parameter.
     /// @return The number of required parameters found in \c Args.
     template <size_t... Indices>
     static constexpr auto number_of_required(std::index_sequence<Indices...>) {
-        return std::tuple_size_v<decltype(
-            std::tuple_cat(std::conditional_t<
-                           has_parameter_type<std::tuple_element_t<Indices, ParametersTuple>::value, Args...>(),
-                           std::tuple<std::tuple_element_t<Indices, ParametersTuple>>, std::tuple<>>{}...))>;
+        return std::tuple_size_v<decltype(std::tuple_cat(
+            std::conditional_t<
+                has_parameter_type<std::tuple_element_t<Indices, ParametersTuple>::value, Args...>(),
+                std::tuple<std::tuple_element_t<Indices, ParametersTuple>>, std::tuple<>>{}...))>;
     }
 
     /// @brief \c true if and only if all required parameters can be found in \c Args.
@@ -205,10 +267,10 @@ struct has_all_required_parameters {
 
 /// @brief Struct wrapping a check that verifies that no unused parameters are part of the arguments.
 ///
-/// @tparam RequiredParametersTuple All required kamping::internal::ParameterType passed as \c std::integral_constant in
-/// an \c std::tuple.
-/// @tparam OptionalParametersTuple All optional kamping::internal::ParameterType passed as \c std::integral_constant in
-/// an \c std::tuple.
+/// @tparam RequiredParametersTuple All required kamping::internal::ParameterType passed as \c
+/// std::integral_constant in an \c std::tuple.
+/// @tparam OptionalParametersTuple All optional kamping::internal::ParameterType passed as \c
+/// std::integral_constant in an \c std::tuple.
 /// @tparam Args Arguments passed to the function that calls this check, i.e., the different parameters.
 template <typename RequiredParametersTuple, typename OptionalParametersTuple, typename... Args>
 struct has_no_unused_parameters {
@@ -216,10 +278,11 @@ struct has_no_unused_parameters {
 
     /// @brief Get total number of different parameters (passed, required, and optional).
     ///
-    /// This check works similar to has_all_required_parameters. Here, we "iterate" over all parameters, i.e., \c
-    /// RequiredParametersTuple and \c OptionalParametersTuple and check which parameters are not(!) passed as \c Args.
-    /// Then, we add this number to the size of Args. If this number is greater than the total number of (required and
-    /// optional) parameters, there are unused parameters.
+    /// This check works similar to has_all_required_parameters. Here, we "iterate" over all parameters,
+    /// i.e., \c RequiredParametersTuple and \c OptionalParametersTuple and check which parameters are
+    /// not(!) passed as \c Args. Then, we add this number to the size of Args. If this number is
+    /// greater than the total number of (required and optional) parameters, there are unused
+    /// parameters.
     ///
     /// @tparam Indices Index sequence used to unpack all required parameters in \c ParametersTuple.
     /// @param N.N. The parameter is only required to deduce the template parameter.
@@ -246,8 +309,8 @@ template <typename Tuple>
 struct all_unique : std::true_type {};
 
 /// @brief Recursive wrapper (\c std::integral_constant) to test if all types of a tuple are unique.
-/// This is done by checking for each type whether the type occurs in the types of the tuple to the right. If this is
-/// true for any type/position, the types in the tuple are not unique.
+/// This is done by checking for each type whether the type occurs in the types of the tuple to the
+/// right. If this is true for any type/position, the types in the tuple are not unique.
 ///
 /// @tparam T Parameter for which we check whether it is contained in the remaining tuple.
 /// @tparam Ts Remaining types of the tuple.
@@ -267,8 +330,8 @@ struct parameter_type_to_integral_constant {
     using type = std::integral_constant<ParameterType, T>;
 };
 
-/// @brief Wrapper to get a tuple of \c std::integral_constant for each kamping::internal::ParameterType passed as
-/// template parameter that are extracted as tuple of \c std::integral_constant.
+/// @brief Wrapper to get a tuple of \c std::integral_constant for each kamping::internal::ParameterType
+/// passed as template parameter that are extracted as tuple of \c std::integral_constant.
 /// @tparam Parameters Passed kamping::internal::ParameterType.
 template <ParameterType... ParameterTypes>
 struct parameter_types_to_integral_constants {
@@ -277,10 +340,10 @@ struct parameter_types_to_integral_constants {
         decltype(std::tuple_cat(std::tuple<typename parameter_type_to_integral_constant<ParameterTypes>::type>{}...));
 };
 
-/// @brief Wrapper to get a tuple of \c std::integral_constant for each kamping::internal::ParameterType of the
-/// parameters.
-/// @tparam Parameters Passed parameters for which the kamping::internal::ParameterType are extracted as \c
-/// std::integral_constant in a tuple.
+/// @brief Wrapper to get a tuple of \c std::integral_constant for each kamping::internal::ParameterType
+/// of the parameters.
+/// @tparam Parameters Passed parameters for which the kamping::internal::ParameterType are extracted as
+/// \c std::integral_constant in a tuple.
 template <typename... Parameters>
 struct parameters_to_integral_constant {
     /// @brief Type of the tuple.
