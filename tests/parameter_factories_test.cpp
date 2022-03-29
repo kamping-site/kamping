@@ -431,3 +431,18 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_library_alloc) {
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf);
 }
+
+TEST(ParameterFactoriesTest, recv_count_in_basics) {
+    auto recv_count_in_obj = recv_count(42);
+    EXPECT_EQ(recv_count_in_obj.recv_count(), 42);
+    EXPECT_FALSE(decltype(recv_count_in_obj)::is_modifiable);
+}
+
+TEST(ParameterFactoriesTest, recv_count_out_basics) {
+    int  recv_count;
+    auto recv_count_out_obj = recv_count_out(recv_count);
+    recv_count_out_obj.set_recv_count(42);
+    EXPECT_EQ(recv_count_out_obj.recv_count(), 42);
+    EXPECT_EQ(recv_count, 42);
+    EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
+}
