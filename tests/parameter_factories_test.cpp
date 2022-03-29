@@ -432,6 +432,23 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_library_alloc) {
         buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf);
 }
 
+TEST(ParameterFactoriesTest, send_recv_buf_custom_type_library_alloc) {
+    struct CustomType {
+        uint64_t v1;
+        int      v2;
+        char     v3;
+
+        bool operator==(CustomType const& other) const {
+            return std::tie(v1, v2, v3) == std::tie(other.v1, other.v2, other.v3);
+        }
+    }; // struct CustomType
+
+    auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<std::vector<CustomType>>{});
+    using ExpectedValueType                   = CustomType;
+    testing::test_library_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf);
+}
+
 TEST(ParameterFactoriesTest, recv_count_in_basics) {
     auto recv_count_in_obj = recv_count(42);
     EXPECT_EQ(recv_count_in_obj.recv_count(), 42);
