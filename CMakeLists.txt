@@ -70,6 +70,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     "-Wnull-dereference"
     "-Wpedantic"
     "-Wextra-semi"
+    "-Wno-gnu-zero-variadic-macro-arguments"
   )
 endif()
 

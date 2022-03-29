@@ -57,7 +57,6 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
     return internal::EmptyBuffer<Data, internal::ParameterType::send_buf>();
 }
 
-
 /// @brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
 /// the data element(s) to send.
 ///
@@ -101,6 +100,20 @@ auto send_counts(const Container& container) {
 template <typename Container>
 auto recv_counts(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
+}
+
+/// @brief Generates a wrapper for a recv count input parameter.
+/// @param recv_count The recv count to be encapsulated.
+/// @return Wrapper around the given recv count.
+inline auto recv_count(int const recv_count) {
+    return internal::RecvCount<int const>(recv_count);
+}
+
+/// @brief Generates a wrapper for a recv count output parameter.
+/// @param recv_count_out Reference for the output parameter.
+/// @return Wrapper around the given reference.
+inline auto recv_count_out(int& recv_count_out) {
+    return internal::RecvCount<int&>(recv_count_out);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage must
