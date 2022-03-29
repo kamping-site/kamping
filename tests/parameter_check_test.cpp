@@ -17,53 +17,46 @@
 #include "helpers_for_testing.hpp"
 #include "kamping/parameter_check.hpp"
 #include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_type_definitions.hpp"
-
-namespace {
-template <typename... Args>
-void test_empty_arguments(Args&&...) {
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS());
-}
-
-template <typename... Args>
-void test_required_send_buf(Args&&...) {
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS());
-}
-
-template <typename... Args>
-void test_required_send_buf_optional_recv_buf(Args&&...) {
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
-}
-
-template <typename... Args>
-void test_optional_recv_buf(Args&&...) {
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
-}
-} // namespace
+#include "parameter_check_common.hpp"
 
 TEST(ParameterCheckTest, check_empty) {
-    test_empty_arguments();
+    testing::test_empty_arguments();
 }
 
 TEST(ParameterCheckTest, check_required) {
     std::vector<int> v;
-    test_required_send_buf(kamping::send_buf(v));
+    testing::test_required_send_buf(kamping::send_buf(v));
 }
 
 TEST(ParameterCheckTest, check_required_and_optional) {
     std::vector<int> v;
-    test_required_send_buf_optional_recv_buf(kamping::send_buf(v));
-    test_required_send_buf_optional_recv_buf(kamping::send_buf(v), kamping::recv_buf(v));
+    testing::test_required_send_buf_optional_recv_buf(kamping::send_buf(v));
+    testing::test_required_send_buf_optional_recv_buf(kamping::send_buf(v), kamping::recv_buf(v));
 }
 
 TEST(ParameterCheckTest, check_optional) {
     std::vector<int> v;
-    test_optional_recv_buf();
-    test_optional_recv_buf(kamping::recv_buf(v));
+    testing::test_optional_recv_buf();
+    testing::test_optional_recv_buf(kamping::recv_buf(v));
+}
+
+TEST(ParameterCheckTest, check_two_required_parameters) {
+    using namespace kamping;
+    std::vector<int> v;
+    testing::test_required_send_recv_buf(send_buf(v), recv_buf(v));
+}
+
+TEST(ParameterCheckTest, check_two_optional_parameters) {
+    using namespace kamping;
+    std::vector<int> v;
+    testing::test_optional_send_recv_buf(send_buf(v), recv_buf(v));
+    testing::test_optional_send_recv_buf(send_buf(v));
+    testing::test_optional_send_recv_buf(recv_buf(v));
+    testing::test_optional_send_recv_buf();
 }
 
 namespace {
-// @brief This dummy resembles the interface of a collective operation, so we can simulate the check for rvalue
+// This dummy resembles the interface of a collective operation, so we can simulate the check for rvalue
 // parameters.
 template <typename... Args>
 bool dummy_collective_operation(Args&&... args [[maybe_unused]]) {
