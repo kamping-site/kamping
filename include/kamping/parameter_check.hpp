@@ -22,6 +22,28 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 
+// The following macros look strange since they use a GNU extension that becomes obsolete with C++-20.
+// The extension is supported by all major compilers.
+// Semantic is as follows: if the variadic parameters of a macro is empty,
+//
+// , ##__VA_ARGS__
+//
+// expands to nothing, i.e., the comma vanishes. Otherwise, the comma stays.
+// This is required because we overload macros based on their number of arguments; however, the preprocessor
+// considers an empty argument to be one argument, i.e., if we have a variadic macro
+//
+// #define M(...)
+//
+// and call it as M(), we actually call it with one argument: the empty argument. But since we decide that to do with M
+// based on the number of arguments passed to it, we need a way to distinguish between "empty argument" and "1
+// argument".
+//
+// Using this trick, "zero arguments" as in "1 argument, but empty" resolves to <empty>, while 1 actual argument
+// resolves to ", <argument>", i.e., 2 arguments.
+//
+// However, this leads to the situation where the first argument of this macro is always empty; that's why we have
+// a lot of "ignore" parameters in the remaining macros of this file.
+
 /// @brief Wrapper to pass (possibly empty) list of parameters as required parameters to \c KAMPING_CHECK_PARAMETERS.
 #define KAMPING_REQUIRED_PARAMETERS(...) , ##__VA_ARGS__
 
@@ -114,53 +136,12 @@
 // two arguments. If we pass 1 argument to `X`, it expands to 1 argument. Thus, we can "move" the correct implementation
 // for `X` to be the 3rd argument passed to `DISPATCH`:
 //
-// * `X(0, 1)` becomes `DISPATCH(0, 1, X2(0, 1), X1(0, 1), X0)` becomes `X2(0, 1)` -- nice
+// * `X(0, 1)` becomes `DISPATCH(0, 1, X2(0, 1), X1(0, 1), X0)` becomes `X2(0, 1)`
 //
-// * `X(0)` becomes `DISPATCH(0, X2(0), X1(0), X0)` becomes `X1(0)` -- nice
+// * `X(0)` becomes `DISPATCH(0, X2(0), X1(0), X0)` becomes `X1(0)`
 //
-// * `X()` becomes `DISPATCH(, X2(), X1(), X0)` becomes `X1()` -- wait, what?
-//
-// Unfortunately, we still have the `,` token after the first `__VA_ARGS__` in the definition of `X`. Since the
-// preprocessor is perfectly fine with empty arguments, this counts as the first argument passed to `DISPATCH`.
-//
-// That's where we use a GNU extension. With GCC (and all other compilers that we support), we can write:
-//
-// ```
-// #define X(...) DISPATCH(, ##__VA_ARGS__, X2(__VA_ARGS__), X1(__VA_ARGS__), X0)
-// ```
-//
-// The semantic of `, ##__VA_ARGS__` is as follows:
-//
-// * If `__VA_ARGS__` expands to a non-empty token sequence, this is `, [tokens]` (as expected)
-//
-// * If `__VA_ARGS__` expands to an empty token sequence, it swallows the preceding comma and expands to thin air
-//
-// Thus, we get new substitutions for `X`:
-//
-// * `X(0, 1)` becomes `DISPATCH(, 0, 1, X2(0, 1), X1(0, 1), X0)`
-//
-// * `X(0)` becomes `DISPATCH(, 0, X2(0), X1(0), X0)`
-//
-// * `X()` becomes `DISPATCH(, X2(), X1(), X0)`  -- note that the comma preceding the `__VA_ARGS__` expansion vanished
-//
-// Thus, the 4th argument of `DISPATCH` is always the correct implementation; thus, we can alter the definition of
-// `DISPATCH` to return its 4th parameter:
-//
-// ```
-// #define DISPATCH(dummy, x2, x1, x, ...) x
-// ```
-//
-// And we are done.
-//
-// ---
-//
-// Once we switch to C++ 20, we can go back to standard C++ by replacing the definition with
-//
-// ```
-// #define X(...) DISPATCH(__VA_OPT__(,) __VA_ARGS__, X2(__VA_ARGS__), X1(__VA_ARGS__), X0)
-// ```
-//
-// `__VA_OPT__(x)` expands to `x` iff. `__VA_ARGS__` expands to a non-empty token sequence.
+// Since KAMPING_REQUIRED_PARAMETERS and KAMPING_OPTIONAL_PARAMETERS always resolve to at least one argument (see
+// description above), this is sufficient.
 
 // DISPATCH helper macro as described above
 #define KAMPING_PARAMETER_CHECK_HPP_SELECT10(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, y, ...) y
@@ -170,6 +151,9 @@
 // kamping::internal::ParameterType::recv_buf"
 //
 // We need to implement the check, but to generate the error messages, we also need the category name with prefix.
+//
+// Note that argument "ignore" argument in this macro is required because the "..." parameter of
+// KAMPING_PARAMETER_CHECK_HPP_SELECT10 may not be empty.
 #define KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(...)                                                  \
     KAMPING_PARAMETER_CHECK_HPP_SELECT10(                                                                   \
         __VA_ARGS__, KAMPING_PARAMETER_CHECK_HPP_PREFIX9(__VA_ARGS__),                                      \
@@ -204,6 +188,9 @@
 // Usage: KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(Args, send_buf, recv_buf)
 // Checks that Args... has parameters for kamping::internal::ParameterType::send_buf and
 // kamping::internal::ParameterType::recv_buf
+//
+// Note that the "ignore" argument in this macro is required because the "..." parameter of
+// KAMPING_PARAMETER_CHECK_HPP_SELECT10 may not be empty.
 #define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(args, ...)                       \
     KAMPING_PARAMETER_CHECK_HPP_SELECT10(                                                       \
         __VA_ARGS__, KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER9(args, __VA_ARGS__), \
