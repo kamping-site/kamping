@@ -45,3 +45,10 @@ kamping_register_compilation_failure_test(
   SECTIONS "REQUESTED_PARAMETER_NOT_GIVEN" "DEFAULT_ARGUMENTS_DO_NOT_MATCH"
   LIBRARIES kamping_base
 )
+
+kamping_register_compilation_failure_test(
+  test_parameter_check_compilation_failure
+  FILES parameter_check_compilation_failures_test.cpp 
+  SECTIONS "MISSING_REQUIRED_PARAMETER" "UNSUPPORTED_PARAMETER_NO_PARAMETERS" "UNSUPPORTED_PARAMETER_ONLY_OPTIONAL_PARAMETERS"
+  LIBRARIES kamping_base 
+)
