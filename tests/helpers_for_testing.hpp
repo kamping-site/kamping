@@ -19,6 +19,8 @@
 #include <cstddef>
 #include <vector>
 
+#include <gtest/gtest.h>
+
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
