@@ -13,7 +13,7 @@
 
 // Overwrite build option and set assertion level to normal
 #undef KAMPING_ASSERTION_LEVEL
-#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
+#define KAMPING_ASSERTION_LEVEL 3
 
 #include "helpers_for_testing.hpp"
 #include "kamping/kassert.hpp"
