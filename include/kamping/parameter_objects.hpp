@@ -234,7 +234,11 @@ public:
 
     /// @brief Constructor for SingleElementConstBuffer.
     /// @param element Element holding that is wrapped.
-    SingleElementModifiableBuffer(DataType& element) : _element(element) {}
+    SingleElementModifiableBuffer(DataType& element) : _element(element) {
+        static_assert(
+            !std::is_const_v<DataType>,
+            "The underlying data type of a SingleElementModifiableBuffer must not be const.");
+    }
 
     /// @brief Get writable access to the underlaying value.
     /// @return Reference to the underlying storage.
