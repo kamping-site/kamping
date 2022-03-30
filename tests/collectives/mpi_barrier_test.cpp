@@ -59,7 +59,7 @@ TEST(BarrierTest, barrier) {
         return everyone_slept_long_enough;
     };
 
-    // On a single rank, there is no such thing as an _invalid_ barrier implementation (expect when something crashes,
+    // On a single rank, there is no such thing as an _invalid_ barrier implementation (except when something crashes,
     // deadlocks, or does not compile).
     if (comm.size() == 1) {
         // Test that our barrier() compiles, does not crash, and does not deadlock.
