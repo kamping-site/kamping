@@ -254,40 +254,40 @@ namespace assert {
 /// @{
 
 /// @brief Assertion level for exceptions if exception mode is disabled.
-constexpr int kthrow = 1;
-
-/// @brief Assertion level for exceptions if exception mode is disabled.
 #define KAMPING_ASSERTION_LEVEL_KTHROW 1
 
-/// @brief Assertion level for lightweight assertions.
-constexpr int light = 2;
+/// @brief Assertion level for exceptions if exception mode is disabled.
+constexpr int kthrow = KAMPING_ASSERTION_LEVEL_KTHROW;
 
 /// @brief Assertion level for lightweight assertions.
 #define KAMPING_ASSERTION_LEVEL_LIGHT 2
 
-/// @brief Default assertion level. This level is used if no assertion level is specified.
-constexpr int normal = 3;
+/// @brief Assertion level for lightweight assertions.
+constexpr int light = KAMPING_ASSERTION_LEVEL_LIGHT;
 
 /// @brief Default assertion level. This level is used if no assertion level is specified.
 #define KAMPING_ASSERTION_LEVEL_NORMAL 3
 
-/// @brief Assertions that perform lightweight communication.
-constexpr int light_communication = 4;
+/// @brief Default assertion level. This level is used if no assertion level is specified.
+constexpr int normal = KAMPING_ASSERTION_LEVEL_NORMAL;
 
 /// @brief Assertions that perform lightweight communication.
 #define KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION 4
 
-/// @brief Assertions that perform heavyweight communication.
-constexpr int heavy_communication = 5;
+/// @brief Assertions that perform lightweight communication.
+constexpr int light_communication = KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION;
 
 /// @brief Assertions that perform heavyweight communication.
 #define KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION 5
 
-/// @brief Assertion level for heavyweight assertions.
-constexpr int heavy = 6;
+/// @brief Assertions that perform heavyweight communication.
+constexpr int heavy_communication = KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION;
 
 /// @brief Assertion level for heavyweight assertions.
 #define KAMPING_ASSERTION_LEVEL_HEAVY 6
+
+/// @brief Assertion level for heavyweight assertions.
+constexpr int heavy = KAMPING_ASSERTION_LEVEL_HEAVY;
 
 /// @}
 } // namespace assert
