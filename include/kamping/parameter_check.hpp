@@ -280,6 +280,7 @@ struct has_all_required_parameters {
 /// @tparam Args Arguments passed to the function that calls this check, i.e., the different parameters.
 template <typename RequiredParametersTuple, typename OptionalParametersTuple, typename... Args>
 struct has_no_unused_parameters {
+    /// @brief Concatenation of required and optional parameters.
     using all_available_parameters = decltype(std::tuple_cat(RequiredParametersTuple{}, OptionalParametersTuple{}));
 
     /// @brief Get total number of different parameters (passed, required, and optional).
@@ -291,10 +292,10 @@ struct has_no_unused_parameters {
     /// parameters.
     ///
     /// @tparam Indices Index sequence used to unpack all required parameters in \c ParametersTuple.
-    /// @param N.N. The parameter is only required to deduce the template parameter.
+    /// @param indices The parameter is only required to deduce the template parameter.
     /// @return The number of different parameters (passed, optional, and required).
     template <size_t... Indices>
-    static constexpr auto total_number_of_parameter(std::index_sequence<Indices...>) {
+    static constexpr auto total_number_of_parameter(std::index_sequence<Indices...> indices [[maybe_unused]]) {
         return std::tuple_size_v<decltype(std::tuple_cat(
                    std::conditional_t<
                        !has_parameter_type<std::tuple_element_t<Indices, all_available_parameters>::value, Args...>(),
