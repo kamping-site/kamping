@@ -92,7 +92,7 @@ public:
         THROW_IF_MPI_ERROR(err, MPI_Alltoall);
         return MPIResult(
             std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
-            internal::BufferCategoryNotUsed{});
+            internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{});
     }
 
 protected:

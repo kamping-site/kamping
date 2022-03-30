@@ -284,6 +284,12 @@ public:
         _recv_count = recv_count;
     }
 
+    /// @brief Returns the encapsulated recv count. To be used when the receive count is part of MPIResult.
+    /// @return The encapsulate recv count.
+    int extract() const {
+        return _recv_count;
+    }
+
 private:
     T _recv_count; ///< Encapsulated recv count.
 };
