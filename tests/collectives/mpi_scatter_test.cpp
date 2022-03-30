@@ -22,14 +22,18 @@ using namespace ::kamping;
 using namespace ::testing;
 
 namespace {
-std::vector<int> create_input_vector_on_root(Communicator const& comm, int const elements_per_pe) {
+std::vector<int> create_input_vector_on_root(Communicator const& comm, int const elements_per_rank, int root = -1) {
+    if (root < 0) {
+        root = comm.root();
+    }
+
     std::vector<int> input;
-    if (comm.is_root()) {
-        input.resize(static_cast<std::size_t>(elements_per_pe * comm.size()));
-        for (int pe = 0; pe < comm.size(); ++pe) {
-            auto begin = input.begin() + pe * elements_per_pe;
-            auto end   = begin + elements_per_pe;
-            std::fill(begin, end, pe);
+    if (comm.rank() == root) {
+        input.resize(static_cast<std::size_t>(elements_per_rank * comm.size()));
+        for (int rank = 0; rank < comm.size(); ++rank) {
+            auto begin = input.begin() + rank * elements_per_rank;
+            auto end   = begin + elements_per_rank;
+            std::fill(begin, end, rank);
         }
     }
     return input;
@@ -109,11 +113,7 @@ TEST(ScatterTest, scatter_with_root_arg) {
     Communicator comm;
     int const    root = comm.size() - 1; // use last PE as root
 
-    std::vector<int> input(static_cast<std::size_t>(comm.size()));
-    if (comm.rank() == root) {
-        std::iota(input.begin(), input.end(), 0);
-    }
-
+    auto const input  = create_input_vector_on_root(comm, 1, root);
     auto const result = comm.scatter(send_buf(input), kamping::root(root)).extract_recv_buffer();
 
     ASSERT_EQ(result.size(), 1);
@@ -121,15 +121,10 @@ TEST(ScatterTest, scatter_with_root_arg) {
 }
 
 TEST(ScatterTest, scatter_with_nonzero_root_comm) {
-    Communicator dummy_comm;
-    int const    root = dummy_comm.size() - 1; // use last PE as root
-    Communicator comm(MPI_COMM_WORLD, root);
+    Communicator comm;
+    comm.root(comm.size() - 1);
 
-    std::vector<int> input(static_cast<std::size_t>(comm.size()));
-    if (comm.rank() == root) {
-        std::iota(input.begin(), input.end(), 0);
-    }
-
+    auto const input  = create_input_vector_on_root(comm, 1);
     auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
 
     ASSERT_EQ(result.size(), 1);

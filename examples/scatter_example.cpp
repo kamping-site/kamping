@@ -13,6 +13,7 @@
 
 #include "helpers_for_examples.hpp"
 #include "kamping/communicator.hpp"
+
 #include <mpi.h>
 #include <numeric>
 #include <vector>
@@ -21,7 +22,6 @@ int main(int argc, char* argv[]) {
     using namespace kamping;
 
     MPI_Init(&argc, &argv);
-    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
 
     Communicator     comm;
     std::vector<int> in(static_cast<std::size_t>(comm.size()));

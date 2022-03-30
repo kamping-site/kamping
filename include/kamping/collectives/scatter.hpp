@@ -38,13 +38,16 @@ public:
     /// communicator.
     ///
     /// The following parameters are mandatory:
-    /// - (root only) \ref kamping::send_buf() containing the data to be evenly distributed across all PEs. The size of
-    /// this buffer must be divisible by the number of PEs in the current communicator.
+    /// - \ref kamping::send_buf() containing the data to be evenly distributed across all PEs. The size of
+    /// this buffer must be divisible by the number of PEs in the current communicator. Non-root PEs can omit a send
+    /// buffer by passing \ref kamping::ignore to \ref kamping::send_buf().
     ///
-    /// The following parameters are optional:
+    /// The following parameters are optional but incur communication overhead if omitted:
     /// - \ref kamping::recv_count() specifying the number of elements sent to each PE. If this parameter is omitted,
     /// the number of elements sent to each PE is computed based on the size of the \ref kamping::send_buf() on the root
     /// PE and broadcasted to other PEs.
+    ///
+    /// The following parameters are optional:
     /// - \ref kamping::root() specifying the rank of the root PE. If omitted, the default root PE of the communicator
     /// is used instead.
     /// - \ref kamping::recv_buf() containing the received data. If omitted, a new buffer is allocated and returned.
@@ -69,7 +72,7 @@ public:
             comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
             assert::light);
 
-        // Parameter send_buf(): required on root, optional/ignored otherwise
+        // Mandatory parameter send_buf()
         static_assert(
             internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
             "Missing required parameter send_buf.");
