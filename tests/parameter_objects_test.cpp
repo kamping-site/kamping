@@ -21,7 +21,7 @@
 using namespace ::kamping::internal;
 
 // Test our minimal span implementation
-TEST(Test_Span, basic_functionality) {
+TEST(SpanTest, basic_functionality) {
     std::vector<int> values = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
     Span<int> int_span(values.data(), values.size());
