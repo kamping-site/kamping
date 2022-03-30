@@ -53,34 +53,40 @@ public:
     auto alltoall(Args&&... args) {
         KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
-        auto& send_buf_param       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
-        auto  send_buf             = send_buf_param.get();
-        using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
-        MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
+        auto const& send_buf  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+        using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+        using default_recv_value_type = std::remove_const_t<send_value_type>;
+        MPI_Datatype mpi_send_type    = mpi_datatype<send_value_type>();
 
-        using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
+        using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
         auto&& recv_buf =
             internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
                 std::tuple(), args...);
         using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
         MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
-        // Get the send and receive counts
-        int send_count = throwing_cast<int>(send_buf.size / asserting_cast<size_t>(this->underlying().size()));
-        KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
+        static_assert(
+            std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
+            "Types of send and receive buffers do not match.");
+        static_assert(!std::is_const_v<recv_value_type>, "The receive buffer must not have a const value_type.");
+        KASSERT(
+            mpi_send_type == mpi_recv_type, "The MPI receive type does not match the MPI send type.", assert::light);
 
-        size_t recv_buf_size = send_buf.size;
-        int    recv_count    = throwing_cast<int>(recv_buf_size / asserting_cast<size_t>(this->underlying().size()));
+        // Get the send and receive counts
+        int send_count = asserting_cast<int>(send_buf.size() / asserting_cast<size_t>(this->underlying().size()));
+
+        size_t recv_buf_size = send_buf.size();
+        int    recv_count    = asserting_cast<int>(recv_buf_size / asserting_cast<size_t>(this->underlying().size()));
         KASSERT(send_count == recv_count, assert::light);
+        recv_buf.resize(recv_buf_size);
+        KASSERT(recv_buf_size == recv_buf.size(), assert::light);
 
         // These KASSERTs are required to avoid a false warning from g++ in release mode
-        auto* send_buf_ptr = send_buf.ptr;
-        KASSERT(send_buf_ptr != nullptr);
-        auto* recv_buf_ptr = recv_buf.get_ptr(recv_buf_size);
-        KASSERT(recv_buf_ptr != nullptr);
+        KASSERT(send_buf.data() != nullptr, assert::light);
+        KASSERT(recv_buf.data() != nullptr, assert::light);
 
         [[maybe_unused]] int err = MPI_Alltoall(
-            send_buf.ptr, send_count, mpi_send_type, recv_buf.get_ptr(recv_buf_size), recv_count, mpi_recv_type,
+            send_buf.data(), send_count, mpi_send_type, recv_buf.data(), recv_count, mpi_recv_type,
             this->underlying().mpi_communicator());
 
         THROW_IF_MPI_ERROR(err, MPI_Alltoall);

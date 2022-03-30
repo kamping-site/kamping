@@ -56,26 +56,69 @@ template <typename T>
 struct NewPtr {};
 
 namespace internal {
+
+
+/// @brief A span modeled after C++20's \c std::span.
 ///
-/// @brief Object referring to a contiguous sequence of size objects.
-///
-/// Since KaMPI.ng needs to be C++17 compatible and std::span is part of C++20, we need our own implementation of the
+/// Since KaMPI.ng needs to be C++17 compatible and \c std::span is part of C++20, we need our own implementation of the
 /// above-described functionality.
 /// @tparam T type for which the span is defined.
 template <typename T>
-struct Span {
-    using value_type = T; ///< Value type of the underlying pointer
-    const T* ptr;         ///< Pointer to the data referred to by Span.
-    size_t   size;        ///< Number of elements of type T referred to by Span.
+class Span {
+public:
+    using element_type    = T;                   ///< Element type; i.e. \c T.
+    using value_type      = std::remove_cv_t<T>; ///< Value type; i.e. \c T with volatile and const qualifiers removed.
+    using size_type       = size_t;              ///< The type used for the size of the span.
+    using difference_type = std::ptrdiff_t;      ///< The type used for the difference between two elements in the span.
+    using pointer         = T*;                  ///< The type of a pointer to a single elements in the span.
+    using const_pointer   = const T*;            ///< The type of a const pointer to a single elements in the span.
+    using reference       = T&;                  ///< The type of a reference to a single elements in the span.
+    using const_reference = const T&;            ///< The type of a const reference to a single elements in the span.
 
-    /// @brief Get access to the underlying read-only memory.
+    /// @brief Constructor for a span from a pointer and a size.
     ///
-    /// While the data can be accessed directly using the member, this member function provides a more STL-like
-    /// interface.
-    /// @return Pointer to the underlying read-only memory.
-    T const* data() const {
-        return ptr;
+    /// @param ptr Pointer to the first element in the span.
+    /// @param size The number of elements in the span.
+    constexpr Span(pointer ptr, size_type size) : _ptr(ptr), _size(size) {}
+
+    /// @brief Constructor for a span from a std::tuple<pointer, size>.
+    ///
+    /// @param initializer_tuple <Pointer to first element, number of elements>
+    constexpr Span(std::tuple<pointer, size_type> initializer_tuple)
+        : _ptr(std::get<0>(initializer_tuple)),
+          _size(std::get<1>(initializer_tuple)) {}
+
+    /// @brief Get access to the underlying memory.
+    ///
+    /// @return Pointer to the underlying memory.
+    constexpr pointer data() const {
+        return _ptr;
     }
+
+    /// @brief Returns the number of elements in the Span.
+    ///
+    /// @return Number of elements in the span.
+    constexpr size_type size() const noexcept {
+        return _size;
+    }
+
+    /// @brief Return the number of bytes occupied by the elements in the Span.
+    ///
+    /// @return The number of elements in the span times the number of bytes per element.
+    constexpr size_type size_bytes() const noexcept {
+        return _size * sizeof(value_type);
+    }
+
+    /// @brief Check if the Span is empty.
+    ///
+    /// @return \c true if the Span is empty, \c false otherwise.
+    [[nodiscard]] constexpr bool empty() const noexcept {
+        return _size == 0;
+    }
+
+protected:
+    pointer   _ptr;  ///< Pointer to the data referred to by Span.
+    size_type _size; ///< Number of elements of type T referred to by Span.
 };
 
 
@@ -124,7 +167,7 @@ public:
 
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
-    Span<value_type> get() const {
+    Span<const value_type> get() const {
         return {std::data(_container), _container.size()};
     }
 
@@ -168,7 +211,7 @@ public:
 
     /// @brief Get access to the underlaying read-only value.
     /// @return Span referring to the underlying read-only storage.
-    Span<value_type> get() const {
+    Span<const value_type> get() const {
         return {&_element, 1};
     }
 
@@ -176,7 +219,39 @@ private:
     DataType const& _element; ///< Reference to the actual data.
 };
 
+/// @brief Buffer based on a single element type that has been allocated by the user.
+///
+/// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by the
+/// user.
+/// @tparam DataType Type of the element wrapped.
+/// @tparam ParameterType parameter type represented by this buffer.
+template <typename DataType, ParameterType type>
+class SingleElementModifiableBuffer {
+public:
+    static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable  = true; ///< Indicates whether the underlying storage is modifiable.
+    using value_type                              = DataType; ///< Value type of the buffer.
+
+    /// @brief Constructor for SingleElementConstBuffer.
+    /// @param element Element holding that is wrapped.
+    SingleElementModifiableBuffer(DataType& element) : _element(element) {
+        static_assert(
+            !std::is_const_v<DataType>,
+            "The underlying data type of a SingleElementModifiableBuffer must not be const.");
+    }
+
+    /// @brief Get writable access to the underlaying value.
+    /// @return Reference to the underlying storage.
+    Span<value_type> get() const {
+        return {&_element, 1};
+    }
+
+private:
+    DataType& _element; ///< (Writable) reference to the actual data.
+};
+
 /// @brief Struct containing some definitions used by all modifiable buffers.
+///
 /// @tparam ParameterType (parameter) type represented by this buffer
 /// @tparam is_consumable_ indicates whether this buffer already contains useable data
 template <ParameterType type>
@@ -206,10 +281,26 @@ public:
     ///
     /// If the underlying container does not provide enough it will be resized.
     /// @param size Number of elements for which memory is requested.
-    /// @return Pointer to container of size \c size.
-    value_type* get_ptr(size_t size) {
+    void resize(size_t size) {
         _container.resize(size);
+    }
+
+    /// @brief Get writable access to the underlaying container.
+    /// @return Pointer to the underlying container.
+    value_type* data() {
         return _container.data();
+    }
+
+    /// @brief Get writable access to the underlaying container.
+    /// @return Reference to the underlying container.
+    Span<value_type> get() {
+        return {_container.data(), _container.size()};
+    }
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() {
+        return _container.size();
     }
 
 private:
@@ -227,18 +318,28 @@ template <typename Container, ParameterType type>
 class LibAllocatedContainerBasedBuffer : public BufferParameterType<type> {
 public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
+
     /// @brief Constructor for LibAllocatedContainerBasedBuffer.
-    ///
     LibAllocatedContainerBasedBuffer() {}
 
     /// @brief Request memory sufficient to hold at least \c size elements of \c value_type.
     ///
     /// If the underlying container does not provide enough memory it will be resized.
     /// @param size Number of elements for which memory is requested.
-    /// @return Pointer to enough memory for \c size elements of type \c value_type.
-    value_type* get_ptr(size_t size) {
+    void resize(size_t size) {
         _container.resize(size);
-        return std::data(_container);
+    }
+
+    /// @brief Get writable access to the underlaying container.
+    /// @return Reference to the underlying container.
+    Span<value_type> get() {
+        return {_container.data(), _container.size()};
+    }
+
+    /// @brief Get writable access to the underlaying container.
+    /// @return Reference to the underlying container.
+    value_type* data() {
+        return _container.data();
     }
 
     /// @brief Extract the underlying container. This will leave LibAllocatedContainerBasedBuffer in an unspecified
@@ -247,6 +348,12 @@ public:
     /// @return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
     Container extract() {
         return std::move(_container);
+    }
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() {
+        return _container.size();
     }
 
 private:

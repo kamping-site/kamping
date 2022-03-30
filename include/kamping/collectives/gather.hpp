@@ -54,7 +54,7 @@ public:
         auto  send_buf        = send_buf_param.get();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
         KASSERT(
-            check_equal_sizes(send_buf.size),
+            check_equal_sizes(send_buf.size()),
             "All PEs have to send the same number of elements. Use gatherv, if you want to send a different number of "
             "elements.",
             assert::light_communication);
@@ -74,12 +74,13 @@ public:
         auto mpi_recv_type = mpi_datatype<recv_value_type>();
         KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
-        size_t recv_size     = (this->underlying().rank() == root.rank()) ? send_buf.size : 0;
+        size_t recv_size     = (this->underlying().rank() == root.rank()) ? send_buf.size() : 0;
         size_t recv_buf_size = asserting_cast<size_t>(this->underlying().size()) * recv_size;
 
         // error code can be unused if KTHROW is removed at compile time
+        recv_buf.resize(recv_buf_size);
         [[maybe_unused]] int err = MPI_Gather(
-            send_buf.ptr, asserting_cast<int>(send_buf.size), mpi_send_type, recv_buf.get_ptr(recv_buf_size),
+            send_buf.data(), asserting_cast<int>(send_buf.size()), mpi_send_type, recv_buf.data(),
             asserting_cast<int>(recv_size), mpi_recv_type, root.rank(), this->underlying().mpi_communicator());
         THROW_IF_MPI_ERROR(err, MPI_Gather);
         return MPIResult(
