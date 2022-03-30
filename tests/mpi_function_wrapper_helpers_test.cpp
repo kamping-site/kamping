@@ -69,6 +69,19 @@ void test_recv_counts_in_MPIResult() {
     }
 }
 
+// Test that the receive count can be moved into and extracted from a MPIResult object.
+void test_recv_count_in_MPIResult() {
+    using namespace kamping;
+    using namespace kamping::internal;
+
+    RecvCount<int const> recv_count_wrapper = recv_count(42);
+    MPIResult            mpi_result{
+        BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, std::move(recv_count_wrapper), BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{}};
+    int recv_count_value = mpi_result.extract_recv_count();
+    EXPECT_EQ(recv_count_value, 42);
+}
+
 // Test that receive displs can be moved into and extracted from a MPIResult object.
 template <typename UnderlyingContainer>
 void test_recv_displs_in_MPIResult() {
@@ -132,6 +145,10 @@ TEST(MpiResultTest, extract_recv_counts_basics) {
 
 TEST(MpiResultTest, extract_recv_counts_basics_own_container) {
     testing::test_recv_counts_in_MPIResult<testing::OwnContainer<int>>();
+}
+
+TEST(MpiResultTest, extract_recv_count_basics) {
+    testing::test_recv_count_in_MPIResult();
 }
 
 TEST(MpiResultTest, extract_recv_displs_basics) {
