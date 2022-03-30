@@ -97,6 +97,9 @@ TEST(BarrierTest, barrier) {
         // This will not correctly detect all broken barrier implementations; e.g. the following would pass:
         // [] { std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms)); }
         // On the other hand, detecting if a given function is a valid barrier implementation is equal to solving the
-        // halting problem.
+        // halting problem [1].
+        // [1] Rice, H. G. (1953), "Classes of recursively enumerable sets and their decision problems", Transactions of
+        // the American Mathematical Society, 74 (2): 358–366, doi:10.1090/s0002-9947-1953-0053041-6, JSTOR 1990888
+        // ;-)
     }
 }
