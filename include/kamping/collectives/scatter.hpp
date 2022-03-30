@@ -40,7 +40,7 @@ public:
     /// The following parameters are mandatory:
     /// - \ref kamping::send_buf() containing the data to be evenly distributed across all PEs. The size of
     /// this buffer must be divisible by the number of PEs in the current communicator. Non-root PEs can omit a send
-    /// buffer by passing \ref kamping::ignore to \ref kamping::send_buf().
+    /// buffer by passing `kamping::ignore` to \ref kamping::send_buf().
     ///
     /// The following parameters are optional but incur communication overhead if omitted:
     /// - \ref kamping::recv_count() specifying the number of elements sent to each PE. If this parameter is omitted,
