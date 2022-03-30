@@ -87,10 +87,10 @@ public:
 
         // Compute sendcount based on the size of the sendbuf
         KASSERT(
-            send_buf.size % static_cast<std::size_t>(this->comm().size()) == 0u,
-            "Size of the send buffer (" << send_buf.size << ") is not divisible by the number of PEs (" << comm().size()
-                                        << ") in the communicator.");
-        int const send_count = asserting_cast<int>(send_buf.size / static_cast<std::size_t>(comm().size()));
+            send_buf.size() % static_cast<std::size_t>(this->comm().size()) == 0u,
+            "Size of the send buffer (" << send_buf.size() << ") is not divisible by the number of PEs ("
+                                        << comm().size() << ") in the communicator.");
+        int const send_count = asserting_cast<int>(send_buf.size() / static_cast<std::size_t>(comm().size()));
 
         // Optional parameter: recv_buf()
         // Default: allocate new container
@@ -138,7 +138,8 @@ public:
             recv_count = this->bcast_value(send_count, root);
         }
 
-        auto* recv_buf_ptr = recv_buf.get_ptr(static_cast<std::size_t>(recv_count));
+        recv_buf.resize(static_cast<std::size_t>(recv_count));
+        auto* recv_buf_ptr = recv_buf.data();
 
         [[maybe_unused]] int const err = MPI_Scatter(
             send_buf_ptr, send_count, mpi_send_type, recv_buf_ptr, recv_count, mpi_recv_type, root,
