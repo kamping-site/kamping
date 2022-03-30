@@ -46,3 +46,11 @@ kamping_register_compilation_failure_test(
   SECTIONS "REQUESTED_PARAMETER_NOT_GIVEN" "DEFAULT_ARGUMENTS_DO_NOT_MATCH"
   LIBRARIES kamping_base
 )
+
+kamping_register_compilation_failure_test(
+  test_kassert_compilation_failure
+  FILES kassert_compilation_failures_test.cpp
+  SECTIONS "FORBIDDEN_AND" "FORBIDDEN_OR"
+  LIBRARIES kamping_base
+)
+
