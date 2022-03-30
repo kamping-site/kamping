@@ -90,7 +90,7 @@ TEST(AlltoallTest, alltoall_custom_type_custom_container) {
 
     auto result =
         comm.alltoall(send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{})).extract_recv_buffer();
-
+    ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), comm.size());
 
     OwnContainer<CustomType> expected_result(asserting_cast<size_t>(comm.size()));
