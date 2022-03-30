@@ -18,7 +18,9 @@
 
 #include "error_handling.hpp"
 #include "kamping/collectives/alltoall.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/bcast.hpp"
+#include "kamping/collectives/gather.hpp"
 #include "kamping/collectives/reduce.hpp"
 #include "kamping/kassert.hpp"
 
@@ -28,6 +30,8 @@ namespace kamping {
 /// Communicator is also access point to all MPI communications provided by KaMPI.ng.
 class Communicator : public internal::Alltoall<Communicator>,
                      public internal::Reduce<Communicator>,
+                     public internal::Gather<Communicator>,
+                     public internal::Barrier<Communicator>,
                      public internal::Bcast<Communicator> {
 public:
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.

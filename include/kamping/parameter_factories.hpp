@@ -34,7 +34,28 @@ constexpr bool has_data_member_v = false;
 /// @return \c true if class has \c .data() method and \c false otherwise.
 template <typename T>
 constexpr bool has_data_member_v<T, std::void_t<decltype(std::declval<T>().data())>> = true;
+
+/// @brief Tag type for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
+template <typename T>
+struct ignore_t {};
 } // namespace internal
+
+/// @brief Tag for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
+template <typename T>
+constexpr internal::ignore_t<T> ignore{};
+
+/// @brief Generates a dummy send buf that wraps a \c nullptr.
+///
+/// This is useful for operations where a send_buf is required on some PEs, such as the root PE,
+/// but not all PEs that participate in the collective communication.
+///
+/// @tparam Data Data type for elements in the send buffer. This must be the same type as in the actual send_buf.
+/// @param ignore Tag parameter for overload dispatching, pass in `kamping::ignore<Data>`.
+/// @return Object wrapping a \c nullptr as a send buffer.
+template <typename Data>
+auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
+    return internal::EmptyBuffer<Data, internal::ParameterType::send_buf>();
+}
 
 /// @brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
 /// the data element(s) to send.
@@ -70,19 +91,40 @@ auto send_buf(const Data& data) {
 ///
 /// @tparam Data Data type representing the element(s) to send/receive.
 /// @param data Data (either a container which contains the elements or the element directly) to send or the buffer to
-/// receive to.
+/// receive into.
 /// @return Object referring to the storage containing the data elements to send / the received elements.
 template <typename Data>
 auto send_recv_buf(Data& data) {
     if constexpr (internal::has_data_member_v<Data>) {
         return internal::UserAllocatedContainerBasedBuffer<Data, internal::ParameterType::send_recv_buf>(data);
     } else {
-        return internal::SingleElementModifyableBuffer<Data, internal::ParameterType::send_recv_buf>(data);
+        return internal::SingleElementModifiableBuffer<Data, internal::ParameterType::send_recv_buf>(data);
+    }
+}
+
+/// @brief Generates a buffer wrapper encapsulating a buffer used for sending based on this processes rank and the
+/// root() of the operation. This buffer type encapsulates const data and can therefore only be used as the send buffer.
+/// For some functions (e.g. bcast), you have to pass a send_recv_buf as the send buffer.
+///
+/// If the underlying container provides \c data(), we assume that it is a container and all elements in the
+/// container are considered for the operation. In this case, the container has to provide a \c size() member functions
+/// and expose the contained \c value_type. If no \c data() member function exists, a single element is wrapped in the
+/// send_recv buffer. Receiving into a constant container is not possible.
+///
+/// @tparam Data Data type representing the element(s) to send/receive.
+/// @param data Data (either a container which contains the elements or the element directly) to send
+/// @return Object referring to the storage containing the data elements to send.
+template <typename Data>
+auto send_recv_buf(const Data& data) {
+    if constexpr (internal::has_data_member_v<Data>) {
+        return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_recv_buf>(data);
+    } else {
+        return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_recv_buf>(data);
     }
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
-/// will contained the received elements when the \c MPI call has been completed.
+/// will contain the received elements when the \c MPI call has been completed.
 /// The storage is allocated by the library and encapsulated in a container of type Container.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
@@ -117,6 +159,20 @@ auto send_counts(const Container& container) {
 template <typename Container>
 auto recv_counts(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
+}
+
+/// @brief Generates a wrapper for a recv count input parameter.
+/// @param recv_count The recv count to be encapsulated.
+/// @return Wrapper around the given recv count.
+inline auto recv_count(int const recv_count) {
+    return internal::RecvCount<int const>(recv_count);
+}
+
+/// @brief Generates a wrapper for a recv count output parameter.
+/// @param recv_count_out Reference for the output parameter.
+/// @return Wrapper around the given reference.
+inline auto recv_count_out(int& recv_count_out) {
+    return internal::RecvCount<int&>(recv_count_out);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage must

@@ -68,7 +68,7 @@ class Span {
 public:
     using element_type    = T;                   ///< Element type; i.e. \c T.
     using value_type      = std::remove_cv_t<T>; ///< Value type; i.e. \c T with volatile and const qualifiers removed.
-    using size_type       = std::size_t;         ///< The type used for the size of the span.
+    using size_type       = size_t;              ///< The type used for the size of the span.
     using difference_type = std::ptrdiff_t;      ///< The type used for the difference between two elements in the span.
     using pointer         = T*;                  ///< The type of a pointer to a single elements in the span.
     using const_pointer   = const T*;            ///< The type of a const pointer to a single elements in the span.
@@ -175,6 +175,23 @@ private:
     const Container& _container; ///< Container which holds the actual data.
 };
 
+/// @brief Empty buffer that can be used as default argument for optional buffer parameters.
+/// @tparam ParameterType Parameter type represented by this pseudo buffer.
+template <typename Data, ParameterType type>
+class EmptyBuffer {
+public:
+    static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable =
+        false;               ///< This pseudo buffer is not modifiable since it represents no actual buffer.
+    using value_type = Data; ///< Value type of the buffer.
+
+    /// @brief Returns a span containing a nullptr.
+    /// @return Span containing a nullptr.
+    Span<value_type> get() const {
+        return {nullptr, 0};
+    }
+};
+
 /// @brief Constant buffer for a single type, i.e., not a container.
 ///
 /// SingleElementConstBuffer wraps a read-only value and is used instead of \ref ContainerBasedConstBuffer if only a
@@ -204,12 +221,12 @@ private:
 
 /// @brief Buffer based on a single element type that has been allocated by the user.
 ///
-/// SingleElementModifyableBuffer wraps modifiable single-element buffer storage that has already been allocated by the
+/// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by the
 /// user.
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
-class SingleElementModifyableBuffer {
+class SingleElementModifiableBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable  = true; ///< Indicates whether the underlying storage is modifiable.
@@ -217,7 +234,11 @@ public:
 
     /// @brief Constructor for SingleElementConstBuffer.
     /// @param element Element holding that is wrapped.
-    SingleElementModifyableBuffer(DataType& element) : _element(element) {}
+    SingleElementModifiableBuffer(DataType& element) : _element(element) {
+        static_assert(
+            !std::is_const_v<DataType>,
+            "The underlying data type of a SingleElementModifiableBuffer must not be const.");
+    }
 
     /// @brief Get writable access to the underlaying value.
     /// @return Reference to the underlying storage.
@@ -265,7 +286,7 @@ public:
     }
 
     /// @brief Get writable access to the underlaying container.
-    /// @return Reference to the underlying container.
+    /// @return Pointer to the underlying container.
     value_type* data() {
         return _container.data();
     }
@@ -273,7 +294,13 @@ public:
     /// @brief Get writable access to the underlaying container.
     /// @return Reference to the underlying container.
     Span<value_type> get() {
-        return {_container.data(), 1};
+        return {_container.data(), _container.size()};
+    }
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() {
+        return _container.size();
     }
 
 private:
@@ -306,7 +333,7 @@ public:
     /// @brief Get writable access to the underlaying container.
     /// @return Reference to the underlying container.
     Span<value_type> get() {
-        return {_container.data(), 1};
+        return {_container.data(), _container.size()};
     }
 
     /// @brief Get writable access to the underlaying container.
@@ -323,8 +350,49 @@ public:
         return std::move(_container);
     }
 
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() {
+        return _container.size();
+    }
+
 private:
     Container _container; ///< Container which holds the actual data.
+};
+
+/// @brief Encapsulates the recv count in a collective operation.
+/// @tparam Value type or reference type, depending on whether this is an input- our output parameter.
+template <typename T>
+class RecvCount {
+public:
+    static_assert(
+        std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, int>,
+        "Underlaying recv count value type must be int.");
+
+    static constexpr ParameterType parameter_type =
+        ParameterType::recv_count; ///< The tag of the parameter that this object encapsulates.
+    static constexpr bool is_modifiable =
+        !std::is_const_v<T> && std::is_reference_v<T>; ///< Whether this is an input parameter or an output parameter.
+
+    /// @brief Constructor for encapsulated recv count.
+    /// @param recv_count Encapsulated recv count.
+    RecvCount(T recv_count) : _recv_count{recv_count} {}
+
+    /// @brief Returns the encapsulated recv count.
+    /// @returns The encapsulated recv count.
+    int recv_count() const {
+        return _recv_count;
+    }
+
+    /// @brief Updates the recv count (only if used to wrap an output parameter).
+    /// @param recv_count New recv count.
+    template <bool modifiable = is_modifiable, std::enable_if_t<modifiable, bool> = true>
+    void set_recv_count(int const recv_count) {
+        _recv_count = recv_count;
+    }
+
+private:
+    T _recv_count; ///< Encapsulated recv count.
 };
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.

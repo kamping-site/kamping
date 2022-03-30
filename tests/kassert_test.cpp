@@ -13,8 +13,9 @@
 
 // Overwrite build option and set assertion level to normal
 #undef KAMPING_ASSERTION_LEVEL
-#define KAMPING_ASSERTION_LEVEL kamping::assert::normal
+#define KAMPING_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_NORMAL
 
+#include "helpers_for_testing.hpp"
 #include "kamping/kassert.hpp"
 
 #include <gmock/gmock.h>
@@ -39,6 +40,20 @@ TEST(KassertTest, kassert_overloads_compile) {
         "__false_is_false_3__");
     EXPECT_EXIT({ KASSERT(false, "__false_is_false_2__"); }, KilledBySignal(SIGABRT), "__false_is_false_2__");
     EXPECT_EXIT({ KASSERT(false); }, KilledBySignal(SIGABRT), "");
+}
+
+TEST(KassertTestingHelperTest, kassert_testing_helper) {
+    auto failing_function = [] {
+        KASSERT(false, "__false_is_false_1__");
+    };
+
+    // Pass a single function call to the macro.
+    EXPECT_KASSERT_FAILS(failing_function(), "__false_is_false_1");
+    ASSERT_KASSERT_FAILS(failing_function(), "__false_is_false_1");
+
+    // Pass a code block to the macro.
+    EXPECT_KASSERT_FAILS({ failing_function(); }, "__false_is_false_1");
+    ASSERT_KASSERT_FAILS({ failing_function(); }, "__false_is_false_1");
 }
 
 // Since we explicitly set the assertion level to normal, heavier assertions should not trigger.
