@@ -71,6 +71,19 @@ TEST(ScatterTest, scatter_single_element_with_recv_count) {
     EXPECT_EQ(result.front(), comm.rank());
 }
 
+TEST(ScatterTest, scatter_extract_recv_count) {
+    Communicator comm;
+
+    auto const input = create_input_vector_on_root(comm, 1);
+
+    EXPECT_EQ(comm.scatter(send_buf(input)).extract_recv_count(), 1);
+    EXPECT_EQ(comm.scatter(send_buf(input), recv_count(1)).extract_recv_count(), 1);
+
+    int recv_count_value;
+    EXPECT_EQ(comm.scatter(send_buf(input), recv_count_out(recv_count_value)).extract_recv_count(), 1);
+    EXPECT_EQ(recv_count_value, 1);
+}
+
 TEST(ScatterTest, scatter_multiple_elements) {
     int const elements_per_pe = 4;
 
