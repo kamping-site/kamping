@@ -18,6 +18,7 @@
 #include "helpers_for_testing.hpp"
 #include "kamping/parameter_objects.hpp"
 
+using namespace ::kamping;
 using namespace ::kamping::internal;
 
 // Tests the basic functionality of ContainerBasedConstBuffer (i.e. its only public function get())
@@ -165,4 +166,24 @@ TEST(SingleElementConstBufferTest, get_basics) {
     EXPECT_FALSE(int_buffer.is_modifiable);
 
     static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
+}
+
+TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
+    std::vector<int>        data(20, 0);
+    Span<int>               container = {data.data(), data.size()};
+    constexpr ParameterType ptype     = ParameterType::send_counts;
+
+    UserAllocatedContainerBasedBuffer<Span<int>, ptype> span_buffer(container);
+
+    for (size_t i = 0; i <= 20; ++i) {
+        span_buffer.resize(i);
+        EXPECT_EQ(20, span_buffer.size());
+    }
+
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> vec_buffer(data);
+
+    for (size_t i = 0; i <= 20; ++i) {
+        vec_buffer.resize(i);
+        EXPECT_EQ(i, vec_buffer.size());
+    }
 }

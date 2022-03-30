@@ -213,12 +213,20 @@ public:
     /// param container Container providing storage for data that may be written.
     UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
 
-    /// @brief Request memory sufficient to hold \c size elements of \c value_type.
+    /// @brief Request memory sufficient to hold at least \c size elements of \c value_type if the \c Container is not a
+    /// \c Span.
     ///
-    /// If the underlying container does not provide enough it will be resized.
+    /// If the underlying container does not provide enough memory it will be resized. If the container is of type \c
+    /// Span, KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// is \c KASSERTed that the memory provided by the span is sufficient.
+    ///
     /// @param size Number of elements for which memory is requested.
     void resize(size_t size) {
-        _container.resize(size);
+        if constexpr (!std::is_same_v<Container, Span<value_type>>) {
+            _container.resize(size);
+        } else {
+            KASSERT(_container.size() >= size, "Span cannot be resized and is smaller than the requested size.");
+        }
     }
 
     /// @brief Get writable access to the underlaying container.
@@ -258,12 +266,20 @@ public:
     /// @brief Constructor for LibAllocatedContainerBasedBuffer.
     LibAllocatedContainerBasedBuffer() {}
 
-    /// @brief Request memory sufficient to hold at least \c size elements of \c value_type.
+    /// @brief Request memory sufficient to hold at least \c size elements of \c value_type if the \c Container is not a
+    /// \c Span.
     ///
-    /// If the underlying container does not provide enough memory it will be resized.
+    /// If the underlying container does not provide enough memory it will be resized. If the container is of type \c
+    /// Span, KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// is \c KASSERTed that the memory provided by the span is sufficient.
+    ///
     /// @param size Number of elements for which memory is requested.
     void resize(size_t size) {
-        _container.resize(size);
+        if constexpr (!std::is_same_v<Container, Span<value_type>>) {
+            _container.resize(size);
+        } else {
+            KASSERT(_container.size() >= size, "Span cannot be resized and is smaller than the requested size.");
+        }
     }
 
     /// @brief Get writable access to the underlaying container.
