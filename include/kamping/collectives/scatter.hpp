@@ -54,7 +54,7 @@ public:
     ///
     /// @tparam Args Deduced template parameters.
     /// @param args Required and optionally optional parameters.
-    /// @return Result type wrapping the output buffer if not specified as an input parameter.
+    /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
     template <typename... Args>
     auto scatter(Args&&... args) {
         static_assert(
