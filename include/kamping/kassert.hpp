@@ -664,7 +664,7 @@ constexpr bool assertion_enabled(int level) {
 }
 
 /// @brief Checks if a assertion of the given level is enabled. This is controlled by the CMake option
-/// \c KAMPING_ASSERTION_LEVEL. This is the macro version of assertion_enabled for us in the preprocessor.
+/// \c KAMPING_ASSERTION_LEVEL. This is the macro version of assertion_enabled for use in the preprocessor.
 /// @param level The level of the assertion.
 /// @return Whether the assertion is enabled.
 #define ASSERTION_ENABLED(level) level <= KAMPING_ASSERTION_LEVEL
