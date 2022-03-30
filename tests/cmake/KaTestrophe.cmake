@@ -115,7 +115,7 @@ if (NOT DEFINED KATESTROPHE_INCLUDED)
 
     # the file should compile without any section enabled
     add_executable(${KATESTROPHE_TARGET} ${KATESTROPHE_FILES})
-    target_link_libraries(${KATESTROPHE_TARGET} PUBLIC ${KATESTROPHE_LIBRARIES})
+    target_link_libraries(${KATESTROPHE_TARGET} PUBLIC gtest ${KATESTROPHE_LIBRARIES})
 
     # For each given section, add a target.
     foreach(SECTION ${KATESTROPHE_SECTIONS})
@@ -124,7 +124,7 @@ if (NOT DEFINED KATESTROPHE_INCLUDED)
 
       # Add the executable and link the libraries.
       add_executable(${THIS_TARGETS_NAME} ${KATESTROPHE_FILES})
-      target_link_libraries(${THIS_TARGETS_NAME} PUBLIC ${KATESTROPHE_LIBRARIES})
+      target_link_libraries(${THIS_TARGETS_NAME} PUBLIC gtest ${KATESTROPHE_LIBRARIES})
 
       # Select the correct section of the target by setting the appropriate preprocessor define.
       target_compile_definitions(${THIS_TARGETS_NAME} PRIVATE ${SECTION})

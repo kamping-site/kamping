@@ -66,11 +66,11 @@ public:
         auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
             std::tuple(this->underlying().root()), args...);
 
-        auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
-        auto  send_buf        = send_buf_param.get();
+        const auto& send_buf  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+        using default_recv_value_type = std::remove_const_t<send_value_type>;
 
-        using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
+        using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
         auto&& recv_buf =
             internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
                 std::tuple(), args...);
@@ -81,17 +81,19 @@ public:
 
         // Check parameters
         static_assert(
-            std::is_same_v<send_value_type, recv_value_type>, "Types of send and receive buffers do not match.");
+            std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
+            "Types of send and receive buffers do not match.");
         MPI_Datatype type = mpi_datatype<send_value_type>();
 
         KASSERT(this->underlying().is_valid_rank(root.rank()), "The provided root rank is invalid.");
 
         send_value_type* recv_buf_ptr = nullptr;
         if (this->underlying().rank() == root.rank()) {
-            recv_buf_ptr = recv_buf.get_ptr(send_buf.size);
+            recv_buf.resize(send_buf.size());
+            recv_buf_ptr = recv_buf.data();
         }
         [[maybe_unused]] int err = MPI_Reduce(
-            send_buf.ptr, recv_buf_ptr, asserting_cast<int>(send_buf.size), type, operation.op(), root.rank(),
+            send_buf.data(), recv_buf_ptr, asserting_cast<int>(send_buf.size()), type, operation.op(), root.rank(),
             this->underlying().mpi_communicator());
 
         THROW_IF_MPI_ERROR(err, MPI_Reduce);

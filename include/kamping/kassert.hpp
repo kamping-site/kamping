@@ -254,22 +254,40 @@ namespace assert {
 /// @{
 
 /// @brief Assertion level for exceptions if exception mode is disabled.
-constexpr int kthrow = 1;
+#define KAMPING_ASSERTION_LEVEL_KTHROW 1
+
+/// @brief Assertion level for exceptions if exception mode is disabled.
+constexpr int kthrow = KAMPING_ASSERTION_LEVEL_KTHROW;
 
 /// @brief Assertion level for lightweight assertions.
-constexpr int light = 2;
+#define KAMPING_ASSERTION_LEVEL_LIGHT 2
+
+/// @brief Assertion level for lightweight assertions.
+constexpr int light = KAMPING_ASSERTION_LEVEL_LIGHT;
 
 /// @brief Default assertion level. This level is used if no assertion level is specified.
-constexpr int normal = 3;
+#define KAMPING_ASSERTION_LEVEL_NORMAL 3
+
+/// @brief Default assertion level. This level is used if no assertion level is specified.
+constexpr int normal = KAMPING_ASSERTION_LEVEL_NORMAL;
 
 /// @brief Assertions that perform lightweight communication.
-constexpr int light_communication = 4;
+#define KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION 4
+
+/// @brief Assertions that perform lightweight communication.
+constexpr int light_communication = KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION;
 
 /// @brief Assertions that perform heavyweight communication.
-constexpr int heavy_communication = 5;
+#define KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION 5
+
+/// @brief Assertions that perform heavyweight communication.
+constexpr int heavy_communication = KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION;
 
 /// @brief Assertion level for heavyweight assertions.
-constexpr int heavy = 6;
+#define KAMPING_ASSERTION_LEVEL_HEAVY 6
+
+/// @brief Assertion level for heavyweight assertions.
+constexpr int heavy = KAMPING_ASSERTION_LEVEL_HEAVY;
 
 /// @}
 } // namespace assert
@@ -644,6 +662,12 @@ namespace internal {
 constexpr bool assertion_enabled(int level) {
     return level <= KAMPING_ASSERTION_LEVEL;
 }
+
+/// @brief Checks if a assertion of the given level is enabled. This is controlled by the CMake option
+/// \c KAMPING_ASSERTION_LEVEL. This is the macro version of assertion_enabled for use in the preprocessor.
+/// @param level The level of the assertion.
+/// @return Whether the assertion is enabled.
+#define ASSERTION_ENABLED(level) level <= KAMPING_ASSERTION_LEVEL
 
 /// @brief Evaluates an assertion expression. If the assertion fails, prints an error describing the failed assertion.
 /// @param type Actual type of this check. In exception mode, this parameter has always value \c ASSERTION, otherwise

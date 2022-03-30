@@ -39,7 +39,8 @@ void test_recv_buffer_in_MPIResult() {
     auto recv_buffer = recv_buf(kamping::NewContainer<UnderlyingContainer>{});
     static_assert(std::is_integral_v<typename decltype(recv_buffer)::value_type>, "Use integral Types in this test.");
 
-    int* ptr = recv_buffer.get_ptr(10);
+    recv_buffer.resize(10);
+    int* ptr = recv_buffer.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
         std::move(recv_buffer), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
@@ -58,7 +59,8 @@ void test_recv_counts_in_MPIResult() {
     auto recv_counts = recv_counts_out(NewContainer<UnderlyingContainer>{});
     static_assert(std::is_integral_v<typename decltype(recv_counts)::value_type>, "Use integral Types in this test.");
 
-    int* ptr = recv_counts.get_ptr(10);
+    recv_counts.resize(10);
+    int* ptr = recv_counts.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
         BufferCategoryNotUsed{}, std::move(recv_counts), BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
@@ -90,7 +92,8 @@ void test_recv_displs_in_MPIResult() {
     auto recv_displs = recv_displs_out(NewContainer<UnderlyingContainer>{});
     static_assert(std::is_integral_v<typename decltype(recv_displs)::value_type>, "Use integral Types in this test.");
 
-    int* ptr = recv_displs.get_ptr(10);
+    recv_displs.resize(10);
+    int* ptr = recv_displs.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
         BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, std::move(recv_displs),
@@ -109,7 +112,8 @@ void test_send_displs_in_MPIResult() {
     auto send_displs = send_displs_out(NewContainer<UnderlyingContainer>{});
     static_assert(std::is_integral_v<typename decltype(send_displs)::value_type>, "Use integral Types in this test.");
 
-    int* ptr = send_displs.get_ptr(10);
+    send_displs.resize(10);
+    int* ptr = send_displs.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
         BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
