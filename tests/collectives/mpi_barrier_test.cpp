@@ -78,15 +78,21 @@ TEST(BarrierTest, barrier) {
         ASSERT_TRUE(test_failed);
 
         // Even with this empirically determined sleep duration, we still get some false-negative test results for a
-        // valid barrier implementation. As this test can't be false positive, we can re-run it a given number of times
-        // or until it succeeds to get more reliable results. (See also the comment marked with ! above.)
-        const uint32_t max_tries      = 8;
-        bool           test_succeeded = false;
-        for (uint32_t i = 0; i < max_tries && !test_succeeded; ++i) {
-            test_succeeded = test_the_barrier([&comm] { comm.barrier(); }, sleep_for_ms);
-            MPI_Barrier(MPI_COMM_WORLD);
+        // valid barrier implementation. If the scheduler pauses all non-root processes for longer than sleep_for_ms,
+        // between starting the time measurement and entering the (broken) barrier, this test will yield a
+        // false-positive. We therefore perform multiple iterations of this test, and then accept or deny the barrier
+        // implementation depending on if more tests succeeded or failed.
+        const uint32_t num_tries          = 9;
+        uint32_t       num_test_succeeded = 0;
+        uint32_t       num_test_failed    = 0;
+        for (uint32_t i = 0; i < num_tries; ++i) {
+            if (test_the_barrier([&comm] { comm.barrier(); }, sleep_for_ms)) {
+                ++num_test_succeeded;
+            } else {
+                ++num_test_failed;
+            }
         }
-        EXPECT_TRUE(test_succeeded);
+        EXPECT_GT(num_test_succeeded, num_test_failed);
 
         // This will not correctly detect all broken barrier implementations; e.g. the following would pass:
         // [] { std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms)); }
