@@ -33,7 +33,7 @@ TEST(BarrierTest, barrier) {
         //! cause this test to fail, even for a valid barrier implementation.
         auto start = std::chrono::high_resolution_clock::now();
 
-        // The root process sleeps for a predefined amount of time, before entering the barrier.
+        // The root process sleeps for a predefined amount of time before entering the barrier.
         if (comm.is_root()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
         }
@@ -41,7 +41,7 @@ TEST(BarrierTest, barrier) {
 
         barrierImpl();
 
-        // All processes check, if they spent at least the amount of time the root process slept inside the barrier.
+        // All processes check if they spent at least the amount of time the root process slept inside the barrier.
         auto end                 = std::chrono::high_resolution_clock::now();
         auto time_diff           = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         bool i_slept_long_enough = time_diff >= sleep_for_ms;
@@ -59,13 +59,13 @@ TEST(BarrierTest, barrier) {
         return everyone_slept_long_enough;
     };
 
-    // On a single rank, there is no such thing as an _invalid_ barrier implementation (expect something that crashes,
+    // On a single rank, there is no such thing as an _invalid_ barrier implementation (expect when something crashes,
     // deadlocks, or does not compile).
     if (comm.size() == 1) {
-        // Test that our barrier() compiles, does crash, and doesnot deadlock.
+        // Test that our barrier() compiles, does not crash, and does not deadlock.
         EXPECT_TRUE(test_the_barrier([&comm]() { comm.barrier(); }, 10));
     } else {
-        // If the scheduling is such, that the non-root processes are not scheduled for longer than the root process
+        // If the scheduling is such that the non-root processes are not scheduled for longer than the root process
         // sleep()s, a broken barrier implementation might yield a false positive. We therefore have to test multiple
         // sleep durations until the test fails.
         bool test_failed  = false;
