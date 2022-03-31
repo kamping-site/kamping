@@ -51,7 +51,7 @@
 #define KAMPING_OPTIONAL_PARAMETERS(...) , ##__VA_ARGS__
 
 /// @brief Assertion macro that checks if passed parameters are correct, i.e., all parameter types are unique, all
-/// required parameters are provided, and on unused parameter is passed. Also checks that all parameter types are
+/// required parameters are provided, and no unused parameter is passed. Also checks that all parameter types are
 /// r-value references.
 ///
 /// The \c REQUIRED parameter should be passed as \c KAMPING_REQUIRED_PARAMETERS and the \c OPTIONAL parameter should be
