@@ -22,7 +22,7 @@
 /// The modifiable buffers:
 /// - UserAllocatedContainerBasedBuffer
 /// - UserAllocatedUniquePtrBasedBuffer
-/// - LibAllocatedUniquePtrBasedBuffer
+/// - LibAllocatedContainerBasedBuffer
 /// - LibAllocatedUniquePtrBasedBuffer
 /// - MovedContainerBasedBuffer
 /// provide memory to store the result of \c MPI calls and (intermediate information needed to complete an \c MPI call
@@ -39,6 +39,7 @@
 
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
+#include "kamping/span.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -57,30 +58,6 @@ struct NewPtr {};
 
 namespace internal {
 
-
-///
-/// @brief Object referring to a contiguous sequence of size objects.
-///
-/// Since KaMPI.ng needs to be C++17 compatible and std::span is part of C++20, we need our own implementation of the
-/// above-described functionality.
-/// @tparam T type for which the span is defined.
-template <typename T>
-struct Span {
-    using value_type = T; ///< Value type of the underlying pointer
-    const T* ptr;         ///< Pointer to the data referred to by Span.
-    size_t   size;        ///< Number of elements of type T referred to by Span.
-
-    /// @brief Get access to the underlying read-only memory.
-    ///
-    /// While the data can be accessed directly using the member, this member function provides a more STL-like
-    /// interface.
-    /// @return Pointer to the underlying read-only memory.
-    T const* data() const {
-        return ptr;
-    }
-};
-
-
 //@todo enable once the tests have been written
 ///// @brief Constant buffer based on a pointer.
 /////
@@ -97,8 +74,8 @@ struct Span {
 //
 //     PtrBasedConstBuffer(const T* ptr, size_t size) : _span{ptr, size} {}
 //
-//     ///@brief Get access to the underlying read-only storage.
-//     ///@return Span referring to the underlying read-only storage.
+//     /// @brief Get access to the underlying read-only storage.
+//     /// @return Span referring to the underlying read-only storage.
 //     Span<T> get() const {
 //         return _span;
 //     }
@@ -126,12 +103,29 @@ public:
 
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
-    Span<value_type> get() const {
+    Span<const value_type> get() const {
         return {std::data(_container), _container.size()};
     }
 
 private:
     const Container& _container; ///< Container which holds the actual data.
+};
+
+/// @brief Empty buffer that can be used as default argument for optional buffer parameters.
+/// @tparam ParameterType Parameter type represented by this pseudo buffer.
+template <typename Data, ParameterType type>
+class EmptyBuffer {
+public:
+    static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable =
+        false;               ///< This pseudo buffer is not modifiable since it represents no actual buffer.
+    using value_type = Data; ///< Value type of the buffer.
+
+    /// @brief Returns a span containing a nullptr.
+    /// @return Span containing a nullptr.
+    Span<value_type> get() const {
+        return {nullptr, 0};
+    }
 };
 
 /// @brief Constant buffer for a single type, i.e., not a container.
@@ -153,12 +147,43 @@ public:
 
     /// @brief Get access to the underlaying read-only value.
     /// @return Span referring to the underlying read-only storage.
-    Span<value_type> get() const {
+    Span<const value_type> get() const {
         return {&_element, 1};
     }
 
 private:
     DataType const& _element; ///< Reference to the actual data.
+};
+
+/// @brief Buffer based on a single element type that has been allocated by the user.
+///
+/// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by the
+/// user.
+/// @tparam DataType Type of the element wrapped.
+/// @tparam ParameterType parameter type represented by this buffer.
+template <typename DataType, ParameterType type>
+class SingleElementModifiableBuffer {
+public:
+    static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable  = true; ///< Indicates whether the underlying storage is modifiable.
+    using value_type                              = DataType; ///< Value type of the buffer.
+
+    /// @brief Constructor for SingleElementConstBuffer.
+    /// @param element Element holding that is wrapped.
+    SingleElementModifiableBuffer(DataType& element) : _element(element) {
+        static_assert(
+            !std::is_const_v<DataType>,
+            "The underlying data type of a SingleElementModifiableBuffer must not be const.");
+    }
+
+    /// @brief Get writable access to the underlaying value.
+    /// @return Reference to the underlying storage.
+    Span<value_type> get() const {
+        return {&_element, 1};
+    }
+
+private:
+    DataType& _element; ///< (Writable) reference to the actual data.
 };
 
 /// @brief Struct containing some definitions used by all modifiable buffers.
@@ -184,18 +209,43 @@ class UserAllocatedContainerBasedBuffer : public BufferParameterType<parameter_t
 public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
 
-    ///@brief Constructor for UserAllocatedContainerBasedBuffer.
+    /// @brief Constructor for UserAllocatedContainerBasedBuffer.
     /// param container Container providing storage for data that may be written.
     UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
 
-    ///@brief Request memory sufficient to hold \c size elements of \c value_type.
+    /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
+    /// a \c Span.
     ///
-    /// If the underlying container does not provide enough it will be resized.
-    ///@param size Number of elements for which memory is requested.
-    ///@return Pointer to container of size \c size.
-    value_type* get_ptr(size_t size) {
-        _container.resize(size);
+    /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
+    /// Span,  KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
+    /// is  copied depends in the implementation of the container.
+    ///
+    /// @param size Size the container is resized to if it is not a \c Span.
+    void resize(size_t size) {
+        if constexpr (!std::is_same_v<Container, Span<value_type>>) {
+            _container.resize(size);
+        } else {
+            KASSERT(_container.size() >= size, "Span cannot be resized and is smaller than the requested size.");
+        }
+    }
+
+    /// @brief Get writable access to the underlaying container.
+    /// @return Pointer to the underlying container.
+    value_type* data() {
         return _container.data();
+    }
+
+    /// @brief Get writable access to the underlaying container.
+    /// @return Reference to the underlying container.
+    Span<value_type> get() {
+        return {_container.data(), _container.size()};
+    }
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() {
+        return _container.size();
     }
 
 private:
@@ -213,42 +263,110 @@ template <typename Container, ParameterType type>
 class LibAllocatedContainerBasedBuffer : public BufferParameterType<type> {
 public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
-    ///@brief Constructor for LibAllocatedContainerBasedBuffer.
-    ///
+
+    /// @brief Constructor for LibAllocatedContainerBasedBuffer.
     LibAllocatedContainerBasedBuffer() {}
 
-    ///@brief Request memory sufficient to hold at least \c size elements of \c value_type.
+    /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
+    /// a \c Span.
     ///
-    /// If the underlying container does not provide enough memory it will be resized.
-    ///@param size Number of elements for which memory is requested.
-    ///@return Pointer to enough memory for \c size elements of type \c value_type.
-    value_type* get_ptr(size_t size) {
-        _container.resize(size);
-        return std::data(_container);
+    /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
+    /// Span,  KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
+    /// is  copied depends in the implementation of the container.
+    ///
+    /// @param size Size the container is resized to if it is not a \c Span.
+    void resize(size_t size) {
+        if constexpr (!std::is_same_v<Container, Span<value_type>>) {
+            _container.resize(size);
+        } else {
+            KASSERT(_container.size() >= size, "Span cannot be resized and is smaller than the requested size.");
+        }
     }
 
-    ///@brief Extract the underlying container. This will leave LibAllocatedContainerBasedBuffer in an unspecified
+    /// @brief Get writable access to the underlaying container.
+    /// @return Reference to the underlying container.
+    Span<value_type> get() {
+        return {_container.data(), _container.size()};
+    }
+
+    /// @brief Get writable access to the underlaying container.
+    /// @return Reference to the underlying container.
+    value_type* data() {
+        return _container.data();
+    }
+
+    /// @brief Extract the underlying container. This will leave LibAllocatedContainerBasedBuffer in an unspecified
     /// state.
     ///
-    ///@return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
+    /// @return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
     Container extract() {
         return std::move(_container);
+    }
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() {
+        return _container.size();
     }
 
 private:
     Container _container; ///< Container which holds the actual data.
 };
 
-///@brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
+/// @brief Encapsulates the recv count in a collective operation.
+/// @tparam Value type or reference type, depending on whether this is an input- our output parameter.
+template <typename T>
+class RecvCount {
+public:
+    static_assert(
+        std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, int>,
+        "Underlaying recv count value type must be int.");
+
+    static constexpr ParameterType parameter_type =
+        ParameterType::recv_count; ///< The tag of the parameter that this object encapsulates.
+    static constexpr bool is_modifiable =
+        !std::is_const_v<T> && std::is_reference_v<T>; ///< Whether this is an input parameter or an output parameter.
+
+    /// @brief Constructor for encapsulated recv count.
+    /// @param recv_count Encapsulated recv count.
+    RecvCount(T recv_count) : _recv_count{recv_count} {}
+
+    /// @brief Returns the encapsulated recv count.
+    /// @returns The encapsulated recv count.
+    int recv_count() const {
+        return _recv_count; // type of _recv_count is always based on int
+    }
+
+    /// @brief Updates the recv count (only if used to wrap an output parameter).
+    /// @param recv_count New recv count.
+    template <bool modifiable = is_modifiable, std::enable_if_t<modifiable, bool> = true>
+    void set_recv_count(int const recv_count) {
+        _recv_count = recv_count;
+    }
+
+    /// @brief Returns the encapsulated recv count. To be used when the receive count is part of MPIResult.
+    /// @return The encapsulate recv count.
+    int extract() const {
+        return _recv_count; // type of _recv_count is always based on int
+    }
+
+private:
+    T _recv_count; ///< Encapsulated recv count.
+};
+
+/// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
 class Root {
 public:
     static constexpr ParameterType parameter_type =
         ParameterType::root; ///< The type of parameter this object encapsulates.
-    ///@ Constructor for Root.
-    ///@param rank Rank of the root PE.
+
+    /// @ Constructor for Root.
+    /// @param rank Rank of the root PE.
     Root(int rank) : _rank{rank} {}
-    ///@brief Returns the rank of the root.
-    ///@returns Rank of the root.
+
+    /// @brief Returns the rank of the root.
+    /// @returns Rank of the root.
     int rank() const {
         return _rank;
     }
@@ -258,24 +376,26 @@ private:
 };
 
 
-///@brief Parameter wrapping an operation passed to reduce-like MPI collectives.
+/// @brief Parameter wrapping an operation passed to reduce-like MPI collectives.
 /// This wraps an MPI operation without the argument of the operation specified. This enables the user to construct such
 /// wrapper using the parameter factory \c kamping::op without passing the type of the operation.
 /// The library developer may then construct the actual operation wrapper with a given type later.
 ///
-///@tparam Op type of the operation (may be a function object or a lambda)
-///@tparam Commutative tag specifying if the operation is commutative
+/// @tparam Op type of the operation (may be a function object or a lambda)
+/// @tparam Commutative tag specifying if the operation is commutative
 template <typename Op, typename Commutative>
 class OperationBuilder {
 public:
     static constexpr ParameterType parameter_type =
         ParameterType::op; ///< The type of parameter this object encapsulates.
-    ///@brief constructs an Operation builder
-    ///@param op the operation
-    ///@param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
+
+    /// @brief constructs an Operation builder
+    /// @param op the operation
+    /// @param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
     OperationBuilder(Op&& op, Commutative commutative_tag [[maybe_unused]]) : _op(op) {}
-    ///@brief constructs an operation for the given type T
-    ///@tparam T argument type of the reduction operation
+
+    /// @brief constructs an operation for the given type T
+    /// @tparam T argument type of the reduction operation
     template <typename T>
     [[nodiscard]] auto build_operation() {
         static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");

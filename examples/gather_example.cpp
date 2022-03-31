@@ -23,15 +23,14 @@
 
 int main() {
     using namespace kamping;
-
     MPI_Init(NULL, NULL);
-    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
-    Communicator     comm;
-    std::vector<int> input(asserting_cast<size_t>(comm.size()));
+    kamping::Communicator comm;
+    std::vector<int>      input(asserting_cast<size_t>(comm.size()));
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> output;
 
-    comm.alltoall(send_buf(input), recv_buf(output));
+    comm.gather(send_buf(input), recv_buf(output), root(0));
+
     print_result_on_root(output, comm);
 
     MPI_Finalize();

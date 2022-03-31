@@ -63,6 +63,28 @@ TODO \@Demian \@Matthias: Rules for API
 * Use the `KASSERT()` macro with the appropriate assertion level to validate the internal state of your code or user supplied data.
 * Use the `THROW_IF_MPI_ERROR()` macro for MPI errors.
 
+# Short-circuit evaluation in KASSERT() macros
+Since we overload the `&&` and `||` operators, `KASSERT` cannot short circuit assertion expressions.
+This can lead to unexpected behaviour, for instance:
+
+```cpp
+KASSERT(ptr != nullptr && ptr->check_sth()); // might seg fault if ptr == nullptr
+// or
+KASSERT(!pe_is_root() || [&]{
+    KASSERT(/* Stuff that matters only on root. */);
+}()); // The lambda is evaluated on *all* PEs.
+```
+
+This is impossible to fix since C++ does not allow us to overload the `&&` and `||` operators while preserving short-circuit evaluation.
+Therefore, it is not allowed to write
+```cpp
+KASSERT(false && true);
+```
+Instead, add an extra pair of parenthesis:
+```cpp
+KASSERT((false && true));
+```
+
 # Warnings
 Code *should* compile with `clang` and `gcc` (not `icc`) without warning with the warning flags given below. If you want to submit code which throws warnings, at least two other persons have to agree. Possible reasons for this are: False-positive warnings.
 
