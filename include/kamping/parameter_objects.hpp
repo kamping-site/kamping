@@ -216,10 +216,10 @@ public:
     /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
     /// a \c Span.
     ///
-    /// This function calls \c resize on the container if the container is of type \c
-    /// Span. Then KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case
-    /// it is \c KASSERTed that the memory provided by the span is sufficient. If new memory is allocated and/or data is
-    /// copied depends in the implementation of the container.
+    /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
+    /// Span,  KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
+    /// is  copied depends in the implementation of the container.
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
     void resize(size_t size) {
@@ -270,10 +270,10 @@ public:
     /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
     /// a \c Span.
     ///
-    /// This function calls \c resize on the container if the container is of type \c
-    /// Span. Then KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case
-    /// it is \c KASSERTed that the memory provided by the span is sufficient. If new memory is allocated and/or data is
-    /// copied depends in the implementation of the container.
+    /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
+    /// Span,  KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
+    /// is  copied depends in the implementation of the container.
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
     void resize(size_t size) {
