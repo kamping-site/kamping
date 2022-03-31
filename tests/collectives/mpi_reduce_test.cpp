@@ -11,11 +11,11 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../helpers_for_testing.hpp"
+
 #include <gtest/gtest.h>
 
-#include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
-
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -147,7 +147,6 @@ TEST(ReduceTest, reduce_builtin_op_on_non_builtin_type) {
         EXPECT_EQ(result.size(), 0);
     }
 }
-
 
 int add_plus_42_function(int const& lhs, int const& rhs) {
     return lhs + rhs + 42;

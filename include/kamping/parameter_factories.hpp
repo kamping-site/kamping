@@ -76,7 +76,6 @@ auto send_buf(const Data& data) {
     }
 }
 
-
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
 /// and the root() of the operation.
 ///

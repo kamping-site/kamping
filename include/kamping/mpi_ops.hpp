@@ -24,7 +24,6 @@
 
 #include "kamping/mpi_datatype.hpp"
 
-
 namespace kamping {
 namespace internal {
 
@@ -140,7 +139,6 @@ struct logical_xor_impl<void> {
 /// to.
 namespace ops {
 
-
 /// @brief builtin maximum operation (aka `MPI_MAX`)
 template <typename T = void>
 using max = kamping::internal::max_impl<T>;
@@ -198,7 +196,6 @@ struct undefined_commutative_tag {};
 
 namespace internal {
 
-
 #ifdef KAMPING_DOXYGEN_ONLY
 /// @brief Type trait for checking whether a functor is a builtin MPI reduction operation and query corresponding \c
 /// MPI_Op.
@@ -239,7 +236,6 @@ template <typename Op, typename T, typename Enable = void>
 struct mpi_operation_traits {
     static constexpr bool is_builtin = false;
 };
-
 
 template <typename T, typename S>
 struct mpi_operation_traits<
@@ -412,7 +408,6 @@ public:
 private:
     MPI_Op _mpi_op; ///< the \c MPI_Op referencing the user defined operation
 };
-
 
 /// @brief Wrapper for a user defined reduction operation based on a function pointer.
 ///

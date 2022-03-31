@@ -32,7 +32,6 @@ struct DefaultArgument {
     std::string _message;
 };
 
-
 } // namespace kamping
 
 int main() {

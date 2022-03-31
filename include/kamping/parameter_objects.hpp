@@ -34,8 +34,9 @@
 
 #include <cstddef>
 #include <memory>
-#include <mpi.h>
 #include <type_traits>
+
+#include <mpi.h>
 
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
@@ -374,7 +375,6 @@ public:
 private:
     int _rank; ///< Rank of the root PE.
 };
-
 
 /// @brief Parameter wrapping an operation passed to reduce-like MPI collectives.
 /// This wraps an MPI operation without the argument of the operation specified. This enables the user to construct such

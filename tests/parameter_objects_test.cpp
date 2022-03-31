@@ -11,11 +11,11 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "helpers_for_testing.hpp"
 #include <type_traits>
 
 #include <gtest/gtest.h>
 
-#include "helpers_for_testing.hpp"
 #include "kamping/parameter_objects.hpp"
 
 using namespace ::kamping;

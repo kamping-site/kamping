@@ -11,7 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-
 namespace kamping {
 
 /// @brief A span modeled after C++20's \c std::span.

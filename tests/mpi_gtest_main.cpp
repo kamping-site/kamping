@@ -8,8 +8,8 @@
  ******************************************************************************/
 
 #include "gtest-mpi-listener.hpp"
-#include "mpi.h"
 #include "gtest/gtest.h"
+#include "mpi.h"
 #include <stdexcept>
 
 int main(int argc, char** argv) {

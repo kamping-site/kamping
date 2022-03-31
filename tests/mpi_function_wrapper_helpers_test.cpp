@@ -11,11 +11,11 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "helpers_for_testing.hpp"
 #include <numeric>
 
 #include <gtest/gtest.h>
 
-#include "helpers_for_testing.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/parameter_factories.hpp"
 
@@ -125,7 +125,6 @@ void test_send_displs_in_MPIResult() {
 }
 } // namespace testing
 
-
 TEST(MpiResultTest, has_extract_v_basics) {
     static_assert(
         has_extract_v<testing::StructWithExtract>,
@@ -188,7 +187,6 @@ public:
         return this->underlying().root() * x;
     }
 };
-
 
 /// @brief Mixin for Changing the root
 template <class Communicator>

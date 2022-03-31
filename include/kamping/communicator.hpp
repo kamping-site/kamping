@@ -13,10 +13,11 @@
 
 #pragma once
 
+#include "error_handling.hpp"
 #include <cstdlib>
+
 #include <mpi.h>
 
-#include "error_handling.hpp"
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/gather.hpp"

@@ -12,14 +12,16 @@
 // <https://www.gnu.org/licenses/>.
 
 #include "helpers_for_examples.hpp"
+#include <iostream>
+#include <numeric>
+#include <vector>
+
+#include <mpi.h>
+
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
-#include <iostream>
-#include <mpi.h>
-#include <numeric>
-#include <vector>
 
 int main() {
     using namespace kamping;

@@ -11,10 +11,11 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../helpers_for_testing.hpp"
+
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
@@ -161,7 +162,6 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
     }
 }
 
-
 TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
     Communicator     comm;
     std::vector<int> values = {comm.rank(), comm.rank(), comm.rank(), comm.rank()};
@@ -264,7 +264,6 @@ TEST(GatherTest, gather_receive_custom_container) {
         EXPECT_EQ(result.size(), 0);
     }
 }
-
 
 TEST(GatherTest, gather_send_custom_container) {
     Communicator      comm;
