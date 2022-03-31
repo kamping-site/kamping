@@ -31,14 +31,21 @@ ConstructorInitializerAllOnOneLineOrOnePerLine: 'true'
 ConstructorInitializerIndentWidth: '4'
 ContinuationIndentWidth: '4'
 Cpp11BracedListStyle: 'true'
-IncludeBlocks: Preserve
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '".*\.hpp"'
+    Priority: 2
+  - Regex: '<.*\.(h|hpp)>'
+    Priority: 1
+  - Regex: '.*'
+    Priority: 0
 IndentCaseLabels: 'true'
 IndentPPDirectives: BeforeHash
 IndentWidth: '4'
 IndentWrappedFunctionNames: 'false'
 KeepEmptyLinesAtTheStartOfBlocks: 'false'
 Language: Cpp
-MaxEmptyLinesToKeep: '2'
+MaxEmptyLinesToKeep: '1'
 NamespaceIndentation: None
 PointerAlignment: Left
 ReflowComments: 'true'

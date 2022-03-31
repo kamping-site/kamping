@@ -13,9 +13,10 @@
 
 #pragma once
 
-#include <mpi.h>
 #include <tuple>
 #include <type_traits>
+
+#include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/kassert.hpp"

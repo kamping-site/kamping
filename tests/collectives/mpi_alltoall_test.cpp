@@ -12,12 +12,12 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <algorithm>
-#include <gtest/gtest.h>
 #include <numeric>
+
+#include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
-
 
 using namespace ::kamping;
 using namespace ::testing;

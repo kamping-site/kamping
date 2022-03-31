@@ -153,7 +153,6 @@ TYPED_TEST(TypedOperationsTest, user_defined_operation_is_not_builtin_unsupporte
     EXPECT_FALSE((kamping::internal::mpi_operation_traits<std::divides<>, T>::is_builtin));
 }
 
-
 TEST(OperationsTest, builtin_operations_on_unsupported_type) {
     // maximum/minimum
     EXPECT_FALSE((kamping::internal::mpi_operation_traits<kamping::ops::max<>, DummyType>::is_builtin));
