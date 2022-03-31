@@ -33,7 +33,7 @@ ContinuationIndentWidth: '4'
 Cpp11BracedListStyle: 'true'
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^"kamping/'
+  - Regex: '".*\.hpp"'
     Priority: 2
   - Regex: '<.*\.(h|hpp)>'
     Priority: 1

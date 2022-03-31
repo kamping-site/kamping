@@ -7,10 +7,11 @@
  *
  ******************************************************************************/
 
-#include "gtest-mpi-listener.hpp"
 #include "gtest/gtest.h"
 #include "mpi.h"
 #include <stdexcept>
+
+#include "gtest-mpi-listener.hpp"
 
 int main(int argc, char** argv) {
     // Filter out Google Test arguments

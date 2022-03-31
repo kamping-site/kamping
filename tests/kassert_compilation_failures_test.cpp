@@ -12,7 +12,6 @@
 // <https://www.gnu.org/licenses/>.
 
 #include "helpers_for_testing.hpp"
-
 #include "kamping/kassert.hpp"
 
 int main(int /* argc */, char** /* argv */) {
