@@ -7,9 +7,10 @@
  *
  ******************************************************************************/
 
-#include "gtest/gtest.h"
-#include "mpi.h"
 #include <stdexcept>
+
+#include <gtest/gtest.h>
+#include <mpi.h>
 
 #include "gtest-mpi-listener.hpp"
 
