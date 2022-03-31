@@ -34,9 +34,9 @@
 //
 // #define M(...)
 //
-// and call it as M(), we actually call it with one argument: the empty argument. But since we decide that to do with M
-// based on the number of arguments passed to it, we need a way to distinguish between "empty argument" and "1
-// argument".
+// and call it as M(), we actually call it with one argument: the empty argument. But since we decide what to do with M
+// based on the number of arguments passed to it, we need a way to distinguish between "1 empty argument" and "1
+// actual argument".
 //
 // Using this trick, "zero arguments" as in "1 argument, but empty" resolves to <empty>, while 1 actual argument
 // resolves to ", <argument>", i.e., 2 arguments.
