@@ -16,6 +16,7 @@
 #include <numeric>
 #include <vector>
 
+#include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
@@ -153,4 +154,37 @@ TEST(ScatterTest, scatter_with_recv_count_out) {
 
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(recv_count, 2);
+}
+
+TEST(ScatterTest, scatter_with_custom_sendbuf_and_type) {
+    Communicator comm;
+    struct Data {
+        int value;
+    };
+
+    ::testing::OwnContainer<Data> input(static_cast<std::size_t>(comm.size()));
+    if (comm.is_root()) {
+        for (int rank = 0; rank < comm.size(); ++rank) {
+            input[static_cast<std::size_t>(rank)].value = rank;
+        }
+    }
+
+    auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front().value, comm.rank());
+}
+
+TEST(ScatterTest, scatter_with_nonempty_sendbuf_on_non_root) {
+    Communicator comm;
+
+    std::vector<int> input(static_cast<std::size_t>(comm.size()));
+    for (int rank = 0; rank < comm.size(); ++rank) {
+        input[static_cast<std::size_t>(rank)] = rank;
+    }
+
+    auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
 }
