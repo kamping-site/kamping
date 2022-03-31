@@ -274,7 +274,7 @@ public:
     /// @brief Returns the encapsulated recv count.
     /// @returns The encapsulated recv count.
     int recv_count() const {
-        return _recv_count;
+        return _recv_count; // type of _recv_count is always based on int
     }
 
     /// @brief Updates the recv count (only if used to wrap an output parameter).
@@ -287,7 +287,7 @@ public:
     /// @brief Returns the encapsulated recv count. To be used when the receive count is part of MPIResult.
     /// @return The encapsulate recv count.
     int extract() const {
-        return _recv_count;
+        return _recv_count; // type of _recv_count is always based on int
     }
 
 private:
