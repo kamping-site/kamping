@@ -238,7 +238,6 @@ struct mpi_type_traits_impl<std::complex<long double>> : is_builtin_mpi_type_tru
     static constexpr TypeCategory category = TypeCategory::complex;
 };
 
-
 /// @brief wrapper for \c mpi_type_traits_impl which removes const and volatile qualifiers
 template <typename T>
 struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};

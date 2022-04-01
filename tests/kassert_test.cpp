@@ -15,10 +15,10 @@
 #undef KAMPING_ASSERTION_LEVEL
 #define KAMPING_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_NORMAL
 
+#include <gmock/gmock.h>
+
 #include "helpers_for_testing.hpp"
 #include "kamping/kassert.hpp"
-
-#include <gmock/gmock.h>
 
 using namespace ::testing;
 

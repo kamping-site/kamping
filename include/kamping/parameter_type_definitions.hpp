@@ -24,7 +24,6 @@ namespace internal {
 /// @addtogroup kamping_utility
 /// @{
 
-
 /// @brief Each input parameter to one of the \c MPI calls wrapped by KaMPI.ng needs to has one of the following tags.
 ///
 /// The \c MPI calls wrapped by KaMPI.ng do not rely on the restricting positional parameter paradigm but use named

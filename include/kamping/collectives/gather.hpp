@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <mpi.h>
+
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/mpi_datatype.hpp"
@@ -21,7 +23,6 @@
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
-#include <mpi.h>
 
 namespace kamping::internal {
 
