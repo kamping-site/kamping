@@ -125,7 +125,6 @@ void test_send_displs_in_MPIResult() {
 }
 } // namespace testing
 
-
 TEST(MpiResultTest, has_extract_v_basics) {
     static_assert(
         has_extract_v<testing::StructWithExtract>,
@@ -188,7 +187,6 @@ public:
         return this->underlying().root() * x;
     }
 };
-
 
 /// @brief Mixin for Changing the root
 template <class Communicator>

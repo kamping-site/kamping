@@ -18,84 +18,8 @@
 #include "helpers_for_testing.hpp"
 #include "kamping/parameter_objects.hpp"
 
+using namespace ::kamping;
 using namespace ::kamping::internal;
-
-// Test our minimal span implementation
-TEST(SpanTest, basic_functionality) {
-    std::vector<int> values = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-
-    Span<int> int_span(values.data(), values.size());
-    EXPECT_EQ(values.size(), int_span.size());
-    EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_span.size_bytes());
-    EXPECT_FALSE(int_span.empty());
-    EXPECT_EQ(values.data(), int_span.data());
-
-    Span<int> tuple_constructed_span(std::tuple<int*, size_t>{values.data(), values.size()});
-    EXPECT_EQ(values.size(), tuple_constructed_span.size());
-    EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), tuple_constructed_span.size_bytes());
-    EXPECT_FALSE(tuple_constructed_span.empty());
-    EXPECT_EQ(values.data(), tuple_constructed_span.data());
-    EXPECT_EQ(tuple_constructed_span.data(), int_span.data());
-
-    Span<const int> const_int_span = {values.data(), values.size()};
-    EXPECT_EQ(values.size(), const_int_span.size());
-    EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), const_int_span.size_bytes());
-    EXPECT_FALSE(const_int_span.empty());
-    EXPECT_EQ(values.data(), const_int_span.data());
-    EXPECT_EQ(const_int_span.data(), int_span.data());
-
-    Span<int> empty_span = {values.data(), 0};
-    EXPECT_TRUE(empty_span.empty());
-    EXPECT_EQ(0, empty_span.size());
-    EXPECT_EQ(0, empty_span.size_bytes());
-    EXPECT_EQ(values.data(), empty_span.data());
-
-    Span<int> nullptr_span = {nullptr, 0};
-    EXPECT_TRUE(nullptr_span.empty());
-    EXPECT_EQ(0, nullptr_span.size());
-    EXPECT_EQ(0, nullptr_span.size_bytes());
-    EXPECT_EQ(nullptr, nullptr_span.data());
-
-    static_assert(
-        std::is_pointer_v<decltype(int_span.data())>,
-        "Member data() of internal::Span<T*, size_t> does not return a pointer.");
-    static_assert(
-        std::is_pointer_v<decltype(const_int_span.data())>,
-        "Member data() of internal::Span<T const *, size_t> does not return a pointer.");
-    static_assert(
-        std::is_const_v<std::remove_pointer_t<decltype(const_int_span.data())>>,
-        "Member data() of internal::Span<T const *, size_t> does not return a pointer pointing to const memory.");
-    static_assert(
-        !std::is_const_v<std::remove_pointer_t<decltype(int_span.data())>>,
-        "Member data() of internal::Span<T*, size_t> does return a pointer pointing to const memory.");
-
-    static_assert(
-        std::is_same_v<decltype(int_span)::value_type, decltype(values)::value_type>,
-        "Member value_type of internal::Span<T*, size_t> does not match the element type of the underlying container.");
-    static_assert(
-        std::is_same_v<decltype(int_span)::size_type, decltype(values)::size_type>,
-        "Member size_type of internal::Span<T*, size_t> does not match the element type of the underlying container.");
-    static_assert(
-        std::is_same_v<decltype(int_span)::difference_type, decltype(values)::difference_type>,
-        "Member difference_type of internal::Span<T*, difference_t> does not match the element type of the underlying "
-        "container.");
-    static_assert(
-        std::is_same_v<decltype(int_span)::pointer, decltype(values)::pointer>,
-        "Member pointer of internal::Span<T*, difference_t> does not match the element type of the underlying "
-        "container.");
-    static_assert(
-        std::is_same_v<decltype(int_span)::const_pointer, decltype(values)::const_pointer>,
-        "Member const_pointer of internal::Span<T*, difference_t> does not match the element type of the underlying "
-        "container.");
-    static_assert(
-        std::is_same_v<decltype(int_span)::reference, decltype(values)::reference>,
-        "Member reference of internal::Span<T*, difference_t> does not match the element type of the underlying "
-        "container.");
-    static_assert(
-        std::is_same_v<decltype(int_span)::const_reference, decltype(values)::const_reference>,
-        "Member const_reference of internal::Span<T*, difference_t> does not match the element type of the underlying "
-        "container.");
-}
 
 // Tests the basic functionality of ContainerBasedConstBuffer (i.e. its only public function get())
 TEST(ContainerBasedConstBufferTest, get_basics) {
@@ -242,4 +166,24 @@ TEST(SingleElementConstBufferTest, get_basics) {
     EXPECT_FALSE(int_buffer.is_modifiable);
 
     static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
+}
+
+TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
+    std::vector<int>        data(20, 0);
+    Span<int>               container = {data.data(), data.size()};
+    constexpr ParameterType ptype     = ParameterType::send_counts;
+
+    UserAllocatedContainerBasedBuffer<Span<int>, ptype> span_buffer(container);
+
+    for (size_t i = 0; i <= 20; ++i) {
+        span_buffer.resize(i);
+        EXPECT_EQ(20, span_buffer.size());
+    }
+
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> vec_buffer(data);
+
+    for (size_t i = 0; i <= 20; ++i) {
+        vec_buffer.resize(i);
+        EXPECT_EQ(i, vec_buffer.size());
+    }
 }

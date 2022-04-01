@@ -23,7 +23,7 @@ namespace testing {
 template <typename ExpectedValueType, typename GeneratedBuffer, typename T>
 void test_const_buffer(
     const GeneratedBuffer& generated_buffer, kamping::internal::ParameterType expected_parameter_type,
-    kamping::internal::Span<T>& expected_span) {
+    Span<T>& expected_span) {
     // value_type of a buffer should be the same as the value_type of the underlying container
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
@@ -47,7 +47,7 @@ void test_const_buffer(
 template <typename ExpectedValueType, typename GeneratedBuffer, typename T>
 void test_modifiable_buffer(
     GeneratedBuffer& generated_buffer, kamping::internal::ParameterType expected_parameter_type,
-    kamping::internal::Span<T>& expected_span) {
+    Span<T>& expected_span) {
     // value_type of a buffer should be the same as the value_type of the underlying container
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 

@@ -16,7 +16,6 @@
 #include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
 
-
 using namespace ::kamping;
 using namespace ::testing;
 
@@ -147,7 +146,6 @@ TEST(ReduceTest, reduce_builtin_op_on_non_builtin_type) {
         EXPECT_EQ(result.size(), 0);
     }
 }
-
 
 int add_plus_42_function(int const& lhs, int const& rhs) {
     return lhs + rhs + 42;

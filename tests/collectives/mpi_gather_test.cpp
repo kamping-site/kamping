@@ -161,7 +161,6 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
     }
 }
 
-
 TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
     Communicator     comm;
     std::vector<int> values = {comm.rank(), comm.rank(), comm.rank(), comm.rank()};
@@ -264,7 +263,6 @@ TEST(GatherTest, gather_receive_custom_container) {
         EXPECT_EQ(result.size(), 0);
     }
 }
-
 
 TEST(GatherTest, gather_send_custom_container) {
     Communicator      comm;

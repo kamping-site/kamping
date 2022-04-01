@@ -34,11 +34,13 @@
 
 #include <cstddef>
 #include <memory>
-#include <mpi.h>
 #include <type_traits>
+
+#include <mpi.h>
 
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
+#include "kamping/span.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -56,71 +58,6 @@ template <typename T>
 struct NewPtr {};
 
 namespace internal {
-
-
-/// @brief A span modeled after C++20's \c std::span.
-///
-/// Since KaMPI.ng needs to be C++17 compatible and \c std::span is part of C++20, we need our own implementation of the
-/// above-described functionality.
-/// @tparam T type for which the span is defined.
-template <typename T>
-class Span {
-public:
-    using element_type    = T;                   ///< Element type; i.e. \c T.
-    using value_type      = std::remove_cv_t<T>; ///< Value type; i.e. \c T with volatile and const qualifiers removed.
-    using size_type       = size_t;              ///< The type used for the size of the span.
-    using difference_type = std::ptrdiff_t;      ///< The type used for the difference between two elements in the span.
-    using pointer         = T*;                  ///< The type of a pointer to a single elements in the span.
-    using const_pointer   = const T*;            ///< The type of a const pointer to a single elements in the span.
-    using reference       = T&;                  ///< The type of a reference to a single elements in the span.
-    using const_reference = const T&;            ///< The type of a const reference to a single elements in the span.
-
-    /// @brief Constructor for a span from a pointer and a size.
-    ///
-    /// @param ptr Pointer to the first element in the span.
-    /// @param size The number of elements in the span.
-    constexpr Span(pointer ptr, size_type size) : _ptr(ptr), _size(size) {}
-
-    /// @brief Constructor for a span from a std::tuple<pointer, size>.
-    ///
-    /// @param initializer_tuple <Pointer to first element, number of elements>
-    constexpr Span(std::tuple<pointer, size_type> initializer_tuple)
-        : _ptr(std::get<0>(initializer_tuple)),
-          _size(std::get<1>(initializer_tuple)) {}
-
-    /// @brief Get access to the underlying memory.
-    ///
-    /// @return Pointer to the underlying memory.
-    constexpr pointer data() const {
-        return _ptr;
-    }
-
-    /// @brief Returns the number of elements in the Span.
-    ///
-    /// @return Number of elements in the span.
-    constexpr size_type size() const noexcept {
-        return _size;
-    }
-
-    /// @brief Return the number of bytes occupied by the elements in the Span.
-    ///
-    /// @return The number of elements in the span times the number of bytes per element.
-    constexpr size_type size_bytes() const noexcept {
-        return _size * sizeof(value_type);
-    }
-
-    /// @brief Check if the Span is empty.
-    ///
-    /// @return \c true if the Span is empty, \c false otherwise.
-    [[nodiscard]] constexpr bool empty() const noexcept {
-        return _size == 0;
-    }
-
-protected:
-    pointer   _ptr;  ///< Pointer to the data referred to by Span.
-    size_type _size; ///< Number of elements of type T referred to by Span.
-};
-
 
 //@todo enable once the tests have been written
 ///// @brief Constant buffer based on a pointer.
@@ -277,12 +214,21 @@ public:
     /// param container Container providing storage for data that may be written.
     UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
 
-    /// @brief Request memory sufficient to hold \c size elements of \c value_type.
+    /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
+    /// a \c Span.
     ///
-    /// If the underlying container does not provide enough it will be resized.
-    /// @param size Number of elements for which memory is requested.
+    /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
+    /// Span,  KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
+    /// is  copied depends in the implementation of the container.
+    ///
+    /// @param size Size the container is resized to if it is not a \c Span.
     void resize(size_t size) {
-        _container.resize(size);
+        if constexpr (!std::is_same_v<Container, Span<value_type>>) {
+            _container.resize(size);
+        } else {
+            KASSERT(_container.size() >= size, "Span cannot be resized and is smaller than the requested size.");
+        }
     }
 
     /// @brief Get writable access to the underlaying container.
@@ -322,12 +268,21 @@ public:
     /// @brief Constructor for LibAllocatedContainerBasedBuffer.
     LibAllocatedContainerBasedBuffer() {}
 
-    /// @brief Request memory sufficient to hold at least \c size elements of \c value_type.
+    /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
+    /// a \c Span.
     ///
-    /// If the underlying container does not provide enough memory it will be resized.
-    /// @param size Number of elements for which memory is requested.
+    /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
+    /// Span,  KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
+    /// is  copied depends in the implementation of the container.
+    ///
+    /// @param size Size the container is resized to if it is not a \c Span.
     void resize(size_t size) {
-        _container.resize(size);
+        if constexpr (!std::is_same_v<Container, Span<value_type>>) {
+            _container.resize(size);
+        } else {
+            KASSERT(_container.size() >= size, "Span cannot be resized and is smaller than the requested size.");
+        }
     }
 
     /// @brief Get writable access to the underlaying container.
@@ -420,7 +375,6 @@ public:
 private:
     int _rank; ///< Rank of the root PE.
 };
-
 
 /// @brief Parameter wrapping an operation passed to reduce-like MPI collectives.
 /// This wraps an MPI operation without the argument of the operation specified. This enables the user to construct such
