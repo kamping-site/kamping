@@ -134,3 +134,13 @@ TEST(NamedParameterTest, all_parameters_are_rvalues) {
         EXPECT_TRUE(dummy_collective_operation(decltype(arg0){0}, decltype(arg1){1}));
     }
 }
+
+// Test that has_parameter_type can be invoked if the function is called with zero arguments
+template <typename... Args>
+bool dummy_test_has_parameter(Args&&... args [[maybe_unused]]) {
+    return has_parameter_type<ParameterType::send_buf, Args...>();
+}
+
+TEST(NamedParameterTest, has_parameter_on_empty_args) {
+    EXPECT_FALSE(dummy_test_has_parameter());
+}
