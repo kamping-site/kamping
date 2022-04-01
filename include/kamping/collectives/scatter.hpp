@@ -13,8 +13,9 @@
 
 #pragma once
 
-#include <mpi.h>
 #include <type_traits>
+
+#include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/error_handling.hpp"

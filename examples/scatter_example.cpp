@@ -11,12 +11,13 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "helpers_for_examples.hpp"
-#include "kamping/communicator.hpp"
-
-#include <mpi.h>
 #include <numeric>
 #include <vector>
+
+#include <mpi.h>
+
+#include "helpers_for_examples.hpp"
+#include "kamping/communicator.hpp"
 
 int main(int argc, char* argv[]) {
     using namespace kamping;

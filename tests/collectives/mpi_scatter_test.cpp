@@ -11,10 +11,11 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
 #include <numeric>
 #include <vector>
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
