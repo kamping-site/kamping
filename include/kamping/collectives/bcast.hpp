@@ -77,12 +77,11 @@ public:
         KASSERT(
             this->underlying().is_root(root) || !std::is_const_v<decltype(send_recv_buf)>,
             "This rank has to be either root or have a non-const send_recv_buf.", assert::light);
+        /// @todo Implement and test that passing a const-buffer is allowed on the root process but not on all other
+        /// processes.
 
-        // Resive the receive buffers on all but the root process (who sends the data).
-        if (!this->underlying().is_root(root)) {
-            send_recv_buf.resize(
-        }
-
+        /// @todo Once we decided on how to handle different buffer sizes passed to different processes, implement this
+        /// here.
         KASSERT(
             recv_buf_large_enough_on_all_processes(send_recv_buf, root.rank()),
             "The receive buffer is too small on at least one rank.", assert::light_communication);
@@ -112,6 +111,8 @@ private:
     /// performs local comparison and collects the result using an allreduce.
     /// @param send_recv_buf The send buffer on root, the receive buffer on all other ranks.
     /// @param root The rank of the root process.
+    /// @todo Once we decided on which ranks to notify of failed exceptions and the CRTP helper is there,
+    /// implement this.
     template <typename RecvBuf>
     bool recv_buf_large_enough_on_all_processes(RecvBuf const& send_recv_buf, int const root) const {
         uint64_t size = send_recv_buf.size();
