@@ -71,13 +71,14 @@ public:
         // Conduct some validity check on the parmeters.
         KASSERT(this->underlying().is_valid_rank(root.rank()), "Invalid rank as root.", assert::light);
 
-        KASSERT(
-            this->underlying().is_root(root) || send_recv_buf.size() > 0,
-            "The send_recv_buf() on the root process is empty.", assert::light);
+        if (this->underlying().is_root(root)) {
+            KASSERT(send_recv_buf.size() > 0ul, "The send_recv_buf() on the root process is empty.", assert::light);
 
-        KASSERT(
-            this->underlying().is_root(root) || !std::is_const_v<decltype(send_recv_buf)>,
-            "This rank has to be either root or have a non-const send_recv_buf.", assert::light);
+            KASSERT(
+                !std::is_const_v<decltype(send_recv_buf)>,
+                "This rank has to be either root or have a non-const send_recv_buf.", assert::light);
+        }
+
         /// @todo Implement and test that passing a const-buffer is allowed on the root process but not on all other
         /// processes.
 
