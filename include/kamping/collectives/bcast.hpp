@@ -71,7 +71,7 @@ public:
         // Conduct some validity check on the parmeters.
         KASSERT(this->underlying().is_valid_rank(root.rank()), "Invalid rank as root.", assert::light);
 
-        if (this->underlying().is_root(root)) {
+        if (this->underlying().is_root(root.rank())) {
             KASSERT(send_recv_buf.size() > 0ul, "The send_recv_buf() on the root process is empty.", assert::light);
 
             KASSERT(
