@@ -31,21 +31,18 @@ TEST(BcastTest, SingleElement) {
     comm.bcast(send_recv_buf(value));
     EXPECT_EQ(value, comm.root());
 
-    // The following test is only valid if the communicator has more than one rank.
-    if (comm.size() >= 2) {
-        // Broadcast a single POD to all processes, manually specify the root process.
-        value = comm.rank();
-        comm.bcast(send_recv_buf(value), root(1));
-        EXPECT_EQ(value, 1);
+    // Broadcast a single POD to all processes, manually specify the root process.
+    const int root = comm.size() - 1;
+    value          = comm.rank();
+    comm.bcast(send_recv_buf(value), kamping::root(root));
+    EXPECT_EQ(value, root);
 
-        // Broadcast a single POD to all processes, use a non-default communicator's root.
-        value              = comm.rank();
-        const int new_root = 1;
-        comm.root(new_root);
-        ASSERT_EQ(new_root, comm.root());
-        comm.bcast(send_recv_buf(value));
-        EXPECT_EQ(value, new_root);
-    }
+    // Broadcast a single POD to all processes, use a non-default communicator's root.
+    value = comm.rank();
+    comm.root(root);
+    ASSERT_EQ(root, comm.root());
+    comm.bcast(send_recv_buf(value));
+    EXPECT_EQ(value, root);
 }
 
 TEST(BcastTest, Vector) {
