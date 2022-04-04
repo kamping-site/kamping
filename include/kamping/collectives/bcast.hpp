@@ -71,21 +71,23 @@ public:
         KASSERT(this->underlying().is_valid_rank(root.rank()), "Invalid rank as root.", assert::light);
 
         KASSERT(
-            this->underlying().rank() != root.rank() || send_recv_buf.size() > 0,
-            "The send_recv_buf() on root is empty.", assert::light);
+            this->underlying().is_root(root) || send_recv_buf.size() > 0,
+            "The send_recv_buf() on the root process is empty.", assert::light);
+
+        KASSERT(
+            this->underlying().is_root(root) || !std::is_const_v<decltype(send_recv_buf)>,
+            "This rank has to be either root or have a non-const send_recv_buf.", assert::light);
+
+        // Resive the receive buffers on all but the root process (who sends the data).
+        if (!this->underlying().is_root(root)) {
+            send_recv_buf.resize(
+        }
 
         KASSERT(
             recv_buf_large_enough_on_all_processes(send_recv_buf, root.rank()),
             "The receive buffer is too small on at least one rank.", assert::light_communication);
 
-        // Perform the broadcast.
-        // int size = 0;
-        // void* buffer = nullptr;
-        // if constexpr (internal:: ))
-
-        // The error code is unused if KTHROW is removed at compile time.
-        // KASSERT(size != 0, assert::light);
-        // KASSERT(buffer != nullptr, assert::light);
+        // Perform the broadcast. The error code is unused if KTHROW is removed at compile time.
         [[maybe_unused]] int err = MPI_Bcast(
             send_recv_buf.data(),                      // buffer*
             asserting_cast<int>(send_recv_buf.size()), // count
