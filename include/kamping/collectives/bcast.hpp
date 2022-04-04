@@ -98,7 +98,7 @@ public:
 
         return MPIResult(
             std::move(send_recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
-            internal::BufferCategoryNotUsed{});
+            internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{});
     }
 
 protected:
