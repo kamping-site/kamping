@@ -83,13 +83,6 @@ TEST_F(CommunicatorTest, is_root) {
     } else {
         EXPECT_FALSE(comm.is_root(custom_root));
     }
-
-    kamping::internal::Root custom_root_obj(custom_root);
-    if (custom_root_obj.rank() == comm.rank()) {
-        EXPECT_TRUE(comm.is_root(custom_root_obj));
-    } else {
-        EXPECT_FALSE(comm.is_root(custom_root_obj));
-    }
 }
 
 TEST_F(CommunicatorTest, set_root_bound_check) {

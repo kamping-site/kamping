@@ -92,13 +92,6 @@ public:
         return is_root(root());
     }
 
-    /// @brief Check if this rank is the root rank.
-    /// @return Return \c true if this rank is the root rank.
-    /// @param root A \c kamping::internal::Root& object describing the custom root.
-    [[nodiscard]] bool is_root(internal::Root const& root) const {
-        return is_root(root.rank());
-    }
-
     /// @brief Split the communicator in different colors.
     /// @param color All ranks that have the same color will be in the same new communicator.
     /// @param key By default, ranks in the new communicator are determined by the underlying MPI library (if \c key is
