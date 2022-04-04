@@ -11,15 +11,17 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <iostream>
+#include <numeric>
+#include <vector>
+
+#include <mpi.h>
+
 #include "helpers_for_examples.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
-#include <iostream>
-#include <mpi.h>
-#include <numeric>
-#include <vector>
 
 int main() {
     using namespace kamping;

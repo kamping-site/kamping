@@ -11,13 +11,13 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include <gtest/gtest.h>
 #include <tuple>
 
-#include "kamping/named_parameter_selection.hpp"
-#include "kamping/parameter_factories.hpp"
+#include <gtest/gtest.h>
 
 #include "helpers_for_testing.hpp"
+#include "kamping/named_parameter_selection.hpp"
+#include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping::internal;
 
@@ -133,4 +133,14 @@ TEST(NamedParameterTest, all_parameters_are_rvalues) {
         EXPECT_FALSE(dummy_collective_operation(arg0, decltype(arg1){1}));
         EXPECT_TRUE(dummy_collective_operation(decltype(arg0){0}, decltype(arg1){1}));
     }
+}
+
+// Test that has_parameter_type can be invoked if the function is called with zero arguments
+template <typename... Args>
+bool dummy_test_has_parameter(Args&&... args [[maybe_unused]]) {
+    return has_parameter_type<ParameterType::send_buf, Args...>();
+}
+
+TEST(NamedParameterTest, has_parameter_on_empty_args) {
+    EXPECT_FALSE(dummy_test_has_parameter());
 }

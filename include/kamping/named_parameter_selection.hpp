@@ -26,6 +26,15 @@ namespace kamping::internal {
 /// @addtogroup kamping_utility
 /// @{
 
+/// @brief Base case if there are no parameters: always returns max index indicating that the parameter was not found.
+/// @tparam parameter_type The parameter type which to be searched for.
+/// @tparam Index Index of current argument to evaluate (ignored).
+/// @return \c std::numeric_limits<std::size_t>::max().
+template <ParameterType parameter_type, size_t Index>
+constexpr size_t find_pos() {
+    return std::numeric_limits<std::size_t>::max();
+}
+
 /// @brief Returns the Index parameter if the parameter type of Arg matches the requested parameter type. If not, this
 /// fails to compile.
 ///

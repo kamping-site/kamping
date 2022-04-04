@@ -5,13 +5,14 @@ include(GoogleTest)
 
 # Registering tests without MPI:
 kamping_register_test(test_checking_casts FILES checking_casts_test.cpp)
-kamping_register_test(test_kassert_exception_mode FILES kassert_test.cpp)
 kamping_register_test(test_kassert_assertion_mode NO_EXCEPTION_MODE FILES kassert_test.cpp)
-kamping_register_test(test_parameter_factories FILES parameter_factories_test.cpp)
-kamping_register_test(test_parameter_objects FILES parameter_objects_test.cpp)
-kamping_register_test(test_named_parameter_selection FILES named_parameter_selection_test.cpp)
+kamping_register_test(test_kassert_exception_mode FILES kassert_test.cpp)
 kamping_register_test(test_mpi_function_wrapper_helpers FILES mpi_function_wrapper_helpers_test.cpp)
 kamping_register_test(test_mpi_operations FILES mpi_operations_test.cpp)
+kamping_register_test(test_named_parameter_selection FILES named_parameter_selection_test.cpp)
+kamping_register_test(test_parameter_factories FILES parameter_factories_test.cpp)
+kamping_register_test(test_parameter_objects FILES parameter_objects_test.cpp)
+kamping_register_test(test_span FILES span_test.cpp)
 
 # Registering tests with MPI:
 
@@ -26,6 +27,8 @@ kamping_register_mpi_test(test_mpi_reduce FILES collectives/mpi_reduce_test.cpp 
 kamping_register_mpi_test(test_mpi_barrier FILES collectives/mpi_barrier_test.cpp CORES 1 2 4)
 kamping_register_mpi_test(test_mpi_gather FILES collectives/mpi_gather_test.cpp CORES 1 2 4)
 kamping_register_mpi_test(test_mpi_bcast FILES collectives/mpi_bcast_test.cpp CORES 1 2 4)
+kamping_register_mpi_test(test_operation_wrapper FILES mpi_operation_wrapper_test.cpp CORES 1)
+kamping_register_mpi_test(test_parameter_factories_mpi FILES parameter_factories_mpi_test.cpp CORES 1)
 
 kamping_register_compilation_failure_test(
     test_mpi_datatype_unsupported_types
@@ -46,3 +49,11 @@ kamping_register_compilation_failure_test(
   SECTIONS "REQUESTED_PARAMETER_NOT_GIVEN" "DEFAULT_ARGUMENTS_DO_NOT_MATCH"
   LIBRARIES kamping_base
 )
+
+kamping_register_compilation_failure_test(
+  test_kassert_compilation_failure
+  FILES kassert_compilation_failures_test.cpp
+  SECTIONS "FORBIDDEN_AND" "FORBIDDEN_OR"
+  LIBRARIES kamping_base
+)
+

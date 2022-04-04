@@ -11,30 +11,15 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <numeric>
-#include <vector>
+#include "helpers_for_testing.hpp"
+#include "kamping/kassert.hpp"
 
-#include <mpi.h>
-
-#include "helpers_for_examples.hpp"
-#include "kamping/checking_casts.hpp"
-#include "kamping/communicator.hpp"
-#include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
-
-int main() {
-    using namespace kamping;
-    MPI_Init(NULL, NULL);
-    kamping::Communicator comm;
-    std::vector<int>      input(asserting_cast<size_t>(comm.size()));
-    std::iota(input.begin(), input.end(), 0);
-    std::vector<int> output;
-
-    comm.gather(send_buf(input), recv_buf(output), root(0));
-
-    print_result_on_root(output, comm);
-
-    MPI_Finalize();
-    return 0;
+int main(int /* argc */, char** /* argv */) {
+#if defined(FORBIDDEN_AND)
+    KASSERT(false && false);
+#elif defined(FORBIDDEN_OR)
+    KASSERT(false || false);
+#else
+    // If none of the above sections is active, this file will compile successfully.
+#endif
 }

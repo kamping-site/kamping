@@ -15,10 +15,10 @@
 #undef KAMPING_ASSERTION_LEVEL
 #define KAMPING_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_NORMAL
 
+#include <gmock/gmock.h>
+
 #include "helpers_for_testing.hpp"
 #include "kamping/kassert.hpp"
-
-#include <gmock/gmock.h>
 
 using namespace ::testing;
 
@@ -179,19 +179,6 @@ TEST(KassertTest, true_arithmetic_relation_expressions) {
     KASSERT(2 >= 1);
 }
 
-TEST(KassertTest, true_logical_operator_expressions) {
-    KASSERT(true && true);
-    KASSERT(true && true && true);
-    KASSERT((true && true) && true);
-    KASSERT(true && (true && true));
-    KASSERT(true || false);
-    KASSERT(false || true);
-    KASSERT((true && false) || true);
-    KASSERT(true || (false && true));
-    KASSERT(!false || false);
-    KASSERT(true && !false);
-}
-
 TEST(KassertTest, false_arithmetic_relation_expressions) {
     auto eq = [] {
         KASSERT(1 == 2);
@@ -217,17 +204,6 @@ TEST(KassertTest, false_arithmetic_relation_expressions) {
     EXPECT_EXIT({ gt(); }, KilledBySignal(SIGABRT), "");
     EXPECT_EXIT({ le(); }, KilledBySignal(SIGABRT), "");
     EXPECT_EXIT({ ge(); }, KilledBySignal(SIGABRT), "");
-}
-
-TEST(KassertTest, false_logical_operator_expressions) {
-    EXPECT_EXIT({ KASSERT(true && false); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(true && (true && false)); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(true && (false || false)); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(false || (true && false)); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(false && true); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(false || false); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(!false && false); }, KilledBySignal(SIGABRT), "");
-    EXPECT_EXIT({ KASSERT(false && !false); }, KilledBySignal(SIGABRT), "");
 }
 
 TEST(KassertTest, true_chained_relation_ops) {
@@ -264,73 +240,9 @@ TEST(KassertTest, primitive_type_expansion) {
     EXPECT_EXIT({ generic_ge(1, 2); }, KilledBySignal(SIGABRT), "1 >= 2");
     EXPECT_EXIT({ generic_lt(2, 1); }, KilledBySignal(SIGABRT), "2 < 1");
     EXPECT_EXIT({ generic_le(2, 1); }, KilledBySignal(SIGABRT), "2 <= 1");
-
-    // logical operators
-    auto generic_logical_and = [](auto const lhs, auto const rhs) {
-        KASSERT(lhs && rhs);
-    };
-    auto generic_logical_or = [](auto const lhs, auto const rhs) {
-        KASSERT(lhs || rhs);
-    };
-
-    EXPECT_EXIT({ generic_logical_and(true, false); }, KilledBySignal(SIGABRT), "1 && 0");
-    EXPECT_EXIT({ generic_logical_or(false, false); }, KilledBySignal(SIGABRT), "0 \\|\\| 0");
-
-    EXPECT_EXIT({ generic_logical_and(0, 10); }, KilledBySignal(SIGABRT), "0 && 10");  // implicitly convertible to bool
-    EXPECT_EXIT({ generic_logical_or(0, 0); }, KilledBySignal(SIGABRT), "0 \\|\\| 0"); // implicitly convertible to bool
-
-    // more complex expressions
-    auto generic_logical_and_and_and = [](auto const val1, auto const val2, auto const val3, auto const val4) {
-        KASSERT(val1 && val2 && val3 && val4);
-    };
-    auto generic_logical_eq_or_or = [](auto const val1, auto const val2, auto const val3, auto const val4) {
-        KASSERT(val1 == val2 || val3 || val4);
-    };
-
-    EXPECT_EXIT({ generic_logical_and_and_and(true, false, 10, -1); }, KilledBySignal(SIGABRT), "1 && 0 && 10 && -1");
-    EXPECT_EXIT({ generic_logical_eq_or_or(1, 2, false, 0); }, KilledBySignal(SIGABRT), "1 == 2 \\|\\| 0 \\|\\| 0");
-
-    // relation + logical operator (more complex expressions on the rhs of the logical operator cannot be decomposed)
-    auto generic_eq_and = [](auto const eq_lhs, auto const eq_rhs, auto const and_rhs) {
-        KASSERT(eq_lhs == eq_rhs && and_rhs);
-    };
-    auto generic_lt_or = [](auto const lt_lhs, auto const lt_rhs, auto const or_rhs) {
-        KASSERT(lt_lhs < lt_rhs || or_rhs);
-    };
-
-    EXPECT_EXIT({ generic_eq_and(1, 2, true); }, KilledBySignal(SIGABRT), "1 == 2 && 1");
-    EXPECT_EXIT({ generic_lt_or(2, 1, false); }, KilledBySignal(SIGABRT), "2 < 1 \\|\\| 0");
 }
 
 TEST(KassertTest, primitive_type_expansion_limitations) {
-    // test expression expansion where the expression cannot be fully expanded
-
-    KASSERT(true && false || true);
-    KASSERT(true && true || false);
-    KASSERT(false || true && true);
-    KASSERT(true || true && false);
-    KASSERT(!false || false && false);
-    KASSERT(!true || !false && true);
-
-    auto generic_and_or = [](auto const and_rhs, auto const or_rhs, auto const or_lhs) {
-        KASSERT(and_rhs && or_rhs || or_lhs);
-    };
-    auto generic_or_and = [](auto const or_rhs, auto const and_rhs, auto const and_lhs) {
-        KASSERT(or_rhs || and_rhs && and_lhs);
-    };
-    auto generic_neg_or_and = [](auto const neg, auto const and_rhs, auto const and_lhs) {
-        KASSERT(!neg || and_rhs && and_lhs);
-    };
-    auto generic_and_neg_or = [](auto const and_rhs, auto const neg, auto const or_lhs) {
-        KASSERT(and_rhs && !neg || or_lhs);
-    };
-
-    EXPECT_EXIT({ generic_and_or(true, false, false); }, KilledBySignal(SIGABRT), "1 && 0"); // cannot expand rhs of &&
-    EXPECT_EXIT(
-        { generic_or_and(false, true, false); }, KilledBySignal(SIGABRT), "0 \\|\\| 0");  // cannot expand rhs of ||
-    EXPECT_EXIT({ generic_neg_or_and(5, 1, 0); }, KilledBySignal(SIGABRT), "0 \\|\\| 0"); // cannot expand !, rhs of ||
-    EXPECT_EXIT({ generic_and_neg_or(1, 1, false); }, KilledBySignal(SIGABRT), "1 && 0"); // ditto
-
     // negation + relation
     auto generic_neg_eq = [](const auto lhs_neg, const auto rhs) {
         KASSERT(!lhs_neg == rhs);

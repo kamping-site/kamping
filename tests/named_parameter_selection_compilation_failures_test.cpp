@@ -11,9 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "kamping/named_parameter_selection.hpp"
-
 #include "helpers_for_testing.hpp"
+#include "kamping/named_parameter_selection.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
