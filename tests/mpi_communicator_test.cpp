@@ -69,6 +69,22 @@ TEST_F(CommunicatorTest, constructor_with_mpi_communicator_and_root) {
     }
 }
 
+TEST_F(CommunicatorTest, is_root) {
+    Communicator comm;
+    if (comm.root() == comm.rank()) {
+        EXPECT_TRUE(comm.is_root());
+    } else {
+        EXPECT_FALSE(comm.is_root());
+    }
+
+    int const custom_root = comm.size() - 1;
+    if (custom_root == comm.rank()) {
+        EXPECT_TRUE(comm.is_root(custom_root));
+    } else {
+        EXPECT_FALSE(comm.is_root(custom_root));
+    }
+}
+
 TEST_F(CommunicatorTest, set_root_bound_check) {
     Communicator comm;
     for (int i = -(2 * size); i < (2 * size); ++i) {

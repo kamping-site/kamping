@@ -81,8 +81,15 @@ public:
 
     /// @brief Check if this rank is the root rank.
     /// @return Return \c true if this rank is the root rank.
+    /// @param root The custom root's rank.
+    [[nodiscard]] bool is_root(const int root) const {
+        return rank() == root;
+    }
+
+    /// @brief Check if this rank is the root rank.
+    /// @return Return \c true if this rank is the root rank.
     [[nodiscard]] bool is_root() const {
-        return rank() == root();
+        return is_root(root());
     }
 
     /// @brief Split the communicator in different colors.
