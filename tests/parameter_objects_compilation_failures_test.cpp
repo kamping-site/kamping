@@ -38,6 +38,8 @@ int main(int /*argc*/, char** /*argv*/) {
 
     Root root(42);
 
+    OperationBuilder op_builder(ops::plus<>(), commutative);
+
 #if defined(COPY_CONSTRUCT_CONTAINER_CONST_BUFFER)
     // should not be possible to copy construct a buffer (for performance reasons)
     auto tmp = container_based_const_buffer;
@@ -80,6 +82,12 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif defined(COPY_ASSIGN_ROOT_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     root = root;
+#elif defined(COPY_CONSTRUCT_OP_BUILDER_BUFFER)
+    // should not be possible to copy construct a buffer (for performance reasons)
+    auto tmp = op_builder;
+#elif defined(COPY_ASSIGN_OP_BUILDER_BUFFER)
+    // should not be possible to copy assign a buffer (for performance reasons)
+    op_builder = op_builder;
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif
