@@ -38,7 +38,7 @@ namespace kamping {
 /// @see mpi_datatype()
 ///
 template <size_t NumBytes>
-[[nodiscard]] mpi_custom_continuous_type() noexcept {
+[[nodiscard]] MPI_Datatype mpi_custom_continuous_type() noexcept {
     static_assert(NumBytes > 0, "You cannot create a continuous type with 0 bytes.");
     // Create a new MPI datatype only the first type per NumBytes this function is called.
     static MPI_Datatype type = MPI_DATATYPE_NULL;
