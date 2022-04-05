@@ -298,7 +298,7 @@ template <typename T>
 /// @param mpi_datatype The MPI datatype to get the size of.
 /// @return The size of the MPI datatype in bytes.
 ///
-int mpi_datatype_size(MPI_Datatype mpi_datatype) {
+inline int mpi_datatype_size(MPI_Datatype mpi_datatype) {
     int                  result;
     [[maybe_unused]] int err = MPI_Type_size(mpi_datatype, &result);
     THROW_IF_MPI_ERROR(err, MPI_Type_size);

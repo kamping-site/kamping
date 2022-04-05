@@ -100,7 +100,19 @@ public:
 
     /// @brief Constructor for ContainerBasedConstBuffer.
     /// @param container Container holding the actual data.
-    ContainerBasedConstBuffer(const Container& container) : _container(container) {}
+    ContainerBasedConstBuffer(Container const& container) : _container(container) {}
+
+    /// @brief Move constructor for ContainerBasedConstBuffer.
+    ContainerBasedConstBuffer(ContainerBasedConstBuffer&&) = default;
+    // move assignment operator is implicitly deleted as this buffer has a reference member
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    ContainerBasedConstBuffer(ContainerBasedConstBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    ContainerBasedConstBuffer& operator=(ContainerBasedConstBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
@@ -146,6 +158,18 @@ public:
     /// @param element Element holding that is wrapped.
     SingleElementConstBuffer(DataType const& element) : _element(element) {}
 
+    /// @brief Move constructor for SingleElementConstBuffer.
+    SingleElementConstBuffer(SingleElementConstBuffer&&) = default;
+    // move assignment operator is implicitly deleted as this buffer has a reference member
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    SingleElementConstBuffer(SingleElementConstBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    SingleElementConstBuffer& operator=(SingleElementConstBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
     /// @brief Get access to the underlaying read-only value.
     /// @return Span referring to the underlying read-only storage.
     Span<const value_type> get() const {
@@ -176,6 +200,19 @@ public:
             !std::is_const_v<DataType>,
             "The underlying data type of a SingleElementModifiableBuffer must not be const.");
     }
+
+    /// @brief Move constructor for SingleElementModifiableBuffer (implicitly deletes copy constructor/assignment
+    /// operator).
+    SingleElementModifiableBuffer(SingleElementModifiableBuffer&&) = default;
+    // move assignment operator is implicitly deleted as this buffer has a reference member
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    SingleElementModifiableBuffer(SingleElementModifiableBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    SingleElementModifiableBuffer& operator=(SingleElementModifiableBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Get writable access to the underlaying value.
     /// @return Reference to the underlying storage.
@@ -213,6 +250,19 @@ public:
     /// @brief Constructor for UserAllocatedContainerBasedBuffer.
     /// param container Container providing storage for data that may be written.
     UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
+
+    /// @brief Move constructor for UserAllocatedContainerBasedBuffer (implicitly deletes copy constructor/assignment
+    /// operator).
+    UserAllocatedContainerBasedBuffer(UserAllocatedContainerBasedBuffer&&) = default;
+    // move assignment operator is implicitly deleted as this buffer has a reference member
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    UserAllocatedContainerBasedBuffer(UserAllocatedContainerBasedBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    UserAllocatedContainerBasedBuffer& operator=(UserAllocatedContainerBasedBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
     /// a \c Span.
@@ -266,7 +316,21 @@ public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
 
     /// @brief Constructor for LibAllocatedContainerBasedBuffer.
-    LibAllocatedContainerBasedBuffer() {}
+    LibAllocatedContainerBasedBuffer() = default;
+
+    /// @brief Move constructor for LibAllocatedContainerBasedBuffer.
+    LibAllocatedContainerBasedBuffer(LibAllocatedContainerBasedBuffer&&) = default;
+
+    /// @brief Move assignment operator for LibAllocatedContainerBasedBuffer.
+    LibAllocatedContainerBasedBuffer& operator=(LibAllocatedContainerBasedBuffer&&) = default;
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    LibAllocatedContainerBasedBuffer(LibAllocatedContainerBasedBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    LibAllocatedContainerBasedBuffer& operator=(LibAllocatedContainerBasedBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
     /// a \c Span.
@@ -333,6 +397,20 @@ public:
     /// @param recv_count Encapsulated recv count.
     RecvCount(T recv_count) : _recv_count{recv_count} {}
 
+    /// @brief Move constructor for RecvCount.
+    RecvCount(RecvCount&&) = default;
+
+    /// @brief Move assignment operator for RecvCount.
+    RecvCount& operator=(RecvCount&&) = default;
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    RecvCount(RecvCount const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    RecvCount& operator=(RecvCount const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
     /// @brief Returns the encapsulated recv count.
     /// @returns The encapsulated recv count.
     int recv_count() const {
@@ -366,6 +444,20 @@ public:
     /// @param rank Rank of the root PE.
     Root(int rank) : _rank{rank} {}
 
+    /// @brief Move constructor for Root.
+    Root(Root&&) = default;
+
+    /// @brief Move assignment operator for Root.
+    Root& operator=(Root&&) = default;
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    Root(Root const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    Root& operator=(Root const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
     /// @brief Returns the rank of the root.
     /// @returns Rank of the root.
     int rank() const {
@@ -393,6 +485,20 @@ public:
     /// @param op the operation
     /// @param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
     OperationBuilder(Op&& op, Commutative commutative_tag [[maybe_unused]]) : _op(op) {}
+
+    /// @brief Move constructor for OperationsBuilder.
+    OperationBuilder(OperationBuilder&&) = default;
+
+    /// @brief Move assignment operator for OperationsBuilder.
+    OperationBuilder& operator=(OperationBuilder&&) = default;
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    OperationBuilder(OperationBuilder const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    OperationBuilder& operator=(OperationBuilder const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief constructs an operation for the given type T
     /// @tparam T argument type of the reduction operation
