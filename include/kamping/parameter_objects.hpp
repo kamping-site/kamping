@@ -259,6 +259,7 @@ public:
     /// @brief Copy constructor is deleted as buffers should only be moved.
     UserAllocatedContainerBasedBuffer(UserAllocatedContainerBasedBuffer const&) =
         delete; // redundant as defaulted move constructor implies the deletion
+
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     UserAllocatedContainerBasedBuffer& operator=(UserAllocatedContainerBasedBuffer const&) =
         delete; // redundant as defaulted move constructor implies the deletion
@@ -319,14 +320,17 @@ public:
 
     /// @brief Move constructor for LibAllocatedContainerBasedBuffer.
     LibAllocatedContainerBasedBuffer(LibAllocatedContainerBasedBuffer&&) = default;
+
     /// @brief Move assignment operator for LibAllocatedContainerBasedBuffer.
     LibAllocatedContainerBasedBuffer& operator=(LibAllocatedContainerBasedBuffer&&) = default;
+
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    LibAllocatedContainerBasedBuffer(LibAllocatedContainerBasedBuffer const&) =
-        delete; // redundant as defaulted move constructor implies the deletion
+    LibAllocatedContainerBasedBuffer(LibAllocatedContainerBasedBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    LibAllocatedContainerBasedBuffer& operator=(LibAllocatedContainerBasedBuffer const&) =
-        delete; // redundant as defaulted move constructor implies the deletion
+    LibAllocatedContainerBasedBuffer& operator=(LibAllocatedContainerBasedBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
     /// a \c Span.
@@ -395,10 +399,13 @@ public:
 
     /// @brief Move constructor for RecvCount.
     RecvCount(RecvCount&&) = default;
+
     /// @brief Move assignment operator for RecvCount.
     RecvCount& operator=(RecvCount&&) = default;
+
     /// @brief Copy constructor is deleted as buffers should only be moved.
     RecvCount(RecvCount const&) = delete; // redundant as defaulted move constructor implies the deletion
+
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     RecvCount& operator=(RecvCount const&) = delete; // redundant as defaulted move constructor implies the deletion
 
@@ -437,10 +444,13 @@ public:
 
     /// @brief Move constructor for Root.
     Root(Root&&) = default;
+
     /// @brief Move assignment operator for Root.
     Root& operator=(Root&&) = default;
+
     /// @brief Copy constructor is deleted as buffers should only be moved.
     Root(Root const&) = delete; // redundant as defaulted move constructor implies the deletion
+
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     Root& operator=(Root const&) = delete; // redundant as defaulted move constructor implies the deletion
 
@@ -471,12 +481,16 @@ public:
     /// @param op the operation
     /// @param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
     OperationBuilder(Op&& op, Commutative commutative_tag [[maybe_unused]]) : _op(op) {}
+
     /// @brief Move constructor for OperationsBuilder.
     OperationBuilder(OperationBuilder&&) = default;
+
     /// @brief Move assignment operator for OperationsBuilder.
     OperationBuilder& operator=(OperationBuilder&&) = default;
+
     /// @brief Copy constructor is deleted as buffers should only be moved.
     OperationBuilder(OperationBuilder const&) = delete; // redundant as defaulted move constructor implies the deletion
+
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     OperationBuilder&
     operator=(OperationBuilder const&) = delete; // redundant as defaulted move constructor implies the deletion

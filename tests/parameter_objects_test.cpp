@@ -11,7 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include <numeric>
 #include <type_traits>
 
 #include <gtest/gtest.h>
@@ -222,7 +221,7 @@ TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
     EXPECT_EQ(*buffer2.get().data(), const_elem);
 }
 
-TEST(RecvCount, move_constructor_assignment_operator_is_enabled) {
+TEST(RecvCountTest, move_constructor_assignment_operator_is_enabled) {
     int       count       = 2;
     const int const_count = count;
     RecvCount recv_count1(count);
@@ -232,7 +231,7 @@ TEST(RecvCount, move_constructor_assignment_operator_is_enabled) {
     EXPECT_EQ(recv_count3.recv_count(), const_count);
 }
 
-TEST(Root, move_constructor_assignment_operator_is_enabled) {
+TEST(RootTest, move_constructor_assignment_operator_is_enabled) {
     int       rank       = 2;
     const int const_rank = rank;
     Root      root1(rank);
@@ -242,7 +241,7 @@ TEST(Root, move_constructor_assignment_operator_is_enabled) {
     EXPECT_EQ(root3.rank(), const_rank);
 }
 
-TEST(OperationBuilder, move_constructor_assignment_operator_is_enabled) {
+TEST(OperationBuilderTest, move_constructor_assignment_operator_is_enabled) {
     // simply test that move ctor and assignment operator can be called.
     OperationBuilder op_builder1(ops::plus<>(), commutative);
     OperationBuilder op_builder2(std::move(op_builder1));
