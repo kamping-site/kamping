@@ -111,8 +111,8 @@ public:
     // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    ContainerBasedConstBuffer& operator=(ContainerBasedConstBuffer const&) =
-        delete; // redundant as defaulted move constructor implies the deletion
+    ContainerBasedConstBuffer& operator=(ContainerBasedConstBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
@@ -163,12 +163,12 @@ public:
     // move assignment operator is implicitly deleted as this buffer has a reference member
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    SingleElementConstBuffer(SingleElementConstBuffer const&) = delete; 
+    SingleElementConstBuffer(SingleElementConstBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    SingleElementConstBuffer&
-    operator=(SingleElementConstBuffer const&) = delete; // redundant as defaulted move constructor implies the deletion
+    SingleElementConstBuffer& operator=(SingleElementConstBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Get access to the underlaying read-only value.
     /// @return Span referring to the underlying read-only storage.
@@ -207,12 +207,12 @@ public:
     // move assignment operator is implicitly deleted as this buffer has a reference member
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    SingleElementModifiableBuffer(SingleElementModifiableBuffer const&) =
-        delete; // redundant as defaulted move constructor implies the deletion
+    SingleElementModifiableBuffer(SingleElementModifiableBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    SingleElementModifiableBuffer& operator=(SingleElementModifiableBuffer const&) =
-        delete; // redundant as defaulted move constructor implies the deletion
+    SingleElementModifiableBuffer& operator=(SingleElementModifiableBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Get writable access to the underlaying value.
     /// @return Reference to the underlying storage.
@@ -257,12 +257,12 @@ public:
     // move assignment operator is implicitly deleted as this buffer has a reference member
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    UserAllocatedContainerBasedBuffer(UserAllocatedContainerBasedBuffer const&) =
-        delete; // redundant as defaulted move constructor implies the deletion
+    UserAllocatedContainerBasedBuffer(UserAllocatedContainerBasedBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    UserAllocatedContainerBasedBuffer& operator=(UserAllocatedContainerBasedBuffer const&) =
-        delete; // redundant as defaulted move constructor implies the deletion
+    UserAllocatedContainerBasedBuffer& operator=(UserAllocatedContainerBasedBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
     /// a \c Span.
@@ -404,10 +404,12 @@ public:
     RecvCount& operator=(RecvCount&&) = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    RecvCount(RecvCount const&) = delete; // redundant as defaulted move constructor implies the deletion
+    RecvCount(RecvCount const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    RecvCount& operator=(RecvCount const&) = delete; // redundant as defaulted move constructor implies the deletion
+    RecvCount& operator=(RecvCount const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Returns the encapsulated recv count.
     /// @returns The encapsulated recv count.
@@ -449,10 +451,12 @@ public:
     Root& operator=(Root&&) = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    Root(Root const&) = delete; // redundant as defaulted move constructor implies the deletion
+    Root(Root const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    Root& operator=(Root const&) = delete; // redundant as defaulted move constructor implies the deletion
+    Root& operator=(Root const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Returns the rank of the root.
     /// @returns Rank of the root.
@@ -489,11 +493,12 @@ public:
     OperationBuilder& operator=(OperationBuilder&&) = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    OperationBuilder(OperationBuilder const&) = delete; // redundant as defaulted move constructor implies the deletion
+    OperationBuilder(OperationBuilder const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    OperationBuilder&
-    operator=(OperationBuilder const&) = delete; // redundant as defaulted move constructor implies the deletion
+    OperationBuilder& operator=(OperationBuilder const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief constructs an operation for the given type T
     /// @tparam T argument type of the reduction operation
