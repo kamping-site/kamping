@@ -100,7 +100,7 @@ public:
 
     /// @brief Constructor for ContainerBasedConstBuffer.
     /// @param container Container holding the actual data.
-    ContainerBasedConstBuffer(const Container& container) : _container(container) {}
+    ContainerBasedConstBuffer(Container const& container) : _container(container) {}
 
     /// @brief Move constructor for ContainerBasedConstBuffer (implicitly deletes copy constructor/assignment operator).
     ContainerBasedConstBuffer(ContainerBasedConstBuffer&&) = default;
