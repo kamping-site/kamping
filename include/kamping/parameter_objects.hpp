@@ -107,9 +107,9 @@ public:
     // move assignment operator is implicitly deleted as this buffer has a reference member
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    ///
-    /// redundant as defaulted move constructor implies the deletion
-    ContainerBasedConstBuffer(ContainerBasedConstBuffer const&) = delete; 
+    ContainerBasedConstBuffer(ContainerBasedConstBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     ContainerBasedConstBuffer& operator=(ContainerBasedConstBuffer const&) =
         delete; // redundant as defaulted move constructor implies the deletion
@@ -165,6 +165,7 @@ public:
     /// @brief Copy constructor is deleted as buffers should only be moved.
     SingleElementConstBuffer(SingleElementConstBuffer const&) =
         delete; // redundant as defaulted move constructor implies the deletion
+
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     SingleElementConstBuffer&
     operator=(SingleElementConstBuffer const&) = delete; // redundant as defaulted move constructor implies the deletion
@@ -208,7 +209,7 @@ public:
     /// @brief Copy constructor is deleted as buffers should only be moved.
     SingleElementModifiableBuffer(SingleElementModifiableBuffer const&) =
         delete; // redundant as defaulted move constructor implies the deletion
-        
+
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     SingleElementModifiableBuffer& operator=(SingleElementModifiableBuffer const&) =
         delete; // redundant as defaulted move constructor implies the deletion
