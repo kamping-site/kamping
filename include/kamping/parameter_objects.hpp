@@ -102,6 +102,15 @@ public:
     /// @param container Container holding the actual data.
     ContainerBasedConstBuffer(const Container& container) : _container(container) {}
 
+    /// @brief Move constructor for ContainerBasedConstBuffer (implicitly deletes copy constructor/assignment operator).
+    ContainerBasedConstBuffer(ContainerBasedConstBuffer&&) = default;
+    //@Reviewers: How well do you know special member function generation in c++ ;)? Hint: the following lines are
+    //  completely redundant - should we include it anyway (to avoid confusion? if so, we should add this in all other
+    //  buffers, too)
+    //  ContainerBasedConstBuffer& operator=(ContainerBasedConstBuffer&&) = delete;
+    //  ContainerBasedConstBuffer(ContainerBasedConstBuffer&) = delete;
+    //  ContainerBasedConstBuffer& operator=(ContainerBasedConstBuffer&) = delete;
+
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
     Span<const value_type> get() const {
@@ -146,6 +155,12 @@ public:
     /// @param element Element holding that is wrapped.
     SingleElementConstBuffer(DataType const& element) : _element(element) {}
 
+    /// @brief Move constructor for SingleElementConstBuffer (implicitly deletes copy constructor/assignment operator).
+    SingleElementConstBuffer(SingleElementConstBuffer&&) = default;
+    // SingleElementConstBuffer& operator=(SingleElementConstBuffer&&) = delete;
+    // SingleElementConstBuffer(SingleElementConstBuffer&) = delete;
+    // SingleElementConstBuffer& operator=(SingleElementConstBuffer&) = delete;
+
     /// @brief Get access to the underlaying read-only value.
     /// @return Span referring to the underlying read-only storage.
     Span<const value_type> get() const {
@@ -176,6 +191,13 @@ public:
             !std::is_const_v<DataType>,
             "The underlying data type of a SingleElementModifiableBuffer must not be const.");
     }
+
+    /// @brief Move constructor for SingleElementModifiableBuffer (implicitly deletes copy constructor/assignment
+    /// operator).
+    SingleElementModifiableBuffer(SingleElementModifiableBuffer&&) = default;
+    // SingleElementModifiableBuffer& operator=(SingleElementModifiableBuffer&&) = delete;
+    // SingleElementModifiableBuffer(SingleElementModifiableBuffer&) = delete;
+    // SingleElementModifiableBuffer& operator=(SingleElementModifiableBuffer&) = delete;
 
     /// @brief Get writable access to the underlaying value.
     /// @return Reference to the underlying storage.
@@ -213,6 +235,13 @@ public:
     /// @brief Constructor for UserAllocatedContainerBasedBuffer.
     /// param container Container providing storage for data that may be written.
     UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
+
+    /// @brief Move constructor for UserAllocatedContainerBasedBuffer (implicitly deletes copy constructor/assignment
+    /// operator).
+    UserAllocatedContainerBasedBuffer(UserAllocatedContainerBasedBuffer&&) = default;
+    // UserAllocatedContainerBasedBuffer& operator=(UserAllocatedContainerBasedBuffer&&) = default;
+    // UserAllocatedContainerBasedBuffer(const UserAllocatedContainerBasedBuffer&) = delete;
+    // UserAllocatedContainerBasedBuffer& operator=(UserAllocatedContainerBasedBuffer&) = delete;
 
     /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
     /// a \c Span.
@@ -266,7 +295,16 @@ public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
 
     /// @brief Constructor for LibAllocatedContainerBasedBuffer.
-    LibAllocatedContainerBasedBuffer() {}
+    LibAllocatedContainerBasedBuffer() = default;
+
+    /// @brief Move constructor for LibAllocatedContainerBasedBuffer (implicitly deletes copy constructor/assignment
+    /// operator).
+    LibAllocatedContainerBasedBuffer(LibAllocatedContainerBasedBuffer&&) = default;
+    /// @brief Move assignment operator for LibAllocatedContainerBasedBuffer (implicitly deletes copy
+    /// constructor/assignment operator).
+    LibAllocatedContainerBasedBuffer& operator=(LibAllocatedContainerBasedBuffer&&) = default;
+    // LibAllocatedContainerBasedBuffer(const LibAllocatedContainerBasedBuffer&) = delete;
+    // LibAllocatedContainerBasedBuffer& operator=(const LibAllocatedContainerBasedBuffer&) = delete;
 
     /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
     /// a \c Span.
@@ -333,6 +371,13 @@ public:
     /// @param recv_count Encapsulated recv count.
     RecvCount(T recv_count) : _recv_count{recv_count} {}
 
+    /// @brief Move constructor for RecvCount (implicitly deletes copy constructor/assignment operator).
+    RecvCount(RecvCount&&) = default;
+    /// @brief Move assignment operator for RecvCount (implicitly deletes copy constructor/assignment operator).
+    RecvCount& operator=(RecvCount&&) = default;
+    // RecvCount(const RecvCount&) = delete;
+    // RecvCount& operator=(const RecvCount&) = delete;
+
     /// @brief Returns the encapsulated recv count.
     /// @returns The encapsulated recv count.
     int recv_count() const {
@@ -365,6 +410,13 @@ public:
     /// @ Constructor for Root.
     /// @param rank Rank of the root PE.
     Root(int rank) : _rank{rank} {}
+
+    /// @brief Move constructor for Root (implicitly deletes copy constructor/assignment operator).
+    Root(Root&&) = default;
+    /// @brief Move assignment operator for Root (implicitly deletes copy constructor/assignment operator).
+    Root& operator=(Root&&) = default;
+    // Root(const Root&) = delete;
+    // Root& operator=(const Root&) = delete;
 
     /// @brief Returns the rank of the root.
     /// @returns Rank of the root.

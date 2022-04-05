@@ -1,0 +1,86 @@
+// This file is part of KaMPI.ng.
+//
+// Copyright 2021 The KaMPI.ng Authors
+//
+// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
+#include <vector>
+
+#include "kamping/parameter_objects.hpp"
+
+int main(int /*argc*/, char** /*argv*/) {
+    using namespace ::kamping;
+    using namespace ::kamping::internal;
+    using ContainerType                = std::vector<int>;
+    const ParameterType parameter_type = ParameterType::recv_buf;
+
+    const ContainerType                                      const_container;
+    ContainerBasedConstBuffer<ContainerType, parameter_type> container_based_const_buffer(const_container);
+
+    SingleElementConstBuffer<int, parameter_type> single_elem_const_buffer(42);
+
+    int                                                elem = 42;
+    SingleElementModifiableBuffer<int, parameter_type> single_elem_modifiable_buffer(elem);
+
+    ContainerType                                                    container;
+    UserAllocatedContainerBasedBuffer<ContainerType, parameter_type> user_alloc_container_based_buffer(container);
+
+    LibAllocatedContainerBasedBuffer<ContainerType, parameter_type> lib_alloc_container_based_buffer;
+
+    RecvCount<int> recv_count(42);
+
+    Root root(42);
+
+#if defined(COPY_CONSTRUCT_CONTAINER_CONST_BUFFER)
+    // should not be possible to copy construct a buffer (for performance reasons)
+    auto tmp = container_based_const_buffer;
+#elif defined(COPY_ASSIGN_CONTAINER_CONST_BUFFER)
+    // should not be possible to copy assign a buffer (for performance reasons)
+    container_based_const_buffer = container_based_const_buffer;
+#elif defined(COPY_CONSTRUCT_SINGLE_ELMENT_CONST_BUFFER)
+    // should not be possible to copy construct a buffer (for performance reasons)
+    auto tmp = single_elem_const_buffer;
+#elif defined(COPY_ASSIGN_SINGLE_ELMENT_CONST_BUFFER)
+    // should not be possible to copy assign a buffer (for performance reasons)
+    single_elem_const_buffer = single_elem_const_buffer;
+#elif defined(COPY_CONSTRUCT_SINGLE_ELMENT_MODIFIABLE_BUFFER)
+    // should not be possible to copy construct a buffer (for performance reasons)
+    auto tmp = single_elem_modifiable_buffer;
+#elif defined(COPY_ASSIGN_SINGLE_ELMENT_MODIFIABLE_BUFFER)
+    // should not be possible to copy assign a buffer (for performance reasons)
+    single_elem_modifiable_buffer = single_elem_modifiable_buffer;
+#elif defined(COPY_CONSTRUCT_USER_ALLOC_CONTAINER_BUFFER)
+    // should not be possible to copy construct a buffer (for performance reasons)
+    auto tmp = user_alloc_container_based_buffer;
+#elif defined(COPY_ASSIGN_USER_ALLOC_CONTAINER_BUFFER)
+    // should not be possible to copy assign a buffer (for performance reasons)
+    user_alloc_container_based_buffer = user_alloc_container_based_buffer;
+#elif defined(COPY_CONSTRUCT_LIB_ALLOC_CONTAINER_BUFFER)
+    // should not be possible to copy construct a buffer (for performance reasons)
+    auto tmp = lib_alloc_container_based_buffer;
+#elif defined(COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER)
+    // should not be possible to copy assign a buffer (for performance reasons)
+    lib_alloc_container_based_buffer = lib_alloc_container_based_buffer;
+#elif defined(COPY_CONSTRUCT_RECV_COUNT_BUFFER)
+    // should not be possible to copy construct a buffer (for performance reasons)
+    auto tmp = recv_count;
+#elif defined(COPY_ASSIGN_RECV_COUNT_BUFFER)
+    // should not be possible to copy assign a buffer (for performance reasons)
+    recv_count = recv_count;
+#elif defined(COPY_CONSTRUCT_ROOT_BUFFER)
+    // should not be possible to copy construct a buffer (for performance reasons)
+    auto tmp = root;
+#elif defined(COPY_ASSIGN_ROOT_BUFFER)
+    // should not be possible to copy assign a buffer (for performance reasons)
+    root = root;
+#else
+// If none of the above sections is active, this file will compile successfully.
+#endif
+}
