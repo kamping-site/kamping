@@ -107,8 +107,9 @@ public:
     // move assignment operator is implicitly deleted as this buffer has a reference member
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    ContainerBasedConstBuffer(ContainerBasedConstBuffer const&) =
-        delete; // redundant as defaulted move constructor implies the deletion
+    ///
+    /// redundant as defaulted move constructor implies the deletion
+    ContainerBasedConstBuffer(ContainerBasedConstBuffer const&) = delete; 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     ContainerBasedConstBuffer& operator=(ContainerBasedConstBuffer const&) =
         delete; // redundant as defaulted move constructor implies the deletion
