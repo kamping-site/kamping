@@ -27,6 +27,7 @@
 ///
 /// @param argc The number of command line arguments
 /// @param argv The command line arguments
+/// @return 0 if successfull
 int main(int argc, char** argv) {
     using namespace kamping;
 
