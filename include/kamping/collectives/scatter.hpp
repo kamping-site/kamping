@@ -158,9 +158,8 @@ protected:
 
 private:
     // Broadcasts a value from on PE to all PEs.
-    template <typename Value>
-    Value bcast_value(Value const bcast_value, int const root) {
-        Value                      bcast_result = bcast_value;
+    int bcast_value(int const bcast_value, int const root) {
+        int                        bcast_result = bcast_value;
         [[maybe_unused]] int const result       = MPI_Bcast(&bcast_result, 1, MPI_INT, root, comm().mpi_communicator());
         THROW_IF_MPI_ERROR(result, MPI_Bcast);
         return bcast_result;
