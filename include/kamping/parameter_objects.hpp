@@ -208,6 +208,7 @@ public:
     /// @brief Copy constructor is deleted as buffers should only be moved.
     SingleElementModifiableBuffer(SingleElementModifiableBuffer const&) =
         delete; // redundant as defaulted move constructor implies the deletion
+        
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     SingleElementModifiableBuffer& operator=(SingleElementModifiableBuffer const&) =
         delete; // redundant as defaulted move constructor implies the deletion
