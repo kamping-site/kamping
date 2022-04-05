@@ -247,7 +247,7 @@ TEST(OperationBuilder, move_constructor_assignment_operator_is_enabled) {
     OperationBuilder op_builder1(ops::plus<>(), commutative);
     OperationBuilder op_builder2(std::move(op_builder1));
     OperationBuilder op_builder3(ops::plus<>(), commutative);
-    op_builder3 = std::move(op_builder3);
+    op_builder3 = std::move(op_builder2);
 }
 
 TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
