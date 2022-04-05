@@ -711,8 +711,8 @@ constexpr bool assertion_enabled(int level) {
 /// @param where Source code location of the assertion.
 /// @param expr_str Stringified assertion expression.
 /// @return Result of the assertion. If true, the assertion was triggered and the program should be halted.
-bool evaluate_and_print_assertion(
-    char const* type, Expression&& expr, SourceLocation const& where, char const* expr_str) {
+inline bool
+evaluate_and_print_assertion(char const* type, Expression&& expr, SourceLocation const& where, char const* expr_str) {
     if (!expr.result()) {
         OStreamLogger(std::cerr) << where.file << ": In function '" << where.function << "':\n"
                                  << where.file << ":" << where.row << ": FAILED " << type << "\n"
