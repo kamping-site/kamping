@@ -163,8 +163,8 @@ public:
     // move assignment operator is implicitly deleted as this buffer has a reference member
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    SingleElementConstBuffer(SingleElementConstBuffer const&) =
-        delete; // redundant as defaulted move constructor implies the deletion
+    SingleElementConstBuffer(SingleElementConstBuffer const&) = delete; 
+    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     SingleElementConstBuffer&
