@@ -38,7 +38,7 @@ namespace kamping {
 /// @see mpi_datatype()
 ///
 template <size_t NumBytes>
-[[nodiscard]] MPI_Datatype mpi_custom_continuous_type() noexcept {
+[[nodiscard]] inline MPI_Datatype mpi_custom_continuous_type() noexcept {
     static_assert(NumBytes > 0, "You cannot create a continuous type with 0 bytes.");
     // Create a new MPI datatype only the first type per NumBytes this function is called.
     static MPI_Datatype type = MPI_DATATYPE_NULL;
@@ -252,7 +252,7 @@ struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
 /// @see mpi_custom_continuous_type()
 ///
 template <typename T>
-[[nodiscard]] MPI_Datatype mpi_datatype() noexcept {
+[[nodiscard]] inline MPI_Datatype mpi_datatype() noexcept {
     if constexpr (mpi_type_traits<T>::is_builtin) {
         return mpi_type_traits<T>::data_type();
     }
@@ -298,7 +298,7 @@ template <typename T>
 /// @param mpi_datatype The MPI datatype to get the size of.
 /// @return The size of the MPI datatype in bytes.
 ///
-int mpi_datatype_size(MPI_Datatype mpi_datatype) {
+inline int mpi_datatype_size(MPI_Datatype mpi_datatype) {
     int                  result;
     [[maybe_unused]] int err = MPI_Type_size(mpi_datatype, &result);
     THROW_IF_MPI_ERROR(err, MPI_Type_size);
