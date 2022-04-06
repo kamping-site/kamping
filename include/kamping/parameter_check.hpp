@@ -68,6 +68,10 @@
 /// checks that the parameter pack `Args` contains members of type `kamping::internal::ParameterType::send_buf` and type
 /// `kamping::internal::ParameterType::recv_buf`.
 ///
+/// Note that expanding the macro into a `do { ... } while(false)` pseudo-loop is a common trick to make a macro
+/// "act like a statement". Otherwise, it would have surprising effects if the macro is used inside a `if` branch
+/// without braces.
+///
 /// @param args A parameter pack with all parameter types passed to the function. Note that this is only the name of the
 /// parameter pack *without trailing `...`*.
 /// @param required A list of required parameter type names wrapped in a KAMPING_REQUIRED_PARAMETERS macro.
