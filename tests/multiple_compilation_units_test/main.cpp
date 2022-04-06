@@ -16,7 +16,9 @@
 /// when linking two compilation units that both use KaMPI.ng
 
 #include <cstddef>
+#include <numeric>
 
+#include <gtest/gtest.h>
 #include <mpi.h>
 
 #include "./gatherer.hpp"
@@ -24,14 +26,9 @@
 
 /// @brief The main function for this tests. Gathers the ranks on the root (done in a different compilation unit), calls
 /// a barrier and checks the result
-///
-/// @param argc The number of command line arguments
-/// @param argv The command line arguments
-/// @return 0 if successfull
-int main(int argc, char** argv) {
+TEST(TwoCompilationUnitsTest, main) {
     using namespace kamping;
 
-    MPI_Init(&argc, &argv);
     Communicator comm;
 
     Gatherer gatherer;
@@ -39,16 +36,11 @@ int main(int argc, char** argv) {
 
     comm.barrier();
 
-    // Using assert here because this is supposed to do thing the way a normal KaMPI.ng application would do it.
-    // Since KASSERT is a KaMPI.ng internal, we cannot use it here.
     if (comm.rank() == 0) {
-        assert(gathered_data.size() == static_cast<size_t>(comm.size()));
-        for (int rank = 0; rank < comm.size(); ++rank) {
-            assert(gathered_data[static_cast<size_t>(rank)] == rank);
-        }
+        std::vector<int> expected_result(static_cast<size_t>(comm.size()));
+        std::iota(expected_result.begin(), expected_result.end(), 0);
+        EXPECT_EQ(gathered_data, expected_result);
     } else {
-        assert(gathered_data.empty());
+        EXPECT_TRUE(gathered_data.empty());
     }
-
-    return 0;
 }
