@@ -4,4 +4,3 @@ for file in $(git diff --cached --name-only | grep -E '.*\.(c|cpp|h|hpp)\b'); do
 done
 
 exit 0
-
