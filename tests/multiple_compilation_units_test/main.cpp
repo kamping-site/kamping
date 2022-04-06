@@ -1,0 +1,46 @@
+// This file is part of KaMPI.ng.
+//
+// Copyright 2022 The KaMPI.ng Authors
+//
+// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
+/// @file
+/// @brief The main file (and first compilation unit) of a test that checks if compiling and running works correctly
+/// when linking two compilation units that both use KaMPI.ng
+
+#include <cstddef>
+#include <numeric>
+
+#include <gtest/gtest.h>
+#include <mpi.h>
+
+#include "./gatherer.hpp"
+#include "kamping/communicator.hpp"
+
+/// @brief The main function for this tests. Gathers the ranks on the root (done in a different compilation unit), calls
+/// a barrier and checks the result
+TEST(TwoCompilationUnitsTest, main) {
+    using namespace kamping;
+
+    Communicator comm;
+
+    Gatherer gatherer;
+    auto     gathered_data = gatherer.gather(comm.rank());
+
+    comm.barrier();
+
+    if (comm.rank() == 0) {
+        std::vector<int> expected_result(static_cast<size_t>(comm.size()));
+        std::iota(expected_result.begin(), expected_result.end(), 0);
+        EXPECT_EQ(gathered_data, expected_result);
+    } else {
+        EXPECT_TRUE(gathered_data.empty());
+    }
+}
