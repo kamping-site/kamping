@@ -75,7 +75,7 @@
 /// @param args A parameter pack with all parameter types passed to the function. Note that this is only the name of the
 /// parameter pack *without trailing `...`*.
 /// @param required A list of required parameter type names wrapped in a KAMPING_REQUIRED_PARAMETERS macro.
-/// @param option A list of optional parameter type names wrapped in a KAMPING_OPTIONAL_PARAMETERS macro.
+/// @param optional A list of optional parameter type names wrapped in a KAMPING_OPTIONAL_PARAMETERS macro.
 #define KAMPING_CHECK_PARAMETERS(args, required, optional)                                                         \
     do {                                                                                                           \
         static_assert(                                                                                             \
