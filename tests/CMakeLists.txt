@@ -19,6 +19,7 @@ kamping_register_test(test_span FILES span_test.cpp)
 # We need MPI for the datatypes test as we are using MPI_Type_continuous which in
 # turn requires MPI_Init() to be completed.
 kamping_register_mpi_test(test_mpi_alltoall FILES collectives/mpi_alltoall_test.cpp CORES 1 2 4)
+kamping_register_mpi_test(test_mpi_scatter FILES collectives/mpi_scatter_test.cpp CORES 1 2 4)
 kamping_register_mpi_test(test_mpi_barrier FILES collectives/mpi_barrier_test.cpp CORES 1 2 4)
 kamping_register_mpi_test(test_mpi_communicator FILES mpi_communicator_test.cpp CORES 1 2 4)
 kamping_register_mpi_test(test_mpi_datatype FILES mpi_datatype_test.cpp CORES 1)
