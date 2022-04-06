@@ -83,7 +83,7 @@ public:
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
         auto const*  send_buf_ptr  = send_buf.data();
         KASSERT(
-            (this->comm().rank() != root || send_buf_ptr != nullptr), "Send buffer must be specified on root.",
+            (!this->comm().is_root(root) || send_buf_ptr != nullptr), "Send buffer must be specified on root.",
             assert::light);
 
         // Compute sendcount based on the size of the sendbuf
