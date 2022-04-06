@@ -13,12 +13,13 @@ DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 # Location of active git hooks 
 HOOKS="${DIR}/../.git/hooks"
 
-# Print diff of new hooks
-for hook_inactive_path in $(find "${DIR}" -type f \( ! -name "*.*" \)); do 
+# Iterate over all hooks and ask the user whether to install it if it changed
+# We consider all files without file extension in the same directory as this script to be git hooks
+for hook_inactive_path in $(find "${DIR}" -type f \( ! -name "*.*" \)); do # Loop over all files without file extension 
 	hook=$(basename "$hook_inactive_path")
 	hook_active_path="${HOOKS}/${hook}"
 
-	if [[ -f "$hook_active_path" ]]; then # Hook already active 
+	if [[ -f "$hook_active_path" ]]; then # Hook is already installed
 		if ! cmp --silent "$hook_inactive_path" "$hook_active_path"; then # Hook changed
 			echo "################################################################################"
 			echo "# Changed hook '$hook'"
