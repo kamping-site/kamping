@@ -234,11 +234,9 @@
         KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0(args, __VA_ARGS__), ignore)
 
 #define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0(args, ignore)
-#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, ignore, x1)                                  \
-    static_assert(                                                                                                \
-        kamping::internal::has_all_required_parameters<                                                           \
-            kamping::internal::parameter_types_to_integral_constants<kamping::internal::ParameterType::x1>::type, \
-            args...>::assertion,                                                                                  \
+#define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, ignore, x1)                \
+    static_assert(                                                                              \
+        kamping::internal::has_parameter_type<kamping::internal::ParameterType::x1, args...>(), \
         "Missing required parameter " #x1);
 #define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER2(args, ignore, x1, x2) \
     KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, ignore, x1);        \
@@ -268,38 +266,6 @@
 /// @endcond
 
 namespace kamping::internal {
-/// @brief Struct wrapping a check that verifies that all required parameters are part of the arguments.
-///
-/// @tparam ParametersTuple All required kamping::internal::ParameterType passed as \c
-/// std::integral_constant in an \c std::tuple.
-/// @tparam Args Arguments passed to the function that calls this check, i.e., the different parameters.
-template <typename ParametersTuple, typename... Args>
-struct has_all_required_parameters {
-    /// @brief Get number of required parameters passed as argument in \c Args.
-    ///
-    /// To compute the number, we "iterate" over all required template parameters and check if the
-    /// parameter can be found (using has_parameter_type() on the arguments \c Args). If this is the
-    /// case, we add a tuple with the given parameter type to the result, otherwise, we add a tuple
-    /// without a type. In the end, we have added a parameter type for each parameter type that we have
-    /// found in \c Args. Hence, the size of the resulting tuple is the number of found parameters.
-    ///
-    /// @tparam Indices Index sequence used to unpack all required parameters in \c ParametersTuple.
-    /// @param indices The parameter is only required to deduce the template parameter.
-    /// @return The number of required parameters found in \c Args.
-    template <size_t... Indices>
-    static constexpr auto number_of_required(std::index_sequence<Indices...> indices [[maybe_unused]]) {
-        return std::tuple_size_v<decltype(std::tuple_cat(
-            std::conditional_t<
-                has_parameter_type<std::tuple_element_t<Indices, ParametersTuple>::value, Args...>(),
-                std::tuple<std::tuple_element_t<Indices, ParametersTuple>>, std::tuple<>>{}...))>;
-    }
-
-    /// @brief \c true if and only if all required parameters can be found in \c Args.
-    static constexpr bool assertion =
-        (std::tuple_size_v<
-             ParametersTuple> == number_of_required(std::make_index_sequence<std::tuple_size_v<ParametersTuple>>{}));
-}; // struct has_all_required_parameters
-
 /// @brief Struct wrapping a check that verifies that no unused parameters are part of the arguments.
 ///
 /// @tparam RequiredParametersTuple All required kamping::internal::ParameterType passed as \c
