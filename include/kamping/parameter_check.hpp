@@ -290,7 +290,7 @@ struct has_no_unused_parameters {
     /// @param indices The parameter is only required to deduce the template parameter.
     /// @return The number of different parameters (passed, optional, and required).
     template <size_t... Indices>
-    static constexpr auto total_number_of_parameter(std::index_sequence<Indices...> indices [[maybe_unused]]) {
+    static constexpr auto total_number_of_parameters(std::index_sequence<Indices...> indices [[maybe_unused]]) {
         return std::tuple_size_v<decltype(std::tuple_cat(
                    std::conditional_t<
                        !has_parameter_type<std::tuple_element_t<Indices, all_available_parameters>::value, Args...>(),
@@ -300,7 +300,7 @@ struct has_no_unused_parameters {
 
     /// @brief \c true if and only if no unused parameter can be found in \c Args.
     static constexpr bool assertion =
-        (std::tuple_size_v<all_available_parameters> >= total_number_of_parameter(
+        (std::tuple_size_v<all_available_parameters> >= total_number_of_parameters(
              std::make_index_sequence<std::tuple_size_v<all_available_parameters>>{}));
 
 }; // struct has_no_unused_parameters
