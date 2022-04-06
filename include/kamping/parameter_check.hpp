@@ -44,18 +44,34 @@
 // However, this leads to the situation where the first argument of this macro is always empty; that's why we have
 // a lot of "ignore" parameters in the remaining macros of this file.
 
-/// @brief Wrapper to pass (possibly empty) list of parameters as required parameters to \c KAMPING_CHECK_PARAMETERS.
+/// @brief Wrapper to pass (possibly empty) list of parameter type names as required parameters to \c
+/// KAMPING_CHECK_PARAMETERS.
+/// Note that this macro only takes the *name* of parameter types, i.e., instead of using
+/// `kamping::internal::ParameterType::send_buf`, only pass `send_buf` to this macro.
 #define KAMPING_REQUIRED_PARAMETERS(...) , ##__VA_ARGS__
 
-/// @brief Wrapper to pass (possibly empty) list of parameters as optional parameters to \c KAMPING_CHECK_PARAMETERS.
+/// @brief Wrapper to pass (possibly empty) list of parameter type names as optional parameters to \c
+/// KAMPING_CHECK_PARAMETERS.
+/// Note that this macro only takes the *name* of parameter types, i.e., instead of using
+/// `kamping::internal::ParameterType::send_buf`, only pass `send_buf` to this macro.
 #define KAMPING_OPTIONAL_PARAMETERS(...) , ##__VA_ARGS__
 
 /// @brief Assertion macro that checks if passed parameters are correct, i.e., all parameter types are unique, all
 /// required parameters are provided, and no unused parameter is passed. Also checks that all parameter types are
 /// r-value references.
 ///
-/// The \c REQUIRED parameter should be passed as \c KAMPING_REQUIRED_PARAMETERS and the \c OPTIONAL parameter should be
-/// passed as KAMPING_OPTIONAL_PARAMETERS.
+/// The macro *only* expects the parameter type, i.e., a member name of the `kamping::internal::ParameterType` enum
+/// *without the name of the enum*. For instance,
+/// ```c++
+/// KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, recv_buf), KAMPING_OPTIONAL_PARAMETERS())
+/// ```
+/// checks that the parameter pack `Args` contains members of type `kamping::internal::ParameterType::send_buf` and type
+/// `kamping::internal::ParameterType::recv_buf`.
+///
+/// @param args A parameter pack with all parameter types passed to the function. Note that this is only the name of the
+/// parameter pack *without trailing `...`*.
+/// @param required A list of required parameter type names wrapped in a KAMPING_REQUIRED_PARAMETERS macro.
+/// @param option A list of optional parameter type names wrapped in a KAMPING_OPTIONAL_PARAMETERS macro.
 #define KAMPING_CHECK_PARAMETERS(args, required, optional)                                                         \
     do {                                                                                                           \
         static_assert(                                                                                             \
@@ -83,10 +99,10 @@
 
 // Used to stringify variadic parameters:
 // KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(a, b, c) returns the string "a, b, c"
-#define KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(ignore, ...) #__VA_ARGS__
+#define KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(ignore, ...) "[" #__VA_ARGS__ "]"
 
 // In the following, we implement variadic macros that do something for each of their arguments:
-// - KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(...) prepends each argument by "internal::kamping::ParameterType::"
+// - KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(...) prepends each argument by "kamping::internal::ParameterType::"
 // - KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(args, ...) generates a static assert for each of its
 //   arguments to ensure that args... contains a parameter of that type.
 //
@@ -126,19 +142,26 @@
 // DISPATCH(X2(), X1(), X0) // becomes X0
 // ```
 //
+// At least in theory -- if one strictly adheres to the C++ standard, `DISPATCH` actually takes at least 4 arguments,
+// since the `...` parameter may not be empty. Thus, in our implementation, we pass another dummy argument to the
+// `DISPATCH` invocation, e.g:
+// ```
+// DISPATCH(X2(), X1(), X0, ignore)
+// ```
+//
 // We can use that to implement `X`:
 //
 // ```
-// #define X(...) DISPATCH(__VA_ARGS__, X2(__VA_ARGS__), X1(__VA_ARGS__), X0)
+// #define X(...) DISPATCH(__VA_ARGS__, X2(__VA_ARGS__), X1(__VA_ARGS__), X0, ignore)
 // ```
 //
 // `__VA_ARGS__` expands to whatever arguments we pass to `X`. Thus, if we pass 2 arguments to `X`, it also expands to
 // two arguments. If we pass 1 argument to `X`, it expands to 1 argument. Thus, we can "move" the correct implementation
 // for `X` to be the 3rd argument passed to `DISPATCH`:
 //
-// * `X(0, 1)` becomes `DISPATCH(0, 1, X2(0, 1), X1(0, 1), X0)` becomes `X2(0, 1)`
+// * `X(0, 1)` becomes `DISPATCH(0, 1, X2(0, 1), X1(0, 1), X0, ignore)` becomes `X2(0, 1)`
 //
-// * `X(0)` becomes `DISPATCH(0, X2(0), X1(0), X0)` becomes `X1(0)`
+// * `X(0)` becomes `DISPATCH(0, X2(0), X1(0), X0, ignore)` becomes `X1(0)`
 //
 // Since KAMPING_REQUIRED_PARAMETERS and KAMPING_OPTIONAL_PARAMETERS always resolve to at least one argument (see
 // description above), this is sufficient.
@@ -150,7 +173,9 @@
 // I.e., turns "send_buf, recv_buf" into "kamping::internal::ParameterType::send_buf,
 // kamping::internal::ParameterType::recv_buf"
 //
-// We need to implement the check, but to generate the error messages, we also need the category name with prefix.
+// We do this because we need both versions of the parameter types: to print nice error messages, we only need the names
+// of the types without preceeding `kamping::internal::ParameterType::`; to implement the checks, we need the actual
+// name of the symbol to generate valid C++ code.
 //
 // Note that argument "ignore" argument in this macro is required because the "..." parameter of
 // KAMPING_PARAMETER_CHECK_HPP_SELECT10 may not be empty.
