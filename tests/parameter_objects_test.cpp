@@ -11,6 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "gtest/gtest.h"
 #include <type_traits>
 
 #include <gtest/gtest.h>
@@ -195,6 +196,7 @@ TEST(SingleElementConstBufferTest, get_basics) {
     int                                  value = 5;
     SingleElementConstBuffer<int, ptype> int_buffer(value);
 
+    EXPECT_EQ(int_buffer.size(), 1);
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
 
@@ -219,6 +221,25 @@ TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
     SingleElementModifiableBuffer<int, ptype> buffer1(elem);
     SingleElementModifiableBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), const_elem);
+}
+
+TEST(SingleElementModifiableBufferTest, get_basics) {
+    constexpr ParameterType                   ptype = ParameterType::send_counts;
+    int                                       value = 5;
+    SingleElementModifiableBuffer<int, ptype> int_buffer(value);
+
+    EXPECT_EQ(int_buffer.size(), 1);
+    int_buffer.resize(1);
+    EXPECT_EQ(int_buffer.size(), 1);
+    EXPECT_DEATH(int_buffer.resize(0), "Single element buffers must hold exactly one element.");
+    EXPECT_DEATH(int_buffer.resize(2), "Single element buffers must hold exactly one element.");
+    EXPECT_EQ(int_buffer.get().size(), 1);
+    EXPECT_EQ(*(int_buffer.get().data()), 5);
+
+    EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
+    EXPECT_TRUE(int_buffer.is_modifiable);
+
+    static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
 }
 
 TEST(RecvCountTest, move_constructor_assignment_operator_is_enabled) {

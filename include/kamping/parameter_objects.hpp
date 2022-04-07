@@ -170,6 +170,12 @@ public:
     SingleElementConstBuffer& operator=(SingleElementConstBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage (always 1).
+    size_t size() {
+        return 1;
+    }
+
     /// @brief Get access to the underlaying read-only value.
     /// @return Span referring to the underlying read-only storage.
     Span<const value_type> get() const {
@@ -213,6 +219,19 @@ public:
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     SingleElementModifiableBuffer& operator=(SingleElementModifiableBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Does nothing but kassert that only size 1 is requested.
+    ///
+    /// @param size The size that this "container" is expected to have after the call.
+    void resize(size_t size) const {
+        KASSERT(size == 1ul, "Single element buffers must hold exactly one element.");
+    }
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage (always 1).
+    size_t size() {
+        return 1;
+    }
 
     /// @brief Get writable access to the underlaying value.
     /// @return Reference to the underlying storage.
