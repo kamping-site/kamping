@@ -21,7 +21,7 @@
 namespace kamping {
 
 /// @brief Wrapper for MPI functions that don't require a communicator. If the template parameter `init_finalize` is set
-/// to true (default), MPI_Init is called in the constructor, MPI_Finalize is called in the destructor.
+/// to true (default), MPI_Init is called in the constructor, and MPI_Finalize is called in the destructor.
 template <bool init_finalize = true>
 class Environment {
 public:
