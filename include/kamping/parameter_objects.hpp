@@ -114,6 +114,12 @@ public:
     ContainerBasedConstBuffer& operator=(ContainerBasedConstBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() {
+        return _container.size();
+    }
+
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
     Span<const value_type> get() const {
@@ -133,6 +139,12 @@ public:
     static constexpr bool          is_modifiable =
         false;               ///< This pseudo buffer is not modifiable since it represents no actual buffer.
     using value_type = Data; ///< Value type of the buffer.
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage (always 0).
+    size_t size() {
+        return 0;
+    }
 
     /// @brief Returns a span containing a nullptr.
     /// @return Span containing a nullptr.

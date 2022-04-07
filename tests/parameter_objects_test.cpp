@@ -22,7 +22,17 @@
 using namespace ::kamping;
 using namespace ::kamping::internal;
 
-// Tests the basic functionality of ContainerBasedConstBuffer (i.e. its only public function get())
+// Tests the basic functionality of EmptyBuffer
+TEST(EmptyBufferTest, get_basics) {
+    constexpr ParameterType              ptype = ParameterType::send_counts;
+    EmptyBuffer<std::vector<int>, ptype> empty_buffer{};
+
+    EXPECT_EQ(empty_buffer.size(), 0);
+    EXPECT_EQ(empty_buffer.get().size(), 0);
+    EXPECT_EQ(empty_buffer.get().data(), nullptr);
+}
+
+// Tests the basic functionality of ContainerBasedConstBuffer
 TEST(ContainerBasedConstBufferTest, get_basics) {
     std::vector<int>       int_vec{1, 2, 3};
     std::vector<int> const int_vec_const{1, 2, 3, 4};
@@ -31,6 +41,7 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
     ContainerBasedConstBuffer<std::vector<int>, ptype> buffer_based_on_int_vector(int_vec);
     ContainerBasedConstBuffer<std::vector<int>, ptype> buffer_based_on_const_int_vector(int_vec_const);
 
+    EXPECT_EQ(buffer_based_on_int_vector.size(), int_vec.size());
     EXPECT_EQ(buffer_based_on_int_vector.get().size(), int_vec.size());
     EXPECT_EQ(buffer_based_on_int_vector.get().data(), int_vec.data());
     static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.get().data()), const int*>);
