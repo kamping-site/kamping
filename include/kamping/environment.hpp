@@ -43,7 +43,7 @@ public:
     }
 
     /// @brief Calls MPI_Init without arguments.
-    void init() {
+    void init() const {
         KASSERT(!initialized(), "Trying to call MPI_Init twice");
         [[maybe_unused]] int err = MPI_Init(NULL, NULL);
         THROW_IF_MPI_ERROR(err, MPI_Init);
@@ -53,7 +53,7 @@ public:
     ///
     /// @param argc The number of arguments
     /// @param argv The arguments
-    void init(int& argc, char**& argv) {
+    void init(int& argc, char**& argv) const {
         KASSERT(!initialized(), "Trying to call MPI_Init twice");
         [[maybe_unused]] int err = MPI_Init(&argc, &argv);
         THROW_IF_MPI_ERROR(err, MPI_Init);
@@ -63,7 +63,7 @@ public:
     ///
     /// As MPI_Finalize could potentially return an error, this function can be used if you want to be able to
     /// handle that error. Otherwise the destructor will call MPI_Finalize and not throw on any errors returned.
-    void finalize() {
+    void finalize() const {
         KASSERT(!finalized(), "Trying to call MPI_Finalize twice");
         [[maybe_unused]] int err = MPI_Finalize();
         THROW_IF_MPI_ERROR(err, MPI_Finalize);
@@ -72,7 +72,7 @@ public:
     /// @brief Checks whether MPI_Init has been called.
     ///
     /// @return Whether MPI_Init has been called.
-    bool initialized() {
+    bool initialized() const {
         int                  result;
         [[maybe_unused]] int err = MPI_Initialized(&result);
         THROW_IF_MPI_ERROR(err, MPI_Initialized);
@@ -82,7 +82,7 @@ public:
     /// @brief Checks whether MPI_Finalize has been called.
     ///
     /// @return Whether MPI_Finalize has been called.
-    bool finalized() {
+    bool finalized() const {
         int                  result;
         [[maybe_unused]] int err = MPI_Finalized(&result);
         THROW_IF_MPI_ERROR(err, MPI_Finalized);
@@ -108,6 +108,6 @@ public:
     }
 }; // class Environment
 
-Environment<false> mpi_env;
+static const Environment<false> mpi_env;
 
 } // namespace kamping

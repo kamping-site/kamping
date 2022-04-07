@@ -23,11 +23,13 @@
 
 #include "./gatherer.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/environment.hpp"
 
 /// @brief The main function for this tests. Gathers the ranks on the root (done in a different compilation unit), calls
 /// a barrier and checks the result
 TEST(TwoCompilationUnitsTest, main) {
     using namespace kamping;
+    EXPECT_TRUE(mpi_env.initialized());
 
     Communicator comm;
 
