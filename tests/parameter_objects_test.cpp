@@ -231,8 +231,10 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.size(), 1);
     int_buffer.resize(1);
     EXPECT_EQ(int_buffer.size(), 1);
+#if KAMPING_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
     EXPECT_DEATH(int_buffer.resize(0), "Single element buffers must hold exactly one element.");
     EXPECT_DEATH(int_buffer.resize(2), "Single element buffers must hold exactly one element.");
+#endif
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
 
