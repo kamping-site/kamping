@@ -31,17 +31,39 @@ public:
     /// @param argv The arguments
     Environment(int& argc, char**& argv) {
         if constexpr (init_finalize) {
-            [[maybe_unused]] int err = MPI_Init(&argc, &argv);
-            THROW_IF_MPI_ERROR(err, MPI_Init);
+            init(argc, argv);
         }
     }
 
     /// @brief Calls MPI_Init without arguments.
     Environment() {
         if constexpr (init_finalize) {
-            [[maybe_unused]] int err = MPI_Init(NULL, NULL);
-            THROW_IF_MPI_ERROR(err, MPI_Init);
+            init();
         }
+    }
+
+    /// @brief Calls MPI_Init without arguments.
+    void init() {
+        init(NULL, NULL);
+    }
+
+    /// @brief Calls MPI_Init with arguments.
+    ///
+    /// @param argc The number of arguments
+    /// @param argv The arguments
+    void init(int& argc, char**& argv) {
+        [[maybe_unused]] int err = MPI_Init(&argc, &argv);
+        THROW_IF_MPI_ERROR(err, MPI_Init);
+    }
+
+    /// @brief Calls MPI_Finalize
+    ///
+    /// As MPI_Finalize could potentially return an error, this function can be used if you want to be able to
+    /// handle that error. Otherwise the destructor will call MPI_Finalize and not throw on any errors returned.
+    void finalize() {
+        KASSERT(!finalized(), "Trying to call MPI_Finalize twice");
+        [[maybe_unused]] int err = MPI_Finalize();
+        THROW_IF_MPI_ERROR(err, MPI_Finalize);
     }
 
     /// @brief Checks whether MPI_Init has been called.
@@ -62,16 +84,6 @@ public:
         [[maybe_unused]] int err = MPI_Finalized(&result);
         THROW_IF_MPI_ERROR(err, MPI_Finalized);
         return result == true;
-    }
-
-    /// @brief Calls MPI_Finalize
-    ///
-    /// As MPI_Finalize could potentially return an error, this function can be used if you want to be able to
-    /// handle that error. Otherwise the destructor will call MPI_Finalize and not throw on any errors returned.
-    void finalize() {
-        KASSERT(!finalized(), "Trying to call MPI_Finalize twice");
-        [[maybe_unused]] int err = MPI_Finalize();
-        THROW_IF_MPI_ERROR(err, MPI_Finalize);
     }
 
     /// @brief Calls MPI_Finalize if finalize() has not been called before.
