@@ -4,13 +4,13 @@
 # https://stackoverflow.com/questions/4877306/list-changed-files-in-git-post-merge-hook
 git diff-tree -r --name-only --no-commit-id "HEAD@{1}" HEAD |
 	while read -r changed_file; do
-		if [[ "$changed_file" == ".githooks/install.sh" ]]; then 
+		if [[ "$changed_file" == "githooks/install.sh" ]]; then 
 			echo "[KaMPI.ng] +------------------------!!! CAUTION !!!----------------------------+"
-			echo "[KaMPI.ng] | The hook install script '.githooks/install.sh' **changed**!       |"
+			echo "[KaMPI.ng] | The hook install script 'githooks/install.sh' **changed**!        |"
 			echo "[KaMPI.ng] | Please review these changes carefully before running the script!  |"
 			echo "[KaMPI.ng] +-------------------------------------------------------------------+"
-		elif [[ "$changed_file" == ".githooks/"* ]]; then
-			echo "[KaMPI.ng] Updated git hook: '$changed_file': run .githooks/install.sh for the changes to become active!"
+		elif [[ "$changed_file" == "githooks/"* ]]; then
+			echo "[KaMPI.ng] Updated git hook: '$changed_file': run githooks/install.sh for the changes to become active!"
 		fi
 	done
 
