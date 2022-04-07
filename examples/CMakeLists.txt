@@ -6,6 +6,10 @@ add_executable(example_reduce reduce_example.cpp)
 target_link_libraries(example_reduce kamping)
 target_compile_options(example_reduce PRIVATE ${KAMPING_WARNING_FLAGS})
 
+add_executable(example_scatter scatter_example.cpp)
+target_link_libraries(example_scatter kamping)
+target_compile_options(example_scatter PRIVATE ${KAMPING_WARNING_FLAGS})
+
 add_executable(example_alltoall alltoall_example.cpp)
 target_link_libraries(example_alltoall kamping)
 target_compile_options(example_alltoall PRIVATE ${KAMPING_WARNING_FLAGS})

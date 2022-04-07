@@ -19,6 +19,7 @@ kamping_register_test(test_span FILES span_test.cpp)
 # We need MPI for the datatypes test as we are using MPI_Type_continuous which in
 # turn requires MPI_Init() to be completed.
 kamping_register_mpi_test(test_mpi_alltoall FILES collectives/mpi_alltoall_test.cpp CORES 1 2 4)
+kamping_register_mpi_test(test_mpi_scatter FILES collectives/mpi_scatter_test.cpp CORES 1 2 4)
 kamping_register_mpi_test(test_mpi_barrier FILES collectives/mpi_barrier_test.cpp CORES 1 2 4)
 kamping_register_mpi_test(test_mpi_communicator FILES mpi_communicator_test.cpp CORES 1 2 4)
 kamping_register_mpi_test(test_mpi_datatype FILES mpi_datatype_test.cpp CORES 1)
@@ -26,6 +27,7 @@ kamping_register_mpi_test(test_mpi_gather FILES collectives/mpi_gather_test.cpp 
 kamping_register_mpi_test(test_mpi_reduce FILES collectives/mpi_reduce_test.cpp CORES 1 2 4)
 kamping_register_mpi_test(test_operation_wrapper FILES mpi_operation_wrapper_test.cpp CORES 1)
 kamping_register_mpi_test(test_parameter_factories_mpi FILES parameter_factories_mpi_test.cpp CORES 1)
+kamping_register_mpi_test(test_multiple_compilation_units FILES multiple_compilation_units_test/main.cpp multiple_compilation_units_test/gatherer.cpp CORES 1 2 4)
 
 kamping_register_compilation_failure_test(
     test_mpi_datatype_unsupported_types
@@ -51,6 +53,13 @@ kamping_register_compilation_failure_test(
   test_kassert_compilation_failure
   FILES kassert_compilation_failures_test.cpp
   SECTIONS "FORBIDDEN_AND" "FORBIDDEN_OR"
+  LIBRARIES kamping_base
+)
+
+kamping_register_compilation_failure_test(
+  test_parameter_objects_compilation_failure
+  FILES parameter_objects_compilation_failures_test.cpp
+  SECTIONS "COPY_CONSTRUCT_CONTAINER_CONST_BUFFER" "COPY_ASSIGN_CONTAINER_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_CONST_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_CONSTRUCT_USER_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_USER_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_RECV_COUNT_BUFFER" "COPY_ASSIGN_RECV_COUNT_BUFFER" "COPY_CONSTRUCT_ROOT_BUFFER" "COPY_ASSIGN_ROOT_BUFFER" "COPY_CONSTRUCT_OP_BUILDER_BUFFER" "COPY_ASSIGN_OP_BUILDER_BUFFER"
   LIBRARIES kamping_base
 )
 

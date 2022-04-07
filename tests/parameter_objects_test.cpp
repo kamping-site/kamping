@@ -53,6 +53,15 @@ TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
     EXPECT_EQ(buffer_based_on_own_container.get().data(), own_container.data());
 }
 
+TEST(ContainerBasedConstBufferTest, move_constructor_is_enabled) {
+    constexpr ParameterType                            ptype = ParameterType::send_counts;
+    const std::vector<int>                             container{1, 2, 3};
+    ContainerBasedConstBuffer<std::vector<int>, ptype> buffer1(container);
+    ContainerBasedConstBuffer<std::vector<int>, ptype> buffer2(std::move(buffer1));
+    EXPECT_EQ(buffer2.get().size(), container.size());
+    EXPECT_TRUE(std::equal(container.begin(), container.end(), buffer2.get().data()));
+}
+
 TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
     std::vector<int> int_vec{1, 2, 3, 2, 1};
 
@@ -97,6 +106,16 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_containers_other_tha
     resize_write_check(10);
     resize_write_check(50);
     resize_write_check(9);
+}
+
+TEST(UserAllocatedContainerBasedBufferTest, move_constructor_is_enabled) {
+    constexpr ParameterType ptype = ParameterType::send_counts;
+    std::vector<int>        container{1, 2, 3};
+    const auto              const_container = container; // ensure that container is not altered
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer1(container);
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer2(std::move(buffer1));
+    EXPECT_EQ(buffer2.get().size(), const_container.size());
+    EXPECT_TRUE(std::equal(const_container.begin(), const_container.end(), buffer2.get().data()));
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
@@ -154,6 +173,23 @@ TEST(LibAllocatedContainerBasedBufferTest, extract_containers_other_than_vector)
     }
 }
 
+TEST(LibAllocatedContainerBasedBufferTest, move_ctor_assignment_operator_is_enabled) {
+    constexpr ParameterType                                             ptype = ParameterType::recv_counts;
+    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer1;
+    const size_t                                                        size = 3;
+    buffer1.resize(size);
+    buffer1.get().data()[0] = 0;
+    buffer1.get().data()[1] = 1;
+    buffer1.get().data()[2] = 2;
+    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer2(std::move(buffer1));
+    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer3;
+    buffer3 = std::move(buffer2);
+    EXPECT_EQ(buffer3.get().size(), 3);
+    EXPECT_EQ(buffer3.get().data()[0], 0);
+    EXPECT_EQ(buffer3.get().data()[1], 1);
+    EXPECT_EQ(buffer3.get().data()[2], 2);
+}
+
 TEST(SingleElementConstBufferTest, get_basics) {
     constexpr ParameterType              ptype = ParameterType::send_counts;
     int                                  value = 5;
@@ -166,6 +202,51 @@ TEST(SingleElementConstBufferTest, get_basics) {
     EXPECT_FALSE(int_buffer.is_modifiable);
 
     static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
+}
+
+TEST(SingleElementConstBufferTest, move_constructor_is_enabled) {
+    constexpr ParameterType              ptype = ParameterType::send_counts;
+    const int                            elem  = 42;
+    SingleElementConstBuffer<int, ptype> buffer1(elem);
+    SingleElementConstBuffer<int, ptype> buffer2(std::move(buffer1));
+    EXPECT_EQ(*buffer2.get().data(), elem);
+}
+
+TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
+    constexpr ParameterType                   ptype      = ParameterType::send_counts;
+    int                                       elem       = 42;
+    const int                                 const_elem = elem;
+    SingleElementModifiableBuffer<int, ptype> buffer1(elem);
+    SingleElementModifiableBuffer<int, ptype> buffer2(std::move(buffer1));
+    EXPECT_EQ(*buffer2.get().data(), const_elem);
+}
+
+TEST(RecvCountTest, move_constructor_assignment_operator_is_enabled) {
+    int       count       = 2;
+    const int const_count = count;
+    RecvCount recv_count1(count);
+    RecvCount recv_count2 = std::move(recv_count1);
+    RecvCount recv_count3(count + 1);
+    recv_count3 = std::move(recv_count2);
+    EXPECT_EQ(recv_count3.recv_count(), const_count);
+}
+
+TEST(RootTest, move_constructor_assignment_operator_is_enabled) {
+    int       rank       = 2;
+    const int const_rank = rank;
+    Root      root1(rank);
+    Root      root2 = std::move(root1);
+    Root      root3(rank + 1);
+    root3 = std::move(root2);
+    EXPECT_EQ(root3.rank(), const_rank);
+}
+
+TEST(OperationBuilderTest, move_constructor_assignment_operator_is_enabled) {
+    // simply test that move ctor and assignment operator can be called.
+    OperationBuilder op_builder1(ops::plus<>(), commutative);
+    OperationBuilder op_builder2(std::move(op_builder1));
+    OperationBuilder op_builder3(ops::plus<>(), commutative);
+    op_builder3 = std::move(op_builder2);
 }
 
 TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {

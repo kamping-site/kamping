@@ -1,6 +1,5 @@
-#!/bin/sh
-while read local_ref local_sha remote_ref remote_sha
-do
+#!/bin/bash
+while read -r local_ref local_sha remote_ref remote_sha; do
 	if [ "$remote_ref" = "refs/heads/main" ]; then
 		echo "Pushing to branch \"main\" is forbidden"
 		exit 1
