@@ -17,9 +17,12 @@
 /// @brief Code for error handling.
 
 #include <array>
+#include <exception>
 #include <string>
 
 #include <mpi.h>
+
+#include "kamping/kassert.hpp"
 
 /// @brief Wrapper around THROWING_KASSERT for MPI errors.
 ///
@@ -32,8 +35,9 @@
     THROWING_KASSERT_SPECIFIED(error_code == MPI_SUCCESS, #function << " failed!", MpiErrorException, error_code);
 
 namespace kamping {
-/// @brief The exception type used when an MPI call did not return \c MPI_SUCCESS.
 
+/// @brief The exception type used when an MPI call did not return \c MPI_SUCCESS.
+///
 /// When using this with THROWING_KASSERT you should call it like this: `THROWING_KASSERT_SPECIFIED(err == MPI_SUCCESS,
 /// "<MPI function that failed> failed", MpiErrorException, err);`
 class MpiErrorException : public std::exception {
