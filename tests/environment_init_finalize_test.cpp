@@ -34,7 +34,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         KASSERT(environment.initialized());
         KASSERT(!environment.finalized());
 #if defined(KAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE)
-        environment.finalize();
+        // Test that destructor works correctly even if finalize was called on a different object.
+        mpi_env.finalize();
         KASSERT(environment.finalized());
 #endif
     }
