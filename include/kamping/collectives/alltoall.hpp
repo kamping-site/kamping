@@ -23,6 +23,7 @@
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_selection.hpp"
+#include "kamping/parameter_check.hpp"
 #include "kamping/parameter_factories.hpp"
 
 namespace kamping::internal {
@@ -50,15 +51,7 @@ public:
     /// @return Result type wrapping the output buffer if not specified as input parameter.
     template <typename... Args>
     auto alltoall(Args&&... args) {
-        /// @todo Use new functionality from #169 once that is implemented
-        static_assert(
-            all_parameters_are_rvalues<Args...>,
-            "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
-            "returned by the named parameter helper functions like recv_buf().");
-        // Get all parameters
-        static_assert(
-            internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
-            "Missing required parameter send_buf.");
+        KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
         auto const& send_buf  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;

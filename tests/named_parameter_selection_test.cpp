@@ -117,24 +117,6 @@ TEST(NamedParameterTest, select_parameter_type_duplicates) {
     }
 }
 
-// @brief This dummy resembles the interface of a collective operation, so we can simulate the check for rvalue
-// parameters.
-template <typename... Args>
-bool dummy_collective_operation(Args&&... args [[maybe_unused]]) {
-    return all_parameters_are_rvalues<Args...>;
-}
-
-TEST(NamedParameterTest, all_parameters_are_rvalues) {
-    testing::Argument<ParameterType::send_buf> arg0{0};
-    testing::Argument<ParameterType::recv_buf> arg1{1};
-    {
-        EXPECT_FALSE(dummy_collective_operation(arg0, arg1));
-        EXPECT_FALSE(dummy_collective_operation(decltype(arg0){0}, arg1));
-        EXPECT_FALSE(dummy_collective_operation(arg0, decltype(arg1){1}));
-        EXPECT_TRUE(dummy_collective_operation(decltype(arg0){0}, decltype(arg1){1}));
-    }
-}
-
 // Test that has_parameter_type can be invoked if the function is called with zero arguments
 template <typename... Args>
 bool dummy_test_has_parameter(Args&&... args [[maybe_unused]]) {

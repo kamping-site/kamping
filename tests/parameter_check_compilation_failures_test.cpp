@@ -11,32 +11,23 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <numeric>
 #include <vector>
 
-#include <mpi.h>
+#include "parameter_check_common.hpp"
 
-#include "helpers_for_examples.hpp"
-#include "kamping/checking_casts.hpp"
-#include "kamping/communicator.hpp"
-#include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
-
-int main() {
-    using namespace kamping;
-
-    MPI_Init(NULL, NULL);
-    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
-    Communicator     comm;
-    std::vector<int> input(asserting_cast<size_t>(comm.size()));
-    std::iota(input.begin(), input.end(), 0);
-    std::vector<int> output;
-
-    comm.alltoall(send_buf(input), recv_buf(output));
-
-    print_result_on_root(output, comm);
-
-    MPI_Finalize();
-    return 0;
+int main(int /* argc */, char** /* argv */) {
+#if defined(MISSING_REQUIRED_PARAMETER)
+    testing::test_required_send_buf();
+#elif defined(UNSUPPORTED_PARAMETER_NO_PARAMETERS)
+    std::vector<int> v;
+    testing::test_empty_arguments(kamping::send_buf(v));
+#elif defined(UNSUPPORTED_PARAMETER_ONLY_OPTIONAL_PARAMETERS)
+    std::vector<int> v;
+    testing::test_optional_recv_buf(kamping::send_buf(v));
+#elif defined(DUPLICATE_PARAMETERS)
+    std::vector<int> v;
+    testing::test_required_send_buf(kamping::send_buf(v), kamping::send_buf(v));
+#else
+    // If none of the above sections is active, this file will compile successfully.
+#endif
 }

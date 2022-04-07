@@ -23,6 +23,7 @@
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_selection.hpp"
+#include "kamping/parameter_check.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
 
@@ -58,10 +59,8 @@ public:
     /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
     template <typename... Args>
     auto scatter(Args&&... args) {
-        static_assert(
-            all_parameters_are_rvalues<Args...>,
-            "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
-            "returned by the named parameter helper functions like send_buf().");
+        KAMPING_CHECK_PARAMETERS(
+            Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_count));
 
         // Optional parameter: root()
         // Default: communicator root
@@ -74,10 +73,6 @@ public:
             assert::light);
 
         // Mandatory parameter send_buf()
-        static_assert(
-            internal::has_parameter_type<internal::ParameterType::send_buf, Args...>(),
-            "Missing required parameter send_buf.");
-
         auto send_buf              = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
         using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
         MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
