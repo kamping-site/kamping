@@ -14,3 +14,5 @@ git diff-tree -r --name-only --no-commit-id "HEAD@{1}" HEAD |
 		fi
 	done
 
+# Update submodules to the version registered in the repository
+git submodule update --init --recursive

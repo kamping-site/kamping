@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Update submodules to the version registered in the repository
+git submodule update --init --recursive
