@@ -108,4 +108,6 @@ public:
     }
 }; // class Environment
 
+Environment<false> mpi_env;
+
 } // namespace kamping

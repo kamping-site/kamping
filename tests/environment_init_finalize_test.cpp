@@ -20,9 +20,8 @@ using namespace ::kamping;
 
 // This is not using google test because our test setup would call MPI_Init before running any tests
 int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
-    Environment<false> utiliy_environment;
-    KASSERT(!utiliy_environment.initialized());
-    KASSERT(!utiliy_environment.finalized());
+    KASSERT(!mpi_env.initialized());
+    KASSERT(!mpi_env.finalized());
     {
 #if defined(KAMPING_ENVIRONMENT_TEST_NO_PARAM)
         Environment environment;
@@ -39,5 +38,5 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         KASSERT(environment.finalized());
 #endif
     }
-    KASSERT(utiliy_environment.finalized());
+    KASSERT(mpi_env.finalized());
 }
