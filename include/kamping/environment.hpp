@@ -44,7 +44,9 @@ public:
 
     /// @brief Calls MPI_Init without arguments.
     void init() {
-        init(NULL, NULL);
+        KASSERT(!initialized(), "Trying to call MPI_Init twice");
+        [[maybe_unused]] int err = MPI_Init(NULL, NULL);
+        THROW_IF_MPI_ERROR(err, MPI_Init);
     }
 
     /// @brief Calls MPI_Init with arguments.
@@ -52,6 +54,7 @@ public:
     /// @param argc The number of arguments
     /// @param argv The arguments
     void init(int& argc, char**& argv) {
+        KASSERT(!initialized(), "Trying to call MPI_Init twice");
         [[maybe_unused]] int err = MPI_Init(&argc, &argv);
         THROW_IF_MPI_ERROR(err, MPI_Init);
     }
