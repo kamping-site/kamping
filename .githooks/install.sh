@@ -6,7 +6,7 @@ SOURCE=${BASH_SOURCE[0]}
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
   SOURCE=$(readlink "$SOURCE")
-  [[ $SOURCE != /* ]] && SOURCE=$DIR/$SOURCE # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
 DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 
@@ -15,23 +15,24 @@ HOOKS="${DIR}/../.git/hooks"
 
 # Iterate over all hooks and ask the user whether to install it if it changed
 # We consider all files without file extension in the same directory as this script to be git hooks
-for hook_inactive_path in $(find "${DIR}" -type f \( ! -name "*.*" \)); do # Loop over all files without file extension 
+find "$DIR" -type f \( ! -name "*.*" \) -exec bash -c '
+	hook_inactive_path="$1"
 	hook=$(basename "$hook_inactive_path")
-	hook_active_path="${HOOKS}/${hook}"
+	hook_active_path="'"$HOOKS"'/${hook}"
 
 	if [[ -f "$hook_active_path" ]]; then # Hook is already installed
 		if ! cmp --silent "$hook_inactive_path" "$hook_active_path"; then # Hook changed
 			echo "################################################################################"
-			echo "# Changed hook '$hook'"
+			echo "# Changed hook $hook"
 			echo "################################################################################"
 			diff "$hook_inactive_path" "$hook_active_path"
 			echo ""
 		else # No changes -> skip file 
-			continue 
+			exit 
 		fi
 	else # New hook
 		echo "################################################################################"
-		echo "# New hook '$hook'"
+		echo "# New hook $hook"
 		echo "################################################################################"
 		cat "$hook_inactive_path"
 		echo ""
@@ -47,5 +48,4 @@ for hook_inactive_path in $(find "${DIR}" -type f \( ! -name "*.*" \)); do # Loo
 				break;;
 		esac
 	done
-done
-
+' bash {} \;
