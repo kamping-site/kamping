@@ -20,8 +20,9 @@
 
 namespace kamping {
 
-/// @brief Wrapper for MPI_Init and MPI_Finalize. MPI_Init is called when an object of this class is contructed. When
-/// the destructor is called (typically when the object runs out of scope), MPI_Finalize is called.
+/// @brief Wrapper for MPI functions that don't require a communicator. If the template parameter `init_finalize` is set
+/// to true (default), MPI_Init is called in the constructor, MPI_Finalize is called in the destructor.
+template <bool init_finalize = true>
 class Environment {
 public:
     /// @brief Calls MPI_Init with arguments.
@@ -29,14 +30,18 @@ public:
     /// @param argc The number of arguments
     /// @param argv The arguments
     Environment(int& argc, char**& argv) {
-        [[maybe_unused]] int err = MPI_Init(&argc, &argv);
-        THROW_IF_MPI_ERROR(err, MPI_Init);
+        if constexpr (init_finalize) {
+            [[maybe_unused]] int err = MPI_Init(&argc, &argv);
+            THROW_IF_MPI_ERROR(err, MPI_Init);
+        }
     }
 
     /// @brief Calls MPI_Init without arguments.
     Environment() {
-        [[maybe_unused]] int err = MPI_Init(NULL, NULL);
-        THROW_IF_MPI_ERROR(err, MPI_Init);
+        if constexpr (init_finalize) {
+            [[maybe_unused]] int err = MPI_Init(NULL, NULL);
+            THROW_IF_MPI_ERROR(err, MPI_Init);
+        }
     }
 
     /// @brief Checks whether MPI_Init has been called.
@@ -61,8 +66,8 @@ public:
 
     /// @brief Calls MPI_Finalize
     ///
-    /// As MPI_Finalize could potentially return an error, this function can be used if you want to be able to handle
-    /// that error. Otherwise the destructor will call MPI_Finalize and ignore any errors returned.
+    /// As MPI_Finalize could potentially return an error, this function can be used if you want to be able to
+    /// handle that error. Otherwise the destructor will call MPI_Finalize and not throw on any errors returned.
     void finalize() {
         KASSERT(!finalized(), "Trying to call MPI_Finalize twice");
         [[maybe_unused]] int err = MPI_Finalize();
@@ -71,15 +76,19 @@ public:
 
     /// @brief Calls MPI_Finalize if finalize() has not been called before.
     ~Environment() {
-        bool is_already_finalized;
-        try {
-            is_already_finalized = finalized();
-        } catch (MpiErrorException) {
-            // Do nothing. We can't throw exceptions in the destructor.
-        }
-        if (!is_already_finalized) {
-            // Ignore the error code. We can't throw exceptions in the destructor.
-            MPI_Finalize();
+        if constexpr (init_finalize) {
+            bool is_already_finalized;
+            try {
+                is_already_finalized = finalized();
+            } catch (MpiErrorException&) {
+                // Just kassert. We can't throw exceptions in the destructor.
+                KASSERT(false, "MPI_Finalized call failed.");
+            }
+            if (!is_already_finalized) {
+                // Just kassert the error code. We can't throw exceptions in the destructor.
+                [[maybe_unused]] int err = MPI_Finalize();
+                KASSERT(err == MPI_SUCCESS, "MPI_Finalize call failed.");
+            }
         }
     }
 }; // class Environment
