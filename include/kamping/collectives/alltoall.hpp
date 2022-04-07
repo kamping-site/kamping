@@ -73,6 +73,10 @@ public:
             mpi_send_type == mpi_recv_type, "The MPI receive type does not match the MPI send type.", assert::light);
 
         // Get the send and receive counts
+        KASSERT(
+            send_buf.size() % this->underlying().size() == 0,
+            "The number of elements in send_buf is not divisible by the number of ranks in the communicator. Did you "
+            "mean to use alltoallv?");
         int send_count = asserting_cast<int>(send_buf.size() / asserting_cast<size_t>(this->underlying().size()));
 
         size_t recv_buf_size = send_buf.size();
