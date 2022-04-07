@@ -40,4 +40,5 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
 #endif
     }
     KASSERT(mpi_env.finalized());
+    return 0;
 }
