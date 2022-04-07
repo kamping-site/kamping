@@ -77,7 +77,7 @@ public:
     /// @brief Calls MPI_Finalize if finalize() has not been called before.
     ~Environment() {
         if constexpr (init_finalize) {
-            bool is_already_finalized;
+            bool is_already_finalized = false;
             try {
                 is_already_finalized = finalized();
             } catch (MpiErrorException&) {
