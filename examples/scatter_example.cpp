@@ -18,11 +18,12 @@
 
 #include "helpers_for_examples.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/environment.hpp"
 
 int main(int argc, char* argv[]) {
     using namespace kamping;
 
-    MPI_Init(&argc, &argv);
+    Environment e(argc, argv);
 
     Communicator     comm;
     std::vector<int> in(static_cast<std::size_t>(comm.size()));
@@ -33,6 +34,5 @@ int main(int argc, char* argv[]) {
     comm.scatter(send_buf(in), recv_buf(out));
     print_result(out, comm);
 
-    MPI_Finalize();
     return 0;
 }
