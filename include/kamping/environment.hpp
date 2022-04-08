@@ -66,8 +66,9 @@ public:
 
     /// @brief Calls MPI_Finalize
     ///
-    /// As MPI_Finalize could potentially return an error, this function can be used if you want to be able to
-    /// handle that error. Otherwise the destructor will call MPI_Finalize and not throw on any errors returned.
+    /// Even if you chose InitMPIMode::InitFinalize, you might want to call this function: As MPI_Finalize could
+    /// potentially return an error, this function can be used if you want to be able to handle that error. Otherwise
+    /// the destructor will call MPI_Finalize and not throw on any errors returned.
     void finalize() const {
         KASSERT(!finalized(), "Trying to call MPI_Finalize twice");
         [[maybe_unused]] int err = MPI_Finalize();
