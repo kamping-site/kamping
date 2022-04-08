@@ -20,9 +20,11 @@
 
 namespace kamping {
 
+enum InitMPIMode { InitFiinalize, NoInitFinalize };
+
 /// @brief Wrapper for MPI functions that don't require a communicator. If the template parameter `init_finalize` is set
 /// to true (default), MPI_Init is called in the constructor, and MPI_Finalize is called in the destructor.
-template <bool init_finalize = true>
+template <InitMPIMode init_finalize_mode = InitFiinalize>
 class Environment {
 public:
     /// @brief Calls MPI_Init with arguments.
@@ -30,14 +32,14 @@ public:
     /// @param argc The number of arguments
     /// @param argv The arguments
     Environment(int& argc, char**& argv) {
-        if constexpr (init_finalize) {
+        if constexpr (init_finalize_mode == InitMPIMode::InitFiinalize) {
             init(argc, argv);
         }
     }
 
     /// @brief Calls MPI_Init without arguments.
     Environment() {
-        if constexpr (init_finalize) {
+        if constexpr (init_finalize_mode == InitMPIMode::InitFiinalize) {
             init();
         }
     }
@@ -91,7 +93,7 @@ public:
 
     /// @brief Calls MPI_Finalize if finalize() has not been called before.
     ~Environment() {
-        if constexpr (init_finalize) {
+        if constexpr (init_finalize_mode == InitMPIMode::InitFiinalize) {
             bool is_already_finalized = false;
             try {
                 is_already_finalized = finalized();
@@ -112,6 +114,6 @@ public:
 ///
 /// Because everything in Environment is const, it doesn't matter that every compilation unit will have its own copy of
 /// this.
-static const Environment<false> mpi_env;
+static const Environment<InitMPIMode::NoInitFinalize> mpi_env;
 
 } // namespace kamping
