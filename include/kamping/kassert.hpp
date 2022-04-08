@@ -24,10 +24,56 @@
 #include <utility>
 #include <vector>
 
+/// @brief Assertion levels
+namespace kamping::assert {
+/// @defgroup assertion-levels Assertion levels
+/// Predefined assertion levels.
+///
+/// @{
+
+/// @brief Assertion level for exceptions if exception mode is disabled.
+#define KAMPING_ASSERTION_LEVEL_KTHROW 1
+
+/// @brief Assertion level for exceptions if exception mode is disabled.
+constexpr int kthrow = KAMPING_ASSERTION_LEVEL_KTHROW;
+
+/// @brief Assertion level for lightweight assertions.
+#define KAMPING_ASSERTION_LEVEL_LIGHT 2
+
+/// @brief Assertion level for lightweight assertions.
+constexpr int light = KAMPING_ASSERTION_LEVEL_LIGHT;
+
+/// @brief Default assertion level. This level is used if no assertion level is specified.
+#define KAMPING_ASSERTION_LEVEL_NORMAL 3
+
+/// @brief Default assertion level. This level is used if no assertion level is specified.
+constexpr int normal = KAMPING_ASSERTION_LEVEL_NORMAL;
+
+/// @brief Assertions that perform lightweight communication.
+#define KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION 4
+
+/// @brief Assertions that perform lightweight communication.
+constexpr int light_communication = KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION;
+
+/// @brief Assertions that perform heavyweight communication.
+#define KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION 5
+
+/// @brief Assertions that perform heavyweight communication.
+constexpr int heavy_communication = KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION;
+
+/// @brief Assertion level for heavyweight assertions.
+#define KAMPING_ASSERTION_LEVEL_HEAVY 6
+
+/// @brief Assertion level for heavyweight assertions.
+constexpr int heavy = KAMPING_ASSERTION_LEVEL_HEAVY;
+
+/// @}
+} // namespace kamping::assert
+
 #ifndef KAMPING_ASSERTION_LEVEL
     #warning "Assertion level was not set explicitly; using default assertion level."
-    /// @brief Default assertion level to `kamping::kassert::default` if not set explicitly.
-    #define KAMPING_ASSERTION_LEVEL 3
+  /// @brief Default assertion level to `kamping::kassert::normal` if not set explicitly.
+    #define KAMPING_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_NORMAL
 #endif
 
 /// @brief Assertion macro for the KaMPI.ng library. Accepts between one and three parameters.
@@ -245,52 +291,6 @@ private:
     /// @brief The description of this exception.
     std::string _what;
 };
-
-/// @brief Assertion levels
-namespace assert {
-/// @defgroup assertion-levels Assertion levels
-/// Predefined assertion levels.
-///
-/// @{
-
-/// @brief Assertion level for exceptions if exception mode is disabled.
-#define KAMPING_ASSERTION_LEVEL_KTHROW 1
-
-/// @brief Assertion level for exceptions if exception mode is disabled.
-constexpr int kthrow = KAMPING_ASSERTION_LEVEL_KTHROW;
-
-/// @brief Assertion level for lightweight assertions.
-#define KAMPING_ASSERTION_LEVEL_LIGHT 2
-
-/// @brief Assertion level for lightweight assertions.
-constexpr int light = KAMPING_ASSERTION_LEVEL_LIGHT;
-
-/// @brief Default assertion level. This level is used if no assertion level is specified.
-#define KAMPING_ASSERTION_LEVEL_NORMAL 3
-
-/// @brief Default assertion level. This level is used if no assertion level is specified.
-constexpr int normal = KAMPING_ASSERTION_LEVEL_NORMAL;
-
-/// @brief Assertions that perform lightweight communication.
-#define KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION 4
-
-/// @brief Assertions that perform lightweight communication.
-constexpr int light_communication = KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION;
-
-/// @brief Assertions that perform heavyweight communication.
-#define KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION 5
-
-/// @brief Assertions that perform heavyweight communication.
-constexpr int heavy_communication = KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION;
-
-/// @brief Assertion level for heavyweight assertions.
-#define KAMPING_ASSERTION_LEVEL_HEAVY 6
-
-/// @brief Assertion level for heavyweight assertions.
-constexpr int heavy = KAMPING_ASSERTION_LEVEL_HEAVY;
-
-/// @}
-} // namespace assert
 
 /// @defgroup expression-expansion Expression expansion
 ///
