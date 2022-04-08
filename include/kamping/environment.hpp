@@ -24,6 +24,9 @@ enum InitMPIMode { InitFiinalize, NoInitFinalize };
 
 /// @brief Wrapper for MPI functions that don't require a communicator. If the template parameter `init_finalize` is set
 /// to true (default), MPI_Init is called in the constructor, and MPI_Finalize is called in the destructor.
+///
+/// Note that MPI_Init and MPI_Finalize are global, meaning that if they are called on an Environment object they must
+/// not be called again in any Environment object (or directly vie the MPI_* calls).
 template <InitMPIMode init_finalize_mode = InitFiinalize>
 class Environment {
 public:
