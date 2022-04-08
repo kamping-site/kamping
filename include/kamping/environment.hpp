@@ -33,7 +33,7 @@ public:
     /// @brief Calls MPI_Init with arguments.
     ///
     /// @param argc The number of arguments
-    /// @param argv The arguments
+    /// @param argv The arguments.
     Environment(int& argc, char**& argv) {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
             init(argc, argv);
@@ -57,7 +57,7 @@ public:
     /// @brief Calls MPI_Init with arguments.
     ///
     /// @param argc The number of arguments
-    /// @param argv The arguments
+    /// @param argv The arguments.
     void init(int& argc, char**& argv) const {
         KASSERT(!initialized(), "Trying to call MPI_Init twice");
         [[maybe_unused]] int err = MPI_Init(&argc, &argv);
@@ -77,7 +77,7 @@ public:
 
     /// @brief Checks whether MPI_Init has been called.
     ///
-    /// @return Whether MPI_Init has been called.
+    /// @return \c true if MPI_Init has been called, \c false otherwise.
     bool initialized() const {
         int                  result;
         [[maybe_unused]] int err = MPI_Initialized(&result);
@@ -87,7 +87,7 @@ public:
 
     /// @brief Checks whether MPI_Finalize has been called.
     ///
-    /// @return Whether MPI_Finalize has been called.
+    /// @return \c true if MPI_Finalize has been called, \c false otherwise.
     bool finalized() const {
         int                  result;
         [[maybe_unused]] int err = MPI_Finalized(&result);
