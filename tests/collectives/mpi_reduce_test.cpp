@@ -15,6 +15,8 @@
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/mpi_ops.hpp"
+#include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -58,6 +60,99 @@ TEST(ReduceTest, reduce_no_receive_buffer) {
         } else {
             EXPECT_EQ(result.size(), 0);
         }
+    }
+}
+
+TEST(ReduceTest, reduce_no_receive_buffer_bool) {
+    Communicator comm;
+
+    std::vector<kabool> input = {false, false};
+    if (comm.rank() == comm.rank_shifted_cyclic(comm.root())) {
+        input[1] = true;
+    }
+
+    auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{})).extract_recv_buffer();
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), 2);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+
+    std::vector<kabool> expected_result = {false, true};
+    if (comm.is_root()) {
+        EXPECT_EQ(result, expected_result);
+    }
+}
+
+TEST(ReduceTest, reduce_no_receive_buffer_bool_custom_operation) {
+    Communicator comm;
+
+    std::vector<kabool> input = {false, false};
+    if (comm.rank() == comm.rank_shifted_cyclic(comm.root())) {
+        input[1] = true;
+    }
+
+    // test that we can use a operation defined on bool even though wrap them as kabool
+    auto my_or = [&](bool lhs, bool rhs) {
+        return lhs || rhs;
+    };
+    auto result = comm.reduce(send_buf(input), op(my_or, commutative)).extract_recv_buffer();
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), 2);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+
+    std::vector<kabool> expected_result = {false, true};
+    if (comm.is_root()) {
+        EXPECT_EQ(result, expected_result);
+    }
+}
+
+TEST(ReduceTest, reduce_single_element_no_receive_buffer_bool) {
+    Communicator comm;
+
+    kabool input = false;
+    if (comm.rank() == comm.rank_shifted_cyclic(comm.root())) {
+        input = true;
+    }
+
+    auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{})).extract_recv_buffer();
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), 1);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+
+    std::vector<kabool> expected_result = {true};
+    if (comm.is_root()) {
+        EXPECT_EQ(result, expected_result);
+    }
+}
+
+TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
+    Communicator comm;
+
+    kabool              input = false;
+    std::vector<kabool> result;
+    if (comm.rank() == comm.rank_shifted_cyclic(comm.root())) {
+        input = true;
+    }
+
+    comm.reduce(send_buf(input), recv_buf(result), op(ops::logical_or<>{}));
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), 1);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+
+    std::vector<kabool> expected_result = {true};
+    if (comm.is_root()) {
+        EXPECT_EQ(result, expected_result);
     }
 }
 

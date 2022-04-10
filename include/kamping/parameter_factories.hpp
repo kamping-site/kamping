@@ -24,25 +24,6 @@ namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
 
-namespace internal {
-/// @brief Boolean value helping to decide if data type has \c .data() method.
-/// @return \c true if class has \c .data() method and \c false otherwise.
-template <typename, typename = void>
-constexpr bool has_data_member_v = false;
-
-/// @brief Boolean value helping to decide if data type has \c .data() method.
-/// @return \c true if class has \c .data() method and \c false otherwise.
-template <typename T>
-constexpr bool has_data_member_v<T, std::void_t<decltype(std::declval<T>().data())>> = true;
-
-/// @brief Tag type for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
-template <typename T>
-struct ignore_t {};
-} // namespace internal
-
-/// @brief Tag for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
-template <typename T>
-constexpr internal::ignore_t<T> ignore{};
 
 /// @brief Generates a dummy send buf that wraps a \c nullptr.
 ///
@@ -69,6 +50,9 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename Data>
 auto send_buf(const Data& data) {
+    static_assert(
+        !internal::is_vector_bool_v<Data>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
     if constexpr (internal::has_data_member_v<Data>) {
         return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_buf>(data);
     } else {
@@ -94,6 +78,10 @@ auto send_buf(const Data& data) {
 /// @return Object referring to the storage containing the data elements to send / the received elements.
 template <typename Data>
 auto send_recv_buf(Data& data) {
+    static_assert(
+        !internal::is_vector_bool_v<Data>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
+
     if constexpr (internal::has_data_member_v<Data>) {
         return internal::UserAllocatedContainerBasedBuffer<Data, internal::ParameterType::send_recv_buf>(data);
     } else {
@@ -115,6 +103,10 @@ auto send_recv_buf(Data& data) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename Data>
 auto send_recv_buf(const Data& data) {
+    static_assert(
+        !internal::is_vector_bool_v<Data>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
+
     if constexpr (internal::has_data_member_v<Data>) {
         return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_recv_buf>(data);
     } else {

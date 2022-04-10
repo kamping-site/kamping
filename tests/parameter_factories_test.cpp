@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include "helpers_for_testing.hpp"
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping;
@@ -470,4 +471,12 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
     EXPECT_EQ(recv_count_out_obj.recv_count(), 42);
     EXPECT_EQ(recv_count, 42);
     EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
+}
+
+
+TEST(IsVectorBoolTest, is_vector_bool_basics) {
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool>>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int>);
 }

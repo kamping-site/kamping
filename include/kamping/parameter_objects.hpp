@@ -46,6 +46,69 @@ namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
 
+namespace internal {
+/// @brief Boolean value helping to decide if data type has \c .data() method.
+/// @return \c true if class has \c .data() method and \c false otherwise.
+template <typename, typename = void>
+constexpr bool has_data_member_v = false;
+
+/// @brief Boolean value helping to decide if data type has \c .data() method.
+/// @return \c true if class has \c .data() method and \c false otherwise.
+template <typename T>
+static constexpr bool has_data_member_v<T, std::void_t<decltype(std::declval<T>().data())>> = true;
+
+/// @brief Boolean value helping to decide if type has a \c value_type member type.
+/// @return \c true if class has \c value_type method and \c false otherwise.
+template <typename, typename = void>
+static constexpr bool has_value_type_v = false;
+
+/// @brief Boolean value helping to decide if type has a \c value_type member type.
+/// @return \c true if class has \c value_type method and \c false otherwise.
+template <typename T>
+static constexpr bool has_value_type_v<T, std::void_t<typename T::value_type>> = true;
+
+/// @brief type trait to check if a type is an instance of a templated type.
+/// @tparam T the concrete type
+/// @tparam Template the type template
+/// @return \c true if the type is an instance and \c false otherwise.
+template <class T, template <class...> class Template>
+struct is_specialization : std::false_type {};
+
+/// @brief type trait to check if a type is an instance of a templated type.
+/// @tparam T the concrete type
+/// @tparam Template the type template
+/// @return \c true if the type is an instance and \c false otherwise.
+template <template <class...> class Template, class... Args>
+struct is_specialization<Template<Args...>, Template> : std::true_type {};
+
+/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>
+/// @tparam T the type
+/// @return \c true if \c T is an template instance of \c std::vector<bool>, \c false otherwise.
+template <typename T, typename = void>
+static constexpr bool is_vector_bool_v = false;
+
+/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>
+/// @tparam T the type
+/// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
+template <typename T>
+static constexpr bool is_vector_bool_v<T, typename std::enable_if<!has_value_type_v<T>>::type> = false;
+
+/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>
+/// @tparam T the type
+/// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
+template <typename T>
+static constexpr bool                          is_vector_bool_v<T, typename std::enable_if<has_value_type_v<T>>::type> =
+    is_specialization<T, std::vector>::value&& std::is_same_v<typename T::value_type, bool>;
+
+/// @brief Tag type for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
+template <typename T>
+struct ignore_t {};
+} // namespace internal
+
+/// @brief Tag for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
+template <typename T>
+constexpr internal::ignore_t<T> ignore{};
+
 /// @brief Type used for tag dispatching.
 ///
 /// This types needs to be used to select internal::LibAllocContainerBasedBuffer as buffer type.
@@ -93,6 +156,10 @@ namespace internal {
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
 class ContainerBasedConstBuffer {
+    static_assert(
+        !internal::is_vector_bool_v<Container>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
+
 public:
     static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
@@ -244,6 +311,10 @@ struct BufferParameterType {
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType parameter_type>
 class UserAllocatedContainerBasedBuffer : public BufferParameterType<parameter_type> {
+    static_assert(
+        !internal::is_vector_bool_v<Container>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
+
 public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
 
@@ -312,6 +383,10 @@ private:
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
 class LibAllocatedContainerBasedBuffer : public BufferParameterType<type> {
+    static_assert(
+        !internal::is_vector_bool_v<Container>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
+
 public:
     using value_type = typename Container::value_type; ///< Value type of the buffer.
 
