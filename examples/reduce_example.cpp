@@ -19,6 +19,7 @@
 #include "helpers_for_examples.hpp"
 #include "kamping/collectives/reduce.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/environment.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
@@ -33,8 +34,7 @@ struct my_plus {
 int main() {
     using namespace kamping;
 
-    MPI_Init(NULL, NULL);
-    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
+    Environment         e;
     Communicator        comm;
     std::vector<double> input = {1, 2, 3};
     std::vector<double> output;
@@ -88,6 +88,5 @@ int main() {
         }
     }
 
-    MPI_Finalize();
     return 0;
 }
