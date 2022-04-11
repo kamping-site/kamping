@@ -67,9 +67,9 @@ static constexpr bool has_value_type_v = false;
 template <typename T>
 static constexpr bool has_value_type_v<T, std::void_t<typename T::value_type>> = true;
 
-/// @brief type trait to check if a type is an instance of a templated type.
-/// @tparam T the concrete type
-/// @tparam Template the type template
+/// @brief Type trait to check if a type is an instance of a templated type.
+/// @tparam T The concrete type.
+/// @tparam Template The type template.
 /// @return \c true if the type is an instance and \c false otherwise.
 template <class T, template <class...> class Template>
 struct is_specialization : std::false_type {};
@@ -81,8 +81,8 @@ struct is_specialization : std::false_type {};
 template <template <class...> class Template, class... Args>
 struct is_specialization<Template<Args...>, Template> : std::true_type {};
 
-/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>
-/// @tparam T the type
+/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
+/// @tparam T The type.
 /// @return \c true if \c T is an template instance of \c std::vector<bool>, \c false otherwise.
 template <typename T, typename = void>
 static constexpr bool is_vector_bool_v = false;

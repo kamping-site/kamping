@@ -28,7 +28,7 @@
 
 namespace kamping::internal {
 ///@brief Helper for getting a unsigned integer of fixed size.
-///@tparam N the type size in bytes
+///@tparam Size in bytes.
 template <size_t N>
 struct fixed_sized_uint_t {
     static_assert(N != 1 && N != 2 && N != 4 && N != 8, "Only 8, 16, 32 and 64 bit integers are supported");
