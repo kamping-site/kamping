@@ -32,7 +32,7 @@ class Environment {
 public:
     /// @brief Calls MPI_Init with arguments.
     ///
-    /// @param argc The number of arguments
+    /// @param argc Number of arguments.
     /// @param argv The arguments.
     Environment(int& argc, char**& argv) {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
@@ -56,7 +56,7 @@ public:
 
     /// @brief Calls MPI_Init with arguments.
     ///
-    /// @param argc The number of arguments
+    /// @param argc Number of arguments.
     /// @param argv The arguments.
     void init(int& argc, char**& argv) const {
         KASSERT(!initialized(), "Trying to call MPI_Init twice");
