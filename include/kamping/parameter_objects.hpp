@@ -232,7 +232,7 @@ public:
     SingleElementModifiableBuffer& operator=(SingleElementModifiableBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
-    /// @brief Does nothing but kassert that only size 1 is requested.
+    /// @brief Does nothing but assert that only size 1 is requested.
     ///
     /// @param size The size that this "container" is expected to have after the call.
     void resize(size_t size) const {
