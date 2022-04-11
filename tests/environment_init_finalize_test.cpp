@@ -38,6 +38,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         mpi_env.finalize();
         KASSERT(environment.finalized());
 #endif
+        // If KAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE is not defined, MPI_Init() is called by `Environment`s
+        // destructor after this closing bracket.
     }
     KASSERT(mpi_env.finalized());
     return 0;
