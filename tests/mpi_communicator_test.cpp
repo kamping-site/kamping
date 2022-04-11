@@ -35,6 +35,7 @@ TEST_F(CommunicatorTest, empty_constructor) {
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_WORLD);
     EXPECT_EQ(comm.rank(), rank);
     EXPECT_EQ(comm.size(), size);
+    EXPECT_EQ(comm.usize(), static_cast<size_t>(size));
     EXPECT_EQ(comm.root(), 0);
 }
 
@@ -50,6 +51,7 @@ TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_SELF);
     EXPECT_EQ(comm.rank(), self_rank);
     EXPECT_EQ(comm.size(), self_size);
+    EXPECT_EQ(comm.usize(), static_cast<size_t>(self_size));
     EXPECT_EQ(comm.rank(), 0);
 
     EXPECT_THROW(Communicator(MPI_COMM_NULL), KassertException);
@@ -142,6 +144,7 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
         auto      splitted_comm = comm.split(color);
         int const expected_size = (size / i) + ((size % i > rank % i) ? 1 : 0);
         EXPECT_EQ(splitted_comm.size(), expected_size);
+        EXPECT_EQ(splitted_comm.usize(), static_cast<size_t>(expected_size));
 
         // Check for all rank ids whether they correctly convert to the splitted communicator
         for (int rank_to_test = 0; rank_to_test < size; ++rank_to_test) {
@@ -163,6 +166,7 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
         auto      splitted_comm = comm.split(color, size - rank);
         int const expected_size = (size / i) + ((size % i > rank % i) ? 1 : 0);
         EXPECT_EQ(splitted_comm.size(), expected_size);
+        EXPECT_EQ(splitted_comm.usize(), static_cast<size_t>(expected_size));
 
         int const smaller_ranks_in_split = rank / i;
         int const expected_rank          = expected_size - smaller_ranks_in_split - 1;

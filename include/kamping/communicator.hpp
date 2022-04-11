@@ -61,6 +61,12 @@ public:
         return _size;
     }
 
+    /// @brief Number of MPI processes in this communicator as size_t.
+    /// @return Number of MPI processes in this communicator as size_t.
+    [[nodiscard]] size_t usize() const {
+        return asserting_cast<size_t>(_size);
+    }
+
     /// @brief MPI communicator corresponding to this communicator.
     /// @return MPI communicator corresponding to this communicator.
     [[nodiscard]] MPI_Comm mpi_communicator() const {
