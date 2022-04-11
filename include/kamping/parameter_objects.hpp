@@ -116,7 +116,7 @@ public:
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
-    size_t size() {
+    size_t size() const {
         return _container.size();
     }
 
@@ -142,7 +142,7 @@ public:
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage (always 0).
-    size_t size() {
+    size_t size() const {
         return 0;
     }
 
@@ -184,7 +184,7 @@ public:
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage (always 1).
-    size_t size() {
+    size_t size() const {
         return 1;
     }
 
@@ -241,7 +241,7 @@ public:
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage (always 1).
-    size_t size() {
+    size_t size() const {
         return 1;
     }
 
@@ -326,7 +326,7 @@ public:
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
-    size_t size() {
+    size_t size() const {
         return _container.size();
     }
 
@@ -402,7 +402,7 @@ public:
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
-    size_t size() {
+    size_t size() const {
         return _container.size();
     }
 
