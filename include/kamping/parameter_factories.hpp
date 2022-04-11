@@ -24,7 +24,6 @@ namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
 
-
 /// @brief Generates a dummy send buf that wraps a \c nullptr.
 ///
 /// This is useful for operations where a send_buf is required on some PEs, such as the root PE,
