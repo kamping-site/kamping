@@ -74,8 +74,8 @@ public:
         auto mpi_recv_type = mpi_datatype<recv_value_type>();
         KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
-        size_t recv_size     = (this->underlying().rank() == root.rank()) ? send_buf.size() : 0;
-        size_t recv_buf_size = asserting_cast<size_t>(this->underlying().size()) * recv_size;
+        size_t recv_size     = (this->underlying().rank_signed() == root.rank()) ? send_buf.size() : 0;
+        size_t recv_buf_size = this->underlying().size() * recv_size;
 
         // error code can be unused if KTHROW is removed at compile time
         recv_buf.resize(recv_buf_size);
@@ -93,10 +93,10 @@ protected:
 
 private:
     bool check_equal_sizes(size_t local_size) const {
-        std::vector<size_t> result(asserting_cast<size_t>(this->underlying().size()), 0);
+        std::vector<size_t> result(this->underlying().size(), 0);
         MPI_Gather(
-            &local_size, 1, mpi_datatype<size_t>(), result.data(), 1, mpi_datatype<size_t>(), this->underlying().root(),
-            this->underlying().mpi_communicator());
+            &local_size, 1, mpi_datatype<size_t>(), result.data(), 1, mpi_datatype<size_t>(),
+            this->underlying().root_signed(), this->underlying().mpi_communicator());
         return std::equal(result.begin() + 1, result.end(), result.begin());
     }
 }; // class Gather

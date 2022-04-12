@@ -83,10 +83,10 @@ public:
 
         // Compute sendcount based on the size of the sendbuf
         KASSERT(
-            send_buf.size() % static_cast<std::size_t>(this->comm().size()) == 0u,
+            send_buf.size() % this->comm().size() == 0u,
             "Size of the send buffer (" << send_buf.size() << ") is not divisible by the number of PEs ("
                                         << comm().size() << ") in the communicator.");
-        int const send_count = asserting_cast<int>(send_buf.size() / static_cast<std::size_t>(comm().size()));
+        int const send_count = asserting_cast<int>(send_buf.size() / comm().size());
 
         // Optional parameter: recv_buf()
         // Default: allocate new container

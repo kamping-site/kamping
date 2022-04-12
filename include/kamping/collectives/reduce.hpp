@@ -82,7 +82,7 @@ public:
         KASSERT(this->underlying().is_valid_rank(root.rank()), "The provided root rank is invalid.");
 
         send_value_type* recv_buf_ptr = nullptr;
-        if (this->underlying().rank() == root.rank()) {
+        if (this->underlying().rank_signed() == root.rank()) {
             recv_buf.resize(send_buf.size());
             recv_buf_ptr = recv_buf.data();
         }

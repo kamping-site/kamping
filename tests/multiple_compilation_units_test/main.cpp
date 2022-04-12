@@ -34,7 +34,7 @@ TEST(TwoCompilationUnitsTest, main) {
     Communicator comm;
 
     Gatherer gatherer;
-    auto     gathered_data = gatherer.gather(comm.rank());
+    auto     gathered_data = gatherer.gather(comm.rank_signed());
 
     comm.barrier();
 

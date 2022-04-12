@@ -28,7 +28,7 @@ int main() {
     using namespace kamping;
     kamping::Environment  e;
     kamping::Communicator comm;
-    std::vector<int>      input(asserting_cast<size_t>(comm.size()));
+    std::vector<int>      input(comm.size());
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> output;
 

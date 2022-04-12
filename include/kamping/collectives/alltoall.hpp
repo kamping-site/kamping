@@ -74,13 +74,13 @@ public:
 
         // Get the send and receive counts
         KASSERT(
-            send_buf.size() % asserting_cast<size_t>(this->underlying().size()) == 0lu,
+            send_buf.size() % this->underlying().size() == 0lu,
             "The number of elements in send_buf is not divisible by the number of ranks in the communicator. Did you "
             "mean to use alltoallv?");
-        int send_count = asserting_cast<int>(send_buf.size() / asserting_cast<size_t>(this->underlying().size()));
+        int send_count = asserting_cast<int>(send_buf.size() / this->underlying().size());
 
         size_t recv_buf_size = send_buf.size();
-        int    recv_count    = asserting_cast<int>(recv_buf_size / asserting_cast<size_t>(this->underlying().size()));
+        int    recv_count    = asserting_cast<int>(recv_buf_size / this->underlying().size());
         KASSERT(send_count == recv_count, assert::light);
         recv_buf.resize(recv_buf_size);
         KASSERT(recv_buf_size == recv_buf.size(), assert::light);
