@@ -133,6 +133,10 @@ TEST_F(CommunicatorTest, valid_rank) {
     for (int i = -(2 * mpi_size); i < (2 * mpi_size); ++i) {
         EXPECT_EQ((i >= 0 && i < mpi_size), comm.is_valid_rank(i));
     }
+
+    for (size_t i = 0; i < (2 * asserting_cast<size_t>(mpi_size)); ++i) {
+        EXPECT_EQ((i >= 0 && i < asserting_cast<size_t>(mpi_size)), comm.is_valid_rank(i));
+    }
 }
 
 TEST_F(CommunicatorTest, split_and_rank_conversion) {
