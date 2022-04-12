@@ -100,8 +100,8 @@ TEST_F(CommunicatorTest, set_root_bound_check) {
             comm.root(i);
             EXPECT_EQ(i, comm.root());
             if (i > 0) {
-                comm.root(i);
-                EXPECT_EQ(asserting_cast<size_t>(i), comm.root());
+                comm.root(asserting_cast<size_t>(i));
+                EXPECT_EQ(i, comm.root());
             }
             if (comm.rank_signed() == i) {
                 EXPECT_TRUE(comm.is_root());
