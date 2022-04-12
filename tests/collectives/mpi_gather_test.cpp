@@ -73,7 +73,7 @@ TEST(GatherTest, gather_single_custom_element_no_receive_buffer) {
         int additional_value;
     }; // struct custom_data_type
 
-    CustomDataType value = {comm.rank(), comm.size_signed() - comm.rank()};
+    CustomDataType value = {comm.rank_signed(), comm.size_signed() - comm.rank_signed()};
 
     // Test default root of communicator
     auto result = comm.gather(send_buf(value)).extract_recv_buffer();
