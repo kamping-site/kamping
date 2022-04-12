@@ -128,7 +128,7 @@ TEST_F(CommunicatorTest, rank_shifted_cyclic) {
     Communicator comm;
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
-        EXPECT_EQ((rank + i + (size * 2)) % size, comm.rank_shifted_cyclic(i));
+        EXPECT_EQ((rank + i + 2 * size) % size, comm.rank_shifted_cyclic(i));
     }
 }
 
