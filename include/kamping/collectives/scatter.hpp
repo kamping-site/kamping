@@ -67,7 +67,7 @@ public:
         using root_param_type = decltype(kamping::root(0));
         auto&& root_param = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
             std::tuple(comm().root()), args...);
-        int const root = root_param.rank_signed();
+        size_t const root = root_param.rank();
         KASSERT(
             comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
             assert::light);
@@ -138,7 +138,7 @@ public:
         auto* recv_buf_ptr = recv_buf.data();
 
         [[maybe_unused]] int const err = MPI_Scatter(
-            send_buf_ptr, send_count, mpi_send_type, recv_buf_ptr, recv_count, mpi_recv_type, root,
+            send_buf_ptr, send_count, mpi_send_type, recv_buf_ptr, recv_count, mpi_recv_type, root_param.rank_signed(),
             comm().mpi_communicator());
         THROW_IF_MPI_ERROR(err, MPI_Scatter);
 
@@ -153,9 +153,10 @@ protected:
 
 private:
     // Broadcasts a value from on PE to all PEs.
-    int bcast_value(int const bcast_value, int const root) {
+    int bcast_value(int const bcast_value, size_t const root) {
         int                        bcast_result = bcast_value;
-        [[maybe_unused]] int const result       = MPI_Bcast(&bcast_result, 1, MPI_INT, root, comm().mpi_communicator());
+        [[maybe_unused]] int const result =
+            MPI_Bcast(&bcast_result, 1, mpi_datatype<size_t>(), asserting_cast<int>(root), comm().mpi_communicator());
         THROW_IF_MPI_ERROR(result, MPI_Bcast);
         return bcast_result;
     }
