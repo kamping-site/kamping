@@ -67,7 +67,7 @@ public:
         using root_param_type = decltype(kamping::root(0));
         auto&& root_param = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
             std::tuple(comm().root()), args...);
-        int const root = root_param.rank();
+        int const root = root_param.rank_signed();
         KASSERT(
             comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
             assert::light);

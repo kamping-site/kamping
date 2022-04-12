@@ -82,13 +82,13 @@ public:
         KASSERT(this->underlying().is_valid_rank(root.rank()), "The provided root rank is invalid.");
 
         send_value_type* recv_buf_ptr = nullptr;
-        if (this->underlying().rank_signed() == root.rank()) {
+        if (this->underlying().rank() == root.rank()) {
             recv_buf.resize(send_buf.size());
             recv_buf_ptr = recv_buf.data();
         }
         [[maybe_unused]] int err = MPI_Reduce(
-            send_buf.data(), recv_buf_ptr, asserting_cast<int>(send_buf.size()), type, operation.op(), root.rank(),
-            this->underlying().mpi_communicator());
+            send_buf.data(), recv_buf_ptr, asserting_cast<int>(send_buf.size()), type, operation.op(),
+            root.rank_signed(), this->underlying().mpi_communicator());
 
         THROW_IF_MPI_ERROR(err, MPI_Reduce);
         return MPIResult(
