@@ -184,7 +184,8 @@ public:
     /// @param distance Distance of the new rank to the rank of this MPI thread.
     /// @return The circular rank that is \c distance ranks apart from this MPI threads rank.
     [[nodiscard]] size_t rank_shifted_cyclic(int const distance) const {
-        return asserting_cast<size_t>((rank_signed() + distance) % size_signed());
+        int const capped_distance = distance % size_signed();
+        return asserting_cast<size_t>((rank_signed() + capped_distance + size_signed()) % size_signed());
     }
 
     /// @brief Checks if a rank is a valid rank for this communicator, i.e., if the rank is in [0, size).
