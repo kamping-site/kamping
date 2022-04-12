@@ -149,7 +149,8 @@ public:
     /// @param distance Distance of the new rank to the rank of this MPI thread.
     /// @return The circular rank that is \c distance ranks apart from this MPI threads rank.
     [[nodiscard]] int rank_shifted_cyclic(int const distance) const {
-        return (_rank + distance) % _size;
+        const int capped_distance = distance % _size;
+        return (_rank + capped_distance + _size) % _size;
     }
 
     /// @brief Checks if a rank is a valid rank for this communicator, i.e., if the rank is in [0, size).
