@@ -143,7 +143,7 @@ TEST_F(CommunicatorTest, valid_rank) {
     }
 
     for (size_t i = 0; i < (2 * asserting_cast<size_t>(mpi_size)); ++i) {
-        EXPECT_EQ((i >= 0 && i < asserting_cast<size_t>(mpi_size)), comm.is_valid_rank(i));
+        EXPECT_EQ(i < asserting_cast<size_t>(mpi_size), comm.is_valid_rank(i));
     }
 }
 
