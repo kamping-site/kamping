@@ -32,14 +32,14 @@ TEST(AlltoallTest, alltoall_single_element_no_receive_buffer) {
 
     EXPECT_EQ(result.size(), comm.size());
 
-    std::vector<int> expected_result(comm.size(), comm.rank());
+    std::vector<int> expected_result(comm.size(), comm.rank_signed());
     EXPECT_EQ(result, expected_result);
 }
 
 TEST(AlltoallTest, alltoall_single_element_with_receive_buffer) {
     Communicator comm;
 
-    std::vector<int> input(comm.size(), comm.rank());
+    std::vector<int> input(comm.size(), comm.rank_signed());
 
     std::vector<int> result;
     comm.alltoall(send_buf(input), recv_buf(result));
@@ -67,7 +67,7 @@ TEST(AlltoallTest, alltoall_multiple_elements) {
 
     EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
 
-    std::vector<int> expected_result(comm.size() * num_elements_per_processor_pair, comm.rank());
+    std::vector<int> expected_result(comm.size() * num_elements_per_processor_pair, comm.rank_signed());
     EXPECT_EQ(result, expected_result);
 }
 
@@ -75,16 +75,16 @@ TEST(AlltoallTest, alltoall_custom_type_custom_container) {
     Communicator comm;
 
     struct CustomType {
-        int  sendingRank;
-        int  receivingRank;
-        bool operator==(const CustomType& other) const {
+        size_t sendingRank;
+        size_t receivingRank;
+        bool   operator==(const CustomType& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
     OwnContainer<CustomType> input(comm.size());
     for (size_t i = 0; i < input.size(); ++i) {
-        input[i] = {comm.rank(), asserting_cast<int>(i)};
+        input[i] = {comm.rank(), i};
     }
 
     auto result =
@@ -94,7 +94,7 @@ TEST(AlltoallTest, alltoall_custom_type_custom_container) {
 
     OwnContainer<CustomType> expected_result(comm.size());
     for (size_t i = 0; i < expected_result.size(); ++i) {
-        expected_result[i] = {asserting_cast<int>(i), comm.rank()};
+        expected_result[i] = {i, comm.rank()};
     }
     EXPECT_EQ(result, expected_result);
 }
