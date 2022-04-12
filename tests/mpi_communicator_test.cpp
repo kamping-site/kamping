@@ -34,9 +34,11 @@ TEST_F(CommunicatorTest, empty_constructor) {
 
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_WORLD);
     EXPECT_EQ(comm.rank(), rank);
+    EXPECT_EQ(comm.rank_signed(), rank);
     EXPECT_EQ(comm.size_signed(), size);
     EXPECT_EQ(comm.size(), size);
     EXPECT_EQ(comm.root(), 0);
+    EXPECT_EQ(comm.root_signed(), 0);
 }
 
 TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
@@ -49,9 +51,11 @@ TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
     MPI_Comm_rank(MPI_COMM_SELF, &self_rank);
 
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_SELF);
+    EXPECT_EQ(comm.rank_signed(), self_rank);
     EXPECT_EQ(comm.rank(), self_rank);
     EXPECT_EQ(comm.size_signed(), self_size);
     EXPECT_EQ(comm.size(), self_size);
+    EXPECT_EQ(comm.rank_signed(), 0);
     EXPECT_EQ(comm.rank(), 0);
 
     EXPECT_THROW(Communicator(MPI_COMM_NULL), KassertException);
@@ -95,6 +99,10 @@ TEST_F(CommunicatorTest, set_root_bound_check) {
         } else {
             comm.root(i);
             EXPECT_EQ(i, comm.root());
+            if (i > 0) {
+                comm.root(i);
+                EXPECT_EQ(asserting_cast<size_t>(i), comm.root());
+            }
             if (comm.rank_signed() == i) {
                 EXPECT_TRUE(comm.is_root());
             } else {
