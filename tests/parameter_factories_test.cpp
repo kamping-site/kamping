@@ -458,16 +458,17 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_container_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_count_in_basics) {
-    auto recv_count_in_obj = recv_count(42);
-    EXPECT_EQ(recv_count_in_obj.recv_count(), 42);
+    int  value             = 42;
+    auto recv_count_in_obj = recv_count(value);
+    EXPECT_EQ(*recv_count_in_obj.get().data(), 42);
     EXPECT_FALSE(decltype(recv_count_in_obj)::is_modifiable);
 }
 
 TEST(ParameterFactoriesTest, recv_count_out_basics) {
     int  recv_count;
-    auto recv_count_out_obj = recv_count_out(recv_count);
-    recv_count_out_obj.set_recv_count(42);
-    EXPECT_EQ(recv_count_out_obj.recv_count(), 42);
+    auto recv_count_out_obj          = recv_count_out(recv_count);
+    *recv_count_out_obj.get().data() = 42;
+    EXPECT_EQ(*recv_count_out_obj.get().data(), 42);
     EXPECT_EQ(recv_count, 42);
     EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
 }

@@ -29,12 +29,12 @@ int main(int /*argc*/, char** /*argv*/) {
     int                                                elem = 42;
     SingleElementModifiableBuffer<int, parameter_type> single_elem_modifiable_buffer(elem);
 
+    LibAllocatedSingleElementBuffer<int, parameter_type> lib_alloc_single_element_buffer;
+
     ContainerType                                                    container;
     UserAllocatedContainerBasedBuffer<ContainerType, parameter_type> user_alloc_container_based_buffer(container);
 
     LibAllocatedContainerBasedBuffer<ContainerType, parameter_type> lib_alloc_container_based_buffer;
-
-    RecvCount<int> recv_count(42);
 
     Root root(42);
 
@@ -70,12 +70,12 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif defined(COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     lib_alloc_container_based_buffer = lib_alloc_container_based_buffer;
-#elif defined(COPY_CONSTRUCT_RECV_COUNT_BUFFER)
+#elif defined(COPY_CONSTRUCT_LIB_ALLOC_SINGLE_ELEMENT_BUFFER)
     // should not be possible to copy construct a buffer (for performance reasons)
-    auto tmp = recv_count;
-#elif defined(COPY_ASSIGN_RECV_COUNT_BUFFER)
+    auto tmp = lib_alloc_single_element_buffer;
+#elif defined(COPY_ASSIGN_LIB_ALLOC_SINGLE_ELEMENT_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
-    recv_count = recv_count;
+    lib_alloc_single_element_buffer = lib_alloc_single_element_buffer;
 #elif defined(COPY_CONSTRUCT_ROOT_BUFFER)
     // should not be possible to copy construct a buffer (for performance reasons)
     auto tmp = root;

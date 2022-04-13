@@ -199,6 +199,63 @@ private:
     DataType const& _element; ///< Reference to the actual data.
 };
 
+/// @brief Buffer based on a single element type that has been allocated by the library.
+///
+/// @tparam DataType Type of the element wrapped.
+/// @tparam ParameterType parameter type represented by this buffer.
+template <typename DataType, ParameterType type>
+class LibAllocatedSingleElementBuffer {
+public:
+    static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable  = true; ///< Indicates whether the underlying storage is modifiable.
+    using value_type                              = DataType; ///< Value type of the buffer.
+
+    /// @brief Constructor for LibAllocatedSingleElementBuffer.
+    LibAllocatedSingleElementBuffer() {}
+
+    /// @brief Move constructor for LibAllocatedSingleElementBuffer (implicitly deletes copy constructor/assignment
+    /// operator).
+    LibAllocatedSingleElementBuffer(LibAllocatedSingleElementBuffer&&) = default;
+    // move assignment operator is implicitly deleted as this buffer has a reference member
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    LibAllocatedSingleElementBuffer(LibAllocatedSingleElementBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    LibAllocatedSingleElementBuffer& operator=(LibAllocatedSingleElementBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Does nothing but assert that only size 1 is requested.
+    ///
+    /// @param size The size that this "container" is expected to have after the call.
+    void resize(size_t size) const {
+        KASSERT(size == 1ul, "Single element buffers must hold exactly one element.");
+    }
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage (always 1).
+    size_t size() const {
+        return 1;
+    }
+
+    /// @brief Get writable access to the underlaying value.
+    /// @return Reference to the underlying storage.
+    Span<value_type> get() {
+        return {&_element, 1};
+    }
+
+    /// @brief Extract the underlying data element. This will leave LibAllocatedSingleElementBuffer in an unspecified
+    /// state.
+    ///
+    /// @return Moves the underlying data element out of the LibAllocatedSingleElementBuffer.
+    DataType extract() {
+        return std::move(_element);
+    }
+
+private:
+    DataType _element; ///< (Writable) reference to the actual data.
+};
 /// @brief Buffer based on a single element type that has been allocated by the user.
 ///
 /// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by the
@@ -409,61 +466,6 @@ public:
 
 private:
     Container _container; ///< Container which holds the actual data.
-};
-
-/// @brief Encapsulates the recv count in a collective operation.
-/// @tparam Value type or reference type, depending on whether this is an input- our output parameter.
-template <typename T>
-class RecvCount {
-public:
-    static_assert(
-        std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, int>,
-        "Underlaying recv count value type must be int.");
-
-    static constexpr ParameterType parameter_type =
-        ParameterType::recv_count; ///< The tag of the parameter that this object encapsulates.
-    static constexpr bool is_modifiable =
-        !std::is_const_v<T> && std::is_reference_v<T>; ///< Whether this is an input parameter or an output parameter.
-
-    /// @brief Constructor for encapsulated recv count.
-    /// @param recv_count Encapsulated recv count.
-    RecvCount(T recv_count) : _recv_count{recv_count} {}
-
-    /// @brief Move constructor for RecvCount.
-    RecvCount(RecvCount&&) = default;
-
-    /// @brief Move assignment operator for RecvCount.
-    RecvCount& operator=(RecvCount&&) = default;
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    RecvCount(RecvCount const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    RecvCount& operator=(RecvCount const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Returns the encapsulated recv count.
-    /// @returns The encapsulated recv count.
-    int recv_count() const {
-        return _recv_count; // type of _recv_count is always based on int
-    }
-
-    /// @brief Updates the recv count (only if used to wrap an output parameter).
-    /// @param recv_count New recv count.
-    template <bool modifiable = is_modifiable, std::enable_if_t<modifiable, bool> = true>
-    void set_recv_count(int const recv_count) {
-        _recv_count = recv_count;
-    }
-
-    /// @brief Returns the encapsulated recv count. To be used when the receive count is part of MPIResult.
-    /// @return The encapsulate recv count.
-    int extract() const {
-        return _recv_count; // type of _recv_count is always based on int
-    }
-
-private:
-    T _recv_count; ///< Encapsulated recv count.
 };
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.

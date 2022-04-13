@@ -26,6 +26,7 @@
 #include "kamping/parameter_check.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "kamping/parameter_type_definitions.hpp"
 
 namespace kamping::internal {
 /// @brief CRTP mixin class for \c MPI_Scatter.
@@ -110,30 +111,27 @@ public:
             has_recv_count_param == bcast_value(has_recv_count_param, int_root),
             "recv_count() parameter is specified on some PEs, but not on all PEs.", assert::light_communication);
 
-        int recv_count = 0;
-        if constexpr (has_recv_count_param) {
-            auto&& recv_count_param = internal::select_parameter_type<internal::ParameterType::recv_count>(args...);
-            constexpr bool is_output_parameter = std::remove_reference_t<decltype(recv_count_param)>::is_modifiable;
-            KASSERT(
-                is_output_parameter == bcast_value(is_output_parameter, int_root),
-                "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.",
-                assert::light_communication);
+        auto&& recv_count_param = internal::select_parameter_type_or_default<
+            internal::ParameterType::recv_count,
+            LibAllocatedSingleElementBuffer<int, internal::ParameterType::recv_count>>(std::tuple(), args...);
 
-            // If it is an output parameter, broadcast send_count to get recv_count
-            if constexpr (is_output_parameter) {
-                recv_count_param.set_recv_count(this->bcast_value(send_count, int_root));
-            }
+        constexpr bool is_output_parameter = std::remove_reference_t<decltype(recv_count_param)>::is_modifiable;
+        KASSERT(
+            is_output_parameter == bcast_value(is_output_parameter, int_root),
+            "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.",
+            assert::light_communication);
 
-            recv_count = recv_count_param.recv_count();
-
-            // Validate against send_count
-            KASSERT(
-                recv_count == bcast_value(send_count, int_root),
-                "Specified recv_count() does not match the send count.", assert::light_communication);
-        } else {
-            // Broadcast send_count to get recv_count
-            recv_count = this->bcast_value(send_count, int_root);
+        // If it is an output parameter, broadcast send_count to get recv_count
+        if constexpr (is_output_parameter) {
+            *recv_count_param.get().data() = this->bcast_value(send_count, int_root);
         }
+
+        int recv_count = *recv_count_param.get().data();
+
+        // Validate against send_count
+        KASSERT(
+            recv_count == bcast_value(send_count, int_root), "Specified recv_count() does not match the send count.",
+            assert::light_communication);
 
         recv_buf.resize(static_cast<std::size_t>(recv_count));
         auto* recv_buf_ptr = recv_buf.data();
@@ -144,7 +142,7 @@ public:
         THROW_IF_MPI_ERROR(err, MPI_Scatter);
 
         return MPIResult(
-            std::move(recv_buf), internal::BufferCategoryNotUsed{}, kamping::recv_count(recv_count),
+            std::move(recv_buf), internal::BufferCategoryNotUsed{}, std::move(recv_count_param),
             internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{});
     }
 

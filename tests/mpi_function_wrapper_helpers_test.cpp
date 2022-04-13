@@ -18,6 +18,8 @@
 #include "helpers_for_testing.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/parameter_factories.hpp"
+#include "kamping/parameter_objects.hpp"
+#include "kamping/parameter_type_definitions.hpp"
 
 using namespace ::kamping;
 using namespace ::kamping::internal;
@@ -76,8 +78,9 @@ void test_recv_count_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
 
-    RecvCount<int const> recv_count_wrapper = recv_count(42);
-    MPIResult            mpi_result{
+    LibAllocatedSingleElementBuffer<int, ParameterType::recv_count> recv_count_wrapper{};
+    *recv_count_wrapper.get().data() = 42;
+    MPIResult mpi_result{
         BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, std::move(recv_count_wrapper), BufferCategoryNotUsed{},
         BufferCategoryNotUsed{}};
     int recv_count_value = mpi_result.extract_recv_count();
