@@ -38,6 +38,7 @@
 
 #include <mpi.h>
 
+#include "kamping/checking_casts.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 #include "kamping/span.hpp"
@@ -473,7 +474,11 @@ public:
 
     /// @ Constructor for Root.
     /// @param rank Rank of the root PE.
-    Root(int rank) : _rank{rank} {}
+    Root(size_t rank) : _rank{rank} {}
+
+    /// @ Constructor for Root.
+    /// @param rank Rank of the root PE.
+    Root(int rank) : _rank{asserting_cast<size_t>(rank)} {}
 
     /// @brief Move constructor for Root.
     Root(Root&&) = default;
@@ -489,14 +494,20 @@ public:
     Root& operator=(Root const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
-    /// @brief Returns the rank of the root.
-    /// @returns Rank of the root.
-    int rank() const {
+    /// @brief Returns the rank of the root as `size_t`.
+    /// @returns Rank of the root as `size_t`.
+    size_t rank() const {
         return _rank;
     }
 
+    /// @brief Returns the rank of the root as `int`.
+    /// @returns Rank of the root as `int`.
+    int rank_signed() const {
+        return asserting_cast<int>(_rank);
+    }
+
 private:
-    int _rank; ///< Rank of the root PE.
+    size_t _rank; ///< Rank of the root PE.
 };
 
 /// @brief Parameter wrapping an operation passed to reduce-like MPI collectives.

@@ -25,28 +25,28 @@ using namespace ::testing;
 TEST(AlltoallTest, alltoall_single_element_no_receive_buffer) {
     Communicator comm;
 
-    std::vector<int> input(asserting_cast<size_t>(comm.size()));
+    std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
 
     auto result = comm.alltoall(send_buf(input)).extract_recv_buffer();
 
     EXPECT_EQ(result.size(), comm.size());
 
-    std::vector<int> expected_result(asserting_cast<size_t>(comm.size()), comm.rank());
+    std::vector<int> expected_result(comm.size(), comm.rank_signed());
     EXPECT_EQ(result, expected_result);
 }
 
 TEST(AlltoallTest, alltoall_single_element_with_receive_buffer) {
     Communicator comm;
 
-    std::vector<int> input(asserting_cast<size_t>(comm.size()), comm.rank());
+    std::vector<int> input(comm.size(), comm.rank_signed());
 
     std::vector<int> result;
     comm.alltoall(send_buf(input), recv_buf(result));
 
     EXPECT_EQ(result.size(), comm.size());
 
-    std::vector<int> expected_result(asserting_cast<size_t>(comm.size()));
+    std::vector<int> expected_result(comm.size());
     std::iota(expected_result.begin(), expected_result.end(), 0);
     EXPECT_EQ(result, expected_result);
 }
@@ -56,7 +56,7 @@ TEST(AlltoallTest, alltoall_multiple_elements) {
 
     const int num_elements_per_processor_pair = 4;
 
-    std::vector<int> input(asserting_cast<size_t>(comm.size() * num_elements_per_processor_pair));
+    std::vector<int> input(comm.size() * num_elements_per_processor_pair);
     std::iota(input.begin(), input.end(), 0);
     std::transform(input.begin(), input.end(), input.begin(), [](const int element) -> int {
         return element / num_elements_per_processor_pair;
@@ -67,8 +67,7 @@ TEST(AlltoallTest, alltoall_multiple_elements) {
 
     EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
 
-    std::vector<int> expected_result(
-        asserting_cast<size_t>(comm.size() * num_elements_per_processor_pair), comm.rank());
+    std::vector<int> expected_result(comm.size() * num_elements_per_processor_pair, comm.rank_signed());
     EXPECT_EQ(result, expected_result);
 }
 
@@ -76,16 +75,16 @@ TEST(AlltoallTest, alltoall_custom_type_custom_container) {
     Communicator comm;
 
     struct CustomType {
-        int  sendingRank;
-        int  receivingRank;
-        bool operator==(const CustomType& other) const {
+        size_t sendingRank;
+        size_t receivingRank;
+        bool   operator==(const CustomType& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
-    OwnContainer<CustomType> input(asserting_cast<size_t>(comm.size()));
+    OwnContainer<CustomType> input(comm.size());
     for (size_t i = 0; i < input.size(); ++i) {
-        input[i] = {comm.rank(), asserting_cast<int>(i)};
+        input[i] = {comm.rank(), i};
     }
 
     auto result =
@@ -93,9 +92,9 @@ TEST(AlltoallTest, alltoall_custom_type_custom_container) {
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), comm.size());
 
-    OwnContainer<CustomType> expected_result(asserting_cast<size_t>(comm.size()));
+    OwnContainer<CustomType> expected_result(comm.size());
     for (size_t i = 0; i < expected_result.size(); ++i) {
-        expected_result[i] = {asserting_cast<int>(i), comm.rank()};
+        expected_result[i] = {i, comm.rank()};
     }
     EXPECT_EQ(result, expected_result);
 }
