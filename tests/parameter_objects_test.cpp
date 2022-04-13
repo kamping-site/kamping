@@ -255,14 +255,40 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
     static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
 }
 
-TEST(RecvCountTest, move_constructor_assignment_operator_is_enabled) {
-    int       count       = 2;
-    const int const_count = count;
-    RecvCount recv_count1(count);
-    RecvCount recv_count2 = std::move(recv_count1);
-    RecvCount recv_count3(count + 1);
-    recv_count3 = std::move(recv_count2);
-    EXPECT_EQ(recv_count3.recv_count(), const_count);
+TEST(LibAllocatedSingleElementBufferTest, move_constructor_is_enabled) {
+    constexpr ParameterType                     ptype      = ParameterType::send_counts;
+    int                                         elem       = 42;
+    const int                                   const_elem = elem;
+    LibAllocatedSingleElementBuffer<int, ptype> buffer1{};
+    *buffer1.get().data() = elem;
+    LibAllocatedSingleElementBuffer<int, ptype> buffer2(std::move(buffer1));
+    EXPECT_EQ(*buffer2.get().data(), const_elem);
+}
+
+TEST(LibAllocatedSingleElementBufferTest, get_basics) {
+    constexpr ParameterType                     ptype = ParameterType::send_counts;
+    int                                         value = 5;
+    LibAllocatedSingleElementBuffer<int, ptype> int_buffer{};
+
+    *int_buffer.get().data() = value;
+
+    EXPECT_EQ(int_buffer.size(), 1);
+    int_buffer.resize(1);
+    EXPECT_EQ(int_buffer.size(), 1);
+#if KAMPING_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
+    EXPECT_DEATH(int_buffer.resize(0), "Single element buffers must hold exactly one element.");
+    EXPECT_DEATH(int_buffer.resize(2), "Single element buffers must hold exactly one element.");
+#endif
+    EXPECT_EQ(int_buffer.get().size(), 1);
+    EXPECT_EQ(*(int_buffer.get().data()), 5);
+
+    EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
+    EXPECT_TRUE(int_buffer.is_modifiable);
+
+    static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
+
+    int extracted_value = int_buffer.extract();
+    EXPECT_EQ(extracted_value, value);
 }
 
 TEST(RootTest, move_constructor_assignment_operator_is_enabled) {
