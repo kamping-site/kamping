@@ -67,7 +67,8 @@ public:
         using root_param_type = decltype(kamping::root(0));
         auto&& root_param = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
             std::tuple(comm().root()), args...);
-        size_t const root = root_param.rank();
+        size_t const root     = root_param.rank();
+        int const    int_root = root_param.rank_signed();
         KASSERT(
             comm().is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << comm().size(),
             assert::light);
@@ -106,7 +107,7 @@ public:
         constexpr bool has_recv_count_param =
             internal::has_parameter_type<internal::ParameterType::recv_count, Args...>();
         KASSERT(
-            has_recv_count_param == bcast_value(has_recv_count_param, root),
+            has_recv_count_param == bcast_value(has_recv_count_param, int_root),
             "recv_count() parameter is specified on some PEs, but not on all PEs.", assert::light_communication);
 
         int recv_count = 0;
@@ -114,31 +115,31 @@ public:
             auto&& recv_count_param = internal::select_parameter_type<internal::ParameterType::recv_count>(args...);
             constexpr bool is_output_parameter = std::remove_reference_t<decltype(recv_count_param)>::is_modifiable;
             KASSERT(
-                is_output_parameter == bcast_value(is_output_parameter, root),
+                is_output_parameter == bcast_value(is_output_parameter, int_root),
                 "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.",
                 assert::light_communication);
 
             // If it is an output parameter, broadcast send_count to get recv_count
             if constexpr (is_output_parameter) {
-                recv_count_param.set_recv_count(this->bcast_value(send_count, root));
+                recv_count_param.set_recv_count(this->bcast_value(send_count, int_root));
             }
 
             recv_count = recv_count_param.recv_count();
 
             // Validate against send_count
             KASSERT(
-                recv_count == bcast_value(send_count, root), "Specified recv_count() does not match the send count.",
-                assert::light_communication);
+                recv_count == bcast_value(send_count, int_root),
+                "Specified recv_count() does not match the send count.", assert::light_communication);
         } else {
             // Broadcast send_count to get recv_count
-            recv_count = this->bcast_value(send_count, root);
+            recv_count = this->bcast_value(send_count, int_root);
         }
 
         recv_buf.resize(static_cast<std::size_t>(recv_count));
         auto* recv_buf_ptr = recv_buf.data();
 
         [[maybe_unused]] int const err = MPI_Scatter(
-            send_buf_ptr, send_count, mpi_send_type, recv_buf_ptr, recv_count, mpi_recv_type, root_param.rank_signed(),
+            send_buf_ptr, send_count, mpi_send_type, recv_buf_ptr, recv_count, mpi_recv_type, int_root,
             comm().mpi_communicator());
         THROW_IF_MPI_ERROR(err, MPI_Scatter);
 
@@ -153,10 +154,10 @@ protected:
 
 private:
     // Broadcasts a value from on PE to all PEs.
-    int bcast_value(int const bcast_value, size_t const root) {
+    int bcast_value(int const bcast_value, int const root) {
         int                        bcast_result = bcast_value;
         [[maybe_unused]] int const result =
-            MPI_Bcast(&bcast_result, 1, mpi_datatype<size_t>(), asserting_cast<int>(root), comm().mpi_communicator());
+            MPI_Bcast(&bcast_result, 1, mpi_datatype<size_t>(), root, comm().mpi_communicator());
         THROW_IF_MPI_ERROR(result, MPI_Bcast);
         return bcast_result;
     }
