@@ -153,11 +153,12 @@ protected:
     Scatter() = default;
 
 private:
-    // Broadcasts a value from on PE to all PEs.
-    int bcast_value(int const bcast_value, int const root) {
-        int                        bcast_result = bcast_value;
+    // Broadcasts a value from one PE to all PEs.
+    template <typename T>
+    int bcast_value(T const bcast_value, int const root) {
+        T                          bcast_result = bcast_value;
         [[maybe_unused]] int const result =
-            MPI_Bcast(&bcast_result, 1, mpi_datatype<int>(), root, comm().mpi_communicator());
+            MPI_Bcast(&bcast_result, 1, mpi_datatype<T>(), root, comm().mpi_communicator());
         THROW_IF_MPI_ERROR(result, MPI_Bcast);
         return bcast_result;
     }
