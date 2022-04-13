@@ -13,11 +13,13 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdlib>
 
 #include <mpi.h>
 
 #include "error_handling.hpp"
+#include "kamping/checking_casts.hpp"
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/gather.hpp"
@@ -49,15 +51,27 @@ public:
         this->root(root);
     }
 
-    /// @brief Rank of the current MPI process in the communicator.
-    /// @return Rank of the current MPI process in the communicator.
-    [[nodiscard]] int rank() const {
+    /// @brief Rank of the current MPI process in the communicator as `int`.
+    /// @return Rank of the current MPI process in the communicator as `int`.
+    [[nodiscard]] int rank_signed() const {
+        return asserting_cast<int>(_rank);
+    }
+
+    /// @brief Rank of the current MPI process in the communicator as `size_t`.
+    /// @return Rank of the current MPI process in the communicator as `size_t`.
+    [[nodiscard]] size_t rank() const {
         return _rank;
     }
 
-    /// @brief Number of MPI processes in this communicator.
-    /// @return Number of MPI processes in this communicator.
-    [[nodiscard]] int size() const {
+    /// @brief Number of MPI processes in this communicator as `int`.
+    /// @return Number of MPI processes in this communicator `int`.
+    [[nodiscard]] int size_signed() const {
+        return asserting_cast<int>(_size);
+    }
+
+    /// @brief Number of MPI processes in this communicator as `size_t`.
+    /// @return Number of MPI processes in this communicator as `size_t`.
+    [[nodiscard]] size_t size() const {
         return _size;
     }
 
@@ -72,19 +86,40 @@ public:
     void root(int const new_root) {
         THROWING_KASSERT(
             is_valid_rank(new_root), "invalid root rank " << new_root << " in communicator of size " << size());
+        _root = asserting_cast<size_t>(new_root);
+    }
+
+    /// @brief Set a new root for MPI operations that require a root.
+    /// @param new_root The new default root.
+    void root(size_t const new_root) {
+        THROWING_KASSERT(
+            is_valid_rank(new_root), "invalid root rank " << new_root << " in communicator of size " << size());
         _root = new_root;
     }
 
-    /// @brief Default root for MPI operations that require a root.
-    /// @return Default root for MPI operations that require a root.
-    [[nodiscard]] int root() const {
+    /// @brief Default root for MPI operations that require a root as `size_t`.
+    /// @return Default root for MPI operations that require a root as `size_t`.
+    [[nodiscard]] size_t root() const {
         return _root;
+    }
+
+    /// @brief Default root for MPI operations that require a root as `int`.
+    /// @return Default root for MPI operations that require a root as `int`.
+    [[nodiscard]] int root_signed() const {
+        return asserting_cast<int>(_root);
     }
 
     /// @brief Check if this rank is the root rank.
     /// @return Return \c true if this rank is the root rank.
     /// @param root The custom root's rank.
     [[nodiscard]] bool is_root(const int root) const {
+        return rank() == asserting_cast<size_t>(root);
+    }
+
+    /// @brief Check if this rank is the root rank.
+    /// @return Return \c true if this rank is the root rank.
+    /// @param root The custom root's rank.
+    [[nodiscard]] bool is_root(const size_t root) const {
         return rank() == root;
     }
 
@@ -135,10 +170,10 @@ public:
     /// resulting rank is not valid.
     /// @param distance Amount current rank is decreased or increased by.
     /// @return Rank if rank is in [0, size of communicator) and ASSERT/EXCEPTION? otherwise.
-    [[nodiscard]] int rank_shifted_checked(int const distance) const {
-        int const result = _rank + distance;
+    [[nodiscard]] size_t rank_shifted_checked(int const distance) const {
+        int const result = rank_signed() + distance;
         THROWING_KASSERT(is_valid_rank(result), "invalid shifted rank " << result);
-        return result;
+        return asserting_cast<size_t>(result);
     }
 
     /// @brief Computes a rank that is some ranks apart from this MPI thread's rank modulo the communicator's size.
@@ -148,42 +183,49 @@ public:
     /// rank, as it computes the rank in a circular fashion, i.e., \f$ new\_rank=(rank + distance) \% size \f$.
     /// @param distance Distance of the new rank to the rank of this MPI thread.
     /// @return The circular rank that is \c distance ranks apart from this MPI threads rank.
-    [[nodiscard]] int rank_shifted_cyclic(int const distance) const {
-        return (_rank + distance) % _size;
+    [[nodiscard]] size_t rank_shifted_cyclic(int const distance) const {
+        int const capped_distance = distance % size_signed();
+        return asserting_cast<size_t>((rank_signed() + capped_distance + size_signed()) % size_signed());
     }
 
     /// @brief Checks if a rank is a valid rank for this communicator, i.e., if the rank is in [0, size).
     /// @return \c true if rank in [0,size) and \c false otherwise.
     [[nodiscard]] bool is_valid_rank(int const rank) const {
-        return rank >= 0 && rank < _size;
+        return rank >= 0 && rank < size_signed();
+    }
+
+    /// @brief Checks if a rank is a valid rank for this communicator, i.e., if the rank is in [0, size).
+    /// @return \c true if rank in [0,size) and \c false otherwise.
+    [[nodiscard]] bool is_valid_rank(size_t const rank) const {
+        return rank < size();
     }
 
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
     /// @return Rank of the current MPI process in the communicator.
-    int get_mpi_rank(MPI_Comm comm) const {
+    size_t get_mpi_rank(MPI_Comm comm) const {
         THROWING_KASSERT(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
 
         int rank;
         MPI_Comm_rank(comm, &rank);
-        return rank;
+        return asserting_cast<size_t>(rank);
     }
 
     /// @brief Compute the number of MPI processes in this communicator using \c MPI_Comm_size.
     /// @return Size of the communicator.
-    int get_mpi_size(MPI_Comm comm) const {
+    size_t get_mpi_size(MPI_Comm comm) const {
         THROWING_KASSERT(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
 
         int size;
         MPI_Comm_size(comm, &size);
-        return size;
+        return asserting_cast<size_t>(size);
     }
 
-    int      _rank; ///< Rank of the MPI process in this communicator.
-    int      _size; ///< Number of MPI processes in this communicator.
+    size_t   _rank; ///< Rank of the MPI process in this communicator.
+    size_t   _size; ///< Number of MPI processes in this communicator.
     MPI_Comm _comm; ///< Corresponding MPI communicator.
 
-    int _root; ///< Default root for MPI operations that require a root.
-};             // class communicator
+    size_t _root; ///< Default root for MPI operations that require a root.
+};                // class communicator
 
 } // namespace kamping

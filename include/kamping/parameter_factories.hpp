@@ -296,6 +296,15 @@ inline auto root(int rank) {
     return internal::Root(rank);
 }
 
+/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like \c
+/// MPI_Gather.
+///
+/// @param rank Rank of the root PE.
+/// @returns Root Object containing the rank information of the root PE.
+inline auto root(size_t rank) {
+    return internal::Root(rank);
+}
+
 /// @brief generates a parameter object for a reduce operation.
 ///
 /// @tparam Op the type of the operation

@@ -34,8 +34,11 @@ TEST_F(CommunicatorTest, empty_constructor) {
 
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_WORLD);
     EXPECT_EQ(comm.rank(), rank);
+    EXPECT_EQ(comm.rank_signed(), rank);
+    EXPECT_EQ(comm.size_signed(), size);
     EXPECT_EQ(comm.size(), size);
     EXPECT_EQ(comm.root(), 0);
+    EXPECT_EQ(comm.root_signed(), 0);
 }
 
 TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
@@ -48,8 +51,11 @@ TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
     MPI_Comm_rank(MPI_COMM_SELF, &self_rank);
 
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_SELF);
+    EXPECT_EQ(comm.rank_signed(), self_rank);
     EXPECT_EQ(comm.rank(), self_rank);
+    EXPECT_EQ(comm.size_signed(), self_size);
     EXPECT_EQ(comm.size(), self_size);
+    EXPECT_EQ(comm.rank_signed(), 0);
     EXPECT_EQ(comm.rank(), 0);
 
     EXPECT_THROW(Communicator(MPI_COMM_NULL), KassertException);
@@ -77,8 +83,8 @@ TEST_F(CommunicatorTest, is_root) {
         EXPECT_FALSE(comm.is_root());
     }
 
-    int const custom_root = comm.size() - 1;
-    if (custom_root == comm.rank()) {
+    int const custom_root = comm.size_signed() - 1;
+    if (custom_root == comm.rank_signed()) {
         EXPECT_TRUE(comm.is_root(custom_root));
     } else {
         EXPECT_FALSE(comm.is_root(custom_root));
@@ -93,7 +99,11 @@ TEST_F(CommunicatorTest, set_root_bound_check) {
         } else {
             comm.root(i);
             EXPECT_EQ(i, comm.root());
-            if (comm.rank() == i) {
+            if (i > 0) {
+                comm.root(asserting_cast<size_t>(i));
+                EXPECT_EQ(i, comm.root());
+            }
+            if (comm.rank_signed() == i) {
                 EXPECT_TRUE(comm.is_root());
             } else {
                 EXPECT_FALSE(comm.is_root());
@@ -118,7 +128,7 @@ TEST_F(CommunicatorTest, rank_shifted_cyclic) {
     Communicator comm;
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
-        EXPECT_EQ((rank + i) % size, comm.rank_shifted_cyclic(i));
+        EXPECT_EQ((rank + i + 2 * size) % size, comm.rank_shifted_cyclic(i));
     }
 }
 
@@ -131,6 +141,10 @@ TEST_F(CommunicatorTest, valid_rank) {
     for (int i = -(2 * mpi_size); i < (2 * mpi_size); ++i) {
         EXPECT_EQ((i >= 0 && i < mpi_size), comm.is_valid_rank(i));
     }
+
+    for (size_t i = 0; i < (2 * asserting_cast<size_t>(mpi_size)); ++i) {
+        EXPECT_EQ(i < asserting_cast<size_t>(mpi_size), comm.is_valid_rank(i));
+    }
 }
 
 TEST_F(CommunicatorTest, split_and_rank_conversion) {
@@ -142,6 +156,7 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
         auto      splitted_comm = comm.split(color);
         int const expected_size = (size / i) + ((size % i > rank % i) ? 1 : 0);
         EXPECT_EQ(splitted_comm.size(), expected_size);
+        EXPECT_EQ(splitted_comm.size_signed(), expected_size);
 
         // Check for all rank ids whether they correctly convert to the splitted communicator
         for (int rank_to_test = 0; rank_to_test < size; ++rank_to_test) {
@@ -163,6 +178,7 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
         auto      splitted_comm = comm.split(color, size - rank);
         int const expected_size = (size / i) + ((size % i > rank % i) ? 1 : 0);
         EXPECT_EQ(splitted_comm.size(), expected_size);
+        EXPECT_EQ(splitted_comm.size_signed(), expected_size);
 
         int const smaller_ranks_in_split = rank / i;
         int const expected_rank          = expected_size - smaller_ranks_in_split - 1;

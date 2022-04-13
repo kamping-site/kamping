@@ -87,8 +87,8 @@ public:
             recv_buf_ptr = recv_buf.data();
         }
         [[maybe_unused]] int err = MPI_Reduce(
-            send_buf.data(), recv_buf_ptr, asserting_cast<int>(send_buf.size()), type, operation.op(), root.rank(),
-            this->underlying().mpi_communicator());
+            send_buf.data(), recv_buf_ptr, asserting_cast<int>(send_buf.size()), type, operation.op(),
+            root.rank_signed(), this->underlying().mpi_communicator());
 
         THROW_IF_MPI_ERROR(err, MPI_Reduce);
         return MPIResult(

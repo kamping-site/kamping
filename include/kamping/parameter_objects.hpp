@@ -38,6 +38,7 @@
 
 #include <mpi.h>
 
+#include "kamping/checking_casts.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 #include "kamping/span.hpp"
@@ -181,6 +182,12 @@ public:
     ContainerBasedConstBuffer& operator=(ContainerBasedConstBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() const {
+        return _container.size();
+    }
+
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
     Span<const value_type> get() const {
@@ -200,6 +207,12 @@ public:
     static constexpr bool          is_modifiable =
         false;               ///< This pseudo buffer is not modifiable since it represents no actual buffer.
     using value_type = Data; ///< Value type of the buffer.
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage (always 0).
+    size_t size() const {
+        return 0;
+    }
 
     /// @brief Returns a span containing a nullptr.
     /// @return Span containing a nullptr.
@@ -236,6 +249,12 @@ public:
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     SingleElementConstBuffer& operator=(SingleElementConstBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage (always 1).
+    size_t size() const {
+        return 1;
+    }
 
     /// @brief Get access to the underlaying read-only value.
     /// @return Span referring to the underlying read-only storage.
@@ -280,6 +299,19 @@ public:
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     SingleElementModifiableBuffer& operator=(SingleElementModifiableBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Does nothing but assert that only size 1 is requested.
+    ///
+    /// @param size The size that this "container" is expected to have after the call.
+    void resize(size_t size) const {
+        KASSERT(size == 1ul, "Single element buffers must hold exactly one element.");
+    }
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage (always 1).
+    size_t size() const {
+        return 1;
+    }
 
     /// @brief Get writable access to the underlaying value.
     /// @return Reference to the underlying storage.
@@ -366,7 +398,7 @@ public:
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
-    size_t size() {
+    size_t size() const {
         return _container.size();
     }
 
@@ -446,7 +478,7 @@ public:
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
-    size_t size() {
+    size_t size() const {
         return _container.size();
     }
 
@@ -517,7 +549,11 @@ public:
 
     /// @ Constructor for Root.
     /// @param rank Rank of the root PE.
-    Root(int rank) : _rank{rank} {}
+    Root(size_t rank) : _rank{rank} {}
+
+    /// @ Constructor for Root.
+    /// @param rank Rank of the root PE.
+    Root(int rank) : _rank{asserting_cast<size_t>(rank)} {}
 
     /// @brief Move constructor for Root.
     Root(Root&&) = default;
@@ -533,14 +569,20 @@ public:
     Root& operator=(Root const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
-    /// @brief Returns the rank of the root.
-    /// @returns Rank of the root.
-    int rank() const {
+    /// @brief Returns the rank of the root as `size_t`.
+    /// @returns Rank of the root as `size_t`.
+    size_t rank() const {
         return _rank;
     }
 
+    /// @brief Returns the rank of the root as `int`.
+    /// @returns Rank of the root as `int`.
+    int rank_signed() const {
+        return asserting_cast<int>(_rank);
+    }
+
 private:
-    int _rank; ///< Rank of the root PE.
+    size_t _rank; ///< Rank of the root PE.
 };
 
 /// @brief Parameter wrapping an operation passed to reduce-like MPI collectives.

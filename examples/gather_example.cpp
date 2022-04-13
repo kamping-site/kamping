@@ -20,14 +20,15 @@
 #include "helpers_for_examples.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/environment.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
 
 int main() {
     using namespace kamping;
-    MPI_Init(NULL, NULL);
+    kamping::Environment  e;
     kamping::Communicator comm;
-    std::vector<int>      input(asserting_cast<size_t>(comm.size()));
+    std::vector<int>      input(comm.size());
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> output;
 
@@ -35,6 +36,5 @@ int main() {
 
     print_result_on_root(output, comm);
 
-    MPI_Finalize();
     return 0;
 }

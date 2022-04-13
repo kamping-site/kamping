@@ -26,13 +26,13 @@ using namespace ::testing;
 namespace {
 std::vector<int> create_input_vector_on_root(Communicator const& comm, int const elements_per_rank, int root = -1) {
     if (root < 0) {
-        root = comm.root();
+        root = comm.root_signed();
     }
 
     std::vector<int> input;
-    if (comm.rank() == root) {
-        input.resize(static_cast<std::size_t>(elements_per_rank * comm.size()));
-        for (int rank = 0; rank < comm.size(); ++rank) {
+    if (comm.rank_signed() == root) {
+        input.resize(static_cast<std::size_t>(elements_per_rank) * comm.size());
+        for (int rank = 0; rank < comm.size_signed(); ++rank) {
             auto begin = input.begin() + rank * elements_per_rank;
             auto end   = begin + elements_per_rank;
             std::fill(begin, end, rank);
@@ -126,7 +126,7 @@ TEST(ScatterTest, scatter_with_send_buf_only_on_root) {
 
 TEST(ScatterTest, scatter_with_root_arg) {
     Communicator comm;
-    int const    root = comm.size() - 1; // use last PE as root
+    int const    root = comm.size_signed() - 1; // use last PE as root
 
     auto const input  = create_input_vector_on_root(comm, 1, root);
     auto const result = comm.scatter(send_buf(input), kamping::root(root)).extract_recv_buffer();
@@ -165,8 +165,8 @@ TEST(ScatterTest, scatter_with_custom_sendbuf_and_type) {
 
     ::testing::OwnContainer<Data> input(static_cast<std::size_t>(comm.size()));
     if (comm.is_root()) {
-        for (int rank = 0; rank < comm.size(); ++rank) {
-            input[static_cast<std::size_t>(rank)].value = rank;
+        for (size_t rank = 0; rank < comm.size(); ++rank) {
+            input[rank].value = asserting_cast<int>(rank);
         }
     }
 
@@ -180,8 +180,8 @@ TEST(ScatterTest, scatter_with_nonempty_sendbuf_on_non_root) {
     Communicator comm;
 
     std::vector<int> input(static_cast<std::size_t>(comm.size()));
-    for (int rank = 0; rank < comm.size(); ++rank) {
-        input[static_cast<std::size_t>(rank)] = rank;
+    for (size_t rank = 0; rank < comm.size(); ++rank) {
+        input[rank] = asserting_cast<int>(rank);
     }
 
     auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
