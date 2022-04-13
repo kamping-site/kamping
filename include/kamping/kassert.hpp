@@ -702,7 +702,7 @@ constexpr bool assertion_enabled(int level) {
 /// \c KAMPING_ASSERTION_LEVEL. This is the macro version of assertion_enabled for use in the preprocessor.
 /// @param level The level of the assertion.
 /// @return Whether the assertion is enabled.
-#define ASSERTION_ENABLED(level) level <= KAMPING_ASSERTION_LEVEL
+#define KAMPING_ASSERTION_ENABLED(level) level <= KAMPING_ASSERTION_LEVEL
 
 /// @brief Evaluates an assertion expression. If the assertion fails, prints an error describing the failed assertion.
 /// @param type Actual type of this check. In exception mode, this parameter has always value \c ASSERTION, otherwise
