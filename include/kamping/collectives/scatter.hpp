@@ -157,7 +157,7 @@ private:
     int bcast_value(int const bcast_value, int const root) {
         int                        bcast_result = bcast_value;
         [[maybe_unused]] int const result =
-            MPI_Bcast(&bcast_result, 1, mpi_datatype<size_t>(), root, comm().mpi_communicator());
+            MPI_Bcast(&bcast_result, 1, mpi_datatype<int>(), root, comm().mpi_communicator());
         THROW_IF_MPI_ERROR(result, MPI_Bcast);
         return bcast_result;
     }
