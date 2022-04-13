@@ -153,7 +153,7 @@ protected:
     Scatter() = default;
 
 private:
-    // Broadcasts a value from on PE to all PEs.
+    // Broadcasts a value from one PE to all PEs.
     template <typename T>
     int bcast_value(T const bcast_value, int const root) {
         T                          bcast_result = bcast_value;
