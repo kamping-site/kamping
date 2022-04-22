@@ -20,7 +20,6 @@
 
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
-#include "kamping/collectives/alltoall.hpp"
 #include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/gather.hpp"
 #include "kamping/collectives/reduce.hpp"
@@ -31,8 +30,7 @@ namespace kamping {
 
 /// @brief Wrapper for MPI communicator providing access to \ref rank() and \ref size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPI.ng.
-class Communicator : public internal::Alltoall<Communicator>,
-                     public internal::Scatter<Communicator>,
+class Communicator : public internal::Scatter<Communicator>,
                      public internal::Reduce<Communicator>,
                      public internal::Gather<Communicator>,
                      public internal::Barrier<Communicator> {
@@ -199,6 +197,9 @@ public:
     [[nodiscard]] bool is_valid_rank(size_t const rank) const {
         return rank < size();
     }
+
+    template <typename... Args>
+    auto alltoall(Args&&... args);
 
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
