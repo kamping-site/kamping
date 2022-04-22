@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
+#include "kamping/collectives/scatter.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
