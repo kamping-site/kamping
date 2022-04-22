@@ -21,14 +21,13 @@
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/barrier.hpp"
-#include "kamping/collectives/gather.hpp"
 #include "kamping/kassert.hpp"
 
 namespace kamping {
 
 /// @brief Wrapper for MPI communicator providing access to \ref rank() and \ref size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPI.ng.
-class Communicator : public internal::Gather<Communicator>, public internal::Barrier<Communicator> {
+class Communicator : public internal::Barrier<Communicator> {
 public:
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
     Communicator() : Communicator(MPI_COMM_WORLD) {}
@@ -201,6 +200,9 @@ public:
 
     template <typename... Args>
     auto reduce(Args&&... args);
+
+    template <typename... Args>
+    auto gather(Args&&... args);
 
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.

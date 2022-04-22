@@ -17,6 +17,7 @@
 #include <mpi.h>
 
 #include "../helpers_for_testing.hpp"
+#include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;

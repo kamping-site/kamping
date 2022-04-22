@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "./gatherer.hpp"
+#include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/kassert.hpp"

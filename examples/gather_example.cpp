@@ -19,6 +19,7 @@
 
 #include "helpers_for_examples.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/parameter_factories.hpp"
