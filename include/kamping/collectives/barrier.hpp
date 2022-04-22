@@ -15,31 +15,21 @@
 
 #include <mpi.h>
 
+#include "kamping/communicator.hpp"
 #include "kamping/error_handling.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 
-namespace kamping::internal {
-/// @brief CRTP mixin class for \c MPI_Barrier.
+/// @brief Perform a \c MPI_Barrier on this communicator.
 ///
-/// This class is only to be used as a super class of kamping::Communicator
-template <typename Communicator>
-class Barrier : public CRTPHelper<Communicator, Barrier> {
-public:
-    /// @brief Perform a \c MPI_Barrier on this communicator.
-    ///
-    /// Barrier takes no parameters. Any parameters passed will cause a compilation error.
-    ///
-    /// The parameter pack prohibits the compiler form compiling this
-    /// function even when it's not used.
-    template <typename... Args>
-    void barrier(Args&&... args) {
-        static_assert(sizeof...(args) == 0, "You may not pass any arguments to barrier().");
+/// Barrier takes no parameters. Any parameters passed will cause a compilation error.
+///
+/// The parameter pack prohibits the compiler form compiling this
+/// function even when it's not used.
+template <typename... Args>
+void kamping::Communicator::barrier(Args&&... args) {
+    using namespace kamping::internal;
+    static_assert(sizeof...(args) == 0, "You may not pass any arguments to barrier().");
 
-        [[maybe_unused]] int err = MPI_Barrier(this->underlying().mpi_communicator());
-        THROW_IF_MPI_ERROR(err, MPI_Barrier);
-    }
-
-protected:
-    Barrier() {}
-};
-} // namespace kamping::internal
+    [[maybe_unused]] int err = MPI_Barrier(mpi_communicator());
+    THROW_IF_MPI_ERROR(err, MPI_Barrier);
+}

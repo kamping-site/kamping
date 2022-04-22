@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;

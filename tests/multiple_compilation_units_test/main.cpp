@@ -22,6 +22,7 @@
 #include <mpi.h>
 
 #include "./gatherer.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
 
