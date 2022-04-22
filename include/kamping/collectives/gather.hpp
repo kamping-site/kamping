@@ -26,12 +26,13 @@
 #include "kamping/parameter_type_definitions.hpp"
 
 namespace {
-bool check_equal_sizes(kamping::Communicator const& comm, size_t local_size) {
+template <typename T>
+inline bool check_equal_sizes(kamping::Communicator const& comm, T local_size) {
     using namespace kamping::internal;
     using namespace kamping;
-    std::vector<size_t> result(comm.size(), 0);
+    std::vector<T> result(comm.size(), 0);
     MPI_Gather(
-        &local_size, 1, mpi_datatype<size_t>(), result.data(), 1, mpi_datatype<size_t>(), comm.root_signed(),
+        &local_size, 1, mpi_datatype<T>(), result.data(), 1, mpi_datatype<T>(), comm.root_signed(),
         comm.mpi_communicator());
     return std::equal(result.begin() + 1, result.end(), result.begin());
 }
