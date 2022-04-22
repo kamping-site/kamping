@@ -59,7 +59,7 @@ function(kamping_register_mpi_test KAMPING_TARGET_NAME)
     )
   katestrophe_add_test_executable(${KAMPING_TARGET_NAME} FILES ${KAMPING_FILES})
   target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE kamping_base)
-  katestrophe_add_mpi_test(${KAMPING_TARGET_NAME} CORES ${KAMPING_CORES} DISCOVER_TESTS)
+  katestrophe_add_mpi_test(${KAMPING_TARGET_NAME} CORES ${KAMPING_CORES})
   kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN}) 
 endfunction()
 
