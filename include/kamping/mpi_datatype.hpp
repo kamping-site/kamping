@@ -27,21 +27,21 @@
 #include "kamping/kassert.hpp"
 
 namespace kamping {
-///@brief Wrapper around bool to allow handling containers of boolean values
+/// @brief Wrapper around bool to allow handling containers of boolean values
 class kabool {
 public:
-    ///@brief default constructor for a \c kabool with value \c false
+    /// @brief default constructor for a \c kabool with value \c false
     kabool() noexcept : _value() {}
-    ///@brief constructor to construct a \c kabool out of a \c bool
+    /// @brief constructor to construct a \c kabool out of a \c bool
     kabool(bool value) noexcept : _value(value) {}
 
-    ///@brief implicit cast of \c kabool to \c bool
+    /// @brief implicit cast of \c kabool to \c bool
     inline operator bool() const noexcept {
         return _value;
     }
 
 private:
-    bool _value; ///< the wrapped boolean value
+    bool _value; /// < the wrapped boolean value
 };
 
 /// @addtogroup kamping_mpi_utility
