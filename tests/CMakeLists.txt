@@ -19,28 +19,28 @@ kamping_register_test(test_span FILES span_test.cpp)
 
 # We need MPI for the datatypes test as we are using MPI_Type_continuous which in
 # turn requires MPI_Init() to be completed.
-kamping_register_mpi_test(test_mpi_alltoall FILES collectives/mpi_alltoall_test.cpp CORES 1 2 4)
-kamping_register_mpi_test(test_mpi_scatter FILES collectives/mpi_scatter_test.cpp CORES 1 2 4)
-kamping_register_mpi_test(test_mpi_barrier FILES collectives/mpi_barrier_test.cpp CORES 1 2 4)
-kamping_register_mpi_test(test_mpi_communicator FILES mpi_communicator_test.cpp CORES 1 2 4)
+kamping_register_mpi_test(test_mpi_alltoall FILES collectives/mpi_alltoall_test.cpp CORES 1 4)
+kamping_register_mpi_test(test_mpi_scatter FILES collectives/mpi_scatter_test.cpp CORES 1 4)
+kamping_register_mpi_test(test_mpi_barrier FILES collectives/mpi_barrier_test.cpp CORES 1 4)
+kamping_register_mpi_test(test_mpi_communicator FILES mpi_communicator_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_mpi_datatype FILES mpi_datatype_test.cpp CORES 1)
-kamping_register_mpi_test(test_mpi_gather FILES collectives/mpi_gather_test.cpp CORES 1 2 4)
-kamping_register_mpi_test(test_mpi_reduce FILES collectives/mpi_reduce_test.cpp CORES 1 2 4)
+kamping_register_mpi_test(test_mpi_gather FILES collectives/mpi_gather_test.cpp CORES 1 4)
+kamping_register_mpi_test(test_mpi_reduce FILES collectives/mpi_reduce_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_operation_wrapper FILES mpi_operation_wrapper_test.cpp CORES 1)
 kamping_register_mpi_test(test_parameter_factories_mpi FILES parameter_factories_mpi_test.cpp CORES 1)
-kamping_register_mpi_test(test_multiple_compilation_units FILES multiple_compilation_units_test/main.cpp multiple_compilation_units_test/gatherer.cpp CORES 1 2 4)
+kamping_register_mpi_test(test_multiple_compilation_units FILES multiple_compilation_units_test/main.cpp multiple_compilation_units_test/gatherer.cpp CORES 1 4)
 
 # The environment test does not use our wrapper functions because it can't use our google test setup.
 # First variant does only the minimum amount of interaction with kamping::Environment.
 add_executable(test_environment_init_finalize_basic environment_init_finalize_test.cpp)
 target_link_libraries(test_environment_init_finalize_basic PRIVATE kamping_base MPI::MPI_CXX)
 target_compile_definitions(test_environment_init_finalize_basic PRIVATE -DKAMPING_ENVIRONMENT_TEST_NO_PARAM -DKAMPING_ASSERTION_LEVEL=6)
-katestrophe_add_mpi_test(test_environment_init_finalize_basic CORES 1 2)
+katestrophe_add_mpi_test(test_environment_init_finalize_basic CORES 1 4)
 # Second variant passes parameters to MPI_Init and calls finallize manually.
 add_executable(test_environment_init_finalize_manual environment_init_finalize_test.cpp)
 target_link_libraries(test_environment_init_finalize_manual PRIVATE kamping_base MPI::MPI_CXX)
 target_compile_definitions(test_environment_init_finalize_manual PRIVATE -DKAMPING_ENVIRONMENT_TEST_WITH_PARAM -DKAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE -DKAMPING_ASSERTION_LEVEL=6)
-katestrophe_add_mpi_test(test_environment_init_finalize_manual CORES 1 2)
+katestrophe_add_mpi_test(test_environment_init_finalize_manual CORES 1 4)
 
 kamping_register_compilation_failure_test(
     test_mpi_datatype_unsupported_types
