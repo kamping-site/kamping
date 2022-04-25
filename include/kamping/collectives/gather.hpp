@@ -38,7 +38,7 @@ inline bool check_equal_sizes(kamping::Communicator const& comm, T local_size) {
 }
 } // anonymous namespace
 
-/// @brief Wrapper for \c MPI_Gather
+/// @brief Wrapper for \c MPI_Gather.
 ///
 /// This wrapper for \c MPI_Gather sends the same amount of data from each rank to a root. The following buffers are
 /// required:

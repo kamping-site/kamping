@@ -30,7 +30,7 @@
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 
-/// @brief Wrapper for \c MPI_Reduce
+/// @brief Wrapper for \c MPI_Reduce.
 ///
 /// This wraps \c MPI_Reduce. The operation combines the elements in the input buffer provided via \c
 /// kamping::send_buf() and returns the combined value on the root rank. The following parameters are required:
