@@ -20,7 +20,7 @@ int main(int /*argc*/, char** /*argv*/) {
     bool                single_element_bool [[maybe_unused]]   = false;
     bool                single_element_kabool [[maybe_unused]] = false;
     std::vector<bool>   vector_bool                            = {false, true, false};
-    std::vector<kabool> vector_kabbool                         = {false, true, false};
+    std::vector<kabool> vector_kabool                          = {false, true, false};
     Communicator        comm;
 
 #ifdef SINGLE_BOOL_VEC_BOOL
@@ -30,7 +30,7 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif SEND_VEC_BOOL
     comm.gather(send_buf(vector_bool));
 #elif SEND_VEC_KABOOL_RECV_VEC_BOOL
-    comm.gather(send_buf(vector_kabbool), recv_buf(vector_bool));
+    comm.gather(send_buf(vector_kabool), recv_buf(vector_bool));
 // If none of the above sections is active, this file will compile successfully.
 #endif
 }

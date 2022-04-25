@@ -57,7 +57,12 @@ auto send_buf(const Data& data) {
     } else {
         if constexpr (std::is_same_v<Data, bool>) {
             // the user may pass a single bool as send_buf, but will get a Container of kabool as recv_buf
-            return internal::SingleElementConstBuffer<kabool, internal::ParameterType::send_buf>(data);
+
+            // we have to reinterpret_cast the value here, because constructing a "real" kabool would result in an
+            // intermediate object, passed by lvalue-ref to SingleElementConstBuffer, which would get destroyed after
+            // the call of this factory, resulting in a reference to a non-existent value.
+            return internal::SingleElementConstBuffer<kabool, internal::ParameterType::send_buf>(
+                reinterpret_cast<kabool const&>(data));
         } else {
             return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_buf>(data);
         }
