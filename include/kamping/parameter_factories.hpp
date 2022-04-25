@@ -55,7 +55,12 @@ auto send_buf(const Data& data) {
     if constexpr (internal::has_data_member_v<Data>) {
         return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_buf>(data);
     } else {
-        return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_buf>(data);
+        if constexpr (std::is_same_v<Data, bool>) {
+            // the user may pass a single bool as send_buf, but will get a Container of kabool as recv_buf
+            return internal::SingleElementConstBuffer<kabool, internal::ParameterType::send_buf>(data);
+        } else {
+            return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_buf>(data);
+        }
     }
 }
 

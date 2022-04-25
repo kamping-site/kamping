@@ -133,6 +133,28 @@ TEST(ReduceTest, reduce_single_element_no_receive_buffer_bool) {
     }
 }
 
+TEST(ReduceTest, reduce_single_element_from_bool_no_receive_buffer) {
+    Communicator comm;
+
+    bool input = false;
+    if (comm.rank() == 1 % comm.size()) {
+        input = true;
+    }
+
+    auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{})).extract_recv_buffer();
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), 1);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+
+    std::vector<kabool> expected_result = {true};
+    if (comm.is_root()) {
+        EXPECT_EQ(result, expected_result);
+    }
+}
+
 TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
     Communicator comm;
 
