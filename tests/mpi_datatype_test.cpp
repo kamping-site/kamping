@@ -382,13 +382,6 @@ TEST(MpiDataTypeTest, mpi_datatype_size) {
     EXPECT_TRUE(has_thrown);
 }
 
-TEST(MpiDataTypeTest, fixed_sized_uint_test) {
-    EXPECT_TRUE((std::is_same_v<kamping::internal::fixed_sized_uint<1>, std::uint8_t>));
-    EXPECT_TRUE((std::is_same_v<kamping::internal::fixed_sized_uint<2>, std::uint16_t>));
-    EXPECT_TRUE((std::is_same_v<kamping::internal::fixed_sized_uint<4>, std::uint32_t>));
-    EXPECT_TRUE((std::is_same_v<kamping::internal::fixed_sized_uint<8>, std::uint64_t>));
-}
-
 TEST(MpiDataTypeTest, kabool_basics) {
     // size matches bool
     EXPECT_EQ(sizeof(kabool), sizeof(bool));

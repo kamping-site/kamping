@@ -26,48 +26,6 @@
 #include "kamping/error_handling.hpp"
 #include "kamping/kassert.hpp"
 
-namespace kamping::internal {
-///@brief Helper for getting a unsigned integer of fixed size.
-///@tparam Size in bytes.
-template <size_t N>
-struct fixed_sized_uint_t {
-    static_assert(N != 1 && N != 2 && N != 4 && N != 8, "Only 8, 16, 32 and 64 bit integers are supported");
-};
-
-///@brief Helper for getting a unsigned integer of fixed size.
-///@tparam N the type size in bytes
-template <>
-struct fixed_sized_uint_t<1> {
-    using type = std::uint8_t; ///< the integer type
-};
-
-///@brief Helper for getting a unsigned integer of fixed size.
-///@tparam N the type size in bytes
-template <>
-struct fixed_sized_uint_t<2> {
-    using type = std::uint16_t; ///< the integer type
-};
-
-///@brief Helper for getting a unsigned integer of fixed size.
-///@tparam N the type size in bytes
-template <>
-struct fixed_sized_uint_t<4> {
-    using type = std::uint32_t; ///< the integer type
-};
-
-///@brief Helper for getting a unsigned integer of fixed size.
-///@tparam N the type size in bytes
-template <>
-struct fixed_sized_uint_t<8> {
-    using type = std::uint64_t; ///< the integer type
-};
-
-///@brief Helper type definition for getting a unsigned integer of fixed size.
-///@tparam N the type size in bytes
-template <size_t N>
-using fixed_sized_uint = typename fixed_sized_uint_t<N>::type;
-} // namespace kamping::internal
-
 namespace kamping {
 ///@brief Wrapper around bool to allow handling containers of boolean values
 class kabool {
@@ -79,12 +37,11 @@ public:
 
     ///@brief implicit cast of \c kabool to \c bool
     inline operator bool() const noexcept {
-        return static_cast<bool>(_value);
+        return _value;
     }
 
 private:
-    // We need an unsigned integer with the correct size, because \c sizeof(bool) is implementation defined.
-    internal::fixed_sized_uint<sizeof(bool)> _value; ///< the wrapped boolean value
+    bool _value; ///< the wrapped boolean value
 };
 
 /// @addtogroup kamping_mpi_utility
