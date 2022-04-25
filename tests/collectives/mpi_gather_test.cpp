@@ -11,6 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "gmock/gmock.h"
 #include <cstddef>
 
 #include <gtest/gtest.h>
@@ -18,6 +19,8 @@
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/mpi_datatype.hpp"
+#include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -300,6 +303,99 @@ TEST(GatherTest, gather_send_and_receive_custom_container) {
         EXPECT_EQ(result.size(), values.size() * comm.size());
         for (size_t i = 0; i < result.size(); ++i) {
             EXPECT_EQ(result[i], i / values.size());
+        }
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(GatherTest, gather_single_element_bool_no_receive_buffer) {
+    Communicator comm;
+    auto         result = comm.gather(send_buf(false)).extract_recv_buffer();
+
+    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    // Test default root of communicator
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), comm.size());
+        EXPECT_THAT(result, Each(IsFalse()));
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(GatherTest, gather_single_element_kabool_no_receive_buffer) {
+    Communicator comm;
+    auto         result = comm.gather(send_buf(kabool{false})).extract_recv_buffer();
+
+    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    // Test default root of communicator
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), comm.size());
+        EXPECT_THAT(result, Each(IsFalse()));
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(GatherTest, gather_single_element_bool_with_receive_buffer) {
+    Communicator        comm;
+    std::vector<kabool> result;
+    comm.gather(send_buf(false), recv_buf(result));
+
+    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    // Test default root of communicator
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), comm.size());
+        EXPECT_THAT(result, Each(IsFalse()));
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(GatherTest, gather_single_element_kabool_with_receive_buffer) {
+    Communicator        comm;
+    std::vector<kabool> result;
+    comm.gather(send_buf(kabool{false}), recv_buf(result));
+
+    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    // Test default root of communicator
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), comm.size());
+        EXPECT_THAT(result, Each(IsFalse()));
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(GatherTest, gather_multiple_elements_kabool_no_receive_buffer) {
+    Communicator        comm;
+    std::vector<kabool> input  = {false, true};
+    auto                result = comm.gather(send_buf(input)).extract_recv_buffer();
+
+    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    // Test default root of communicator
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), 2 * comm.size());
+        for (size_t i = 0; i < result.size(); i++) {
+            EXPECT_EQ((i % 2 != 0), result[i]);
+        }
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(GatherTest, gather_multiple_elements_kabool_with_receive_buffer) {
+    Communicator        comm;
+    std::vector<kabool> input = {false, true};
+    std::vector<kabool> result;
+    comm.gather(send_buf(input), recv_buf(result));
+
+    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    // Test default root of communicator
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), 2 * comm.size());
+        for (size_t i = 0; i < result.size(); i++) {
+            EXPECT_EQ((i % 2 != 0), result[i]);
         }
     } else {
         EXPECT_EQ(result.size(), 0);
