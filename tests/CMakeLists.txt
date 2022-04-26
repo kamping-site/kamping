@@ -3,6 +3,12 @@ include(KaTestrophe)
 include(KampingTestHelper)
 include(GoogleTest)
 
+include(ProcessorCount)
+ProcessorCount(N)
+if(NOT N EQUAL 0)
+  add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -j ${N})
+endif()
+
 # Registering tests without MPI:
 kamping_register_test(test_checking_casts FILES checking_casts_test.cpp)
 kamping_register_test(test_kassert_assertion_mode NO_EXCEPTION_MODE FILES kassert_test.cpp)
