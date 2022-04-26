@@ -72,19 +72,14 @@ jobs:
       run: mpirun --version
     - name: print-mpicxx-flags
       run: mpicxx -show
-    - name: cpu-cores
-      uses: SimenB/github-actions-cpu-cores@v1
-      id: cpu-cores
-    - name: print-cpu-cores
-      run: echo ${{ steps.cpu-cores.outputs.count }}
     - name: cmake
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DKAMPING_WARNINGS_ARE_ERRORS=ON -DKAMPING_EXCEPTION_MODE=${{ matrix.exception-mode }} -DKASSERT_ASSERTION_LEVEL=${{ matrix.assertion-level }} -DKAMPING_TESTS_DISCOVER=OFF
     - name: build
-      run: cmake --build build/ --parallel ${{ steps.cpu-cores.outputs.count }}
+      run: cmake --build build/ --parallel
     - name: Allow-running-mpi
       run: |
         echo OMPI_ALLOW_RUN_AS_ROOT=1 >> $GITHUB_ENV
         echo OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 >> $GITHUB_ENV
     - name: run tests
       if: matrix.run-tests == 'ON'
-      run: ctest --output-on-failure --parallel ${{ steps.cpu-cores.outputs.count }} --test-dir build/
+      run: make -C build/ check
