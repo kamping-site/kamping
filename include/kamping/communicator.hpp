@@ -16,11 +16,11 @@
 #include <cstddef>
 #include <cstdlib>
 
+#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
-#include "kamping/kassert.hpp"
 
 namespace kamping {
 

@@ -11,11 +11,10 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/environment.hpp"
-#include "kamping/kassert.hpp"
-
 using namespace ::kamping;
 
 // This is not using google test because our test setup would call MPI_Init before running any tests

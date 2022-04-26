@@ -17,6 +17,8 @@
 
 #include <vector>
 
+#include <kassert/kassert.hpp>
+
 // include all collectives so we can catch errors
 #include "./gatherer.hpp"
 #include "kamping/collectives/alltoall.hpp"
@@ -26,8 +28,6 @@
 #include "kamping/collectives/scatter.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/kassert.hpp"
-
 std::vector<int> Gatherer::gather(int data) {
     using namespace kamping;
     KASSERT(mpi_env.initialized());

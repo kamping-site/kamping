@@ -20,9 +20,8 @@
 #include <exception>
 #include <string>
 
+#include <kassert/kassert.hpp>
 #include <mpi.h>
-
-#include "kamping/kassert.hpp"
 
 /// @brief Wrapper around THROWING_KASSERT for MPI errors.
 ///

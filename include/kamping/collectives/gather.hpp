@@ -13,8 +13,10 @@
 
 #pragma once
 
+#include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/mpi_datatype.hpp"

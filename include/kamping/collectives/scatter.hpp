@@ -15,12 +15,13 @@
 
 #include <type_traits>
 
+#include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/error_handling.hpp"
-#include "kamping/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_selection.hpp"
