@@ -43,7 +43,6 @@ find_package(MPI REQUIRED)
 
 add_subdirectory(extern)
 
-
 add_library(kamping_base INTERFACE)
 target_include_directories(kamping_base INTERFACE include)
 
