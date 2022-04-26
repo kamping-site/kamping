@@ -6,12 +6,6 @@ namespace kamping::assert {
 ///
 /// @{
 
-/// @brief Assertion level for exceptions if exception mode is disabled.
-#define KAMPING_ASSERTION_LEVEL_KTHROW 10
-
-/// @brief Assertion level for exceptions if exception mode is disabled.
-constexpr int kthrow = KAMPING_ASSERTION_LEVEL_KTHROW;
-
 /// @brief Assertion level for lightweight assertions.
 #define KAMPING_ASSERTION_LEVEL_LIGHT 20
 
