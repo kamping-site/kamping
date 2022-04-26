@@ -21,7 +21,13 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+// include all collectives so we can catch errors
 #include "./gatherer.hpp"
+#include "kamping/collectives/alltoall.hpp"
+#include "kamping/collectives/barrier.hpp"
+#include "kamping/collectives/gather.hpp"
+#include "kamping/collectives/reduce.hpp"
+#include "kamping/collectives/scatter.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
 

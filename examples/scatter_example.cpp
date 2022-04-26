@@ -17,6 +17,7 @@
 #include <mpi.h>
 
 #include "helpers_for_examples.hpp"
+#include "kamping/collectives/scatter.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
 

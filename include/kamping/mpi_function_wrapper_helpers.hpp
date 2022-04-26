@@ -152,27 +152,4 @@ private:
                              ///< displacements have been written into storage owned by the caller of KaMPI.ng.
 };
 
-/// @brief Helper class for using CRTP for mixins.
-///
-/// Taken from https://www.fluentcpp.com/2017/05/19/crtp-helper/
-/// @tparam BaseClass Type of the class we want to add functionality to
-/// @tparam MixinClass Type of the class template which inherits from \c CRTPHelper and adds functionality to \c
-/// BaseClass.
-template <typename BaseClass, template <typename> class MixinClass>
-struct CRTPHelper {
-private:
-    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the members.
-    /// @return Reference to the underlying base class.
-    BaseClass& underlying() {
-        return static_cast<BaseClass&>(*this);
-    }
-
-    /// @return const-reference to the underlying base class.
-    BaseClass const& underlying() const {
-        return static_cast<BaseClass const&>(*this);
-    }
-
-    CRTPHelper() {} ///< private constructor
-};
-
 } // namespace kamping
