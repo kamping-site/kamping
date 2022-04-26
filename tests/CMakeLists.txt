@@ -5,8 +5,6 @@ include(GoogleTest)
 
 # Registering tests without MPI:
 kamping_register_test(test_checking_casts FILES checking_casts_test.cpp)
-kamping_register_test(test_kassert_assertion_mode NO_EXCEPTION_MODE FILES kassert_test.cpp)
-kamping_register_test(test_kassert_exception_mode FILES kassert_test.cpp)
 kamping_register_test(test_mpi_function_wrapper_helpers FILES mpi_function_wrapper_helpers_test.cpp)
 kamping_register_test(test_mpi_operations FILES mpi_operations_test.cpp)
 kamping_register_test(test_parameter_check FILES parameter_check_test.cpp)
@@ -34,12 +32,12 @@ kamping_register_mpi_test(test_multiple_compilation_units FILES multiple_compila
 # First variant does only the minimum amount of interaction with kamping::Environment.
 add_executable(test_environment_init_finalize_basic environment_init_finalize_test.cpp)
 target_link_libraries(test_environment_init_finalize_basic PRIVATE kamping_base MPI::MPI_CXX)
-target_compile_definitions(test_environment_init_finalize_basic PRIVATE -DKAMPING_ENVIRONMENT_TEST_NO_PARAM -DKAMPING_ASSERTION_LEVEL=6)
+target_compile_definitions(test_environment_init_finalize_basic PRIVATE -DKAMPING_ENVIRONMENT_TEST_NO_PARAM -DKASSERT_ASSERTION_LEVEL=60)
 katestrophe_add_mpi_test(test_environment_init_finalize_basic CORES 1 4)
 # Second variant passes parameters to MPI_Init and calls finallize manually.
 add_executable(test_environment_init_finalize_manual environment_init_finalize_test.cpp)
 target_link_libraries(test_environment_init_finalize_manual PRIVATE kamping_base MPI::MPI_CXX)
-target_compile_definitions(test_environment_init_finalize_manual PRIVATE -DKAMPING_ENVIRONMENT_TEST_WITH_PARAM -DKAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE -DKAMPING_ASSERTION_LEVEL=6)
+target_compile_definitions(test_environment_init_finalize_manual PRIVATE -DKAMPING_ENVIRONMENT_TEST_WITH_PARAM -DKAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE -DKASSERT_ASSERTION_LEVEL=60)
 katestrophe_add_mpi_test(test_environment_init_finalize_manual CORES 1 4)
 
 kamping_register_compilation_failure_test(
@@ -67,12 +65,6 @@ kamping_register_compilation_failure_test(
   FILES parameter_check_compilation_failures_test.cpp 
   SECTIONS "MISSING_REQUIRED_PARAMETER" "UNSUPPORTED_PARAMETER_NO_PARAMETERS" "UNSUPPORTED_PARAMETER_ONLY_OPTIONAL_PARAMETERS" "DUPLICATE_PARAMETERS"
   LIBRARIES kamping_base 
-)
-kamping_register_compilation_failure_test(
-  test_kassert_compilation_failure
-  FILES kassert_compilation_failures_test.cpp
-  SECTIONS "FORBIDDEN_AND" "FORBIDDEN_OR"
-  LIBRARIES kamping_base
 )
 
 kamping_register_compilation_failure_test(

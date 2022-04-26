@@ -12,6 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <gtest/gtest.h>
+#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
@@ -58,19 +59,19 @@ TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
     EXPECT_EQ(comm.rank_signed(), 0);
     EXPECT_EQ(comm.rank(), 0);
 
-    EXPECT_THROW(Communicator(MPI_COMM_NULL), KassertException);
+    EXPECT_THROW(Communicator(MPI_COMM_NULL), kassert::KassertException);
 }
 
 TEST_F(CommunicatorTest, constructor_with_mpi_communicator_and_root) {
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-            EXPECT_THROW(Communicator(MPI_COMM_WORLD, i), KassertException);
-            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), KassertException);
+            EXPECT_THROW(Communicator(MPI_COMM_WORLD, i), kassert::KassertException);
+            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), kassert::KassertException);
         } else {
             Communicator comm(MPI_COMM_WORLD, i);
             ASSERT_EQ(comm.root(), i);
 
-            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), KassertException);
+            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), kassert::KassertException);
         }
     }
 }
@@ -95,7 +96,7 @@ TEST_F(CommunicatorTest, set_root_bound_check) {
     Communicator comm;
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-            EXPECT_THROW(comm.root(i), KassertException);
+            EXPECT_THROW(comm.root(i), kassert::KassertException);
         } else {
             comm.root(i);
             EXPECT_EQ(i, comm.root());
@@ -117,7 +118,7 @@ TEST_F(CommunicatorTest, rank_shifted_checked) {
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i + rank < 0 || i + rank >= size) {
-            EXPECT_THROW(((void)comm.rank_shifted_checked(i)), KassertException);
+            EXPECT_THROW(((void)comm.rank_shifted_checked(i)), kassert::KassertException);
         } else {
             EXPECT_EQ(rank + i, comm.rank_shifted_checked(i));
         }

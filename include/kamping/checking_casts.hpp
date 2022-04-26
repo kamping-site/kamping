@@ -21,7 +21,7 @@
 #include <string>
 #include <type_traits>
 
-#include "kamping/kassert.hpp"
+#include <kassert/kassert.hpp>
 
 namespace kamping {
 

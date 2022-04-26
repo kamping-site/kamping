@@ -22,7 +22,7 @@
 
 #include <mpi.h>
 
-#include "kamping/kassert.hpp"
+#include "kassert/kassert.hpp"
 
 /// @brief Wrapper around THROWING_KASSERT for MPI errors.
 ///

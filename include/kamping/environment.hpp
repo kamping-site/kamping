@@ -13,10 +13,10 @@
 
 #pragma once
 
+#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/error_handling.hpp"
-#include "kamping/kassert.hpp"
 
 namespace kamping {
 
