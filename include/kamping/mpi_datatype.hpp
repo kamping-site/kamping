@@ -19,13 +19,33 @@
 #include <cassert>
 #include <complex>
 #include <cstdint>
-#include <mutex>
 #include <type_traits>
 
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "kamping/checking_casts.hpp"
 #include "kamping/error_handling.hpp"
+
+namespace kamping::internal {
+
+/// @brief Construct a custom continuous MPI datatype.
+///
+/// @param num_bytes The number of bytes for the new type.
+/// @return The newly created MPI_Datatype.
+/// @see mpi_datatype()
+///
+MPI_Datatype construct_custom_continuous_type(size_t num_bytes_unsigned) {
+    int          num_bytes = asserting_cast<int>(num_bytes_unsigned);
+    MPI_Datatype type      = MPI_DATATYPE_NULL;
+    if (type == MPI_DATATYPE_NULL) {
+        MPI_Type_contiguous(num_bytes, MPI_CHAR, &type);
+        MPI_Type_commit(&type);
+        assert(type != MPI_DATATYPE_NULL);
+    }
+    return type;
+}
+} // namespace kamping::internal
 
 namespace kamping {
 
@@ -40,18 +60,10 @@ namespace kamping {
 ///
 template <size_t NumBytes>
 [[nodiscard]] MPI_Datatype mpi_custom_continuous_type() noexcept {
-    // Lock this function to prevent race conditions
-    static std::mutex     mutex;
-    const std::lock_guard lock(mutex);
-
     static_assert(NumBytes > 0, "You cannot create a continuous type with 0 bytes.");
     // Create a new MPI datatype only the first type per NumBytes this function is called.
-    static MPI_Datatype type = MPI_DATATYPE_NULL;
-    if (type == MPI_DATATYPE_NULL) {
-        MPI_Type_contiguous(NumBytes, MPI_CHAR, &type);
-        MPI_Type_commit(&type);
-        assert(type != MPI_DATATYPE_NULL);
-    }
+    // By initializing this in the same line as the static declaration, this is thread safe.
+    static MPI_Datatype type = internal::construct_custom_continuous_type(NumBytes);
     // From the second call onwards, re-use the existing type.
     return type;
 }
