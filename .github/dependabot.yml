@@ -6,12 +6,3 @@ updates:
       interval: "monthly"
     labels:
       - "review"
-  - package-ecosystem: "gitsubmodule"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    labels:
-      - "review"
-    allow:
-      - dependency-name: "extern/kassert"
-
