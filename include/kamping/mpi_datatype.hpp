@@ -31,7 +31,7 @@ namespace kamping::internal {
 
 /// @brief Construct a custom continuous MPI datatype.
 ///
-/// @param num_bytes The number of bytes for the new type.
+/// @param num_bytes_unsigned The number of bytes for the new type.
 /// @return The newly created MPI_Datatype.
 /// @see mpi_datatype()
 ///
