@@ -19,6 +19,7 @@
 #include <cassert>
 #include <complex>
 #include <cstdint>
+#include <mutex>
 #include <type_traits>
 
 #include <kassert/kassert.hpp>
@@ -39,6 +40,10 @@ namespace kamping {
 ///
 template <size_t NumBytes>
 [[nodiscard]] MPI_Datatype mpi_custom_continuous_type() noexcept {
+    // Lock this function to prevent race conditions
+    static std::mutex     mutex;
+    const std::lock_guard lock(mutex);
+
     static_assert(NumBytes > 0, "You cannot create a continuous type with 0 bytes.");
     // Create a new MPI datatype only the first type per NumBytes this function is called.
     static MPI_Datatype type = MPI_DATATYPE_NULL;
