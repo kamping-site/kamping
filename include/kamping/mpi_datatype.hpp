@@ -40,7 +40,7 @@ inline MPI_Datatype construct_custom_continuous_type(size_t const num_bytes_unsi
     MPI_Datatype type      = MPI_DATATYPE_NULL;
     MPI_Type_contiguous(num_bytes, MPI_CHAR, &type);
     MPI_Type_commit(&type);
-    assert(type != MPI_DATATYPE_NULL);
+    KASSERT(type != MPI_DATATYPE_NULL);
     return type;
 }
 } // namespace kamping::internal
