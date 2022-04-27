@@ -38,11 +38,9 @@ namespace kamping::internal {
 MPI_Datatype construct_custom_continuous_type(size_t num_bytes_unsigned) {
     int          num_bytes = asserting_cast<int>(num_bytes_unsigned);
     MPI_Datatype type      = MPI_DATATYPE_NULL;
-    if (type == MPI_DATATYPE_NULL) {
-        MPI_Type_contiguous(num_bytes, MPI_CHAR, &type);
-        MPI_Type_commit(&type);
-        assert(type != MPI_DATATYPE_NULL);
-    }
+    MPI_Type_contiguous(num_bytes, MPI_CHAR, &type);
+    MPI_Type_commit(&type);
+    assert(type != MPI_DATATYPE_NULL);
     return type;
 }
 } // namespace kamping::internal
