@@ -30,9 +30,11 @@ TEST(BarrierTest, barrier) {
     auto test_the_barrier = [&comm](auto barrierImpl, long sleep_for_ms) -> bool {
         // All processes take the current time.
         MPI_Barrier(MPI_COMM_WORLD);
-        //! If we are unlucky, some processes exit this barrier more than sleep_for_ms after the root rank, which will
-        //! cause this test to fail, even for a valid barrier implementation.
+        // If we are unlucky, some processes exit this barrier more than sleep_for_ms after the root rank, which will
+        // cause this test to fail, even for a valid barrier implementation.
         auto start = std::chrono::high_resolution_clock::now();
+        // Ensure that we start our timer *before* the root goes to sleep
+        MPI_Barrier(MPI_COMM_WORLD);
 
         // The root process sleeps for a predefined amount of time before entering the barrier.
         if (comm.is_root()) {
