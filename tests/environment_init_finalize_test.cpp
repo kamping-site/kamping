@@ -11,6 +11,10 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "kamping/assertion_levels.hpp"
+#undef KASSERT_ASSERTION_LEVEL
+#define KASSERT_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION
+
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
