@@ -20,11 +20,14 @@ jobs:
           # make sure the parent commit is grabbed as well, because
           # that's what will get formatted (i.e. the most recent commit)
           fetch-depth: 2
-      # format the latest commit
       - name: install clang-format
         run: apt-get install clang-format -y
+      - name: Checkout main
+        run: git reset --soft ${{ github.event.pull_request.base.sha }}
       - name: Run clang-format
-        run: git-clang-format HEAD^
+        run: git-clang-format
+      -name: Checkout branch again
+       run: ${{ github.head_ref }}
       # commit the changes (if there are any)
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
