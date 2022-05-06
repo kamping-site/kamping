@@ -13,7 +13,7 @@
 
 /// @file
 /// The classes defined in this file serve as in, out and in/out parameters to the
-/// \c MPI calls wrapped by KaMPI.ng.
+/// \c MPI calls wrapped by KaMPIng.
 /// The non-modifiable buffers (PtrBasedConstBuffer, ContainerBasedConstBuffer)
 /// encapsulate input data like data to send or send counts needed for a lot of \c MPI calls. If the user already
 /// computed additional information like the send displacements or receive counts for a collective operations that would
@@ -357,7 +357,7 @@ public:
     /// a \c Span.
     ///
     /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
-    /// Span,  KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// Span,  KaMPIng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
     /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
     /// is  copied depends in the implementation of the container.
     ///
@@ -395,7 +395,7 @@ private:
 /// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
 ///
 /// LibAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like std::vector
-/// that will be allocated by KaMPI.ng. The Container type must provide \c data(), \c size() and \c resize() and
+/// that will be allocated by KaMPIng. The Container type must provide \c data(), \c size() and \c resize() and
 /// expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
@@ -425,7 +425,7 @@ public:
     /// a \c Span.
     ///
     /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
-    /// Span,  KaMPI.ng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// Span,  KaMPIng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
     /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
     /// is  copied depends in the implementation of the container.
     ///

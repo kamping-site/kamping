@@ -1,10 +1,10 @@
-# KaMPI.ng: Karlsruhe MPI next generation
+# KaMPIng: Karlsruhe MPI next generation
 
-![KaMPI.ng logo](./docs/images/logo.svg)
+![KaMPIng logo](./docs/images/logo.svg)
 
-This is KaMPI.ng, an MPI wrapper which makes using MPI feel like real C++
+This is KaMPIng, an MPI wrapper which makes using MPI feel like real C++
 
-KaMPI.ng is developed at the [Algorithm Engineering Group](https://algo2.iti.kit.edu) at Karlsruhe Institute of Technology.
+KaMPIng is developed at the [Algorithm Engineering Group](https://algo2.iti.kit.edu) at Karlsruhe Institute of Technology.
 
 ## Goals
    - ban `man MPI_*` from your command line history
@@ -24,4 +24,4 @@ KaMPI.ng is developed at the [Algorithm Engineering Group](https://algo2.iti.kit
    
 ## LICENSE
 
-KaMPI.ng is released under the GNU Lesser General Public License. See [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER) for details
+KaMPIng is released under the GNU Lesser General Public License. See [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER) for details

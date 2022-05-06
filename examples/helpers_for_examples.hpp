@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPI.ng Authors
+// Copyright 2022 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <vector>
@@ -19,7 +19,7 @@ namespace kamping {
 /// @brief Print all elements in a container, prefixed with the rank of the current PE.
 /// @tparam T Type of the elements contained in the container.
 /// @param result The container whose elements are printed.
-/// @param comm KaMPI.ng communicator to get the rank of the PE.
+/// @param comm KaMPIng communicator to get the rank of the PE.
 template <typename T>
 void print_result(std::vector<T> const& result, Communicator const& comm) {
     for (auto const& elem: result) {
@@ -31,7 +31,7 @@ void print_result(std::vector<T> const& result, Communicator const& comm) {
 /// @brief Print all elements in a container only on the root PE.
 /// @tparam T Type of the elements contained in the container.
 /// @param result The container whose elements are printed on the root PE.
-/// @param comm KaMPI.ng communicator to determine which PE is the root PE.
+/// @param comm KaMPIng communicator to determine which PE is the root PE.
 template <typename T>
 void print_result_on_root(std::vector<T> const& result, Communicator const& comm) {
     if (comm.is_root()) {
