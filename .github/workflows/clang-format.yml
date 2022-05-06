@@ -21,8 +21,10 @@ jobs:
           # that's what will get formatted (i.e. the most recent commit)
           fetch-depth: 2
       # format the latest commit
+      - name: install clang-format
+        run: apt-get install clang-format
       - name: Run clang-format
-        run: git clang-format HEAD^
+        run: git-clang-format HEAD^
       # commit the changes (if there are any)
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
