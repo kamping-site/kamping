@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 2
       # format the latest commit
       - name: install clang-format
-        run: apt-get install clang-format
+        run: apt-get install clang-format -y
       - name: Run clang-format
         run: git-clang-format HEAD^
       # commit the changes (if there are any)
