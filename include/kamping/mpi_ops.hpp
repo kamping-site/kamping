@@ -41,7 +41,7 @@ struct max_impl {
     /// @param rhs the second operand
     /// @return the maximum
     constexpr T& operator()(const T& lhs, const T& rhs) const {
-        return std::max(lhs, rhs);
+     return std::max(lhs, rhs);
     }
 };
 
