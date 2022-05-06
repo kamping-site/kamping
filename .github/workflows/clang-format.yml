@@ -28,7 +28,7 @@ jobs:
     - name: Run clang-format
       run: git-clang-format
     - name: Checkout branch again
-      run: GITHUB_REF
+      run: git checkout $GITHUB_REF
     # commit the changes (if there are any)
     - name: Commit changes
       uses: stefanzweifel/git-auto-commit-action@v4.1.2
