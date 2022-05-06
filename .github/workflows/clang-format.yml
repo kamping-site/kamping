@@ -14,20 +14,20 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        # check out HEAD on the branch
+        # Check out HEAD on the branch
         ref: ${{ github.head_ref }}
-        # make sure the parent commit is grabbed as well, because
-        # that's what will get formatted (i.e. the most recent commit)
-        fetch-depth: 2
     - name: install clang-format
       run: apt-get install clang-format -y
-    - name: Checkout main
+      # Check out the commit where we diverged from main. Everything from there on will be clang-formatted
+    - name: Check out branching point
       run: |
         git checkout --detach
         git reset --soft ${{ github.event.pull_request.base.sha }}
+        # Run clang-format
     - name: Run clang-format
       run: git-clang-format
-    - name: Checkout branch again
+      # Check out branch again so we can commit to it
+    - name: Check out branch again
       run: git checkout ${{ github.head_ref }}
     # commit the changes (if there are any)
     - name: Commit changes
