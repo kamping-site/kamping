@@ -12,25 +12,24 @@ jobs:
     container:
       image: "localhost:5000/kamping-ci"
     steps:
-      # Partially copied from https://github.com/marketplace/actions/git-clang-format-action
-      - uses: actions/checkout@v2
-        with:
-          # check out HEAD on the branch
-          ref: ${{ github.head_ref }}
-          # make sure the parent commit is grabbed as well, because
-          # that's what will get formatted (i.e. the most recent commit)
-          fetch-depth: 2
-      - name: install clang-format
-        run: apt-get install clang-format -y
-      - name: Checkout main
-        run: git reset --soft ${{ github.event.pull_request.base.sha }}
-      - name: Run clang-format
-        run: git-clang-format
-      -name: Checkout branch again
-       run: ${{ github.head_ref }}
-      # commit the changes (if there are any)
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v4.1.2
-        with:
-          commit_message: 🎨 apply clang-format changes
-          branch: ${{ github.head_ref }}
+    - uses: actions/checkout@v2
+      with:
+        # check out HEAD on the branch
+        ref: ${{ github.head_ref }}
+        # make sure the parent commit is grabbed as well, because
+        # that's what will get formatted (i.e. the most recent commit)
+        fetch-depth: 2
+    - name: install clang-format
+      run: apt-get install clang-format -y
+    - name: Checkout main
+      run: git reset --soft ${{ github.event.pull_request.base.sha }}
+    - name: Run clang-format
+      run: git-clang-format
+    - name: Checkout branch again
+      run: ${{ github.head_ref }}
+    # commit the changes (if there are any)
+    - name: Commit changes
+      uses: stefanzweifel/git-auto-commit-action@v4.1.2
+      with:
+        commit_message: 🎨 apply clang-format changes
+        branch: ${{ github.head_ref }}
