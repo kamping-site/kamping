@@ -33,5 +33,5 @@ jobs:
     - name: Commit changes
       uses: stefanzweifel/git-auto-commit-action@v4.1.2
       with:
-        commit_message: 🎨 apply clang-format changes
+        commit_message: Apply clang-format changes
         branch: ${{ github.head_ref }}
