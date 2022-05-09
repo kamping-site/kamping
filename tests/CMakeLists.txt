@@ -33,6 +33,7 @@ kamping_register_mpi_test(test_mpi_reduce FILES collectives/mpi_reduce_test.cpp 
 kamping_register_mpi_test(test_operation_wrapper FILES mpi_operation_wrapper_test.cpp CORES 1)
 kamping_register_mpi_test(test_parameter_factories_mpi FILES parameter_factories_mpi_test.cpp CORES 1)
 kamping_register_mpi_test(test_multiple_compilation_units FILES multiple_compilation_units_test/main.cpp multiple_compilation_units_test/gatherer.cpp CORES 1 4)
+kamping_register_mpi_test(test_environment FILES environment_test.cpp CORES 1 4)
 
 # The environment test does not use our wrapper functions because it can't use our google test setup.
 # First variant does only the minimum amount of interaction with kamping::Environment.
