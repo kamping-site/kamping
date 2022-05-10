@@ -19,6 +19,7 @@
 
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "kamping/parameter_type_definitions.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -73,6 +74,14 @@ auto send_buf(const Data& data) {
         return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_buf>(data);
     } else {
         return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_buf>(data);
+    }
+}
+template <class Data, typename = std::enable_if_t<std::is_rvalue_reference<Data&&>::value>>
+auto send_buf(Data&& data) {
+    if constexpr (internal::has_data_member_v<Data>) {
+        return internal::ContainerBasedOwningBuffer<Data, internal::ParameterType::send_buf>(std::forward<Data>(data));
+    } else {
+        return internal::SingleElementOwningBuffer<Data, internal::ParameterType::send_buf>(std::forward<Data>(data));
     }
 }
 

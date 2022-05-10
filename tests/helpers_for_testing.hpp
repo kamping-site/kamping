@@ -35,6 +35,16 @@ public:
 
     OwnContainer() = default;
     OwnContainer(size_t size) : _vec(size) {}
+    OwnContainer(OwnContainer<T> const& rhs) : _vec(rhs._vec), _copy_count(rhs._copy_count) {
+        (*_copy_count)++;
+    }
+    OwnContainer(OwnContainer<T>&& rhs) : _vec(std::move(rhs._vec)), _copy_count(rhs._copy_count) {}
+    OwnContainer<T>& operator=(OwnContainer<T> const& rhs) {
+        this->_vec        = rhs._vec;
+        this->_copy_count = rhs._copy_count;
+        (*_copy_count)++;
+        return *this;
+    }
 
     T* data() noexcept {
         return _vec.data();
@@ -60,12 +70,17 @@ public:
         return _vec[i];
     }
 
+    size_t copy_count() const {
+        return *_copy_count;
+    }
+
     bool operator==(const OwnContainer<T>& other) const {
         return _vec == other._vec;
     }
 
 private:
-    std::vector<T> _vec;
+    std::vector<T>          _vec;
+    std::shared_ptr<size_t> _copy_count = 0;
 };
 
 /// @ Mock argument for wrapped \c MPI calls.
