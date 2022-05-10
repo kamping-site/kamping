@@ -128,7 +128,7 @@ endif()
 set(KASSERT_ASSERTION_LEVEL $<IF:$<CONFIG:Debug>,30,10> CACHE STRING "Higher values enable more complex assertions. To disable all runtime checks, set to '0'.")
 set_property(CACHE KASSERT_ASSERTION_LEVEL PROPERTY STRINGS 0 10 20 30 40 50 60)
 
-# Constant for the highest assertion level used by KaMPI.ng
+# Constant for the highest assertion level used by KaMPIng
 set(KASSERT_HIGHEST_ASSERTION_LEVEL 60)
 
 add_subdirectory(extern/kassert)

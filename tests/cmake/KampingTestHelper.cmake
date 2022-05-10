@@ -19,7 +19,7 @@ function(kamping_set_kassert_flags KAMPING_TARGET_NAME)
   endif ()
 endfunction()
 
-# Convenience wrapper for adding tests for KaMPI.ng
+# Convenience wrapper for adding tests for KaMPIng
 # this creates the target, links googletest and kamping, enables warnings and registers the test
 #
 # TARGET_NAME the target name
@@ -41,7 +41,7 @@ function(kamping_register_test KAMPING_TARGET_NAME)
   kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN}) 
 endfunction()
 
-# Convenience wrapper for adding tests for KaMPI.ng which rely on MPI
+# Convenience wrapper for adding tests for KaMPIng which rely on MPI
 # this creates the target, links googletest, kamping and MPI, enables warnings and registers the tests
 #
 # TARGET_NAME the target name
@@ -67,7 +67,7 @@ function(kamping_register_mpi_test KAMPING_TARGET_NAME)
   kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN}) 
 endfunction()
 
-# Convenience wrapper for registering a set of tests that should fail to compile and require KaMPI.ng to be linked.
+# Convenience wrapper for registering a set of tests that should fail to compile and require KaMPIng to be linked.
 #
 # TARGET prefix for the targets to be built
 # FILES the list of files to include in the target

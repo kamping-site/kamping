@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <iostream>
@@ -67,7 +67,7 @@ int main() {
         // arguments to the default parameter are passed as a tuple
         auto&& selected_arg =
             internal::select_parameter_type_or_default<internal::ParameterType::root, DefaultArgument>(
-                std::tuple(42, "KaMPI.ng"), arg_id_2, arg_id_1, arg_id_3, arg_id_4);
+                std::tuple(42, "KaMPIng"), arg_id_2, arg_id_1, arg_id_3, arg_id_4);
         std::cout << "parameters of default argument: " << selected_arg._value << " " << selected_arg._message
                   << std::endl;
     }

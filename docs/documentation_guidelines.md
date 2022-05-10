@@ -1,7 +1,7 @@
 Documentation Guidelines {#documentation_guidelines}
 ============
 
-In this document, we describe the documentation guidelines for the KaMPI.ng library.
+In this document, we describe the documentation guidelines for the KaMPIng library.
 We use [Doxygen] and add the documentation directly in the source code.
 When it comes to the scope of documentation, we use the following as rule of thumb:
 
@@ -47,7 +47,7 @@ A brief description is mandatory for all classes, structs, enums, members, and f
 
 ```cpp
 ///
-/// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
+/// @brief This is a small example of how to document code using Doxygen in KaMPIng.
 class RunningExample {
 
 };
@@ -58,7 +58,7 @@ Note that both public *and* private members and functions (see [example](@ref ex
 
 ```cpp
 ///
-/// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
+/// @brief This is a small example of how to document code using Doxygen in KaMPIng.
 class RunningExample {
 
 public:
@@ -76,10 +76,10 @@ To this end, no keyword is required, instead start a new paragraph below the `@b
 The detailed description is mandatory for classes and structs and optional for everything else, where it is only required if the brief description does not fully explain the functionality or if some additional details require an explanation.
 
 ```cpp
-/// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
+/// @brief This is a small example of how to document code using Doxygen in KaMPIng.
 ///
 /// Since there are a lot of different ways to document code using Doxygen, we use this class to show how to do so in
-/// KaMPI.ng. We will add more and more stuff to this example, until every realisitc case is covered.
+/// KaMPIng. We will add more and more stuff to this example, until every realisitc case is covered.
 class RunningExample {
 
 public:
@@ -97,10 +97,10 @@ Note that the `@tparam` keyword can also be used for classes and structs (which 
 The `@tparam` keyword always has to appear before the `@param` keyword.
 
 ```cpp
-/// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
+/// @brief This is a small example of how to document code using Doxygen in KaMPIng.
 ///
 /// Since there are a lot of different ways to document code using Doxygen, we use this class to show how to do so in
-/// KaMPI.ng. We will add more and more stuff to this example, until every realisitc case is covered.
+/// KaMPIng. We will add more and more stuff to this example, until every realisitc case is covered.
 class RunningExample {
 
 public:
@@ -129,16 +129,16 @@ Types of parameters do not have to be specified explicitly, i.e., we write `@par
 We can document the return value of functions using the `@return` keyword.
 If multiple cases of return values are documented, `@return` can be used for each case to improve readability of the documentation in the code.
 They are automatically concatenated in the documentation.
-With this keyword, we finally have everything we need to obtain the minimal documentation that is required for everything in the KaMPI.ng code base (as shown in the example below).
+With this keyword, we finally have everything we need to obtain the minimal documentation that is required for everything in the KaMPIng code base (as shown in the example below).
 We say *minimal* because the documentation can be improved by using special formatting, cross-references, and many more features, which we discuss further [below](@ref formatting-and-references).
 
 # Example of Minimal Documentation Style {#example-of-minimal-documentation-style}
 
 ```cpp
-/// @brief This is a small example of how to document code using Doxygen in KaMPI.ng.
+/// @brief This is a small example of how to document code using Doxygen in KaMPIng.
 ///
 /// Since there are a lot of different ways to document code using Doxygen, we use this class to show how to do so in
-/// KaMPI.ng. We will add more and more stuff to this example, until every realisitc case is covered.
+/// KaMPIng. We will add more and more stuff to this example, until every realisitc case is covered.
 class RunningExample {
 
 public:
@@ -187,7 +187,7 @@ void example() {
 # tl;dr
 
 In the example above, we also have added the first formatting commands with `\c`, which sets the following word in typewriter font.
-Before we take a look at the formatting that should be used in the KaMPI.ng documentation, we give a short overview what parts of the documentation are required.
+Before we take a look at the formatting that should be used in the KaMPIng documentation, we give a short overview what parts of the documentation are required.
 In the table below, we give a brief overview which keywords have to be used as part of the documentation in which parts of the code.
 Here *Yes* means that the keyword has to be used, *(Yes)* means that the keyword has to be used if applicable, *Optional* means that the keyword can be used if deemed necessary, and a dash (*-*) means that this keyword is not applicable here.
 
@@ -202,7 +202,7 @@ Here *Yes* means that the keyword has to be used, *(Yes)* means that the keyword
 
 
 # TODOs
-While all code should be finalized (finished and polished) before it is merged into the main branch of the KaMPI.ng repository, sometimes there are open *todos* that cannot yet be fixed or may be fixed later as part of a bigger update.
+While all code should be finalized (finished and polished) before it is merged into the main branch of the KaMPIng repository, sometimes there are open *todos* that cannot yet be fixed or may be fixed later as part of a bigger update.
 To better keep up with this type of todo, we want to create a list of these them.
 Fortunately, [Doxygen] provides an easy aggregation of all *todos* in the code.
 To this end, we have to mark all todos using the `@todo` command, where we summarize the todo. Small steps needed to complete it can be described using `\\ TODO`.
@@ -226,7 +226,7 @@ void example_function() {
 
 As mentioned above, the documentation can be formatted with different commands.
 Due to better readability of the unprocessed documentation, we use a backslash `\` to enable formatting commands similar to how LaTeX works.
-(`@` would also work but is strongly discouraged in KaMPI.ng.)
+(`@` would also work but is strongly discouraged in KaMPIng.)
 
 - **Typwriter Font** `\c`
 
@@ -257,7 +257,7 @@ Due to better readability of the unprocessed documentation, we use a backslash `
 
 # Structuring the Documentation
 [Doxygen] can be used to [group] different parts of the documentation independent of the structure of the source code.
-We want to keep the number of groups small but still use this feature to make different aspects of KaMPI.ng easily discoverable in the documentation.
+We want to keep the number of groups small but still use this feature to make different aspects of KaMPIng easily discoverable in the documentation.
 Documentation can be added to a group via the `@addtogroup` command, e.g.,
 
 ```cpp
