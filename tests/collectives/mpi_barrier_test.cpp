@@ -25,7 +25,7 @@ TEST(BarrierTest, barrier) {
     Communicator comm;
 
     // One rank calls MPI_Barrier directly, all others call comm.barrier.
-    // If comm.barrier correctly calls MPI_Barrier this finishes. Otherwise it deadlocks on at least one rank.
+    // If comm.barrier() correctly calls MPI_Barrier, this finishes. Otherwise it deadlocks on at least one rank.
 
     // Use rank 1 as the rank that calls MPI_Barrier directly so when running on 1 rank, we test that comm.barrier()
     // finishes correctly.
