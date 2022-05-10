@@ -23,9 +23,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
       COMMENT "Generating Documentation"
       VERBATIM)
+  else()
+    message(STATUS "Doxygen not found, not building docs")
   endif()
-else()
-  message(STATUS "Doxygen not found, not building docs")
 endif()
 
 # Require out-of-source builds

@@ -95,6 +95,20 @@ public:
         return result == true;
     }
 
+    /// @brief Returns the elapsed time since an arbitrary time in the past.
+    ///
+    /// @return The elapsed time in seconds.
+    double static wtime() {
+        return MPI_Wtime();
+    }
+
+    /// @brief Returns the resolution of Environment::wtime().
+    ///
+    /// @return The resolution in seconds.
+    double static wtick() {
+        return MPI_Wtick();
+    }
+
     /// @brief Calls MPI_Finalize if finalize() has not been called before.
     ~Environment() {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
