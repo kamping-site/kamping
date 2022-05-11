@@ -211,6 +211,11 @@ TEST(ParameterFactoriesTest, send_buf_single_element) {
         testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_buf, value);
     }
     {
+        // pass value as rvalue
+        auto gen_single_element_buffer = send_buf(42051);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_buf, 42051);
+    }
+    {
         struct CustomType {
             uint64_t v1;
             int      v2;
@@ -220,9 +225,16 @@ TEST(ParameterFactoriesTest, send_buf_single_element) {
                 return std::tie(v1, v2, v3) == std::tie(other.v1, other.v2, other.v3);
             }
         }; // struct CustomType
-        CustomType value                     = {843290834, -482, 'a'};
-        auto       gen_single_element_buffer = send_buf(value);
-        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_buf, value);
+        {
+            CustomType value                     = {843290834, -482, 'a'};
+            auto       gen_single_element_buffer = send_buf(value);
+            testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::send_buf, value);
+        }
+        {
+            auto gen_single_element_buffer = send_buf(CustomType{843290834, -482, 'a'});
+            testing::test_single_element_buffer(
+                gen_single_element_buffer, ParameterType::send_buf, CustomType{843290834, -482, 'a'});
+        }
     }
 }
 
@@ -230,8 +242,10 @@ TEST(ParameterFactoriesTest, send_buf_switch) {
     uint8_t              value  = 0;
     std::vector<uint8_t> values = {0, 0, 0, 0, 0, 0};
 
-    [[maybe_unused]] auto gen_single_element_buffer = send_buf(value);
-    [[maybe_unused]] auto gen_int_vec_buffer        = send_buf(values);
+    [[maybe_unused]] auto gen_single_element_buffer        = send_buf(value);
+    [[maybe_unused]] auto gen_int_vec_buffer               = send_buf(values);
+    [[maybe_unused]] auto gen_single_element_owning_buffer = send_buf(uint8_t(0));
+    [[maybe_unused]] auto gen_int_vec_owning_buffer        = send_buf(std::vector<uint8_t>{0, 0, 0, 0, 0, 0});
 
     bool const single_result =
         std::is_same_v<decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_buf>>;
@@ -239,6 +253,12 @@ TEST(ParameterFactoriesTest, send_buf_switch) {
     bool const vec_result = std::is_same_v<
         decltype(gen_int_vec_buffer), ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
     EXPECT_TRUE(vec_result);
+    bool const owning_single_result = std::is_same_v<
+        decltype(gen_single_element_owning_buffer), SingleElementOwningBuffer<uint8_t, ParameterType::send_buf>>;
+    EXPECT_TRUE(owning_single_result);
+    bool const owning_vec_result = std::is_same_v<
+        decltype(gen_int_vec_owning_buffer), ContainerBasedOwningBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
+    EXPECT_TRUE(owning_vec_result);
 }
 
 TEST(ParameterFactoriesTest, send_buf_ignored) {
