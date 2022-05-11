@@ -167,6 +167,10 @@ public:
         return _container.size();
     }
 
+    Container const& underlying() const {
+        return _container;
+    }
+
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
     Span<const value_type> get() const {

@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <initializer_list>
 #include <type_traits>
 
 #include "kamping/mpi_ops.hpp"
@@ -76,6 +77,12 @@ auto send_buf(const Data& data) {
         return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_buf>(data);
     }
 }
+template <typename T>
+auto send_buf(std::initializer_list<T> data) {
+    return internal::ContainerBasedOwningBuffer<std::initializer_list<T>, internal::ParameterType::send_buf>(
+        std::move(data));
+}
+
 template <class Data, typename = std::enable_if_t<std::is_rvalue_reference<Data&&>::value>>
 auto send_buf(Data&& data) {
     if constexpr (internal::has_data_member_v<Data>) {
@@ -156,6 +163,18 @@ auto send_counts(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_counts>(container);
 }
 
+template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
+auto send_counts(Container&& container) {
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::send_counts>(
+        std::forward<Container>(container));
+}
+
+template <typename T>
+auto send_counts(std::initializer_list<T> counts) {
+    return internal::ContainerBasedOwningBuffer<std::initializer_list<T>, internal::ParameterType::send_counts>(
+        std::move(counts));
+}
+
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must contain
 /// the recv counts from each relevant PE.
 ///
@@ -167,6 +186,18 @@ auto send_counts(const Container& container) {
 template <typename Container>
 auto recv_counts(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
+}
+
+template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
+auto recv_counts(Container&& container) {
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::recv_counts>(
+        std::forward<Container>(container));
+}
+
+template <typename T>
+auto recv_counts(std::initializer_list<T> counts) {
+    return internal::ContainerBasedOwningBuffer<std::initializer_list<T>, internal::ParameterType::recv_counts>(
+        std::move(counts));
 }
 
 /// @brief Generates a wrapper for a recv count input parameter.
@@ -196,6 +227,18 @@ auto send_displs(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_displs>(container);
 }
 
+template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
+auto send_displs(Container&& container) {
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::send_displs>(
+        std::forward<Container>(container));
+}
+
+template <typename T>
+auto send_displs(std::initializer_list<T> counts) {
+    return internal::ContainerBasedOwningBuffer<std::initializer_list<T>, internal::ParameterType::send_displs>(
+        std::move(counts));
+}
+
 /// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage must
 /// contain the recv displacements from each relevant PE.
 ///
@@ -207,6 +250,18 @@ auto send_displs(const Container& container) {
 template <typename Container>
 auto recv_displs(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_displs>(container);
+}
+
+template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
+auto recv_displs(Container&& container) {
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::recv_displs>(
+        std::forward<Container>(container));
+}
+
+template <typename T>
+auto recv_displs(std::initializer_list<T> counts) {
+    return internal::ContainerBasedOwningBuffer<std::initializer_list<T>, internal::ParameterType::recv_displs>(
+        std::move(counts));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage

@@ -17,6 +17,7 @@
 #pragma once
 
 #include <cstddef>
+#include <initializer_list>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -33,8 +34,9 @@ class OwnContainer {
 public:
     using value_type = T;
 
-    OwnContainer() = default;
-    OwnContainer(size_t size) : _vec(size) {}
+    OwnContainer() : OwnContainer(0){};
+    OwnContainer(size_t size) : _vec(size), _copy_count(std::make_shared<size_t>(0)) {}
+    OwnContainer(std::initializer_list<T> elems) : _vec(elems), _copy_count(std::make_shared<size_t>(0)) {}
     OwnContainer(OwnContainer<T> const& rhs) : _vec(rhs._vec), _copy_count(rhs._copy_count) {
         (*_copy_count)++;
     }
@@ -80,7 +82,7 @@ public:
 
 private:
     std::vector<T>          _vec;
-    std::shared_ptr<size_t> _copy_count = 0;
+    std::shared_ptr<size_t> _copy_count;
 };
 
 /// @ Mock argument for wrapped \c MPI calls.

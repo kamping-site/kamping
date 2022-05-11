@@ -75,6 +75,75 @@ TEST(ContainerBasedConstBufferTest, move_constructor_is_enabled) {
     EXPECT_TRUE(std::equal(container.begin(), container.end(), buffer2.get().data()));
 }
 
+// Tests the basic functionality of ContainerBasedOwningBuffer
+TEST(ContainerBasedOwningBufferTest, get_basics) {
+    std::vector<int> int_vec{1, 2, 3};
+
+    constexpr ParameterType                             ptype = ParameterType::send_counts;
+    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer_based_on_moved_vector(std::move(int_vec));
+    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer_based_on_rvalue_vector(std::vector<int>{1, 2, 3});
+
+    EXPECT_EQ(buffer_based_on_moved_vector.size(), 3);
+    EXPECT_EQ(buffer_based_on_moved_vector.get().size(), 3);
+    EXPECT_EQ(buffer_based_on_moved_vector.get().data()[0], 1);
+    EXPECT_EQ(buffer_based_on_moved_vector.get().data()[1], 2);
+    EXPECT_EQ(buffer_based_on_moved_vector.get().data()[2], 3);
+    static_assert(std::is_same_v<decltype(buffer_based_on_moved_vector.get().data()), const int*>);
+
+    EXPECT_EQ(buffer_based_on_rvalue_vector.size(), 3);
+    EXPECT_EQ(buffer_based_on_rvalue_vector.get().size(), 3);
+    EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[0], 1);
+    EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[1], 2);
+    EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[2], 3);
+    static_assert(std::is_same_v<decltype(buffer_based_on_rvalue_vector.get().data()), const int*>);
+}
+
+TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
+    std::string                str = "I am underlying storage";
+    testing::OwnContainer<int> own_container{1, 2, 3};
+    EXPECT_EQ(own_container.copy_count(), 0);
+
+    constexpr ParameterType ptype = ParameterType::send_counts;
+
+    ContainerBasedOwningBuffer<std::string, ptype> buffer_based_on_string(std::move(str));
+
+    ContainerBasedOwningBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(
+        std::move(own_container));
+    EXPECT_EQ(own_container.copy_count(), 0);
+    EXPECT_EQ(buffer_based_on_own_container.underlying().copy_count(), 0);
+
+    ContainerBasedConstBuffer<std::initializer_list<int>, ptype> buffer_based_on_initializer_list({1, 2, 3});
+
+    std::string expected = "I am underlying storage";
+    EXPECT_EQ(buffer_based_on_string.get().size(), expected.size());
+    EXPECT_EQ(
+        std::string(
+            buffer_based_on_string.get().data(),
+            buffer_based_on_string.get().data() + buffer_based_on_string.get().size()),
+        expected);
+
+    EXPECT_EQ(buffer_based_on_own_container.get().size(), 3);
+    EXPECT_EQ(buffer_based_on_own_container.get().data()[0], 1);
+    EXPECT_EQ(buffer_based_on_own_container.get().data()[1], 2);
+    EXPECT_EQ(buffer_based_on_own_container.get().data()[2], 3);
+
+    EXPECT_EQ(buffer_based_on_initializer_list.get().size(), 3);
+    EXPECT_EQ(buffer_based_on_initializer_list.get().data()[0], 1);
+    EXPECT_EQ(buffer_based_on_initializer_list.get().data()[1], 2);
+    EXPECT_EQ(buffer_based_on_initializer_list.get().data()[2], 3);
+}
+
+TEST(ContainerBasedOwningBufferTest, move_constructor_is_enabled) {
+    constexpr ParameterType                             ptype = ParameterType::send_counts;
+    const std::vector<int>                              container{1, 2, 3};
+    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer1({1, 2, 3});
+    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer2(std::move(buffer1));
+    EXPECT_EQ(buffer2.get().size(), 3);
+
+    const std::vector<int> expected_container{1, 2, 3};
+    EXPECT_TRUE(std::equal(expected_container.begin(), expected_container.end(), buffer2.get().data()));
+}
+
 TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
     std::vector<int> int_vec{1, 2, 3, 2, 1};
 
