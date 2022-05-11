@@ -131,13 +131,14 @@ private:
     const Container& _container; ///< Container which holds the actual data.
 };
 
-/// @brief Constant buffer based on a container type.
+/// @brief Read-only buffer owning a container type passed to it.
 ///
-/// ContainerBasedConstBuffer wraps read-only buffer storage provided by an std-like container like std::vector. The
-/// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
+/// ContainerBasedOwningBuffer wraps read-only buffer storage provided by an std-like container like std::vector. This
+/// is the owning variant of \ref ContainerBasedConstBuffer. The Container type must provide \c data(), \c size() and
+/// expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
-/// TODO: clean documentation
+
 template <typename Container, ParameterType type>
 class ContainerBasedOwningBuffer {
 public:
@@ -167,6 +168,8 @@ public:
         return _container.size();
     }
 
+    /// @brief Provides access to the underlying container.
+    /// @return A reference to the container.
     Container const& underlying() const {
         return _container;
     }
@@ -249,11 +252,10 @@ private:
     DataType const& _element; ///< Reference to the actual data.
 };
 
-/// TODO: correct documentation
-/// @brief Constant buffer for a single type, i.e., not a container.
+/// @brief Buffer for a single element, which is not a container. The element is owned by the buffer.
 ///
-/// SingleElementConstBuffer wraps a read-only value and is used instead of \ref ContainerBasedConstBuffer if only a
-/// single element is sent or received and no container is needed.
+/// SingleElementOwningBuffer wraps a read-only value and takes ownership of it. It is the owning variant of \ref
+/// SingleElementConstBuffer.
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType Parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
@@ -283,6 +285,12 @@ public:
     /// @return Number of elements in the underlying storage (always 1).
     size_t size() const {
         return 1;
+    }
+
+    /// @brief Provides access to the underlying owned element.
+    /// @return A reference to the element.
+    DataType const& underlying() const {
+        return _element;
     }
 
     /// @brief Get access to the underlaying read-only value.
