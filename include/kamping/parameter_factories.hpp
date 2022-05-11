@@ -79,8 +79,8 @@ auto send_buf(const Data& data) {
 }
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
-    return internal::ContainerBasedOwningBuffer<std::initializer_list<T>, internal::ParameterType::send_buf>(
-        std::move(data));
+    std::vector<T> data_vec{data};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_buf>(std::move(data_vec));
 }
 
 template <class Data, typename = std::enable_if_t<std::is_rvalue_reference<Data&&>::value>>
@@ -171,8 +171,9 @@ auto send_counts(Container&& container) {
 
 template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
-    return internal::ContainerBasedOwningBuffer<std::initializer_list<T>, internal::ParameterType::send_counts>(
-        std::move(counts));
+    std::vector<T> counts_vec{counts};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_counts>(
+        std::move(counts_vec));
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must contain
@@ -196,8 +197,9 @@ auto recv_counts(Container&& container) {
 
 template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
-    return internal::ContainerBasedOwningBuffer<std::initializer_list<T>, internal::ParameterType::recv_counts>(
-        std::move(counts));
+    std::vector<T> counts_vec{counts};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::recv_counts>(
+        std::move(counts_vec));
 }
 
 /// @brief Generates a wrapper for a recv count input parameter.
@@ -234,9 +236,10 @@ auto send_displs(Container&& container) {
 }
 
 template <typename T>
-auto send_displs(std::initializer_list<T> counts) {
-    return internal::ContainerBasedOwningBuffer<std::initializer_list<T>, internal::ParameterType::send_displs>(
-        std::move(counts));
+auto send_displs(std::initializer_list<T> displs) {
+    std::vector<T> displs_vec{displs};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_displs>(
+        std::move(displs_vec));
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage must
@@ -259,9 +262,10 @@ auto recv_displs(Container&& container) {
 }
 
 template <typename T>
-auto recv_displs(std::initializer_list<T> counts) {
-    return internal::ContainerBasedOwningBuffer<std::initializer_list<T>, internal::ParameterType::recv_displs>(
-        std::move(counts));
+auto recv_displs(std::initializer_list<T> displs) {
+    std::vector<T> displs_vec{displs};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::recv_displs>(
+        std::move(displs_vec));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
