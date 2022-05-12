@@ -1,0 +1,37 @@
+name: clang-format
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  format:
+    name: Format
+    runs-on: self-hosted
+    container:
+      image: "localhost:5000/kamping-ci"
+    steps:
+    - uses: actions/checkout@v2
+      with:
+    # Check out HEAD on the branch
+        ref: ${{ github.head_ref }}
+    - name: install clang-format
+      run: apt-get install clang-format -y
+    # Check out the commit where we diverged from main. Everything from there on will be clang-formatted
+    - name: Check out branching point
+      run: |
+        git checkout --detach
+        git reset --soft ${{ github.event.pull_request.base.sha }}
+    # Run clang-format
+    - name: Run clang-format
+      run: git-clang-format
+    # Check out branch again so we can commit to it
+    - name: Check out branch again
+      run: git checkout ${{ github.head_ref }}
+    # Commit the changes (if there are any)
+    - name: Commit changes
+      uses: stefanzweifel/git-auto-commit-action@v4.1.2
+      with:
+        commit_message: Apply clang-format changes
+        branch: ${{ github.head_ref }}

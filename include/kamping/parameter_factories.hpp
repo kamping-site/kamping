@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 /// @file
 /// @brief Factory methods for buffer wrappers
@@ -163,15 +163,15 @@ auto recv_counts(const Container& container) {
 /// @brief Generates a wrapper for a recv count input parameter.
 /// @param recv_count The recv count to be encapsulated.
 /// @return Wrapper around the given recv count.
-inline auto recv_count(int const recv_count) {
-    return internal::RecvCount<int const>(recv_count);
+inline auto recv_count(int const& recv_count) {
+    return internal::SingleElementConstBuffer<int, internal::ParameterType::recv_count>(recv_count);
 }
 
 /// @brief Generates a wrapper for a recv count output parameter.
 /// @param recv_count_out Reference for the output parameter.
 /// @return Wrapper around the given reference.
 inline auto recv_count_out(int& recv_count_out) {
-    return internal::RecvCount<int&>(recv_count_out);
+    return internal::SingleElementModifiableBuffer<int, internal::ParameterType::recv_count>(recv_count_out);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage must
@@ -302,6 +302,15 @@ auto recv_displs_out(NewContainer<Container>&&) {
 /// @param rank Rank of the root PE.
 /// @returns Root Object containing the rank information of the root PE.
 inline auto root(int rank) {
+    return internal::Root(rank);
+}
+
+/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like \c
+/// MPI_Gather.
+///
+/// @param rank Rank of the root PE.
+/// @returns Root Object containing the rank information of the root PE.
+inline auto root(size_t rank) {
     return internal::Root(rank);
 }
 

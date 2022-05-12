@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPI.ng Authors
+// Copyright 2022 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <iostream>
@@ -19,15 +19,17 @@
 
 #include "helpers_for_examples.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/environment.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
 
 int main() {
     using namespace kamping;
-    MPI_Init(NULL, NULL);
+    kamping::Environment  e;
     kamping::Communicator comm;
-    std::vector<int>      input(asserting_cast<size_t>(comm.size()));
+    std::vector<int>      input(comm.size());
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> output;
 
@@ -35,6 +37,5 @@ int main() {
 
     print_result_on_root(output, comm);
 
-    MPI_Finalize();
     return 0;
 }

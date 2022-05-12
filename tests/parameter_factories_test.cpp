@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <gtest/gtest.h>
@@ -458,16 +458,17 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_container_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_count_in_basics) {
-    auto recv_count_in_obj = recv_count(42);
-    EXPECT_EQ(recv_count_in_obj.recv_count(), 42);
+    int  value             = 42;
+    auto recv_count_in_obj = recv_count(value);
+    EXPECT_EQ(*recv_count_in_obj.get().data(), 42);
     EXPECT_FALSE(decltype(recv_count_in_obj)::is_modifiable);
 }
 
 TEST(ParameterFactoriesTest, recv_count_out_basics) {
     int  recv_count;
-    auto recv_count_out_obj = recv_count_out(recv_count);
-    recv_count_out_obj.set_recv_count(42);
-    EXPECT_EQ(recv_count_out_obj.recv_count(), 42);
+    auto recv_count_out_obj          = recv_count_out(recv_count);
+    *recv_count_out_obj.get().data() = 42;
+    EXPECT_EQ(*recv_count_out_obj.get().data(), 42);
     EXPECT_EQ(recv_count, 42);
     EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
 }

@@ -1,17 +1,18 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPI.ng Authors
+// Copyright 2021-2022 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <gtest/gtest.h>
+#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
@@ -34,8 +35,11 @@ TEST_F(CommunicatorTest, empty_constructor) {
 
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_WORLD);
     EXPECT_EQ(comm.rank(), rank);
+    EXPECT_EQ(comm.rank_signed(), rank);
+    EXPECT_EQ(comm.size_signed(), size);
     EXPECT_EQ(comm.size(), size);
     EXPECT_EQ(comm.root(), 0);
+    EXPECT_EQ(comm.root_signed(), 0);
 }
 
 TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
@@ -48,23 +52,26 @@ TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
     MPI_Comm_rank(MPI_COMM_SELF, &self_rank);
 
     EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_SELF);
+    EXPECT_EQ(comm.rank_signed(), self_rank);
     EXPECT_EQ(comm.rank(), self_rank);
+    EXPECT_EQ(comm.size_signed(), self_size);
     EXPECT_EQ(comm.size(), self_size);
+    EXPECT_EQ(comm.rank_signed(), 0);
     EXPECT_EQ(comm.rank(), 0);
 
-    EXPECT_THROW(Communicator(MPI_COMM_NULL), KassertException);
+    EXPECT_THROW(Communicator(MPI_COMM_NULL), kassert::KassertException);
 }
 
 TEST_F(CommunicatorTest, constructor_with_mpi_communicator_and_root) {
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-            EXPECT_THROW(Communicator(MPI_COMM_WORLD, i), KassertException);
-            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), KassertException);
+            EXPECT_THROW(Communicator(MPI_COMM_WORLD, i), kassert::KassertException);
+            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), kassert::KassertException);
         } else {
             Communicator comm(MPI_COMM_WORLD, i);
             ASSERT_EQ(comm.root(), i);
 
-            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), KassertException);
+            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), kassert::KassertException);
         }
     }
 }
@@ -77,8 +84,8 @@ TEST_F(CommunicatorTest, is_root) {
         EXPECT_FALSE(comm.is_root());
     }
 
-    int const custom_root = comm.size() - 1;
-    if (custom_root == comm.rank()) {
+    int const custom_root = comm.size_signed() - 1;
+    if (custom_root == comm.rank_signed()) {
         EXPECT_TRUE(comm.is_root(custom_root));
     } else {
         EXPECT_FALSE(comm.is_root(custom_root));
@@ -89,11 +96,15 @@ TEST_F(CommunicatorTest, set_root_bound_check) {
     Communicator comm;
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-            EXPECT_THROW(comm.root(i), KassertException);
+            EXPECT_THROW(comm.root(i), kassert::KassertException);
         } else {
             comm.root(i);
             EXPECT_EQ(i, comm.root());
-            if (comm.rank() == i) {
+            if (i > 0) {
+                comm.root(asserting_cast<size_t>(i));
+                EXPECT_EQ(i, comm.root());
+            }
+            if (comm.rank_signed() == i) {
                 EXPECT_TRUE(comm.is_root());
             } else {
                 EXPECT_FALSE(comm.is_root());
@@ -107,7 +118,7 @@ TEST_F(CommunicatorTest, rank_shifted_checked) {
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i + rank < 0 || i + rank >= size) {
-            EXPECT_THROW(((void)comm.rank_shifted_checked(i)), KassertException);
+            EXPECT_THROW(((void)comm.rank_shifted_checked(i)), kassert::KassertException);
         } else {
             EXPECT_EQ(rank + i, comm.rank_shifted_checked(i));
         }
@@ -118,7 +129,7 @@ TEST_F(CommunicatorTest, rank_shifted_cyclic) {
     Communicator comm;
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
-        EXPECT_EQ((rank + i) % size, comm.rank_shifted_cyclic(i));
+        EXPECT_EQ((rank + i + 2 * size) % size, comm.rank_shifted_cyclic(i));
     }
 }
 
@@ -131,6 +142,10 @@ TEST_F(CommunicatorTest, valid_rank) {
     for (int i = -(2 * mpi_size); i < (2 * mpi_size); ++i) {
         EXPECT_EQ((i >= 0 && i < mpi_size), comm.is_valid_rank(i));
     }
+
+    for (size_t i = 0; i < (2 * asserting_cast<size_t>(mpi_size)); ++i) {
+        EXPECT_EQ(i < asserting_cast<size_t>(mpi_size), comm.is_valid_rank(i));
+    }
 }
 
 TEST_F(CommunicatorTest, split_and_rank_conversion) {
@@ -142,6 +157,7 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
         auto      splitted_comm = comm.split(color);
         int const expected_size = (size / i) + ((size % i > rank % i) ? 1 : 0);
         EXPECT_EQ(splitted_comm.size(), expected_size);
+        EXPECT_EQ(splitted_comm.size_signed(), expected_size);
 
         // Check for all rank ids whether they correctly convert to the splitted communicator
         for (int rank_to_test = 0; rank_to_test < size; ++rank_to_test) {
@@ -163,6 +179,7 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
         auto      splitted_comm = comm.split(color, size - rank);
         int const expected_size = (size / i) + ((size % i > rank % i) ? 1 : 0);
         EXPECT_EQ(splitted_comm.size(), expected_size);
+        EXPECT_EQ(splitted_comm.size_signed(), expected_size);
 
         int const smaller_ranks_in_split = rank / i;
         int const expected_rank          = expected_size - smaller_ranks_in_split - 1;

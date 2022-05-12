@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPI.ng Authors
+// Copyright 2022 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <iostream>
@@ -19,6 +19,7 @@
 #include "helpers_for_examples.hpp"
 #include "kamping/collectives/reduce.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/environment.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
@@ -33,8 +34,7 @@ struct my_plus {
 int main() {
     using namespace kamping;
 
-    MPI_Init(NULL, NULL);
-    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
+    Environment         e;
     Communicator        comm;
     std::vector<double> input = {1, 2, 3};
     std::vector<double> output;
@@ -88,6 +88,5 @@ int main() {
         }
     }
 
-    MPI_Finalize();
     return 0;
 }

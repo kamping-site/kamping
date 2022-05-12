@@ -18,7 +18,9 @@
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
+#include "kamping/collectives/bcast.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -27,12 +29,18 @@ TEST(BcastTest, SingleElement) {
     Communicator comm;
 
     // Basic use case, broadcast a single POD.
-    int value = comm.rank();
+    size_t value = comm.rank();
     comm.bcast(send_recv_buf(value));
     EXPECT_EQ(value, comm.root());
 
+    // TODO Using the unnamed first parameter.
+    // value++;
+    // comm.bcast(value);
+    // EXPECT_EQ(value, comm.root() + 1);
+
     // Broadcast a single POD to all processes, manually specify the root process.
-    const int root = comm.size() - 1;
+    assert(comm.size() > 0);
+    const size_t root = comm.size() - 1;
     value          = comm.rank();
     comm.bcast(send_recv_buf(value), kamping::root(root));
     EXPECT_EQ(value, root);

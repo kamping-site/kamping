@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Go over all files changed by this merge 
+# https://stackoverflow.com/questions/4877306/list-changed-files-in-git-post-merge-hook
+git diff-tree -r --name-only --no-commit-id "HEAD@{1}" HEAD |
+	while read -r changed_file; do
+		if [[ "$changed_file" == "githooks/install.sh" ]]; then 
+			echo "[KaMPIng] +------------------------!!! CAUTION !!!----------------------------+"
+			echo "[KaMPIng] | The hook install script 'githooks/install.sh' **changed**!        |"
+			echo "[KaMPIng] | Please review these changes carefully before running the script!  |"
+			echo "[KaMPIng] +-------------------------------------------------------------------+"
+		elif [[ "$changed_file" == "githooks/"* ]]; then
+			echo "[KaMPIng] Updated git hook: '$changed_file': run githooks/install.sh for the changes to become active!"
+		fi
+	done
+
+# Update submodules to the version registered in the repository
+git submodule update --init --recursive

@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <tuple>
@@ -98,10 +98,10 @@ TEST(NamedParameterTest, default_parameters) {
     }
     {
         auto&& selected_arg = select_parameter_type_or_default<ParameterType::root, DefaultArgument>(
-            std::tuple(42, "KaMPI.ng"), arg0, arg1, arg2);
+            std::tuple(42, "KaMPIng"), arg0, arg1, arg2);
         static_assert(std::is_same_v<decltype(selected_arg), DefaultArgument&&>);
         EXPECT_EQ(selected_arg._value, 42);
-        EXPECT_EQ(selected_arg._message, "KaMPI.ng");
+        EXPECT_EQ(selected_arg._message, "KaMPIng");
     }
 }
 
@@ -114,24 +114,6 @@ TEST(NamedParameterTest, select_parameter_type_duplicates) {
         // If two arguments have the same ParameterType the first occurrence in the argument list is selected.
         const auto& selected_arg = select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2, arg3);
         EXPECT_EQ(selected_arg._i, 0);
-    }
-}
-
-// @brief This dummy resembles the interface of a collective operation, so we can simulate the check for rvalue
-// parameters.
-template <typename... Args>
-bool dummy_collective_operation(Args&&... args [[maybe_unused]]) {
-    return all_parameters_are_rvalues<Args...>;
-}
-
-TEST(NamedParameterTest, all_parameters_are_rvalues) {
-    testing::Argument<ParameterType::send_buf> arg0{0};
-    testing::Argument<ParameterType::recv_buf> arg1{1};
-    {
-        EXPECT_FALSE(dummy_collective_operation(arg0, arg1));
-        EXPECT_FALSE(dummy_collective_operation(decltype(arg0){0}, arg1));
-        EXPECT_FALSE(dummy_collective_operation(arg0, decltype(arg1){1}));
-        EXPECT_TRUE(dummy_collective_operation(decltype(arg0){0}, decltype(arg1){1}));
     }
 }
 

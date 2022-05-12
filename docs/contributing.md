@@ -1,4 +1,4 @@
-Contributing to KaMPI.ng {#contribution_guidelines}
+Contributing to KaMPIng {#contribution_guidelines}
 ============
 
 * Commit only corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `fix-` branches and merge them to the `main` branch using a Pull Request (PR).

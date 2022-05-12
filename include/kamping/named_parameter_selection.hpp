@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.:
 
 /// @file
@@ -129,12 +129,6 @@ decltype(auto) select_parameter_type_or_default(std::tuple<DefaultArguments...> 
         return std::make_from_tuple<DefaultParameterType>(std::move(default_arguments));
     }
 }
-
-/// @brief checks if all named parameters are passed as rvalues.
-/// @tparam Args The types of the arguments to validate.
-template <typename... Args>
-constexpr bool all_parameters_are_rvalues =
-    std::conjunction<std::bool_constant<!std::is_lvalue_reference_v<Args>>...>::value;
 
 /// @}
 } // namespace kamping::internal

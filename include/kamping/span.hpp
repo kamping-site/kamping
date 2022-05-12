@@ -15,7 +15,7 @@ namespace kamping {
 
 /// @brief A span modeled after C++20's \c std::span.
 ///
-/// Since KaMPI.ng needs to be C++17 compatible and \c std::span is part of C++20, we need our own implementation of the
+/// Since KaMPIng needs to be C++17 compatible and \c std::span is part of C++20, we need our own implementation of the
 /// above-described functionality.
 /// @tparam T type for which the span is defined.
 template <typename T>

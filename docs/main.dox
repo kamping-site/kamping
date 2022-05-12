@@ -1,6 +1,6 @@
 namespace kamping {
 
-  /** @mainpage KaMPI.ng Documentation Overview
+  /** @mainpage KaMPIng Documentation Overview
 
   <img width="920" height="200" src="logo.svg">
 
@@ -21,7 +21,7 @@ namespace kamping {
 
 /**
   \defgroup kamping_utility Utility
-  \brief Quality of life features that make coding with (and within) KaMPI.ng easier
+  \brief Quality of life features that make coding with (and within) KaMPIng easier
 
   - \ref checking_casts.hpp
 
