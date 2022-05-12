@@ -13,6 +13,9 @@ jobs:
       image: "localhost:5000/kamping-ci"
     steps:
     - uses: actions/checkout@v2
+      with:
+    # Check out HEAD on the branch
+      ref: ${{ github.head_ref }}
     - name: install clang-format
       run: apt-get install clang-format -y
     - name: Run clang-format
