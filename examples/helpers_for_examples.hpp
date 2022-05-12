@@ -21,7 +21,7 @@ namespace kamping {
 /// @param result The container whose elements are printed.
 /// @param comm KaMPIng communicator to get the rank of the PE.
 template <typename T>
-void print_result(std::vector<T> const & result, Communicator const& comm) {
+void print_result(std::vector<T> const& result, Communicator const& comm) {
     for (auto const& elem: result) {
         std::cout << "[PE " << comm.rank() << "] " << elem << "\n";
     }
