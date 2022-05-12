@@ -41,7 +41,7 @@ TEST(BcastTest, SingleElement) {
     // Broadcast a single POD to all processes, manually specify the root process.
     assert(comm.size() > 0);
     const size_t root = comm.size() - 1;
-    value          = comm.rank();
+    value             = comm.rank();
     comm.bcast(send_recv_buf(value), kamping::root(root));
     EXPECT_EQ(value, root);
 
