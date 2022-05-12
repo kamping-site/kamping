@@ -33,6 +33,7 @@
 #pragma once
 
 #include <cstddef>
+#include <initializer_list>
 #include <memory>
 #include <type_traits>
 
@@ -145,6 +146,9 @@ public:
     static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
     using value_type                              = typename Container::value_type; ///< Value type of the buffer.
+    static_assert(
+        !std::is_same_v<Container, std::initializer_list<value_type>>,
+        "Passing intializer lists directly is prohibited because they cause ownership problems.");
 
     /// @brief Constructor for ContainerBasedConstBuffer.
     /// @param container Container holding the actual data.

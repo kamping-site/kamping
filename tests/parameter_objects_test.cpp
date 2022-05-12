@@ -121,8 +121,6 @@ TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
     EXPECT_EQ(own_container.copy_count(), 0);
     EXPECT_EQ(buffer_based_on_own_container.underlying().copy_count(), 0);
 
-    ContainerBasedOwningBuffer<std::initializer_list<int>, ptype> buffer_based_on_initializer_list({1, 2, 3});
-
     std::string expected = "I am underlying storage";
     EXPECT_EQ(buffer_based_on_string.get().size(), expected.size());
     EXPECT_EQ(
@@ -142,15 +140,6 @@ TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
     {
         auto const& underlying_container = buffer_based_on_own_container.underlying();
         EXPECT_EQ(underlying_container, (testing::OwnContainer<int>{1, 2, 3}));
-    }
-
-    EXPECT_EQ(buffer_based_on_initializer_list.get().size(), 3);
-    EXPECT_EQ(buffer_based_on_initializer_list.get().data()[0], 1);
-    EXPECT_EQ(buffer_based_on_initializer_list.get().data()[1], 2);
-    EXPECT_EQ(buffer_based_on_initializer_list.get().data()[2], 3);
-    {
-        auto const& underlying_container = buffer_based_on_initializer_list.underlying();
-        EXPECT_EQ(std::vector<int>{underlying_container}, (std::vector{1, 2, 3}));
     }
 }
 
