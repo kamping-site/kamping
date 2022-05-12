@@ -34,7 +34,7 @@ public:
     ///
     /// @param argc Number of arguments.
     /// @param argv The arguments.
-    Environment(int& argc, char**& argv) {
+    Environment(int & argc, char**& argv) {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
             init(argc, argv);
         }
