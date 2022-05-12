@@ -31,7 +31,7 @@ namespace kamping::internal {
 /// @tparam Index Index of current argument to evaluate (ignored).
 /// @return \c std::numeric_limits<std::size_t>::max().
 template <ParameterType parameter_type, size_t Index>
-constexpr size_t find_pos(   ) {
+constexpr size_t find_pos() {
     return std::numeric_limits<std::size_t>::max();
 }
 

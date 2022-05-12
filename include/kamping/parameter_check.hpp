@@ -316,7 +316,7 @@ struct all_unique : std::true_type {};
 ///
 /// @tparam T Parameter for which we check whether it is contained in the remaining tuple.
 /// @tparam Ts Remaining types of the tuple.
-template <typename T , typename... Ts>
+template <typename T, typename... Ts>
 struct all_unique<std::tuple<T, Ts...>>
     : std::conjunction<std::negation<std::disjunction<std::is_same<T, Ts>...>>, all_unique<std::tuple<Ts...>>> {};
 
