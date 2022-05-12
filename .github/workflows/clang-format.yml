@@ -16,10 +16,12 @@ jobs:
       with:
     # Check out HEAD on the branch
         ref: ${{ github.head_ref }}
+    # Fetch all commits in the repo
+        fetch-depth: 0
     - name: install clang-format
       run: apt-get install clang-format -y
     - name: Run clang-format
-      run: scripts/run_clang_format.sh
+      run: git-clang-format ${{ github.event.pull_request.base.sha }}
     # Commit the changes (if there are any)
     - name: Commit changes
       uses: stefanzweifel/git-auto-commit-action@v4.1.2
