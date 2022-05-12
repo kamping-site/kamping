@@ -122,7 +122,7 @@ constexpr To asserting_cast(From value) noexcept {
 /// @return Casted value.
 ///
 template <class To, class From>
-constexpr To throwing_cast(From value) {
+constexpr To throwing_cast(From  value) {
     THROWING_KASSERT_SPECIFIED(
         in_range<To>(value), value << " is not representable by the target type.", std::range_error);
     return static_cast<To>(value);
