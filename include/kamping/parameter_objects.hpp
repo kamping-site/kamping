@@ -277,6 +277,7 @@ public:
     /// @brief Move constructor for SingleElementConstBuffer.
     SingleElementOwningBuffer(SingleElementOwningBuffer&&) = default;
 
+    /// @brief Move assignment operator.
     SingleElementOwningBuffer& operator=(SingleElementOwningBuffer&&) = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
