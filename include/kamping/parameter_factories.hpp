@@ -78,17 +78,6 @@ auto send_buf(const Data& data) {
     }
 }
 
-/// @brief Generates a buffer taking ownership of the data pass to the send buffer as an initializer list.
-///
-/// @tparam T The type of the elements in the initializer list.
-/// @param data An initializer list of the data elements.
-/// @return Object referring to the storage containing the data elements to send.
-template <typename T>
-auto send_buf(std::initializer_list<T> data) {
-    std::vector<T> data_vec{data};
-    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_buf>(std::move(data_vec));
-}
-
 /// @brief Generates a buffer wrapper which takes ownership of the data in the send buffer, i.e. the underlying storage
 /// must contain the data element(s) to send.
 ///
@@ -102,10 +91,21 @@ auto send_buf(std::initializer_list<T> data) {
 template <class Data, typename = std::enable_if_t<std::is_rvalue_reference<Data&&>::value>>
 auto send_buf(Data&& data) {
     if constexpr (internal::has_data_member_v<Data>) {
-        return internal::ContainerBasedOwningBuffer<Data, internal::ParameterType::send_buf>(std::forward<Data>(data));
+        return internal::ContainerBasedOwningBuffer<Data, internal::ParameterType::send_buf>(std::move(data));
     } else {
-        return internal::SingleElementOwningBuffer<Data, internal::ParameterType::send_buf>(std::forward<Data>(data));
+        return internal::SingleElementOwningBuffer<Data, internal::ParameterType::send_buf>(std::move(data));
     }
+}
+
+/// @brief Generates a buffer taking ownership of the data pass to the send buffer as an initializer list.
+///
+/// @tparam T The type of the elements in the initializer list.
+/// @param data An initializer list of the data elements.
+/// @return Object referring to the storage containing the data elements to send.
+template <typename T>
+auto send_buf(std::initializer_list<T> data) {
+    std::vector<T> data_vec{data};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_buf>(std::move(data_vec));
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
@@ -187,8 +187,7 @@ auto send_counts(const Container& container) {
 /// @return Object referring to the storage containing the send counts.
 template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
 auto send_counts(Container&& container) {
-    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::send_counts>(
-        std::forward<Container>(container));
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::send_counts>(std::move(container));
 }
 
 /// @brief Generates a buffer wrapper for the send counts based on an initializer list, i.e. the
@@ -227,8 +226,7 @@ auto recv_counts(const Container& container) {
 /// @return Object referring to the storage containing the recv counts.
 template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
 auto recv_counts(Container&& container) {
-    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::recv_counts>(
-        std::forward<Container>(container));
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::recv_counts>(std::move(container));
 }
 
 /// @brief Generates a buffer wrapper for the recv counts based on an initializer list, i.e. the
@@ -281,8 +279,7 @@ auto send_displs(const Container& container) {
 /// @return Object referring to the storage containing the send displacements.
 template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
 auto send_displs(Container&& container) {
-    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::send_displs>(
-        std::forward<Container>(container));
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::send_displs>(std::move(container));
 }
 
 /// @brief Generates a buffer wrapper for the send displacements based on an initializer list, i.e. the
@@ -321,8 +318,7 @@ auto recv_displs(const Container& container) {
 /// @return Object referring to the storage containing the recv displacements.
 template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
 auto recv_displs(Container&& container) {
-    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::recv_displs>(
-        std::forward<Container>(container));
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::recv_displs>(std::move(container));
 }
 
 /// @brief Generates a buffer wrapper for the receive displacements based on an initializer list, i.e. the
