@@ -17,3 +17,7 @@ target_compile_options(example_alltoall PRIVATE ${KAMPING_WARNING_FLAGS})
 add_executable(example_gather gather_example.cpp)
 target_link_libraries(example_gather kamping)
 target_compile_options(example_gather PRIVATE ${KAMPING_WARNING_FLAGS})
+
+add_executable(top_k_reduce top_k_reduce.cpp)
+target_link_libraries(top_k_reduce kamping)
+target_compile_options(top_k_reduce PRIVATE ${KAMPING_WARNING_FLAGS})
