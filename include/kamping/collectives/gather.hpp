@@ -54,7 +54,7 @@ inline bool check_equal_sizes(kamping::Communicator const& comm, T local_size) {
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
 template <typename... Args>
-auto kamping::Communicator::gather(Args&&... args) {
+auto kamping::Communicator::gather(Args&&... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf, root));
 
