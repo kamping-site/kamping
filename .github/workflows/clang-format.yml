@@ -16,19 +16,12 @@ jobs:
       with:
     # Check out HEAD on the branch
         ref: ${{ github.head_ref }}
+    # Fetch all commits in the repo
+        fetch-depth: 0
     - name: install clang-format
       run: apt-get install clang-format -y
-    # Check out the commit where we diverged from main. Everything from there on will be clang-formatted
-    - name: Check out branching point
-      run: |
-        git checkout --detach
-        git reset --soft ${{ github.event.pull_request.base.sha }}
-    # Run clang-format
     - name: Run clang-format
-      run: git-clang-format
-    # Check out branch again so we can commit to it
-    - name: Check out branch again
-      run: git checkout ${{ github.head_ref }}
+      run: git-clang-format ${{ github.event.pull_request.base.sha }}
     # Commit the changes (if there are any)
     - name: Commit changes
       uses: stefanzweifel/git-auto-commit-action@v4.1.2

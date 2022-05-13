@@ -192,19 +192,19 @@ public:
     }
 
     template <typename... Args>
-    auto alltoall(Args&&... args);
+    auto alltoall(Args&&... args) const;
 
     template <typename... Args>
-    auto scatter(Args&&... args);
+    auto scatter(Args&&... args) const;
 
     template <typename... Args>
-    auto reduce(Args&&... args);
+    auto reduce(Args&&... args) const;
 
     template <typename... Args>
-    auto gather(Args&&... args);
+    auto gather(Args&&... args) const;
 
     template <typename... Args>
-    void barrier(Args&&... args);
+    void barrier(Args&&... args) const;
 
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
