@@ -156,11 +156,12 @@ public:
 
     /// @brief Move constructor for ContainerBasedConstBuffer.
     ContainerBasedOwningBuffer(ContainerBasedOwningBuffer&&) = default;
-    // move assignment operator is implicitly deleted as this buffer has a reference member
+
+    /// @brief Move assignment operator
+    ContainerBasedOwningBuffer& operator=(ContainerBasedOwningBuffer&&) = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
     ContainerBasedOwningBuffer(ContainerBasedOwningBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     ContainerBasedOwningBuffer& operator=(ContainerBasedOwningBuffer const&) = delete;
@@ -275,15 +276,14 @@ public:
 
     /// @brief Move constructor for SingleElementConstBuffer.
     SingleElementOwningBuffer(SingleElementOwningBuffer&&) = default;
-    // move assignment operator is implicitly deleted as this buffer has a reference member
+
+    SingleElementOwningBuffer& operator=(SingleElementOwningBuffer&&) = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
     SingleElementOwningBuffer(SingleElementOwningBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     SingleElementOwningBuffer& operator=(SingleElementOwningBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage (always 1).
