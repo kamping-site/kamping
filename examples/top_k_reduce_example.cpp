@@ -28,6 +28,23 @@ private:
 };
 
 template <size_t K, typename ValueType>
+TopK<K, ValueType> merge(TopK<K, ValueType> const& lhs, TopK<K, ValueType> const& rhs) {
+    size_t          lhs_current = 0;
+    size_t          rhs_current = 0;
+    TopK<K, size_t> merged;
+    for (size_t i = 0; i < K; i++) {
+        if (lhs[lhs_current] < rhs[rhs_current]) {
+            merged[i] = lhs[lhs_current];
+            lhs_current++;
+        } else {
+            merged[i] = rhs[rhs_current];
+            rhs_current++;
+        }
+    }
+    return merged;
+}
+
+template <size_t K, typename ValueType>
 std::ostream& operator<<(std::ostream& os, TopK<K, ValueType> const& top_k) {
     os << "TopK(";
     for (size_t i = 0; i < K; ++i) {
@@ -41,32 +58,13 @@ std::ostream& operator<<(std::ostream& os, TopK<K, ValueType> const& top_k) {
 }
 
 template <size_t K, typename ValueType>
-std::optional<TopK<K, ValueType>> kamping_top_k(TopK<K, ValueType> const& local_top_k, kamping::Communicator& comm) {
+auto kamping_top_k(TopK<K, ValueType> const& local_top_k, kamping::Communicator& comm) {
     using namespace kamping;
-    auto result = comm.reduce(
-                          send_buf(local_top_k), //
-                          op(
-                              [](auto& lhs, auto& rhs) {
-                                  size_t          lhs_current = 0;
-                                  size_t          rhs_current = 0;
-                                  TopK<K, size_t> merged;
-                                  for (size_t i = 0; i < K; i++) {
-                                      if (lhs[lhs_current] < rhs[rhs_current]) {
-                                          merged[i] = lhs[lhs_current];
-                                          lhs_current++;
-                                      } else {
-                                          merged[i] = rhs[rhs_current];
-                                          rhs_current++;
-                                      }
-                                  }
-                                  return merged;
-                              },
-                              commutative))
-                      .extract_recv_buffer();
+    auto result = comm.reduce(send_buf(local_top_k), op(merge<K, size_t>, commutative)).extract_recv_buffer();
     if (comm.is_root()) {
-        return result[0];
+        return std::make_optional(result[0]);
     } else {
-        return std::nullopt;
+        return std::optional<TopK<K, ValueType>>{};
     }
 }
 
@@ -80,26 +78,12 @@ std::optional<TopK<K, ValueType>> mpi_top_k(TopK<K, ValueType> const& local_top_
 
     // create a custom reduce operation
     MPI_Op             topK_merge_op;
-    MPI_User_function* merge = [](void* invec, void* inoutvec, int* len, MPI_Datatype*) {
+    MPI_User_function* merge_op = [](void* invec, void* inoutvec, int* len, MPI_Datatype*) {
         TopK<K, ValueType>* invec_    = static_cast<TopK<K, ValueType>*>(invec);
         TopK<K, ValueType>* inoutvec_ = static_cast<TopK<K, ValueType>*>(inoutvec);
-        std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, [](auto& lhs, auto& rhs) {
-            size_t          lhs_current = 0;
-            size_t          rhs_current = 0;
-            TopK<3, size_t> merged;
-            for (size_t i = 0; i < K; i++) {
-                if (lhs[lhs_current] < rhs[rhs_current]) {
-                    merged[i] = lhs[lhs_current];
-                    lhs_current++;
-                } else {
-                    merged[i] = rhs[rhs_current];
-                    rhs_current++;
-                }
-            }
-            return merged;
-        });
+        std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, merge<K, size_t>);
     };
-    MPI_Op_create(merge, true, &topK_merge_op);
+    MPI_Op_create(merge_op, true, &topK_merge_op);
 
     // the actual MPI call
     TopK<K, ValueType> global_top_k;
@@ -112,9 +96,9 @@ std::optional<TopK<K, ValueType>> mpi_top_k(TopK<K, ValueType> const& local_top_
     int rank;
     MPI_Comm_rank(comm, &rank);
     if (rank == 0) {
-        return global_top_k;
+        return std::make_optional(std::move(global_top_k));
     } else {
-        return std::nullopt;
+        return std::optional<TopK<K, ValueType>>{};
     }
 }
 
