@@ -108,20 +108,13 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
 }
 
 TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
-    std::string                str = "I am underlying storage";
-    testing::OwnContainer<int> own_container{1, 2, 3};
-    EXPECT_EQ(own_container.copy_count(), 0);
-
     constexpr ParameterType ptype = ParameterType::send_counts;
 
+    // string
+    std::string                                    str      = "I am underlying storage";
+    std::string                                    expected = "I am underlying storage";
     ContainerBasedOwningBuffer<std::string, ptype> buffer_based_on_string(std::move(str));
 
-    ContainerBasedOwningBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(
-        std::move(own_container));
-    EXPECT_EQ(own_container.copy_count(), 0);
-    EXPECT_EQ(buffer_based_on_own_container.underlying().copy_count(), 0);
-
-    std::string expected = "I am underlying storage";
     EXPECT_EQ(buffer_based_on_string.get().size(), expected.size());
     EXPECT_EQ(
         std::string(
@@ -132,6 +125,14 @@ TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
         auto const& underlying_container = buffer_based_on_string.underlying();
         EXPECT_EQ(underlying_container, expected);
     }
+    // own container
+    testing::OwnContainer<int> own_container{1, 2, 3};
+    EXPECT_EQ(own_container.copy_count(), 0);
+
+    ContainerBasedOwningBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(
+        std::move(own_container));
+    EXPECT_EQ(own_container.copy_count(), 0);
+    EXPECT_EQ(buffer_based_on_own_container.underlying().copy_count(), 0);
 
     EXPECT_EQ(buffer_based_on_own_container.get().size(), 3);
     EXPECT_EQ(buffer_based_on_own_container.get().data()[0], 1);
