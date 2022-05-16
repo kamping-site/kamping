@@ -19,11 +19,12 @@
 #include "../helpers_for_testing.hpp"
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
 
-TEST(AlltoallTest, alltoall_single_element_no_receive_buffer) {
+TEST(AlltoallTest, single_element_no_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input(comm.size());
@@ -37,7 +38,7 @@ TEST(AlltoallTest, alltoall_single_element_no_receive_buffer) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AlltoallTest, alltoall_single_element_with_receive_buffer) {
+TEST(AlltoallTest, single_element_with_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input(comm.size(), comm.rank_signed());
@@ -52,7 +53,7 @@ TEST(AlltoallTest, alltoall_single_element_with_receive_buffer) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AlltoallTest, alltoall_multiple_elements) {
+TEST(AlltoallTest, multiple_elements) {
     Communicator comm;
 
     const int num_elements_per_processor_pair = 4;
@@ -72,14 +73,14 @@ TEST(AlltoallTest, alltoall_multiple_elements) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AlltoallTest, alltoall_custom_type_custom_container) {
+TEST(AlltoallTest, custom_type_custom_container) {
     Communicator comm;
 
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
         bool   operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -90,6 +91,120 @@ TEST(AlltoallTest, alltoall_custom_type_custom_container) {
 
     auto result =
         comm.alltoall(send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{})).extract_recv_buffer();
+    ASSERT_NE(result.data(), nullptr);
+    EXPECT_EQ(result.size(), comm.size());
+
+    OwnContainer<CustomType> expected_result(comm.size());
+    for (size_t i = 0; i < expected_result.size(); ++i) {
+        expected_result[i] = {i, comm.rank()};
+    }
+    EXPECT_EQ(result, expected_result);
+}
+
+// ------------------------------------------------------------
+// Alltoallv tests
+
+TEST(AlltoallvTest, single_element_no_receive_buffer) {
+    Communicator comm;
+
+    std::vector<int> input(comm.size());
+    std::iota(input.begin(), input.end(), 0);
+    std::vector<int> send_counts(comm.size(), 1);
+
+    auto mpi_result = comm.alltoallv(send_buf(input), kamping::send_counts(send_counts));
+
+    auto result = mpi_result.extract_recv_buffer();
+    EXPECT_EQ(result.size(), comm.size());
+    std::vector<int> expected_result(comm.size(), comm.rank_signed());
+    EXPECT_EQ(result, expected_result);
+
+    auto recv_counts = mpi_result.extract_recv_counts();
+    EXPECT_EQ(recv_counts, send_counts);
+
+    std::vector<int> expected_displs(comm.size());
+    std::iota(expected_displs.begin(), expected_displs.end(), 0);
+
+    auto send_displs = mpi_result.extract_send_displs();
+    EXPECT_EQ(send_displs, expected_displs);
+
+    auto recv_displs = mpi_result.extract_recv_displs();
+    EXPECT_EQ(recv_displs, expected_displs);
+}
+
+TEST(AlltoallvTest, single_element_with_receive_buffer) {
+    Communicator comm;
+
+    std::vector<int> input(comm.size(), comm.rank_signed());
+    std::vector<int> send_counts(comm.size(), 1);
+
+    std::vector<int> result;
+    comm.alltoallv(send_buf(input), recv_buf(result), kamping::send_counts(send_counts));
+
+    EXPECT_EQ(result.size(), comm.size());
+
+    std::vector<int> expected_result(comm.size());
+    std::iota(expected_result.begin(), expected_result.end(), 0);
+    EXPECT_EQ(result, expected_result);
+}
+
+TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
+    Communicator comm;
+
+    const int num_elements_per_processor_pair = 4;
+
+    std::vector<int> input(comm.size() * num_elements_per_processor_pair);
+    std::iota(input.begin(), input.end(), 0);
+    std::transform(input.begin(), input.end(), input.begin(), [](const int element) -> int {
+        return element / num_elements_per_processor_pair;
+    });
+
+    std::vector<int> send_counts(comm.size(), num_elements_per_processor_pair);
+
+    std::vector<int> result;
+    auto             mpi_result = comm.alltoallv(send_buf(input), recv_buf(result), kamping::send_counts(send_counts));
+
+    EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
+    std::vector<int> expected_result(comm.size() * num_elements_per_processor_pair, comm.rank_signed());
+    EXPECT_EQ(result, expected_result);
+
+    auto recv_counts = mpi_result.extract_recv_counts();
+    EXPECT_EQ(recv_counts, send_counts);
+
+    std::vector<int> expected_displs(comm.size());
+    std::iota(expected_displs.begin(), expected_displs.end(), 0);
+    std::transform(expected_displs.begin(), expected_displs.end(), expected_displs.begin(), [](int value) {
+        return value * num_elements_per_processor_pair;
+    });
+
+    auto send_displs = mpi_result.extract_send_displs();
+    EXPECT_EQ(send_displs, expected_displs);
+
+    auto recv_displs = mpi_result.extract_recv_displs();
+    EXPECT_EQ(recv_displs, expected_displs);
+}
+
+TEST(AlltoallvTest, custom_type_custom_container) {
+    Communicator comm;
+
+    struct CustomType {
+        size_t sendingRank;
+        size_t receivingRank;
+        bool   operator==(const CustomType& other) const {
+              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+        }
+    };
+
+    OwnContainer<CustomType> input(comm.size());
+    for (size_t i = 0; i < input.size(); ++i) {
+        input[i] = {comm.rank(), i};
+    }
+
+    std::vector<int> send_counts(comm.size(), 1);
+
+    auto result =
+        comm.alltoallv(
+                send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}), kamping::send_counts(send_counts))
+            .extract_recv_buffer();
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), comm.size());
 
