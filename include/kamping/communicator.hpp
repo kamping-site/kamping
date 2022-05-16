@@ -195,6 +195,9 @@ public:
     auto alltoall(Args&&... args) const;
 
     template <typename... Args>
+    auto alltoallv(Args&&... args) const;
+
+    template <typename... Args>
     auto scatter(Args&&... args) const;
 
     template <typename... Args>

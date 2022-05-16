@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <numeric>
 #include <tuple>
 #include <type_traits>
 
@@ -35,8 +36,9 @@
 /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 /// each rank and divisible by the size of the communicator. Each rank receives the same number of elements from
 /// this buffer. Rank 0 receives the first `<buffer size>/<communicator size>` elements, rank 1 the next, and so
-/// on. See
-/// TODO alltoallv if the amounts differ. The following buffers are optional:
+/// on. See alltoallv() if the amounts differ.
+///
+/// The following buffers are optional:
 /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
 /// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
 /// received from rank 1, and so on.
@@ -69,7 +71,8 @@ auto kamping::Communicator::alltoall(Args&&... args) const {
     KASSERT(
         send_buf.size() % size() == 0lu,
         "The number of elements in send_buf is not divisible by the number of ranks in the communicator. Did you "
-        "mean to use alltoallv?");
+        "mean to use alltoallv?",
+        assert::light);
     int send_count = asserting_cast<int>(send_buf.size() / size());
 
     size_t recv_buf_size = send_buf.size();
@@ -87,6 +90,143 @@ auto kamping::Communicator::alltoall(Args&&... args) const {
 
     THROW_IF_MPI_ERROR(err, MPI_Alltoall);
     return MPIResult(
-        std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
-        internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{});
+        std::move(recv_buf),                // recv_buf
+        internal::BufferCategoryNotUsed{},  // recv_counts
+        internal::BufferCategoryNotUsed{},  // recv_count
+        internal::BufferCategoryNotUsed{},  // recv_displs
+        internal::BufferCategoryNotUsed{}); // send_displs
+}
+
+/// @brief Wrapper for \c MPI_Alltoallv.
+///
+/// This wrapper for \c MPI_Alltoallv sends the different amounts of data from each rank to each rank. The following
+/// buffers are required:
+/// - \ref kamping::send_buf() containing the data that is sent to each rank. The size of this buffer has to be at least
+/// the sum of the send_counts argument.
+/// - \ref kamping::send_counts() containing the number of elements to send to each rank.
+///
+/// The following parameters are optional but incur communication overhead if omitted:
+/// - \ref kamping::recv_counts containing the number of elements to receive from each rank.
+///
+/// The following buffers are optional:
+/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
+/// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
+/// received from rank 1, and so on.
+/// -\ref kamping::send_displs() containing the offsets of the messages in send_buf. The `send_counts[i]` elements
+/// starting at `send_buf[send_displs[i]]` will be sent to rank `i`. If ommited, this is calculated as the exclusive
+/// prefix-sum of `send_counts`.
+/// -\ref kamping::recv_displs() containing the offsets of the messages in recv_buf. The `recv_counts[i]` elements
+/// starting at `recv_buf[recv_displs[i]]` will be received from rank `i`. If ommited, this is calculated as the
+/// exclusive prefix-sum of `recv_counts`.
+///
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described above.
+/// @return Result type wrapping the output buffer, counts and displacements if not specified as input parameter.
+template <typename... Args>
+auto kamping::Communicator::alltoallv(Args&&... args) const {
+    // Get all parameter objects
+    KAMPING_CHECK_PARAMETERS(
+        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
+        KAMPING_OPTIONAL_PARAMETERS(recv_counts, recv_buf, send_displs, recv_displs));
+
+    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+    using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+    using default_recv_value_type = std::remove_const_t<send_value_type>;
+    MPI_Datatype mpi_send_type    = mpi_datatype<send_value_type>();
+
+    auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...).get();
+    using send_counts_type  = typename std::remove_reference_t<decltype(send_counts)>::value_type;
+    static_assert(std::is_same_v<std::remove_const_t<send_counts_type>, int>, "Send counts must be of type int");
+    KASSERT(send_counts.size() == this->size(), assert::light);
+
+    using default_recv_counts_type = decltype(kamping::recv_counts_out(NewContainer<std::vector<int>>{}));
+    auto&& recv_counts =
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
+            std::tuple(), args...);
+    using recv_counts_type = typename std::remove_reference_t<decltype(recv_counts)>::value_type;
+    static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
+
+    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
+    auto&& recv_buf =
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
+            std::tuple(), args...);
+    using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
+    MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
+
+    using default_send_displs_type = decltype(kamping::send_displs_out(NewContainer<std::vector<int>>{}));
+    auto&& send_displs =
+        internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
+            std::tuple(), args...);
+    using send_displs_type = typename std::remove_reference_t<decltype(send_displs)>::value_type;
+    static_assert(std::is_same_v<std::remove_const_t<send_displs_type>, int>, "Send displs must be of type int");
+
+    using default_recv_displs_type = decltype(kamping::recv_displs_out(NewContainer<std::vector<int>>{}));
+    auto&& recv_displs =
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
+            std::tuple(), args...);
+    using recv_displs_type = typename std::remove_reference_t<decltype(recv_displs)>::value_type;
+    static_assert(std::is_same_v<std::remove_const_t<recv_displs_type>, int>, "Recv displs must be of type int");
+
+    static_assert(
+        std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
+        "Types of send and receive buffers do not match.");
+    static_assert(!std::is_const_v<recv_value_type>, "The receive buffer must not have a const value_type.");
+    KASSERT(mpi_send_type == mpi_recv_type, "The MPI receive type does not match the MPI send type.", assert::light);
+
+    // Calculate recv_counts if necessary
+    constexpr bool do_calculate_recv_counts = std::remove_reference_t<decltype(recv_counts)>::is_modifiable;
+    if constexpr (do_calculate_recv_counts) {
+        /// @todo make it possible to test whether this additional communication is skipped
+        recv_counts.resize(this->size());
+        this->alltoall(send_buf(send_counts), recv_buf(recv_counts.get()));
+    }
+    KASSERT(recv_counts.size() == this->size(), assert::light);
+
+    // Calculate send_displs if necessary
+    constexpr bool do_calculate_send_displs = std::remove_reference_t<decltype(send_displs)>::is_modifiable;
+    if constexpr (do_calculate_send_displs) {
+        send_displs.resize(this->size());
+        std::exclusive_scan(send_counts.data(), send_counts.data() + send_counts.size(), send_displs.data(), 0);
+    }
+    KASSERT(send_displs.size() == this->size(), assert::light);
+    // Check that send displs and send counts match the size of send_buf
+    KASSERT(
+        *(send_counts.data() + send_counts.size() - 1) +       // Last element of send_counts
+                *(send_displs.data() + send_displs.size() - 1) // Last element of send_displs
+            <= send_buf.size(),
+        assert::light);
+
+    // Calculate recv_displs if necessary
+    constexpr bool do_calculate_recv_displs = std::remove_reference_t<decltype(recv_displs)>::is_modifiable;
+    if constexpr (do_calculate_recv_displs) {
+        recv_displs.resize(this->size());
+        std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), recv_displs.data(), 0);
+    }
+    KASSERT(recv_displs.size() == this->size(), assert::light);
+
+    // Resize recv_buff
+    int recv_buf_size = *(recv_counts.data() + recv_counts.size() - 1) + // Last element of recv_counts
+                        *(recv_displs.data() + recv_displs.size() - 1);  // Last element of recv_displs
+    recv_buf.resize(recv_buf_size);
+
+    [[maybe_unused]] int err = MPI_Alltoallv(
+        send_buf.data(),    // sendbuf
+        send_counts.data(), // sendcounts
+        send_displs.data(), // sdispls
+        mpi_send_type,      // sendtype
+        recv_buf.data(),    // sendcounts
+        recv_counts.data(), // recvcounts
+        recv_displs.data(), // rdispls
+        mpi_recv_type,      // recvtype
+        mpi_communicator()  // comm
+    );
+
+    THROW_IF_MPI_ERROR(err, MPI_Alltoallv);
+
+    return MPIResult(
+        std::move(recv_buf),               // recv_buf
+        std::move(recv_counts),            // recv_counts
+        internal::BufferCategoryNotUsed{}, // recv_count
+        std::move(recv_displs),            // recv_displs
+        std::move(send_displs));           // send_displs
 }
