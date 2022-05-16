@@ -49,3 +49,29 @@ find "$DIR" -type f \( ! -name "*.*" \) -exec bash -c '
 		esac
 	done
 ' bash {} \;
+
+# Find active githooks that are no longer under version control 
+find "$HOOKS" -type f \( ! -name "*.*" \) -exec bash -c '
+    hook_path="$1"
+    hook=$(basename "$hook_path")
+
+    # Considered deleted if it does not exist in the current directory
+    if [[ ! -f "'$DIR'/$hook" ]]; then 
+        echo "################################################################################"
+        echo "# Deleted hook $hook"
+        echo "################################################################################"
+        cat "$hook_path"
+        echo ""
+
+        echo "Do you want to delete this hook?"
+        select answer in "Yes" "No"; do 
+            case $answer in
+                Yes)
+                    rm "$hook_path"
+                    break;;
+                No)
+                    break;;
+            esac 
+        done
+    fi
+' bash {} \;
