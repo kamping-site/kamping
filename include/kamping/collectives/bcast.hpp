@@ -76,6 +76,21 @@ auto kamping::Communicator::bcast(Args&&... args) {
             "This rank has to be either root or have a non-const send_recv_buf.", assert::light);
     }
 
+    size_t recv_count = 0;
+    if constexpr has_parameter_type<ParameterType::recv_count, Args...>() {
+        recv_count = select_parameter_type<ParameterType::recv_count>(args...).get();
+    } else {
+        // Broadcast the receive cound. The error code is unused if KTHROW is removed at compile time.
+        [[maybe_unused]] int err = MPI_Bcast(
+            send_recv_buf.data(),                      // buffer*
+            asserting_cast<int>(send_recv_buf.size()), // count
+            mpi_value_type,                            // datatype
+            root.rank_signed(),                        // root
+            this->mpi_communicator()                   // MPI_Comm comm
+        );
+        THROW_IF_MPI_ERROR(err, MPI_Bcast);
+    }
+
     /// @todo Implement and test that passing a const-buffer is allowed on the root process but not on all other
     /// processes.
 
