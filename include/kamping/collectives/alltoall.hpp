@@ -178,7 +178,8 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
         recv_counts.resize(this->size());
-        this->alltoall(send_buf(send_counts), recv_buf(recv_counts.get()));
+        auto recv_counts_span = recv_counts.get();
+        this->alltoall(kamping::send_buf(send_counts), kamping::recv_buf(recv_counts_span));
     }
     KASSERT(recv_counts.size() == this->size(), assert::light);
 
@@ -207,7 +208,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     // Resize recv_buff
     int recv_buf_size = *(recv_counts.data() + recv_counts.size() - 1) + // Last element of recv_counts
                         *(recv_displs.data() + recv_displs.size() - 1);  // Last element of recv_displs
-    recv_buf.resize(recv_buf_size);
+    recv_buf.resize(asserting_cast<size_t>(recv_buf_size));
 
     [[maybe_unused]] int err = MPI_Alltoallv(
         send_buf.data(),    // sendbuf
