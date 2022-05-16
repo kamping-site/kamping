@@ -194,7 +194,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     KASSERT(
         *(send_counts.data() + send_counts.size() - 1) +       // Last element of send_counts
                 *(send_displs.data() + send_displs.size() - 1) // Last element of send_displs
-            <= send_buf.size(),
+            <= asserting_cast<int>(send_buf.size()),
         assert::light);
 
     // Calculate recv_displs if necessary
