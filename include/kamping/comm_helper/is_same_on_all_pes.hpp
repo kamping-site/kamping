@@ -27,7 +27,7 @@ namespace kamping {
 /// @brief Checks if all PEs provide the same value to this collective.
 ///
 /// This collective function checks if all PEs have called it with the same value. The result is returned on all ranks.
-/// @tparam Value Type of the value to check; must be comparable with `operator==`.
+/// @tparam Value Type of the value to check. Must be comparable with `operator==`.
 /// @param value The value of this rank. This value is compared with the ones provided by all other PEs.
 /// @return On all ranks: `true` if all PEs have provided the same value, `false` otherwise.
 template <typename Value>
