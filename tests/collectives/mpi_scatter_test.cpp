@@ -189,3 +189,12 @@ TEST(ScatterTest, scatter_with_nonempty_sendbuf_on_non_root) {
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
 }
+
+TEST(ScatterTest, scatter_different_roots_on_different_processes) {
+    Communicator comm;
+    auto const   input = create_input_vector_on_root(comm, 1);
+
+    if (kassert::internal::assertion_enabled(assert::light_communication)) {
+        EXPECT_KASSERT_FAILS(comm.scatter(send_buf(input), root(comm.rank())), "Root has to be the same on all PEs.");
+    }
+}

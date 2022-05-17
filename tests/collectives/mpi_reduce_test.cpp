@@ -290,3 +290,14 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_type) {
         EXPECT_EQ(result.size(), 0);
     }
 }
+
+TEST(ReduceTest, reduce_different_roots_on_different_processes) {
+    Communicator comm;
+    auto         value = comm.rank();
+
+    if (kassert::internal::assertion_enabled(assert::light_communication)) {
+        EXPECT_KASSERT_FAILS(
+            comm.reduce(send_buf(value), op(kamping::ops::plus<>{}), root(comm.rank())),
+            "Root has to be the same on all PEs.");
+    }
+}
