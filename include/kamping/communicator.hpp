@@ -206,6 +206,9 @@ public:
     template <typename... Args>
     void barrier(Args&&... args) const;
 
+    template <typename Value>
+    bool is_same_on_all_pes(Value const& value);
+
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
     /// @return Rank of the current MPI process in the communicator.

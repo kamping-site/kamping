@@ -34,6 +34,7 @@ kamping_register_mpi_test(test_operation_wrapper FILES mpi_operation_wrapper_tes
 kamping_register_mpi_test(test_parameter_factories_mpi FILES parameter_factories_mpi_test.cpp CORES 1)
 kamping_register_mpi_test(test_multiple_compilation_units FILES multiple_compilation_units_test/main.cpp multiple_compilation_units_test/gatherer.cpp CORES 1 4)
 kamping_register_mpi_test(test_environment FILES environment_test.cpp CORES 1 4)
+kamping_register_mpi_test(test_mpi_communicator_is_same_on_all_pes FILES mpi_communicator_is_same_on_all_pes_test.cpp CORES 1 4)
 
 # The environment test does not use our wrapper functions because it can't use our google test setup.
 # First variant does only the minimum amount of interaction with kamping::Environment.
@@ -57,6 +58,13 @@ kamping_register_compilation_failure_test(
   test_mpi_function_wrapper_compilation_failure
   FILES mpi_function_wrapper_helpers_compilation_failures_test.cpp
   SECTIONS "RECV_BUFFER_NOT_EXTRACTABLE" "RECV_COUNTS_NOT_EXTRACTABLE" "RECV_DISPLACEMENTS_NOT_EXTRACTABLE" "SEND_DISPLACEMENTS_NOT_EXTRACTABLE"
+  LIBRARIES kamping_base
+)
+
+kamping_register_compilation_failure_test(
+  test_mpi_communicator_is_same_on_all_pes_compilation_failure
+  FILES mpi_communicator_is_same_on_all_pes_compilation_failure_test.cpp
+  SECTIONS "VALUE_IS_A_POINTER" "VALUE_IS_NOT_A_POD"
   LIBRARIES kamping_base
 )
 
