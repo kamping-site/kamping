@@ -33,7 +33,9 @@ namespace kamping {
 template <typename Value>
 bool Communicator::is_same_on_all_pes(Value const& value) const {
     // TODO Assert that two values are comparable.
-    static_assert(std::is_pod_v<Value>, "Value must be a POD type (more complex types are not implemented yet).");
+    static_assert(
+        std::is_trivially_copyable_v<Value>,
+        "Value must be a trivial type (more complex types are not implemented yet).");
     static_assert(!std::is_pointer_v<Value>, "Comparing pointers from different machines does not make sense.");
 
     /// @todo Expose this functionality to the user, he might find it useful, too.
