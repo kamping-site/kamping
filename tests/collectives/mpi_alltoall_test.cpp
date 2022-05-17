@@ -342,6 +342,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
 }
 
 TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_recv_counts) {
+    /// @todo test that no additional communication is done
     Communicator comm;
 
     struct CustomType {
@@ -401,6 +402,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
 }
 
 TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_parameters_given) {
+    /// @todo test that no additional communication is done
     Communicator comm;
 
     struct CustomType {
@@ -454,6 +456,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
 }
 
 TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_all_parameters_given) {
+    /// @todo test that no additional communication is done
     Communicator comm;
 
     struct CustomType {
