@@ -12,8 +12,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "kamping/communicator.hpp"
 #include "kamping/comm_helper/is_same_on_all_pes.hpp"
+#include "kamping/communicator.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
