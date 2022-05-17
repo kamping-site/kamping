@@ -36,6 +36,7 @@ public:
 
     OwnContainer() : OwnContainer(0) {}
     OwnContainer(size_t size) : _vec(size), _copy_count(std::make_shared<size_t>(0)) {}
+    OwnContainer(size_t size, T value) : _vec(size, value), _copy_count(std::make_shared<size_t>(0)) {}
     OwnContainer(std::initializer_list<T> elems) : _vec(elems), _copy_count(std::make_shared<size_t>(0)) {}
     OwnContainer(OwnContainer<T> const& rhs) : _vec(rhs._vec), _copy_count(rhs._copy_count) {
         (*_copy_count)++;
@@ -78,6 +79,14 @@ public:
 
     bool operator==(const OwnContainer<T>& other) const {
         return _vec == other._vec;
+    }
+
+    auto begin() {
+        return _vec.begin();
+    }
+
+    auto end() {
+        return _vec.end();
     }
 
 private:
