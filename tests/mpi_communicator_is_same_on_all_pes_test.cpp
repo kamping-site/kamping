@@ -23,7 +23,7 @@
 using namespace ::kamping;
 using namespace ::testing;
 
-TEST(CommunicatorTest_is_same_on_all_ranks, is_same_on_all_ranks) {
+TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     Communicator comm;
 
     // All PEs have the same value.
