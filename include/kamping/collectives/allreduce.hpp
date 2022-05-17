@@ -30,18 +30,16 @@
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 
-/// TODO
-/// @brief Wrapper for \c MPI_Reduce.
+/// @brief Wrapper for \c MPI_Allreduce.
 ///
-/// This wraps \c MPI_Reduce. The operation combines the elements in the input buffer provided via \c
-/// kamping::send_buf() and returns the combined value on the root rank. The following parameters are required:
+/// This wraps \c MPI_Allreduce. The operation combines the elements in the input buffer provided via \c
+/// kamping::send_buf() and returns the combined value on all ranks. The following parameters are required:
 /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 /// each rank.
 /// - \ref kamping::op() wrapping the operation to apply to the input.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::recv_buf() containing a buffer for the output.
-/// - \ref kamping::root() the root rank. If not set, the default root process of the communicator will be used.
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
