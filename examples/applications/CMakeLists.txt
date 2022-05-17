@@ -1,0 +1,3 @@
+add_executable(example_top_k_reduce top_k_reduce_example.cpp)
+target_link_libraries(example_top_k_reduce kamping)
+target_compile_options(example_top_k_reduce PRIVATE ${KAMPING_WARNING_FLAGS})

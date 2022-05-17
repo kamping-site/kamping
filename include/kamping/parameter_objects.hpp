@@ -33,6 +33,7 @@
 #pragma once
 
 #include <cstddef>
+#include <initializer_list>
 #include <memory>
 #include <type_traits>
 
@@ -131,6 +132,63 @@ private:
     const Container& _container; ///< Container which holds the actual data.
 };
 
+/// @brief Read-only buffer owning a container type passed to it.
+///
+/// ContainerBasedOwningBuffer wraps read-only buffer storage provided by an std-like container like std::vector. This
+/// is the owning variant of \ref ContainerBasedConstBuffer. The Container type must provide \c data(), \c size() and
+/// expose the type definition \c value_type. type.
+/// @tparam Container Container on which this buffer is based.
+/// @tparam ParameterType parameter type represented by this buffer.
+
+template <typename Container, ParameterType type>
+class ContainerBasedOwningBuffer {
+public:
+    static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
+    using value_type                              = typename Container::value_type; ///< Value type of the buffer.
+    static_assert(
+        !std::is_same_v<Container, std::initializer_list<value_type>>,
+        "Passing intializer lists directly is prohibited because they cause ownership problems.");
+
+    /// @brief Constructor for ContainerBasedConstBuffer.
+    /// @param container Container holding the actual data.
+    ContainerBasedOwningBuffer(Container container) : _container(std::move(container)) {}
+
+    /// @brief Move constructor for ContainerBasedConstBuffer.
+    ContainerBasedOwningBuffer(ContainerBasedOwningBuffer&&) = default;
+
+    /// @brief Move assignment operator
+    ContainerBasedOwningBuffer& operator=(ContainerBasedOwningBuffer&&) = default;
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    ContainerBasedOwningBuffer(ContainerBasedOwningBuffer const&) = delete;
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    ContainerBasedOwningBuffer& operator=(ContainerBasedOwningBuffer const&) = delete;
+    // redundant as defaulted move constructor implies the deletion
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage.
+    size_t size() const {
+        return _container.size();
+    }
+
+    /// @brief Provides access to the underlying container.
+    /// @return A reference to the container.
+    Container const& underlying() const {
+        return _container;
+    }
+
+    /// @brief Get access to the underlying read-only storage.
+    /// @return Span referring to the underlying read-only storage.
+    Span<const value_type> get() const {
+        return {std::data(_container), _container.size()};
+    }
+
+private:
+    const Container _container; ///< Container which holds the actual data.
+};
+
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
 template <typename Data, ParameterType type>
@@ -197,6 +255,57 @@ public:
 
 private:
     DataType const& _element; ///< Reference to the actual data.
+};
+
+/// @brief Buffer for a single element, which is not a container. The element is owned by the buffer.
+///
+/// SingleElementOwningBuffer wraps a read-only value and takes ownership of it. It is the owning variant of \ref
+/// SingleElementConstBuffer.
+/// @tparam DataType Type of the element wrapped.
+/// @tparam ParameterType Parameter type represented by this buffer.
+template <typename DataType, ParameterType type>
+class SingleElementOwningBuffer {
+public:
+    static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
+    using value_type                              = DataType; ///< Value type of the buffer.
+
+    /// @brief Constructor for SingleElementConstBuffer.
+    /// @param element Element holding that is wrapped.
+    SingleElementOwningBuffer(DataType element) : _element(std::move(element)) {}
+
+    /// @brief Move constructor for SingleElementConstBuffer.
+    SingleElementOwningBuffer(SingleElementOwningBuffer&&) = default;
+
+    /// @brief Move assignment operator.
+    SingleElementOwningBuffer& operator=(SingleElementOwningBuffer&&) = default;
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    SingleElementOwningBuffer(SingleElementOwningBuffer const&) = delete;
+
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    SingleElementOwningBuffer& operator=(SingleElementOwningBuffer const&) = delete;
+
+    /// @brief Get the number of elements in the underlying storage.
+    /// @return Number of elements in the underlying storage (always 1).
+    size_t size() const {
+        return 1;
+    }
+
+    /// @brief Provides access to the underlying owned element.
+    /// @return A reference to the element.
+    DataType const& underlying() const {
+        return _element;
+    }
+
+    /// @brief Get access to the underlaying read-only value.
+    /// @return Span referring to the underlying read-only storage.
+    Span<const value_type> get() const {
+        return {&_element, 1};
+    }
+
+private:
+    DataType _element; ///< Reference to the actual data.
 };
 
 /// @brief Buffer based on a single element type that has been allocated by the library.
