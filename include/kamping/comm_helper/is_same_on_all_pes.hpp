@@ -31,7 +31,7 @@ namespace kamping {
 /// @param value The value of this rank. This value is compared with the ones provided by all other PEs.
 /// @return On all ranks: `true` if all PEs have provided the same value, `false` otherwise.
 template <typename Value>
-bool Communicator::is_same_on_all_pes(Value const& value) {
+bool Communicator::is_same_on_all_pes(Value const& value) const {
     // TODO Assert that two values are comparable.
     static_assert(std::is_pod_v<Value>, "Value must be a POD type (more complex types are not implemented yet).");
     static_assert(!std::is_pointer_v<Value>, "Comparing pointers from different machines does not make sense.");
