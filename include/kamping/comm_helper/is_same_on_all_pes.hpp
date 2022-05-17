@@ -24,6 +24,13 @@
 
 namespace kamping {
 
+
+/// @brief Checks if all PEs provide the same value to this collective.
+///
+/// This collective function checks if all PEs have called it with the same value. The result is returned on all ranks.
+/// @tparam Value Type of the value to check; must be comparable with `operator==`.
+/// @param value The value of this rank. This value is compared with the ones provided by all other PEs.
+/// @return On all ranks: `true` if all PEs have provided the same value, `false` otherwise.
 template <typename Value>
 bool Communicator::is_same_on_all_pes(Value const& value) {
     // TODO Assert that two values are comparable.
@@ -52,6 +59,7 @@ bool Communicator::is_same_on_all_pes(Value const& value) {
         kamping::commutative);
     auto operation = operation_param.template build_operation<ValueEqual>();
 
+    // Perform the reduction and return.
     MPI_Allreduce(
         MPI_IN_PLACE,            // sendbuf
         &value_equal,            // recvbuf
