@@ -24,7 +24,6 @@
 
 namespace kamping {
 
-
 /// @brief Checks if all PEs provide the same value to this collective.
 ///
 /// This collective function checks if all PEs have called it with the same value. The result is returned on all ranks.
