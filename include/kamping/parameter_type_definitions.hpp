@@ -39,6 +39,7 @@ enum class ParameterType {
                    ///< be sent or received (depending on the process' rank) via \c MPI.
     recv_counts,   ///< Tag used to represent a receive counts buffer, i.e. a buffer containing the receive counts from
                    ///< the involved PEs.
+    send_recv_count, //< Tag used to represent the number of elements in a send_recv_buf, used for example during Bcast().
     recv_displs,   ///< Tag used to represent a receive displacements buffer, i.e. a buffer containing the receive
                    ///< displacements from the involved PEs.
     recv_count,    ///< Tag used to represent the receive count of a collective operation where only data
