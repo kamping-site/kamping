@@ -353,12 +353,14 @@ struct parameters_to_integral_constant {
         std::tuple<typename parameter_type_to_integral_constant<Parameters::parameter_type>::type>{}...));
 };
 
-/// @brief checks if all named parameters are passed as rvalues.
+/// @brief Checks if all named parameters are passed as rvalues.
 /// @tparam Args The types of the arguments to validate.
 template <typename... Args>
 constexpr bool all_parameters_are_rvalues =
     std::conjunction<std::bool_constant<!std::is_lvalue_reference_v<Args>>...>::value;
 
+/// @brief Checks if the buffer has to be computed by kamping, i.e. if it is an output parameter
+/// @tparam BufferType The buffer type to be checked
 template <typename BufferType>
 constexpr bool has_to_be_computed = std::remove_reference_t<BufferType>::is_modifiable;
 
