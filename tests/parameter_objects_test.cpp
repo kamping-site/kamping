@@ -46,10 +46,14 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_int_vector.get().size(), int_vec.size());
     EXPECT_EQ(buffer_based_on_int_vector.get().data(), int_vec.data());
     static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.get().data()), const int*>);
+    EXPECT_EQ(buffer_based_on_int_vector.data(), int_vec.data());
+    static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.data()), const int*>);
 
     EXPECT_EQ(buffer_based_on_const_int_vector.get().size(), int_vec_const.size());
     EXPECT_EQ(buffer_based_on_const_int_vector.get().data(), int_vec_const.data());
     static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.get().data()), const int*>);
+    EXPECT_EQ(buffer_based_on_const_int_vector.data(), int_vec_const.data());
+    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.data()), const int*>);
 }
 
 TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
