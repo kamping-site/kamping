@@ -195,8 +195,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     constexpr bool do_calculate_send_displs = std::remove_reference_t<decltype(send_displs)>::is_modifiable;
     if constexpr (do_calculate_send_displs) {
         send_displs.resize(this->size());
-        std::exclusive_scan(
-            send_counts.data(), send_counts.data() + send_counts.size(), send_displs.data(), 0);
+        std::exclusive_scan(send_counts.data(), send_counts.data() + send_counts.size(), send_displs.data(), 0);
     }
     KASSERT(send_displs.size() == this->size(), assert::light);
     // Check that send displs and send counts match the size of send_buf
@@ -210,8 +209,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     constexpr bool do_calculate_recv_displs = std::remove_reference_t<decltype(recv_displs)>::is_modifiable;
     if constexpr (do_calculate_recv_displs) {
         recv_displs.resize(this->size());
-        std::exclusive_scan(
-            recv_counts.data(), recv_counts.data() + recv_counts.size(), recv_displs.data(), 0);
+        std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), recv_displs.data(), 0);
     }
     KASSERT(recv_displs.size() == this->size(), assert::light);
 
@@ -225,12 +223,12 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
         send_buf.data(),    // sendbuf
         send_counts.data(), // sendcounts
         send_displs.data(), // sdispls
-        mpi_send_type,            // sendtype
+        mpi_send_type,      // sendtype
         recv_buf.data(),    // sendcounts
         recv_counts.data(), // recvcounts
         recv_displs.data(), // rdispls
-        mpi_recv_type,            // recvtype
-        mpi_communicator()        // comm
+        mpi_recv_type,      // recvtype
+        mpi_communicator()  // comm
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Alltoallv);
