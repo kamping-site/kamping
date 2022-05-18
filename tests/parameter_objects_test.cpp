@@ -31,6 +31,7 @@ TEST(EmptyBufferTest, get_basics) {
     EXPECT_EQ(empty_buffer.size(), 0);
     EXPECT_EQ(empty_buffer.get().size(), 0);
     EXPECT_EQ(empty_buffer.get().data(), nullptr);
+    EXPECT_EQ(empty_buffer.data(), nullptr);
 }
 
 // Tests the basic functionality of ContainerBasedConstBuffer

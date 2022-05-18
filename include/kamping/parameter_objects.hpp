@@ -217,6 +217,12 @@ public:
         return 0;
     }
 
+    /// @brief Get a nullptr.
+    /// @return nullptr.
+    value_type const* data() {
+        return nullptr;
+    }
+
     /// @brief Returns a span containing a nullptr.
     /// @return Span containing a nullptr.
     Span<value_type> get() const {
