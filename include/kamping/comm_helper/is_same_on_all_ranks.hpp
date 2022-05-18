@@ -33,9 +33,12 @@ namespace kamping {
 template <typename Value>
 bool Communicator::is_same_on_all_ranks(Value const& value) const {
     // TODO Assert that two values are comparable.
-    static_assert(
-        std::is_trivially_copyable_v<Value>,
-        "Value must be a trivial type (more complex types are not implemented yet).");
+    // std::pair<> is not trivially_copyable and we don't want to forbid comparing std::pair<>s for equality.
+    /// @todo How to handle more complex data types, e.g. std::pair<>, user defined classes, std::vector (here and
+    /// elsewhere)?
+    // static_assert(
+    //     std::is_trivially_copyable_v<Value>,
+    //     "Value must be a trivial type (more complex types are not implemented yet).");
     static_assert(!std::is_pointer_v<Value>, "Comparing pointers from different machines does not make sense.");
 
     /// @todo Expose this functionality to the user, he might find it useful, too.
