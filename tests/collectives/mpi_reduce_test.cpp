@@ -292,13 +292,14 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_type) {
     }
 }
 
-TEST(ReduceTest, reduce_different_roots_on_different_processes) {
-    Communicator comm;
-    auto         value = comm.rank();
-
-    if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
-        EXPECT_KASSERT_FAILS(
-            comm.reduce(send_buf(value), op(kamping::ops::plus<>{}), root(comm.rank())),
-            "Root has to be the same on all ranks.");
-    }
-}
+// Death test do not work with MPI.
+// TEST(ReduceTest, reduce_different_roots_on_different_processes) {
+//     Communicator comm;
+//     auto         value = comm.rank();
+//
+//     if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
+//         EXPECT_KASSERT_FAILS(
+//             comm.reduce(send_buf(value), op(kamping::ops::plus<>{}), root(comm.rank())),
+//             "Root has to be the same on all ranks.");
+//     }
+// }
