@@ -423,7 +423,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
     // Do the alltoallv - use output parameters
     OwnContainer<CustomType> result;
     OwnContainer<int>        send_displs;
-    OwnContainer<int> recv_displs;
+    OwnContainer<int>        recv_displs;
     comm.alltoallv(
         send_buf(input), recv_buf(result), kamping::send_counts(send_counts), send_displs_out(send_displs),
         kamping::recv_counts(recv_counts), recv_displs_out(recv_displs));
