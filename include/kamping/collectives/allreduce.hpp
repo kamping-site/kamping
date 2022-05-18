@@ -19,6 +19,7 @@
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/error_handling.hpp"
@@ -30,7 +31,7 @@
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 
-/// @brief Wrapper for \c MPI_Allreduce.
+/// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
 ///
 /// This wraps \c MPI_Allreduce. The operation combines the elements in the input buffer provided via \c
 /// kamping::send_buf() and returns the combined value on all ranks. The following parameters are required:
@@ -48,38 +49,39 @@ auto kamping::Communicator::allreduce(Args&&... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
-    // Get all parameters
-    auto&& root = select_parameter_type_or_default<ParameterType::root, Root>(std::tuple(this->root()), args...);
-
+    // Get the send buffer and deduce the send and recv value types.
     const auto& send_buf          = select_parameter_type<ParameterType::send_buf>(args...).get();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
+    KASSERT(is_same_on_all_ranks(send_buf.size()), "The send buffer has to be the same size on all ranks.");
 
+    // Deduce the recv buffer type and get (if provided) the recv buffer or allocate one (if not provided).
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
     auto&& recv_buf =
         select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
-
-    auto& operation_param = select_parameter_type<ParameterType::op>(args...);
-    auto  operation       = operation_param.template build_operation<send_value_type>();
-
-    // Check parameters
     static_assert(
         std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
         "Types of send and receive buffers do not match.");
-    MPI_Datatype type = mpi_datatype<send_value_type>();
 
-    KASSERT(is_valid_rank(root.rank()), "The provided root rank is invalid.");
+    // Get the operation used for the reduction. The signature of the provided function is checked while building.
+    auto& operation_param = select_parameter_type<ParameterType::op>(args...);
+    auto  operation       = operation_param.template build_operation<send_value_type>();
 
+    // Resize the recv buffer to the same size as the send buffer; get the pointer needed for the MPI call.
     send_value_type* recv_buf_ptr = nullptr;
     recv_buf.resize(send_buf.size());
     recv_buf_ptr = recv_buf.data();
+    KASSERT(recv_buf_ptr != nullptr, assert::light);
+    KASSERT(recv_buf.size() == send_buf.size(), assert::light);
+    // send_buf.size() is equal on all ranks, as checked above.
 
+    // Perform the MPI_Allreduce call and return.
     [[maybe_unused]] int err = MPI_Allreduce(
         send_buf.data(),                      // sendbuf
         recv_buf_ptr,                         // recvbuf,
         asserting_cast<int>(send_buf.size()), // count
-        type,                                 // datatype,
+        mpi_datatype<send_value_type>(),      // datatype,
         operation.op(),                       // op
         mpi_communicator()                    // communicator
     );
