@@ -129,16 +129,19 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
         Args, KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
         KAMPING_OPTIONAL_PARAMETERS(recv_counts, recv_buf, send_displs, recv_displs));
 
+    // Get send_buf
     auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
     MPI_Datatype mpi_send_type    = mpi_datatype<send_value_type>();
 
+    // Get send_counts
     auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
     using send_counts_type  = typename std::remove_reference_t<decltype(send_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<send_counts_type>, int>, "Send counts must be of type int");
     KASSERT(send_counts.get().size() == this->size(), assert::light);
 
+    // Get recv_counts
     using default_recv_counts_type = decltype(kamping::recv_counts_out(NewContainer<std::vector<int>>{}));
     auto&& recv_counts =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
@@ -146,6 +149,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     using recv_counts_type = typename std::remove_reference_t<decltype(recv_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
 
+    // Get recv_buf
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
@@ -153,6 +157,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
+    // Get send_displs
     using default_send_displs_type = decltype(kamping::send_displs_out(NewContainer<std::vector<int>>{}));
     auto&& send_displs =
         internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
@@ -160,6 +165,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     using send_displs_type = typename std::remove_reference_t<decltype(send_displs)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<send_displs_type>, int>, "Send displs must be of type int");
 
+    // Get recv_displs
     using default_recv_displs_type = decltype(kamping::recv_displs_out(NewContainer<std::vector<int>>{}));
     auto&& recv_displs =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
@@ -167,6 +173,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     using recv_displs_type = typename std::remove_reference_t<decltype(recv_displs)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_displs_type>, int>, "Recv displs must be of type int");
 
+    // Check that send and receive buffers have matching types
     static_assert(
         std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
         "Types of send and receive buffers do not match.");
@@ -213,6 +220,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
                         *(recv_displs.get().data() + recv_displs.get().size() - 1);  // Last element of recv_displs
     recv_buf.resize(asserting_cast<size_t>(recv_buf_size));
 
+    // Do the actual alltoallv
     [[maybe_unused]] int err = MPI_Alltoallv(
         send_buf.get().data(),    // sendbuf
         send_counts.get().data(), // sendcounts
