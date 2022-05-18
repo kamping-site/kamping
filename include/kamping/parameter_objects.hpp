@@ -124,7 +124,7 @@ public:
 
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
-    value_type const* data() const {
+    value_type const* data() {
         return _container.data();
     }
 
@@ -181,7 +181,7 @@ public:
 
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
-    value_type const* data() const {
+    value_type const* data() {
         return _container.data();
     }
 
@@ -219,7 +219,7 @@ public:
 
     /// @brief Get a nullptr.
     /// @return nullptr.
-    value_type const* data() const {
+    value_type const* data() {
         return nullptr;
     }
 
@@ -267,7 +267,7 @@ public:
 
     /// @brief Get const access to the underlying read-only value.
     /// @return Pointer to the underlying read-only value.
-    value_type const* data() const {
+    value_type const* data() {
         return &_element;
     }
 
@@ -318,7 +318,7 @@ public:
 
     /// @brief Get const access to the underlying data.
     /// @return Pointer to the underlying data.
-    value_type const* data() const {
+    value_type const* data() {
         return &_element;
     }
 
@@ -380,7 +380,7 @@ public:
 
     /// @brief Get writable access to the underlying data.
     /// @return Pointer to the underlying data.
-    value_type* data() const {
+    value_type* data() {
         return &_element;
     }
 
@@ -450,7 +450,7 @@ public:
 
     /// @brief Get writable access to the underlying data.
     /// @return Pointer to the underlying data.
-    value_type* data() const {
+    value_type* data() {
         return &_element;
     }
 
@@ -523,7 +523,7 @@ public:
 
     /// @brief Get writable access to the underlying container.
     /// @return Pointer to the underlying container.
-    value_type* data() const {
+    value_type* data() {
         return _container.data();
     }
 
@@ -597,7 +597,7 @@ public:
 
     /// @brief Get writable access to the underlying container.
     /// @return Pointer to the underlying container.
-    value_type* data() const {
+    value_type* data() {
         return _container.data();
     }
 
