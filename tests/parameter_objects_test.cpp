@@ -400,6 +400,7 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
 #endif
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
+    EXPECT_EQ(*(int_buffer.data()), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_TRUE(int_buffer.is_modifiable);
