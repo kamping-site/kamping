@@ -12,6 +12,7 @@ on:
 jobs:
   build:
     runs-on: self-hosted
+    timeout-minutes: 10
     container:
       image: "localhost:5000/kamping-ci"
     continue-on-error: true

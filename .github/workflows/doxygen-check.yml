@@ -12,6 +12,7 @@ jobs:
   doxygen-check:
     name: Doxygen Check
     runs-on: self-hosted
+    timeout-minutes: 10
     container:
       image: "localhost:5000/kamping-ci"
     steps:
