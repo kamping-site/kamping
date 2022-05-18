@@ -448,6 +448,12 @@ public:
         return 1;
     }
 
+    /// @brief Get writable access to the underlying data.
+    /// @return Pointer to the underlying data.
+    value_type* data() {
+        return &_element;
+    }
+
     /// @brief Get writable access to the underlying value.
     /// @return Reference to the underlying storage.
     Span<value_type> get() const {
