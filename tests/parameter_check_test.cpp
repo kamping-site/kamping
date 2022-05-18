@@ -90,9 +90,9 @@ TEST(NamedParameterTest, has_to_be_computed) {
     using namespace kamping::internal;
 
     std::vector<int> dummy_recv_counts;
-    auto recv_counts_in = kamping::recv_counts(dummy_recv_counts);
-    EXPECT_FALSE(has_to_be_computed(recv_counts_in));
+    auto             recv_counts_in = kamping::recv_counts(dummy_recv_counts);
+    EXPECT_FALSE(has_to_be_computed<decltype(recv_counts_in)>);
 
     auto recv_counts_out = kamping::recv_counts_out(kamping::NewContainer<std::vector<int>>{});
-    EXPECT_TRUE(has_to_be_computed(recv_counts_out));
+    EXPECT_TRUE(has_to_be_computed<decltype(recv_counts_out)>);
 }
