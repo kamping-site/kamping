@@ -44,7 +44,8 @@
 template <typename... Args>
 auto kamping::Communicator::bcast(Args&&... args) {
     using namespace ::kamping::internal;
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(root, send_recv_buf, send_recv_count));
+    KAMPING_CHECK_PARAMETERS(
+        Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(root, send_recv_buf, send_recv_count));
 
     static_assert(
         all_parameters_are_rvalues<Args...>,
@@ -58,12 +59,12 @@ auto kamping::Communicator::bcast(Args&&... args) {
     // Get the send_recv_buf
     using default_send_recv_buf_type = decltype(kamping::send_recv_buf(NewContainer<std::vector<send_value_type>>{}));
 
-    const bool  has_user_provided_send_recv_buf = has_parameter_type<ParameterType::send_recv_buf>(args...);
-    auto&& send_recv_buf =
+    const bool has_user_provided_send_recv_buf = has_parameter_type<ParameterType::send_recv_buf>(args...);
+    auto&&     send_recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_send_recv_buf_type>(
             std::tuple(), args...);
-    using value_type                            = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
-    auto mpi_value_type                         = mpi_datatype<value_type>();
+    using value_type    = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
+    auto mpi_value_type = mpi_datatype<value_type>();
 
     // Get the recv_count
     const bool has_user_provided_send_recv_count = has_parameter_type<ParameterType::send_recv_count>(args...);
