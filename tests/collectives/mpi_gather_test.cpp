@@ -312,7 +312,7 @@ TEST(GatherTest, gather_different_roots_on_different_processes) {
     Communicator comm;
     auto         value = comm.rank();
 
-    if (kassert::internal::assertion_enabled(assert::light_communication)) {
-        EXPECT_KASSERT_FAILS(comm.gather(send_buf(value), root(comm.rank())), "Root has to be the same on all PEs.");
+    if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
+        EXPECT_KASSERT_FAILS(comm.gather(send_buf(value), root(comm.rank())), "Root has to be the same on all ranks.");
     }
 }
