@@ -24,12 +24,12 @@
 
 namespace kamping {
 
-/// @brief Checks if all PEs provide the same value to this collective.
+/// @brief Checks if all ranks provide the same value to this collective.
 ///
-/// This collective function checks if all PEs have called it with the same value. The result is returned on all ranks.
+/// This collective function checks if all ranks have called it with the same value. The result is returned on all ranks.
 /// @tparam Value Type of the value to check. Must be comparable with `operator==`.
-/// @param value The value of this rank. This value is compared with the ones provided by all other PEs.
-/// @return `true` if all PEs have provided the same value, `false` otherwise.
+/// @param value The value of this rank. This value is compared with the ones provided by all other ranks.
+/// @return `true` if all ranks have provided the same value, `false` otherwise.
 template <typename Value>
 bool Communicator::is_same_on_all_ranks(Value const& value) const {
     // TODO Assert that two values are comparable.
