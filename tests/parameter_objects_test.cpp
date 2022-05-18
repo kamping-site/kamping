@@ -92,7 +92,11 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_moved_vector.get().data()[0], 1);
     EXPECT_EQ(buffer_based_on_moved_vector.get().data()[1], 2);
     EXPECT_EQ(buffer_based_on_moved_vector.get().data()[2], 3);
-    static_assert(std::is_same_v<decltype(buffer_based_on_moved_vector.get().data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_moved_vector.get().data()), int const*>);
+    EXPECT_EQ(buffer_based_on_moved_vector.data()[0], 1);
+    EXPECT_EQ(buffer_based_on_moved_vector.data()[1], 2);
+    EXPECT_EQ(buffer_based_on_moved_vector.data()[2], 3);
+    static_assert(std::is_same_v<decltype(buffer_based_on_moved_vector.data()), int const*>);
 
     EXPECT_EQ(buffer_based_on_rvalue_vector.size(), 3);
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().size(), 3);
@@ -100,6 +104,10 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[1], 2);
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[2], 3);
     static_assert(std::is_same_v<decltype(buffer_based_on_rvalue_vector.get().data()), const int*>);
+    EXPECT_EQ(buffer_based_on_rvalue_vector.data()[0], 1);
+    EXPECT_EQ(buffer_based_on_rvalue_vector.data()[1], 2);
+    EXPECT_EQ(buffer_based_on_rvalue_vector.data()[2], 3);
+    static_assert(std::is_same_v<decltype(buffer_based_on_rvalue_vector.data()), int const*>);
 
     {
         auto const& underlying_container = buffer_based_on_moved_vector.underlying();

@@ -179,6 +179,12 @@ public:
         return _container.size();
     }
 
+    /// @brief Get const access to the underlaying container.
+    /// @return Pointer to the underlying container.
+    value_type const* data() {
+        return _container.data();
+    }
+
     /// @brief Provides access to the underlying container.
     /// @return A reference to the container.
     Container const& underlying() const {
@@ -187,7 +193,7 @@ public:
 
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
-    Span<const value_type> get() const {
+    Span<value_type const> get() const {
         return {std::data(_container), _container.size()};
     }
 
