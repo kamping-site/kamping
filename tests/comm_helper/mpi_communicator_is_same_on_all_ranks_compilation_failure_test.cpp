@@ -1,7 +1,6 @@
-
 // This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPIng Authors
+// Copyright 2022 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -12,7 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "kamping/comm_helper/is_same_on_all_pes.hpp"
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
@@ -25,9 +24,7 @@ int main(int /*argc*/, char** /*argv*/) {
     [[maybe_unused]] int value = 0;
 
 #if defined(VALUE_IS_A_POINTER)
-    std::ignore = comm.is_same_on_all_pes(&value);
-#elif defined(VALUE_IS_NOT_A_POD)
-    std::ignore = comm.is_same_on_all_pes(NotAPod{});
+    std::ignore = comm.is_same_on_all_ranks(&value);
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif
