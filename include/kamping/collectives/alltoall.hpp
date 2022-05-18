@@ -105,7 +105,7 @@ auto kamping::Communicator::alltoall(Args&&... args) const {
 /// the sum of the send_counts argument.
 /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
 ///
-/// The following parameters are optional but incur communication overhead if omitted:
+/// The following parameters are optional but result in communication overhead if omitted:
 /// - \ref kamping::recv_counts() containing the number of elements to receive from each rank.
 ///
 /// The following buffers are optional:
