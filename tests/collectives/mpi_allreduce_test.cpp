@@ -190,15 +190,17 @@ TEST(AllreduceTest, allreduce_custom_operation_on_custom_type) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AllreduceTest, different_send_buf_sizes_fails) {
-    Communicator comm;
-
-    std::vector<int> input(comm.rank());
-    assert(input.size() == comm.rank());
-
-    if (kassert::internal::assertion_enabled(assert::light_communication)) {
-        EXPECT_KASSERT_FAILS(
-            comm.allreduce(send_buf(input), op(kamping::ops::plus<>{})),
-            "The send buffer has to be the same size on all ranks.");
-    }
-}
+// Death test + MPI does not work
+/// @todo Add a prober test for the input validation.
+// TEST(AllreduceTest, different_send_buf_sizes_fails) {
+//     Communicator comm;
+// 
+//     std::vector<int> input(comm.rank());
+//     assert(input.size() == comm.rank());
+// 
+//     if (kassert::internal::assertion_enabled(assert::light_communication)) {
+//         EXPECT_KASSERT_FAILS(
+//             comm.allreduce(send_buf(input), op(kamping::ops::plus<>{})),
+//             "The send buffer has to be the same size on all ranks.");
+//     }
+// }
