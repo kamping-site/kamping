@@ -49,7 +49,7 @@ template <typename... Args>
 auto kamping::Communicator::alltoall(Args&&... args) const {
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
-    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
     MPI_Datatype mpi_send_type    = mpi_datatype<send_value_type>();
@@ -139,7 +139,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
     using send_counts_type  = typename std::remove_reference_t<decltype(send_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<send_counts_type>, int>, "Send counts must be of type int");
-    KASSERT(send_counts.get().size() == this->size(), assert::light);
+    KASSERT(send_counts.size() == this->size(), assert::light);
 
     // Get recv_counts
     using default_recv_counts_type = decltype(kamping::recv_counts_out(NewContainer<std::vector<int>>{}));
@@ -189,21 +189,21 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
         auto send_counts_span = send_counts.get();
         this->alltoall(kamping::send_buf(send_counts_span), kamping::recv_buf(recv_counts_span));
     }
-    KASSERT(recv_counts.get().size() == this->size(), assert::light);
+    KASSERT(recv_counts.size() == this->size(), assert::light);
 
     // Calculate send_displs if necessary
     constexpr bool do_calculate_send_displs = std::remove_reference_t<decltype(send_displs)>::is_modifiable;
     if constexpr (do_calculate_send_displs) {
         send_displs.resize(this->size());
         std::exclusive_scan(
-            send_counts.get().data(), send_counts.get().data() + send_counts.get().size(), send_displs.get().data(), 0);
+            send_counts.data(), send_counts.data() + send_counts.size(), send_displs.data(), 0);
     }
-    KASSERT(send_displs.get().size() == this->size(), assert::light);
+    KASSERT(send_displs.size() == this->size(), assert::light);
     // Check that send displs and send counts match the size of send_buf
     KASSERT(
-        *(send_counts.get().data() + send_counts.get().size() - 1) +       // Last element of send_counts
-                *(send_displs.get().data() + send_displs.get().size() - 1) // Last element of send_displs
-            <= asserting_cast<int>(send_buf.get().size()),
+        *(send_counts.data() + send_counts.size() - 1) +       // Last element of send_counts
+                *(send_displs.data() + send_displs.size() - 1) // Last element of send_displs
+            <= asserting_cast<int>(send_buf.size()),
         assert::light);
 
     // Calculate recv_displs if necessary
@@ -211,24 +211,24 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     if constexpr (do_calculate_recv_displs) {
         recv_displs.resize(this->size());
         std::exclusive_scan(
-            recv_counts.get().data(), recv_counts.get().data() + recv_counts.get().size(), recv_displs.get().data(), 0);
+            recv_counts.data(), recv_counts.data() + recv_counts.size(), recv_displs.data(), 0);
     }
-    KASSERT(recv_displs.get().size() == this->size(), assert::light);
+    KASSERT(recv_displs.size() == this->size(), assert::light);
 
     // Resize recv_buff
-    int recv_buf_size = *(recv_counts.get().data() + recv_counts.get().size() - 1) + // Last element of recv_counts
-                        *(recv_displs.get().data() + recv_displs.get().size() - 1);  // Last element of recv_displs
+    int recv_buf_size = *(recv_counts.data() + recv_counts.size() - 1) + // Last element of recv_counts
+                        *(recv_displs.data() + recv_displs.size() - 1);  // Last element of recv_displs
     recv_buf.resize(asserting_cast<size_t>(recv_buf_size));
 
     // Do the actual alltoallv
     [[maybe_unused]] int err = MPI_Alltoallv(
-        send_buf.get().data(),    // sendbuf
-        send_counts.get().data(), // sendcounts
-        send_displs.get().data(), // sdispls
+        send_buf.data(),    // sendbuf
+        send_counts.data(), // sendcounts
+        send_displs.data(), // sdispls
         mpi_send_type,            // sendtype
-        recv_buf.get().data(),    // sendcounts
-        recv_counts.get().data(), // recvcounts
-        recv_displs.get().data(), // rdispls
+        recv_buf.data(),    // sendcounts
+        recv_counts.data(), // recvcounts
+        recv_displs.data(), // rdispls
         mpi_recv_type,            // recvtype
         mpi_communicator()        // comm
     );
