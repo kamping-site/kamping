@@ -151,11 +151,11 @@ TEST(AlltoallvTest, single_element_with_receive_buffer) {
 TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
     Communicator comm;
 
-    const int num_elements_per_processor_pair = 4;
+    int const num_elements_per_processor_pair = 4;
 
     std::vector<int> input(comm.size() * num_elements_per_processor_pair);
     std::iota(input.begin(), input.end(), 0);
-    std::transform(input.begin(), input.end(), input.begin(), [](const int element) -> int {
+    std::transform(input.begin(), input.end(), input.begin(), [](int const element) -> int {
         return element / num_elements_per_processor_pair;
     });
 
@@ -173,7 +173,7 @@ TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
 
     std::vector<int> expected_displs(comm.size());
     std::iota(expected_displs.begin(), expected_displs.end(), 0);
-    std::transform(expected_displs.begin(), expected_displs.end(), expected_displs.begin(), [](int value) {
+    std::transform(expected_displs.begin(), expected_displs.end(), expected_displs.begin(), [](int const value) {
         return value * num_elements_per_processor_pair;
     });
 
