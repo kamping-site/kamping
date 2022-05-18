@@ -19,7 +19,9 @@
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/error_handling.hpp"
 #include "kamping/mpi_datatype.hpp"
@@ -73,7 +75,9 @@ auto kamping::Communicator::reduce(Args&&... args) const {
         "Types of send and receive buffers do not match.");
     MPI_Datatype type = mpi_datatype<send_value_type>();
 
-    KASSERT(is_valid_rank(root.rank()), "The provided root rank is invalid.");
+    KASSERT(is_valid_rank(root.rank()), "The provided root rank is invalid.", assert::light);
+    KASSERT(
+        this->is_same_on_all_ranks(root.rank()), "Root has to be the same on all ranks.", assert::light_communication);
 
     send_value_type* recv_buf_ptr = nullptr;
     if (rank() == root.rank()) {

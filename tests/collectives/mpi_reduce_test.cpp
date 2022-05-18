@@ -15,6 +15,7 @@
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/collectives/reduce.hpp"
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
@@ -288,5 +289,16 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_type) {
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(ReduceTest, reduce_different_roots_on_different_processes) {
+    Communicator comm;
+    auto         value = comm.rank();
+
+    if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
+        EXPECT_KASSERT_FAILS(
+            comm.reduce(send_buf(value), op(kamping::ops::plus<>{}), root(comm.rank())),
+            "Root has to be the same on all ranks.");
     }
 }

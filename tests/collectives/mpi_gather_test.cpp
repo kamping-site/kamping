@@ -18,6 +18,7 @@
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/collectives/gather.hpp"
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
@@ -304,5 +305,14 @@ TEST(GatherTest, gather_send_and_receive_custom_container) {
         }
     } else {
         EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(GatherTest, gather_different_roots_on_different_processes) {
+    Communicator comm;
+    auto         value = comm.rank();
+
+    if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
+        EXPECT_KASSERT_FAILS(comm.gather(send_buf(value), root(comm.rank())), "Root has to be the same on all ranks.");
     }
 }

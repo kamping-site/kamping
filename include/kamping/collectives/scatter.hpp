@@ -20,6 +20,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/error_handling.hpp"
 #include "kamping/mpi_datatype.hpp"
@@ -80,6 +81,7 @@ auto kamping::Communicator::scatter(Args&&... args) const {
     size_t const root     = root_param.rank();
     int const    int_root = root_param.rank_signed();
     KASSERT(is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << size(), assert::light);
+    KASSERT(this->is_same_on_all_ranks(root), "Root has to be the same on all ranks.", assert::light_communication);
 
     // Mandatory parameter send_buf()
     auto send_buf              = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
