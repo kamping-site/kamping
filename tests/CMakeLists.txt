@@ -65,7 +65,7 @@ kamping_register_compilation_failure_test(
 kamping_register_compilation_failure_test(
   test_mpi_communicator_is_same_on_all_ranks_compilation_failure
   FILES comm_helper/mpi_communicator_is_same_on_all_ranks_compilation_failure_test.cpp
-  SECTIONS "VALUE_IS_A_POINTER" "VALUE_IS_NOT_A_POD"
+  SECTIONS "VALUE_IS_A_POINTER" 
   LIBRARIES kamping_base
 )
 
