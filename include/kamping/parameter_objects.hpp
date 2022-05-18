@@ -122,7 +122,7 @@ public:
         return _container.size();
     }
 
-    /// @brief Get const access to the underlaying container.
+    /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type const* data() {
         return _container.data();
@@ -179,7 +179,7 @@ public:
         return _container.size();
     }
 
-    /// @brief Get const access to the underlaying container.
+    /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type const* data() {
         return _container.data();
@@ -271,7 +271,7 @@ public:
         return &_element;
     }
 
-    /// @brief Get access to the underlaying read-only value.
+    /// @brief Get access to the underlying read-only value.
     /// @return Span referring to the underlying read-only storage.
     Span<const value_type> get() const {
         return {&_element, 1};
@@ -322,7 +322,7 @@ public:
         return _element;
     }
 
-    /// @brief Get access to the underlaying read-only value.
+    /// @brief Get access to the underlying read-only value.
     /// @return Span referring to the underlying read-only storage.
     Span<const value_type> get() const {
         return {&_element, 1};
@@ -372,7 +372,7 @@ public:
         return 1;
     }
 
-    /// @brief Get writable access to the underlaying value.
+    /// @brief Get writable access to the underlying value.
     /// @return Reference to the underlying storage.
     Span<value_type> get() {
         return {&_element, 1};
@@ -436,7 +436,7 @@ public:
         return 1;
     }
 
-    /// @brief Get writable access to the underlaying value.
+    /// @brief Get writable access to the underlying value.
     /// @return Reference to the underlying storage.
     Span<value_type> get() const {
         return {&_element, 1};
@@ -503,13 +503,13 @@ public:
         }
     }
 
-    /// @brief Get writable access to the underlaying container.
+    /// @brief Get writable access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type* data() {
         return _container.data();
     }
 
-    /// @brief Get writable access to the underlaying container.
+    /// @brief Get writable access to the underlying container.
     /// @return Reference to the underlying container.
     Span<value_type> get() {
         return {_container.data(), _container.size()};
@@ -571,13 +571,13 @@ public:
         }
     }
 
-    /// @brief Get writable access to the underlaying container.
+    /// @brief Get writable access to the underlying container.
     /// @return Reference to the underlying container.
     Span<value_type> get() {
         return {_container.data(), _container.size()};
     }
 
-    /// @brief Get writable access to the underlaying container.
+    /// @brief Get writable access to the underlying container.
     /// @return Reference to the underlying container.
     value_type* data() {
         return _container.data();
