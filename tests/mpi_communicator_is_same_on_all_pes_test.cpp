@@ -17,7 +17,7 @@
 #include <mpi.h>
 
 #include "helpers_for_testing.hpp"
-#include "kamping/comm_helper/is_same_on_all_pes.hpp"
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
@@ -28,16 +28,16 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
 
     // All PEs have the same value.
     size_t value = 0;
-    EXPECT_TRUE(comm.is_same_on_all_pes(value));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(value));
 
     // PE with rank 0 has a different value.
     if (comm.rank() == 0) {
         value = 1;
     }
     if (comm.size() > 1) {
-        EXPECT_FALSE(comm.is_same_on_all_pes(value));
+        EXPECT_FALSE(comm.is_same_on_all_ranks(value));
     } else {
-        EXPECT_TRUE(comm.is_same_on_all_pes(value));
+        EXPECT_TRUE(comm.is_same_on_all_ranks(value));
     }
 
     // Try different data types.
@@ -63,17 +63,17 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     };
     ValueStruct value_struct = {0, 0};
 
-    EXPECT_TRUE(comm.is_same_on_all_pes(value_int));
-    EXPECT_TRUE(comm.is_same_on_all_pes(value_ulint));
-    EXPECT_TRUE(comm.is_same_on_all_pes(value_const_short));
-    EXPECT_TRUE(comm.is_same_on_all_pes(value_volatile_long));
-    EXPECT_TRUE(comm.is_same_on_all_pes(value_bool));
-    EXPECT_TRUE(comm.is_same_on_all_pes(value_float));
-    EXPECT_TRUE(comm.is_same_on_all_pes(value_double));
-    EXPECT_TRUE(comm.is_same_on_all_pes(value_char));
-    EXPECT_TRUE(comm.is_same_on_all_pes(ValueEnum::a));
-    EXPECT_TRUE(comm.is_same_on_all_pes(ValueEnumClass::b));
-    EXPECT_TRUE(comm.is_same_on_all_pes(value_struct));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(value_int));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(value_ulint));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(value_const_short));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(value_volatile_long));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(value_bool));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(value_float));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(value_double));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(value_char));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(ValueEnum::a));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(ValueEnumClass::b));
+    EXPECT_TRUE(comm.is_same_on_all_ranks(value_struct));
 
     if (comm.rank() == 0) {
         value_int           = 1;
@@ -87,41 +87,41 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     }
 
     if (comm.size() > 1) {
-        EXPECT_FALSE(comm.is_same_on_all_pes(value_int));
-        EXPECT_FALSE(comm.is_same_on_all_pes(value_ulint));
-        EXPECT_FALSE(comm.is_same_on_all_pes(value_volatile_long));
-        EXPECT_FALSE(comm.is_same_on_all_pes(value_bool));
-        EXPECT_FALSE(comm.is_same_on_all_pes(value_float));
-        EXPECT_FALSE(comm.is_same_on_all_pes(value_double));
-        EXPECT_FALSE(comm.is_same_on_all_pes(value_char));
-        EXPECT_FALSE(comm.is_same_on_all_pes(value_struct));
+        EXPECT_FALSE(comm.is_same_on_all_ranks(value_int));
+        EXPECT_FALSE(comm.is_same_on_all_ranks(value_ulint));
+        EXPECT_FALSE(comm.is_same_on_all_ranks(value_volatile_long));
+        EXPECT_FALSE(comm.is_same_on_all_ranks(value_bool));
+        EXPECT_FALSE(comm.is_same_on_all_ranks(value_float));
+        EXPECT_FALSE(comm.is_same_on_all_ranks(value_double));
+        EXPECT_FALSE(comm.is_same_on_all_ranks(value_char));
+        EXPECT_FALSE(comm.is_same_on_all_ranks(value_struct));
     } else {
-        EXPECT_TRUE(comm.is_same_on_all_pes(value_int));
-        EXPECT_TRUE(comm.is_same_on_all_pes(value_ulint));
-        EXPECT_TRUE(comm.is_same_on_all_pes(value_volatile_long));
-        EXPECT_TRUE(comm.is_same_on_all_pes(value_bool));
-        EXPECT_TRUE(comm.is_same_on_all_pes(value_float));
-        EXPECT_TRUE(comm.is_same_on_all_pes(value_double));
-        EXPECT_TRUE(comm.is_same_on_all_pes(value_char));
-        EXPECT_TRUE(comm.is_same_on_all_pes(value_struct));
+        EXPECT_TRUE(comm.is_same_on_all_ranks(value_int));
+        EXPECT_TRUE(comm.is_same_on_all_ranks(value_ulint));
+        EXPECT_TRUE(comm.is_same_on_all_ranks(value_volatile_long));
+        EXPECT_TRUE(comm.is_same_on_all_ranks(value_bool));
+        EXPECT_TRUE(comm.is_same_on_all_ranks(value_float));
+        EXPECT_TRUE(comm.is_same_on_all_ranks(value_double));
+        EXPECT_TRUE(comm.is_same_on_all_ranks(value_char));
+        EXPECT_TRUE(comm.is_same_on_all_ranks(value_struct));
     }
 
     if (comm.size() > 1) {
         // Compare non-equal const-values.
         if (comm.is_root()) {
             const short value_const_short_2 = 42;
-            EXPECT_FALSE(comm.is_same_on_all_pes(value_const_short_2));
+            EXPECT_FALSE(comm.is_same_on_all_ranks(value_const_short_2));
         } else {
-            EXPECT_FALSE(comm.is_same_on_all_pes(value_const_short));
+            EXPECT_FALSE(comm.is_same_on_all_ranks(value_const_short));
         }
 
         // Compare non-equal enums.
         if (comm.is_root()) {
-            EXPECT_FALSE(comm.is_same_on_all_pes(ValueEnum::a));
-            EXPECT_FALSE(comm.is_same_on_all_pes(ValueEnumClass::a));
+            EXPECT_FALSE(comm.is_same_on_all_ranks(ValueEnum::a));
+            EXPECT_FALSE(comm.is_same_on_all_ranks(ValueEnumClass::a));
         } else {
-            EXPECT_FALSE(comm.is_same_on_all_pes(ValueEnum::b));
-            EXPECT_FALSE(comm.is_same_on_all_pes(ValueEnumClass::b));
+            EXPECT_FALSE(comm.is_same_on_all_ranks(ValueEnum::b));
+            EXPECT_FALSE(comm.is_same_on_all_ranks(ValueEnumClass::b));
         }
     }
 }

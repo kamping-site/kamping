@@ -25,9 +25,9 @@ int main(int /*argc*/, char** /*argv*/) {
     [[maybe_unused]] int value = 0;
 
 #if defined(VALUE_IS_A_POINTER)
-    std::ignore = comm.is_same_on_all_pes(&value);
+    std::ignore = comm.is_same_on_all_ranks(&value);
 #elif defined(VALUE_IS_NOT_A_POD)
-    std::ignore = comm.is_same_on_all_pes(NotAPod{});
+    std::ignore = comm.is_same_on_all_ranks(NotAPod{});
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif
