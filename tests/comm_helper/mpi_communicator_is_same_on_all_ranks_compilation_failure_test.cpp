@@ -1,4 +1,3 @@
-
 // This file is part of KaMPIng.
 //
 // Copyright 2022 The KaMPIng Authors
