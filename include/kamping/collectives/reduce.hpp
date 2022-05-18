@@ -19,7 +19,6 @@
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
-#include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/error_handling.hpp"
@@ -58,9 +57,6 @@ auto kamping::Communicator::reduce(Args&&... args) const {
     const auto& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
-    KASSERT(
-        is_same_on_all_ranks(send_buf.size()), "The send buffer has to be the same size on all ranks.",
-        assert::light_communication);
 
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
     auto&& recv_buf =
@@ -83,8 +79,6 @@ auto kamping::Communicator::reduce(Args&&... args) const {
     if (rank() == root.rank()) {
         recv_buf.resize(send_buf.size());
         recv_buf_ptr = recv_buf.data();
-        KASSERT(recv_buf_ptr != nullptr, "The receive buffer has to be non-null.");
-        KASSERT(send_buf.size() == recv_buf.size(), "The send and receive buffers have to be the same size.");
     }
     [[maybe_unused]] int err = MPI_Reduce(
         send_buf.data(), recv_buf_ptr, asserting_cast<int>(send_buf.size()), type, operation.op(), root.rank_signed(),
