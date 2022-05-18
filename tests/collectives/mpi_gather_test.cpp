@@ -308,11 +308,14 @@ TEST(GatherTest, gather_send_and_receive_custom_container) {
     }
 }
 
-TEST(GatherTest, gather_different_roots_on_different_processes) {
-    Communicator comm;
-    auto         value = comm.rank();
-
-    if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
-        EXPECT_KASSERT_FAILS(comm.gather(send_buf(value), root(comm.rank())), "Root has to be the same on all ranks.");
-    }
-}
+// Death test do not work with MPI.
+/// @todo Implement proper tests for input validation via KASSERT()s.
+// TEST(GatherTest, gather_different_roots_on_different_processes) {
+//     Communicator comm;
+//     auto         value = comm.rank();
+//
+//     if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
+//         EXPECT_KASSERT_FAILS(comm.gather(send_buf(value), root(comm.rank())), "Root has to be the same on all
+//         ranks.");
+//     }
+// }
