@@ -18,6 +18,7 @@
 #include "helpers_for_testing.hpp"
 #include "kamping/parameter_check.hpp"
 #include "kamping/parameter_factories.hpp"
+#include "kamping/parameter_objects.hpp"
 #include "parameter_check_common.hpp"
 
 TEST(ParameterCheckTest, check_empty) {
@@ -83,4 +84,15 @@ TEST(NamedParameterTest, all_parameters_are_rvalues) {
         EXPECT_FALSE(dummy_collective_operation(arg0, decltype(arg1){1}));
         EXPECT_TRUE(dummy_collective_operation(decltype(arg0){0}, decltype(arg1){1}));
     }
+}
+
+TEST(NamedParameterTest, has_to_be_computed) {
+    using namespace kamping::internal;
+
+    std::vector<int> dummy_recv_counts;
+    auto recv_counts_in = kamping::recv_counts(dummy_recv_counts);
+    EXPECT_FALSE(has_to_be_computed(recv_counts_in));
+
+    auto recv_counts_out = kamping::recv_counts_out(kamping::NewContainer<std::vector<int>>{});
+    EXPECT_TRUE(has_to_be_computed(recv_counts_out));
 }

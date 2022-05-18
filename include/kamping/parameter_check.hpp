@@ -358,4 +358,9 @@ struct parameters_to_integral_constant {
 template <typename... Args>
 constexpr bool all_parameters_are_rvalues =
     std::conjunction<std::bool_constant<!std::is_lvalue_reference_v<Args>>...>::value;
+
+template <typename BufferType>
+constexpr bool has_to_be_computed(BufferType const &) {
+    return std::remove_reference_t<BufferType>::is_modifiable;
+}
 } // namespace kamping::internal
