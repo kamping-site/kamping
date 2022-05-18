@@ -25,7 +25,7 @@ using namespace ::testing;
 TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     Communicator comm;
 
-    // All PEs have the same value.
+    // All ranks have the same value.
     size_t value = 0;
     EXPECT_TRUE(comm.is_same_on_all_ranks(value));
 
