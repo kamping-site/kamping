@@ -335,7 +335,7 @@ public:
     }
 
 private:
-    DataType _element; ///< Reference to the actual data.
+    DataType _element; ///< The actual data.
 };
 
 /// @brief Buffer based on a single element type that has been allocated by the library.
@@ -584,7 +584,7 @@ public:
     }
 
     /// @brief Get writable access to the underlying container.
-    /// @return Reference to the underlying container.
+    /// @return Pointer to the underlying container.
     value_type* data() {
         return _container.data();
     }
