@@ -265,6 +265,12 @@ public:
         return 1;
     }
 
+    /// @brief Get const access to the underlying read-only value.
+    /// @return Pointer to the underlying read-only value.
+    value_type const* data() {
+        return &_element;
+    }
+
     /// @brief Get access to the underlaying read-only value.
     /// @return Span referring to the underlying read-only storage.
     Span<const value_type> get() const {
