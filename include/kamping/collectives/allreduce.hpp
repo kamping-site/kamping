@@ -54,7 +54,7 @@ auto kamping::Communicator::allreduce(Args&&... args) const {
     const auto& send_buf          = select_parameter_type<ParameterType::send_buf>(args...).get();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
-    KASSERT(is_same_on_all_ranks(send_buf.size()), "The send buffer has to be the same size on all ranks.");
+    KASSERT(is_same_on_all_ranks(send_buf.size()), "The send buffer has to be the same size on all ranks.", assert::light_communication);
 
     // Deduce the recv buffer type and get (if provided) the recv buffer or allocate one (if not provided).
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
