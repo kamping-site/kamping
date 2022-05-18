@@ -77,7 +77,8 @@ auto kamping::Communicator::gather(Args&&... args) const {
     auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
         std::tuple(this->root()), args...);
     KASSERT(this->is_valid_rank(root.rank()), "Invalid rank as root.");
-    KASSERT(this->is_same_on_all_pes(root.rank()), "Root has to be the same on all PEs.", assert::light_communication);
+    KASSERT(
+        this->is_same_on_all_ranks(root.rank()), "Root has to be the same on all PEs.", assert::light_communication);
 
     auto mpi_send_type = mpi_datatype<send_value_type>();
     auto mpi_recv_type = mpi_datatype<recv_value_type>();
