@@ -327,6 +327,7 @@ TEST(SingleElementOwningBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.size(), 1);
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
+    EXPECT_EQ(*(int_buffer.data()), 5);
     EXPECT_EQ(int_buffer.underlying(), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);

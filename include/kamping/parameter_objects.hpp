@@ -316,6 +316,12 @@ public:
         return 1;
     }
 
+    /// @brief Get const access to the underlying data.
+    /// @return Pointer to the underlying data.
+    value_type const* data() {
+        return &_element;
+    }
+
     /// @brief Provides access to the underlying owned element.
     /// @return A reference to the element.
     DataType const& underlying() const {
