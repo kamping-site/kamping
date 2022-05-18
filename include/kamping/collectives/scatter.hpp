@@ -119,7 +119,7 @@ auto kamping::Communicator::scatter(Args&&... args) const {
         internal::ParameterType::recv_count, LibAllocatedSingleElementBuffer<int, internal::ParameterType::recv_count>>(
         std::tuple(), args...);
 
-    constexpr bool is_output_parameter = std::remove_reference_t<decltype(recv_count_param)>::is_modifiable;
+    constexpr bool is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;
     KASSERT(
         is_output_parameter == bcast_value(*this, is_output_parameter, int_root),
         "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.", assert::light_communication);
