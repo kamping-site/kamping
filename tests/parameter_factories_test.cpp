@@ -611,4 +611,3 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
     EXPECT_EQ(recv_count, 42);
     EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
 }
-
