@@ -35,8 +35,10 @@ TEST(HasDataMemberTest, has_data_member_basics) {
 
     EXPECT_FALSE((kamping::internal::has_data_member_v<int>));
     EXPECT_FALSE((kamping::internal::has_data_member_v<bool>));
-    EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool>>));
-    EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool, testing::CustomAllocator<bool>>>));
+
+    // on some compilers vector<bool> still has .data() but it returns void
+    // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool>>));
+    // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool, testing::CustomAllocator<bool>>>));
 }
 TEST(IsSpecializationTest, is_specialization_basics) {
     EXPECT_TRUE((kamping::internal::is_specialization<std::vector<int>, std::vector>::value));
