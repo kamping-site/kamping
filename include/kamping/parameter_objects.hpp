@@ -124,7 +124,7 @@ public:
 
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
-    value_type const* data() {
+    value_type const* data() const {
         return _container.data();
     }
 
@@ -181,7 +181,7 @@ public:
 
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
-    value_type const* data() {
+    value_type const* data() const {
         return _container.data();
     }
 
@@ -219,7 +219,7 @@ public:
 
     /// @brief Get a nullptr.
     /// @return nullptr.
-    value_type const* data() {
+    value_type const* data() const {
         return nullptr;
     }
 
@@ -267,7 +267,7 @@ public:
 
     /// @brief Get const access to the underlying read-only value.
     /// @return Pointer to the underlying read-only value.
-    value_type const* data() {
+    value_type const* data() const {
         return &_element;
     }
 
@@ -318,7 +318,7 @@ public:
 
     /// @brief Get const access to the underlying data.
     /// @return Pointer to the underlying data.
-    value_type const* data() {
+    value_type const* data() const {
         return &_element;
     }
 
