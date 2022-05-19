@@ -1,21 +1,24 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPI.ng Authors
+// Copyright 2022 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "kamping/assertion_levels.hpp"
+#undef KASSERT_ASSERTION_LEVEL
+#define KASSERT_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION
+
+#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/environment.hpp"
-#include "kamping/kassert.hpp"
-
 using namespace ::kamping;
 
 // This is not using google test because our test setup would call MPI_Init before running any tests

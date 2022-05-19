@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPI.ng Authors
+// Copyright 2021-2022 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 /// @file
@@ -21,10 +21,29 @@
 #include <cstdint>
 #include <type_traits>
 
+#include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "kamping/checking_casts.hpp"
 #include "kamping/error_handling.hpp"
-#include "kamping/kassert.hpp"
+
+namespace kamping::internal {
+
+/// @brief Construct a custom continuous MPI datatype.
+///
+/// @param num_bytes_unsigned The number of bytes for the new type.
+/// @return The newly created MPI_Datatype.
+/// @see mpi_datatype()
+///
+inline MPI_Datatype construct_custom_continuous_type(size_t const num_bytes_unsigned) {
+    int const    num_bytes = asserting_cast<int>(num_bytes_unsigned);
+    MPI_Datatype type      = MPI_DATATYPE_NULL;
+    MPI_Type_contiguous(num_bytes, MPI_CHAR, &type);
+    MPI_Type_commit(&type);
+    KASSERT(type != MPI_DATATYPE_NULL);
+    return type;
+}
+} // namespace kamping::internal
 
 namespace kamping {
 /// @brief Wrapper around bool to allow handling containers of boolean values
@@ -57,12 +76,8 @@ template <size_t NumBytes>
 [[nodiscard]] MPI_Datatype mpi_custom_continuous_type() noexcept {
     static_assert(NumBytes > 0, "You cannot create a continuous type with 0 bytes.");
     // Create a new MPI datatype only the first type per NumBytes this function is called.
-    static MPI_Datatype type = MPI_DATATYPE_NULL;
-    if (type == MPI_DATATYPE_NULL) {
-        MPI_Type_contiguous(NumBytes, MPI_CHAR, &type);
-        MPI_Type_commit(&type);
-        assert(type != MPI_DATATYPE_NULL);
-    }
+    // By initializing this in the same line as the static declaration, this is thread safe.
+    static MPI_Datatype type = internal::construct_custom_continuous_type(NumBytes);
     // From the second call onwards, re-use the existing type.
     return type;
 }

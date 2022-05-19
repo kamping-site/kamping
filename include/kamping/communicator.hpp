@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPI.ng Authors
+// Copyright 2021-2022 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #pragma once
@@ -16,26 +16,17 @@
 #include <cstddef>
 #include <cstdlib>
 
+#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
-#include "kamping/collectives/alltoall.hpp"
-#include "kamping/collectives/barrier.hpp"
-#include "kamping/collectives/gather.hpp"
-#include "kamping/collectives/reduce.hpp"
-#include "kamping/collectives/scatter.hpp"
-#include "kamping/kassert.hpp"
 
 namespace kamping {
 
 /// @brief Wrapper for MPI communicator providing access to \ref rank() and \ref size() of the communicator. The \ref
-/// Communicator is also access point to all MPI communications provided by KaMPI.ng.
-class Communicator : public internal::Alltoall<Communicator>,
-                     public internal::Scatter<Communicator>,
-                     public internal::Reduce<Communicator>,
-                     public internal::Gather<Communicator>,
-                     public internal::Barrier<Communicator> {
+/// Communicator is also access point to all MPI communications provided by KaMPIng.
+class Communicator {
 public:
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
     Communicator() : Communicator(MPI_COMM_WORLD) {}
@@ -199,6 +190,30 @@ public:
     [[nodiscard]] bool is_valid_rank(size_t const rank) const {
         return rank < size();
     }
+
+    template <typename... Args>
+    auto alltoall(Args&&... args) const;
+
+    template <typename... Args>
+    auto alltoallv(Args&&... args) const;
+
+    template <typename... Args>
+    auto scatter(Args&&... args) const;
+
+    template <typename... Args>
+    auto reduce(Args&&... args) const;
+
+    template <typename... Args>
+    auto allreduce(Args&&... args) const;
+
+    template <typename... Args>
+    auto gather(Args&&... args) const;
+
+    template <typename... Args>
+    void barrier(Args&&... args) const;
+
+    template <typename Value>
+    bool is_same_on_all_ranks(Value const& value) const;
 
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.

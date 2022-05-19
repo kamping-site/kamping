@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPI.ng Authors
+// Copyright 2022 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <iostream>
@@ -46,8 +46,8 @@ int main() {
     auto result2 = comm.reduce(send_buf(input), op(my_plus{}, commutative)).extract_recv_buffer();
     print_result_on_root(result2, comm);
 
-    auto result3 [[maybe_unused]] =
-        comm.reduce(send_buf(input), recv_buf(output), op([](auto a, auto b) { return a + b; }, non_commutative));
+    auto result3 [[maybe_unused]] = comm.reduce(
+        send_buf({1.0, 2.0, 3.0}), recv_buf(output), op([](auto a, auto b) { return a + b; }, non_commutative));
     print_result_on_root(output, comm);
 
     std::vector<std::pair<int, double>> input2 = {{3, 0.25}};

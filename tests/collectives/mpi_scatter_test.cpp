@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPI.ng Authors
+// Copyright 2022 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <numeric>
@@ -18,6 +18,8 @@
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
+#include "kamping/collectives/scatter.hpp"
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
@@ -79,10 +81,9 @@ TEST(ScatterTest, scatter_extract_recv_count) {
     auto const input = create_input_vector_on_root(comm, 1);
 
     EXPECT_EQ(comm.scatter(send_buf(input)).extract_recv_count(), 1);
-    EXPECT_EQ(comm.scatter(send_buf(input), recv_count(1)).extract_recv_count(), 1);
 
     int recv_count_value;
-    EXPECT_EQ(comm.scatter(send_buf(input), recv_count_out(recv_count_value)).extract_recv_count(), 1);
+    comm.scatter(send_buf(input), recv_count_out(recv_count_value));
     EXPECT_EQ(recv_count_value, 1);
 }
 
@@ -189,3 +190,14 @@ TEST(ScatterTest, scatter_with_nonempty_sendbuf_on_non_root) {
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
 }
+
+// Death test do not work with MPI.
+// TEST(ScatterTest, scatter_different_roots_on_different_processes) {
+//     Communicator comm;
+//     auto const   input = create_input_vector_on_root(comm, 1);
+//
+//     if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
+//         EXPECT_KASSERT_FAILS(comm.scatter(send_buf(input), root(comm.rank())), "Root has to be the same on all
+//         ranks.");
+//     }
+// }

@@ -14,7 +14,7 @@
 #pragma once
 
 /// @file
-/// @brief Some functions and types simplifying/enabling the development of wrapped \c MPI calls in KaMPI.ng.
+/// @brief Some functions and types simplifying/enabling the development of wrapped \c MPI calls in KaMPIng.
 
 #include <utility>
 
@@ -47,12 +47,12 @@ inline constexpr bool has_extract_v = has_extract<T>::value;
 struct BufferCategoryNotUsed {};
 } // namespace internal
 
-/// @brief MPIResult contains the result of a \c MPI call wrapped by KaMPI.ng.
+/// @brief MPIResult contains the result of a \c MPI call wrapped by KaMPIng.
 ///
 /// A wrapped \c MPI call can have multiple different results such as the \c
 /// recv_buffer, \c recv_counts, \c recv_displs etc. If the buffers where these
 /// results have been written to by the library call has been allocated
-/// by/transferred to KaMPI.ng, the content of the buffers can be extracted using
+/// by/transferred to KaMPIng, the content of the buffers can be extracted using
 /// extract_<result>.
 /// Note that not all below-listed buffer categories needs to be used by every wrapped \c MPI call.
 /// If a specific call does not use a buffer category, you have to provide BufferCategoryNotUsed instead.
@@ -141,38 +141,15 @@ public:
 
 private:
     RecvBuf _recv_buffer;    ///< Buffer object containing the received elements. May be empty if the received elements
-                             ///< have been written into storage owned by the caller of KaMPI.ng.
+                             ///< have been written into storage owned by the caller of KaMPIng.
     RecvCounts _recv_counts; ///< Buffer object containing the receive counts. May be empty if the receive counts have
-                             ///< been written into storage owned by the caller of KaMPI.ng.
+                             ///< been written into storage owned by the caller of KaMPIng.
     RecvCount _recv_count;   ///< Object containing the receive count. May be empty if the operation does not yield a
                              ///< receive count.
     RecvDispls _recv_displs; ///< Buffer object containing the receive displacements. May be empty if the receive
-                             ///< displacements have been written into storage owned by the caller of KaMPI.ng.
+                             ///< displacements have been written into storage owned by the caller of KaMPIng.
     SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if the send
-                             ///< displacements have been written into storage owned by the caller of KaMPI.ng.
-};
-
-/// @brief Helper class for using CRTP for mixins.
-///
-/// Taken from https://www.fluentcpp.com/2017/05/19/crtp-helper/
-/// @tparam BaseClass Type of the class we want to add functionality to
-/// @tparam MixinClass Type of the class template which inherits from \c CRTPHelper and adds functionality to \c
-/// BaseClass.
-template <typename BaseClass, template <typename> class MixinClass>
-struct CRTPHelper {
-private:
-    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the members.
-    /// @return Reference to the underlying base class.
-    BaseClass& underlying() {
-        return static_cast<BaseClass&>(*this);
-    }
-
-    /// @return const-reference to the underlying base class.
-    BaseClass const& underlying() const {
-        return static_cast<BaseClass const&>(*this);
-    }
-
-    CRTPHelper() {} ///< private constructor
+                             ///< displacements have been written into storage owned by the caller of KaMPIng.
 };
 
 } // namespace kamping

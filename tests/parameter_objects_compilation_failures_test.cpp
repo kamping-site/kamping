@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <vector>
@@ -29,12 +29,12 @@ int main(int /*argc*/, char** /*argv*/) {
     int                                                elem = 42;
     SingleElementModifiableBuffer<int, parameter_type> single_elem_modifiable_buffer(elem);
 
+    LibAllocatedSingleElementBuffer<int, parameter_type> lib_alloc_single_element_buffer;
+
     ContainerType                                                    container;
     UserAllocatedContainerBasedBuffer<ContainerType, parameter_type> user_alloc_container_based_buffer(container);
 
     LibAllocatedContainerBasedBuffer<ContainerType, parameter_type> lib_alloc_container_based_buffer;
-
-    RecvCount<int> recv_count(42);
 
     Root root(42);
 
@@ -70,12 +70,12 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif defined(COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     lib_alloc_container_based_buffer = lib_alloc_container_based_buffer;
-#elif defined(COPY_CONSTRUCT_RECV_COUNT_BUFFER)
+#elif defined(COPY_CONSTRUCT_LIB_ALLOC_SINGLE_ELEMENT_BUFFER)
     // should not be possible to copy construct a buffer (for performance reasons)
-    auto tmp = recv_count;
-#elif defined(COPY_ASSIGN_RECV_COUNT_BUFFER)
+    auto tmp = lib_alloc_single_element_buffer;
+#elif defined(COPY_ASSIGN_LIB_ALLOC_SINGLE_ELEMENT_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
-    recv_count = recv_count;
+    lib_alloc_single_element_buffer = lib_alloc_single_element_buffer;
 #elif defined(COPY_CONSTRUCT_ROOT_BUFFER)
     // should not be possible to copy construct a buffer (for performance reasons)
     auto tmp = root;

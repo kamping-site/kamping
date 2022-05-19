@@ -1,7 +1,0 @@
-#!/bin/bash 
-for file in $(git diff --cached --name-only | grep -E '.*\.(c|cpp|h|hpp)\b'); do 
-	clang-format --dry-run --Werror "$file" || exit 1
-done
-
-exit 0
-

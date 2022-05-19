@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include "gmock/gmock.h"
@@ -18,6 +18,8 @@
 #include <mpi.h>
 
 #include "../helpers_for_testing.hpp"
+#include "kamping/collectives/gather.hpp"
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/parameter_factories.hpp"
@@ -401,3 +403,15 @@ TEST(GatherTest, gather_multiple_elements_kabool_with_receive_buffer) {
         EXPECT_EQ(result.size(), 0);
     }
 }
+
+// Death test do not work with MPI.
+/// @todo Implement proper tests for input validation via KASSERT()s.
+// TEST(GatherTest, gather_different_roots_on_different_processes) {
+//     Communicator comm;
+//     auto         value = comm.rank();
+//
+//     if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
+//         EXPECT_KASSERT_FAILS(comm.gather(send_buf(value), root(comm.rank())), "Root has to be the same on all
+//         ranks.");
+//     }
+// }

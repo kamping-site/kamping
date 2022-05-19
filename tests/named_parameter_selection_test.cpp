@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #include <tuple>
@@ -98,10 +98,10 @@ TEST(NamedParameterTest, default_parameters) {
     }
     {
         auto&& selected_arg = select_parameter_type_or_default<ParameterType::root, DefaultArgument>(
-            std::tuple(42, "KaMPI.ng"), arg0, arg1, arg2);
+            std::tuple(42, "KaMPIng"), arg0, arg1, arg2);
         static_assert(std::is_same_v<decltype(selected_arg), DefaultArgument&&>);
         EXPECT_EQ(selected_arg._value, 42);
-        EXPECT_EQ(selected_arg._message, "KaMPI.ng");
+        EXPECT_EQ(selected_arg._message, "KaMPIng");
     }
 }
 

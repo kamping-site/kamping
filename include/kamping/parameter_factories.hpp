@@ -1,24 +1,26 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPI.ng Authors
+// Copyright 2021 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 /// @file
 /// @brief Factory methods for buffer wrappers
 
 #pragma once
 
+#include <initializer_list>
 #include <type_traits>
 
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "kamping/parameter_type_definitions.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -67,6 +69,36 @@ auto send_buf(const Data& data) {
             return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_buf>(data);
         }
     }
+}
+
+/// @brief Generates a buffer wrapper which takes ownership of the data in the send buffer, i.e. the underlying storage
+/// must contain the data element(s) to send.
+///
+/// If the underlying container provides \c data(), it is assumed that it is a container and all elements in the
+/// container are considered for the operation. In this case, the container has to provide a \c size() member functions
+/// and expose the contained \c value_type. If no \c data() member function exists, a single element is wrapped in the
+/// send buffer.
+/// @tparam Data Data type representing the element(s) to send.
+/// @param data Data (either a container which contains the elements or the element directly) to send
+/// @return Object referring to the storage containing the data elements to send.
+template <class Data, typename = std::enable_if_t<std::is_rvalue_reference<Data&&>::value>>
+auto send_buf(Data&& data) {
+    if constexpr (internal::has_data_member_v<Data>) {
+        return internal::ContainerBasedOwningBuffer<Data, internal::ParameterType::send_buf>(std::move(data));
+    } else {
+        return internal::SingleElementOwningBuffer<Data, internal::ParameterType::send_buf>(std::move(data));
+    }
+}
+
+/// @brief Generates a buffer taking ownership of the data pass to the send buffer as an initializer list.
+///
+/// @tparam T The type of the elements in the initializer list.
+/// @param data An initializer list of the data elements.
+/// @return Object referring to the storage containing the data elements to send.
+template <typename T>
+auto send_buf(std::initializer_list<T> data) {
+    std::vector<T> data_vec{data};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_buf>(std::move(data_vec));
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
@@ -148,6 +180,30 @@ auto send_counts(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_counts>(container);
 }
 
+/// @brief Generates a buffer wrapper which takes ownership of the provided container containing the send counts, i.e.
+/// the send counts to each relevant PE.
+///
+/// @tparam Container Container type which contains the send counts.
+/// @param container Container which contains the send counts.
+/// @return Object referring to the storage containing the send counts.
+template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
+auto send_counts(Container&& container) {
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::send_counts>(std::move(container));
+}
+
+/// @brief Generates a buffer wrapper for the send counts based on an initializer list, i.e. the
+/// send counts to each relevant PE.
+///
+/// @tparam Type The type of the initializer list.
+/// @param counts The send counts.
+/// @return Object referring to the storage containing the send counts.
+template <typename T>
+auto send_counts(std::initializer_list<T> counts) {
+    std::vector<T> counts_vec{counts};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_counts>(
+        std::move(counts_vec));
+}
+
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must contain
 /// the recv counts from each relevant PE.
 ///
@@ -161,18 +217,44 @@ auto recv_counts(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
 }
 
+/// @brief Generates buffer wrapper which takes ownership of a container for the recv counts, i.e. the underlying
+/// storage must contain the recv counts from each relevant PE.
+///
+/// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
+/// value_type
+/// @tparam Container Container type which contains the recv counts.
+/// @param container Container which contains the recv counts.
+/// @return Object referring to the storage containing the recv counts.
+template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
+auto recv_counts(Container&& container) {
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::recv_counts>(std::move(container));
+}
+
+/// @brief Generates a buffer wrapper for the recv counts based on an initializer list, i.e. the
+/// recv counts from each relevant PE.
+///
+/// @tparam Type The type of the initializer list.
+/// @param counts The recv counts.
+/// @return Object referring to the storage containing the recv counts.
+template <typename T>
+auto recv_counts(std::initializer_list<T> counts) {
+    std::vector<T> counts_vec{counts};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::recv_counts>(
+        std::move(counts_vec));
+}
+
 /// @brief Generates a wrapper for a recv count input parameter.
 /// @param recv_count The recv count to be encapsulated.
 /// @return Wrapper around the given recv count.
-inline auto recv_count(int const recv_count) {
-    return internal::RecvCount<int const>(recv_count);
+inline auto recv_count(int recv_count) {
+    return internal::SingleElementOwningBuffer<int, internal::ParameterType::recv_count>(recv_count);
 }
 
 /// @brief Generates a wrapper for a recv count output parameter.
 /// @param recv_count_out Reference for the output parameter.
 /// @return Wrapper around the given reference.
 inline auto recv_count_out(int& recv_count_out) {
-    return internal::RecvCount<int&>(recv_count_out);
+    return internal::SingleElementModifiableBuffer<int, internal::ParameterType::recv_count>(recv_count_out);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage must
@@ -188,6 +270,32 @@ auto send_displs(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_displs>(container);
 }
 
+/// @brief Generates buffer wrapper which takes ownership of a container for the send displacements, i.e. the underlying
+/// storage must contain the send displacements to each relevant PE.
+///
+/// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
+/// value_type
+/// @tparam Container Container type which contains the send displacements.
+/// @param container Container which contains the send displacements.
+/// @return Object referring to the storage containing the send displacements.
+template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
+auto send_displs(Container&& container) {
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::send_displs>(std::move(container));
+}
+
+/// @brief Generates a buffer wrapper for the send displacements based on an initializer list, i.e. the
+/// send displacements from each relevant PE.
+///
+/// @tparam Type The type of the initializer list.
+/// @param displs The send displacements.
+/// @return Object referring to the storage containing the send displacements.
+template <typename T>
+auto send_displs(std::initializer_list<T> displs) {
+    std::vector<T> displs_vec{displs};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_displs>(
+        std::move(displs_vec));
+}
+
 /// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage must
 /// contain the recv displacements from each relevant PE.
 ///
@@ -199,6 +307,32 @@ auto send_displs(const Container& container) {
 template <typename Container>
 auto recv_displs(const Container& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_displs>(container);
+}
+
+/// @brief Generates buffer wrapper which takes ownership of a container for the recv displacements, i.e. the underlying
+/// storage must contain the recv displacements from each relevant PE.
+///
+/// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
+/// value_type
+/// @tparam Container Container type which contains the recv displacements.
+/// @param container Container type which contains the recv displacements.
+/// @return Object referring to the storage containing the recv displacements.
+template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
+auto recv_displs(Container&& container) {
+    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::recv_displs>(std::move(container));
+}
+
+/// @brief Generates a buffer wrapper for the receive displacements based on an initializer list, i.e. the
+/// receive displacements from each relevant PE.
+///
+/// @tparam Type The type of the initializer list.
+/// @param displs The receive displacements.
+/// @return Object referring to the storage containing the receive displacements.
+template <typename T>
+auto recv_displs(std::initializer_list<T> displs) {
+    std::vector<T> displs_vec{displs};
+    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::recv_displs>(
+        std::move(displs_vec));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage

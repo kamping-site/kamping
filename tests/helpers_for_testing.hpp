@@ -17,6 +17,7 @@
 #pragma once
 
 #include <cstddef>
+#include <initializer_list>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -33,8 +34,20 @@ class OwnContainer {
 public:
     using value_type = T;
 
-    OwnContainer() = default;
-    OwnContainer(size_t size) : _vec(size) {}
+    OwnContainer() : OwnContainer(0) {}
+    OwnContainer(size_t size) : _vec(size), _copy_count(std::make_shared<size_t>(0)) {}
+    OwnContainer(size_t size, T value) : _vec(size, value), _copy_count(std::make_shared<size_t>(0)) {}
+    OwnContainer(std::initializer_list<T> elems) : _vec(elems), _copy_count(std::make_shared<size_t>(0)) {}
+    OwnContainer(OwnContainer<T> const& rhs) : _vec(rhs._vec), _copy_count(rhs._copy_count) {
+        (*_copy_count)++;
+    }
+    OwnContainer(OwnContainer<T>&& rhs) : _vec(std::move(rhs._vec)), _copy_count(rhs._copy_count) {}
+    OwnContainer<T>& operator=(OwnContainer<T> const& rhs) {
+        this->_vec        = rhs._vec;
+        this->_copy_count = rhs._copy_count;
+        (*_copy_count)++;
+        return *this;
+    }
 
     T* data() noexcept {
         return _vec.data();
@@ -60,12 +73,25 @@ public:
         return _vec[i];
     }
 
+    size_t copy_count() const {
+        return *_copy_count;
+    }
+
     bool operator==(const OwnContainer<T>& other) const {
         return _vec == other._vec;
     }
 
+    auto begin() {
+        return _vec.begin();
+    }
+
+    auto end() {
+        return _vec.end();
+    }
+
 private:
-    std::vector<T> _vec;
+    std::vector<T>          _vec;
+    std::shared_ptr<size_t> _copy_count;
 };
 
 /// @ Mock argument for wrapped \c MPI calls.

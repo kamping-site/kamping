@@ -23,9 +23,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
       COMMENT "Generating Documentation"
       VERBATIM)
+  else()
+    message(STATUS "Doxygen not found, not building docs")
   endif()
-else()
-  message(STATUS "Doxygen not found, not building docs")
 endif()
 
 # Require out-of-source builds
@@ -36,6 +36,7 @@ endif()
 
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
+option(KAMPING_TESTS_DISCOVER OFF)
 
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
 find_package(MPI REQUIRED)
@@ -124,12 +125,16 @@ endif()
 #
 # Assertion levels can be set explicitly using the -DKAMPING_ASSERTION_LEVEL=... flag. If no level is set explicitly,
 # we set it to 1 (exceptions only) in Release mode and 3 (up to normal assertions) in Debug mode.
-set(KAMPING_ASSERTION_LEVEL $<IF:$<CONFIG:Debug>,3,1> CACHE STRING "Higher values enable more complex assertions. To disable all runtime checks, set to '0'.")
-set_property(CACHE KAMPING_ASSERTION_LEVEL PROPERTY STRINGS 0 1 2 3 4 5 6)
-target_compile_definitions(kamping INTERFACE -DKAMPING_ASSERTION_LEVEL=${KAMPING_ASSERTION_LEVEL})
+set(KASSERT_ASSERTION_LEVEL $<IF:$<CONFIG:Debug>,30,10> CACHE STRING "Higher values enable more complex assertions. To disable all runtime checks, set to '0'.")
+set_property(CACHE KASSERT_ASSERTION_LEVEL PROPERTY STRINGS 0 10 20 30 40 50 60)
 
-# Constant for the highest assertion level used by KaMPI.ng
-set(KAMPING_HIGHEST_ASSERTION_LEVEL 6)
+# Constant for the highest assertion level used by KaMPIng
+set(KASSERT_HIGHEST_ASSERTION_LEVEL 60)
+
+add_subdirectory(extern/kassert)
+target_include_directories(kamping_base INTERFACE extern/kassert/include)
+target_link_libraries(kamping_base INTERFACE kassert)
+
 
 add_library(kamping::kamping ALIAS kamping)
 

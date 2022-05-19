@@ -6,10 +6,10 @@ Using the provided `.clang-format` library is mandatory. The CI will reject non-
 
 
 # Scoping and Naming
-* We are working in the `kamping` (KaMPI.ng) namespace to avoid polluting the user's namespace with trivial names as `in`, `out`, or `root`.
+* We are working in the `kamping` (KaMPIng) namespace to avoid polluting the user's namespace with trivial names as `in`, `out`, or `root`.
 * Everything that is not user facing lives in the `internal` namespace.
 * Classes and structs start with an Upper case letter and are using CamelCase.
-* Start variables, attributes, functions, and members with a lower case letter. Use `snake_case`, that is, separate words by an underscore (\_). Write acronyms in lower case letters, e.g., `partitioned_msa` and `generate_mpi_failure`. This also applies to KaMPI.ng -> `kamping`.
+* Start variables, attributes, functions, and members with a lower case letter. Use `snake_case`, that is, separate words by an underscore (\_). Write acronyms in lower case letters, e.g., `partitioned_msa` and `generate_mpi_failure`. This also applies to KaMPIng -> `kamping`.
 * Use the above naming scheme for wrapped MPI functions without adding underscores where the corresponding MPI function doesn't have one.
 * `struct`s have only trivial methods if at all, everything more complicated has to be a `class`. `struct`s are always forbidden to have private members or functions.
 * `std::pair` leads to hard to read code. Use named pairs (`struct`s) instead.
@@ -41,7 +41,7 @@ TODO \@Demian \@Matthias: Rules for API
 # Header files and includes
 * Use `#pragma once` instead of include guards, as it is available on all important compilers.
 * Include all used headers, don't rely on transitive inclusions. Maybe use `include-what-you-use` to check.
-* The `#include` statements will be automatically grouped and sorted by clang-format: STL headers come first, then other system headers followed by KaMPI.ng headers.
+* The `#include` statements will be automatically grouped and sorted by clang-format: STL headers come first, then other system headers followed by KaMPIng headers.
 * Do not use `using namespace` in header files as this would then also apply to all files including this header file.
 * Use the `kamping/` prefix when including our own header files.
 

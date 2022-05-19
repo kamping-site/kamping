@@ -20,9 +20,8 @@
 #include <exception>
 #include <string>
 
+#include <kassert/kassert.hpp>
 #include <mpi.h>
-
-#include "kamping/kassert.hpp"
 
 /// @brief Wrapper around THROWING_KASSERT for MPI errors.
 ///
@@ -32,7 +31,8 @@
 /// 1. The error code returned by the MPI call.
 /// 2. The MPI function that returned the error code.
 #define THROW_IF_MPI_ERROR(error_code, function) \
-    THROWING_KASSERT_SPECIFIED(error_code == MPI_SUCCESS, #function << " failed!", MpiErrorException, error_code);
+    THROWING_KASSERT_SPECIFIED(                  \
+        error_code == MPI_SUCCESS, #function << " failed!", kamping::MpiErrorException, error_code);
 
 namespace kamping {
 
