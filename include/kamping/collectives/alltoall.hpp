@@ -181,7 +181,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     KASSERT(mpi_send_type == mpi_recv_type, "The MPI receive type does not match the MPI send type.", assert::light);
 
     // Calculate recv_counts if necessary
-    constexpr bool do_calculate_recv_counts = std::remove_reference_t<decltype(recv_counts)>::is_modifiable;
+    constexpr bool do_calculate_recv_counts = internal::has_to_be_computed<decltype(recv_counts)>;
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
         recv_counts.resize(this->size());
@@ -192,7 +192,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
     KASSERT(recv_counts.size() == this->size(), assert::light);
 
     // Calculate send_displs if necessary
-    constexpr bool do_calculate_send_displs = std::remove_reference_t<decltype(send_displs)>::is_modifiable;
+    constexpr bool do_calculate_send_displs = internal::has_to_be_computed<decltype(send_displs)>;
     if constexpr (do_calculate_send_displs) {
         send_displs.resize(this->size());
         std::exclusive_scan(
@@ -207,7 +207,7 @@ auto kamping::Communicator::alltoallv(Args&&... args) const {
         assert::light);
 
     // Calculate recv_displs if necessary
-    constexpr bool do_calculate_recv_displs = std::remove_reference_t<decltype(recv_displs)>::is_modifiable;
+    constexpr bool do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
     if constexpr (do_calculate_recv_displs) {
         recv_displs.resize(this->size());
         std::exclusive_scan(
