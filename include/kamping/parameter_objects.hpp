@@ -90,6 +90,8 @@ template <typename T, typename = void>
 static constexpr bool is_vector_bool_v = false;
 
 /// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
+/// This catches the edge case of elements which do not have a value type, they can not be a vector bool.
+///
 /// @tparam T The type.
 /// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
 template <typename T>

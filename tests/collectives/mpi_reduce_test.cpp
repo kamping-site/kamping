@@ -30,15 +30,12 @@ TEST(ReduceTest, reduce_no_receive_buffer) {
 
     auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
 
+    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), 2);
+        EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
-    }
-
-    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
-    if (comm.is_root()) {
-        EXPECT_EQ(result, expected_result);
     }
 
     // Change default root and test with communicator's default root again
@@ -77,13 +74,10 @@ TEST(ReduceTest, reduce_no_receive_buffer_bool) {
 
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), 2);
+        std::vector<kabool> expected_result = {false, true};
+        EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
-    }
-
-    std::vector<kabool> expected_result = {false, true};
-    if (comm.is_root()) {
-        EXPECT_EQ(result, expected_result);
     }
 }
 
@@ -101,15 +95,12 @@ TEST(ReduceTest, reduce_no_receive_buffer_bool_custom_operation) {
     };
     auto result = comm.reduce(send_buf(input), op(my_or, commutative)).extract_recv_buffer();
 
-    if (comm.rank() == comm.root()) {
+    if (comm.is_root()) {
+        std::vector<kabool> expected_result = {false, true};
         EXPECT_EQ(result.size(), 2);
+        EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
-    }
-
-    std::vector<kabool> expected_result = {false, true};
-    if (comm.is_root()) {
-        EXPECT_EQ(result, expected_result);
     }
 }
 
@@ -123,15 +114,12 @@ TEST(ReduceTest, reduce_single_element_no_receive_buffer_bool) {
 
     auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{})).extract_recv_buffer();
 
-    if (comm.rank() == comm.root()) {
+    if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
+        std::vector<kabool> expected_result = {true};
+        EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
-    }
-
-    std::vector<kabool> expected_result = {true};
-    if (comm.is_root()) {
-        EXPECT_EQ(result, expected_result);
     }
 }
 
@@ -145,15 +133,12 @@ TEST(ReduceTest, reduce_single_element_from_bool_no_receive_buffer) {
 
     auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{})).extract_recv_buffer();
 
-    if (comm.rank() == comm.root()) {
+    if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
+        std::vector<kabool> expected_result = {true};
+        EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
-    }
-
-    std::vector<kabool> expected_result = {true};
-    if (comm.is_root()) {
-        EXPECT_EQ(result, expected_result);
     }
 }
 
@@ -168,15 +153,12 @@ TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
 
     comm.reduce(send_buf(input), recv_buf(result), op(ops::logical_or<>{}));
 
-    if (comm.rank() == comm.root()) {
+    if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
+        std::vector<kabool> expected_result = {true};
+        EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
-    }
-
-    std::vector<kabool> expected_result = {true};
-    if (comm.is_root()) {
-        EXPECT_EQ(result, expected_result);
     }
 }
 
@@ -188,15 +170,13 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
 
     comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
 
+    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), 2);
+        EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
-    }
-
-    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
-    if (comm.is_root()) {
-        EXPECT_EQ(result, expected_result);
     }
 
     // Change default root and test with communicator's default root again
