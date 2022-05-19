@@ -93,14 +93,17 @@ static constexpr bool is_vector_bool_v = false;
 /// @tparam T The type.
 /// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
 template <typename T>
-static constexpr bool is_vector_bool_v<T, typename std::enable_if<!has_value_type_v<T>>::type> = false;
+static constexpr bool is_vector_bool_v<
+    T, typename std::enable_if<!has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> = false;
 
 /// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
 /// @tparam T The type.
 /// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
 template <typename T>
-static constexpr bool                          is_vector_bool_v<T, typename std::enable_if<has_value_type_v<T>>::type> =
-    is_specialization<T, std::vector>::value&& std::is_same_v<typename T::value_type, bool>;
+static constexpr bool
+    is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
+        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
+            std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
 
 /// @brief Tag type for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
 template <typename T>
@@ -215,6 +218,10 @@ private:
 
 template <typename Container, ParameterType type>
 class ContainerBasedOwningBuffer {
+    static_assert(
+        !internal::is_vector_bool_v<std::remove_reference_t<Container>>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
+
 public:
     static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
@@ -305,6 +312,10 @@ public:
 /// @tparam ParameterType Parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
 class SingleElementConstBuffer {
+    static_assert(
+        !internal::is_vector_bool_v<DataType>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
+
 public:
     static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
@@ -356,6 +367,10 @@ private:
 /// @tparam ParameterType Parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
 class SingleElementOwningBuffer {
+    static_assert(
+        !internal::is_vector_bool_v<DataType>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
+
 public:
     static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
@@ -411,6 +426,10 @@ private:
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
 class LibAllocatedSingleElementBuffer {
+    static_assert(
+        !internal::is_vector_bool_v<DataType>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
+
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable  = true; ///< Indicates whether the underlying storage is modifiable.
@@ -476,6 +495,10 @@ private:
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
 class SingleElementModifiableBuffer {
+    static_assert(
+        !internal::is_vector_bool_v<DataType>,
+        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
+
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable  = true; ///< Indicates whether the underlying storage is modifiable.

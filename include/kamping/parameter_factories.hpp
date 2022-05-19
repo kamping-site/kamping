@@ -51,9 +51,6 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename Data>
 auto send_buf(const Data& data) {
-    static_assert(
-        !internal::is_vector_bool_v<Data>,
-        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
     if constexpr (internal::has_data_member_v<Data>) {
         return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_buf>(data);
     } else {
@@ -63,8 +60,7 @@ auto send_buf(const Data& data) {
             // we have to reinterpret_cast the value here, because constructing a "real" kabool would result in an
             // intermediate object, passed by lvalue-ref to SingleElementConstBuffer, which would get destroyed after
             // the call of this factory, resulting in a reference to a non-existent value.
-            return internal::SingleElementConstBuffer<kabool, internal::ParameterType::send_buf>(
-                reinterpret_cast<kabool const&>(data));
+            return internal::SingleElementOwningBuffer<kabool, internal::ParameterType::send_buf>(data);
         } else {
             return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_buf>(data);
         }
@@ -144,10 +140,6 @@ auto send_recv_buf(Data& data) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename Data>
 auto send_recv_buf(const Data& data) {
-    static_assert(
-        !internal::is_vector_bool_v<Data>,
-        "std::vector<bool> can not be used with MPI, please use a container of kamping::kabool instead.");
-
     if constexpr (internal::has_data_member_v<Data>) {
         return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_recv_buf>(data);
     } else {

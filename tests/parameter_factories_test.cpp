@@ -612,9 +612,3 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
     EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
 }
 
-TEST(IsVectorBoolTest, is_vector_bool_basics) {
-    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>>);
-    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>>);
-    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool>>);
-    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int>);
-}

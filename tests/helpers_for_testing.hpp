@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <initializer_list>
+#include <memory>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -100,6 +101,20 @@ struct Argument {
     static constexpr kamping::internal::ParameterType parameter_type = _parameter_type;
     Argument(int i) : _i{i} {}
     int _i;
+};
+
+template <typename T>
+struct CustomAllocator {
+    using value_type = T;
+    using pointer    = T*;
+    using size_type  = size_t;
+
+    pointer allocate(size_type n) {
+        return malloc(n * sizeof(value_type));
+    }
+    void deallocate(pointer p, size_type) {
+        free(p);
+    }
 };
 
 /// @brief Custom expectation for testing if a KASSERT fails.

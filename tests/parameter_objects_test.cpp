@@ -12,7 +12,10 @@
 // <https://www.gnu.org/licenses/>.
 
 #include "gtest/gtest.h"
+#include <array>
+#include <deque>
 #include <type_traits>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -22,6 +25,63 @@
 
 using namespace ::kamping;
 using namespace ::kamping::internal;
+
+TEST(HasDataMemberTest, has_data_member_basics) {
+    EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<int>>);
+    EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<double>>);
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::vector<double, testing::CustomAllocator<double>>>));
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::string>));
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::array<int, 42>>));
+
+    EXPECT_FALSE((kamping::internal::has_data_member_v<int>));
+    EXPECT_FALSE((kamping::internal::has_data_member_v<bool>));
+    EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool>>));
+    EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool, testing::CustomAllocator<bool>>>));
+}
+TEST(IsSpecializationTest, is_specialization_basics) {
+    EXPECT_TRUE((kamping::internal::is_specialization<std::vector<int>, std::vector>::value));
+    EXPECT_TRUE((kamping::internal::is_specialization<std::vector<bool>, std::vector>::value));
+    EXPECT_TRUE(
+        (kamping::internal::is_specialization<std::vector<int, testing::CustomAllocator<int>>, std::vector>::value));
+    EXPECT_TRUE((kamping::internal::is_specialization<
+                 std::vector<double, testing::CustomAllocator<double>>, std::vector>::value));
+    EXPECT_TRUE((kamping::internal::is_specialization<std::deque<int>, std::deque>::value));
+
+    EXPECT_FALSE((kamping::internal::is_specialization<std::array<int, 2>, std::vector>::value));
+    EXPECT_FALSE((kamping::internal::is_specialization<std::deque<int>, std::vector>::value));
+    EXPECT_FALSE((kamping::internal::is_specialization<int, std::vector>::value));
+}
+TEST(HasValueTypeTest, has_value_type_basics) {
+    EXPECT_TRUE(kamping::internal::has_value_type_v<std::vector<int>>);
+    EXPECT_TRUE(kamping::internal::has_value_type_v<std::vector<bool>>);
+    EXPECT_TRUE((kamping::internal::has_value_type_v<std::array<int, 42>>));
+    EXPECT_TRUE((kamping::internal::has_value_type_v<std::string>));
+
+    EXPECT_FALSE((kamping::internal::has_value_type_v<int>));
+    EXPECT_FALSE((kamping::internal::has_value_type_v<double>));
+    EXPECT_FALSE((kamping::internal::has_value_type_v<bool>));
+}
+
+TEST(IsVectorBoolTest, is_vector_bool_basics) {
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>>);
+    EXPECT_TRUE((kamping::internal::is_vector_bool_v<std::vector<bool, testing::CustomAllocator<bool>>>));
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<const std::vector<bool>>);
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>&>);
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool> const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>>);
+    EXPECT_FALSE((kamping::internal::is_vector_bool_v<std::vector<int, testing::CustomAllocator<int>>>));
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int> const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool>>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool>&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool> const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<bool>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<bool&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<bool const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int const&>);
+}
 
 // Tests the basic functionality of EmptyBuffer
 TEST(EmptyBufferTest, get_basics) {
