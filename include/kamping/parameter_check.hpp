@@ -78,12 +78,6 @@
 /// @param optional A list of optional parameter type names wrapped in a KAMPING_OPTIONAL_PARAMETERS macro.
 #define KAMPING_CHECK_PARAMETERS(args, required, optional)                                                       \
     do {                                                                                                         \
-        /* This should only fail when an operation is not implemented correctly. The user should have no way of  \
-         * encountering this. */                                                                                 \
-        static_assert(                                                                                           \
-            kamping::internal::all_parameters_are_values<args...>,                                               \
-            "All parameters have to be passed in as value, meaning that you must not pass a reference.");        \
-                                                                                                                 \
         KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(args, required);                                  \
                                                                                                                  \
         using required_parameters_types = typename kamping::internal::parameter_types_to_integral_constants<     \
@@ -353,17 +347,6 @@ struct parameters_to_integral_constant {
     using type = decltype(std::tuple_cat(
         std::tuple<typename parameter_type_to_integral_constant<Parameters::parameter_type>::type>{}...));
 };
-
-/// @brief Checks if all named parameters are passed as rvalues.
-/// @tparam Args The types of the arguments to validate.
-template <typename... Args>
-constexpr bool all_parameters_are_rvalues =
-    std::conjunction<std::bool_constant<!std::is_lvalue_reference_v<Args>>...>::value;
-
-/// @brief Checks if all named parameters are passed as values.
-/// @tparam Args The types of the arguments to validate.
-template <typename... Args>
-constexpr bool all_parameters_are_values = std::conjunction<std::bool_constant<!std::is_reference_v<Args>>...>::value;
 
 /// @brief Checks if the buffer has to be computed by kamping, i.e. if it is an output parameter
 /// @tparam BufferType The buffer type to be checked
