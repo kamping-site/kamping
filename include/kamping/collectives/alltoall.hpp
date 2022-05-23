@@ -46,7 +46,7 @@
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
 template <typename... Args>
-auto kamping::Communicator::alltoall(Args&&... args) const {
+auto kamping::Communicator::alltoall(Args... args) const {
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
     auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
@@ -123,7 +123,7 @@ auto kamping::Communicator::alltoall(Args&&... args) const {
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer, counts and displacements if not specified as input parameter.
 template <typename... Args>
-auto kamping::Communicator::alltoallv(Args&&... args) const {
+auto kamping::Communicator::alltoallv(Args... args) const {
     // Get all parameter objects
     KAMPING_CHECK_PARAMETERS(
         Args, KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
