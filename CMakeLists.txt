@@ -123,7 +123,7 @@ endif()
 # Level 6: Heavy assertions = assertions that introduce overhead which renders some library operations infeasible when
 #          invoked with any significant work load.
 #
-# Assertion levels can be set explicitly using the -DKAMPING_ASSERTION_LEVEL=... flag. If no level is set explicitly,
+# Assertion levels can be set explicitly using the -DKASSERT_ASSERTION_LEVEL=... flag. If no level is set explicitly,
 # we set it to 1 (exceptions only) in Release mode and 3 (up to normal assertions) in Debug mode.
 set(KASSERT_ASSERTION_LEVEL $<IF:$<CONFIG:Debug>,30,10> CACHE STRING "Higher values enable more complex assertions. To disable all runtime checks, set to '0'.")
 set_property(CACHE KASSERT_ASSERTION_LEVEL PROPERTY STRINGS 0 10 20 30 40 50 60)
