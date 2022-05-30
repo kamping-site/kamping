@@ -87,13 +87,13 @@ namespace internal {
 //     Span<T> _span; ///< Actual storage to which PtrBasedConstBuffer refers.
 // };
 
-enum modifiability : bool { modifiable = true, constant = false };
-enum ownership : bool { owning = true, referencing = false };
+enum modifiability_flag : bool { modifiable = true, constant = false };
+enum ownership_flag : bool { owning = true, referencing = false };
 enum allocation_flag : bool { lib_allocated = true, user_allocated = false };
 
 template <
-    typename ContainerType, ParameterType type, modifiability is_modifiable_tparam, ownership is_owning_buffer,
-    allocation_flag allocation = allocation_flag::user_allocated>
+    typename ContainerType, ParameterType type, modifiability_flag is_modifiable_tparam,
+    ownership_flag is_owning_buffer, allocation_flag is_lib_allocated = allocation_flag::user_allocated>
 class ContainerBasedBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
@@ -114,7 +114,7 @@ public:
     ContainerBasedBuffer(ContainerType container) : _container(std::move(container)) {}
 
     /// @brief Constructor for owning ContainerBasedBuffer.
-    template <bool enable = allocation == allocation_flag::lib_allocated, std::enable_if_t<enable, bool> = true>
+    template <bool enable = is_lib_allocated, std::enable_if_t<enable, bool> = true>
     ContainerBasedBuffer() : _container() {}
 
     /// @brief Move constructor for ContainerBasedBuffer.
@@ -191,7 +191,7 @@ public:
     /// state.
     ///
     /// @return Moves the underlying container out of the ContainerBasedBuffer.
-    template <bool enable = allocation == allocation_flag::lib_allocated, std::enable_if_t<enable, bool> = true>
+    template <bool enable = is_lib_allocated == allocation_flag::lib_allocated, std::enable_if_t<enable, bool> = true>
     ContainerTypeWithConst extract() {
         return std::move(_container);
     }
@@ -208,7 +208,7 @@ private:
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
 using ContainerBasedConstBuffer =
-    ContainerBasedBuffer<Container, type, modifiability::constant, ownership::referencing>;
+    ContainerBasedBuffer<Container, type, modifiability_flag::constant, ownership_flag::referencing>;
 
 /// @brief Read-only buffer owning a container type passed to it.
 ///
@@ -218,7 +218,8 @@ using ContainerBasedConstBuffer =
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
-using ContainerBasedOwningBuffer = ContainerBasedBuffer<Container, type, modifiability::constant, ownership::owning>;
+using ContainerBasedOwningBuffer =
+    ContainerBasedBuffer<Container, type, modifiability_flag::constant, ownership_flag::owning>;
 
 /// @brief Buffer based on a container type that has been allocated by the user (but may be resized if the provided
 /// space is not sufficient).
@@ -230,7 +231,7 @@ using ContainerBasedOwningBuffer = ContainerBasedBuffer<Container, type, modifia
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType parameter_type>
 using UserAllocatedContainerBasedBuffer =
-    ContainerBasedBuffer<Container, parameter_type, modifiability::modifiable, ownership::referencing>;
+    ContainerBasedBuffer<Container, parameter_type, modifiability_flag::modifiable, ownership_flag::referencing>;
 
 /// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
 ///
@@ -240,8 +241,8 @@ using UserAllocatedContainerBasedBuffer =
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
-using LibAllocatedContainerBasedBuffer =
-    ContainerBasedBuffer<Container, type, modifiability::modifiable, ownership::owning, allocation_flag::lib_allocated>;
+using LibAllocatedContainerBasedBuffer = ContainerBasedBuffer<
+    Container, type, modifiability_flag::modifiable, ownership_flag::owning, allocation_flag::lib_allocated>;
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
