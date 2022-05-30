@@ -87,8 +87,11 @@ namespace internal {
 //     Span<T> _span; ///< Actual storage to which PtrBasedConstBuffer refers.
 // };
 
+/// @brief Enum to specify whether a buffer is modifiable
 enum modifiability_flag : bool { modifiable = true, constant = false };
+/// @brief Enum to specify whether a buffer owns its data
 enum ownership_flag : bool { owning = true, referencing = false };
+/// @brief Enum to specify whether a buffer is allocated by the library or the user
 enum allocation_flag : bool { lib_allocated = true, user_allocated = false };
 
 /// @brief Buffer based on a container type.
