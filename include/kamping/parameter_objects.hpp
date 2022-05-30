@@ -191,7 +191,7 @@ public:
     /// state.
     ///
     /// @return Moves the underlying container out of the ContainerBasedBuffer.
-    template <bool enable = is_lib_allocated == allocation_flag::lib_allocated, std::enable_if_t<enable, bool> = true>
+    template <bool enable = is_lib_allocated, std::enable_if_t<enable, bool> = true>
     ContainerTypeWithConst extract() {
         return std::move(_container);
     }
