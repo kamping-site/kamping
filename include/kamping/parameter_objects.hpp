@@ -176,7 +176,6 @@ public:
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
     // template <std::enable_if_t<!is_modifiable, bool> = true>
-    template <bool enabled = !is_modifiable, std::enable_if_t<enabled, bool> = true>
     value_type const* data() const {
         return std::data(_container);
     }
@@ -190,7 +189,6 @@ public:
 
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
-    template <bool enabled = !is_modifiable, std::enable_if_t<enabled, bool> = true>
     Span<value_type const> get() const {
         return {std::data(_container), _container.size()};
     }
