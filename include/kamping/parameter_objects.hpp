@@ -126,16 +126,16 @@ public:
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.
-    template <bool enable = !is_owning_buffer, std::enable_if_t<enable, bool> = true>
+    template <bool enabled = !is_owning_buffer, std::enable_if_t<enabled, bool> = true>
     ContainerBasedBuffer(ContainerTypeWithConst& container) : _container(container) {}
 
     /// @brief Constructor for owning ContainerBasedBuffer.
     /// @param container Container holding the actual data.
-    template <bool enable = is_owning_buffer, std::enable_if_t<enable, bool> = true>
+    template <bool enabled = is_owning_buffer, std::enable_if_t<enabled, bool> = true>
     ContainerBasedBuffer(ContainerType container) : _container(std::move(container)) {}
 
     /// @brief Constructor for owning ContainerBasedBuffer.
-    template <bool enable = is_lib_allocated, std::enable_if_t<enable, bool> = true>
+    template <bool enabled = is_lib_allocated, std::enable_if_t<enabled, bool> = true>
     ContainerBasedBuffer() : _container() {}
 
     /// @brief Move constructor for ContainerBasedBuffer.
@@ -164,8 +164,8 @@ public:
     /// is  copied depends in the implementation of the container.
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
-    template <bool enabled = is_modifiable>
-    typename std::enable_if<enabled, void>::type resize(size_t size) {
+    template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
+    void resize(size_t size) {
         if constexpr (!std::is_same_v<ContainerType, Span<value_type>>) {
             _container.resize(size);
         } else {
@@ -176,29 +176,29 @@ public:
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
     // template <std::enable_if_t<!is_modifiable, bool> = true>
-    template <bool enabled = !is_modifiable>
-    typename std::enable_if<enabled, value_type const*>::type data() const {
+    template <bool enabled = !is_modifiable, std::enable_if_t<enabled, bool> = true>
+    value_type const* data() const {
         return _container.data();
     }
 
     /// @brief Get writable access to the underlying container.
     /// @return Pointer to the underlying container.
-    template <bool enabled = is_modifiable>
-    typename std::enable_if<enabled, value_type*>::type data() {
+    template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
+    value_type* data() {
         return _container.data();
     }
 
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
     template <bool enabled = !is_modifiable>
-    typename std::enable_if<enabled, Span<value_type const>>::type get() const {
+    Span<value_type const> get() const {
         return {std::data(_container), _container.size()};
     }
 
     /// @brief Get access to the underlying modifiable storage.
     /// @return Span referring to the underlying modifiable storage.
-    template <bool enabled = is_modifiable>
-    typename std::enable_if<enabled, Span<value_type>>::type get() {
+    template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
+    Span<value_type> get() {
         return {std::data(_container), _container.size()};
     }
 
