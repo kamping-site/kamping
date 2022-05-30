@@ -87,33 +87,45 @@ namespace internal {
 //     Span<T> _span; ///< Actual storage to which PtrBasedConstBuffer refers.
 // };
 
-/// @brief Constant buffer based on a container type.
-///
-/// ContainerBasedConstBuffer wraps read-only buffer storage provided by an std-like container like std::vector. The
-/// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
-/// @tparam Container Container on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
-template <typename Container, ParameterType type>
-class ContainerBasedConstBuffer {
+enum modifiability : bool { modifiable = true, constant = false };
+enum ownership : bool { owning = true, referencing = false };
+enum allocation_flag : bool { lib_allocated = true, user_allocated = false };
+
+template <
+    typename ContainerType, ParameterType type, modifiability is_modifiable_tparam, ownership is_owning_buffer,
+    allocation_flag allocation = allocation_flag::user_allocated>
+class ContainerBasedBuffer {
 public:
-    static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
-    using value_type                              = typename Container::value_type; ///< Value type of the buffer.
+    static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
+    static constexpr bool          is_modifiable =
+        is_modifiable_tparam; ///< Indicates whether the underlying storage is modifiable.
+    using ContainerTypeWithConst = std::conditional_t<is_modifiable, ContainerType, ContainerType const>;
+    using ContainerTypeWithRef = std::conditional_t<is_owning_buffer, ContainerTypeWithConst, ContainerTypeWithConst&>;
+    using value_type           = typename ContainerType::value_type; ///< Value type of the buffer.
 
-    /// @brief Constructor for ContainerBasedConstBuffer.
+    /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.
-    ContainerBasedConstBuffer(Container const& container) : _container(container) {}
+    template <bool enable = !is_owning_buffer, std::enable_if_t<enable, bool> = true>
+    ContainerBasedBuffer(ContainerTypeWithConst& container) : _container(container) {}
 
-    /// @brief Move constructor for ContainerBasedConstBuffer.
-    ContainerBasedConstBuffer(ContainerBasedConstBuffer&&) = default;
-    // move assignment operator is implicitly deleted as this buffer has a reference member
+    /// @brief Constructor for owning ContainerBasedBuffer.
+    /// @param container Container holding the actual data.
+    template <bool enable = is_owning_buffer, std::enable_if_t<enable, bool> = true>
+    ContainerBasedBuffer(ContainerType container) : _container(std::move(container)) {}
+
+    /// @brief Constructor for owning ContainerBasedBuffer.
+    template <bool enable = allocation == allocation_flag::lib_allocated, std::enable_if_t<enable, bool> = true>
+    ContainerBasedBuffer() : _container() {}
+
+    /// @brief Move constructor for ContainerBasedBuffer.
+    ContainerBasedBuffer(ContainerBasedBuffer&&) = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    ContainerBasedConstBuffer(ContainerBasedConstBuffer const&) = delete;
+    ContainerBasedBuffer(ContainerBasedBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    ContainerBasedConstBuffer& operator=(ContainerBasedConstBuffer const&) = delete;
+    ContainerBasedBuffer& operator=(ContainerBasedBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
     /// @brief Get the number of elements in the underlying storage.
@@ -122,21 +134,81 @@ public:
         return _container.size();
     }
 
+    /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
+    /// a \c Span.
+    ///
+    /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
+    /// Span,  KaMPIng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
+    /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
+    /// is  copied depends in the implementation of the container.
+    ///
+    /// @param size Size the container is resized to if it is not a \c Span.
+    template <bool enabled = is_modifiable>
+    typename std::enable_if<enabled, void>::type resize(size_t size) {
+        if constexpr (!std::is_same_v<ContainerType, Span<value_type>>) {
+            _container.resize(size);
+        } else {
+            KASSERT(_container.size() >= size, "Span cannot be resized and is smaller than the requested size.");
+        }
+    }
+
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
-    value_type const* data() const {
+    // template <std::enable_if_t<!is_modifiable, bool> = true>
+    template <bool enabled = !is_modifiable>
+    typename std::enable_if<enabled, value_type const*>::type data() const {
+        return _container.data();
+    }
+
+    /// @brief Get writable access to the underlying container.
+    /// @return Pointer to the underlying container.
+    template <bool enabled = is_modifiable>
+    typename std::enable_if<enabled, value_type*>::type data() {
         return _container.data();
     }
 
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
-    Span<value_type const> get() const {
+    template <bool enabled = !is_modifiable>
+    typename std::enable_if<enabled, Span<value_type const>>::type get() const {
         return {std::data(_container), _container.size()};
     }
 
+    /// @brief Get access to the underlying modifiable storage.
+    /// @return Span referring to the underlying modifiable storage.
+    template <bool enabled = is_modifiable>
+    typename std::enable_if<enabled, Span<value_type>>::type get() {
+        return {std::data(_container), _container.size()};
+    }
+
+    /// @brief Provides access to the underlying container.
+    /// @return A reference to the container.
+    ContainerType const& underlying() const {
+        return _container;
+    }
+
+    /// @brief Extract the underlying container. This will leave ontainerBasedBuffer in an unspecified
+    /// state.
+    ///
+    /// @return Moves the underlying container out of the ContainerBasedBuffer.
+    template <bool enable = allocation == allocation_flag::lib_allocated, std::enable_if_t<enable, bool> = true>
+    ContainerTypeWithConst extract() {
+        return std::move(_container);
+    }
+
 private:
-    const Container& _container; ///< Container which holds the actual data.
+    ContainerTypeWithRef _container; ///< Container which holds the actual data.
 };
+
+/// @brief Constant buffer based on a container type.
+///
+/// ContainerBasedConstBuffer wraps read-only buffer storage provided by an std-like container like std::vector. The
+/// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
+/// @tparam Container Container on which this buffer is based.
+/// @tparam ParameterType parameter type represented by this buffer.
+template <typename Container, ParameterType type>
+using ContainerBasedConstBuffer =
+    ContainerBasedBuffer<Container, type, modifiability::constant, ownership::referencing>;
 
 /// @brief Read-only buffer owning a container type passed to it.
 ///
@@ -145,61 +217,31 @@ private:
 /// expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
-
 template <typename Container, ParameterType type>
-class ContainerBasedOwningBuffer {
-public:
-    static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
-    using value_type                              = typename Container::value_type; ///< Value type of the buffer.
-    static_assert(
-        !std::is_same_v<Container, std::initializer_list<value_type>>,
-        "Passing intializer lists directly is prohibited because they cause ownership problems.");
+using ContainerBasedOwningBuffer = ContainerBasedBuffer<Container, type, modifiability::constant, ownership::owning>;
 
-    /// @brief Constructor for ContainerBasedConstBuffer.
-    /// @param container Container holding the actual data.
-    ContainerBasedOwningBuffer(Container container) : _container(std::move(container)) {}
+/// @brief Buffer based on a container type that has been allocated by the user (but may be resized if the provided
+/// space is not sufficient).
+///
+/// UserAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like std::vector
+/// that has already been allocated by the user. The Container type must provide \c data(), \c size() and \c resize()
+/// and expose the type definition \c value_type. type.
+/// @tparam Container Container on which this buffer is based.
+/// @tparam ParameterType parameter type represented by this buffer.
+template <typename Container, ParameterType parameter_type>
+using UserAllocatedContainerBasedBuffer =
+    ContainerBasedBuffer<Container, parameter_type, modifiability::modifiable, ownership::referencing>;
 
-    /// @brief Move constructor for ContainerBasedConstBuffer.
-    ContainerBasedOwningBuffer(ContainerBasedOwningBuffer&&) = default;
-
-    /// @brief Move assignment operator
-    ContainerBasedOwningBuffer& operator=(ContainerBasedOwningBuffer&&) = default;
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    ContainerBasedOwningBuffer(ContainerBasedOwningBuffer const&) = delete;
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    ContainerBasedOwningBuffer& operator=(ContainerBasedOwningBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Get the number of elements in the underlying storage.
-    /// @return Number of elements in the underlying storage.
-    size_t size() const {
-        return _container.size();
-    }
-
-    /// @brief Get const access to the underlying container.
-    /// @return Pointer to the underlying container.
-    value_type const* data() const {
-        return _container.data();
-    }
-
-    /// @brief Provides access to the underlying container.
-    /// @return A reference to the container.
-    Container const& underlying() const {
-        return _container;
-    }
-
-    /// @brief Get access to the underlying read-only storage.
-    /// @return Span referring to the underlying read-only storage.
-    Span<value_type const> get() const {
-        return {std::data(_container), _container.size()};
-    }
-
-private:
-    const Container _container; ///< Container which holds the actual data.
-};
+/// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
+///
+/// LibAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like
+/// std::vector that will be allocated by KaMPIng. The Container type must provide \c data(), \c size() and \c
+/// resize() and expose the type definition \c value_type. type.
+/// @tparam Container Container on which this buffer is based.
+/// @tparam ParameterType parameter type represented by this buffer.
+template <typename Container, ParameterType type>
+using LibAllocatedContainerBasedBuffer =
+    ContainerBasedBuffer<Container, type, modifiability::modifiable, ownership::owning, allocation_flag::lib_allocated>;
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
@@ -462,161 +504,6 @@ public:
 
 private:
     DataType& _element; ///< (Writable) reference to the actual data.
-};
-
-/// @brief Struct containing some definitions used by all modifiable buffers.
-///
-/// @tparam ParameterType (parameter) type represented by this buffer
-/// @tparam is_consumable_ indicates whether this buffer already contains useable data
-template <ParameterType type>
-struct BufferParameterType {
-    static constexpr ParameterType parameter_type = type; ///< ParameterType which the buffer represents.
-    static constexpr bool          is_modifiable  = true; ///< Indicates whether the underlying storage is modifiable.
-};
-
-/// @brief Buffer based on a container type that has been allocated by the user (but may be resized if the provided
-/// space is not sufficient).
-///
-/// UserAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like std::vector
-/// that has already been allocated by the user. The Container type must provide \c data(), \c size() and \c resize()
-/// and expose the type definition \c value_type. type.
-/// @tparam Container Container on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
-template <typename Container, ParameterType parameter_type>
-class UserAllocatedContainerBasedBuffer : public BufferParameterType<parameter_type> {
-public:
-    using value_type = typename Container::value_type; ///< Value type of the buffer.
-
-    /// @brief Constructor for UserAllocatedContainerBasedBuffer.
-    /// param container Container providing storage for data that may be written.
-    UserAllocatedContainerBasedBuffer(Container& cont) : _container(cont) {}
-
-    /// @brief Move constructor for UserAllocatedContainerBasedBuffer (implicitly deletes copy constructor/assignment
-    /// operator).
-    UserAllocatedContainerBasedBuffer(UserAllocatedContainerBasedBuffer&&) = default;
-    // move assignment operator is implicitly deleted as this buffer has a reference member
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    UserAllocatedContainerBasedBuffer(UserAllocatedContainerBasedBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    UserAllocatedContainerBasedBuffer& operator=(UserAllocatedContainerBasedBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
-    /// a \c Span.
-    ///
-    /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
-    /// Span,  KaMPIng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
-    /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
-    /// is  copied depends in the implementation of the container.
-    ///
-    /// @param size Size the container is resized to if it is not a \c Span.
-    void resize(size_t size) {
-        if constexpr (!std::is_same_v<Container, Span<value_type>>) {
-            _container.resize(size);
-        } else {
-            KASSERT(_container.size() >= size, "Span cannot be resized and is smaller than the requested size.");
-        }
-    }
-
-    /// @brief Get writable access to the underlying container.
-    /// @return Pointer to the underlying container.
-    value_type* data() {
-        return _container.data();
-    }
-
-    /// @brief Get writable access to the underlying container.
-    /// @return Reference to the underlying container.
-    Span<value_type> get() {
-        return {_container.data(), _container.size()};
-    }
-
-    /// @brief Get the number of elements in the underlying storage.
-    /// @return Number of elements in the underlying storage.
-    size_t size() const {
-        return _container.size();
-    }
-
-private:
-    Container& _container; ///< Container which holds the actual data.
-};
-
-/// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
-///
-/// LibAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like std::vector
-/// that will be allocated by KaMPIng. The Container type must provide \c data(), \c size() and \c resize() and
-/// expose the type definition \c value_type. type.
-/// @tparam Container Container on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
-template <typename Container, ParameterType type>
-class LibAllocatedContainerBasedBuffer : public BufferParameterType<type> {
-public:
-    using value_type = typename Container::value_type; ///< Value type of the buffer.
-
-    /// @brief Constructor for LibAllocatedContainerBasedBuffer.
-    LibAllocatedContainerBasedBuffer() = default;
-
-    /// @brief Move constructor for LibAllocatedContainerBasedBuffer.
-    LibAllocatedContainerBasedBuffer(LibAllocatedContainerBasedBuffer&&) = default;
-
-    /// @brief Move assignment operator for LibAllocatedContainerBasedBuffer.
-    LibAllocatedContainerBasedBuffer& operator=(LibAllocatedContainerBasedBuffer&&) = default;
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    LibAllocatedContainerBasedBuffer(LibAllocatedContainerBasedBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    LibAllocatedContainerBasedBuffer& operator=(LibAllocatedContainerBasedBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
-    /// a \c Span.
-    ///
-    /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
-    /// Span,  KaMPIng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
-    /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
-    /// is  copied depends in the implementation of the container.
-    ///
-    /// @param size Size the container is resized to if it is not a \c Span.
-    void resize(size_t size) {
-        if constexpr (!std::is_same_v<Container, Span<value_type>>) {
-            _container.resize(size);
-        } else {
-            KASSERT(_container.size() >= size, "Span cannot be resized and is smaller than the requested size.");
-        }
-    }
-
-    /// @brief Get writable access to the underlying container.
-    /// @return Reference to the underlying container.
-    Span<value_type> get() {
-        return {_container.data(), _container.size()};
-    }
-
-    /// @brief Get writable access to the underlying container.
-    /// @return Pointer to the underlying container.
-    value_type* data() {
-        return _container.data();
-    }
-
-    /// @brief Extract the underlying container. This will leave LibAllocatedContainerBasedBuffer in an unspecified
-    /// state.
-    ///
-    /// @return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
-    Container extract() {
-        return std::move(_container);
-    }
-
-    /// @brief Get the number of elements in the underlying storage.
-    /// @return Number of elements in the underlying storage.
-    size_t size() const {
-        return _container.size();
-    }
-
-private:
-    Container _container; ///< Container which holds the actual data.
 };
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.

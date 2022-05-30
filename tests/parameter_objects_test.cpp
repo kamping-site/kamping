@@ -288,12 +288,10 @@ TEST(LibAllocatedContainerBasedBufferTest, move_ctor_assignment_operator_is_enab
     buffer1.get().data()[1] = 1;
     buffer1.get().data()[2] = 2;
     LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer2(std::move(buffer1));
-    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer3;
-    buffer3 = std::move(buffer2);
-    EXPECT_EQ(buffer3.get().size(), 3);
-    EXPECT_EQ(buffer3.get().data()[0], 0);
-    EXPECT_EQ(buffer3.get().data()[1], 1);
-    EXPECT_EQ(buffer3.get().data()[2], 2);
+    EXPECT_EQ(buffer2.get().size(), 3);
+    EXPECT_EQ(buffer2.get().data()[0], 0);
+    EXPECT_EQ(buffer2.get().data()[1], 1);
+    EXPECT_EQ(buffer2.get().data()[2], 2);
 }
 
 TEST(SingleElementConstBufferTest, get_basics) {
