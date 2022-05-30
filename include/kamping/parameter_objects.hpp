@@ -187,7 +187,7 @@ public:
         return _container;
     }
 
-    /// @brief Extract the underlying container. This will leave ontainerBasedBuffer in an unspecified
+    /// @brief Extract the underlying container. This will leave ContainerBasedBuffer in an unspecified
     /// state.
     ///
     /// @return Moves the underlying container out of the ContainerBasedBuffer.
