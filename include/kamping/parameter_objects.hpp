@@ -178,14 +178,14 @@ public:
     // template <std::enable_if_t<!is_modifiable, bool> = true>
     template <bool enabled = !is_modifiable, std::enable_if_t<enabled, bool> = true>
     value_type const* data() const {
-        return _container.data();
+        return std::data(_container);
     }
 
     /// @brief Get writable access to the underlying container.
     /// @return Pointer to the underlying container.
     template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
     value_type* data() {
-        return _container.data();
+        return std::data(_container);
     }
 
     /// @brief Get access to the underlying read-only storage.
