@@ -91,6 +91,18 @@ enum modifiability_flag : bool { modifiable = true, constant = false };
 enum ownership_flag : bool { owning = true, referencing = false };
 enum allocation_flag : bool { lib_allocated = true, user_allocated = false };
 
+/// @brief Buffer based on a container type.
+///
+/// ContainerBasedBuffer wraps all buffer storages provided by an std-like container like std::vector. The
+/// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
+/// @tparam Containertype Container on which this buffer is based.
+/// @tparam ParameterType parameter type represented by this buffer.
+/// @tparam is_modifiable_tparam modifiability_flag::modifiable if a KaMPIng operation is allowed to modify the
+/// underlying container. modifiability_flag::constant otherwise.
+/// @tparam is_owning_buffer ownership_flag::owning if the buffer should hold the actual container.
+/// ownership_flag::referencing if only a reference to an existing container should be held.
+/// @tparam is_lib_allocated allocation_flag::lib_allocated if the buffer was allocated by the library,
+/// allocation_flag::user_allocated if it was allocated by the user.
 template <
     typename ContainerType, ParameterType type, modifiability_flag is_modifiable_tparam,
     ownership_flag is_owning_buffer, allocation_flag is_lib_allocated = allocation_flag::user_allocated>
@@ -99,9 +111,15 @@ public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
         is_modifiable_tparam; ///< Indicates whether the underlying storage is modifiable.
-    using ContainerTypeWithConst = std::conditional_t<is_modifiable, ContainerType, ContainerType const>;
-    using ContainerTypeWithRef = std::conditional_t<is_owning_buffer, ContainerTypeWithConst, ContainerTypeWithConst&>;
-    using value_type           = typename ContainerType::value_type; ///< Value type of the buffer.
+    using ContainerTypeWithConst =
+        std::conditional_t<is_modifiable, ContainerType, ContainerType const>; ///< The ContainerType as const or
+                                                                               ///< non-const depending on
+                                                                               ///< is_modifiable.
+    using ContainerTypeWithRef = std::conditional_t<
+        is_owning_buffer, ContainerTypeWithConst,
+        ContainerTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
+                                  ///< reference or non-reference depending on is_owning_buffer.
+    using value_type = typename ContainerType::value_type; ///< Value type of the buffer.
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.
