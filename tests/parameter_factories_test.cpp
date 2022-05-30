@@ -473,10 +473,15 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_int_vector) {
 
 TEST(ParameterFactoriesTest, send_recv_buf_basics_rvalue_span) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto gen_via_rvalue_span = send_recv_buf(kamping::Span<const int>(const_int_vec.data(), const_int_vec.size()));
-    EXPECT_EQ(gen_via_rvalue_span.parameter_type, kamping::internal::ParameterType::send_recv_buf);
-    EXPECT_EQ(gen_via_rvalue_span.get().data(), const_int_vec.data());
-    EXPECT_EQ(gen_via_rvalue_span.get().size(), const_int_vec.size());
+    auto                   gen_via_rvalue_span_const =
+        send_recv_buf(kamping::Span<const int>(const_int_vec.data(), const_int_vec.size()));
+    EXPECT_EQ(gen_via_rvalue_span_const.parameter_type, kamping::internal::ParameterType::send_recv_buf);
+    EXPECT_EQ(gen_via_rvalue_span_const.get().data(), const_int_vec.data());
+    EXPECT_EQ(gen_via_rvalue_span_const.get().size(), const_int_vec.size());
+    EXPECT_FALSE(gen_via_rvalue_span_const.is_modifiable);
+    std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
+    auto             gen_via_rvalue_span = send_recv_buf(kamping::Span<int>(int_vec.data(), int_vec.size()));
+    EXPECT_TRUE(gen_via_rvalue_span.is_modifiable);
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_basics_const_int_vector) {
