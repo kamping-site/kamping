@@ -109,16 +109,21 @@ enum class BufferOwnership { owning, referencing };
 /// @brief Enum to specify whether a buffer is allocated by the library or the user
 enum class BufferAllocation { lib_allocated, user_allocated };
 
+/// @brief Wrapper to get the value type of a non-container type (aka the type itself).
+/// @tparam has_value_type_member Whether `T` has a value_type member
+/// @tparam T The type to get the value_type of
 template <bool has_value_type_member /*= false */, typename T>
-class ValueTypeDispatcher {
+class ValueTypeWrapper {
 public:
-    using value_type = T;
+    using value_type = T; ///< The value type of T.
 };
 
+/// @brief Wrapper to get the value type of a container type.
+/// @tparam T The type to get the value_type of
 template <typename T>
-class ValueTypeDispatcher<true, T> {
+class ValueTypeWrapper</*has_value_type_member =*/true, T> {
 public:
-    using value_type = typename T::value_type;
+    using value_type = typename T::value_type; ///< The value type of T.
 };
 
 /// @brief Buffer based on a container type.
@@ -154,7 +159,7 @@ public:
                                ///< reference or non-reference depending on ownership.
 
     using value_type =
-        typename ValueTypeDispatcher<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
+        typename ValueTypeWrapper<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
     using value_type_with_const =
         std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending
                                                                          ///< on modifiability
