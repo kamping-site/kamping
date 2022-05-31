@@ -185,10 +185,10 @@ public:
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
     void resize(size_t size) {
-        if constexpr (!std::is_same_v<MemberType, Span<value_type>> && !is_single_element) {
+        if constexpr (!std::is_same_v<MemberType, Span<value_type>> && !is_single_element && is_modifiable) {
             _data.resize(size);
         } else {
-            KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
+            KASSERT(this->size() >= size, "Cannot be resized and is smaller than the requested size.");
         }
     }
 
