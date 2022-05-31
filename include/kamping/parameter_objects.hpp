@@ -97,11 +97,11 @@ constexpr bool has_data_member_v<T, std::void_t<decltype(std::declval<T>().data(
 // };
 
 /// @brief Enum to specify whether a buffer is modifiable
-enum class BufferModifiability : bool { modifiable = true, constant = false };
+enum class BufferModifiability { modifiable, constant };
 /// @brief Enum to specify whether a buffer owns its data
-enum class BufferOwnership : bool { owning = true, referencing = false };
+enum class BufferOwnership { owning, referencing };
 /// @brief Enum to specify whether a buffer is allocated by the library or the user
-enum class BufferAllocation : bool { lib_allocated = true, user_allocated = false };
+enum class BufferAllocation { lib_allocated, user_allocated };
 
 /// @brief Buffer based on a container type.
 ///
