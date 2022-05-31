@@ -27,16 +27,6 @@ namespace kamping {
 /// @{
 
 namespace internal {
-/// @brief Boolean value helping to decide if data type has \c .data() method.
-/// @return \c true if class has \c .data() method and \c false otherwise.
-template <typename, typename = void>
-constexpr bool has_data_member_v = false;
-
-/// @brief Boolean value helping to decide if data type has \c .data() method.
-/// @return \c true if class has \c .data() method and \c false otherwise.
-template <typename T>
-constexpr bool has_data_member_v<T, std::void_t<decltype(std::declval<T>().data())>> = true;
-
 /// @brief Tag type for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
 template <typename T>
 struct ignore_t {};

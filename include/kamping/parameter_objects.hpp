@@ -60,6 +60,15 @@ template <typename T>
 struct NewPtr {};
 
 namespace internal {
+/// @brief Boolean value helping to decide if data type has \c .data() method.
+/// @return \c true if class has \c .data() method and \c false otherwise.
+template <typename, typename = void>
+constexpr bool has_data_member_v = false;
+
+/// @brief Boolean value helping to decide if data type has \c .data() method.
+/// @return \c true if class has \c .data() method and \c false otherwise.
+template <typename T>
+constexpr bool has_data_member_v<T, std::void_t<decltype(std::declval<T>().data())>> = true;
 
 //@todo enable once the tests have been written
 ///// @brief Constant buffer based on a pointer.
@@ -107,9 +116,9 @@ enum class BufferAllocation : bool { lib_allocated = true, user_allocated = fals
 /// @tparam allocation `lib_allocated` if the buffer was allocated by the library,
 /// `user_allocated` if it was allocated by the user.
 template <
-    typename ContainerType, ParameterType type, BufferModifiability modifiability, BufferOwnership ownership,
+    typename MemberType, ParameterType type, BufferModifiability modifiability, BufferOwnership ownership,
     BufferAllocation allocation = BufferAllocation::user_allocated>
-class ContainerBasedBuffer {
+class DataBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
@@ -123,36 +132,43 @@ public:
         ownership == BufferOwnership::owning, MemberTypeWithConst,
         MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
                                ///< reference or non-reference depending on ownership.
+    using value_type =
+        std::conditional_t<is_single_element, MemberType, typename MemberType::value_type>; ///< Value type of the
+                                                                                            ///< buffer.
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.
     template <bool enabled = ownership == BufferOwnership::referencing, std::enable_if_t<enabled, bool> = true>
-    ContainerBasedBuffer(ContainerTypeWithConst& container) : _container(container) {}
+    DataBuffer(MemberTypeWithConst& container) : _data(container) {}
 
     /// @brief Constructor for owning ContainerBasedBuffer.
     /// @param container Container holding the actual data.
     template <bool enabled = ownership == BufferOwnership::owning, std::enable_if_t<enabled, bool> = true>
-    ContainerBasedBuffer(ContainerType container) : _container(std::move(container)) {}
+    DataBuffer(MemberType container) : _data(std::move(container)) {}
 
     /// @brief Constructor for owning ContainerBasedBuffer.
     template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>
-    ContainerBasedBuffer() : _container() {}
+    DataBuffer() : _data() {}
 
     /// @brief Move constructor for ContainerBasedBuffer.
-    ContainerBasedBuffer(ContainerBasedBuffer&&) = default;
+    DataBuffer(DataBuffer&&) = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    ContainerBasedBuffer(ContainerBasedBuffer const&) = delete;
+    DataBuffer(DataBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    ContainerBasedBuffer& operator=(ContainerBasedBuffer const&) = delete;
+    DataBuffer& operator=(DataBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
     size_t size() const {
-        return _container.size();
+        if constexpr (is_single_element) {
+            return 1;
+        } else {
+            return _data.size();
+        }
     }
 
     /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
@@ -166,10 +182,10 @@ public:
     /// @param size Size the container is resized to if it is not a \c Span.
     template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
     void resize(size_t size) {
-        if constexpr (!std::is_same_v<ContainerType, Span<value_type>>) {
-            _container.resize(size);
+        if constexpr (!std::is_same_v<MemberType, Span<value_type>>) {
+            _data.resize(size);
         } else {
-            KASSERT(_container.size() >= size, "Span cannot be resized and is smaller than the requested size.");
+            KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
         }
     }
 
@@ -177,33 +193,41 @@ public:
     /// @return Pointer to the underlying container.
     // template <std::enable_if_t<!is_modifiable, bool> = true>
     value_type const* data() const {
-        return std::data(_container);
+        if constexpr (is_single_element) {
+            return &_data;
+        } else {
+            return std::data(_data);
+        }
     }
 
     /// @brief Get writable access to the underlying container.
     /// @return Pointer to the underlying container.
     template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
     value_type* data() {
-        return std::data(_container);
+        if constexpr (is_single_element) {
+            return &_data;
+        } else {
+            return std::data(_data);
+        }
     }
 
     /// @brief Get access to the underlying read-only storage.
     /// @return Span referring to the underlying read-only storage.
     Span<value_type const> get() const {
-        return {std::data(_container), _container.size()};
+        return {this->data(), this->size()};
     }
 
     /// @brief Get access to the underlying modifiable storage.
     /// @return Span referring to the underlying modifiable storage.
     template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
     Span<value_type> get() {
-        return {std::data(_container), _container.size()};
+        return {this->data(), this->size()};
     }
 
     /// @brief Provides access to the underlying container.
     /// @return A reference to the container.
-    ContainerType const& underlying() const {
-        return _container;
+    MemberType const& underlying() const {
+        return _data;
     }
 
     /// @brief Extract the underlying container. This will leave ContainerBasedBuffer in an unspecified
@@ -211,12 +235,12 @@ public:
     ///
     /// @return Moves the underlying container out of the ContainerBasedBuffer.
     template <bool enable = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enable, bool> = true>
-    ContainerTypeWithConst extract() {
-        return std::move(_container);
+    MemberTypeWithConst extract() {
+        return std::move(_data);
     }
 
 private:
-    ContainerTypeWithRef _container; ///< Container which holds the actual data.
+    MemberTypeWithRef _data; ///< Container which holds the actual data.
 };
 
 /// @brief Constant buffer based on a container type.
@@ -227,30 +251,29 @@ private:
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
 using ContainerBasedConstBuffer =
-    ContainerBasedBuffer<Container, type, BufferModifiability::constant, BufferOwnership::referencing>;
+    DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::referencing>;
 
 /// @brief Read-only buffer owning a container type passed to it.
 ///
-/// ContainerBasedOwningBuffer wraps read-only buffer storage provided by an std-like container like std::vector. This
-/// is the owning variant of \ref ContainerBasedConstBuffer. The Container type must provide \c data(), \c size() and
-/// expose the type definition \c value_type. type.
+/// ContainerBasedOwningBuffer wraps read-only buffer storage provided by an std-like container like std::vector.
+/// This is the owning variant of \ref ContainerBasedConstBuffer. The Container type must provide \c data(), \c
+/// size() and expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
-using ContainerBasedOwningBuffer =
-    ContainerBasedBuffer<Container, type, BufferModifiability::constant, BufferOwnership::owning>;
+using ContainerBasedOwningBuffer = DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::owning>;
 
 /// @brief Buffer based on a container type that has been allocated by the user (but may be resized if the provided
 /// space is not sufficient).
 ///
-/// UserAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like std::vector
-/// that has already been allocated by the user. The Container type must provide \c data(), \c size() and \c resize()
-/// and expose the type definition \c value_type. type.
+/// UserAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like
+/// std::vector that has already been allocated by the user. The Container type must provide \c data(), \c size()
+/// and \c resize() and expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType parameter_type>
 using UserAllocatedContainerBasedBuffer =
-    ContainerBasedBuffer<Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing>;
+    DataBuffer<Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing>;
 
 /// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
 ///
@@ -260,7 +283,7 @@ using UserAllocatedContainerBasedBuffer =
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
-using LibAllocatedContainerBasedBuffer = ContainerBasedBuffer<
+using LibAllocatedContainerBasedBuffer = DataBuffer<
     Container, type, BufferModifiability::modifiable, BufferOwnership::owning, BufferAllocation::lib_allocated>;
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
@@ -452,8 +475,8 @@ public:
         return {&_element, 1};
     }
 
-    /// @brief Extract the underlying data element. This will leave LibAllocatedSingleElementBuffer in an unspecified
-    /// state.
+    /// @brief Extract the underlying data element. This will leave LibAllocatedSingleElementBuffer in an
+    /// unspecified state.
     ///
     /// @return Moves the underlying data element out of the LibAllocatedSingleElementBuffer.
     DataType extract() {
@@ -465,8 +488,8 @@ private:
 };
 /// @brief Buffer based on a single element type that has been allocated by the user.
 ///
-/// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by the
-/// user.
+/// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by
+/// the user.
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
@@ -571,9 +594,9 @@ private:
 };
 
 /// @brief Parameter wrapping an operation passed to reduce-like MPI collectives.
-/// This wraps an MPI operation without the argument of the operation specified. This enables the user to construct such
-/// wrapper using the parameter factory \c kamping::op without passing the type of the operation.
-/// The library developer may then construct the actual operation wrapper with a given type later.
+/// This wraps an MPI operation without the argument of the operation specified. This enables the user to construct
+/// such wrapper using the parameter factory \c kamping::op without passing the type of the operation. The library
+/// developer may then construct the actual operation wrapper with a given type later.
 ///
 /// @tparam Op type of the operation (may be a function object or a lambda)
 /// @tparam Commutative tag specifying if the operation is commutative
