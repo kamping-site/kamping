@@ -43,6 +43,7 @@
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 #include "kamping/span.hpp"
+#include "kassert/kassert.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -202,6 +203,8 @@ public:
     void resize(size_t size) {
         if constexpr (!std::is_same_v<MemberType, Span<value_type>> && !is_single_element && is_modifiable) {
             _data.resize(size);
+        } else if constexpr (is_single_element) {
+            KASSERT(size == 1u, "Single element buffers must hold exactly one element.");
         } else {
             KASSERT(this->size() >= size, "Cannot be resized and is smaller than the requested size.");
         }
@@ -355,64 +358,9 @@ using SingleElementOwningBuffer = DataBuffer<DataType, type, BufferModifiability
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
-class LibAllocatedSingleElementBuffer {
-public:
-    static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable  = true; ///< Indicates whether the underlying storage is modifiable.
-    using value_type                              = DataType; ///< Value type of the buffer.
+using LibAllocatedSingleElementBuffer = DataBuffer<
+    DataType, type, BufferModifiability::modifiable, BufferOwnership::owning, BufferAllocation::lib_allocated>;
 
-    /// @brief Constructor for LibAllocatedSingleElementBuffer.
-    LibAllocatedSingleElementBuffer() {}
-
-    /// @brief Move constructor for LibAllocatedSingleElementBuffer (implicitly deletes copy constructor/assignment
-    /// operator).
-    LibAllocatedSingleElementBuffer(LibAllocatedSingleElementBuffer&&) = default;
-    // move assignment operator is implicitly deleted as this buffer has a reference member
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    LibAllocatedSingleElementBuffer(LibAllocatedSingleElementBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    LibAllocatedSingleElementBuffer& operator=(LibAllocatedSingleElementBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Does nothing but assert that only size 1 is requested.
-    ///
-    /// @param size The size that this "container" is expected to have after the call.
-    void resize(size_t size) const {
-        KASSERT(size == 1ul, "Single element buffers must hold exactly one element.");
-    }
-
-    /// @brief Get the number of elements in the underlying storage.
-    /// @return Number of elements in the underlying storage (always 1).
-    size_t size() const {
-        return 1;
-    }
-
-    /// @brief Get writable access to the underlying data.
-    /// @return Pointer to the underlying data.
-    value_type* data() {
-        return &_element;
-    }
-
-    /// @brief Get writable access to the underlying value.
-    /// @return Reference to the underlying storage.
-    Span<value_type> get() {
-        return {&_element, 1};
-    }
-
-    /// @brief Extract the underlying data element. This will leave LibAllocatedSingleElementBuffer in an
-    /// unspecified state.
-    ///
-    /// @return Moves the underlying data element out of the LibAllocatedSingleElementBuffer.
-    DataType extract() {
-        return std::move(_element);
-    }
-
-private:
-    DataType _element; ///< (Writable) reference to the actual data.
-};
 /// @brief Buffer based on a single element type that has been allocated by the user.
 ///
 /// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by
