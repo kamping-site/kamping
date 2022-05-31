@@ -64,28 +64,6 @@ TEST(ParameterCheckTest, check_many_required_parameters) {
         send_buf(v), recv_buf(v), root(0), recv_count(0), recv_counts(v), send_counts(v));
 }
 
-namespace {
-// This dummy resembles the interface of a collective operation, so we can simulate the check for rvalue
-// parameters.
-template <typename... Args>
-bool dummy_collective_operation(Args&&... args [[maybe_unused]]) {
-    return kamping::internal::all_parameters_are_rvalues<Args...>;
-}
-} // namespace
-
-TEST(NamedParameterTest, all_parameters_are_rvalues) {
-    using namespace kamping::internal;
-
-    testing::Argument<ParameterType::send_buf> arg0{0};
-    testing::Argument<ParameterType::recv_buf> arg1{1};
-    {
-        EXPECT_FALSE(dummy_collective_operation(arg0, arg1));
-        EXPECT_FALSE(dummy_collective_operation(decltype(arg0){0}, arg1));
-        EXPECT_FALSE(dummy_collective_operation(arg0, decltype(arg1){1}));
-        EXPECT_TRUE(dummy_collective_operation(decltype(arg0){0}, decltype(arg1){1}));
-    }
-}
-
 TEST(NamedParameterTest, has_to_be_computed) {
     using namespace kamping::internal;
 
