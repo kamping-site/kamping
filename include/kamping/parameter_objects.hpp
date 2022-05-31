@@ -184,7 +184,7 @@ public:
     /// @param size Size the container is resized to if it is not a \c Span.
     template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
     void resize(size_t size) {
-        if constexpr (!std::is_same_v<MemberType, Span<value_type>>) {
+        if constexpr (!std::is_same_v<MemberType, Span<value_type>> && !is_single_element) {
             _data.resize(size);
         } else {
             KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
