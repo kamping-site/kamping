@@ -180,8 +180,11 @@ public:
         static_assert(ownership == BufferOwnership::owning, "Lib allocated buffers must be owning");
     }
 
-    /// @brief Move constructor for ContainerBasedBuffer.
+    /// @brief Move constructor.
     DataBuffer(DataBuffer&&) = default;
+
+    /// @brief Move assignment operator.
+    DataBuffer& operator=(DataBuffer&&) = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
     DataBuffer(DataBuffer const&) = delete;
