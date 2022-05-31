@@ -64,12 +64,15 @@ namespace internal {
 /// @brief Boolean value helping to decide if data type has \c .data() method.
 /// @return \c true if class has \c .data() method and \c false otherwise.
 template <typename, typename = void>
-constexpr bool has_data_member_v = false;
+struct has_data_member : std::false_type {};
 
 /// @brief Boolean value helping to decide if data type has \c .data() method.
 /// @return \c true if class has \c .data() method and \c false otherwise.
 template <typename T>
-constexpr bool has_data_member_v<T, std::void_t<decltype(std::declval<T>().data())>> = true;
+struct has_data_member<T, std::void_t<decltype(std::declval<T>().data())>> : std::true_type {};
+
+template <class T>
+inline constexpr bool has_data_member_v = has_data_member<T>::value;
 
 //@todo enable once the tests have been written
 ///// @brief Constant buffer based on a pointer.
