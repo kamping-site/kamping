@@ -341,50 +341,6 @@ template <typename DataType, ParameterType type>
 using SingleElementConstBuffer =
     DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::referencing>;
 
-// class SingleElementConstBuffer {
-// public:
-//     static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
-//     static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage
-//     ismodifiable. using value_type                              = DataType; ///< Value type of the buffer.
-
-//     /// @brief Constructor for SingleElementConstBuffer.
-//     /// @param element Element holding that is wrapped.
-//     SingleElementConstBuffer(DataType const& element) : _element(element) {}
-
-//     /// @brief Move constructor for SingleElementConstBuffer.
-//     SingleElementConstBuffer(SingleElementConstBuffer&&) = default;
-//     // move assignment operator is implicitly deleted as this buffer has a reference member
-
-//     /// @brief Copy constructor is deleted as buffers should only be moved.
-//     SingleElementConstBuffer(SingleElementConstBuffer const&) = delete;
-//     // redundant as defaulted move constructor implies the deletion
-
-//     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-//     SingleElementConstBuffer& operator=(SingleElementConstBuffer const&) = delete;
-//     // redundant as defaulted move constructor implies the deletion
-
-//     /// @brief Get the number of elements in the underlying storage.
-//     /// @return Number of elements in the underlying storage (always 1).
-//     size_t size() const {
-//         return 1;
-//     }
-
-//     /// @brief Get const access to the underlying read-only value.
-//     /// @return Pointer to the underlying read-only value.
-//     value_type const* data() const {
-//         return &_element;
-//     }
-
-//     /// @brief Get access to the underlying read-only value.
-//     /// @return Span referring to the underlying read-only storage.
-//     Span<const value_type> get() const {
-//         return {&_element, 1};
-//     }
-
-// private:
-//     DataType const& _element; ///< Reference to the actual data.
-// };
-
 /// @brief Buffer for a single element, which is not a container. The element is owned by the buffer.
 ///
 /// SingleElementOwningBuffer wraps a read-only value and takes ownership of it. It is the owning variant of \ref
@@ -392,55 +348,7 @@ using SingleElementConstBuffer =
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType Parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
-class SingleElementOwningBuffer {
-public:
-    static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
-    using value_type                              = DataType; ///< Value type of the buffer.
-
-    /// @brief Constructor for SingleElementConstBuffer.
-    /// @param element Element holding that is wrapped.
-    SingleElementOwningBuffer(DataType element) : _element(std::move(element)) {}
-
-    /// @brief Move constructor for SingleElementConstBuffer.
-    SingleElementOwningBuffer(SingleElementOwningBuffer&&) = default;
-
-    /// @brief Move assignment operator.
-    SingleElementOwningBuffer& operator=(SingleElementOwningBuffer&&) = default;
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    SingleElementOwningBuffer(SingleElementOwningBuffer const&) = delete;
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    SingleElementOwningBuffer& operator=(SingleElementOwningBuffer const&) = delete;
-
-    /// @brief Get the number of elements in the underlying storage.
-    /// @return Number of elements in the underlying storage (always 1).
-    size_t size() const {
-        return 1;
-    }
-
-    /// @brief Get const access to the underlying data.
-    /// @return Pointer to the underlying data.
-    value_type const* data() const {
-        return &_element;
-    }
-
-    /// @brief Provides access to the underlying owned element.
-    /// @return A reference to the element.
-    DataType const& underlying() const {
-        return _element;
-    }
-
-    /// @brief Get access to the underlying read-only value.
-    /// @return Span referring to the underlying read-only storage.
-    Span<const value_type> get() const {
-        return {&_element, 1};
-    }
-
-private:
-    DataType _element; ///< The actual data.
-};
+using SingleElementOwningBuffer = DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::owning>;
 
 /// @brief Buffer based on a single element type that has been allocated by the library.
 ///
