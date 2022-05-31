@@ -72,32 +72,6 @@ struct has_data_member<T, std::void_t<decltype(std::declval<T>().data())>> : std
 template <typename T>
 inline constexpr bool has_data_member_v = has_data_member<T>::value;
 
-//@todo enable once the tests have been written
-///// @brief Constant buffer based on a pointer.
-/////
-///// PtrBasedConstBuffer wraps read-only buffer storage of type T and represents an input of ParameterType
-///// type.
-///// @tparam T type contained in the buffer.
-///// @tparam ParameterType parameter type represented by this buffer.
-// template <typename T, ParameterType type>
-// class PtrBasedConstBuffer {
-// public:
-//     static constexpr ParameterType parameter_type         = type;  ///< The type of parameter this buffer represents.
-//     static constexpr bool          is_modifiable = false; ///< Indicates whether the underlying storage is
-//     modifiable. using value_type                             = T;     ///< Value type of the buffer.
-//
-//     PtrBasedConstBuffer(const T* ptr, size_t size) : _span{ptr, size} {}
-//
-//     /// @brief Get access to the underlying read-only storage.
-//     /// @return Span referring to the underlying read-only storage.
-//     Span<T> get() const {
-//         return _span;
-//     }
-//
-// private:
-//     Span<T> _span; ///< Actual storage to which PtrBasedConstBuffer refers.
-// };
-
 /// @brief Enum to specify whether a buffer is modifiable
 enum class BufferModifiability { modifiable, constant };
 /// @brief Enum to specify whether a buffer owns its data
