@@ -114,15 +114,15 @@ public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
-    using ContainerTypeWithConst =
-        std::conditional_t<is_modifiable, ContainerType, ContainerType const>; ///< The ContainerType as const or
-                                                                               ///< non-const depending on
-                                                                               ///< is_modifiable.
-    using ContainerTypeWithRef = std::conditional_t<
-        ownership == BufferOwnership::owning, ContainerTypeWithConst,
-        ContainerTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
-                                  ///< reference or non-reference depending on is_owning_buffer.
-    using value_type = typename ContainerType::value_type; ///< Value type of the buffer.
+    static constexpr bool is_single_element = !has_data_member_v<MemberType>;
+    using MemberTypeWithConst =
+        std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
+                                                                         ///< non-const depending on
+                                                                         ///< modifiability.
+    using MemberTypeWithRef = std::conditional_t<
+        ownership == BufferOwnership::owning, MemberTypeWithConst,
+        MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
+                               ///< reference or non-reference depending on ownership.
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.
