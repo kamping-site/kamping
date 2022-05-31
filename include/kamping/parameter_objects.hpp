@@ -73,7 +73,7 @@ struct has_data_member<T, std::void_t<decltype(std::declval<T>().data())>> : std
 
 /// @brief Boolean value helping to decide if data type has \c .data() method.
 /// @return \c true if class has \c .data() method and \c false otherwise.
-template <class T>
+template <typename T>
 inline constexpr bool has_data_member_v = has_data_member<T>::value;
 
 //@todo enable once the tests have been written
