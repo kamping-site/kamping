@@ -188,11 +188,9 @@ public:
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
     DataBuffer(DataBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
     DataBuffer& operator=(DataBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
