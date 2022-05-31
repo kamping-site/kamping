@@ -96,7 +96,7 @@ public:
     using value_type = typename T::value_type; ///< The value type of T.
 };
 
-/// @brief Buffer based on a container type.
+/// @brief Data buffer used for named parameters.
 ///
 /// DataBuffer wraps all buffer storages provided by an std-like container like std::vector or single values. The
 /// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
