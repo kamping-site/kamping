@@ -134,7 +134,9 @@ public:
                                ///< reference or non-reference depending on ownership.
     using value_type =
         std::conditional_t<is_single_element, MemberType, typename MemberType::value_type>; ///< Value type of the
-                                                                                            ///< buffer.
+
+    using value_type_with_const = std::conditional_t<is_modifiable, value_type, value_type const>;
+    ///< buffer.
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.
@@ -182,7 +184,6 @@ public:
     /// is  copied depends in the implementation of the container.
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
-    template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
     void resize(size_t size) {
         if constexpr (!std::is_same_v<MemberType, Span<value_type>> && !is_single_element) {
             _data.resize(size);
@@ -193,7 +194,6 @@ public:
 
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
-    // template <std::enable_if_t<!is_modifiable, bool> = true>
     value_type const* data() const {
         if constexpr (is_single_element) {
             return &_data;
@@ -204,8 +204,7 @@ public:
 
     /// @brief Get writable access to the underlying container.
     /// @return Pointer to the underlying container.
-    template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
-    value_type* data() {
+    value_type_with_const* data() {
         if constexpr (is_single_element) {
             return &_data;
         } else {
@@ -221,8 +220,7 @@ public:
 
     /// @brief Get access to the underlying modifiable storage.
     /// @return Span referring to the underlying modifiable storage.
-    template <bool enabled = is_modifiable, std::enable_if_t<enabled, bool> = true>
-    Span<value_type> get() {
+    Span<value_type_with_const> get() {
         return {this->data(), this->size()};
     }
 
@@ -238,6 +236,7 @@ public:
     /// @return Moves the underlying container out of the ContainerBasedBuffer.
     template <bool enable = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enable, bool> = true>
     MemberTypeWithConst extract() {
+        static_assert(is_modifiable);
         return std::move(_data);
     }
 
