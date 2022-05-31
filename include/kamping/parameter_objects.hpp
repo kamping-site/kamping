@@ -103,6 +103,18 @@ enum class BufferOwnership { owning, referencing };
 /// @brief Enum to specify whether a buffer is allocated by the library or the user
 enum class BufferAllocation { lib_allocated, user_allocated };
 
+template <bool has_value_type_member /*= false */, typename T>
+class ValueTypeDispatcher {
+public:
+    using value_type = T;
+};
+
+template <typename T>
+class ValueTypeDispatcher<true, T> {
+public:
+    using value_type = typename T::value_type;
+};
+
 /// @brief Buffer based on a container type.
 ///
 /// ContainerBasedBuffer wraps all buffer storages provided by an std-like container like std::vector. The
@@ -123,7 +135,9 @@ public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
-    static constexpr bool is_single_element = !has_data_member_v<MemberType>;
+    static constexpr bool is_single_element =
+        !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
+                                        ///< DataBuffer represents a container.
     using MemberTypeWithConst =
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
                                                                          ///< non-const depending on
@@ -132,11 +146,12 @@ public:
         ownership == BufferOwnership::owning, MemberTypeWithConst,
         MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
                                ///< reference or non-reference depending on ownership.
-    using value_type =
-        std::conditional_t<is_single_element, MemberType, typename MemberType::value_type>; ///< Value type of the
 
-    using value_type_with_const = std::conditional_t<is_modifiable, value_type, value_type const>;
-    ///< buffer.
+    using value_type =
+        typename ValueTypeDispatcher<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
+    using value_type_with_const =
+        std::conditional_t<is_modifiable, value_type, value_type const>; ///< value type as const or non-const depending
+                                                                         ///< on modifiability
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.
@@ -323,49 +338,52 @@ public:
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType Parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
-class SingleElementConstBuffer {
-public:
-    static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage is modifiable.
-    using value_type                              = DataType; ///< Value type of the buffer.
+using SingleElementConstBuffer =
+    DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::referencing>;
 
-    /// @brief Constructor for SingleElementConstBuffer.
-    /// @param element Element holding that is wrapped.
-    SingleElementConstBuffer(DataType const& element) : _element(element) {}
+// class SingleElementConstBuffer {
+// public:
+//     static constexpr ParameterType parameter_type = type;  ///< The type of parameter this buffer represents.
+//     static constexpr bool          is_modifiable  = false; ///< Indicates whether the underlying storage
+//     ismodifiable. using value_type                              = DataType; ///< Value type of the buffer.
 
-    /// @brief Move constructor for SingleElementConstBuffer.
-    SingleElementConstBuffer(SingleElementConstBuffer&&) = default;
-    // move assignment operator is implicitly deleted as this buffer has a reference member
+//     /// @brief Constructor for SingleElementConstBuffer.
+//     /// @param element Element holding that is wrapped.
+//     SingleElementConstBuffer(DataType const& element) : _element(element) {}
 
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    SingleElementConstBuffer(SingleElementConstBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
+//     /// @brief Move constructor for SingleElementConstBuffer.
+//     SingleElementConstBuffer(SingleElementConstBuffer&&) = default;
+//     // move assignment operator is implicitly deleted as this buffer has a reference member
 
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    SingleElementConstBuffer& operator=(SingleElementConstBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
+//     /// @brief Copy constructor is deleted as buffers should only be moved.
+//     SingleElementConstBuffer(SingleElementConstBuffer const&) = delete;
+//     // redundant as defaulted move constructor implies the deletion
 
-    /// @brief Get the number of elements in the underlying storage.
-    /// @return Number of elements in the underlying storage (always 1).
-    size_t size() const {
-        return 1;
-    }
+//     /// @brief Copy assignment operator is deleted as buffers should only be moved.
+//     SingleElementConstBuffer& operator=(SingleElementConstBuffer const&) = delete;
+//     // redundant as defaulted move constructor implies the deletion
 
-    /// @brief Get const access to the underlying read-only value.
-    /// @return Pointer to the underlying read-only value.
-    value_type const* data() const {
-        return &_element;
-    }
+//     /// @brief Get the number of elements in the underlying storage.
+//     /// @return Number of elements in the underlying storage (always 1).
+//     size_t size() const {
+//         return 1;
+//     }
 
-    /// @brief Get access to the underlying read-only value.
-    /// @return Span referring to the underlying read-only storage.
-    Span<const value_type> get() const {
-        return {&_element, 1};
-    }
+//     /// @brief Get const access to the underlying read-only value.
+//     /// @return Pointer to the underlying read-only value.
+//     value_type const* data() const {
+//         return &_element;
+//     }
 
-private:
-    DataType const& _element; ///< Reference to the actual data.
-};
+//     /// @brief Get access to the underlying read-only value.
+//     /// @return Span referring to the underlying read-only storage.
+//     Span<const value_type> get() const {
+//         return {&_element, 1};
+//     }
+
+// private:
+//     DataType const& _element; ///< Reference to the actual data.
+// };
 
 /// @brief Buffer for a single element, which is not a container. The element is owned by the buffer.
 ///
