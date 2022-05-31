@@ -153,7 +153,7 @@ public:
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
                                                                          ///< non-const depending on
                                                                          ///< modifiability.
-    using MemberTypeWithRef = std::conditional_t<
+    using MemberTypeWithConstAndRef = std::conditional_t<
         ownership == BufferOwnership::owning, MemberTypeWithConst,
         MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
                                ///< reference or non-reference depending on ownership.
@@ -272,7 +272,7 @@ public:
     }
 
 private:
-    MemberTypeWithRef _data; ///< Container which holds the actual data.
+    MemberTypeWithConstAndRef _data; ///< Container which holds the actual data.
 };
 
 /// @brief Constant buffer based on a container type.
