@@ -98,7 +98,7 @@ public:
 
 /// @brief Data buffer used for named parameters.
 ///
-/// DataBuffer wraps all buffer storages provided by an std-like container like std::vector or single values. The
+/// DataBuffer wraps all buffer storages provided by an std-like container like std::vector or single values. A
 /// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
 /// @tparam MemberType Container or data type on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
