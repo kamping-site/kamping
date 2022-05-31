@@ -68,7 +68,7 @@ int bcast_value(kamping::Communicator const& comm, T const bcast_value, int cons
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
 template <typename... Args>
-auto kamping::Communicator::scatter(Args&&... args) const {
+auto kamping::Communicator::scatter(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_count));

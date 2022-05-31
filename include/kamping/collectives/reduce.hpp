@@ -47,7 +47,7 @@
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
 template <typename... Args>
-auto kamping::Communicator::reduce(Args&&... args) const {
+auto kamping::Communicator::reduce(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, root));

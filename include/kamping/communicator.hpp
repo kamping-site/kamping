@@ -192,25 +192,25 @@ public:
     }
 
     template <typename... Args>
-    auto alltoall(Args&&... args) const;
+    auto alltoall(Args... args) const;
 
     template <typename... Args>
-    auto alltoallv(Args&&... args) const;
+    auto alltoallv(Args... args) const;
 
     template <typename... Args>
-    auto scatter(Args&&... args) const;
+    auto scatter(Args... args) const;
 
     template <typename... Args>
-    auto reduce(Args&&... args) const;
+    auto reduce(Args... args) const;
 
     template <typename... Args>
-    auto allreduce(Args&&... args) const;
+    auto allreduce(Args... args) const;
 
     template <typename... Args>
-    auto gather(Args&&... args) const;
+    auto gather(Args... args) const;
 
     template <typename... Args>
-    void barrier(Args&&... args) const;
+    void barrier(Args... args) const;
 
     template <typename Value>
     bool is_same_on_all_ranks(Value const& value) const;
