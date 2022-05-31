@@ -148,7 +148,9 @@ public:
 
     /// @brief Constructor for owning ContainerBasedBuffer.
     template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>
-    DataBuffer() : _data() {}
+    DataBuffer() : _data() {
+        static_assert(ownership == BufferOwnership::owning, "Lib allocated buffers must be owning");
+    }
 
     /// @brief Move constructor for ContainerBasedBuffer.
     DataBuffer(DataBuffer&&) = default;
