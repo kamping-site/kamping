@@ -88,11 +88,11 @@ namespace internal {
 // };
 
 /// @brief Enum to specify whether a buffer is modifiable
-enum BufferModifiability : bool { modifiable = true, constant = false };
+enum class BufferModifiability : bool { modifiable = true, constant = false };
 /// @brief Enum to specify whether a buffer owns its data
-enum BufferOwnership : bool { owning = true, referencing = false };
+enum class BufferOwnership : bool { owning = true, referencing = false };
 /// @brief Enum to specify whether a buffer is allocated by the library or the user
-enum BufferAllocation : bool { lib_allocated = true, user_allocated = false };
+enum class BufferAllocation : bool { lib_allocated = true, user_allocated = false };
 
 /// @brief Buffer based on a container type.
 ///
@@ -107,35 +107,35 @@ enum BufferAllocation : bool { lib_allocated = true, user_allocated = false };
 /// @tparam is_lib_allocated allocation_flag::lib_allocated if the buffer was allocated by the library,
 /// allocation_flag::user_allocated if it was allocated by the user.
 template <
-    typename ContainerType, ParameterType type, BufferModifiability is_modifiable_tparam,
-    BufferOwnership is_owning_buffer, BufferAllocation is_lib_allocated = BufferAllocation::user_allocated>
+    typename ContainerType, ParameterType type, BufferModifiability modifiability, BufferOwnership ownership,
+    BufferAllocation allocation = BufferAllocation::user_allocated>
 class ContainerBasedBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
-        is_modifiable_tparam; ///< Indicates whether the underlying storage is modifiable.
+        modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
     using ContainerTypeWithConst =
         std::conditional_t<is_modifiable, ContainerType, ContainerType const>; ///< The ContainerType as const or
                                                                                ///< non-const depending on
                                                                                ///< is_modifiable.
     using ContainerTypeWithRef = std::conditional_t<
-        is_owning_buffer, ContainerTypeWithConst,
+        ownership == BufferOwnership::owning, ContainerTypeWithConst,
         ContainerTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
                                   ///< reference or non-reference depending on is_owning_buffer.
     using value_type = typename ContainerType::value_type; ///< Value type of the buffer.
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.
-    template <bool enabled = !is_owning_buffer, std::enable_if_t<enabled, bool> = true>
+    template <bool enabled = ownership == BufferOwnership::referencing, std::enable_if_t<enabled, bool> = true>
     ContainerBasedBuffer(ContainerTypeWithConst& container) : _container(container) {}
 
     /// @brief Constructor for owning ContainerBasedBuffer.
     /// @param container Container holding the actual data.
-    template <bool enabled = is_owning_buffer, std::enable_if_t<enabled, bool> = true>
+    template <bool enabled = ownership == BufferOwnership::owning, std::enable_if_t<enabled, bool> = true>
     ContainerBasedBuffer(ContainerType container) : _container(std::move(container)) {}
 
     /// @brief Constructor for owning ContainerBasedBuffer.
-    template <bool enabled = is_lib_allocated, std::enable_if_t<enabled, bool> = true>
+    template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>
     ContainerBasedBuffer() : _container() {}
 
     /// @brief Move constructor for ContainerBasedBuffer.
@@ -210,7 +210,7 @@ public:
     /// state.
     ///
     /// @return Moves the underlying container out of the ContainerBasedBuffer.
-    template <bool enable = is_lib_allocated, std::enable_if_t<enable, bool> = true>
+    template <bool enable = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enable, bool> = true>
     ContainerTypeWithConst extract() {
         return std::move(_container);
     }
