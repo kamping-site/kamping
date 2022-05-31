@@ -100,12 +100,12 @@ enum class BufferAllocation : bool { lib_allocated = true, user_allocated = fals
 /// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
 /// @tparam Containertype Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
-/// @tparam is_modifiable_tparam modifiability_flag::modifiable if a KaMPIng operation is allowed to modify the
-/// underlying container. modifiability_flag::constant otherwise.
-/// @tparam is_owning_buffer ownership_flag::owning if the buffer should hold the actual container.
-/// ownership_flag::referencing if only a reference to an existing container should be held.
-/// @tparam is_lib_allocated allocation_flag::lib_allocated if the buffer was allocated by the library,
-/// allocation_flag::user_allocated if it was allocated by the user.
+/// @tparam modifiability BufferModifiability::modifiable if a KaMPIng operation is allowed to modify the
+/// underlying container. BufferModifiability::constant otherwise.
+/// @tparam ownership BufferOwnership::owning if the buffer should hold the actual container.
+/// BufferOwnership::referencing if only a reference to an existing container should be held.
+/// @tparam allocation BufferAllocation::lib_allocated if the buffer was allocated by the library,
+/// BufferAllocation::user_allocated if it was allocated by the user.
 template <
     typename ContainerType, ParameterType type, BufferModifiability modifiability, BufferOwnership ownership,
     BufferAllocation allocation = BufferAllocation::user_allocated>
