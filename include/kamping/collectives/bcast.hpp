@@ -42,7 +42,7 @@
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
 template <typename... Args>
-auto kamping::Communicator::bcast(Args&&... args) {
+auto kamping::Communicator::bcast(Args... args) {
     using namespace ::kamping::internal;
 
     static_assert(
