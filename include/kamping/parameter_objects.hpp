@@ -98,9 +98,9 @@ public:
 
 /// @brief Buffer based on a container type.
 ///
-/// ContainerBasedBuffer wraps all buffer storages provided by an std-like container like std::vector. The
+/// DataBuffer wraps all buffer storages provided by an std-like container like std::vector or single values. The
 /// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
-/// @tparam Containertype Container on which this buffer is based.
+/// @tparam MemberType Container or data type on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
