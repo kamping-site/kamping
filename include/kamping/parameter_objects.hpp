@@ -151,7 +151,7 @@ public:
     using value_type =
         typename ValueTypeDispatcher<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
     using value_type_with_const =
-        std::conditional_t<is_modifiable, value_type, value_type const>; ///< value type as const or non-const depending
+        std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending
                                                                          ///< on modifiability
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
@@ -164,7 +164,7 @@ public:
     template <bool enabled = ownership == BufferOwnership::owning, std::enable_if_t<enabled, bool> = true>
     DataBuffer(MemberType container) : _data(std::move(container)) {}
 
-    /// @brief Constructor for owning ContainerBasedBuffer.
+    /// @brief Constructor for lib allocated ContainerBasedBuffer.
     template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>
     DataBuffer() : _data() {
         static_assert(ownership == BufferOwnership::owning, "Lib allocated buffers must be owning");
@@ -220,7 +220,7 @@ public:
         }
     }
 
-    /// @brief Get writable access to the underlying container.
+    /// @brief Get access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type_with_const* data() {
         if constexpr (is_single_element) {
@@ -230,14 +230,14 @@ public:
         }
     }
 
-    /// @brief Get access to the underlying read-only storage.
-    /// @return Span referring to the underlying read-only storage.
+    /// @brief Get read-only access to the underlying storage.
+    /// @return Span referring the underlying storage.
     Span<value_type const> get() const {
         return {this->data(), this->size()};
     }
 
-    /// @brief Get access to the underlying modifiable storage.
-    /// @return Span referring to the underlying modifiable storage.
+    /// @brief Get access to the underlying storage.
+    /// @return Span referring to the underlying storage.
     Span<value_type_with_const> get() {
         return {this->data(), this->size()};
     }
