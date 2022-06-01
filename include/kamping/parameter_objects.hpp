@@ -168,13 +168,14 @@ public:
         }
     }
 
-    /// @brief Resizes container such that it holds exactly \c size elements of \c value_type if the \c Container is not
-    /// a \c Span.
+    /// @brief Resizes the underlying container such that it holds exactly \c size elements of \c value_type if the \c
+    /// MemberType is not a \c Span or a single elements.
     ///
-    /// This function calls \c resize on the container if the container is of type \c Span. If the container is a \c
-    /// Span,  KaMPIng assumes that the memory is managed by the user and that resizing is not wanted. In this case it
-    /// is \c KASSERTed that the memory provided by the span is sufficient. Whether new memory is allocated and/or data
-    /// is  copied depends in the implementation of the container.
+    /// This function calls \c resize on the container if the container is not of type \c Span or a single value. If the
+    /// container is a \c Span,  KaMPIng assumes that the memory is managed by the user and that resizing is not wanted.
+    /// In this case it is \c KASSERTed that the memory provided by the span is sufficient. If the buffer stores only a
+    /// single value, it is KASSERTed that the requested size is exactly 1. Whether new memory is
+    /// allocated and/or data is copied depends in the implementation of the container.
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
     template <bool enable = modifiability == BufferModifiability::modifiable, std::enable_if_t<enable, bool> = true>
@@ -220,16 +221,16 @@ public:
         return {this->data(), this->size()};
     }
 
-    /// @brief Provides access to the underlying container.
-    /// @return A reference to the container.
+    /// @brief Provides access to the underlying data.
+    /// @return A reference to the data.
     MemberType const& underlying() const {
         return _data;
     }
 
-    /// @brief Extract the underlying container. This will leave ContainerBasedBuffer in an unspecified
+    /// @brief Extract the underlying container. This will leave DataBasedBuffer in an unspecified
     /// state.
     ///
-    /// @return Moves the underlying container out of the ContainerBasedBuffer.
+    /// @return Moves the underlying container out of the DataBuffer.
     template <bool enable = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enable, bool> = true>
     MemberTypeWithConst extract() {
         static_assert(is_modifiable);
