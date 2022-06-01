@@ -176,13 +176,14 @@ public:
     /// is  copied depends in the implementation of the container.
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
+    template <bool enable = modifiability == BufferModifiability::modifiable, std::enable_if_t<enable, bool> = true>
     void resize(size_t size) {
-        if constexpr (!std::is_same_v<MemberType, Span<value_type>> && !is_single_element && is_modifiable) {
+        if constexpr (!std::is_same_v<MemberType, Span<value_type>> && !is_single_element) {
             _data.resize(size);
         } else if constexpr (is_single_element) {
             KASSERT(size == 1u, "Single element buffers must hold exactly one element.");
         } else {
-            KASSERT(this->size() >= size, "Cannot be resized and is smaller than the requested size.");
+            KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
         }
     }
 
