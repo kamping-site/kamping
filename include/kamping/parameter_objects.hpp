@@ -143,6 +143,7 @@ public:
     template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>
     DataBuffer() : _data() {
         static_assert(ownership == BufferOwnership::owning, "Lib allocated buffers must be owning");
+        static_assert(is_modifiable, "Lib allocated buffers must be modifiable");
     }
 
     /// @brief Move constructor.
