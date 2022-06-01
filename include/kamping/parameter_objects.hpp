@@ -180,6 +180,8 @@ public:
     /// @param size Size the container is resized to if it is not a \c Span.
     void resize(size_t size) {
         // This works because in template classes, only functions that are actually called are instantiated
+        // Technically not needed here because _data is const in this case, so we can't call resize() anyways. But this
+        // gives a nicer error message.
         static_assert(is_modifiable, "Trying to resize a constant DataBuffer");
         if constexpr (is_single_element) {
             KASSERT(size == 1u, "Single element buffers must hold exactly one element.");
