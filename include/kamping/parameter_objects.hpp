@@ -178,8 +178,9 @@ public:
     /// allocated and/or data is copied depends in the implementation of the container.
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
-    template <bool enable = modifiability == BufferModifiability::modifiable, std::enable_if_t<enable, bool> = true>
     void resize(size_t size) {
+        // This works because in template classes, only functions that are actually called are instantiated
+        static_assert(is_modifiable, "Trying to resize a constant DataBuffer");
         if constexpr (is_single_element) {
             KASSERT(size == 1u, "Single element buffers must hold exactly one element.");
         } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
@@ -231,8 +232,11 @@ public:
     /// state.
     ///
     /// @return Moves the underlying container out of the DataBuffer.
-    template <bool enable = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enable, bool> = true>
     MemberTypeWithConst extract() {
+        // This works because in template classes, only functions that are actually called are instantiated
+        static_assert(
+            allocation == BufferAllocation::lib_allocated,
+            "extract() must only be called on library allocated DataBuffers");
         static_assert(ownership == BufferOwnership::owning);
         return std::move(_data);
     }
