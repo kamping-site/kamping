@@ -239,7 +239,9 @@ public:
         static_assert(
             allocation == BufferAllocation::lib_allocated,
             "extract() must only be called on library allocated DataBuffers");
-        static_assert(ownership == BufferOwnership::owning);
+        static_assert(
+            ownership == BufferOwnership::owning, "Moving out of a reference should not be done because it would leave "
+                                                  "a users container in an unspecified state.");
         return std::move(_data);
     }
 
