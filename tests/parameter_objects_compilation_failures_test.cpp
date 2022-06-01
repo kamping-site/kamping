@@ -88,6 +88,23 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif defined(COPY_ASSIGN_OP_BUILDER_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     op_builder = op_builder;
+#elif defined(VALUE_CONSTRUCTOR_REFERENCING_DATA_BUFFER)
+    // should not be possible to value (or rvalue) construct a referencing DataBuffer
+    DataBuffer<std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::referencing>
+        foo{std::vector<int>()};
+#elif defined(DEFAULT_CONSTRUCT_USER_ALLOCATED_DATA_BUFFER)
+    // should not be possible to default construct a user defined DataBuffer
+    DataBuffer<
+        std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+        BufferAllocation::user_allocated>
+        foo{};
+#elif defined(EXTRACT_USER_ALLOCATED_DATA_BUFFER)
+    // should not be possible to extract a user allocated DataBuffer
+    DataBuffer<
+        std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+        BufferAllocation::user_allocated>
+         foo{std::vector<int>()};
+    auto bar = foo.extract();
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif
