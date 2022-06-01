@@ -233,7 +233,7 @@ public:
     /// @return Moves the underlying container out of the DataBuffer.
     template <bool enable = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enable, bool> = true>
     MemberTypeWithConst extract() {
-        static_assert(is_modifiable);
+        static_assert(ownership == BufferOwnership::owning);
         return std::move(_data);
     }
 
