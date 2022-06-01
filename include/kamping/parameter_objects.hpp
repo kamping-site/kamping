@@ -227,7 +227,7 @@ public:
         return _data;
     }
 
-    /// @brief Extract the underlying container. This will leave DataBasedBuffer in an unspecified
+    /// @brief Extract the underlying container. This will leave the DataBuffer in an unspecified
     /// state.
     ///
     /// @return Moves the underlying container out of the DataBuffer.
