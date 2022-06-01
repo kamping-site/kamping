@@ -50,11 +50,6 @@ namespace kamping {
 /// This types needs to be used to select internal::LibAllocContainerBasedBuffer as buffer type.
 template <typename Container>
 struct NewContainer {};
-/// @brief Type used for tag dispatching.
-///
-/// This types needs to be used to select internal::LibAllocUniquePtrBasedBuffer as buffer type.
-template <typename T>
-struct NewPtr {};
 
 namespace internal {
 /// @brief Helper to decide if data type has \c .data() method.
