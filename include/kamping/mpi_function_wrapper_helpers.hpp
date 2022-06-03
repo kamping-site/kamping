@@ -57,10 +57,10 @@ struct BufferCategoryNotUsed {};
 /// Note that not all below-listed buffer categories needs to be used by every wrapped \c MPI call.
 /// If a specific call does not use a buffer category, you have to provide BufferCategoryNotUsed instead.
 ///
-/// @tparam RecBuf Buffer type containing the received elements.
-/// @tparam RecCounts Buffer type containing the numbers of received elements.
+/// @tparam RecvBuf Buffer type containing the received elements.
+/// @tparam RecvCounts Buffer type containing the numbers of received elements.
 /// @tparam RecvCount Value wrapper type containing the number of received elements.
-/// @tparam RecDispls Buffer type containing the displacements of the received elements.
+/// @tparam RecvDispls Buffer type containing the displacements of the received elements.
 /// @tparam SendDispls Buffer type containing the displacements of the sent elements.
 /// @tparam MPIStatusObject Buffer type containing the \c MPI status object(s).
 template <class RecvBuf, class RecvCounts, class RecvCount, class RecvDispls, class SendDispls>
