@@ -39,10 +39,12 @@
 
 #include <mpi.h>
 
+#include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
 #include "kamping/span.hpp"
+#include "kassert/kassert.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -582,6 +584,9 @@ public:
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
     void resize(size_t size) {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+        KASSERT(!is_extracted, "Cannot resize a buffer that has already been extracted.", assert::light);
+#endif
         if constexpr (!std::is_same_v<Container, Span<value_type>>) {
             _container.resize(size);
         } else {
@@ -592,12 +597,18 @@ public:
     /// @brief Get writable access to the underlying container.
     /// @return Reference to the underlying container.
     Span<value_type> get() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::light);
+#endif
         return {_container.data(), _container.size()};
     }
 
     /// @brief Get writable access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type* data() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+        KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::light);
+#endif
         return _container.data();
     }
 
@@ -606,17 +617,27 @@ public:
     ///
     /// @return Moves the underlying container out of the LibAllocatedContainerBasedBuffer.
     Container extract() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+        KASSERT(!is_extracted, "Cannot extract a buffer that has already been extracted.", assert::light);
+        is_extracted = true;
+#endif
         return std::move(_container);
     }
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
     size_t size() const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+        KASSERT(!is_extracted, "Cannot get the size of a buffer that has already been extracted.", assert::light);
+#endif
         return _container.size();
     }
 
 private:
     Container _container; ///< Container which holds the actual data.
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+    bool is_extracted = false; ///< Has the container been extracted and is therefore in an invalid state?
+#endif
 };
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.

@@ -449,3 +449,43 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
         EXPECT_EQ(i, vec_buffer.size());
     }
 }
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf> buffer;
+
+    buffer.data();
+    buffer.size();
+    buffer.resize(10);
+    std::ignore = buffer.extract();
+    EXPECT_KASSERT_FAILS(buffer.extract(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(buffer.get(), "Cannot get a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(buffer.data(), "Cannot get a pointer to a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(buffer.size(), "Cannot get the size of a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(buffer.resize(20), "Cannot resize a buffer that has already been extracted.");
+}
+
+TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mpi_result) {
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf>    recv_buffer;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts> recv_counts;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_count>  recv_count;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs> recv_displs;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs> send_displs;
+
+    MPIResult result(
+        std::move(recv_buffer), std::move(recv_counts), std::move(recv_count), std::move(recv_displs),
+        std::move(send_displs));
+
+    std::ignore = result.extract_recv_buffer();
+    EXPECT_KASSERT_FAILS(result.extract_recv_buffer(), "Cannot extract a buffer that has already been extracted.");
+
+    std::ignore = result.extract_recv_counts();
+    EXPECT_KASSERT_FAILS(result.extract_recv_counts(), "Cannot extract a buffer that has already been extracted.");
+
+    std::ignore = result.extract_recv_displs();
+    EXPECT_KASSERT_FAILS(result.extract_recv_displs(), "Cannot extract a buffer that has already been extracted.");
+
+    std::ignore = result.extract_send_displs();
+    EXPECT_KASSERT_FAILS(result.extract_send_displs(), "Cannot extract a buffer that has already been extracted.");
+}
+#endif
