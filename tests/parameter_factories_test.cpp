@@ -356,9 +356,9 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_moved_vector) {
 
 TEST(ParameterFactoriesTest, send_displs_in_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_intializer_list = send_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1});
-    using ExpectedValueType                  = int;
-    testing::test_owning_buffer<ExpectedValueType>(gen_via_intializer_list, ParameterType::send_displs, expected);
+    auto             gen_via_initializer_list = send_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1});
+    using ExpectedValueType                   = int;
+    testing::test_owning_buffer<ExpectedValueType>(gen_via_initializer_list, ParameterType::send_displs, expected);
 }
 
 TEST(ParameterFactoriesTest, recv_displs_in_basics_int_vector) {

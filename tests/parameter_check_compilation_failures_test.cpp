@@ -13,6 +13,7 @@
 
 #include <vector>
 
+#include "kamping/parameter_factories.hpp"
 #include "parameter_check_common.hpp"
 
 int main(int /* argc */, char** /* argv */) {

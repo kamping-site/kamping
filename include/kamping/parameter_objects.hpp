@@ -154,7 +154,7 @@ public:
     using value_type                              = typename Container::value_type; ///< Value type of the buffer.
     static_assert(
         !std::is_same_v<Container, std::initializer_list<value_type>>,
-        "Passing intializer lists directly is prohibited because they cause ownership problems.");
+        "Passing an initializer lists directly is prohibited because they cause ownership problems.");
 
     /// @brief Constructor for ContainerBasedConstBuffer.
     /// @param container Container holding the actual data.
