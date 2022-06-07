@@ -1,0 +1,23 @@
+name: clang-format Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  formatting-check:
+    name: Formatting Check
+    runs-on: self-hosted
+    container:
+      image: "localhost:5000/kamping-ci"
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check formatting
+      uses: jidicula/clang-format-action@v4.4.0
+      with:
+        clang-format-version: '13'
+        exclude-regex: 'extern/'
