@@ -196,7 +196,6 @@ TEST(ScatterTest, scatter_with_nonempty_sendbuf_on_non_root) {
     EXPECT_EQ(result.front(), comm.rank());
 }
 
-// Death test do not work with MPI.
 TEST(ScatterTest, scatter_different_roots_on_different_processes) {
     Communicator comm;
     auto const   input = create_input_vector_on_root(comm, 1);
