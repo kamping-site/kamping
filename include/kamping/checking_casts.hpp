@@ -42,7 +42,7 @@ namespace kamping {
 /// @return \c false otherwise.
 ///
 template <class To, class From>
-constexpr bool in_range(From value) noexcept {
+constexpr bool in_range(From value) {
     static_assert(std::is_integral_v<From>, "From has to be an integral type.");
     static_assert(std::is_integral_v<To>, "To has to be an integral type.");
 
@@ -102,7 +102,7 @@ constexpr bool in_range(From value) noexcept {
 /// @return Casted value.
 ///
 template <class To, class From>
-constexpr To asserting_cast(From value) noexcept {
+constexpr To asserting_cast(From value) {
     KASSERT(in_range<To>(value));
     return static_cast<To>(value);
 }

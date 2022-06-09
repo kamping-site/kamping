@@ -11,6 +11,11 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+// This must come first
+// clang-format off
+#include "../test_assertions.hpp"
+// clang-format on
+
 #include <numeric>
 #include <vector>
 
@@ -192,12 +197,11 @@ TEST(ScatterTest, scatter_with_nonempty_sendbuf_on_non_root) {
 }
 
 // Death test do not work with MPI.
-// TEST(ScatterTest, scatter_different_roots_on_different_processes) {
-//     Communicator comm;
-//     auto const   input = create_input_vector_on_root(comm, 1);
-//
-//     if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
-//         EXPECT_KASSERT_FAILS(comm.scatter(send_buf(input), root(comm.rank())), "Root has to be the same on all
-//         ranks.");
-//     }
-// }
+TEST(ScatterTest, scatter_different_roots_on_different_processes) {
+    Communicator comm;
+    auto const   input = create_input_vector_on_root(comm, 1);
+
+    if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
+        EXPECT_THROW(comm.scatter(send_buf(input), root(comm.rank())), testing::KassertTestingException);
+    }
+}
