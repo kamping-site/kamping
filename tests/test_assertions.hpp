@@ -12,7 +12,9 @@
 // <https://www.gnu.org/licenses/>.
 
 /// @file
-/// @brief Turns all assertions into exceptions. This allows one to test if assertions fail.
+/// @brief Redefines the KASSERT macro such that assertions throw exceptions instead of aborting the process.
+/// THis is needed because GoogleTest does not support death tests in a multithreaded program (MPI spawns multiple
+/// threads). 
 
 #pragma once
 
@@ -26,8 +28,10 @@
     KASSERT_KASSERT_HPP_THROWING_KASSERT_CUSTOM_IMPL(expression, testing::KassertTestingException, message)
 
 namespace testing {
+// Dummy exception class used for remapping assertions to throwing exceptions.
 class KassertTestingException : public std::exception {
 public:
+    // Assertion message (no expression decomposition)
     KassertTestingException(std::string message) : _message(std::move(message)) {}
 
     const char* what() const noexcept override {

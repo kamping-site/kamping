@@ -11,11 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-// This must come first
-// clang-format off
-#include "../test_assertions.hpp"
-// clang-format on
-
 #include <numeric>
 #include <vector>
 
@@ -23,6 +18,7 @@
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
+#include "../test_assertions.hpp"
 #include "kamping/collectives/scatter.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
