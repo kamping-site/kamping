@@ -14,7 +14,10 @@
 /// @file
 /// @brief Redefines the KASSERT macro such that assertions throw exceptions instead of aborting the process.
 /// THis is needed because GoogleTest does not support death tests in a multithreaded program (MPI spawns multiple
-/// threads). 
+/// threads).
+///
+/// *NOTE THAT THIS HEADER MUST BE INCLUDED BEFORE ANY OTHER KAMPING HEADERS* since it redefines the KASSERT macro.
+/// This must happen before the preprocessor substitutes the macro invocations.
 
 #pragma once
 

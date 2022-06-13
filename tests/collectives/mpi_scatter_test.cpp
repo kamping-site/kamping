@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 
 #include "../test_assertions.hpp"
+
 #include "../helpers_for_testing.hpp"
 #include "kamping/collectives/scatter.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
