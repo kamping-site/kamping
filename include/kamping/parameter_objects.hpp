@@ -29,7 +29,6 @@
 #pragma once
 
 #include <cstddef>
-#include <initializer_list>
 #include <memory>
 #include <type_traits>
 

@@ -222,11 +222,11 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     [[maybe_unused]] int err = MPI_Alltoallv(
         send_buf.data(),    // sendbuf
         send_counts.data(), // sendcounts
-        send_displs.data(), // senddispls
+        send_displs.data(), // sdispls
         mpi_send_type,      // sendtype
         recv_buf.data(),    // sendcounts
         recv_counts.data(), // recvcounts
-        recv_displs.data(), // recvdispls
+        recv_displs.data(), // rdispls
         mpi_recv_type,      // recvtype
         mpi_communicator()  // comm
     );
