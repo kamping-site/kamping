@@ -17,8 +17,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "../helpers_for_testing.hpp"
 #include "../test_assertions.hpp"
+#include "../helpers_for_testing.hpp"
 #include "kamping/collectives/scatter.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
