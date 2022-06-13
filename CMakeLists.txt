@@ -130,6 +130,10 @@ set_property(CACHE KAMPING_ASSERTION_LEVEL PROPERTY STRINGS
     none exceptions light light_communication normal heavy heavy_communication)
 message(STATUS "Assertion level: ${KAMPING_ASSERTION_LEVEL}")
 
+# If KAMPING_ASSERTION_LEVEL defaults to the generator expression, ${KAMPING_ASSERTION_LEVEL} may not be quoted 
+# However, if it is explicitly set to some constant string, it must be quoted 
+# Thus, all levels are listed twice, once with and without quotes 
+# @todo find a better solution for this problem
 string(CONCAT KASSERT_ASSERTION_LEVEL 
     $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"none">:0>
     $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","none">:0>
