@@ -141,17 +141,14 @@ string(CONCAT KASSERT_ASSERTION_LEVEL
     $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","exceptions">:10>
     $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"light">:20>
     $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","light">:20>
-    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"light_communication">:30>
-    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","light_communication">:30>
-    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"normal">:40>
-    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","normal">:40>
-    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy">:50>
-    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy">:50>
-    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy_communication">:60>
-    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy_communication">:60>)
-
-# Constant for the highest assertion level used by KaMPIng
-set(KAMPING_HIGHEST_ASSERTION_LEVEL 60)
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"normal">:30>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","normal">:30>
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"light_communication">:40>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","light_communication">:40>
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy_communication">:50>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy_communication">:50>
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy">:60>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy">:60>)
 
 add_subdirectory(extern/kassert)
 target_include_directories(kamping_base INTERFACE extern/kassert/include)
