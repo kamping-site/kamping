@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 #include <kassert/kassert.hpp>
 
+#include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
 
 using namespace ::testing;
