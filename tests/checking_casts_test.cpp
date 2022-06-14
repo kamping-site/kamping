@@ -11,14 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-// Force clang-format to keep this before the forced overwrite below
-// clang-format off
-#include "kamping/assertion_levels.hpp"
-// clang-format on
-// Explicitly enable normal assertions
-#undef KASSERT_ASSERTION_LEVEL
-#define KASSERT_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_NORMAL
-
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -31,6 +23,7 @@
 #include <kassert/kassert.hpp>
 
 #include "kamping/checking_casts.hpp"
+
 using namespace ::testing;
 using namespace ::kamping;
 
@@ -120,7 +113,7 @@ TEST(CheckingCastTest, asserting_cast) {
 ///
 template <typename Lambda>
 void checkThrowOrAssert(Lambda&& callable, [[maybe_unused]] std::string const& what = std::string()) {
-#ifndef KASSERT_EXCEPTION_MODE
+#ifndef KAMPING_EXCEPTION_MODE
     if constexpr (KASSERT_ASSERTION_LEVEL >= kassert::assert::kthrow) {
         EXPECT_DEATH(callable(), "FAILED");
     } else {
