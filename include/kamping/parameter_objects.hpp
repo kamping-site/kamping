@@ -163,7 +163,7 @@ public:
     /// @return Number of elements in the underlying storage.
     size_t size() const {
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get the size of a buffer that has already been extracted.", assert::light);
+        KASSERT(!is_extracted, "Cannot get the size of a buffer that has already been extracted.", assert::normal);
 #endif
         if constexpr (is_single_element) {
             return 1;
@@ -188,7 +188,7 @@ public:
         // gives a nicer error message.
         static_assert(is_modifiable, "Trying to resize a constant DataBuffer");
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot resize a buffer that has already been extracted.", assert::light);
+        KASSERT(!is_extracted, "Cannot resize a buffer that has already been extracted.", assert::normal);
 #endif
         if constexpr (is_single_element) {
             KASSERT(size == 1u, "Single element buffers must hold exactly one element.");
@@ -203,7 +203,7 @@ public:
     /// @return Pointer to the underlying container.
     value_type const* data() const {
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::light);
+        KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::normal);
 #endif
         if constexpr (is_single_element) {
             return &_data;
@@ -216,7 +216,7 @@ public:
     /// @return Pointer to the underlying container.
     value_type_with_const* data() {
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::light);
+        KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::normal);
 #endif
         if constexpr (is_single_element) {
             return &_data;
@@ -229,7 +229,7 @@ public:
     /// @return Span referring the underlying storage.
     Span<value_type const> get() const {
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::light);
+        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
 #endif
         return {this->data(), this->size()};
     }
@@ -238,7 +238,7 @@ public:
     /// @return Span referring to the underlying storage.
     Span<value_type_with_const> get() {
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::light);
+        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
 #endif
         return {this->data(), this->size()};
     }
@@ -247,7 +247,7 @@ public:
     /// @return A reference to the data.
     MemberType const& underlying() const {
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::light);
+        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
 #endif
         return _data;
     }
@@ -265,7 +265,7 @@ public:
             ownership == BufferOwnership::owning, "Moving out of a reference should not be done because it would leave "
                                                   "a users container in an unspecified state.");
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot extract a buffer that has already been extracted.", assert::light);
+        KASSERT(!is_extracted, "Cannot extract a buffer that has already been extracted.", assert::normal);
         is_extracted = true;
 #endif
         return std::move(_data);
