@@ -78,7 +78,9 @@ auto kamping::Communicator::bcast(Args... args) const {
 
     // Assume that either all ranks have send_recv_count or none of them hast -> need to broadcast the amount of data to
     // transfer.
-    /// @todo Assert that either all ranks or no rank has a send_recv_count.
+    KASSERT(
+        this->is_same_on_all_ranks(has_user_provided_send_recv_count),
+        "The send_recv_count must be either provided on all ranks or on no rank.", assert::light_communication);
     size_t send_recv_count = 0;
     if constexpr (has_user_provided_send_recv_count) {
         send_recv_count =
@@ -105,7 +107,9 @@ auto kamping::Communicator::bcast(Args... args) const {
         }
         KASSERT(send_recv_buf.size() == send_recv_count, assert::light);
     }
-    /// @todo Assert, that the recv_counts are the same on all ranks
+    KASSERT(
+        this->is_same_on_all_ranks(send_recv_count), "The send_recv_count must be equal on all ranks.",
+        assert::light_communication);
 
     /// @todo Implement and test that passing a const-buffer is allowed on the root process but not on all other
     /// processes.

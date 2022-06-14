@@ -55,16 +55,28 @@ TEST(BcastTest, single_element) {
 
 TEST(BcastTest, vector_send_recv_count) {
     Communicator comm;
-    const size_t num_values = 4;
 
-    std::vector<int> values(num_values);
-    if (comm.is_root()) {
-        std::fill(values.begin(), values.end(), comm.rank());
+    { // All ranks provide the same send_recv_count.
+        const size_t num_values = 4;
+
+        std::vector<int> values(num_values);
+        if (comm.is_root()) {
+            std::fill(values.begin(), values.end(), comm.rank());
+        }
+
+        comm.bcast(send_recv_buf(values), send_recv_count(num_values));
+        EXPECT_EQ(values.size(), num_values);
+        EXPECT_THAT(values, Each(Eq(comm.root())));
     }
 
-    comm.bcast(send_recv_buf(values), send_recv_count(num_values));
-    EXPECT_EQ(values.size(), num_values);
-    EXPECT_THAT(values, Each(Eq(comm.root())));
+    {
+        // Some buffer provide a send_recv_count, some don't.
+        /// @todo Add test, once we can test failing assertions.
+    }
+
+    { // All buffers provide a send_recv_count, but they differ.
+      /// @todo Add test, once we can test failing assertions.
+    }
 }
 
 TEST(BcastTest, vector_no_send_recv_count) {
