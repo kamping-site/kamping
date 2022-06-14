@@ -18,10 +18,14 @@
 ///
 /// *NOTE THAT THIS HEADER MUST BE INCLUDED BEFORE ANY OTHER KAMPING HEADERS* since it redefines the KASSERT macro.
 /// This must happen before the preprocessor substitutes the macro invocations.
-
 #pragma once
 
+#if defined(KASSERT) || defined(EXPECT_KASSERT_FAILS) || defined(ASSERT_KASSERT_FAILS)
+    #error "Bad #include order: this header must be included first"
+#endif
+
 #include <exception>
+#include <string>
 
 #include <kassert/kassert.hpp>
 
@@ -30,8 +34,15 @@
 #define KASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level) \
     KASSERT_KASSERT_HPP_THROWING_KASSERT_CUSTOM_IMPL(expression, testing::KassertTestingException, message)
 
-namespace testing {
+// Makros to test for failed KASSERTs
+#define EXPECT_KASSERT_FAILS(code, failure_message) \
+    EXPECT_THROW({ code; }, ::kamping::testing::KassertTestingException);
+
+#define ASSERT_KASSERT_FAILS(code, failure_message) \
+    ASSERT_THROW({ code; }, ::kamping::testing::KassertTestingException);
+
 // Dummy exception class used for remapping assertions to throwing exceptions.
+namespace kamping::testing {
 class KassertTestingException : public std::exception {
 public:
     // Assertion message (no expression decomposition)
@@ -44,4 +55,4 @@ public:
 private:
     std::string _message;
 };
-} // namespace testing
+} // namespace kamping::testing

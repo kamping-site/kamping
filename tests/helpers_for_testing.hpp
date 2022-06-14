@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <gtest/gtest.h>
+#include <kassert/kassert.hpp>
 
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/parameter_objects.hpp"
@@ -102,13 +103,19 @@ struct Argument {
     int _i;
 };
 
+// Makro might be already defined if we turned assertions into exceptions
+#ifndef EXPECT_KASSERT_FAILS 
 /// @brief Custom expectation for testing if a KASSERT fails.
 #define EXPECT_KASSERT_FAILS(CODE, FAILURE_MESSAGE) \
     EXPECT_EXIT({ CODE; }, testing::KilledBySignal(SIGABRT), FAILURE_MESSAGE);
+#endif 
 
+// Makro might be already defined if we turned assertions into exceptions
+#ifndef ASSERT_KASSERT_FAILS
 /// @brief Custom assertion for testing if a KASSERT fails.
 #define ASSERT_KASSERT_FAILS(CODE, FAILURE_MESSAGE) \
     ASSERT_EXIT({ CODE; }, testing::KilledBySignal(SIGABRT), FAILURE_MESSAGE);
+#endif 
 
 /// @}
 } // namespace testing
