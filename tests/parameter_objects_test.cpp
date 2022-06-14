@@ -11,9 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#undef KASSERT_ASSERTION_LEVEL
-#define KASSERT_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION
-
 #include "gtest/gtest.h"
 #include <type_traits>
 
@@ -453,6 +450,7 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
     }
 }
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf> buffer;
 
@@ -490,3 +488,4 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
     std::ignore = result.extract_send_displs();
     EXPECT_KASSERT_FAILS(result.extract_send_displs(), "Cannot extract a buffer that has already been extracted.");
 }
+#endif
