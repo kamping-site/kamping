@@ -110,12 +110,6 @@ auto kamping::Communicator::bcast(Args... args) const {
     /// @todo Implement and test that passing a const-buffer is allowed on the root process but not on all other
     /// processes.
 
-    /// @todo Once we decided on how to handle different buffer sizes passed to different processes, implement this
-    /// here.
-    // KASSERT(
-    //     recv_buf_large_enough_on_all_processes(send_recv_buf, root.rank()),
-    //     "The receive buffer is too small on at least one rank.", assert::light_communication);
-
     // Perform the broadcast. The error code is unused if KTHROW is removed at compile time.
     [[maybe_unused]] int err = MPI_Bcast(
         send_recv_buf.data(),                      // buffer*
@@ -130,34 +124,3 @@ auto kamping::Communicator::bcast(Args... args) const {
         std::move(send_recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
         BufferCategoryNotUsed{});
 } // namespace kamping::internal
-
-// /// @brief Checks if the receive buffer is large enough to receive all elements on all ranks.
-// ///
-// /// Broadcasts the size of the send buffer (which is equal to the recv_buf) from the root rank,
-// /// performs local comparison and collects the result using an allreduce.
-// /// @param send_recv_buf The send buffer on root, the receive buffer on all other ranks.
-// /// @param root The rank of the root process.
-// /// @todo Once we decided on which ranks to notify of failed exceptions and the CRTP helper is there,
-// /// implement this.
-// template <typename RecvBuf>
-// bool recv_buf_large_enough_on_all_processes(RecvBuf const& send_recv_buf, int const root) const {
-//     uint64_t size = send_recv_buf.size();
-//     MPI_Bcast(
-//         &size,                                // src/dest buffer
-//         1,                                    // size
-//         mpi_datatype<decltype(size)>(),       // datatype
-//         root,                                 // root
-//         this->underlying().mpi_communicator() // communicator
-//     );
-//     bool const local_buffer_large_enough = size <= send_recv_buf.size();
-//     bool       every_buffer_large_enough;
-//     MPI_Allreduce(
-//         &local_buffer_large_enough,           // src buffer
-//         &every_buffer_large_enough,           // dest buffer
-//         1,                                    // count
-//         mpi_datatype<bool>(),                 // datatype
-//         MPI_LAND,                             // operation
-//         this->underlying().mpi_communicator() // communicator
-//     );
-//     return every_buffer_large_enough;
-// }
