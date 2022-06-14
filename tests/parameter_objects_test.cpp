@@ -450,7 +450,7 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf> buffer;
 
