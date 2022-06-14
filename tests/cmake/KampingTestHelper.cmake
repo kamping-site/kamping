@@ -15,7 +15,7 @@ function(kamping_set_kassert_flags KAMPING_TARGET_NAME)
 
   # Explicitly specify exception mode for tests, default to no exception mode
   if (NOT KAMPING_NO_EXCEPTION_MODE)
-    target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_EXCEPTION_MODE)
+    target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKASSERT_EXCEPTION_MODE)
   endif ()
 endfunction()
 

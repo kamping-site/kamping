@@ -34,6 +34,7 @@
 
 #include <mpi.h>
 
+#include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_type_definitions.hpp"
@@ -160,6 +161,9 @@ public:
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
     size_t size() const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot get the size of a buffer that has already been extracted.", assert::normal);
+#endif
         if constexpr (is_single_element) {
             return 1;
         } else {
@@ -182,6 +186,9 @@ public:
         // Technically not needed here because _data is const in this case, so we can't call resize() anyways. But this
         // gives a nicer error message.
         static_assert(is_modifiable, "Trying to resize a constant DataBuffer");
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot resize a buffer that has already been extracted.", assert::normal);
+#endif
         if constexpr (is_single_element) {
             KASSERT(size == 1u, "Single element buffers must hold exactly one element.");
         } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
@@ -194,6 +201,9 @@ public:
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type const* data() const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::normal);
+#endif
         if constexpr (is_single_element) {
             return &_data;
         } else {
@@ -204,6 +214,9 @@ public:
     /// @brief Get access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type_with_const* data() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::normal);
+#endif
         if constexpr (is_single_element) {
             return &_data;
         } else {
@@ -214,18 +227,27 @@ public:
     /// @brief Get read-only access to the underlying storage.
     /// @return Span referring the underlying storage.
     Span<value_type const> get() const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
+#endif
         return {this->data(), this->size()};
     }
 
     /// @brief Get access to the underlying storage.
     /// @return Span referring to the underlying storage.
     Span<value_type_with_const> get() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
+#endif
         return {this->data(), this->size()};
     }
 
     /// @brief Provides access to the underlying data.
     /// @return A reference to the data.
     MemberType const& underlying() const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
+#endif
         return _data;
     }
 
@@ -241,11 +263,18 @@ public:
         static_assert(
             ownership == BufferOwnership::owning, "Moving out of a reference should not be done because it would leave "
                                                   "a users container in an unspecified state.");
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot extract a buffer that has already been extracted.", assert::normal);
+        is_extracted = true;
+#endif
         return std::move(_data);
     }
 
 private:
     MemberTypeWithConstAndRef _data; ///< Container which holds the actual data.
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    bool is_extracted = false; ///< Has the container been extracted and is therefore in an invalid state?
+#endif
 };
 
 /// @brief Constant buffer based on a container type.
