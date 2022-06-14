@@ -67,8 +67,8 @@ auto kamping::Communicator::reduce(Args... args) const {
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     auto& operation_param = internal::select_parameter_type<internal::ParameterType::op>(args...);
-    // If you want to understand the syntax of the following line, ignore the "template " ;-) 
-    auto  operation       = operation_param.template build_operation<send_value_type>();
+    // If you want to understand the syntax of the following line, ignore the "template " ;-)
+    auto operation = operation_param.template build_operation<send_value_type>();
 
     // Check parameters
     static_assert(
