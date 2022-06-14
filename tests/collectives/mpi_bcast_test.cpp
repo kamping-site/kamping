@@ -25,7 +25,7 @@
 using namespace ::kamping;
 using namespace ::testing;
 
-TEST(BcastTest, SingleElement) {
+TEST(BcastTest, single_element) {
     Communicator comm;
 
     // Basic use case, broadcast a single POD.
@@ -53,14 +53,63 @@ TEST(BcastTest, SingleElement) {
     EXPECT_EQ(value, root);
 }
 
-TEST(BcastTest, Vector) {
+TEST(BcastTest, vector_send_recv_count) {
     Communicator comm;
+    const size_t num_values = 4;
 
-    std::vector<int> values(4);
+    std::vector<int> values(num_values);
     if (comm.is_root()) {
         std::fill(values.begin(), values.end(), comm.rank());
     }
 
-    comm.bcast(send_recv_buf(values));
+    comm.bcast(send_recv_buf(values), send_recv_count(num_values));
+    EXPECT_EQ(values.size(), num_values);
     EXPECT_THAT(values, Each(Eq(comm.root())));
+}
+
+TEST(BcastTest, vector_no_send_recv_count) {
+    Communicator comm;
+
+    { // All send_recv_bufs are already large enough.
+        std::vector<int> values(4);
+        if (comm.is_root()) {
+            std::fill(values.begin(), values.end(), comm.rank());
+        }
+
+        comm.bcast(send_recv_buf(values));
+        EXPECT_EQ(values.size(), 4);
+        EXPECT_THAT(values, Each(Eq(comm.root())));
+    }
+
+    { // Some send_recv_bufs need to be resized.
+        std::vector<int> values;
+        if (comm.is_root()) {
+            values.resize(100);
+            std::fill(values.begin(), values.end(), comm.rank());
+        } else {
+            values.resize(0);
+            std::fill(values.begin(), values.end(), comm.rank());
+        }
+
+        comm.bcast(send_recv_buf(values));
+        EXPECT_EQ(values.size(), 100);
+        EXPECT_THAT(values, Each(Eq(comm.root())));
+    }
+
+    { // All send_recv_bufs are of different size
+        comm.root(0);
+        std::vector<int> values;
+
+        if (comm.is_root()) {
+            values.resize(43);
+            std::fill(values.begin(), values.end(), comm.rank());
+        } else {
+            values.resize(comm.rank());
+            std::fill(values.begin(), values.end(), comm.rank());
+        }
+
+        comm.bcast(send_recv_buf(values));
+        EXPECT_EQ(values.size(), 43);
+        EXPECT_THAT(values, Each(Eq(comm.root())));
+    }
 }
