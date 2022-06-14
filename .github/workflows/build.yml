@@ -12,6 +12,7 @@ on:
 jobs:
   build:
     runs-on: self-hosted
+    timeout-minutes: 10
     container:
       image: "localhost:5000/kamping-ci"
     continue-on-error: true
@@ -57,7 +58,6 @@ jobs:
             assertion-level: 60
             run-tests: OFF
 
-    timeout-minutes: 60
     steps:
     - uses: actions/checkout@v2
       with:

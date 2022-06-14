@@ -46,7 +46,7 @@ public:
     /// @brief Get access to the underlying memory.
     ///
     /// @return Pointer to the underlying memory.
-    constexpr pointer data() const {
+    constexpr pointer data() const noexcept {
         return _ptr;
     }
 

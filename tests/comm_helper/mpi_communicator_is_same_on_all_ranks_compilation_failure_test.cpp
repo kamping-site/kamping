@@ -11,25 +11,21 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#pragma once
-
-#include <mpi.h>
-
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
-#include "kamping/error_handling.hpp"
-#include "kamping/mpi_function_wrapper_helpers.hpp"
 
-/// @brief Perform a \c MPI_Barrier on this communicator.
-///
-/// Barrier takes no parameters. Any parameters passed will cause a compilation error.
-///
-/// The parameter pack prohibits the compiler form compiling this
-/// function even when it's not used.
-template <typename... Args>
-void kamping::Communicator::barrier(Args... args) const {
-    using namespace kamping::internal;
-    static_assert(sizeof...(args) == 0, "You may not pass any arguments to barrier().");
+int main(int /*argc*/, char** /*argv*/) {
+    using namespace ::kamping;
+    using namespace ::kamping::internal;
 
-    [[maybe_unused]] int err = MPI_Barrier(mpi_communicator());
-    THROW_IF_MPI_ERROR(err, MPI_Barrier);
+    [[maybe_unused]] Communicator comm;
+    using NotAPod = std::vector<int>;
+    static_assert(!std::is_pod_v<NotAPod>);
+    [[maybe_unused]] int value = 0;
+
+#if defined(VALUE_IS_A_POINTER)
+    std::ignore = comm.is_same_on_all_ranks(&value);
+#else
+// If none of the above sections is active, this file will compile successfully.
+#endif
 }

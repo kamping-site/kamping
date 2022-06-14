@@ -18,6 +18,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
@@ -54,7 +55,7 @@ inline bool check_equal_sizes(kamping::Communicator const& comm, T local_size) {
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
 template <typename... Args>
-auto kamping::Communicator::gather(Args&&... args) const {
+auto kamping::Communicator::gather(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf, root));
 
@@ -77,6 +78,8 @@ auto kamping::Communicator::gather(Args&&... args) const {
     auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
         std::tuple(this->root()), args...);
     KASSERT(this->is_valid_rank(root.rank()), "Invalid rank as root.");
+    KASSERT(
+        this->is_same_on_all_ranks(root.rank()), "Root has to be the same on all ranks.", assert::light_communication);
 
     auto mpi_send_type = mpi_datatype<send_value_type>();
     auto mpi_recv_type = mpi_datatype<recv_value_type>();

@@ -31,6 +31,7 @@ TEST(EmptyBufferTest, get_basics) {
     EXPECT_EQ(empty_buffer.size(), 0);
     EXPECT_EQ(empty_buffer.get().size(), 0);
     EXPECT_EQ(empty_buffer.get().data(), nullptr);
+    EXPECT_EQ(empty_buffer.data(), nullptr);
 }
 
 // Tests the basic functionality of ContainerBasedConstBuffer
@@ -46,10 +47,14 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_int_vector.get().size(), int_vec.size());
     EXPECT_EQ(buffer_based_on_int_vector.get().data(), int_vec.data());
     static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.get().data()), const int*>);
+    EXPECT_EQ(buffer_based_on_int_vector.data(), int_vec.data());
+    static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.data()), const int*>);
 
     EXPECT_EQ(buffer_based_on_const_int_vector.get().size(), int_vec_const.size());
     EXPECT_EQ(buffer_based_on_const_int_vector.get().data(), int_vec_const.data());
     static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.get().data()), const int*>);
+    EXPECT_EQ(buffer_based_on_const_int_vector.data(), int_vec_const.data());
+    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.data()), const int*>);
 }
 
 TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
@@ -88,7 +93,11 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_moved_vector.get().data()[0], 1);
     EXPECT_EQ(buffer_based_on_moved_vector.get().data()[1], 2);
     EXPECT_EQ(buffer_based_on_moved_vector.get().data()[2], 3);
-    static_assert(std::is_same_v<decltype(buffer_based_on_moved_vector.get().data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_moved_vector.get().data()), int const*>);
+    EXPECT_EQ(buffer_based_on_moved_vector.data()[0], 1);
+    EXPECT_EQ(buffer_based_on_moved_vector.data()[1], 2);
+    EXPECT_EQ(buffer_based_on_moved_vector.data()[2], 3);
+    static_assert(std::is_same_v<decltype(buffer_based_on_moved_vector.data()), int const*>);
 
     EXPECT_EQ(buffer_based_on_rvalue_vector.size(), 3);
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().size(), 3);
@@ -96,6 +105,10 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[1], 2);
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[2], 3);
     static_assert(std::is_same_v<decltype(buffer_based_on_rvalue_vector.get().data()), const int*>);
+    EXPECT_EQ(buffer_based_on_rvalue_vector.data()[0], 1);
+    EXPECT_EQ(buffer_based_on_rvalue_vector.data()[1], 2);
+    EXPECT_EQ(buffer_based_on_rvalue_vector.data()[2], 3);
+    static_assert(std::is_same_v<decltype(buffer_based_on_rvalue_vector.data()), int const*>);
 
     {
         auto const& underlying_container = buffer_based_on_moved_vector.underlying();
@@ -291,6 +304,7 @@ TEST(SingleElementConstBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.size(), 1);
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
+    EXPECT_EQ(*(int_buffer.data()), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_FALSE(int_buffer.is_modifiable);
@@ -313,6 +327,7 @@ TEST(SingleElementOwningBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.size(), 1);
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
+    EXPECT_EQ(*(int_buffer.data()), 5);
     EXPECT_EQ(int_buffer.underlying(), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
@@ -352,6 +367,7 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
 #endif
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
+    EXPECT_EQ(*(int_buffer.data()), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_TRUE(int_buffer.is_modifiable);
@@ -385,6 +401,7 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
 #endif
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
+    EXPECT_EQ(*(int_buffer.data()), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_TRUE(int_buffer.is_modifiable);

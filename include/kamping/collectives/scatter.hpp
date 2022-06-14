@@ -20,6 +20,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/error_handling.hpp"
 #include "kamping/mpi_datatype.hpp"
@@ -67,7 +68,7 @@ int bcast_value(kamping::Communicator const& comm, T const bcast_value, int cons
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
 template <typename... Args>
-auto kamping::Communicator::scatter(Args&&... args) const {
+auto kamping::Communicator::scatter(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_count));
@@ -80,6 +81,7 @@ auto kamping::Communicator::scatter(Args&&... args) const {
     size_t const root     = root_param.rank();
     int const    int_root = root_param.rank_signed();
     KASSERT(is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << size(), assert::light);
+    KASSERT(this->is_same_on_all_ranks(root), "Root has to be the same on all ranks.", assert::light_communication);
 
     // Mandatory parameter send_buf()
     auto send_buf              = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
@@ -119,7 +121,7 @@ auto kamping::Communicator::scatter(Args&&... args) const {
         internal::ParameterType::recv_count, LibAllocatedSingleElementBuffer<int, internal::ParameterType::recv_count>>(
         std::tuple(), args...);
 
-    constexpr bool is_output_parameter = std::remove_reference_t<decltype(recv_count_param)>::is_modifiable;
+    constexpr bool is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;
     KASSERT(
         is_output_parameter == bcast_value(*this, is_output_parameter, int_root),
         "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.", assert::light_communication);

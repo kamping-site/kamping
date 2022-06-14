@@ -31,11 +31,12 @@ kamping_register_mpi_test(test_mpi_datatype FILES mpi_datatype_test.cpp CORES 1)
 kamping_register_mpi_test(test_mpi_gather FILES collectives/mpi_gather_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_mpi_reduce FILES collectives/mpi_reduce_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_mpi_bcast FILES collectives/mpi_bcast_test.cpp CORES 1 4)
+kamping_register_mpi_test(test_mpi_allreduce FILES collectives/mpi_allreduce_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_operation_wrapper FILES mpi_operation_wrapper_test.cpp CORES 1)
 kamping_register_mpi_test(test_parameter_factories_mpi FILES parameter_factories_mpi_test.cpp CORES 1)
 kamping_register_mpi_test(test_multiple_compilation_units FILES multiple_compilation_units_test/main.cpp multiple_compilation_units_test/gatherer.cpp CORES 1 4)
 kamping_register_mpi_test(test_environment FILES environment_test.cpp CORES 1 4)
-kamping_register_mpi_test(test_mpi_communicator_is_same_on_all_pes FILES mpi_communicator_is_same_on_all_pes_test.cpp CORES 1 4)
+kamping_register_mpi_test(test_mpi_communicator_is_same_on_all_ranks FILES comm_helper/mpi_communicator_is_same_on_all_ranks_test.cpp CORES 1 4)
 
 # The environment test does not use our wrapper functions because it can't use our google test setup.
 # First variant does only the minimum amount of interaction with kamping::Environment.
@@ -63,9 +64,9 @@ kamping_register_compilation_failure_test(
 )
 
 kamping_register_compilation_failure_test(
-  test_mpi_communicator_is_same_on_all_pes_compilation_failure
-  FILES mpi_communicator_is_same_on_all_pes_compilation_failure_test.cpp
-  SECTIONS "VALUE_IS_A_POINTER" "VALUE_IS_NOT_A_POD"
+  test_mpi_communicator_is_same_on_all_ranks_compilation_failure
+  FILES comm_helper/mpi_communicator_is_same_on_all_ranks_compilation_failure_test.cpp
+  SECTIONS "VALUE_IS_A_POINTER" 
   LIBRARIES kamping_base
 )
 
@@ -86,7 +87,7 @@ kamping_register_compilation_failure_test(
 kamping_register_compilation_failure_test(
   test_parameter_objects_compilation_failure
   FILES parameter_objects_compilation_failures_test.cpp
-  SECTIONS "COPY_CONSTRUCT_CONTAINER_CONST_BUFFER" "COPY_ASSIGN_CONTAINER_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_CONST_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_CONSTRUCT_USER_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_USER_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_SINGLE_ELEMENT_BUFFER" "COPY_ASSIGN_LIB_ALLOC_SINGLE_ELEMENT_BUFFER" "COPY_CONSTRUCT_ROOT_BUFFER" "COPY_ASSIGN_ROOT_BUFFER" "COPY_CONSTRUCT_OP_BUILDER_BUFFER" "COPY_ASSIGN_OP_BUILDER_BUFFER"
+  SECTIONS "COPY_CONSTRUCT_CONTAINER_CONST_BUFFER" "COPY_ASSIGN_CONTAINER_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_CONST_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_CONSTRUCT_USER_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_USER_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_SINGLE_ELEMENT_BUFFER" "COPY_ASSIGN_LIB_ALLOC_SINGLE_ELEMENT_BUFFER" "COPY_CONSTRUCT_ROOT_BUFFER" "COPY_ASSIGN_ROOT_BUFFER" "COPY_CONSTRUCT_OP_BUILDER_BUFFER" "COPY_ASSIGN_OP_BUILDER_BUFFER" "VALUE_CONSTRUCTOR_REFERENCING_DATA_BUFFER" "DEFAULT_CONSTRUCT_USER_ALLOCATED_DATA_BUFFER" "EXTRACT_USER_ALLOCATED_DATA_BUFFER" "RESIZE_CONST_DATA_BUFFER"
   LIBRARIES kamping_base
 )
 
