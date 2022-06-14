@@ -118,18 +118,37 @@ endif()
 #          Should only be used in debug mode.
 # Level 40: Light communication assertions = assertions that perform additional communication causing small running
 #          time overheads.
-# Level 55: Heavy communication assertions = assertions that perform additional communication causing significant
+# Level 50: Heavy communication assertions = assertions that perform additional communication causing significant
 #          running time overheads.
 # Level 60: Heavy assertions = assertions that introduce overhead which renders some library operations infeasible when
 #          invoked with any significant work load.
 #
-# Assertion levels can be set explicitly using the -DKASSERT_ASSERTION_LEVEL=... flag. If no level is set explicitly,
+# Assertion levels can be set explicitly using the -DKAMPING_ASSERTION_LEVEL=... flag. If no level is set explicitly,
 # we set it to 10 (exceptions only) in Release mode and 30 (up to normal assertions) in Debug mode.
-set(KASSERT_ASSERTION_LEVEL $<IF:$<CONFIG:Debug>,30,10> CACHE STRING "Higher values enable more complex assertions. To disable all runtime checks, set to '0'.")
-set_property(CACHE KASSERT_ASSERTION_LEVEL PROPERTY STRINGS 0 10 20 30 40 50 60)
+set(KAMPING_ASSERTION_LEVEL $<IF:$<CONFIG:Debug>,"normal","exceptions"> CACHE STRING "Assertion level")
+set_property(CACHE KAMPING_ASSERTION_LEVEL PROPERTY STRINGS
+    none exceptions light light_communication normal heavy heavy_communication)
+message(STATUS "Assertion level: ${KAMPING_ASSERTION_LEVEL}")
 
-# Constant for the highest assertion level used by KaMPIng
-set(KASSERT_HIGHEST_ASSERTION_LEVEL 60)
+# If KAMPING_ASSERTION_LEVEL defaults to the generator expression, ${KAMPING_ASSERTION_LEVEL} may not be quoted 
+# However, if it is explicitly set to some constant string, it must be quoted 
+# Thus, all levels are listed twice, once with and without quotes 
+# @todo find a better solution for this problem
+string(CONCAT KASSERT_ASSERTION_LEVEL 
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"none">:0>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","none">:0>
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"exceptions">:10>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","exceptions">:10>
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"light">:20>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","light">:20>
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"normal">:30>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","normal">:30>
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"light_communication">:40>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","light_communication">:40>
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy_communication">:50>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy_communication">:50>
+    $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy">:60>
+    $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy">:60>)
 
 add_subdirectory(extern/kassert)
 target_include_directories(kamping_base INTERFACE extern/kassert/include)
