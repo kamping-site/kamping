@@ -34,13 +34,13 @@ Cpp11BracedListStyle: 'true'
 IncludeBlocks: Regroup
 IncludeCategories:
   - Regex: '".*test_assertions\.hpp"'
-    Priority: 1
+    Priority: 0
   - Regex: '".*\.hpp"'
     Priority: 3
   - Regex: '<.*\.(h|hpp)>'
     Priority: 2
   - Regex: '.*'
-    Priority: 0
+    Priority: 1
 IndentCaseLabels: 'true'
 IndentPPDirectives: BeforeHash
 IndentWidth: '4'
