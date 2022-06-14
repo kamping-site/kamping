@@ -114,14 +114,14 @@ endif()
 # Level 0: Disable all assertions
 # Level 10: Exception assertions = only enable exceptions (if not in exception mode)
 # Level 20: Light assertions = assertions that do not affect the running time of library operations significantly.
-# Level 30: Light communication assertions = assertions that perform additional communication causing small running
-#          time overheads.
-# Level 40: Normal assertions = assertions that might slow down some operations of the library by a constant factor.
+# Level 30: Normal assertions = assertions that might slow down some operations of the library by a constant factor.
 #          Should only be used in debug mode.
-# Level 50: Heavy assertions = assertions that introduce overhead which renders some library operations infeasible when
-#          invoked with any significant work load.
-# Level 60: Heavy communication assertions = assertions that perform additional communication causing significant
+# Level 40: Light communication assertions = assertions that perform additional communication causing small running
+#          time overheads.
+# Level 50: Heavy communication assertions = assertions that perform additional communication causing significant
 #          running time overheads.
+# Level 60: Heavy assertions = assertions that introduce overhead which renders some library operations infeasible when
+#          invoked with any significant work load.
 #
 # Assertion levels can be set explicitly using the -DKAMPING_ASSERTION_LEVEL=... flag. If no level is set explicitly,
 # we set it to 10 (exceptions only) in Release mode and 30 (up to normal assertions) in Debug mode.
