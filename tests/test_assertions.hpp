@@ -29,17 +29,24 @@
 
 #include <kassert/kassert.hpp>
 
+#include "kamping/assertion_levels.hpp"
+
 // Redefine KASSERT implementation to throw an exception
 #undef KASSERT_KASSERT_HPP_KASSERT_IMPL
 #define KASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level) \
     KASSERT_KASSERT_HPP_THROWING_KASSERT_CUSTOM_IMPL(expression, testing::KassertTestingException, message)
 
 // Makros to test for failed KASSERTs
-#define EXPECT_KASSERT_FAILS(code, failure_message) \
-    EXPECT_THROW({ code; }, ::kamping::testing::KassertTestingException);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
+    #define EXPECT_KASSERT_FAILS(code, failure_message) \
+        EXPECT_THROW({ code; }, ::kamping::testing::KassertTestingException);
 
-#define ASSERT_KASSERT_FAILS(code, failure_message) \
-    ASSERT_THROW({ code; }, ::kamping::testing::KassertTestingException);
+    #define ASSERT_KASSERT_FAILS(code, failure_message) \
+        ASSERT_THROW({ code; }, ::kamping::testing::KassertTestingException);
+#else // Otherwise, we do not test for failed assertions
+    #define EXCPECT_KASSERT_FAILS(code, failure_message)
+    #define ASSERT_KASSERT_FAILS(code, failure_message)
+#endif
 
 // Dummy exception class used for remapping assertions to throwing exceptions.
 namespace kamping::testing {
