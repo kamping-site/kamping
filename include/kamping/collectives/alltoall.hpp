@@ -113,10 +113,10 @@ auto kamping::Communicator::alltoall(Args... args) const {
 /// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
 /// received from rank 1, and so on.
 /// -\ref kamping::send_displs() containing the offsets of the messages in send_buf. The `send_counts[i]` elements
-/// starting at `send_buf[send_displs[i]]` will be sent to rank `i`. If ommited, this is calculated as the exclusive
+/// starting at `send_buf[send_displs[i]]` will be sent to rank `i`. If omitted, this is calculated as the exclusive
 /// prefix-sum of `send_counts`.
 /// -\ref kamping::recv_displs() containing the offsets of the messages in recv_buf. The `recv_counts[i]` elements
-/// starting at `recv_buf[recv_displs[i]]` will be received from rank `i`. If ommited, this is calculated as the
+/// starting at `recv_buf[recv_displs[i]]` will be received from rank `i`. If omitted, this is calculated as the
 /// exclusive prefix-sum of `recv_counts`.
 ///
 /// @tparam Args Automatically deducted template parameters.
@@ -222,11 +222,11 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     [[maybe_unused]] int err = MPI_Alltoallv(
         send_buf.data(),    // sendbuf
         send_counts.data(), // sendcounts
-        send_displs.data(), // sdispls
+        send_displs.data(), // senddispls
         mpi_send_type,      // sendtype
         recv_buf.data(),    // sendcounts
         recv_counts.data(), // recvcounts
-        recv_displs.data(), // rdispls
+        recv_displs.data(), // recvdispls
         mpi_recv_type,      // recvtype
         mpi_communicator()  // comm
     );
