@@ -44,7 +44,7 @@
     #define ASSERT_KASSERT_FAILS(code, failure_message) \
         ASSERT_THROW({ code; }, ::kamping::testing::KassertTestingException);
 #else // Otherwise, we do not test for failed assertions
-    #define EXCPECT_KASSERT_FAILS(code, failure_message)
+    #define EXPECT_KASSERT_FAILS(code, failure_message)
     #define ASSERT_KASSERT_FAILS(code, failure_message)
 #endif
 

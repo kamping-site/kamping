@@ -11,19 +11,13 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-// Force clang-format to keep this before the forced overwrite below
-// clang-format off
-#include "kamping/assertion_levels.hpp"
-// clang-format on
-// Explicitly enable normal assertions
-#undef KASSERT_ASSERTION_LEVEL
-#define KASSERT_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_NORMAL
-
 #include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
 #include <stdexcept>
+
+#include "test_assertions.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest-death-test.h>
@@ -31,6 +25,7 @@
 #include <kassert/kassert.hpp>
 
 #include "kamping/checking_casts.hpp"
+
 using namespace ::testing;
 using namespace ::kamping;
 
@@ -95,19 +90,7 @@ TEST(CheckingCastTest, asserting_cast) {
         },
         ::testing::ExitedWithCode(0), "Still alive");
 
-    if constexpr (KASSERT_ASSERTION_LEVEL >= kamping::assert::normal) {
-        // According to the googletest documentation, throwing an exception is not considered a death.
-        // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
-        EXPECT_DEATH(asserting_cast<int8_t>(u8val), "FAILED ASSERTION");
-    } else {
-        EXPECT_EXIT(
-            {
-                asserting_cast<int8_t>(u8val);
-                fprintf(stderr, "Still alive!");
-                exit(0);
-            },
-            ::testing::ExitedWithCode(0), "Still alive");
-    }
+    EXPECT_KASSERT_FAILS(asserting_cast<int8_t>(u8val), "FAILED ASSERTION");
 }
 
 ///
@@ -119,20 +102,7 @@ TEST(CheckingCastTest, asserting_cast) {
 /// @param what Substring that should be contained in the output of what() of the thrown exception. Ignored if empty.
 ///
 template <typename Lambda>
-void checkThrowOrAssert(Lambda&& callable, [[maybe_unused]] std::string const& what = std::string()) {
-#ifndef KASSERT_EXCEPTION_MODE
-    if constexpr (KASSERT_ASSERTION_LEVEL >= kassert::assert::kthrow) {
-        EXPECT_DEATH(callable(), "FAILED");
-    } else {
-        EXPECT_EXIT(
-            {
-                callable();
-                fprintf(stderr, "Still alive!");
-                exit(0);
-            },
-            ::testing::ExitedWithCode(0), "Still alive");
-    }
-#else
+void checkThrow(Lambda&& callable, [[maybe_unused]] std::string const& what = std::string()) {
     EXPECT_THROW(callable(), std::range_error);
     if (!what.empty()) {
         try {
@@ -141,7 +111,6 @@ void checkThrowOrAssert(Lambda&& callable, [[maybe_unused]] std::string const& w
             EXPECT_THAT(e.what(), HasSubstr(what));
         }
     }
-#endif
 }
 
 TEST(CheckingCastTest, throwing_cast) {
@@ -151,11 +120,11 @@ TEST(CheckingCastTest, throwing_cast) {
     EXPECT_NO_THROW(throwing_cast<uint8_t>(u8val));
 
     // An invalid cast throws an exception.
-    checkThrowOrAssert([&]() { return throwing_cast<int8_t>(u8val); });
+    checkThrow([&]() { return throwing_cast<int8_t>(u8val); });
 
     // Check the error messages.
-    checkThrowOrAssert([&]() { return throwing_cast<int8_t>(1337); }, "1337 is not representable by the target type.");
+    checkThrow([&]() { return throwing_cast<int8_t>(1337); }, "1337 is not representable by the target type.");
 
     // ... for negative values.
-    checkThrowOrAssert([&]() { return throwing_cast<uint8_t>(-42); }, "-42 is not representable by the target type.");
+    checkThrow([&]() { return throwing_cast<uint8_t>(-42); }, "-42 is not representable by the target type.");
 }
