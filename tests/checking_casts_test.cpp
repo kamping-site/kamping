@@ -120,7 +120,7 @@ TEST(CheckingCastTest, asserting_cast) {
 ///
 template <typename Lambda>
 void checkThrowOrAssert(Lambda&& callable, [[maybe_unused]] std::string const& what = std::string()) {
-#ifndef KASSERT_EXCEPTION_MODE
+#if KASSERT_EXCEPTION_MODE == 1
     if constexpr (KASSERT_ASSERTION_LEVEL >= kamping::assert::kthrow) {
         EXPECT_DEATH(callable(), "FAILED");
     } else {
