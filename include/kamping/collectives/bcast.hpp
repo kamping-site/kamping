@@ -46,51 +46,54 @@
 template <typename... Args>
 auto kamping::Communicator::bcast(Args... args) const {
     using namespace ::kamping::internal;
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(root, send_recv_buf, send_recv_count));
-
-    static_assert(
-        all_parameters_are_rvalues<Args...>,
-        "All parameters have to be passed in as rvalue references, meaning that you must not hold a variable "
-        "returned by the named parameter helper functions like recv_buf().");
+    KAMPING_CHECK_PARAMETERS(
+        Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root, send_recv_count));
 
     // Get the root PE
     auto&& root = select_parameter_type_or_default<ParameterType::root, Root>(std::tuple(this->root()), args...);
     KASSERT(this->is_valid_rank(root.rank()), "Invalid rank as root.", assert::light);
 
     // Get the send_recv_buf
-    using default_send_recv_buf_type = decltype(kamping::send_recv_buf(NewContainer<std::vector<send_value_type>>{}));
+    // For now, the user *has* to provide a send recv buf
+    // using default_send_recv_buf_type =
+    // decltype(kamping::send_recv_buf(NewContainer<std::vector<send_value_type>>{}));
 
-    const bool  has_user_provided_send_recv_buf = has_parameter_type<ParameterType::send_recv_buf>(args...);
-    auto&& send_recv_buf =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_send_recv_buf_type>(
-            std::tuple(), args...);
-    using value_type                            = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
-    auto mpi_value_type                         = mpi_datatype<value_type>();
+    // const bool  has_user_provided_send_recv_buf = has_parameter_type<ParameterType::send_recv_buf>(args...);
+    // auto&& send_recv_buf =
+    //     internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_send_recv_buf_type>(
+    //         std::tuple(), args...);
+    auto&& send_recv_buf = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
+    using value_type     = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
+    auto mpi_value_type  = mpi_datatype<value_type>();
 
     // Get the recv_count
-    const bool has_user_provided_send_recv_count = has_parameter_type<ParameterType::send_recv_count>(args...);
+    constexpr bool has_user_provided_send_recv_count = has_parameter_type<ParameterType::send_recv_count, Args...>();
 
     // If I'm the root, assert, that I have a send_recv_buf which is not empty.
     if (this->is_root(root.rank())) {
-        KASSERT(has_user_provided_send_recv_buf, "The send_recv_buf is mandatory at the root.", assert::light);
-        KASSERT(send_recv_buf.size() > 0, "The send_recv_buf on the root rank must not be empty.");
+        /// @todo Uncomment, once the send_recv_buf is optional.
+        // KASSERT(has_user_provided_send_recv_buf, "The send_recv_buf is mandatory at the root.", assert::light);
+        KASSERT(send_recv_buf.size() > 0u, "The send_recv_buf on the root rank must not be empty.");
     }
 
     // Assume that either all ranks have send_recv_count or none of them hast -> need to broadcast the amount of data to
     // transfer.
-    // TODO Assert that either all ranks or no rank has a send_recv_count.
+    /// @todo Assert that either all ranks or no rank has a send_recv_count.
     size_t send_recv_count = 0;
-    if (has_user_provided_send_recv_count) {
-        send_recv_count = select_parameter_type<ParameterType::send_recv_count>(args...).get();
+    if constexpr (has_user_provided_send_recv_count) {
+        send_recv_count =
+            asserting_cast<size_t>(*(select_parameter_type<ParameterType::send_recv_count>(args...).get().data()));
     } else {
         if (this->is_root(root.rank())) {
             send_recv_count = send_recv_buf.size();
         }
+
+        // Transfer the send_recv_count
         // This error code is unused if KTHROW is removed at compile time.
         [[maybe_unused]] int err = MPI_Bcast(
             &send_recv_count,                          // buffer*
-            asserting_cast<int>(send_recv_buf.size()), // count
-            mpi_value_type,                            // datatype
+            1,                                         // count
+            mpi_datatype<decltype(send_recv_count)>(), // datatype
             root.rank_signed(),                        // root
             this->mpi_communicator()                   // MPI_Comm comm
         );
@@ -100,8 +103,9 @@ auto kamping::Communicator::bcast(Args... args) const {
         if (!this->is_root(root.rank())) {
             send_recv_buf.resize(send_recv_count);
         }
+        KASSERT(send_recv_buf.size() == send_recv_count, assert::light);
     }
-    // TODO Assert, that the recv_counts are the same on all ranks
+    /// @todo Assert, that the recv_counts are the same on all ranks
 
     /// @todo Implement and test that passing a const-buffer is allowed on the root process but not on all other
     /// processes.
