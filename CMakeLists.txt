@@ -129,7 +129,7 @@ endif()
 # we set it to 10 (exceptions only) in Release mode and 30 (up to normal assertions) in Debug mode.
 set(KAMPING_ASSERTION_LEVEL $<IF:$<CONFIG:Debug>,"normal","exceptions"> CACHE STRING "Assertion level")
 set_property(CACHE KAMPING_ASSERTION_LEVEL PROPERTY STRINGS
-    none exceptions light light_communication normal heavy heavy_communication)
+  none exceptions light normal light_communication heavy_communication heavy)
 message(STATUS "Assertion level: ${KAMPING_ASSERTION_LEVEL}")
 
 # If KAMPING_ASSERTION_LEVEL defaults to the generator expression, ${KAMPING_ASSERTION_LEVEL} may not be quoted 
