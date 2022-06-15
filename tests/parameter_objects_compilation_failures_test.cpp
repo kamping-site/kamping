@@ -113,7 +113,7 @@ int main(int /*argc*/, char** /*argv*/) {
          foo{std::vector<int>()};
     auto bar = foo.resize(0);
 #elif defined(GET_SINGLE_ELEMENT_ON_VECTOR)
-    // should not be possible to resize a constant DataBuffer
+    // should not be possible to call `get_single_element()` on a container based buffer
     DataBuffer<
         std::vector<int>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
         BufferAllocation::user_allocated>
