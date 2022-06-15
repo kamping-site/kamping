@@ -12,7 +12,10 @@
 // <https://www.gnu.org/licenses/>.
 /// @file
 /// @brief Defines the macro `KAMPING_NOEXCEPT` to be used instad of `noexcept`.
-#pragma once 
+#pragma once
 
-#define KAMPING_NOEXCEPT noexcept 
+/// @brief `noexcept` macro.
+#define KAMPING_NOEXCEPT noexcept
+
+/// @brief Conditional noexcept `noexcept(...)` macro.
 #define KAMPING_CONDITIONAL_NOEXCEPT(condition) noexcept(condition)
