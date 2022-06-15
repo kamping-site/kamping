@@ -1,4 +1,3 @@
-
 // This file is part of KaMPI.ng.
 //
 // Copyright 2022 The KaMPI.ng Authors
@@ -124,4 +123,19 @@ TEST(BcastTest, vector_no_send_recv_count) {
         EXPECT_EQ(values.size(), 43);
         EXPECT_THAT(values, Each(Eq(comm.root())));
     }
+}
+
+TEST(BcastTest, vector_needs_resizing_and_counts_are_given) {
+    Communicator comm;
+
+    size_t num_values = 10;
+
+    std::vector<int> values;
+    if (comm.is_root()) {
+        values.resize(num_values);
+        std::fill(values.begin(), values.end(), comm.rank());
+    }
+    comm.bcast(send_recv_buf(values), send_recv_count(asserting_cast<int>(num_values)));
+    EXPECT_EQ(values.size(), num_values);
+    EXPECT_THAT(values, Each(Eq(comm.root())));
 }

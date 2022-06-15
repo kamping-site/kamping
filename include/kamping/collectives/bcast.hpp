@@ -94,19 +94,19 @@ auto kamping::Communicator::bcast(Args... args) const {
             1,                                         // count
             mpi_datatype<decltype(send_recv_count)>(), // datatype
             root.rank_signed(),                        // root
-            this->mpi_communicator()                   // MPI_Comm comm
+            this->mpi_communicator()                   // comm
         );
         THROW_IF_MPI_ERROR(err, MPI_Bcast);
-
-        // If I'm not the root, resize my send_recv_buf to be able to hold all received data.
-        if (!this->is_root(root.rank())) {
-            send_recv_buf.resize(send_recv_count);
-        }
-        KASSERT(send_recv_buf.size() == send_recv_count, assert::light);
     }
     KASSERT(
         this->is_same_on_all_ranks(send_recv_count), "The send_recv_count must be equal on all ranks.",
         assert::light_communication);
+
+    // If I'm not the root, resize my send_recv_buf to be able to hold all received data.
+    if (!this->is_root(root.rank())) {
+        send_recv_buf.resize(send_recv_count);
+    }
+    KASSERT(send_recv_buf.size() == send_recv_count, assert::light);
 
     /// @todo Implement and test that passing a const-buffer is allowed on the root process but not on all other
     /// processes.
@@ -117,7 +117,7 @@ auto kamping::Communicator::bcast(Args... args) const {
         asserting_cast<int>(send_recv_buf.size()), // count
         mpi_value_type,                            // datatype
         root.rank_signed(),                        // root
-        this->mpi_communicator()                   // MPI_Comm comm
+        this->mpi_communicator()                   // comm
     );
     THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
