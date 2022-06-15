@@ -246,9 +246,9 @@ inline auto recv_count_out(int& recv_count_out) {
     return internal::SingleElementModifiableBuffer<int, internal::ParameterType::recv_count>(recv_count_out);
 }
 
-/// @brief Generates a wrapper for a send_recv_count input parameter (used in bcast).
-/// @param send_recv_count The recv count to be encapsulated.
-/// @return Wrapper around the given recv count.
+/// @brief Generates a wrapper for a send-recv count input parameter (used in bcast).
+/// @param send_recv_count The send-recv count to be encapsulated.
+/// @return Wrapper around the given send-recv count.
 inline auto send_recv_count(int send_recv_count) {
     return internal::SingleElementOwningBuffer<int, internal::ParameterType::send_recv_count>(send_recv_count);
 }
