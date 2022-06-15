@@ -20,12 +20,26 @@
 /// This must happen before the preprocessor substitutes the macro invocations.
 #pragma once
 
-#if defined(KASSERT) || defined(EXPECT_KASSERT_FAILS) || defined(ASSERT_KASSERT_FAILS)
+#if defined(KASSERT) || defined(EXPECT_KASSERT_FAILS) || defined(ASSERT_KASSERT_FAILS) || defined(KAMPING_NOEXCEPT)
     #error "Bad #include order: this header must be included first"
 #endif
 
 #include <exception>
 #include <string>
+
+//
+// Disable noexcept
+//
+#include "kamping/noexcept.hpp"
+
+#undef KAMPING_NOEXCEPT
+#define KAMPING_NOEXCEPT
+#undef KAMPING_CONDITIONAL_NOEXCEPT
+#define KAMPING_CONDITIONAL_NOEXCEPT(condition)
+
+//
+// Redefine KASSERT()
+//
 
 #include <kassert/kassert.hpp>
 
