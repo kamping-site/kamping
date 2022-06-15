@@ -242,6 +242,16 @@ public:
         return {this->data(), this->size()};
     }
 
+    /// @brief Get the single element wrapped by this object.
+    /// @return The single element wrapped by this object.
+    template <bool enabled = is_single_element, std::enable_if_t<enabled, bool> = true>
+    value_type const get_single_element() const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot get an element from a buffer that has already been extracted.", assert::normal);
+#endif
+        return _data;
+    }
+
     /// @brief Provides access to the underlying data.
     /// @return A reference to the data.
     MemberType const& underlying() const {
