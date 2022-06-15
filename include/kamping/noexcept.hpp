@@ -10,6 +10,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
+
 /// @file
 /// @brief Defines the macro `KAMPING_NOEXCEPT` to be used instad of `noexcept`.
 #pragma once
