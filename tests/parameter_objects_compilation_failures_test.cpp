@@ -112,6 +112,13 @@ int main(int /*argc*/, char** /*argv*/) {
         BufferAllocation::user_allocated>
          foo{std::vector<int>()};
     auto bar = foo.resize(0);
+#elif defined(GET_SINGLE_ELEMENT_ON_VECTOR)
+    // should not be possible to resize a constant DataBuffer
+    DataBuffer<
+        std::vector<int>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
+        BufferAllocation::user_allocated>
+         foo{std::vector<int>()};
+    foo.get_single_element();
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif
