@@ -117,7 +117,7 @@ int main(int /*argc*/, char** /*argv*/) {
     DataBuffer<
         std::vector<int>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
         BufferAllocation::user_allocated>
-         foo{std::vector<int>()};
+        foo{std::vector<int>()};
     foo.get_single_element();
 #else
 // If none of the above sections is active, this file will compile successfully.
