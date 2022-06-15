@@ -182,6 +182,9 @@ auto kamping::Communicator::alltoallv(Args... args) const {
 
     // Calculate recv_counts if necessary
     constexpr bool do_calculate_recv_counts = internal::has_to_be_computed<decltype(recv_counts)>;
+    KASSERT(
+        is_same_on_all_ranks(do_calculate_recv_counts),
+        "Receive counts are given on some ranks and have to be computed on others", assert::light_communication);
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
         recv_counts.resize(this->size());
@@ -193,6 +196,9 @@ auto kamping::Communicator::alltoallv(Args... args) const {
 
     // Calculate send_displs if necessary
     constexpr bool do_calculate_send_displs = internal::has_to_be_computed<decltype(send_displs)>;
+    KASSERT(
+        is_same_on_all_ranks(do_calculate_send_displs),
+        "Send displacements are given on some ranks and have to be computed on others", assert::light_communication);
     if constexpr (do_calculate_send_displs) {
         send_displs.resize(this->size());
         std::exclusive_scan(send_counts.data(), send_counts.data() + send_counts.size(), send_displs.data(), 0);
@@ -207,6 +213,9 @@ auto kamping::Communicator::alltoallv(Args... args) const {
 
     // Calculate recv_displs if necessary
     constexpr bool do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
+    KASSERT(
+        is_same_on_all_ranks(do_calculate_recv_displs),
+        "Receive displacements are given on some ranks and have to be computed on others", assert::light_communication);
     if constexpr (do_calculate_recv_displs) {
         recv_displs.resize(this->size());
         std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), recv_displs.data(), 0);
