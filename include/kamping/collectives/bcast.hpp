@@ -57,21 +57,13 @@ auto kamping::Communicator::bcast(Args... args) const {
     auto&& root = select_parameter_type_or_default<ParameterType::root, Root>(std::tuple(this->root()), args...);
     KASSERT(this->is_valid_rank(root.rank()), "Invalid rank as root.", assert::light);
 
-    // Get the send_recv_buf
-    // For now, the user *has* to provide a send recv buf
-    // using default_send_recv_buf_type =
-    // decltype(kamping::send_recv_buf(NewContainer<std::vector<send_value_type>>{}));
-
-    // const bool  has_user_provided_send_recv_buf = has_parameter_type<ParameterType::send_recv_buf>(args...);
-    // auto&& send_recv_buf =
-    //     internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_send_recv_buf_type>(
-    //         std::tuple(), args...);
+    // Get the send_recv_bu; for now, the user *has* to provide a send-receive buffer.
     auto&& send_recv_buf = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
     using value_type     = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
     auto mpi_value_type  = mpi_datatype<value_type>();
 
     // Get the recv_count
-    constexpr bool has_user_provided_send_recv_count = has_parameter_type<ParameterType::send_recv_count, Args...>();
+    constexpr bool send_recv_count_is_provided = has_parameter_type<ParameterType::send_recv_count, Args...>();
 
     // If I'm the root, assert, that I have a send_recv_buf which is not empty.
     if (this->is_root(root.rank())) {
@@ -83,10 +75,10 @@ auto kamping::Communicator::bcast(Args... args) const {
     // Assume that either all ranks have send_recv_count or none of them hast -> need to broadcast the amount of data to
     // transfer.
     KASSERT(
-        this->is_same_on_all_ranks(has_user_provided_send_recv_count),
+        this->is_same_on_all_ranks(send_recv_count_is_provided),
         "The send_recv_count must be either provided on all ranks or on no rank.", assert::light_communication);
     size_t send_recv_count = 0;
-    if constexpr (has_user_provided_send_recv_count) {
+    if constexpr (send_recv_count_is_provided) {
         /// @todo Update this line once there is a simpler way of getting a single element from the bufer.
         send_recv_count =
             asserting_cast<size_t>(*(select_parameter_type<ParameterType::send_recv_count>(args...).get().data()));
