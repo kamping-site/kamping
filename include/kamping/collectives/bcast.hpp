@@ -82,10 +82,11 @@ auto kamping::Communicator::bcast(Args... args) const {
     KASSERT(
         this->is_same_on_all_ranks(has_user_provided_send_recv_count),
         "The send_recv_count must be either provided on all ranks or on no rank.", assert::light_communication);
-    int send_recv_count = 0;
+    size_t send_recv_count = 0;
     if constexpr (has_user_provided_send_recv_count) {
         /// @todo Update this line once there is a simpler way of getting a single element from the bufer.
-        send_recv_count = *(select_parameter_type<ParameterType::send_recv_count>(args...).get().data());
+        send_recv_count =
+            asserting_cast<size_t>(*(select_parameter_type<ParameterType::send_recv_count>(args...).get().data()));
     } else {
         if (this->is_root(root.rank())) {
             send_recv_count = send_recv_buf.size();
