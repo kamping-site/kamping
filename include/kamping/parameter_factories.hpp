@@ -117,48 +117,23 @@ auto send_buf(std::initializer_list<T> data) {
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
-/// and the root() of the operation.
-///
-/// For example when used as parameter to \c bcast, all processes provide this buffer; on the root process it
-/// acts as the send buffer, on all other processes as the receive buffer.
-///
-/// If the underlying container provides \c data(), it is assumed that it is a container and all elements in the
-/// container are considered for the operation. In this case, the container has to provide a \c size() member functions
-/// and expose the contained \c value_type. If no \c data() member function exists, a single element is wrapped in the
-/// send_recv buffer. For receiving, the buffer is automatically resized to the correct size and thus has to provide a
-/// \c resize() method.
+/// and the root() of the operation. This buffer type may encapsulate const data and in which case it can only be used
+/// as the send buffer. For some functions (e.g. bcast), you have to pass a send_recv_buf as the send buffer.
 ///
 /// @tparam Data Data type representing the element(s) to send/receive.
 /// @param data Data (either a container which contains the elements or the element directly) to send or the buffer to
 /// receive into.
 /// @return Object referring to the storage containing the data elements to send / the received elements.
 template <typename Data>
-auto send_recv_buf(Data& data) {
-    if constexpr (internal::has_data_member_v<Data>) {
-        return internal::UserAllocatedContainerBasedBuffer<Data, internal::ParameterType::send_recv_buf>(data);
+auto send_recv_buf(Data&& data) {
+    if constexpr (std::is_const_v<std::remove_reference_t<Data>>) {
+        return internal::make_data_buffer<
+            internal::ParameterType::send_recv_buf, internal::BufferModifiability::constant, Data>(
+            std::forward<Data>(data));
     } else {
-        return internal::SingleElementModifiableBuffer<Data, internal::ParameterType::send_recv_buf>(data);
-    }
-}
-
-/// @brief Generates a buffer wrapper encapsulating a buffer used for sending based on this processes rank and the
-/// root() of the operation. This buffer type encapsulates const data and can therefore only be used as the send buffer.
-/// For some functions (e.g. bcast), you have to pass a send_recv_buf as the send buffer.
-///
-/// If the underlying container provides \c data(), we assume that it is a container and all elements in the
-/// container are considered for the operation. In this case, the container has to provide a \c size() member functions
-/// and expose the contained \c value_type. If no \c data() member function exists, a single element is wrapped in the
-/// send_recv buffer. Receiving into a constant container is not possible.
-///
-/// @tparam Data Data type representing the element(s) to send/receive.
-/// @param data Data (either a container which contains the elements or the element directly) to send
-/// @return Object referring to the storage containing the data elements to send.
-template <typename Data>
-auto send_recv_buf(const Data& data) {
-    if constexpr (internal::has_data_member_v<Data>) {
-        return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_recv_buf>(data);
-    } else {
-        return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_recv_buf>(data);
+        return internal::make_data_buffer<
+            internal::ParameterType::send_recv_buf, internal::BufferModifiability::modifiable, Data>(
+            std::forward<Data>(data));
     }
 }
 
@@ -171,7 +146,9 @@ auto send_recv_buf(const Data& data) {
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
 auto send_recv_buf(NewContainer<Container>&&) {
-    return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_recv_buf>();
+    return internal::make_data_buffer<
+        internal::ParameterType::send_recv_buf, internal::BufferModifiability::modifiable, Container>(
+        NewContainer<Container>{});
 }
 
 /// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must contain
