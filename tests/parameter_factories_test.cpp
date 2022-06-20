@@ -11,10 +11,16 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <type_traits>
+#include <vector>
+
 #include <gtest/gtest.h>
 
 #include "helpers_for_testing.hpp"
+#include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/parameter_factories.hpp"
+#include "kamping/parameter_objects.hpp"
+#include "kamping/parameter_type_definitions.hpp"
 
 using namespace ::kamping;
 using namespace ::kamping::internal;
@@ -609,4 +615,84 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
     EXPECT_EQ(*recv_count_out_obj.get().data(), 42);
     EXPECT_EQ(recv_count, 42);
     EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
+}
+
+TEST(ParameterFactoriesTest, make_data_buffer) {
+    {
+        // Constant, container, referencing, user allocated
+        std::vector<int>                  vec;
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf                          = internal::make_data_buffer<type, BufferModifiability::constant>(vec);
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_FALSE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
+        EXPECT_EQ(&vec, &data_buf.underlying());
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const&>,
+            "Referencing buffers must hold a reference to their data.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+    {
+        // Modifiable, container, referencing, user allocated
+        std::vector<int>                  vec;
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf                          = internal::make_data_buffer<type, BufferModifiability::modifiable>(vec);
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_TRUE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
+        EXPECT_EQ(&vec, &data_buf.underlying());
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>&>,
+            "Referencing buffers must hold a reference to their data.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+    {
+        // Constant, single element, referencing, user allocated
+        int                               single_int;
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf = internal::make_data_buffer<type, BufferModifiability::constant>(single_int);
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_FALSE(data_buf.is_modifiable);
+        EXPECT_TRUE(data_buf.is_single_element);
+        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
+        EXPECT_EQ(&single_int, &data_buf.underlying());
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, int const&>,
+            "Referencing buffers must hold a reference to their data.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+    {
+        // Constant, container, owning, user allocated
+        std::vector<int>                  vec;
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf = internal::make_data_buffer<type, BufferModifiability::constant>(std::move(vec));
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_FALSE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const>,
+            "Owning buffers must hold their data directly.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+
+    {
+        // modifiable, container, owning, library allocated
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto                              data_buf =
+            internal::make_data_buffer<type, BufferModifiability::modifiable>(NewContainer<std::vector<int>>{});
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_TRUE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>>,
+            "Owning buffers must hold their data directly.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
+    }
 }

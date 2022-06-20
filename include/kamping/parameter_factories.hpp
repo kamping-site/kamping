@@ -17,6 +17,7 @@
 
 #include <initializer_list>
 #include <type_traits>
+#include <utility>
 
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_objects.hpp"
@@ -30,6 +31,43 @@ namespace internal {
 /// @brief Tag type for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
 template <typename T>
 struct ignore_t {};
+
+/// @brief Creates a user allocated DataBuffer containing the supplied data (a container or a single element)
+///
+/// Creates a user allocated DataBuffer with the given template parameters and ownership based on whether an rvalue or
+/// lvalue reference is passed.
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam Data Container or data type on which this buffer is based.
+/// @param data Universal reference to a container or single element holding the data for the buffer.
+///
+/// @return A user allocated DataBuffer with the given template parameters and matching ownership.
+template <ParameterType parameter_type, BufferModifiability modifiability, typename Data>
+auto make_data_buffer(Data&& data) {
+    constexpr BufferOwnership ownership =
+        std::is_rvalue_reference<Data&&>::value ? BufferOwnership::owning : BufferOwnership::referencing;
+
+    return DataBuffer<
+        std::remove_reference_t<Data>, parameter_type, modifiability, ownership, BufferAllocation::user_allocated>(
+        std::forward<Data>(data));
+}
+
+/// @brief Creates a library allocated DataBuffer containing the supplied data (a container or a single element)
+///
+/// Creates a library allocated DataBuffer with the given template parameters.
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam Data Container or data type on which this buffer is based.
+///
+/// @return A library allocated DataBuffer with the given template parameters.
+template <ParameterType parameter_type, BufferModifiability modifiability, typename Data>
+auto make_data_buffer(NewContainer<Data>&&) {
+    return DataBuffer<Data, parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::lib_allocated>();
+}
 } // namespace internal
 
 /// @brief Tag for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
