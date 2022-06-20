@@ -98,31 +98,9 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
 /// @param data Data (either a container which contains the elements or the element directly) to send
 /// @return Object referring to the storage containing the data elements to send.
 template <typename Data>
-auto send_buf(const Data& data) {
-    if constexpr (internal::has_data_member_v<Data>) {
-        return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_buf>(data);
-    } else {
-        return internal::SingleElementConstBuffer<Data, internal::ParameterType::send_buf>(data);
-    }
-}
-
-/// @brief Generates a buffer wrapper which takes ownership of the data in the send buffer, i.e. the underlying storage
-/// must contain the data element(s) to send.
-///
-/// If the underlying container provides \c data(), it is assumed that it is a container and all elements in the
-/// container are considered for the operation. In this case, the container has to provide a \c size() member functions
-/// and expose the contained \c value_type. If no \c data() member function exists, a single element is wrapped in the
-/// send buffer.
-/// @tparam Data Data type representing the element(s) to send.
-/// @param data Data (either a container which contains the elements or the element directly) to send
-/// @return Object referring to the storage containing the data elements to send.
-template <class Data, typename = std::enable_if_t<std::is_rvalue_reference<Data&&>::value>>
 auto send_buf(Data&& data) {
-    if constexpr (internal::has_data_member_v<Data>) {
-        return internal::ContainerBasedOwningBuffer<Data, internal::ParameterType::send_buf>(std::move(data));
-    } else {
-        return internal::SingleElementOwningBuffer<Data, internal::ParameterType::send_buf>(std::move(data));
-    }
+    return internal::make_data_buffer<internal::ParameterType::send_buf, internal::BufferModifiability::constant, Data>(
+        std::forward<Data>(data));
 }
 
 /// @brief Generates a buffer taking ownership of the data pass to the send buffer as an initializer list.
@@ -133,7 +111,9 @@ auto send_buf(Data&& data) {
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
     std::vector<T> data_vec{data};
-    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_buf>(std::move(data_vec));
+    return internal::make_data_buffer<
+        internal::ParameterType::send_buf, internal::BufferModifiability::constant, std::vector<T>>(
+        std::move(data_vec));
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
