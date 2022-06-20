@@ -190,21 +190,10 @@ auto send_counts(std::initializer_list<T> counts) {
 /// @param container Container which contains the recv counts.
 /// @return Object referring to the storage containing the recv counts.
 template <typename Container>
-auto recv_counts(const Container& container) {
-    return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
-}
-
-/// @brief Generates buffer wrapper which takes ownership of a container for the recv counts, i.e. the underlying
-/// storage must contain the recv counts from each relevant PE.
-///
-/// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
-/// @tparam Container Container type which contains the recv counts.
-/// @param container Container which contains the recv counts.
-/// @return Object referring to the storage containing the recv counts.
-template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
 auto recv_counts(Container&& container) {
-    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::recv_counts>(std::move(container));
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_counts, internal::BufferModifiability::constant, Container>(
+        std::forward<Container>(container));
 }
 
 /// @brief Generates a buffer wrapper for the recv counts based on an initializer list, i.e. the
@@ -216,7 +205,9 @@ auto recv_counts(Container&& container) {
 template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
     std::vector<T> counts_vec{counts};
-    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::recv_counts>(
+
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_counts, internal::BufferModifiability::constant, std::vector<T>>(
         std::move(counts_vec));
 }
 
