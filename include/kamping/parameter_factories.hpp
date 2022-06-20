@@ -50,8 +50,8 @@ auto make_data_buffer(Data&& data) {
         std::is_rvalue_reference<Data&&>::value ? BufferOwnership::owning : BufferOwnership::referencing;
 
     return DataBuffer<
-        std::remove_reference_t<Data>, parameter_type, modifiability, ownership, BufferAllocation::user_allocated>(
-        std::forward<Data>(data));
+        std::remove_const_t<std::remove_reference_t<Data>>, parameter_type, modifiability, ownership,
+        BufferAllocation::user_allocated>(std::forward<Data>(data));
 }
 
 /// @brief Creates a library allocated DataBuffer containing the supplied data (a container or a single element)
