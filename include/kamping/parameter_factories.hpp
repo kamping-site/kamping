@@ -237,21 +237,9 @@ inline auto recv_count_out(int& recv_count_out) {
 /// @param container Container which contains the send displacements.
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
-auto send_displs(const Container& container) {
-    return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_displs>(container);
-}
-
-/// @brief Generates buffer wrapper which takes ownership of a container for the send displacements, i.e. the underlying
-/// storage must contain the send displacements to each relevant PE.
-///
-/// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
-/// @tparam Container Container type which contains the send displacements.
-/// @param container Container which contains the send displacements.
-/// @return Object referring to the storage containing the send displacements.
-template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
 auto send_displs(Container&& container) {
-    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::send_displs>(std::move(container));
+    return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::constant>(
+        std::forward<Container>(container));
 }
 
 /// @brief Generates a buffer wrapper for the send displacements based on an initializer list, i.e. the
@@ -263,7 +251,7 @@ auto send_displs(Container&& container) {
 template <typename T>
 auto send_displs(std::initializer_list<T> displs) {
     std::vector<T> displs_vec{displs};
-    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_displs>(
+    return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::constant>(
         std::move(displs_vec));
 }
 
