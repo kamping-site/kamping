@@ -160,19 +160,10 @@ auto send_recv_buf(NewContainer<Container>&&) {
 /// @param container Container which contains the send counts.
 /// @return Object referring to the storage containing the send counts.
 template <typename Container>
-auto send_counts(const Container& container) {
-    return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_counts>(container);
-}
-
-/// @brief Generates a buffer wrapper which takes ownership of the provided container containing the send counts, i.e.
-/// the send counts to each relevant PE.
-///
-/// @tparam Container Container type which contains the send counts.
-/// @param container Container which contains the send counts.
-/// @return Object referring to the storage containing the send counts.
-template <class Container, typename = std::enable_if_t<std::is_rvalue_reference<Container&&>::value>>
 auto send_counts(Container&& container) {
-    return internal::ContainerBasedOwningBuffer<Container, internal::ParameterType::send_counts>(std::move(container));
+    return internal::make_data_buffer<
+        internal::ParameterType::send_counts, internal::BufferModifiability::constant, Container>(
+        std::forward<Container>(container));
 }
 
 /// @brief Generates a buffer wrapper for the send counts based on an initializer list, i.e. the
@@ -184,7 +175,9 @@ auto send_counts(Container&& container) {
 template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
     std::vector<T> counts_vec{counts};
-    return internal::ContainerBasedOwningBuffer<std::vector<T>, internal::ParameterType::send_counts>(
+
+    return internal::make_data_buffer<
+        internal::ParameterType::send_counts, internal::BufferModifiability::constant, std::vector<T>>(
         std::move(counts_vec));
 }
 
