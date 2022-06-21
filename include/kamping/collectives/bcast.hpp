@@ -106,7 +106,9 @@ auto kamping::Communicator::bcast(Args... args) const {
         assert::light_communication);
 
     // Resize my send_recv_buf to be able to hold all received data.
-    if (!send_recv_buf.is_single_element) {
+    if (send_recv_buf.is_single_element) {
+        KASSERT(recv_count == 1, "For a single element send_recv_buf, the recv_count has to equal 1.");
+    } else {
         send_recv_buf.resize(asserting_cast<size_t>(recv_count));
     }
 

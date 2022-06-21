@@ -50,6 +50,14 @@ TEST(BcastTest, single_element) {
     ASSERT_EQ(root, comm.root());
     comm.bcast(send_recv_buf(value));
     EXPECT_EQ(value, root);
+
+    // Broadcast a single POD to all processes, manually specify the recv_count.
+    /// @todo Uncomment, once we can check for failed assertions.
+    value = comm.rank();
+    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(0)));
+    comm.bcast(send_recv_buf(value), recv_count(1));
+    EXPECT_EQ(value, root);
+    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(2)));
 }
 
 TEST(BcastTest, vector_recv_count) {
