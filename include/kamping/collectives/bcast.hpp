@@ -78,14 +78,14 @@ auto kamping::Communicator::bcast(Args... args) const {
         ParameterType::recv_count, LibAllocatedSingleElementBuffer<int, ParameterType::recv_count>>(
         std::tuple(), args...);
 
-    constexpr bool recv_count_is_user_provided = !has_to_be_computed<decltype(recv_count_param)>;
+    constexpr bool recv_count_is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;
     KASSERT(
-        is_same_on_all_ranks(recv_count_is_user_provided),
+        is_same_on_all_ranks(recv_count_is_output_parameter),
         "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.", assert::light_communication);
 
     // If it is not user provided, broadcast the size of send_recv_buf from the root to all ranks.
     int recv_count = recv_count_param.get_single_element();
-    if constexpr (!recv_count_is_user_provided) {
+    if constexpr (recv_count_is_output_parameter) {
         if (this->is_root(root.rank())) {
             recv_count = asserting_cast<int>(send_recv_buf.size());
         }
@@ -100,6 +100,9 @@ auto kamping::Communicator::bcast(Args... args) const {
             this->mpi_communicator()              // comm
         );
         THROW_IF_MPI_ERROR(err, MPI_Bcast);
+
+        // Output the recv count via the output_parameter
+        *recv_count_param.data() = recv_count;
     }
     KASSERT(
         this->is_same_on_all_ranks(recv_count), "The recv_count must be equal on all ranks.",

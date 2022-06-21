@@ -163,6 +163,59 @@ TEST(BcastTest, vector_no_recv_count) {
     }
 }
 
+TEST(BcastTest, vector_recv_count_as_out_parameter) {
+    Communicator comm;
+
+    { // All send_recv_bufs are already large enough.
+        std::vector<int> values(4);
+        if (comm.is_root()) {
+            std::fill(values.begin(), values.end(), comm.rank());
+        }
+
+        int num_elements_received = -1;
+        comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received));
+        EXPECT_EQ(values.size(), 4);
+        EXPECT_EQ(num_elements_received, values.size());
+        EXPECT_THAT(values, Each(Eq(comm.root())));
+    }
+
+    { // Some send_recv_bufs need to be resized.
+        std::vector<int> values;
+        if (comm.is_root()) {
+            values.resize(100);
+            std::fill(values.begin(), values.end(), comm.rank());
+        } else {
+            values.resize(0);
+            std::fill(values.begin(), values.end(), comm.rank());
+        }
+
+        int num_elements_received = -1;
+        comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received));
+        EXPECT_EQ(values.size(), 100);
+        EXPECT_EQ(num_elements_received, values.size());
+        EXPECT_THAT(values, Each(Eq(comm.root())));
+    }
+
+    { // All send_recv_bufs are of different size
+        comm.root(0);
+        std::vector<int> values;
+
+        if (comm.is_root()) {
+            values.resize(43);
+            std::fill(values.begin(), values.end(), comm.rank());
+        } else {
+            values.resize(comm.rank());
+            std::fill(values.begin(), values.end(), comm.rank());
+        }
+
+        int num_elements_received = -1;
+        comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received));
+        EXPECT_EQ(values.size(), 43);
+        EXPECT_EQ(num_elements_received, values.size());
+        EXPECT_THAT(values, Each(Eq(comm.root())));
+    }
+}
+
 TEST(BcastTest, vector_needs_resizing_and_counts_are_given) {
     Communicator comm;
 
