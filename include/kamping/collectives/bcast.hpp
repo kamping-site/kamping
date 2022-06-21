@@ -103,9 +103,7 @@ auto kamping::Communicator::bcast(Args... args) const {
         assert::light_communication);
 
     // If I'm not the root, resize my send_recv_buf to be able to hold all received data.
-    if (!this->is_root(root.rank())) {
-        send_recv_buf.resize(send_recv_count);
-    }
+    send_recv_buf.resize(send_recv_count);
 
     // Perform the broadcast. The error code is unused if KTHROW is removed at compile time.
     [[maybe_unused]] int err = MPI_Bcast(
