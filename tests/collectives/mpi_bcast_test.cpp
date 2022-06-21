@@ -139,3 +139,15 @@ TEST(BcastTest, vector_needs_resizing_and_counts_are_given) {
     EXPECT_EQ(values.size(), num_values);
     EXPECT_THAT(values, Each(Eq(comm.root())));
 }
+
+TEST(BcastTest, message_of_size_0) {
+    Communicator comm;
+
+    std::vector<int> values(0);
+    EXPECT_NO_THROW(comm.bcast(send_recv_buf(values)));
+    EXPECT_EQ(values.size(), 0);
+
+    values.resize(1);
+    EXPECT_NO_THROW(comm.bcast(send_recv_buf(values), send_recv_count(0)));
+    EXPECT_EQ(values.size(), 0);
+}
