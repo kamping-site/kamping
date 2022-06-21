@@ -36,7 +36,7 @@
 /// and provide this buffer as it's needed for deducing the value type. The container will be resized on non-root ranks
 /// to fit exactly the received data.
 /// The following parameter is optional but causes additional communication if not present.
-/// - \ref kamping::send_recv_count() specifying how many elements are broadcasted. If not specified, will be
+/// - \ref kamping::recv_count() specifying how many elements are broadcasted. If not specified, will be
 /// communicated through an additional bcast. If not specified, we broadcast the whole send_recv_buf. If specified,
 /// has to be the same on all ranks (including the root). Has to either be specified or not specified on all ranks. The
 /// following parameter is optional:
@@ -51,7 +51,7 @@ template <typename... Args>
 auto kamping::Communicator::bcast(Args... args) const {
     using namespace ::kamping::internal;
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root, send_recv_count));
+        Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_count));
 
     // Get the root PE
     auto&& root = select_parameter_type_or_default<ParameterType::root, Root>(std::tuple(this->root()), args...);
@@ -63,47 +63,53 @@ auto kamping::Communicator::bcast(Args... args) const {
     static_assert(!std::is_const_v<decltype(send_recv_buf)>, "Const send_recv_buf'fers are not allowed.");
     auto mpi_value_type = mpi_datatype<value_type>();
 
-    // Get the recv_count
-    constexpr bool send_recv_count_is_provided = has_parameter_type<ParameterType::send_recv_count, Args...>();
+    /// @todo Uncomment, once the send_recv_buf is optional.
+    // if (this->is_root(root.rank())) {
+    //     KASSERT(has_user_provided_send_recv_buf, "The send_recv_buf is mandatory at the root.", assert::light);
+    // }
 
-    // If I'm the root, assert, that I have a send_recv_buf which is not empty.
-    if (this->is_root(root.rank())) {
-        /// @todo Uncomment, once the send_recv_buf is optional.
-        // KASSERT(has_user_provided_send_recv_buf, "The send_recv_buf is mandatory at the root.", assert::light);
-    }
-
-    // Assume that either all ranks have send_recv_count or none of them hast -> need to broadcast the amount of data to
-    // transfer.
+    // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
+    constexpr bool has_recv_count_param = has_parameter_type<internal::ParameterType::recv_count, Args...>();
     KASSERT(
-        this->is_same_on_all_ranks(send_recv_count_is_provided),
-        "The send_recv_count must be either provided on all ranks or on no rank.", assert::light_communication);
+        is_same_on_all_ranks(has_recv_count_param),
+        "recv_count() parameter is specified on some PEs, but not on all PEs.", assert::light_communication);
 
-    size_t send_recv_count = 0;
-    if constexpr (send_recv_count_is_provided) {
-        auto&& send_recv_count_parameter = select_parameter_type<ParameterType::send_recv_count>(args...);
-        send_recv_count                  = asserting_cast<size_t>(send_recv_count_parameter.get_single_element());
-    } else {
+    auto&& recv_count_param = internal::select_parameter_type_or_default<
+        ParameterType::recv_count, LibAllocatedSingleElementBuffer<int, ParameterType::recv_count>>(
+        std::tuple(), args...);
+
+    constexpr bool recv_count_is_user_provided = has_to_be_computed<decltype(recv_count_param)>;
+    KASSERT(
+        is_same_on_all_ranks(recv_count_is_user_provided),
+        "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.", assert::light_communication);
+
+    // If it is not user provided, broadcast the size of send_recv_buf from the root to all ranks.
+    int recv_count = recv_count_param.get_single_element();
+    if constexpr (!recv_count_is_user_provided) {
         if (this->is_root(root.rank())) {
-            send_recv_count = send_recv_buf.size();
+            recv_count = asserting_cast<int>(send_recv_buf.size());
         }
-
-        // Transfer the send_recv_count
+        // Transfer the recv_count
         // This error code is unused if KTHROW is removed at compile time.
+        /// @todo Use bcast_single for this.
         [[maybe_unused]] int err = MPI_Bcast(
-            &send_recv_count,                          // buffer
-            1,                                         // count
-            mpi_datatype<decltype(send_recv_count)>(), // datatype
-            root.rank_signed(),                        // root
-            this->mpi_communicator()                   // comm
+            &recv_count,                          // buffer
+            1,                                    // count
+            mpi_datatype<decltype(recv_count)>(), // datatype
+            root.rank_signed(),                   // root
+            this->mpi_communicator()              // comm
         );
         THROW_IF_MPI_ERROR(err, MPI_Bcast);
     }
     KASSERT(
-        this->is_same_on_all_ranks(send_recv_count), "The send_recv_count must be equal on all ranks.",
+        this->is_same_on_all_ranks(recv_count), "The recv_count must be equal on all ranks.",
         assert::light_communication);
 
-    // If I'm not the root, resize my send_recv_buf to be able to hold all received data.
-    send_recv_buf.resize(send_recv_count);
+    // Resize my send_recv_buf to be able to hold all received data.
+    std::cout << "recv_cout " << recv_count << std::endl;
+    if (!send_recv_buf.is_single_element) {
+        send_recv_buf.resize(asserting_cast<size_t>(recv_count));
+    }
 
     // Perform the broadcast. The error code is unused if KTHROW is removed at compile time.
     [[maybe_unused]] int err = MPI_Bcast(
@@ -116,6 +122,6 @@ auto kamping::Communicator::bcast(Args... args) const {
     THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
     return MPIResult(
-        std::move(send_recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
+        std::move(send_recv_buf), BufferCategoryNotUsed{}, std::move(recv_count), BufferCategoryNotUsed{},
         BufferCategoryNotUsed{});
 } // namespace kamping::internal

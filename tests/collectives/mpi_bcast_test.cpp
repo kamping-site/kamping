@@ -52,10 +52,10 @@ TEST(BcastTest, single_element) {
     EXPECT_EQ(value, root);
 }
 
-TEST(BcastTest, vector_send_recv_count) {
+TEST(BcastTest, vector_recv_count) {
     Communicator comm;
 
-    { // All ranks provide the same send_recv_count.
+    { // All ranks provide the same recv_count.
         const size_t num_values = 4;
 
         std::vector<int> values(num_values);
@@ -63,22 +63,22 @@ TEST(BcastTest, vector_send_recv_count) {
             std::fill(values.begin(), values.end(), comm.rank());
         }
 
-        comm.bcast(send_recv_buf(values), send_recv_count(num_values));
+        comm.bcast(send_recv_buf(values), recv_count(num_values));
         EXPECT_EQ(values.size(), num_values);
         EXPECT_THAT(values, Each(Eq(comm.root())));
     }
 
     {
-        // Some buffer provide a send_recv_count, some don't.
+        // Some buffer provide a recv_count, some don't.
         /// @todo Add test, once we can test failing assertions.
     }
 
-    { // All buffers provide a send_recv_count, but they differ.
+    { // All buffers provide a recv_count, but they differ.
       /// @todo Add test, once we can test failing assertions.
     }
 }
 
-TEST(BcastTest, vector_no_send_recv_count) {
+TEST(BcastTest, vector_no_recv_count) {
     Communicator comm;
 
     { // All send_recv_bufs are already large enough.
@@ -135,7 +135,7 @@ TEST(BcastTest, vector_needs_resizing_and_counts_are_given) {
         values.resize(num_values);
         std::fill(values.begin(), values.end(), comm.rank());
     }
-    comm.bcast(send_recv_buf(values), send_recv_count(asserting_cast<int>(num_values)));
+    comm.bcast(send_recv_buf(values), recv_count(asserting_cast<int>(num_values)));
     EXPECT_EQ(values.size(), num_values);
     EXPECT_THAT(values, Each(Eq(comm.root())));
 }
@@ -148,6 +148,6 @@ TEST(BcastTest, message_of_size_0) {
     EXPECT_EQ(values.size(), 0);
 
     values.resize(1);
-    EXPECT_NO_THROW(comm.bcast(send_recv_buf(values), send_recv_count(0)));
+    EXPECT_NO_THROW(comm.bcast(send_recv_buf(values), recv_count(0)));
     EXPECT_EQ(values.size(), 0);
 }
