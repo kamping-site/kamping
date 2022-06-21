@@ -37,9 +37,9 @@
 /// to fit exactly the received data.
 /// The following parameter is optional but causes additional communication if not present.
 /// - \ref kamping::send_recv_count() specifying how many elements are broadcasted. If not specified, will be
-/// communicated thorugh an additional bcast. If specified, has to be the same on all ranks (including the root). Has to
-/// either be specified or not specified on all ranks.
-/// The following parameter is optional:
+/// communicated through an additional bcast. If not specified, we broadcast the whole send_recv_buf. If specified,
+/// has to be the same on all ranks (including the root). Has to either be specified or not specified on all ranks. The
+/// following parameter is optional:
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c
 /// Communicator is used, see root().
 /// @todo Add support for `bcast<int>(..)` style deduction of send_recv_buf's type on non-root ranks.
@@ -57,10 +57,11 @@ auto kamping::Communicator::bcast(Args... args) const {
     auto&& root = select_parameter_type_or_default<ParameterType::root, Root>(std::tuple(this->root()), args...);
     KASSERT(this->is_valid_rank(root.rank()), "Invalid rank as root.", assert::light);
 
-    // Get the send_recv_bu; for now, the user *has* to provide a send-receive buffer.
+    // Get the send_recv_buf; for now, the user *has* to provide a send-receive buffer.
     auto&& send_recv_buf = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
     using value_type     = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
-    auto mpi_value_type  = mpi_datatype<value_type>();
+    static_assert(!std::is_const_v<decltype(send_recv_buf)>, "Const send_recv_buf'fers are not allowed.");
+    auto mpi_value_type = mpi_datatype<value_type>();
 
     // Get the recv_count
     constexpr bool send_recv_count_is_provided = has_parameter_type<ParameterType::send_recv_count, Args...>();
@@ -69,7 +70,6 @@ auto kamping::Communicator::bcast(Args... args) const {
     if (this->is_root(root.rank())) {
         /// @todo Uncomment, once the send_recv_buf is optional.
         // KASSERT(has_user_provided_send_recv_buf, "The send_recv_buf is mandatory at the root.", assert::light);
-        KASSERT(send_recv_buf.size() > 0u, "The send_recv_buf on the root rank must not be empty.");
     }
 
     // Assume that either all ranks have send_recv_count or none of them hast -> need to broadcast the amount of data to
@@ -77,6 +77,7 @@ auto kamping::Communicator::bcast(Args... args) const {
     KASSERT(
         this->is_same_on_all_ranks(send_recv_count_is_provided),
         "The send_recv_count must be either provided on all ranks or on no rank.", assert::light_communication);
+
     size_t send_recv_count = 0;
     if constexpr (send_recv_count_is_provided) {
         auto&& send_recv_count_parameter = select_parameter_type<ParameterType::send_recv_count>(args...);
@@ -89,7 +90,7 @@ auto kamping::Communicator::bcast(Args... args) const {
         // Transfer the send_recv_count
         // This error code is unused if KTHROW is removed at compile time.
         [[maybe_unused]] int err = MPI_Bcast(
-            &send_recv_count,                          // buffer*
+            &send_recv_count,                          // buffer
             1,                                         // count
             mpi_datatype<decltype(send_recv_count)>(), // datatype
             root.rank_signed(),                        // root
@@ -105,14 +106,10 @@ auto kamping::Communicator::bcast(Args... args) const {
     if (!this->is_root(root.rank())) {
         send_recv_buf.resize(send_recv_count);
     }
-    KASSERT(send_recv_buf.size() == send_recv_count, assert::light);
-
-    /// @todo Implement and test that passing a const-buffer is allowed on the root process but not on all other
-    /// processes.
 
     // Perform the broadcast. The error code is unused if KTHROW is removed at compile time.
     [[maybe_unused]] int err = MPI_Bcast(
-        send_recv_buf.data(),                      // buffer*
+        send_recv_buf.data(),                      // buffer
         asserting_cast<int>(send_recv_buf.size()), // count
         mpi_value_type,                            // datatype
         root.rank_signed(),                        // root
