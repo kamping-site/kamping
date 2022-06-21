@@ -78,6 +78,36 @@ TEST(BcastTest, vector_recv_count) {
     }
 }
 
+TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
+    Communicator comm;
+
+    { // recv count < vector size
+        const size_t num_values             = 4;
+        const int    num_transferred_values = num_values - 1;
+
+        std::vector<int> values(num_values);
+        if (comm.is_root()) {
+            std::fill(values.begin(), values.end(), comm.rank());
+        }
+
+        comm.bcast(send_recv_buf(values), recv_count(num_transferred_values));
+        EXPECT_EQ(values.size(), num_transferred_values);
+        EXPECT_THAT(values, Each(Eq(comm.root())));
+    }
+
+    // { // recv count > vector size
+    //     const size_t num_values = 4;
+    //     const int num_transferred_values = num_values + 1;
+
+    //     std::vector<int> values(num_values);
+    //     if (comm.is_root()) {
+    //         std::fill(values.begin(), values.end(), comm.rank());
+    //     }
+
+    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)));
+    // }
+}
+
 TEST(BcastTest, vector_no_recv_count) {
     Communicator comm;
 
