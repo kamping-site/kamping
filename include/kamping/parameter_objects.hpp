@@ -265,11 +265,8 @@ public:
     /// state.
     ///
     /// @return Moves the underlying container out of the DataBuffer.
+    template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>
     MemberTypeWithConst extract() {
-        // This works because in template classes, only functions that are actually called are instantiated
-        static_assert(
-            allocation == BufferAllocation::lib_allocated,
-            "extract() must only be called on library allocated DataBuffers");
         static_assert(
             ownership == BufferOwnership::owning, "Moving out of a reference should not be done because it would leave "
                                                   "a users container in an unspecified state.");

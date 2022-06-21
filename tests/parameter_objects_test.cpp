@@ -461,6 +461,19 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
     }
 }
 
+TEST(DataBufferTest, has_extract) {
+    static_assert(
+        has_extract_v<DataBuffer<
+            int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+            BufferAllocation::lib_allocated> >,
+        "Library allocated DataBuffers must have an extract() member function");
+    static_assert(
+        !has_extract_v<DataBuffer<
+            int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+            BufferAllocation::user_allocated> >,
+        "User allocated DataBuffers must not have an extract() member function");
+}
+
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf> buffer;
