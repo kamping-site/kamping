@@ -60,6 +60,32 @@ TEST(BcastTest, single_element) {
     // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(2)));
 }
 
+TEST(Bcasttest, vector_partial_transfer) {
+    Communicator comm;
+
+    std::vector<int> values(5);
+    int              num_transferred_values = 3;
+    std::iota(values.begin(), values.end(), comm.rank() * 10);
+    kamping::Span<int> transfer_view(values.data(), asserting_cast<size_t>(num_transferred_values));
+
+    /// @todo Once we can check assertions, check that providing an recv_count != transfer_view.size() fails.
+    comm.bcast(send_recv_buf(transfer_view));
+    EXPECT_EQ(values.size(), 5);
+    EXPECT_THAT(values, ElementsAre(0, 1, 2, comm.rank() * 10 + 3, comm.rank() * 10 + 4));
+
+    std::iota(values.begin(), values.end(), comm.rank() * 10);
+    comm.bcast(send_recv_buf(transfer_view), recv_count(num_transferred_values));
+    EXPECT_EQ(values.size(), 5);
+    EXPECT_THAT(values, ElementsAre(0, 1, 2, comm.rank() * 10 + 3, comm.rank() * 10 + 4));
+
+    std::iota(values.begin(), values.end(), comm.rank() * 10);
+    num_transferred_values = -1;
+    comm.bcast(send_recv_buf(transfer_view), recv_count_out(num_transferred_values));
+    EXPECT_EQ(values.size(), 5);
+    EXPECT_EQ(num_transferred_values, 3);
+    EXPECT_THAT(values, ElementsAre(0, 1, 2, comm.rank() * 10 + 3, comm.rank() * 10 + 4));
+}
+
 TEST(BcastTest, vector_recv_count) {
     Communicator comm;
 
