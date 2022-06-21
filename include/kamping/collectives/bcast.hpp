@@ -78,7 +78,7 @@ auto kamping::Communicator::bcast(Args... args) const {
         ParameterType::recv_count, LibAllocatedSingleElementBuffer<int, ParameterType::recv_count>>(
         std::tuple(), args...);
 
-    constexpr bool recv_count_is_user_provided = has_to_be_computed<decltype(recv_count_param)>;
+    constexpr bool recv_count_is_user_provided = !has_to_be_computed<decltype(recv_count_param)>;
     KASSERT(
         is_same_on_all_ranks(recv_count_is_user_provided),
         "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.", assert::light_communication);
@@ -106,7 +106,6 @@ auto kamping::Communicator::bcast(Args... args) const {
         assert::light_communication);
 
     // Resize my send_recv_buf to be able to hold all received data.
-    std::cout << "recv_cout " << recv_count << std::endl;
     if (!send_recv_buf.is_single_element) {
         send_recv_buf.resize(asserting_cast<size_t>(recv_count));
     }
