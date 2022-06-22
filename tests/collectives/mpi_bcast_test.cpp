@@ -102,33 +102,57 @@ TEST(BcastTest, vector_recv_count) {
         EXPECT_THAT(values, Each(Eq(comm.root())));
     }
 
-    {
-        // Some buffer provide a recv_count, some don't.
-        /// @todo Add test, once we can test failing assertions.
-    }
+    /// @todo Add test, once we can test failing assertions.
+    // { // Some buffer provide a recv_count, some don't.
+    //     const size_t num_values = 4;
 
-    { // All buffers provide a recv_count, but they differ.
-      /// @todo Add test, once we can test failing assertions.
-    }
+    //     std::vector<int> values(num_values);
+    //     if (comm.is_root()) {
+    //         std::fill(values.begin(), values.end(), comm.rank());
+    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_values)));
+    //     } else {
+    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values));
+    //     }
+
+    //     EXPECT_EQ(values.size(), num_values);
+    //     EXPECT_THAT(values, Each(Eq(comm.root())));
+    // }
+
+    /// @todo Add test, once we can test failing assertions.
+    // { // All buffers provide a recv_count, but they differ.
+    //     const size_t   num_values             = 4;
+    //     const size - t alternative_num_values = 3;
+
+    //     std::vector<int> values(num_values);
+    //     if (comm.is_root()) {
+    //         std::fill(values.begin(), values.end(), comm.rank());
+    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_values)));
+    //     } else {
+    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(alternative_num_values)));
+    //     }
+
+    //     EXPECT_EQ(values.size(), num_values);
+    //     EXPECT_THAT(values, Each(Eq(comm.root())));
+    // }
 }
 
 TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
     Communicator comm;
 
-    { // recv count < vector size
-        const size_t num_values             = 4;
-        const int    num_transferred_values = num_values - 1;
+    // @todo Add this test, once we can check, that KASSERT fails.
+    // { // recv count < vector size
+    //     const size_t num_values             = 4;
+    //     const int    num_transferred_values = num_values - 1;
 
-        std::vector<int> values(num_values);
-        if (comm.is_root()) {
-            std::fill(values.begin(), values.end(), comm.rank());
-        }
+    //     std::vector<int> values(num_values);
+    //     if (comm.is_root()) {
+    //         std::fill(values.begin(), values.end(), comm.rank());
+    //     }
 
-        comm.bcast(send_recv_buf(values), recv_count(num_transferred_values));
-        EXPECT_EQ(values.size(), num_transferred_values);
-        EXPECT_THAT(values, Each(Eq(comm.root())));
-    }
+    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)));
+    // }
 
+    // @todo Add this test, once we can check, that a KASSERT fails.
     // { // recv count > vector size
     //     const size_t num_values = 4;
     //     const int num_transferred_values = num_values + 1;
@@ -163,7 +187,6 @@ TEST(BcastTest, vector_no_recv_count) {
             std::fill(values.begin(), values.end(), comm.rank());
         } else {
             values.resize(0);
-            std::fill(values.begin(), values.end(), comm.rank());
         }
 
         comm.bcast(send_recv_buf(values));
@@ -212,7 +235,6 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
             std::fill(values.begin(), values.end(), comm.rank());
         } else {
             values.resize(0);
-            std::fill(values.begin(), values.end(), comm.rank());
         }
 
         int num_elements_received = -1;
@@ -240,6 +262,44 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
         EXPECT_EQ(num_elements_received, values.size());
         EXPECT_THAT(values, Each(Eq(comm.root())));
     }
+
+    // @todo Add this test, once we can check if KASSERTs fail
+    // { // Root rank provides recv_count, the other ranks need request as an out parameter.
+    //     comm.root(0);
+    //     std::vector<int> values(0);
+    //     int num_elements = 43;
+    //
+    //     if (comm.is_root()) {
+    //         values.resize(asserting_cast<size_t>(num_elements));
+    //         std::fill(values.begin(), values.end(), comm.rank());
+    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_elements)));
+    //     } else {
+    //         values.resize(comm.rank());
+    //         int num_elements_received = -1;
+    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received)));
+    //     }
+    // }
+
+    { //
+        comm.root(0);
+        std::vector<int> values(0);
+        int              num_elements = 43;
+
+        if (comm.is_root()) {
+            values.resize(asserting_cast<size_t>(num_elements));
+            std::fill(values.begin(), values.end(), comm.rank());
+            comm.bcast(send_recv_buf(values));
+        } else {
+            values.resize(comm.rank());
+            int num_elements_received = -1;
+            comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received));
+            EXPECT_EQ(num_elements, num_elements_received);
+            EXPECT_EQ(num_elements_received, values.size());
+        }
+
+        EXPECT_EQ(values.size(), num_elements);
+        EXPECT_THAT(values, Each(Eq(comm.root())));
+    }
 }
 
 TEST(BcastTest, vector_needs_resizing_and_counts_are_given) {
@@ -264,7 +324,7 @@ TEST(BcastTest, message_of_size_0) {
     EXPECT_NO_THROW(comm.bcast(send_recv_buf(values)));
     EXPECT_EQ(values.size(), 0);
 
-    values.resize(1);
-    EXPECT_NO_THROW(comm.bcast(send_recv_buf(values), recv_count(0)));
-    EXPECT_EQ(values.size(), 0);
+    // @todo Add this, once we can check that KASSERT fails
+    // values.resize(1);
+    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(0)));
 }

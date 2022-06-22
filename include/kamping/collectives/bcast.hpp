@@ -69,11 +69,6 @@ auto kamping::Communicator::bcast(Args... args) const {
     // }
 
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
-    constexpr bool has_recv_count_param = has_parameter_type<internal::ParameterType::recv_count, Args...>();
-    KASSERT(
-        is_same_on_all_ranks(has_recv_count_param),
-        "recv_count() parameter is specified on some PEs, but not on all PEs.", assert::light_communication);
-
     auto&& recv_count_param = internal::select_parameter_type_or_default<
         ParameterType::recv_count, LibAllocatedSingleElementBuffer<int, ParameterType::recv_count>>(
         std::tuple(), args...);
@@ -103,17 +98,21 @@ auto kamping::Communicator::bcast(Args... args) const {
 
         // Output the recv count via the output_parameter
         *recv_count_param.data() = recv_count;
+    } else { // recv_count is given by the user.
+        if (this->is_root(root.rank())) {
+            KASSERT(
+                asserting_cast<size_t>(recv_count) == send_recv_buf.size(),
+                "If a recv_count() is provided on the root rank, it has to be equal to the number of elements in the "
+                "send_recv_buf. For partial transfers, use a view.");
+        }
     }
     KASSERT(
         this->is_same_on_all_ranks(recv_count), "The recv_count must be equal on all ranks.",
         assert::light_communication);
 
     // Resize my send_recv_buf to be able to hold all received data.
-    if (send_recv_buf.is_single_element) {
-        KASSERT(recv_count == 1, "For a single element send_recv_buf, the recv_count has to equal 1.");
-    } else {
-        send_recv_buf.resize(asserting_cast<size_t>(recv_count));
-    }
+    // Trying to resize a single element buffer to something other than 1 will throw an error.
+    send_recv_buf.resize(asserting_cast<size_t>(recv_count));
 
     // Perform the broadcast. The error code is unused if KTHROW is removed at compile time.
     [[maybe_unused]] int err = MPI_Bcast(
