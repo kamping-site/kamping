@@ -362,8 +362,9 @@ auto recv_counts_out(NewContainer<Container>&&) {
 /// @param container Container which will contain the receive displacements.
 /// @return Object referring to the storage containing the receive displacements.
 template <typename Container>
-auto recv_displs_out(Container& container) {
-    return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>(container);
+auto recv_displs_out(Container&& container) {
+    return internal::make_data_buffer<internal::ParameterType::recv_displs, internal::BufferModifiability::modifiable>(
+        std::forward<Container>(container));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying storage
@@ -375,7 +376,8 @@ auto recv_displs_out(Container& container) {
 /// @return Object referring to the storage containing the receive displacements.
 template <typename Container>
 auto recv_displs_out(NewContainer<Container>&&) {
-    return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_displs>();
+    return internal::make_data_buffer<internal::ParameterType::recv_displs, internal::BufferModifiability::modifiable>(
+        NewContainer<Container>{});
 }
 
 /// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like \c
