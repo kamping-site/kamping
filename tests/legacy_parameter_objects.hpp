@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPIng Authors
+// Copyright 2022 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -12,7 +12,8 @@
 // <https://www.gnu.org/licenses/>.
 
 /// @file This file contains the old separate container buffers. These have been replaced by one generic class
-/// DataBuffer but are still used in a lot of the old tests
+/// DataBuffer but are still used in a lot of the old tests. They are exact copies of what was used for the parameter
+/// factories before.
 
 #pragma once
 
