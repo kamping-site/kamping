@@ -297,20 +297,9 @@ auto recv_displs(std::initializer_list<T> displs) {
 /// @param container Container which will contain the received elements.
 /// @return Object referring to the storage containing the received elements.
 template <typename Container>
-auto recv_buf(Container& container) {
-    return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_buf>(container);
-}
-
-/// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
-/// will contained the received elements when the \c MPI call has been completed.
-/// The storage is allocated by the library and encapsulated in a container of type Container.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the received elements.
-/// @return Object referring to the storage containing the send displacements.
-template <typename Container>
-auto recv_buf(NewContainer<Container>&&) {
-    return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::recv_buf>();
+auto recv_buf(Container&& container) {
+    return internal::make_data_buffer<internal::ParameterType::recv_buf, internal::BufferModifiability::modifiable>(
+        std::forward<Container>(container));
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
