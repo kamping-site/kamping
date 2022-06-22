@@ -235,6 +235,18 @@ inline auto recv_count_out(int& recv_count_out) {
         recv_count_out);
 }
 
+/// @brief Generates a wrapper for a recv count output parameter allocated by KaMPIng.
+///
+/// This is primarily used by KaMPIng internally because not passing this to a function will have the same effect as
+/// passing it.
+///
+/// @param recv_count_out Reference for the output parameter.
+/// @return Wrapper around the given reference.
+inline auto recv_count_out(NewContainer<int>&&) {
+    return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
+        NewContainer<int>{});
+}
+
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage must
 /// contain the send displacements to each relevant PE.
 ///
