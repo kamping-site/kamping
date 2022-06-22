@@ -19,6 +19,7 @@
 #include "helpers_for_testing.hpp"
 #include "kamping/assertion_levels.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "legacy_parameter_objects.hpp"
 
 using namespace ::kamping;
 using namespace ::kamping::internal;

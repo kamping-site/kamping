@@ -21,6 +21,7 @@
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
+#include "legacy_parameter_objects.hpp"
 
 using namespace ::kamping;
 using namespace ::kamping::internal;
