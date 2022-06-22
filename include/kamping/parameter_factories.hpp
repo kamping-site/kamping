@@ -240,8 +240,7 @@ inline auto recv_count_out(int& recv_count_out) {
 /// This is primarily used by KaMPIng internally because not passing this to a function will have the same effect as
 /// passing it.
 ///
-/// @param recv_count_out Reference for the output parameter.
-/// @return Wrapper around the given reference.
+/// @return Wrapper around a new recv_count ouptput integer.
 inline auto recv_count_out(NewContainer<int>&&) {
     return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
         NewContainer<int>{});
