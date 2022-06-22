@@ -310,8 +310,9 @@ auto recv_buf(Container&& container) {
 /// @param container Container which will contain the send displacements.
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
-auto send_displs_out(Container& container) {
-    return internal::UserAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>(container);
+auto send_displs_out(Container&& container) {
+    return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::modifiable>(
+        std::forward<Container>(container));
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
@@ -323,7 +324,8 @@ auto send_displs_out(Container& container) {
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
 auto send_displs_out(NewContainer<Container>&&) {
-    return internal::LibAllocatedContainerBasedBuffer<Container, internal::ParameterType::send_displs>();
+    return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::modifiable>(
+        NewContainer<Container>{});
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
