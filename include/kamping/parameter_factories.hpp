@@ -47,7 +47,7 @@ struct ignore_t {};
 template <ParameterType parameter_type, BufferModifiability modifiability, typename Data>
 auto make_data_buffer(Data&& data) {
     constexpr BufferOwnership ownership =
-        std::is_rvalue_reference<Data&&>::value ? BufferOwnership::owning : BufferOwnership::referencing;
+        std::is_rvalue_reference_v<Data&&> ? BufferOwnership::owning : BufferOwnership::referencing;
 
     // Make sure that Data is const, the buffer created is constant (so we don't really remove constness in the return
     // statement below).
