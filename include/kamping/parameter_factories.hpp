@@ -49,6 +49,11 @@ auto make_data_buffer(Data&& data) {
     constexpr BufferOwnership ownership =
         std::is_rvalue_reference<Data&&>::value ? BufferOwnership::owning : BufferOwnership::referencing;
 
+    constexpr bool is_const_data_type = std::is_const_v<std::remove_reference_t<Data>>;
+    constexpr bool is_const_buffer    = modifiability == BufferModifiability::constant;
+    // Implication: is_const_data_type => is_const_buffer
+    static_assert(!is_const_data_type || is_const_buffer);
+
     return DataBuffer<
         std::remove_const_t<std::remove_reference_t<Data>>, parameter_type, modifiability, ownership,
         BufferAllocation::user_allocated>(std::forward<Data>(data));
