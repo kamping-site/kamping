@@ -318,6 +318,8 @@ TEST(SingleElementConstBufferTest, move_constructor_is_enabled) {
     SingleElementConstBuffer<int, ptype> buffer1(elem);
     SingleElementConstBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), elem);
+    EXPECT_EQ(*buffer2.data(), elem);
+    EXPECT_EQ(buffer2.get_single_element(), elem);
 }
 
 TEST(SingleElementOwningBufferTest, get_basics) {
@@ -329,6 +331,7 @@ TEST(SingleElementOwningBufferTest, get_basics) {
     EXPECT_EQ(*(int_buffer.get().data()), 5);
     EXPECT_EQ(*(int_buffer.data()), 5);
     EXPECT_EQ(int_buffer.underlying(), 5);
+    EXPECT_EQ(int_buffer.get_single_element(), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_FALSE(int_buffer.is_modifiable);
@@ -341,7 +344,9 @@ TEST(SingleElementOwningBufferTest, move_constructor_is_enabled) {
     SingleElementOwningBuffer<int, ptype> buffer1(42);
     SingleElementOwningBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), 42);
+    EXPECT_EQ(*buffer2.data(), 42);
     EXPECT_EQ(buffer2.underlying(), 42);
+    EXPECT_EQ(buffer2.get_single_element(), 42);
 }
 
 TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
@@ -351,6 +356,8 @@ TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
     SingleElementModifiableBuffer<int, ptype> buffer1(elem);
     SingleElementModifiableBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), const_elem);
+    EXPECT_EQ(*buffer2.data(), const_elem);
+    EXPECT_EQ(buffer2.get_single_element(), const_elem);
 }
 
 TEST(SingleElementModifiableBufferTest, get_basics) {
@@ -368,6 +375,7 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
     EXPECT_EQ(*(int_buffer.data()), 5);
+    EXPECT_EQ(int_buffer.get_single_element(), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_TRUE(int_buffer.is_modifiable);
@@ -383,6 +391,8 @@ TEST(LibAllocatedSingleElementBufferTest, move_constructor_is_enabled) {
     *buffer1.get().data() = elem;
     LibAllocatedSingleElementBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), const_elem);
+    EXPECT_EQ(*buffer2.data(), const_elem);
+    EXPECT_EQ(buffer2.get_single_element(), const_elem);
 }
 
 TEST(LibAllocatedSingleElementBufferTest, get_basics) {
@@ -402,6 +412,7 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
     EXPECT_EQ(*(int_buffer.data()), 5);
+    EXPECT_EQ(int_buffer.get_single_element(), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_TRUE(int_buffer.is_modifiable);
@@ -450,6 +461,20 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
     }
 }
 
+TEST(DataBufferTest, has_extract) {
+    static_assert(
+        has_extract_v<DataBuffer<
+            int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+            BufferAllocation::lib_allocated> >,
+        "Library allocated DataBuffers must have an extract() member function");
+    static_assert(
+        !has_extract_v<DataBuffer<
+            int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+            BufferAllocation::user_allocated> >,
+        "User allocated DataBuffers must not have an extract() member function");
+}
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf> buffer;
 
@@ -487,3 +512,4 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
     std::ignore = result.extract_send_displs();
     EXPECT_KASSERT_FAILS(result.extract_send_displs(), "Cannot extract a buffer that has already been extracted.");
 }
+#endif

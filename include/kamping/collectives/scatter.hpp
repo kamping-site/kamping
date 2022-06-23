@@ -112,18 +112,15 @@ auto kamping::Communicator::scatter(Args... args) const {
 
     // Optional parameter: recv_count()
     // Default: compute value based on send_buf.size on root
-    constexpr bool has_recv_count_param = internal::has_parameter_type<internal::ParameterType::recv_count, Args...>();
-    KASSERT(
-        has_recv_count_param == bcast_value(*this, has_recv_count_param, int_root),
-        "recv_count() parameter is specified on some PEs, but not on all PEs.", assert::light_communication);
 
     auto&& recv_count_param = internal::select_parameter_type_or_default<
         internal::ParameterType::recv_count, LibAllocatedSingleElementBuffer<int, internal::ParameterType::recv_count>>(
         std::tuple(), args...);
 
     constexpr bool is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;
+
     KASSERT(
-        is_output_parameter == bcast_value(*this, is_output_parameter, int_root),
+        is_same_on_all_ranks(is_output_parameter),
         "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.", assert::light_communication);
 
     // If it is an output parameter, broadcast send_count to get recv_count

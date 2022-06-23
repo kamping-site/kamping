@@ -242,6 +242,16 @@ public:
         return {this->data(), this->size()};
     }
 
+    /// @brief Get the single element wrapped by this object.
+    /// @return The single element wrapped by this object.
+    template <bool enabled = is_single_element, std::enable_if_t<enabled, bool> = true>
+    value_type const get_single_element() const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot get an element from a buffer that has already been extracted.", assert::normal);
+#endif
+        return _data;
+    }
+
     /// @brief Provides access to the underlying data.
     /// @return A reference to the data.
     MemberType const& underlying() const {
@@ -255,11 +265,8 @@ public:
     /// state.
     ///
     /// @return Moves the underlying container out of the DataBuffer.
+    template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>
     MemberTypeWithConst extract() {
-        // This works because in template classes, only functions that are actually called are instantiated
-        static_assert(
-            allocation == BufferAllocation::lib_allocated,
-            "extract() must only be called on library allocated DataBuffers");
         static_assert(
             ownership == BufferOwnership::owning, "Moving out of a reference should not be done because it would leave "
                                                   "a users container in an unspecified state.");
