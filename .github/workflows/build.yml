@@ -24,7 +24,7 @@ jobs:
         build-mode: [Debug, Release]
         # Exception mode has no influence on how tests are run. This only affects the examples.
         exception-mode: [ON]
-        assertion-level: ["heavy_communication"]
+        assertion-level: ["heavy"]
         run-tests: [OFF]
         include:
           - compiler: { name: GNU, cc: gcc, cxx: g++}
@@ -38,24 +38,24 @@ jobs:
             build-mode: Debug
             # Exception mode has no influence on how tests are run. This only affects the examples.
             exception-mode: ON
-            assertion-level: "heavy_communication"
+            assertion-level: "heavy"
             run-tests: ON
           - compiler: { name: Clang, cc: clang, cxx: clang++}
             build-mode: Release
             # Exception mode has no influence on how tests are run. This only affects the examples.
             exception-mode: ON
-            assertion-level: "heavy_communication"
+            assertion-level: "heavy"
             run-tests: ON
         exclude:
           - compiler: { name: GNU, cc: gcc, cxx: g++}
             build-mode: Debug
             exception-mode: ON
-            assertion-level: "heavy_communication"
+            assertion-level: "heavy"
             run-tests: OFF
           - compiler: { name: Clang, cc: clang, cxx: clang++}
             build-mode: Release
             exception-mode: ON
-            assertion-level: "heavy_communication"
+            assertion-level: "heavy"
             run-tests: OFF
 
     steps:
