@@ -22,8 +22,6 @@
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
 
 int main() {
     using namespace kamping;
