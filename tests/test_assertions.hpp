@@ -47,8 +47,15 @@
 
 // Redefine KASSERT implementation to throw an exception
 #undef KASSERT_KASSERT_HPP_KASSERT_IMPL
-#define KASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level) \
-    KASSERT_KASSERT_HPP_THROWING_KASSERT_CUSTOM_IMPL(expression, testing::KassertTestingException, message)
+#define KASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level)                                         \
+    do {                                                                                                           \
+        if constexpr (kassert::internal::assertion_enabled(level)) {                                               \
+            if (!(expression)) {                                                                                   \
+                throw kamping::testing::KassertTestingException(                                                   \
+                    (kassert::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str()); \
+            }                                                                                                      \
+        }                                                                                                          \
+    } while (false)
 
 // Makros to test for failed KASSERTs
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
