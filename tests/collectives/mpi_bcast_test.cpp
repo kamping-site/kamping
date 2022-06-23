@@ -68,7 +68,6 @@ TEST(Bcasttest, vector_partial_transfer) {
     std::iota(values.begin(), values.end(), comm.rank() * 10);
     kamping::Span<int> transfer_view(values.data(), asserting_cast<size_t>(num_transferred_values));
 
-    /// @todo Once we can check assertions, check that providing an recv_count != transfer_view.size() fails.
     comm.bcast(send_recv_buf(transfer_view));
     EXPECT_EQ(values.size(), 5);
     EXPECT_THAT(values, ElementsAre(0, 1, 2, comm.rank() * 10 + 3, comm.rank() * 10 + 4));
@@ -108,14 +107,10 @@ TEST(BcastTest, vector_recv_count) {
 
     //     std::vector<int> values(num_values);
     //     if (comm.is_root()) {
-    //         std::fill(values.begin(), values.end(), comm.rank());
     //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_values)));
     //     } else {
     //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values));
     //     }
-
-    //     EXPECT_EQ(values.size(), num_values);
-    //     EXPECT_THAT(values, Each(Eq(comm.root())));
     // }
 
     /// @todo Add test, once we can test failing assertions.
@@ -125,14 +120,10 @@ TEST(BcastTest, vector_recv_count) {
 
     //     std::vector<int> values(num_values);
     //     if (comm.is_root()) {
-    //         std::fill(values.begin(), values.end(), comm.rank());
     //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_values)));
     //     } else {
     //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(alternative_num_values)));
     //     }
-
-    //     EXPECT_EQ(values.size(), num_values);
-    //     EXPECT_THAT(values, Each(Eq(comm.root())));
     // }
 }
 
@@ -145,10 +136,6 @@ TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
     //     const int    num_transferred_values = num_values - 1;
 
     //     std::vector<int> values(num_values);
-    //     if (comm.is_root()) {
-    //         std::fill(values.begin(), values.end(), comm.rank());
-    //     }
-
     //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)));
     // }
 
@@ -158,10 +145,6 @@ TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
     //     const int num_transferred_values = num_values + 1;
 
     //     std::vector<int> values(num_values);
-    //     if (comm.is_root()) {
-    //         std::fill(values.begin(), values.end(), comm.rank());
-    //     }
-
     //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)));
     // }
 }
@@ -271,7 +254,6 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
     //
     //     if (comm.is_root()) {
     //         values.resize(asserting_cast<size_t>(num_elements));
-    //         std::fill(values.begin(), values.end(), comm.rank());
     //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_elements)));
     //     } else {
     //         values.resize(comm.rank());
@@ -288,7 +270,8 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
         if (comm.is_root()) {
             values.resize(asserting_cast<size_t>(num_elements));
             std::fill(values.begin(), values.end(), comm.rank());
-            comm.bcast(send_recv_buf(values));
+            auto result = comm.bcast(send_recv_buf(values));
+            EXPECT_EQ(result.extract_recv_count(), num_elements);
         } else {
             values.resize(comm.rank());
             int num_elements_received = -1;

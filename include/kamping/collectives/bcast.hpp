@@ -98,13 +98,12 @@ auto kamping::Communicator::bcast(Args... args) const {
 
         // Output the recv count via the output_parameter
         *recv_count_param.data() = recv_count;
-    } else { // recv_count is given by the user.
-        if (this->is_root(root.rank())) {
-            KASSERT(
-                asserting_cast<size_t>(recv_count) == send_recv_buf.size(),
-                "If a recv_count() is provided on the root rank, it has to be equal to the number of elements in the "
-                "send_recv_buf. For partial transfers, use a view.");
-        }
+    }
+    if (this->is_root(root.rank())) {
+        KASSERT(
+            asserting_cast<size_t>(recv_count) == send_recv_buf.size(),
+            "If a recv_count() is provided on the root rank, it has to be equal to the number of elements in the "
+            "send_recv_buf. For partial transfers, use a kamping::Span.");
     }
     KASSERT(
         this->is_same_on_all_ranks(recv_count), "The recv_count must be equal on all ranks.",
@@ -125,6 +124,6 @@ auto kamping::Communicator::bcast(Args... args) const {
     THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
     return MPIResult(
-        std::move(send_recv_buf), BufferCategoryNotUsed{}, std::move(recv_count), BufferCategoryNotUsed{},
+        std::move(send_recv_buf), BufferCategoryNotUsed{}, std::move(recv_count_param), BufferCategoryNotUsed{},
         BufferCategoryNotUsed{});
 } // namespace kamping::internal
