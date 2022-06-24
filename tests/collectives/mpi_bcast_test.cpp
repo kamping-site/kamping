@@ -260,7 +260,7 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
                 EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_elements)), "");
             } else {
                 values.resize(comm.rank());
-                int num_elements_received = -1;
+                [[maybe_unused]] int num_elements_received = -1;
                 EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received)), "");
             }
         }
