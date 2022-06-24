@@ -11,6 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
 #include <numeric>
 
 #include <gmock/gmock-matchers.h>
@@ -52,12 +54,13 @@ TEST(BcastTest, single_element) {
     EXPECT_EQ(value, root);
 
     // Broadcast a single POD to all processes, manually specify the recv_count.
-    /// @todo Uncomment, once we can check for failed assertions.
     value = comm.rank();
-    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(0)));
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS is fixed.
+    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(0)), "");
     comm.bcast(send_recv_buf(value), recv_count(1));
     EXPECT_EQ(value, root);
-    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(2)));
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS is fixed.
+    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(2)), "");
 }
 
 TEST(Bcasttest, vector_partial_transfer) {
@@ -101,51 +104,51 @@ TEST(BcastTest, vector_recv_count) {
         EXPECT_THAT(values, Each(Eq(comm.root())));
     }
 
-    /// @todo Add test, once we can test failing assertions.
-    // { // Some buffer provide a recv_count, some don't.
-    //     const size_t num_values = 4;
+    if (comm.size() > 1) {
+        { // Some ranks provide a recv_count, some don't.
+            const size_t num_values = 4;
 
-    //     std::vector<int> values(num_values);
-    //     if (comm.is_root()) {
-    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_values)));
-    //     } else {
-    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values));
-    //     }
-    // }
+            std::vector<int> values(num_values);
+            if (comm.is_root()) {
+                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_values)), "");
+            } else {
+                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values)), "");
+            }
+        }
 
-    /// @todo Add test, once we can test failing assertions.
-    // { // All buffers provide a recv_count, but they differ.
-    //     const size_t   num_values             = 4;
-    //     const size - t alternative_num_values = 3;
+        { // All ranks provide a recv_count, but they differ.
+            const size_t num_values             = 4;
+            const size_t alternative_num_values = 3;
 
-    //     std::vector<int> values(num_values);
-    //     if (comm.is_root()) {
-    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_values)));
-    //     } else {
-    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(alternative_num_values)));
-    //     }
-    // }
+            std::vector<int> values(num_values);
+            if (comm.is_root()) {
+                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_values)), "");
+            } else {
+                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(alternative_num_values)), "");
+            }
+        }
+    }
 }
 
 TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
     Communicator comm;
 
-    // @todo Add this test, once we can check, that KASSERT fails.
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS is fixed.
     // { // recv count < vector size
     //     const size_t num_values             = 4;
     //     const int    num_transferred_values = num_values - 1;
 
     //     std::vector<int> values(num_values);
-    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)));
+    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)), "");
     // }
 
-    // @todo Add this test, once we can check, that a KASSERT fails.
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS is fixed.
     // { // recv count > vector size
-    //     const size_t num_values = 4;
-    //     const int num_transferred_values = num_values + 1;
+    //     const size_t num_values             = 4;
+    //     const int    num_transferred_values = num_values + 1;
 
     //     std::vector<int> values(num_values);
-    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)));
+    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)), "");
     // }
 }
 
@@ -227,7 +230,7 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
         EXPECT_THAT(values, Each(Eq(comm.root())));
     }
 
-    { // All send_recv_bufs are of different size
+    { // All send_recv_bufs are of different size.
         comm.root(0);
         std::vector<int> values;
 
@@ -246,21 +249,22 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
         EXPECT_THAT(values, Each(Eq(comm.root())));
     }
 
-    // @todo Add this test, once we can check if KASSERTs fail
-    // { // Root rank provides recv_count, the other ranks need request as an out parameter.
-    //     comm.root(0);
-    //     std::vector<int> values(0);
-    //     int num_elements = 43;
-    //
-    //     if (comm.is_root()) {
-    //         values.resize(asserting_cast<size_t>(num_elements));
-    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_elements)));
-    //     } else {
-    //         values.resize(comm.rank());
-    //         int num_elements_received = -1;
-    //         EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received)));
-    //     }
-    // }
+    if (comm.size() > 1) {
+        { // Root rank provides recv_count, the other ranks need request as an out parameter.
+            comm.root(0);
+            std::vector<int> values(0);
+            int              num_elements = 43;
+
+            if (comm.is_root()) {
+                values.resize(asserting_cast<size_t>(num_elements));
+                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_elements)), "");
+            } else {
+                values.resize(comm.rank());
+                int num_elements_received = -1;
+                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received)), "");
+            }
+        }
+    }
 
     { //
         comm.root(0);
@@ -307,7 +311,7 @@ TEST(BcastTest, message_of_size_0) {
     EXPECT_NO_THROW(comm.bcast(send_recv_buf(values)));
     EXPECT_EQ(values.size(), 0);
 
-    // @todo Add this, once we can check that KASSERT fails
-    // values.resize(1);
-    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(0)));
+    values.resize(1);
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS is fixed.
+    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(0)), "");
 }
