@@ -127,3 +127,8 @@ auto kamping::Communicator::bcast(Args... args) const {
         std::move(send_recv_buf), BufferCategoryNotUsed{}, std::move(recv_count_param), BufferCategoryNotUsed{},
         BufferCategoryNotUsed{});
 } // namespace kamping::internal
+
+// template <typename... Args>
+// auto kamping::Communicator::bcast_single(Args... args) const {
+//     
+// }
