@@ -117,7 +117,7 @@ TEST(BcastTest, vector_recv_count) {
         }
 
         { // All ranks provide a recv_count, but they differ.
-            const size_t num_values             = 4;
+            const size_t                  num_values             = 4;
             [[maybe_unused]] const size_t alternative_num_values = 3;
 
             std::vector<int> values(num_values);
