@@ -55,11 +55,11 @@ TEST(BcastTest, single_element) {
 
     // Broadcast a single POD to all processes, manually specify the recv_count.
     value = comm.rank();
-    /// @todo Uncomment, once EXPECT_KASSERT_FAILS is fixed.
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
     // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(0)), "");
     comm.bcast(send_recv_buf(value), recv_count(1));
     EXPECT_EQ(value, root);
-    /// @todo Uncomment, once EXPECT_KASSERT_FAILS is fixed.
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
     // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(2)), "");
 }
 
@@ -133,7 +133,7 @@ TEST(BcastTest, vector_recv_count) {
 TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
     Communicator comm;
 
-    /// @todo Uncomment, once EXPECT_KASSERT_FAILS is fixed.
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
     // { // recv count < vector size
     //     const size_t num_values             = 4;
     //     const int    num_transferred_values = num_values - 1;
@@ -142,7 +142,7 @@ TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
     //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)), "");
     // }
 
-    /// @todo Uncomment, once EXPECT_KASSERT_FAILS is fixed.
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
     // { // recv count > vector size
     //     const size_t num_values             = 4;
     //     const int    num_transferred_values = num_values + 1;
@@ -312,6 +312,6 @@ TEST(BcastTest, message_of_size_0) {
     EXPECT_EQ(values.size(), 0);
 
     values.resize(1);
-    /// @todo Uncomment, once EXPECT_KASSERT_FAILS is fixed.
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
     // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(0)), "");
 }
