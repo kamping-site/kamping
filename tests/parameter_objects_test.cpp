@@ -370,9 +370,14 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
     int_buffer.resize(1);
     EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
-    EXPECT_DEATH(int_buffer.resize(0), "Single element buffers must hold exactly one element.");
-    EXPECT_DEATH(int_buffer.resize(2), "Single element buffers must hold exactly one element.");
+    EXPECT_DEATH(
+        int_buffer.resize(0), "Cannot resize a single element buffer to hold zero or more than one element. Single "
+                              "element buffers always hold exactly one element.");
+    EXPECT_DEATH(
+        int_buffer.resize(2), "Cannot resize a single element buffer to hold zero or more than one element. Single "
+                              "element buffers always hold exactly one element.");
 #endif
+
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
     EXPECT_EQ(*(int_buffer.data()), 5);
@@ -407,8 +412,12 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
     int_buffer.resize(1);
     EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
-    EXPECT_DEATH(int_buffer.resize(0), "Single element buffers must hold exactly one element.");
-    EXPECT_DEATH(int_buffer.resize(2), "Single element buffers must hold exactly one element.");
+    EXPECT_DEATH(
+        int_buffer.resize(0), "Cannot resize a single element buffer to hold zero or more than one element. Single "
+                              "element buffers always hold exactly one element.");
+    EXPECT_DEATH(
+        int_buffer.resize(2), "Cannot resize a single element buffer to hold zero or more than one element. Single "
+                              "element buffers always hold exactly one element.");
 #endif
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);

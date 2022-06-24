@@ -190,7 +190,9 @@ public:
         KASSERT(!is_extracted, "Cannot resize a buffer that has already been extracted.", assert::normal);
 #endif
         if constexpr (is_single_element) {
-            KASSERT(size == 1u, "Single element buffers must hold exactly one element.");
+            KASSERT(
+                size == 1u, "Cannot resize a single element buffer to hold zero or more than one element. Single "
+                            "element buffers always hold exactly one element.");
         } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
             KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
         } else {

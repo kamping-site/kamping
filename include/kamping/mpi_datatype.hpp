@@ -26,6 +26,7 @@
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/noexcept.hpp"
 
 namespace kamping::internal {
 
@@ -57,7 +58,7 @@ namespace kamping {
 /// @see mpi_datatype()
 ///
 template <size_t NumBytes>
-[[nodiscard]] MPI_Datatype mpi_custom_continuous_type() noexcept {
+[[nodiscard]] MPI_Datatype mpi_custom_continuous_type() KAMPING_NOEXCEPT {
     static_assert(NumBytes > 0, "You cannot create a continuous type with 0 bytes.");
     // Create a new MPI datatype only the first type per NumBytes this function is called.
     // By initializing this in the same line as the static declaration, this is thread safe.
@@ -267,7 +268,7 @@ struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
 /// @see mpi_custom_continuous_type()
 ///
 template <typename T>
-[[nodiscard]] MPI_Datatype mpi_datatype() noexcept {
+[[nodiscard]] MPI_Datatype mpi_datatype() KAMPING_NOEXCEPT {
     if constexpr (mpi_type_traits<T>::is_builtin) {
         return mpi_type_traits<T>::data_type();
     }

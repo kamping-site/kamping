@@ -210,6 +210,9 @@ public:
     auto gather(Args... args) const;
 
     template <typename... Args>
+    auto bcast(Args... args) const;
+
+    template <typename... Args>
     void barrier(Args... args) const;
 
     template <typename Value>

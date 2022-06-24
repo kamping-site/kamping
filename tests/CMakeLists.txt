@@ -30,6 +30,7 @@ kamping_register_mpi_test(test_mpi_communicator FILES mpi_communicator_test.cpp 
 kamping_register_mpi_test(test_mpi_datatype FILES mpi_datatype_test.cpp CORES 1)
 kamping_register_mpi_test(test_mpi_gather FILES collectives/mpi_gather_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_mpi_reduce FILES collectives/mpi_reduce_test.cpp CORES 1 4)
+kamping_register_mpi_test(test_mpi_bcast FILES collectives/mpi_bcast_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_mpi_allreduce FILES collectives/mpi_allreduce_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_operation_wrapper FILES mpi_operation_wrapper_test.cpp CORES 1)
 kamping_register_mpi_test(test_parameter_factories_mpi FILES parameter_factories_mpi_test.cpp CORES 1)
@@ -94,3 +95,4 @@ kamping_register_compilation_failure_test(
   "GET_SINGLE_ELEMENT_ON_VECTOR"
   LIBRARIES kamping_base
 )
+
