@@ -308,6 +308,7 @@ TEST(SingleElementConstBufferTest, get_basics) {
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_FALSE(int_buffer.is_modifiable);
+    EXPECT_FALSE(int_buffer.is_out_buffer);
 
     static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
 }
@@ -335,6 +336,7 @@ TEST(SingleElementOwningBufferTest, get_basics) {
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_FALSE(int_buffer.is_modifiable);
+    EXPECT_FALSE(int_buffer.is_out_buffer);
 
     static_assert(std::is_same_v<decltype(int_buffer)::value_type, int>);
 }
@@ -384,6 +386,7 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_TRUE(int_buffer.is_modifiable);
+    EXPECT_FALSE(int_buffer.is_out_buffer);
 
     static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
 }
@@ -425,6 +428,7 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_TRUE(int_buffer.is_modifiable);
+    EXPECT_FALSE(int_buffer.is_out_buffer);
 
     static_assert(std::is_same_v<decltype(int_buffer)::value_type, decltype(value)>);
 
@@ -474,12 +478,12 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferAllocation::lib_allocated> >,
+            BufferOutType::non_out_buffer, BufferAllocation::lib_allocated> >,
         "Library allocated DataBuffers must have an extract() member function");
     static_assert(
         !has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferAllocation::user_allocated> >,
+            BufferOutType::non_out_buffer, BufferAllocation::user_allocated> >,
         "User allocated DataBuffers must not have an extract() member function");
 }
 

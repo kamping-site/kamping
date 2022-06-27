@@ -73,6 +73,9 @@ enum class BufferModifiability { modifiable, constant };
 enum class BufferOwnership { owning, referencing };
 /// @brief Enum to specify whether a buffer is allocated by the library or the user
 enum class BufferAllocation { lib_allocated, user_allocated };
+/// @brief Enum to specify whether a buffer is an in buffer of an out
+/// buffer. Out buffer will be used to directly write the result to.
+enum class BufferOutType { non_out_buffer, out_buffer, structured_out_buffer };
 
 /// @brief Wrapper to get the value type of a non-container type (aka the type itself).
 /// @tparam has_value_type_member Whether `T` has a value_type member
@@ -105,11 +108,16 @@ public:
 /// `user_allocated` if it was allocated by the user.
 template <
     typename MemberType, ParameterType type, BufferModifiability modifiability, BufferOwnership ownership,
-    BufferAllocation allocation = BufferAllocation::user_allocated>
+    BufferOutType out_type, BufferAllocation allocation = BufferAllocation::user_allocated>
 class DataBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable =
+    /// @brief \c true if the buffer is a (structured) out buffer that results will be written to and \c false
+    /// otherwise.
+    static constexpr bool is_out_buffer =
+        (out_type == BufferOutType::out_buffer || out_type == BufferOutType::structured_out_buffer);
+
+    static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
     static constexpr bool is_single_element =
         !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
@@ -293,8 +301,8 @@ private:
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
-using ContainerBasedConstBuffer =
-    DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::referencing>;
+using ContainerBasedConstBuffer = DataBuffer<
+    Container, type, BufferModifiability::constant, BufferOwnership::referencing, BufferOutType::non_out_buffer>;
 
 /// @brief Read-only buffer owning a container type passed to it.
 ///
@@ -304,7 +312,8 @@ using ContainerBasedConstBuffer =
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
-using ContainerBasedOwningBuffer = DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::owning>;
+using ContainerBasedOwningBuffer =
+    DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::owning, BufferOutType::non_out_buffer>;
 
 /// @brief Buffer based on a container type that has been allocated by the user (but may be resized if the provided
 /// space is not sufficient).
@@ -315,8 +324,9 @@ using ContainerBasedOwningBuffer = DataBuffer<Container, type, BufferModifiabili
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType parameter_type>
-using UserAllocatedContainerBasedBuffer =
-    DataBuffer<Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing>;
+using UserAllocatedContainerBasedBuffer = DataBuffer<
+    Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing,
+    BufferOutType::non_out_buffer>;
 
 /// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
 ///
@@ -327,7 +337,8 @@ using UserAllocatedContainerBasedBuffer =
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
 using LibAllocatedContainerBasedBuffer = DataBuffer<
-    Container, type, BufferModifiability::modifiable, BufferOwnership::owning, BufferAllocation::lib_allocated>;
+    Container, type, BufferModifiability::modifiable, BufferOwnership::owning, BufferOutType::non_out_buffer,
+    BufferAllocation::lib_allocated>;
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
@@ -365,8 +376,8 @@ public:
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType Parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
-using SingleElementConstBuffer =
-    DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::referencing>;
+using SingleElementConstBuffer = DataBuffer<
+    DataType, type, BufferModifiability::constant, BufferOwnership::referencing, BufferOutType::non_out_buffer>;
 
 /// @brief Buffer for a single element, which is not a container. The element is owned by the buffer.
 ///
@@ -375,7 +386,8 @@ using SingleElementConstBuffer =
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType Parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
-using SingleElementOwningBuffer = DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::owning>;
+using SingleElementOwningBuffer =
+    DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::owning, BufferOutType::non_out_buffer>;
 
 /// @brief Buffer based on a single element type that has been allocated by the library.
 ///
@@ -383,7 +395,8 @@ using SingleElementOwningBuffer = DataBuffer<DataType, type, BufferModifiability
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
 using LibAllocatedSingleElementBuffer = DataBuffer<
-    DataType, type, BufferModifiability::modifiable, BufferOwnership::owning, BufferAllocation::lib_allocated>;
+    DataType, type, BufferModifiability::modifiable, BufferOwnership::owning, BufferOutType::non_out_buffer,
+    BufferAllocation::lib_allocated>;
 
 /// @brief Buffer based on a single element type that has been allocated by the user.
 ///
@@ -392,8 +405,8 @@ using LibAllocatedSingleElementBuffer = DataBuffer<
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
-using SingleElementModifiableBuffer =
-    DataBuffer<DataType, type, BufferModifiability::modifiable, BufferOwnership::referencing>;
+using SingleElementModifiableBuffer = DataBuffer<
+    DataType, type, BufferModifiability::modifiable, BufferOwnership::referencing, BufferOutType::non_out_buffer>;
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
 class Root {
