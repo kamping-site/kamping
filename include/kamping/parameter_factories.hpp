@@ -136,7 +136,7 @@ auto send_recv_buf(Data& data) {
 /// @param data Data (either a container which contains the elements or the element directly) to send
 /// @return Object referring to the storage containing the data elements to send.
 template <typename Data>
-auto send_recv_buf(const Data& data) {
+auto send_recv_buf(Data const& data) {
     if constexpr (internal::has_data_member_v<Data>) {
         return internal::ContainerBasedConstBuffer<Data, internal::ParameterType::send_recv_buf>(data);
     } else {
@@ -165,7 +165,7 @@ auto send_recv_buf(NewContainer<Container>&&) {
 /// @param container Container which contains the send counts.
 /// @return Object referring to the storage containing the send counts.
 template <typename Container>
-auto send_counts(const Container& container) {
+auto send_counts(Container const& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_counts>(container);
 }
 
@@ -202,7 +202,7 @@ auto send_counts(std::initializer_list<T> counts) {
 /// @param container Container which contains the recv counts.
 /// @return Object referring to the storage containing the recv counts.
 template <typename Container>
-auto recv_counts(const Container& container) {
+auto recv_counts(Container const& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_counts>(container);
 }
 
@@ -255,7 +255,7 @@ inline auto recv_count_out(int& recv_count_out) {
 /// @param container Container which contains the send displacements.
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
-auto send_displs(const Container& container) {
+auto send_displs(Container const& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::send_displs>(container);
 }
 
@@ -294,7 +294,7 @@ auto send_displs(std::initializer_list<T> displs) {
 /// @param container Container type which contains the recv displacements.
 /// @return Object referring to the storage containing the recv displacements.
 template <typename Container>
-auto recv_displs(const Container& container) {
+auto recv_displs(Container const& container) {
     return internal::ContainerBasedConstBuffer<Container, internal::ParameterType::recv_displs>(container);
 }
 
