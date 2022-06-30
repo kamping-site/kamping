@@ -33,7 +33,7 @@ template <typename T>
 struct ignore_t {};
 
 /// @brief The set of parameter types that must be of type `int`
-constexpr std::array<ParameterType, 5> int_parameter_types{
+constexpr std::array int_parameter_types{
     ParameterType::recv_count, ParameterType::recv_counts, ParameterType::send_counts, ParameterType::recv_displs,
     ParameterType::send_displs};
 
