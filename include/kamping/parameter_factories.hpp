@@ -61,7 +61,7 @@ auto make_data_buffer(Data&& data) {
         BufferAllocation::user_allocated>(std::forward<Data>(data));
 }
 
-/// @brief Creates a library allocated DataBuffer containing the supplied data (a container or a single element)
+/// @brief Creates a library allocated DataBuffer with the given container or single data type.
 ///
 /// Creates a library allocated DataBuffer with the given template parameters.
 ///
@@ -75,6 +75,26 @@ template <ParameterType parameter_type, BufferModifiability modifiability, typen
 auto make_data_buffer(NewContainer<Data>&&) {
     return DataBuffer<Data, parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::lib_allocated>();
 }
+
+/// @brief Creates an owning DataBuffer containing the supplied data in a std::vector.
+///
+/// Creates an owning DataBuffer with the given template parameters.
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam Data Container or data type on which this buffer is based.
+/// @param data std::initializer_list holding the data for the buffer.
+///
+/// @return A library allocated DataBuffer with the given template parameters.
+template <ParameterType parameter_type, BufferModifiability modifiability, typename Data>
+auto make_data_buffer(std::initializer_list<Data> data) {
+    std::vector<Data> data_vec{data};
+    return DataBuffer<
+        std::vector<Data>, parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::user_allocated>(
+        std::move(data_vec));
+}
+
 } // namespace internal
 
 /// @brief Tag for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
@@ -117,9 +137,8 @@ auto send_buf(Data&& data) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
-    std::vector<T> data_vec{data};
     return internal::make_data_buffer<internal::ParameterType::send_buf, internal::BufferModifiability::constant>(
-        std::move(data_vec));
+        std::move(data));
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
@@ -160,10 +179,8 @@ auto send_counts(Container&& container) {
 /// @return Object referring to the storage containing the send counts.
 template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
-    std::vector<T> counts_vec{counts};
-
     return internal::make_data_buffer<internal::ParameterType::send_counts, internal::BufferModifiability::constant>(
-        std::move(counts_vec));
+        std::move(counts));
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must contain
@@ -188,10 +205,8 @@ auto recv_counts(Container&& container) {
 /// @return Object referring to the storage containing the recv counts.
 template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
-    std::vector<T> counts_vec{counts};
-
     return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::constant>(
-        std::move(counts_vec));
+        std::move(counts));
 }
 
 /// @brief Generates a wrapper for a recv count input parameter.
@@ -245,9 +260,8 @@ auto send_displs(Container&& container) {
 /// @return Object referring to the storage containing the send displacements.
 template <typename T>
 auto send_displs(std::initializer_list<T> displs) {
-    std::vector<T> displs_vec{displs};
     return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::constant>(
-        std::move(displs_vec));
+        std::move(displs));
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage must
@@ -272,9 +286,8 @@ auto recv_displs(Container&& container) {
 /// @return Object referring to the storage containing the receive displacements.
 template <typename T>
 auto recv_displs(std::initializer_list<T> displs) {
-    std::vector<T> displs_vec{displs};
     return internal::make_data_buffer<internal::ParameterType::recv_displs, internal::BufferModifiability::constant>(
-        std::move(displs_vec));
+        std::move(displs));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
