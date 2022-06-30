@@ -86,7 +86,7 @@ auto make_data_buffer(Data&& data) {
     return result_data_buffer;
 }
 
-/// @brief Creates a library allocated DataBuffer containing the supplied data (a container or a single element)
+/// @brief Creates a library allocated DataBuffer with the given container or single data type.
 ///
 /// Creates a library allocated DataBuffer with the given template parameters.
 ///
@@ -100,6 +100,26 @@ template <ParameterType parameter_type, BufferModifiability modifiability, typen
 auto make_data_buffer(NewContainer<Data>&&) {
     return DataBuffer<Data, parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::lib_allocated>();
 }
+
+/// @brief Creates an owning DataBuffer containing the supplied data in a std::vector.
+///
+/// Creates an owning DataBuffer with the given template parameters.
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam Data Container or data type on which this buffer is based.
+/// @param data std::initializer_list holding the data for the buffer.
+///
+/// @return A library allocated DataBuffer with the given template parameters.
+template <ParameterType parameter_type, BufferModifiability modifiability, typename Data>
+auto make_data_buffer(std::initializer_list<Data> data) {
+    std::vector<Data> data_vec{data};
+    return DataBuffer<
+        std::vector<Data>, parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::user_allocated>(
+        std::move(data_vec));
+}
+
 } // namespace internal
 
 /// @brief Tag for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).

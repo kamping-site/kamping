@@ -728,4 +728,30 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
+    {
+        // Modifiable, container, owning, user_allocated with initializer_list
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf = internal::make_data_buffer<type, BufferModifiability::modifiable>({1, 2, 3});
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_TRUE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>>,
+            "Owning buffers must hold their data directly.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+    {
+        // Constant, container, owning, user_allocated with initializer_list
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf = internal::make_data_buffer<type, BufferModifiability::constant>({1, 2, 3});
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_FALSE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<int>>,
+            "Owning buffers must hold their data directly.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
 }
