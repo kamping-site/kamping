@@ -106,7 +106,7 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename Data>
 auto send_buf(Data&& data) {
-    return internal::make_data_buffer<internal::ParameterType::send_buf, internal::BufferModifiability::constant, Data>(
+    return internal::make_data_buffer<internal::ParameterType::send_buf, internal::BufferModifiability::constant>(
         std::forward<Data>(data));
 }
 
@@ -118,8 +118,7 @@ auto send_buf(Data&& data) {
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
     std::vector<T> data_vec{data};
-    return internal::make_data_buffer<
-        internal::ParameterType::send_buf, internal::BufferModifiability::constant, std::vector<T>>(
+    return internal::make_data_buffer<internal::ParameterType::send_buf, internal::BufferModifiability::constant>(
         std::move(data_vec));
 }
 
@@ -135,11 +134,10 @@ template <typename Data>
 auto send_recv_buf(Data&& data) {
     if constexpr (std::is_const_v<std::remove_reference_t<Data>>) {
         return internal::make_data_buffer<
-            internal::ParameterType::send_recv_buf, internal::BufferModifiability::constant, Data>(
-            std::forward<Data>(data));
+            internal::ParameterType::send_recv_buf, internal::BufferModifiability::constant>(std::forward<Data>(data));
     } else {
         return internal::make_data_buffer<
-            internal::ParameterType::send_recv_buf, internal::BufferModifiability::modifiable, Data>(
+            internal::ParameterType::send_recv_buf, internal::BufferModifiability::modifiable>(
             std::forward<Data>(data));
     }
 }
@@ -154,8 +152,7 @@ auto send_recv_buf(Data&& data) {
 template <typename Container>
 auto send_recv_buf(NewContainer<Container>&&) {
     return internal::make_data_buffer<
-        internal::ParameterType::send_recv_buf, internal::BufferModifiability::modifiable, Container>(
-        NewContainer<Container>{});
+        internal::ParameterType::send_recv_buf, internal::BufferModifiability::modifiable>(NewContainer<Container>{});
 }
 
 /// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must contain
@@ -168,8 +165,7 @@ auto send_recv_buf(NewContainer<Container>&&) {
 /// @return Object referring to the storage containing the send counts.
 template <typename Container>
 auto send_counts(Container&& container) {
-    return internal::make_data_buffer<
-        internal::ParameterType::send_counts, internal::BufferModifiability::constant, Container>(
+    return internal::make_data_buffer<internal::ParameterType::send_counts, internal::BufferModifiability::constant>(
         std::forward<Container>(container));
 }
 
@@ -183,8 +179,7 @@ template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
     std::vector<T> counts_vec{counts};
 
-    return internal::make_data_buffer<
-        internal::ParameterType::send_counts, internal::BufferModifiability::constant, std::vector<T>>(
+    return internal::make_data_buffer<internal::ParameterType::send_counts, internal::BufferModifiability::constant>(
         std::move(counts_vec));
 }
 
@@ -198,8 +193,7 @@ auto send_counts(std::initializer_list<T> counts) {
 /// @return Object referring to the storage containing the recv counts.
 template <typename Container>
 auto recv_counts(Container&& container) {
-    return internal::make_data_buffer<
-        internal::ParameterType::recv_counts, internal::BufferModifiability::constant, Container>(
+    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::constant>(
         std::forward<Container>(container));
 }
 
@@ -213,8 +207,7 @@ template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
     std::vector<T> counts_vec{counts};
 
-    return internal::make_data_buffer<
-        internal::ParameterType::recv_counts, internal::BufferModifiability::constant, std::vector<T>>(
+    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::constant>(
         std::move(counts_vec));
 }
 
