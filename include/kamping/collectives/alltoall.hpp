@@ -189,9 +189,7 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
         recv_counts.resize(this->size());
-        auto recv_counts_span = recv_counts.get();
-        auto send_counts_span = send_counts.get();
-        this->alltoall(kamping::send_buf(send_counts_span), kamping::recv_buf(recv_counts_span));
+        this->alltoall(kamping::send_buf(send_counts.get()), kamping::recv_buf(recv_counts.get()));
     }
     KASSERT(recv_counts.size() == this->size(), assert::light);
 
