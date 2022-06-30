@@ -626,6 +626,17 @@ TEST(ParameterFactoriesTest, recv_count_out_lib_allocated_basics) {
     EXPECT_TRUE(has_extract_v<decltype(recv_count_out_obj)>);
 }
 
+TEST(ParameterFactoriesTest, is_int_type) {
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_buf));
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::recv_buf));
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_recv_buf));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_counts));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_displs));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_count));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_counts));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_displs));
+}
+
 TEST(ParameterFactoriesTest, make_data_buffer) {
     {
         // Constant, container, referencing, user allocated
