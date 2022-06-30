@@ -162,9 +162,8 @@ auto send_buf(Data&& data) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
-    std::vector<T> data_vec{data};
     return internal::make_data_buffer<internal::ParameterType::send_buf, internal::BufferModifiability::constant>(
-        std::move(data_vec));
+        std::move(data));
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
@@ -205,10 +204,8 @@ auto send_counts(Container&& container) {
 /// @return Object referring to the storage containing the send counts.
 template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
-    std::vector<T> counts_vec{counts};
-
     return internal::make_data_buffer<internal::ParameterType::send_counts, internal::BufferModifiability::constant>(
-        std::move(counts_vec));
+        std::move(counts));
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must contain
@@ -233,10 +230,8 @@ auto recv_counts(Container&& container) {
 /// @return Object referring to the storage containing the recv counts.
 template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
-    std::vector<T> counts_vec{counts};
-
     return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::constant>(
-        std::move(counts_vec));
+        std::move(counts));
 }
 
 /// @brief Generates a wrapper for a recv count input parameter.
@@ -290,9 +285,8 @@ auto send_displs(Container&& container) {
 /// @return Object referring to the storage containing the send displacements.
 template <typename T>
 auto send_displs(std::initializer_list<T> displs) {
-    std::vector<T> displs_vec{displs};
     return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::constant>(
-        std::move(displs_vec));
+        std::move(displs));
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage must
@@ -317,9 +311,8 @@ auto recv_displs(Container&& container) {
 /// @return Object referring to the storage containing the receive displacements.
 template <typename T>
 auto recv_displs(std::initializer_list<T> displs) {
-    std::vector<T> displs_vec{displs};
     return internal::make_data_buffer<internal::ParameterType::recv_displs, internal::BufferModifiability::constant>(
-        std::move(displs_vec));
+        std::move(displs));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
