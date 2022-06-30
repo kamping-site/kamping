@@ -704,4 +704,17 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
+    {
+        // Modifiable, single element, owning, lib_allocated
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf = internal::make_data_buffer<type, BufferModifiability::modifiable>(NewContainer<int>{});
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_TRUE(data_buf.is_modifiable);
+        EXPECT_TRUE(data_buf.is_single_element);
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, int>,
+            "Owning buffers must hold their data directly.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
+    }
 }
