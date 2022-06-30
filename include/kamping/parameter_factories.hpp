@@ -78,6 +78,8 @@ auto make_data_buffer(Data&& data) {
     auto result_data_buffer = DataBuffer<
         std::remove_const_t<std::remove_reference_t<Data>>, parameter_type, modifiability, ownership,
         BufferAllocation::user_allocated>(std::forward<Data>(data));
+    // Logical implication: is_int_type(parameter_type) => std::is_same_v<typename
+    // decltype(result_data_buffer)::value_type, int>
     static_assert(
         !is_int_type(parameter_type) || std::is_same_v<typename decltype(result_data_buffer)::value_type, int>,
         "The given data must be of type int");
