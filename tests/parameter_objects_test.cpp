@@ -61,7 +61,7 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
 TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
     std::string                                                  str = "I am underlying storage";
     testing::OwnContainer<int>                                   own_container;
-    constexpr ParameterType                                      ptype = ParameterType::send_counts;
+    constexpr ParameterType                                      ptype = ParameterType::send_buf;
     ContainerBasedConstBuffer<std::string, ptype>                buffer_based_on_string(str);
     ContainerBasedConstBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
 
@@ -122,7 +122,7 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
 }
 
 TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
-    constexpr ParameterType ptype = ParameterType::send_counts;
+    constexpr ParameterType ptype = ParameterType::send_buf;
 
     // string
     std::string                                    str      = "I am underlying storage";
@@ -482,6 +482,17 @@ TEST(DataBufferTest, has_extract) {
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
             BufferAllocation::user_allocated> >,
         "User allocated DataBuffers must not have an extract() member function");
+}
+
+TEST(ParameterFactoriesTest, is_int_type) {
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_buf));
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::recv_buf));
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_recv_buf));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_counts));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_displs));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_count));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_counts));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_displs));
 }
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
