@@ -56,10 +56,9 @@ auto make_data_buffer(Data&& data) {
     // Implication: is_const_data_type => is_const_buffer.
     static_assert(!is_const_data_type || is_const_buffer);
 
-    auto result_data_buffer = DataBuffer<
+    return DataBuffer<
         std::remove_const_t<std::remove_reference_t<Data>>, parameter_type, modifiability, ownership,
         BufferAllocation::user_allocated>(std::forward<Data>(data));
-    return result_data_buffer;
 }
 
 /// @brief Creates a library allocated DataBuffer containing the supplied data (a container or a single element)
