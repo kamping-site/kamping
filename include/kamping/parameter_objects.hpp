@@ -91,6 +91,25 @@ public:
     using value_type = typename T::value_type; ///< The value type of T.
 };
 
+/// @brief The set of parameter types that must be of type `int`
+constexpr std::array int_parameter_types{
+    ParameterType::recv_count, ParameterType::recv_counts, ParameterType::send_counts, ParameterType::recv_displs,
+    ParameterType::send_displs};
+
+/// @brief Checks whether buffers of a given type should have `value_type` `int`.
+///
+/// @param parameter_type The parameter type to check.
+///
+/// @return `true` if parameter_type should be of type `int`, `false` otherwise.
+bool constexpr inline is_int_type(ParameterType parameter_type) {
+    for (ParameterType int_parameter_type: int_parameter_types) {
+        if (parameter_type == int_parameter_type) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /// @brief Data buffer used for named parameters.
 ///
 /// DataBuffer wraps all buffer storages provided by an std-like container like std::vector or single values. A
@@ -125,6 +144,8 @@ public:
 
     using value_type =
         typename ValueTypeWrapper<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
+    // Logical implication: is_int_type(type) => std::is_same_v<value_type, int>
+    static_assert(!is_int_type(type) || std::is_same_v<value_type, int>, "The given data must be of type int");
     using value_type_with_const =
         std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending
                                                                          ///< on modifiability
