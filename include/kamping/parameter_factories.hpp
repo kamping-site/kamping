@@ -132,14 +132,10 @@ auto send_buf(std::initializer_list<T> data) {
 /// @return Object referring to the storage containing the data elements to send / the received elements.
 template <typename Data>
 auto send_recv_buf(Data&& data) {
-    if constexpr (std::is_const_v<std::remove_reference_t<Data>>) {
-        return internal::make_data_buffer<
-            internal::ParameterType::send_recv_buf, internal::BufferModifiability::constant>(std::forward<Data>(data));
-    } else {
-        return internal::make_data_buffer<
-            internal::ParameterType::send_recv_buf, internal::BufferModifiability::modifiable>(
-            std::forward<Data>(data));
-    }
+    constexpr internal::BufferModifiability modifiability = std::is_const_v<std::remove_reference_t<Data>>
+                                                                ? internal::BufferModifiability::constant
+                                                                : internal::BufferModifiability::modifiable;
+    return internal::make_data_buffer<internal::ParameterType::send_recv_buf, modifiability>(std::forward<Data>(data));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
