@@ -163,19 +163,6 @@ auto send_recv_buf(Data&& data) {
     return internal::make_data_buffer<internal::ParameterType::send_recv_buf, modifiability>(std::forward<Data>(data));
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
-/// will contain the received elements when the \c MPI call has been completed.
-/// The storage is allocated by the library and encapsulated in a container of type Container.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the received elements.
-/// @return Object referring to the storage containing the send displacements.
-template <typename Container>
-auto send_recv_buf(NewContainer<Container>&&) {
-    return internal::make_data_buffer<
-        internal::ParameterType::send_recv_buf, internal::BufferModifiability::modifiable>(NewContainer<Container>{});
-}
-
 /// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must contain
 /// the send counts to each relevant PE.
 ///
@@ -256,6 +243,7 @@ inline auto recv_count_out(int& recv_count_out) {
 ///
 /// @return Wrapper around a new recv_count ouptput integer.
 inline auto recv_count_out(NewContainer<int>&&) {
+    // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
     return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
         NewContainer<int>{});
 }
@@ -340,19 +328,6 @@ auto send_displs_out(Container&& container) {
         std::forward<Container>(container));
 }
 
-/// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
-/// will contained the send displacements when the \c MPI call has been completed.
-/// The storage is allocated by the library and encapsulated in a container of type Container.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the send displacements.
-/// @return Object referring to the storage containing the send displacements.
-template <typename Container>
-auto send_displs_out(NewContainer<Container>&&) {
-    return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::modifiable>(
-        NewContainer<Container>{});
-}
-
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
 /// will contained the receive counts when the \c MPI call has been completed.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
@@ -366,19 +341,6 @@ auto recv_counts_out(Container&& container) {
         std::forward<Container>(container));
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
-/// will contained the receive counts when the \c MPI call has been completed.
-/// The storage is allocated by the library and encapsulated in a container of type Container.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the send displacements.
-/// @return Object referring to the storage containing the receive counts.
-template <typename Container>
-auto recv_counts_out(NewContainer<Container>&&) {
-    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
-        NewContainer<Container>{});
-}
-
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying storage
 /// will contained the receive displacements when the \c MPI call has been completed.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
@@ -390,19 +352,6 @@ template <typename Container>
 auto recv_displs_out(Container&& container) {
     return internal::make_data_buffer<internal::ParameterType::recv_displs, internal::BufferModifiability::modifiable>(
         std::forward<Container>(container));
-}
-
-/// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying storage
-/// will contained the receive displacements when the \c MPI call has been completed.
-/// The storage is allocated by the library and encapsulated in a container of type Container.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the send displacements.
-/// @return Object referring to the storage containing the receive displacements.
-template <typename Container>
-auto recv_displs_out(NewContainer<Container>&&) {
-    return internal::make_data_buffer<internal::ParameterType::recv_displs, internal::BufferModifiability::modifiable>(
-        NewContainer<Container>{});
 }
 
 /// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like \c
