@@ -385,8 +385,11 @@ public:
     static_assert(
         std::is_default_constructible_v<Op>,
         "This wrapper only works with default constructible functors, i.e., not with lambdas.");
-    void operator=(UserOperationWrapper<is_commutative, T, Op>&)  = delete;
+
+    void operator=(UserOperationWrapper<is_commutative, T, Op>&) = delete;
+
     void operator=(UserOperationWrapper<is_commutative, T, Op>&&) = delete;
+
     /// @brief creates an MPI operation for the specified functor
     /// @param op the functor to call for reduction.
     ///  this has to be a binary function applicable to two arguments of type \c T which return a result of type  \c T
