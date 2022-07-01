@@ -80,8 +80,9 @@ TEST(AlltoallTest, custom_type_custom_container) {
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
-              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+
+        bool operator==(const CustomType& other) const {
+            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -211,8 +212,9 @@ TEST(AlltoallvTest, custom_type_custom_container) {
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
-              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+
+        bool operator==(const CustomType& other) const {
+            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -250,8 +252,9 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
-              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+
+        bool operator==(const CustomType& other) const {
+            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -322,8 +325,9 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
-              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+
+        bool operator==(const CustomType& other) const {
+            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -395,8 +399,9 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
-              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+
+        bool operator==(const CustomType& other) const {
+            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -466,8 +471,9 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
-              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+
+        bool operator==(const CustomType& other) const {
+            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -529,8 +535,9 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
-              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+
+        bool operator==(const CustomType& other) const {
+            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
