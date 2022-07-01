@@ -103,6 +103,7 @@ kamping_register_compilation_failure_test(
            "SINGLE_KABOOL_VEC_BOOL"
            "SEND_VEC_BOOL"
            "SEND_VEC_KABOOL_RECV_VEC_BOOL"
+           "SEND_BOOL_INITIALIZER_LIST"
   LIBRARIES kamping_base
 )
 

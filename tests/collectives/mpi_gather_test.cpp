@@ -313,13 +313,30 @@ TEST(GatherTest, gather_send_and_receive_custom_container) {
 
 TEST(GatherTest, gather_single_element_bool_no_receive_buffer) {
     Communicator comm;
-    auto         result = comm.gather(send_buf(false)).extract_recv_buffer();
-
+    auto         result = comm.gather(send_buf({false})).extract_recv_buffer();
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
-        EXPECT_THAT(result, Each(IsFalse()));
+        for (auto elem : result) {
+          EXPECT_EQ(elem, false);
+        }
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(GatherTest, gather_initializer_list_bool_no_receive_buffer) {
+    Communicator comm;
+    auto         result = comm.gather(send_buf({false, false})).extract_recv_buffer();
+
+    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    // Test default root of communicator
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), 2 * comm.size());
+        for (auto elem: result) {
+            EXPECT_EQ(elem, false);
+        }
     } else {
         EXPECT_EQ(result.size(), 0);
     }
@@ -333,7 +350,9 @@ TEST(GatherTest, gather_single_element_kabool_no_receive_buffer) {
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
-        EXPECT_THAT(result, Each(IsFalse()));
+        for (auto elem: result) {
+            EXPECT_EQ(elem, false);
+        }
     } else {
         EXPECT_EQ(result.size(), 0);
     }
@@ -342,13 +361,15 @@ TEST(GatherTest, gather_single_element_kabool_no_receive_buffer) {
 TEST(GatherTest, gather_single_element_bool_with_receive_buffer) {
     Communicator        comm;
     std::vector<kabool> result;
-    comm.gather(send_buf(false), recv_buf(result));
+    comm.gather(send_buf({false}), recv_buf(result));
 
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
-        EXPECT_THAT(result, Each(IsFalse()));
+        for (auto elem: result) {
+            EXPECT_EQ(elem, false);
+        }
     } else {
         EXPECT_EQ(result.size(), 0);
     }
@@ -363,7 +384,9 @@ TEST(GatherTest, gather_single_element_kabool_with_receive_buffer) {
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
-        EXPECT_THAT(result, Each(IsFalse()));
+        for (auto elem: result) {
+            EXPECT_EQ(elem, false);
+        }
     } else {
         EXPECT_EQ(result.size(), 0);
     }

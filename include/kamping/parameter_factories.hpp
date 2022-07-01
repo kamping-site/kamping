@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
@@ -55,7 +56,6 @@ auto make_data_buffer(Data&& data) {
     constexpr bool is_const_buffer    = modifiability == BufferModifiability::constant;
     // Implication: is_const_data_type => is_const_buffer.
     static_assert(!is_const_data_type || is_const_buffer);
-
     return DataBuffer<
         std::remove_const_t<std::remove_reference_t<Data>>, parameter_type, modifiability, ownership,
         BufferAllocation::user_allocated>(std::forward<Data>(data));
@@ -89,9 +89,15 @@ auto make_data_buffer(NewContainer<Data>&&) {
 /// @return A library allocated DataBuffer with the given template parameters.
 template <ParameterType parameter_type, BufferModifiability modifiability, typename Data>
 auto make_data_buffer(std::initializer_list<Data> data) {
-    std::vector<Data> data_vec{data};
+    auto data_vec = [&]() {
+        if constexpr (std::is_same_v<Data, bool>) {
+            return std::vector<kabool>(data.begin(), data.end());
+        } else {
+            return std::vector<Data>{data};
+        }
+    }();
     return DataBuffer<
-        std::vector<Data>, parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::user_allocated>(
+        decltype(data_vec), parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::user_allocated>(
         std::move(data_vec));
 }
 

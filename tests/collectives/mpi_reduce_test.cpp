@@ -131,7 +131,7 @@ TEST(ReduceTest, reduce_single_element_from_bool_no_receive_buffer) {
         input = true;
     }
 
-    auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{})).extract_recv_buffer();
+    auto result = comm.reduce(send_buf({input}), op(ops::logical_or<>{})).extract_recv_buffer();
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
@@ -151,7 +151,7 @@ TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
         input = true;
     }
 
-    comm.reduce(send_buf(input), recv_buf(result), op(ops::logical_or<>{}));
+    comm.reduce(send_buf({input}), recv_buf(result), op(ops::logical_or<>{}));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);

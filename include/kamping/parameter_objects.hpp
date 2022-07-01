@@ -189,6 +189,10 @@ public:
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
                                                                          ///< non-const depending on
                                                                          ///< modifiability.
+    static_assert(
+        !is_vector_bool_v<MemberType>,
+        "Passing a std::vector<bool> is not supported, use std::vector<kamping::kabool> instead.");
+
     using MemberTypeWithConstAndRef = std::conditional_t<
         ownership == BufferOwnership::owning, MemberTypeWithConst,
         MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and

@@ -63,6 +63,21 @@ TEST(BcastTest, single_element) {
     // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(2)), "");
 }
 
+TEST(BcastTest, single_element_bool) {
+    Communicator comm;
+
+    // Basic use case, broadcast a single POD.
+
+    bool value;
+    if (comm.is_root()) {
+      value = true;
+    } else {
+      value = false;
+    }
+    comm.bcast(send_recv_buf(value));
+    EXPECT_EQ(value, true);
+}
+
 TEST(Bcasttest, vector_partial_transfer) {
     Communicator comm;
 
