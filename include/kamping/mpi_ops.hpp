@@ -336,8 +336,8 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
 
-    static MPI_Op         op() {
-                return MPI_BAND;
+    static MPI_Op op() {
+        return MPI_BAND;
     }
 };
 
@@ -349,8 +349,8 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
 
-    static MPI_Op         op() {
-                return MPI_BOR;
+    static MPI_Op op() {
+        return MPI_BOR;
     }
 };
 
@@ -362,8 +362,8 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
 
-    static MPI_Op         op() {
-                return MPI_BXOR;
+    static MPI_Op op() {
+        return MPI_BXOR;
     }
 };
 #endif
