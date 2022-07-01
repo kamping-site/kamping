@@ -32,7 +32,7 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif SEND_VEC_KABOOL_RECV_VEC_BOOL
     comm.gather(send_buf(vector_kabool), recv_buf(vector_bool));
 #elif SEND_BOOL_INITIALIZER_LIST
-    comm.gather(send_buf({kabool {true}, kabool{false}, kabool{true}}), recv_buf(vector_kabool));
+    comm.gather(send_buf({kabool{true}, kabool{false}, kabool{true}}), recv_buf(vector_kabool));
 // If none of the above sections is active, this file will compile successfully.
 #endif
 }

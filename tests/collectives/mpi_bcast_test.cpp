@@ -70,9 +70,9 @@ TEST(BcastTest, single_element_bool) {
 
     bool value;
     if (comm.is_root()) {
-      value = true;
+        value = true;
     } else {
-      value = false;
+        value = false;
     }
     comm.bcast(send_recv_buf(value));
     EXPECT_EQ(value, true);

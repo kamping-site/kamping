@@ -245,7 +245,7 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::floating)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
-        return MPI_MAX;
+                return MPI_MAX;
     }
 };
 
@@ -257,7 +257,7 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::floating)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
-        return MPI_MIN;
+                return MPI_MIN;
     }
 };
 
@@ -269,7 +269,7 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::complex)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
-        return MPI_SUM;
+                return MPI_SUM;
     }
 };
 
@@ -281,7 +281,7 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::complex)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
-        return MPI_PROD;
+                return MPI_PROD;
     }
 };
 
@@ -293,7 +293,7 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::logical)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
-        return MPI_LAND;
+                return MPI_LAND;
     }
 };
 
@@ -305,7 +305,7 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::logical)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
-        return MPI_LOR;
+                return MPI_LOR;
     }
 };
 
@@ -317,7 +317,7 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::logical)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
-        return MPI_LXOR;
+                return MPI_LXOR;
     }
 };
 
@@ -329,7 +329,7 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
-        return MPI_BAND;
+                return MPI_BAND;
     }
 };
 
@@ -341,7 +341,7 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
-        return MPI_BOR;
+                return MPI_BOR;
     }
 };
 
@@ -353,7 +353,7 @@ struct mpi_operation_traits<
         || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
     static MPI_Op         op() {
-        return MPI_BXOR;
+                return MPI_BXOR;
     }
 };
 #endif
@@ -375,7 +375,7 @@ public:
     static_assert(
         std::is_default_constructible_v<Op>,
         "This wrapper only works with default constructible functors, i.e., not with lambdas.");
-    void operator=(UserOperationWrapper<is_commutative, T, Op>&) = delete;
+    void operator=(UserOperationWrapper<is_commutative, T, Op>&)  = delete;
     void operator=(UserOperationWrapper<is_commutative, T, Op>&&) = delete;
     /// @brief creates an MPI operation for the specified functor
     /// @param op the functor to call for reduction.
@@ -505,7 +505,7 @@ public:
     static constexpr bool is_builtin  = false;
     static constexpr bool commutative = std::is_same_v<Commutative, kamping::internal::commutative_tag>;
     MPI_Op                op() {
-        return _operation.get_mpi_op();
+                       return _operation.get_mpi_op();
     }
 
 private:
@@ -523,7 +523,7 @@ public:
     static constexpr bool is_builtin  = true;
     static constexpr bool commutative = true; // builtin operations are always commutative
     MPI_Op                op() {
-        return mpi_operation_traits<Op, T>::op();
+                       return mpi_operation_traits<Op, T>::op();
     }
 };
 
@@ -552,7 +552,7 @@ public:
     static constexpr bool is_builtin  = false;
     static constexpr bool commutative = std::is_same_v<Commutative, kamping::internal::commutative_tag>;
     MPI_Op                op() {
-        return _operation.get_mpi_op();
+                       return _operation.get_mpi_op();
     }
 
 private:

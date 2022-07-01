@@ -537,12 +537,12 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferAllocation::lib_allocated> >,
+            BufferAllocation::lib_allocated>>,
         "Library allocated DataBuffers must have an extract() member function");
     static_assert(
         !has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferAllocation::user_allocated> >,
+            BufferAllocation::user_allocated>>,
         "User allocated DataBuffers must not have an extract() member function");
 }
 

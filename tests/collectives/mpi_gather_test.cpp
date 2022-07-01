@@ -318,8 +318,8 @@ TEST(GatherTest, gather_single_element_bool_no_receive_buffer) {
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
-        for (auto elem : result) {
-          EXPECT_EQ(elem, false);
+        for (auto elem: result) {
+            EXPECT_EQ(elem, false);
         }
     } else {
         EXPECT_EQ(result.size(), 0);

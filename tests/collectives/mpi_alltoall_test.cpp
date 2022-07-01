@@ -81,7 +81,7 @@ TEST(AlltoallTest, custom_type_custom_container) {
         size_t sendingRank;
         size_t receivingRank;
         bool   operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -212,7 +212,7 @@ TEST(AlltoallvTest, custom_type_custom_container) {
         size_t sendingRank;
         size_t receivingRank;
         bool   operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -251,7 +251,7 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
         size_t sendingRank;
         size_t receivingRank;
         bool   operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -323,7 +323,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
         size_t sendingRank;
         size_t receivingRank;
         bool   operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -396,7 +396,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
         size_t sendingRank;
         size_t receivingRank;
         bool   operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -467,7 +467,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
         size_t sendingRank;
         size_t receivingRank;
         bool   operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
@@ -530,7 +530,7 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
         size_t sendingRank;
         size_t receivingRank;
         bool   operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+              return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
 
