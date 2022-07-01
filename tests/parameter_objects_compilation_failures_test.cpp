@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "kamping/parameter_objects.hpp"
+#include "legacy_parameter_objects.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
@@ -88,6 +89,37 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif defined(COPY_ASSIGN_OP_BUILDER_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     op_builder = op_builder;
+#elif defined(VALUE_CONSTRUCTOR_REFERENCING_DATA_BUFFER)
+    // should not be possible to value (or rvalue) construct a referencing DataBuffer
+    DataBuffer<std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::referencing>
+        foo{std::vector<int>()};
+#elif defined(DEFAULT_CONSTRUCT_USER_ALLOCATED_DATA_BUFFER)
+    // should not be possible to default construct a user defined DataBuffer
+    DataBuffer<
+        std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+        BufferAllocation::user_allocated>
+        foo{};
+#elif defined(EXTRACT_USER_ALLOCATED_DATA_BUFFER)
+    // should not be possible to extract a user allocated DataBuffer
+    DataBuffer<
+        std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+        BufferAllocation::user_allocated>
+         foo{std::vector<int>()};
+    auto bar = foo.extract();
+#elif defined(RESIZE_CONST_DATA_BUFFER)
+    // should not be possible to resize a constant DataBuffer
+    DataBuffer<
+        std::vector<int>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
+        BufferAllocation::user_allocated>
+         foo{std::vector<int>()};
+    auto bar = foo.resize(0);
+#elif defined(GET_SINGLE_ELEMENT_ON_VECTOR)
+    // should not be possible to call `get_single_element()` on a container based buffer
+    DataBuffer<
+        std::vector<int>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
+        BufferAllocation::user_allocated>
+        foo{std::vector<int>()};
+    foo.get_single_element();
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif

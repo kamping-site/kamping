@@ -22,7 +22,9 @@
 #include <vector>
 
 #include <gtest/gtest.h>
+#include <kassert/kassert.hpp>
 
+#include "kamping/assertion_levels.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
@@ -117,13 +119,31 @@ struct CustomAllocator {
     }
 };
 
-/// @brief Custom expectation for testing if a KASSERT fails.
-#define EXPECT_KASSERT_FAILS(CODE, FAILURE_MESSAGE) \
-    EXPECT_EXIT({ CODE; }, testing::KilledBySignal(SIGABRT), FAILURE_MESSAGE);
+//
+// Makros to test for failed KASSERT() statements.
+// Note that these makros could already be defined if we included the header that turns assertions into exceptions.
+// In this case, we keep the current definition.
+//
 
-/// @brief Custom assertion for testing if a KASSERT fails.
-#define ASSERT_KASSERT_FAILS(CODE, FAILURE_MESSAGE) \
-    ASSERT_EXIT({ CODE; }, testing::KilledBySignal(SIGABRT), FAILURE_MESSAGE);
+#ifndef EXPECT_KASSERT_FAILS
+    #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
+        // EXPECT that a KASSERT assertion failed and that the error message contains a certain failure_message.
+        #define EXPECT_KASSERT_FAILS(code, failure_message) \
+            EXPECT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
+    #else // Otherwise, we do not test for failed assertions
+        #define EXPECT_KASSERT_FAILS(code, failure_message)
+    #endif
+#endif
+
+#ifndef ASSERT_KASSERT_FAILS
+    #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
+        // ASSERT that a KASSERT assertion failed and that the error message contains a certain failure_message.
+        #define ASSERT_KASSERT_FAILS(code, failure_message) \
+            ASSERT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
+    #else // Otherwise, we do not test for failed assertions
+        #define ASSERT_KASSERT_FAILS(code, failure_message)
+    #endif
+#endif
 
 /// @}
 } // namespace testing

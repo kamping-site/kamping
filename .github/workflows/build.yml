@@ -24,7 +24,7 @@ jobs:
         build-mode: [Debug, Release]
         # Exception mode has no influence on how tests are run. This only affects the examples.
         exception-mode: [ON]
-        assertion-level: [60]
+        assertion-level: ["heavy"]
         run-tests: [OFF]
         include:
           - compiler: { name: GNU, cc: gcc, cxx: g++}
@@ -32,30 +32,30 @@ jobs:
             # Exception mode has no influence on how tests are run. This only affects the examples.
             exception-mode: OFF
             # Assertion level is ignored in KASSERT-Tests. This is to ensure that other tests don't rely on side effects in assertions.
-            assertion-level: 0
+            assertion-level: "none"
             run-tests: ON
           - compiler: { name: GNU, cc: gcc, cxx: g++}
             build-mode: Debug
             # Exception mode has no influence on how tests are run. This only affects the examples.
             exception-mode: ON
-            assertion-level: 60
+            assertion-level: "heavy"
             run-tests: ON
           - compiler: { name: Clang, cc: clang, cxx: clang++}
             build-mode: Release
             # Exception mode has no influence on how tests are run. This only affects the examples.
             exception-mode: ON
-            assertion-level: 60
+            assertion-level: "heavy"
             run-tests: ON
         exclude:
           - compiler: { name: GNU, cc: gcc, cxx: g++}
             build-mode: Debug
             exception-mode: ON
-            assertion-level: 60
+            assertion-level: "heavy"
             run-tests: OFF
           - compiler: { name: Clang, cc: clang, cxx: clang++}
             build-mode: Release
             exception-mode: ON
-            assertion-level: 60
+            assertion-level: "heavy"
             run-tests: OFF
 
     steps:
@@ -73,7 +73,7 @@ jobs:
     - name: print-mpicxx-flags
       run: mpicxx -show
     - name: cmake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DKAMPING_WARNINGS_ARE_ERRORS=ON -DKAMPING_EXCEPTION_MODE=${{ matrix.exception-mode }} -DKASSERT_ASSERTION_LEVEL=${{ matrix.assertion-level }} -DKAMPING_TESTS_DISCOVER=OFF
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DKAMPING_WARNINGS_ARE_ERRORS=ON -DKAMPING_EXCEPTION_MODE=${{ matrix.exception-mode }} -DKAMPING_ASSERTION_LEVEL=${{ matrix.assertion-level }} -DKAMPING_TESTS_DISCOVER=OFF
     - name: build
       run: cmake --build build/ --parallel
     - name: Allow-running-mpi

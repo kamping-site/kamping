@@ -22,6 +22,7 @@
 #include "helpers_for_testing.hpp"
 #include "kamping/assertion_levels.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "legacy_parameter_objects.hpp"
 
 using namespace ::kamping;
 using namespace ::kamping::internal;
@@ -122,7 +123,7 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
 TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
     std::string                                                  str = "I am underlying storage";
     testing::OwnContainer<int>                                   own_container;
-    constexpr ParameterType                                      ptype = ParameterType::send_counts;
+    constexpr ParameterType                                      ptype = ParameterType::send_buf;
     ContainerBasedConstBuffer<std::string, ptype>                buffer_based_on_string(str);
     ContainerBasedConstBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
 
@@ -183,7 +184,7 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
 }
 
 TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
-    constexpr ParameterType ptype = ParameterType::send_counts;
+    constexpr ParameterType ptype = ParameterType::send_buf;
 
     // string
     std::string                                    str      = "I am underlying storage";
@@ -380,6 +381,8 @@ TEST(SingleElementConstBufferTest, move_constructor_is_enabled) {
     SingleElementConstBuffer<int, ptype> buffer1(elem);
     SingleElementConstBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), elem);
+    EXPECT_EQ(*buffer2.data(), elem);
+    EXPECT_EQ(buffer2.get_single_element(), elem);
 }
 
 TEST(SingleElementOwningBufferTest, get_basics) {
@@ -391,6 +394,7 @@ TEST(SingleElementOwningBufferTest, get_basics) {
     EXPECT_EQ(*(int_buffer.get().data()), 5);
     EXPECT_EQ(*(int_buffer.data()), 5);
     EXPECT_EQ(int_buffer.underlying(), 5);
+    EXPECT_EQ(int_buffer.get_single_element(), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_FALSE(int_buffer.is_modifiable);
@@ -403,7 +407,9 @@ TEST(SingleElementOwningBufferTest, move_constructor_is_enabled) {
     SingleElementOwningBuffer<int, ptype> buffer1(42);
     SingleElementOwningBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), 42);
+    EXPECT_EQ(*buffer2.data(), 42);
     EXPECT_EQ(buffer2.underlying(), 42);
+    EXPECT_EQ(buffer2.get_single_element(), 42);
 }
 
 TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
@@ -413,6 +419,8 @@ TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
     SingleElementModifiableBuffer<int, ptype> buffer1(elem);
     SingleElementModifiableBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), const_elem);
+    EXPECT_EQ(*buffer2.data(), const_elem);
+    EXPECT_EQ(buffer2.get_single_element(), const_elem);
 }
 
 TEST(SingleElementModifiableBufferTest, get_basics) {
@@ -424,12 +432,18 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
     int_buffer.resize(1);
     EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
-    EXPECT_DEATH(int_buffer.resize(0), "Single element buffers must hold exactly one element.");
-    EXPECT_DEATH(int_buffer.resize(2), "Single element buffers must hold exactly one element.");
+    EXPECT_DEATH(
+        int_buffer.resize(0), "Cannot resize a single element buffer to hold zero or more than one element. Single "
+                              "element buffers always hold exactly one element.");
+    EXPECT_DEATH(
+        int_buffer.resize(2), "Cannot resize a single element buffer to hold zero or more than one element. Single "
+                              "element buffers always hold exactly one element.");
 #endif
+
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
     EXPECT_EQ(*(int_buffer.data()), 5);
+    EXPECT_EQ(int_buffer.get_single_element(), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_TRUE(int_buffer.is_modifiable);
@@ -445,6 +459,8 @@ TEST(LibAllocatedSingleElementBufferTest, move_constructor_is_enabled) {
     *buffer1.get().data() = elem;
     LibAllocatedSingleElementBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), const_elem);
+    EXPECT_EQ(*buffer2.data(), const_elem);
+    EXPECT_EQ(buffer2.get_single_element(), const_elem);
 }
 
 TEST(LibAllocatedSingleElementBufferTest, get_basics) {
@@ -458,12 +474,17 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
     int_buffer.resize(1);
     EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
-    EXPECT_DEATH(int_buffer.resize(0), "Single element buffers must hold exactly one element.");
-    EXPECT_DEATH(int_buffer.resize(2), "Single element buffers must hold exactly one element.");
+    EXPECT_DEATH(
+        int_buffer.resize(0), "Cannot resize a single element buffer to hold zero or more than one element. Single "
+                              "element buffers always hold exactly one element.");
+    EXPECT_DEATH(
+        int_buffer.resize(2), "Cannot resize a single element buffer to hold zero or more than one element. Single "
+                              "element buffers always hold exactly one element.");
 #endif
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
     EXPECT_EQ(*(int_buffer.data()), 5);
+    EXPECT_EQ(int_buffer.get_single_element(), 5);
 
     EXPECT_EQ(decltype(int_buffer)::parameter_type, ptype);
     EXPECT_TRUE(int_buffer.is_modifiable);
@@ -511,3 +532,67 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
         EXPECT_EQ(i, vec_buffer.size());
     }
 }
+
+TEST(DataBufferTest, has_extract) {
+    static_assert(
+        has_extract_v<DataBuffer<
+            int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+            BufferAllocation::lib_allocated> >,
+        "Library allocated DataBuffers must have an extract() member function");
+    static_assert(
+        !has_extract_v<DataBuffer<
+            int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+            BufferAllocation::user_allocated> >,
+        "User allocated DataBuffers must not have an extract() member function");
+}
+
+TEST(ParameterFactoriesTest, is_int_type) {
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_buf));
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::recv_buf));
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_recv_buf));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_counts));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_displs));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_count));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_counts));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_displs));
+}
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf> buffer;
+
+    buffer.data();
+    buffer.size();
+    buffer.resize(10);
+    std::ignore = buffer.extract();
+    EXPECT_KASSERT_FAILS(buffer.extract(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(buffer.get(), "Cannot get a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(buffer.data(), "Cannot get a pointer to a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(buffer.size(), "Cannot get the size of a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(buffer.resize(20), "Cannot resize a buffer that has already been extracted.");
+}
+
+TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mpi_result) {
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf>    recv_buffer;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts> recv_counts;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_count>  recv_count;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs> recv_displs;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs> send_displs;
+
+    MPIResult result(
+        std::move(recv_buffer), std::move(recv_counts), std::move(recv_count), std::move(recv_displs),
+        std::move(send_displs));
+
+    std::ignore = result.extract_recv_buffer();
+    EXPECT_KASSERT_FAILS(result.extract_recv_buffer(), "Cannot extract a buffer that has already been extracted.");
+
+    std::ignore = result.extract_recv_counts();
+    EXPECT_KASSERT_FAILS(result.extract_recv_counts(), "Cannot extract a buffer that has already been extracted.");
+
+    std::ignore = result.extract_recv_displs();
+    EXPECT_KASSERT_FAILS(result.extract_recv_displs(), "Cannot extract a buffer that has already been extracted.");
+
+    std::ignore = result.extract_send_displs();
+    EXPECT_KASSERT_FAILS(result.extract_send_displs(), "Cannot extract a buffer that has already been extracted.");
+}
+#endif

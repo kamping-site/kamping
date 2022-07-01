@@ -30,6 +30,7 @@ kamping_register_mpi_test(test_mpi_communicator FILES mpi_communicator_test.cpp 
 kamping_register_mpi_test(test_mpi_datatype FILES mpi_datatype_test.cpp CORES 1)
 kamping_register_mpi_test(test_mpi_gather FILES collectives/mpi_gather_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_mpi_reduce FILES collectives/mpi_reduce_test.cpp CORES 1 4)
+kamping_register_mpi_test(test_mpi_bcast FILES collectives/mpi_bcast_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_mpi_allreduce FILES collectives/mpi_allreduce_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_operation_wrapper FILES mpi_operation_wrapper_test.cpp CORES 1)
 kamping_register_mpi_test(test_parameter_factories_mpi FILES parameter_factories_mpi_test.cpp CORES 1)
@@ -42,11 +43,15 @@ kamping_register_mpi_test(test_mpi_communicator_is_same_on_all_ranks FILES comm_
 add_executable(test_environment_init_finalize_basic environment_init_finalize_test.cpp)
 target_link_libraries(test_environment_init_finalize_basic PRIVATE kamping_base MPI::MPI_CXX)
 target_compile_definitions(test_environment_init_finalize_basic PRIVATE -DKAMPING_ENVIRONMENT_TEST_NO_PARAM)
+target_compile_definitions(test_environment_init_finalize_basic PRIVATE -D_GLIBCXX_DEBUG)
+target_compile_definitions(test_environment_init_finalize_basic PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
 katestrophe_add_mpi_test(test_environment_init_finalize_basic CORES 1 4)
 # Second variant passes parameters to MPI_Init and calls finallize manually.
 add_executable(test_environment_init_finalize_manual environment_init_finalize_test.cpp)
 target_link_libraries(test_environment_init_finalize_manual PRIVATE kamping_base MPI::MPI_CXX)
 target_compile_definitions(test_environment_init_finalize_manual PRIVATE -DKAMPING_ENVIRONMENT_TEST_WITH_PARAM -DKAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE)
+target_compile_definitions(test_environment_init_finalize_manual PRIVATE -D_GLIBCXX_DEBUG)
+target_compile_definitions(test_environment_init_finalize_manual PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
 katestrophe_add_mpi_test(test_environment_init_finalize_manual CORES 1 4)
 
 kamping_register_compilation_failure_test(
@@ -65,7 +70,7 @@ kamping_register_compilation_failure_test(
 kamping_register_compilation_failure_test(
   test_mpi_communicator_is_same_on_all_ranks_compilation_failure
   FILES comm_helper/mpi_communicator_is_same_on_all_ranks_compilation_failure_test.cpp
-  SECTIONS "VALUE_IS_A_POINTER" 
+  SECTIONS "VALUE_IS_A_POINTER"
   LIBRARIES kamping_base
 )
 
@@ -78,15 +83,16 @@ kamping_register_compilation_failure_test(
 
 kamping_register_compilation_failure_test(
   test_parameter_check_compilation_failure
-  FILES parameter_check_compilation_failures_test.cpp 
+  FILES parameter_check_compilation_failures_test.cpp
   SECTIONS "MISSING_REQUIRED_PARAMETER" "UNSUPPORTED_PARAMETER_NO_PARAMETERS" "UNSUPPORTED_PARAMETER_ONLY_OPTIONAL_PARAMETERS" "DUPLICATE_PARAMETERS"
-  LIBRARIES kamping_base 
+  LIBRARIES kamping_base
 )
 
 kamping_register_compilation_failure_test(
   test_parameter_objects_compilation_failure
   FILES parameter_objects_compilation_failures_test.cpp
-  SECTIONS "COPY_CONSTRUCT_CONTAINER_CONST_BUFFER" "COPY_ASSIGN_CONTAINER_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_CONST_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_CONSTRUCT_USER_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_USER_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_SINGLE_ELEMENT_BUFFER" "COPY_ASSIGN_LIB_ALLOC_SINGLE_ELEMENT_BUFFER" "COPY_CONSTRUCT_ROOT_BUFFER" "COPY_ASSIGN_ROOT_BUFFER" "COPY_CONSTRUCT_OP_BUILDER_BUFFER" "COPY_ASSIGN_OP_BUILDER_BUFFER"
+  SECTIONS "COPY_CONSTRUCT_CONTAINER_CONST_BUFFER" "COPY_ASSIGN_CONTAINER_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_CONST_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_CONSTRUCT_USER_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_USER_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_SINGLE_ELEMENT_BUFFER" "COPY_ASSIGN_LIB_ALLOC_SINGLE_ELEMENT_BUFFER" "COPY_CONSTRUCT_ROOT_BUFFER" "COPY_ASSIGN_ROOT_BUFFER" "COPY_CONSTRUCT_OP_BUILDER_BUFFER" "COPY_ASSIGN_OP_BUILDER_BUFFER" "VALUE_CONSTRUCTOR_REFERENCING_DATA_BUFFER" "DEFAULT_CONSTRUCT_USER_ALLOCATED_DATA_BUFFER" "EXTRACT_USER_ALLOCATED_DATA_BUFFER" "RESIZE_CONST_DATA_BUFFER"
+  "GET_SINGLE_ELEMENT_ON_VECTOR"
   LIBRARIES kamping_base
 )
 
@@ -97,5 +103,12 @@ kamping_register_compilation_failure_test(
            "SINGLE_KABOOL_VEC_BOOL"
            "SEND_VEC_BOOL"
            "SEND_VEC_KABOOL_RECV_VEC_BOOL"
+  LIBRARIES kamping_base
+)
+
+kamping_register_compilation_failure_test(
+  test_required_type_compilation_failure
+  FILES required_type_compilation_failure_test.cpp
+  SECTIONS "RECV_COUNT_OUT_PASSED" "RECV_COUNT_OUT_NEW_CONTAINER" "RECV_COUNTS_PASSED" "RECV_COUNTS_OUT_PASSED" "RECV_COUNTS_OUT_NEW_CONTAINER" "SEND_COUNTS_PASSED" "RECV_DISPLS_PASSED" "RECV_DISPLS_OUT_PASSED" "RECV_DISPLS_OUT_NEW_CONTAINER" "SEND_DISPLS_PASSED" "SEND_DISPLS_OUT_PASSED" "SEND_DISPLS_OUT_NEW_CONTAINER"
   LIBRARIES kamping_base
 )

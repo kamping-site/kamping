@@ -11,11 +11,11 @@ function(kamping_set_kassert_flags KAMPING_TARGET_NAME)
     )
 
   # Use global assertion level
-  target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_ASSERTION_LEVEL=${KAMPING_ASSERTION_LEVEL})
+  target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKASSERT_ASSERTION_LEVEL=${KASSERT_ASSERTION_LEVEL})
 
   # Explicitly specify exception mode for tests, default to no exception mode
   if (NOT KAMPING_NO_EXCEPTION_MODE)
-    target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_EXCEPTION_MODE)
+    target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKASSERT_EXCEPTION_MODE)
   endif ()
 endfunction()
 
@@ -38,7 +38,9 @@ function(kamping_register_test KAMPING_TARGET_NAME)
   target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE gtest gtest_main gmock kamping_base)
   target_compile_options(${KAMPING_TARGET_NAME} PRIVATE ${KAMPING_WARNING_FLAGS})
   gtest_discover_tests(${KAMPING_TARGET_NAME} WORKING_DIRECTORY ${PROJECT_DIR})
-  kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN}) 
+  kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN})
+  target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG)
+  target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
 endfunction()
 
 # Convenience wrapper for adding tests for KaMPIng which rely on MPI
@@ -65,6 +67,8 @@ function(kamping_register_mpi_test KAMPING_TARGET_NAME)
     katestrophe_add_mpi_test(${KAMPING_TARGET_NAME} CORES ${KAMPING_CORES})
   endif()
   kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN}) 
+  target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG)
+  target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
 endfunction()
 
 # Convenience wrapper for registering a set of tests that should fail to compile and require KaMPIng to be linked.

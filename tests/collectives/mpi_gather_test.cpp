@@ -315,7 +315,7 @@ TEST(GatherTest, gather_single_element_bool_no_receive_buffer) {
     Communicator comm;
     auto         result = comm.gather(send_buf(false)).extract_recv_buffer();
 
-    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
@@ -329,7 +329,7 @@ TEST(GatherTest, gather_single_element_kabool_no_receive_buffer) {
     Communicator comm;
     auto         result = comm.gather(send_buf(kabool{false})).extract_recv_buffer();
 
-    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
@@ -344,7 +344,7 @@ TEST(GatherTest, gather_single_element_bool_with_receive_buffer) {
     std::vector<kabool> result;
     comm.gather(send_buf(false), recv_buf(result));
 
-    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
@@ -359,7 +359,7 @@ TEST(GatherTest, gather_single_element_kabool_with_receive_buffer) {
     std::vector<kabool> result;
     comm.gather(send_buf(kabool{false}), recv_buf(result));
 
-    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
@@ -374,7 +374,7 @@ TEST(GatherTest, gather_multiple_elements_kabool_no_receive_buffer) {
     std::vector<kabool> input  = {false, true};
     auto                result = comm.gather(send_buf(input)).extract_recv_buffer();
 
-    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), 2 * comm.size());
@@ -392,7 +392,7 @@ TEST(GatherTest, gather_multiple_elements_kabool_with_receive_buffer) {
     std::vector<kabool> result;
     comm.gather(send_buf(input), recv_buf(result));
 
-    static_assert(std::is_same_v<decltype(result), std::vector<kabool>>);
+    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), 2 * comm.size());

@@ -47,7 +47,7 @@
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
 template <typename... Args>
-auto kamping::Communicator::reduce(Args&&... args) const {
+auto kamping::Communicator::reduce(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, root));
@@ -67,7 +67,8 @@ auto kamping::Communicator::reduce(Args&&... args) const {
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     auto& operation_param = internal::select_parameter_type<internal::ParameterType::op>(args...);
-    auto  operation       = operation_param.template build_operation<send_value_type>();
+    // If you want to understand the syntax of the following line, ignore the "template " ;-)
+    auto operation = operation_param.template build_operation<send_value_type>();
 
     // Check parameters
     static_assert(
