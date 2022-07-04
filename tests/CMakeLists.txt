@@ -70,7 +70,7 @@ kamping_register_compilation_failure_test(
 kamping_register_compilation_failure_test(
   test_mpi_communicator_is_same_on_all_ranks_compilation_failure
   FILES comm_helper/mpi_communicator_is_same_on_all_ranks_compilation_failure_test.cpp
-  SECTIONS "VALUE_IS_A_POINTER" 
+  SECTIONS "VALUE_IS_A_POINTER"
   LIBRARIES kamping_base
 )
 
@@ -83,9 +83,9 @@ kamping_register_compilation_failure_test(
 
 kamping_register_compilation_failure_test(
   test_parameter_check_compilation_failure
-  FILES parameter_check_compilation_failures_test.cpp 
+  FILES parameter_check_compilation_failures_test.cpp
   SECTIONS "MISSING_REQUIRED_PARAMETER" "UNSUPPORTED_PARAMETER_NO_PARAMETERS" "UNSUPPORTED_PARAMETER_ONLY_OPTIONAL_PARAMETERS" "DUPLICATE_PARAMETERS"
-  LIBRARIES kamping_base 
+  LIBRARIES kamping_base
 )
 
 kamping_register_compilation_failure_test(
@@ -97,7 +97,15 @@ kamping_register_compilation_failure_test(
 )
 
 kamping_register_compilation_failure_test(
+  test_required_type_compilation_failure
+  FILES required_type_compilation_failure_test.cpp
+  SECTIONS "RECV_COUNT_OUT_PASSED" "RECV_COUNT_OUT_NEW_CONTAINER" "RECV_COUNTS_PASSED" "RECV_COUNTS_OUT_PASSED" "RECV_COUNTS_OUT_NEW_CONTAINER" "SEND_COUNTS_PASSED" "RECV_DISPLS_PASSED" "RECV_DISPLS_OUT_PASSED" "RECV_DISPLS_OUT_NEW_CONTAINER" "SEND_DISPLS_PASSED" "SEND_DISPLS_OUT_PASSED" "SEND_DISPLS_OUT_NEW_CONTAINER"
+  LIBRARIES kamping_base
+)
+
+kamping_register_compilation_failure_test(
   test_mpi_bcast_compilation_failure
   FILES collectives/mpi_bcast_compilation_failure_test.cpp
   SECTIONS "RECV_COUNT_GIVEN"
+  LIBRARIES kamping_base
 )

@@ -14,6 +14,10 @@ add_executable(example_alltoall alltoall_example.cpp)
 target_link_libraries(example_alltoall kamping)
 target_compile_options(example_alltoall PRIVATE ${KAMPING_WARNING_FLAGS})
 
+add_executable(example_alltoallv alltoallv_example.cpp)
+target_link_libraries(example_alltoallv kamping)
+target_compile_options(example_alltoallv PRIVATE ${KAMPING_WARNING_FLAGS})
+
 add_executable(example_gather gather_example.cpp)
 target_link_libraries(example_gather kamping)
 target_compile_options(example_gather PRIVATE ${KAMPING_WARNING_FLAGS})

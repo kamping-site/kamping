@@ -69,9 +69,10 @@ auto kamping::Communicator::bcast(Args... args) const {
     // }
 
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
-    auto&& recv_count_param = internal::select_parameter_type_or_default<
-        ParameterType::recv_count, LibAllocatedSingleElementBuffer<int, ParameterType::recv_count>>(
-        std::tuple(), args...);
+    using default_recv_count_type = decltype(kamping::recv_count_out(NewContainer<int>{}));
+    auto&& recv_count_param =
+        internal::select_parameter_type_or_default<ParameterType::recv_count, default_recv_count_type>(
+            std::tuple(), args...);
 
     constexpr bool recv_count_is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;
     KASSERT(

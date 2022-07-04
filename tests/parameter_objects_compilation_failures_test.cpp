@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "kamping/parameter_objects.hpp"
+#include "legacy_parameter_objects.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
