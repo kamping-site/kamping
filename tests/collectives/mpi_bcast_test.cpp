@@ -323,7 +323,7 @@ TEST(BcastTest, bcast_single) {
     Communicator comm;
 
     int value = comm.rank_signed();
-    EXPECT_NO_THROW(comm.bcast_single(send_recv_buf(value)));
+    EXPECT_NO_THROW(comm.bcast_single(send_recv_buf(value), root(0)));
     EXPECT_EQ(value, 0);
 
     std::vector<int> value_vector = {comm.rank_signed()};
