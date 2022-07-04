@@ -96,3 +96,8 @@ kamping_register_compilation_failure_test(
   LIBRARIES kamping_base
 )
 
+kamping_register_compilation_failure_test(
+  test_mpi_bcast_compilation_failure
+  FILES collectives/mpi_bcast_compilation_failure_test.cpp
+  SECTIONS "RECV_COUNT_GIVEN"
+)

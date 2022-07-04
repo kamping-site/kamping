@@ -213,6 +213,9 @@ public:
     auto bcast(Args... args) const;
 
     template <typename... Args>
+    auto bcast_single(Args... args) const;
+
+    template <typename... Args>
     void barrier(Args... args) const;
 
     template <typename Value>
