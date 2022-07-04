@@ -128,3 +128,12 @@ auto kamping::Communicator::bcast(Args... args) const {
         std::move(send_recv_buf), BufferCategoryNotUsed{}, std::move(recv_count_param), BufferCategoryNotUsed{},
         BufferCategoryNotUsed{});
 } // namespace kamping::internal
+
+template <typename... Args>
+auto kamping::Communicator::bcast_single(Args... args) const {
+    //! If your expand this function to not being only a simple wrapper arount bcast, you have to write more unit tests!
+    // In contrast to bcast(...), the recv_count is not a possible parameter.
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root));
+
+    return this->bcast(std::forward<Args>(args)..., recv_count(1));
+}
