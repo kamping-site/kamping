@@ -204,6 +204,9 @@ public:
     auto reduce(Args... args) const;
 
     template <typename... Args>
+    auto exscan(Args... args) const;
+
+    template <typename... Args>
     auto allreduce(Args... args) const;
 
     template <typename... Args>
