@@ -125,7 +125,6 @@ struct some_values<std::complex<double>> {
     }
 };
 
-
 template <typename T>
 std::vector<T> some_values_v = some_values<T>::value();
 
