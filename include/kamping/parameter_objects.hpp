@@ -58,6 +58,8 @@ template <typename T>
 static constexpr bool has_value_type_v<T, std::void_t<typename T::value_type>> = true;
 
 /// @brief Type trait to check if a type is an instance of a templated type.
+///
+/// based on https://stackoverflow.com/a/31763111
 /// @tparam T The concrete type.
 /// @tparam Template The type template.
 /// @return \c true if the type is an instance and \c false otherwise.
@@ -65,6 +67,15 @@ template <class T, template <class...> class Template>
 struct is_specialization : std::false_type {};
 
 /// @brief Type trait to check if a type is an instance of a templated type.
+///
+/// based on https://stackoverflow.com/a/31763111
+///
+/// A little note on how this works:
+/// - consider <tt>is_specialization<std::vector<bool, my_alloc>, std::vector></tt>
+/// - this gets template matched with the following specialization such that
+///    - <tt>Template = template<T...> std::vector<T...></tt>
+///    - <tt>Args... = bool, my_alloc</tt>
+/// - but this may only be matched in the case that <tt>Template<Args...> = std::vector<bool, my_alloc></tt>
 /// @tparam T The concrete type.
 /// @tparam Template the type template
 /// @return \c true if the type is an instance and \c false otherwise.
