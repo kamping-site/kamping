@@ -97,13 +97,22 @@ kamping_register_compilation_failure_test(
 )
 
 kamping_register_compilation_failure_test(
+  test_parameter_factories_compilation_failure
+  FILES parameter_factories_compilation_failure_test.cpp
+  SECTIONS "VECTOR_BOOL_LVALUE"
+  "VECTOR_BOOL_RVALUE"
+  "VECTOR_BOOL_CUSTOM_ALLOCATOR"
+  "VECTOR_BOOL_NEW_CONTAINER"
+  LIBRARIES kamping_base
+)
+
+kamping_register_compilation_failure_test(
   test_vector_bool_compilation_failure
   FILES vector_bool_compilation_failures_test.cpp
   SECTIONS "SINGLE_BOOL_VEC_BOOL"
            "SINGLE_KABOOL_VEC_BOOL"
            "SEND_VEC_BOOL"
            "SEND_VEC_KABOOL_RECV_VEC_BOOL"
-           "SEND_BOOL_INITIALIZER_LIST"
   LIBRARIES kamping_base
 )
 

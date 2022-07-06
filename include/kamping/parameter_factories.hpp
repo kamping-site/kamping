@@ -80,6 +80,8 @@ auto make_data_buffer(NewContainer<Data>&&) {
 ///
 /// Creates an owning DataBuffer with the given template parameters.
 ///
+/// An initializer list of type \c bool will be converted to a \c std::vector<kamping::kabool>.
+///
 /// @tparam parameter_type parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -92,6 +94,10 @@ auto make_data_buffer(std::initializer_list<Data> data) {
     auto data_vec = [&]() {
         if constexpr (std::is_same_v<Data, bool>) {
             return std::vector<kabool>(data.begin(), data.end());
+            // We only use automatic conversion of bool to kabool for initializer lists, but not for single elements of
+            // type bool. The reason for that is, that sometimes single element conversion may not be desired.
+            // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
+            // send_recv_buf = bool&
         } else {
             return std::vector<Data>{data};
         }
