@@ -330,3 +330,25 @@ TEST(BcastTest, message_of_size_0) {
     /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
     // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(0)), "");
 }
+
+TEST(BcastTest, bcast_single) {
+    // bcast_single is a wrapper arount bcast, providing the recv_count(1).
+    // There is not much we can test here, that's not already tested by the tests for bcast.
+
+    Communicator comm;
+
+    int value = comm.rank_signed();
+    EXPECT_NO_THROW(comm.bcast_single(send_recv_buf(value), root(0)));
+    EXPECT_EQ(value, 0);
+
+    std::vector<int> value_vector = {comm.rank_signed()};
+    EXPECT_NO_THROW(comm.bcast_single(send_recv_buf(value_vector)));
+    EXPECT_EQ(value_vector[0], 0);
+
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS() supports checking for assertions which fail only on some ranks.
+    // value_vector.resize(2);
+    // EXPECT_KASSERT_FAILS(comm.bcast_single(send_recv_buf(value_vector)), "");
+    //
+    // value_vector.resize(0);
+    // EXPECT_KASSERT_FAILS(comm.bcast_single(send_recv_buf(value_vector)), "");
+}

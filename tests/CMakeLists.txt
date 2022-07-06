@@ -113,3 +113,10 @@ kamping_register_compilation_failure_test(
   SECTIONS "RECV_COUNT_OUT_PASSED" "RECV_COUNT_OUT_NEW_CONTAINER" "RECV_COUNTS_PASSED" "RECV_COUNTS_OUT_PASSED" "RECV_COUNTS_OUT_NEW_CONTAINER" "SEND_COUNTS_PASSED" "RECV_DISPLS_PASSED" "RECV_DISPLS_OUT_PASSED" "RECV_DISPLS_OUT_NEW_CONTAINER" "SEND_DISPLS_PASSED" "SEND_DISPLS_OUT_PASSED" "SEND_DISPLS_OUT_NEW_CONTAINER"
   LIBRARIES kamping_base
 )
+
+kamping_register_compilation_failure_test(
+  test_mpi_bcast_compilation_failure
+  FILES collectives/mpi_bcast_compilation_failure_test.cpp
+  SECTIONS "RECV_COUNT_GIVEN"
+  LIBRARIES kamping_base
+)
