@@ -81,7 +81,7 @@ TEST(ReduceTest, reduce_no_receive_buffer_bool) {
     }
 }
 
-TEST(ReduceTest, reduce_no_receive_buffer_bool_custom_operation) {
+TEST(ReduceTest, reduce_no_receive_buffer_kabool_custom_operation) {
     Communicator comm;
 
     std::vector<kabool> input = {false, false};
@@ -104,7 +104,7 @@ TEST(ReduceTest, reduce_no_receive_buffer_bool_custom_operation) {
     }
 }
 
-TEST(ReduceTest, reduce_single_element_no_receive_buffer_bool) {
+TEST(ReduceTest, reduce_single_element_no_receive_buffer_kabool) {
     Communicator comm;
 
     kabool input = false;
@@ -123,7 +123,7 @@ TEST(ReduceTest, reduce_single_element_no_receive_buffer_bool) {
     }
 }
 
-TEST(ReduceTest, reduce_single_element_from_bool_no_receive_buffer) {
+TEST(ReduceTest, reduce_single_element_initializer_list_bool_no_receive_buffer) {
     Communicator comm;
 
     bool input = false;
@@ -131,6 +131,8 @@ TEST(ReduceTest, reduce_single_element_from_bool_no_receive_buffer) {
         input = true;
     }
 
+    // reduce does not support single element bool when no recv_buf is specified, because the default would be
+    // std::vector<bool>, which is not supported
     auto result = comm.reduce(send_buf({input}), op(ops::logical_or<>{})).extract_recv_buffer();
 
     if (comm.is_root()) {
@@ -145,17 +147,17 @@ TEST(ReduceTest, reduce_single_element_from_bool_no_receive_buffer) {
 TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
     Communicator comm;
 
-    kabool              input = false;
-    std::vector<kabool> result;
+    bool               input = false;
+    OwnContainer<bool> result;
     if (comm.rank() == 1 % comm.size()) {
         input = true;
     }
 
-    comm.reduce(send_buf({input}), recv_buf(result), op(ops::logical_or<>{}));
+    comm.reduce(send_buf(input), recv_buf(result), op(ops::logical_or<>{}));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
-        std::vector<kabool> expected_result = {true};
+        OwnContainer<bool> expected_result = {true};
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);

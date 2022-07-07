@@ -311,9 +311,11 @@ TEST(GatherTest, gather_send_and_receive_custom_container) {
     }
 }
 
-TEST(GatherTest, gather_single_element_bool_no_receive_buffer) {
+TEST(GatherTest, gather_single_element_initializer_list_bool_no_receive_buffer) {
     Communicator comm;
-    auto         result = comm.gather(send_buf({false})).extract_recv_buffer();
+    // gather does not support single element bool when specifying no recv_buffer, because the default receive buffer is
+    // std::vector<bool>, which is not supported
+    auto result = comm.gather(send_buf({false})).extract_recv_buffer();
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
