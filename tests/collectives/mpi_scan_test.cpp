@@ -21,7 +21,7 @@
 using namespace ::kamping;
 using namespace ::testing;
 
-TEST(scanTest, scan_no_receive_buffer) {
+TEST(ScanTest, scan_no_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
@@ -34,7 +34,7 @@ TEST(scanTest, scan_no_receive_buffer) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(scanTest, scan_with_receive_buffer) {
+TEST(ScanTest, scan_with_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
@@ -48,7 +48,7 @@ TEST(scanTest, scan_with_receive_buffer) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(scanTest, scan_builtin_op_on_non_builtin_type) {
+TEST(ScanTest, scan_builtin_op_on_non_builtin_type) {
     Communicator comm;
 
     struct MyInt {
@@ -75,7 +75,7 @@ int add_plus_42_function(int const& lhs, int const& rhs) {
     return lhs + rhs + 42;
 }
 
-TEST(scanTest, scan_custom_operation_on_builtin_type) {
+TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     Communicator comm;
 
     auto add_plus_42_lambda = [](auto const& lhs, auto const& rhs) {
@@ -137,7 +137,7 @@ TEST(scanTest, scan_custom_operation_on_builtin_type) {
     }
 }
 
-TEST(scanTest, scan_custom_operation_on_builtin_type_non_commutative) {
+TEST(ScanTest, scan_custom_operation_on_builtin_type_non_commutative) {
     Communicator comm;
 
     auto get_right = [](auto const&, auto const& rhs) {
@@ -153,7 +153,7 @@ TEST(scanTest, scan_custom_operation_on_builtin_type_non_commutative) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(scanTest, scan_custom_operation_on_custom_type) {
+TEST(ScanTest, scan_custom_operation_on_custom_type) {
     Communicator comm;
 
     struct Aggregate {

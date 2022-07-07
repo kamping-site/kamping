@@ -80,7 +80,7 @@ auto kamping::Communicator::scan(Args... args) const {
     KASSERT(recv_buf.size() == send_buf.size(), assert::light);
     // send_buf.size() is equal on all ranks, as checked above.
 
-    // Perform the MPI_Allreduce call and return.
+    // Perform the MPI_Scan call and return.
     [[maybe_unused]] int err = MPI_Scan(
         send_buf.data(),                      // sendbuf
         recv_buf_ptr,                         // recvbuf,
