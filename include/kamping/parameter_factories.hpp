@@ -251,14 +251,14 @@ auto recv_counts(std::initializer_list<T> counts) {
 /// @return Wrapper around the given recv count.
 inline auto recv_count(int recv_count) {
     return internal::SingleElementOwningBuffer<
-        int, internal::ParameterType::recv_count, internal::BufferType::out_buffer>(recv_count);
+        int, internal::ParameterType::recv_count, internal::BufferType::in_buffer>(recv_count);
 }
 
 /// @brief Generates a buffer for a recv count output parameter that is returned as structured binding.
 /// @return Buffer that can be filled by the library.
 inline auto recv_count_out() {
     return internal::LibAllocatedSingleElementBuffer<
-        int, internal::ParameterType::recv_count, internal::BufferType::out_buffer>();
+        int, internal::ParameterType::recv_count, internal::BufferType::in_buffer>();
 }
 
 /// @brief Generates a wrapper for a recv count output parameter.
@@ -352,7 +352,7 @@ auto recv_displs(std::initializer_list<T> displs) {
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
-/// will contained the received elements when the \c MPI call has been completed.
+/// will contain the received elements when the \c MPI call has been completed.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
 /// @tparam Container Container type which contains the received elements.
@@ -365,7 +365,7 @@ auto recv_buf(Container& container) {
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
-/// will contained the received elements when the \c MPI call has been completed.
+/// will contain the received elements when the \c MPI call has been completed.
 /// The storage is allocated by the library and encapsulated in a container of type Container.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
@@ -378,7 +378,7 @@ auto recv_buf(NewContainer<Container>&&) {
 }
 
 /// @brief Generates buffer wrapper based on a std::vector<int> for the send displacements, i.e., the underlying storage
-/// will contain re the send displacements when the \c MPI call has been completed.
+/// will contain the send displacements when the \c MPI call has been completed.
 /// @return Object referring to the storage containing the send displacements.
 inline auto send_displs_out() {
     return internal::LibAllocatedContainerBasedBuffer<
@@ -386,7 +386,7 @@ inline auto send_displs_out() {
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
-/// will contained the send displacements when the \c MPI call has been completed.
+/// will contain the send displacements when the \c MPI call has been completed.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
 /// @tparam Container Container type which contains the send displacements.
@@ -399,7 +399,7 @@ auto send_displs_out(Container& container) {
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
-/// will contained the send displacements when the \c MPI call has been completed.
+/// will contain the send displacements when the \c MPI call has been completed.
 /// The storage is allocated by the library and encapsulated in a container of type Container.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
@@ -420,7 +420,7 @@ inline auto recv_counts_out() {
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
-/// will contained the receive counts when the \c MPI call has been completed.
+/// will contain the receive counts when the \c MPI call has been completed.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
 /// @tparam Container Container type which contains the receive counts.
@@ -433,7 +433,7 @@ auto recv_counts_out(Container& container) {
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
-/// will contained the receive counts when the \c MPI call has been completed.
+/// will contain the receive counts when the \c MPI call has been completed.
 /// The storage is allocated by the library and encapsulated in a container of type Container.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
@@ -454,7 +454,7 @@ inline auto recv_displs_out() {
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying storage
-/// will contained the receive displacements when the \c MPI call has been completed.
+/// will contain the receive displacements when the \c MPI call has been completed.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
 /// @tparam Container Container type which contains the receive displacements.
@@ -467,7 +467,7 @@ auto recv_displs_out(Container& container) {
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying storage
-/// will contained the receive displacements when the \c MPI call has been completed.
+/// will contain the receive displacements when the \c MPI call has been completed.
 /// The storage is allocated by the library and encapsulated in a container of type Container.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type

@@ -400,7 +400,7 @@ using SingleElementOwningBuffer =
 /// @tparam buffer_type BuffType This buffer's buffer type.
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
 using LibAllocatedSingleElementBuffer = DataBuffer<
-    DataType, ParamType, BufferModifiability::modifiable, BufferOwnership::owning, BuffType,
+    DataType, parameter_type, BufferModifiability::modifiable, BufferOwnership::owning, buffer_type,
     BufferAllocation::lib_allocated>;
 
 /// @brief Buffer based on a single element type that has been allocated by the user.
