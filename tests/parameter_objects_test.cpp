@@ -39,9 +39,10 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
     std::vector<int>       int_vec{1, 2, 3};
     std::vector<int> const int_vec_const{1, 2, 3, 4};
 
-    constexpr ParameterType                            ptype = ParameterType::send_counts;
-    ContainerBasedConstBuffer<std::vector<int>, ptype> buffer_based_on_int_vector(int_vec);
-    ContainerBasedConstBuffer<std::vector<int>, ptype> buffer_based_on_const_int_vector(int_vec_const);
+    constexpr ParameterType                                   ptype = ParameterType::send_counts;
+    constexpr BufferType                                      btype = BufferType::in_buffer;
+    ContainerBasedConstBuffer<std::vector<int>, ptype, btype> buffer_based_on_int_vector(int_vec);
+    ContainerBasedConstBuffer<std::vector<int>, ptype, btype> buffer_based_on_const_int_vector(int_vec_const);
 
     EXPECT_EQ(buffer_based_on_int_vector.size(), int_vec.size());
     EXPECT_EQ(buffer_based_on_int_vector.get().size(), int_vec.size());
@@ -58,11 +59,12 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
 }
 
 TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
-    std::string                                                  str = "I am underlying storage";
-    testing::OwnContainer<int>                                   own_container;
-    constexpr ParameterType                                      ptype = ParameterType::send_counts;
-    ContainerBasedConstBuffer<std::string, ptype>                buffer_based_on_string(str);
-    ContainerBasedConstBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
+    std::string                                                         str = "I am underlying storage";
+    testing::OwnContainer<int>                                          own_container;
+    constexpr ParameterType                                             ptype = ParameterType::send_counts;
+    constexpr BufferType                                                btype = BufferType::in_buffer;
+    ContainerBasedConstBuffer<std::string, ptype, btype>                buffer_based_on_string(str);
+    ContainerBasedConstBuffer<testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container(own_container);
 
     EXPECT_EQ(buffer_based_on_string.get().size(), str.size());
     EXPECT_EQ(buffer_based_on_string.get().data(), str.data());
@@ -72,10 +74,11 @@ TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
 }
 
 TEST(ContainerBasedConstBufferTest, move_constructor_is_enabled) {
-    constexpr ParameterType                            ptype = ParameterType::send_counts;
-    const std::vector<int>                             container{1, 2, 3};
-    ContainerBasedConstBuffer<std::vector<int>, ptype> buffer1(container);
-    ContainerBasedConstBuffer<std::vector<int>, ptype> buffer2(std::move(buffer1));
+    constexpr ParameterType                                   ptype = ParameterType::send_counts;
+    constexpr BufferType                                      btype = BufferType::in_buffer;
+    const std::vector<int>                                    container{1, 2, 3};
+    ContainerBasedConstBuffer<std::vector<int>, ptype, btype> buffer1(container);
+    ContainerBasedConstBuffer<std::vector<int>, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(buffer2.get().size(), container.size());
     EXPECT_TRUE(std::equal(container.begin(), container.end(), buffer2.get().data()));
 }
@@ -84,9 +87,10 @@ TEST(ContainerBasedConstBufferTest, move_constructor_is_enabled) {
 TEST(ContainerBasedOwningBufferTest, get_basics) {
     std::vector<int> int_vec{1, 2, 3};
 
-    constexpr ParameterType                             ptype = ParameterType::send_counts;
-    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer_based_on_moved_vector(std::move(int_vec));
-    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer_based_on_rvalue_vector(std::vector<int>{1, 2, 3});
+    constexpr ParameterType                                    ptype = ParameterType::send_counts;
+    constexpr BufferType                                       btype = BufferType::in_buffer;
+    ContainerBasedOwningBuffer<std::vector<int>, ptype, btype> buffer_based_on_moved_vector(std::move(int_vec));
+    ContainerBasedOwningBuffer<std::vector<int>, ptype, btype> buffer_based_on_rvalue_vector(std::vector<int>{1, 2, 3});
 
     EXPECT_EQ(buffer_based_on_moved_vector.size(), 3);
     EXPECT_EQ(buffer_based_on_moved_vector.get().size(), 3);
@@ -122,11 +126,12 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
 
 TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
     constexpr ParameterType ptype = ParameterType::send_counts;
+    constexpr BufferType    btype = BufferType::in_buffer;
 
     // string
-    std::string                                    str      = "I am underlying storage";
-    std::string                                    expected = "I am underlying storage";
-    ContainerBasedOwningBuffer<std::string, ptype> buffer_based_on_string(std::move(str));
+    std::string                                           str      = "I am underlying storage";
+    std::string                                           expected = "I am underlying storage";
+    ContainerBasedOwningBuffer<std::string, ptype, btype> buffer_based_on_string(std::move(str));
 
     EXPECT_EQ(buffer_based_on_string.get().size(), expected.size());
     EXPECT_EQ(
@@ -142,7 +147,7 @@ TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
     testing::OwnContainer<int> own_container{1, 2, 3};
     EXPECT_EQ(own_container.copy_count(), 0);
 
-    ContainerBasedOwningBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(
+    ContainerBasedOwningBuffer<testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container(
         std::move(own_container));
     EXPECT_EQ(own_container.copy_count(), 0);
     EXPECT_EQ(buffer_based_on_own_container.underlying().copy_count(), 0);
@@ -158,10 +163,11 @@ TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
 }
 
 TEST(ContainerBasedOwningBufferTest, move_constructor_is_enabled) {
-    constexpr ParameterType                             ptype = ParameterType::send_counts;
-    const std::vector<int>                              container{1, 2, 3};
-    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer1({1, 2, 3});
-    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer2(std::move(buffer1));
+    constexpr ParameterType                                    ptype = ParameterType::send_counts;
+    constexpr BufferType                                       btype = BufferType::in_buffer;
+    const std::vector<int>                                     container{1, 2, 3};
+    ContainerBasedOwningBuffer<std::vector<int>, ptype, btype> buffer1({1, 2, 3});
+    ContainerBasedOwningBuffer<std::vector<int>, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(buffer2.get().size(), 3);
 
     const std::vector<int> expected_container{1, 2, 3};
@@ -171,8 +177,9 @@ TEST(ContainerBasedOwningBufferTest, move_constructor_is_enabled) {
 TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
     std::vector<int> int_vec{1, 2, 3, 2, 1};
 
-    constexpr ParameterType                                    ptype = ParameterType::send_counts;
-    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer_based_on_int_vector(int_vec);
+    constexpr ParameterType                                           ptype = ParameterType::send_counts;
+    constexpr BufferType                                              btype = BufferType::in_buffer;
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer_based_on_int_vector(int_vec);
     EXPECT_EQ(int_vec.size(), buffer_based_on_int_vector.get().size());
     EXPECT_EQ(int_vec.data(), buffer_based_on_int_vector.get().data());
 
@@ -196,8 +203,10 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
 TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_containers_other_than_vector) {
     testing::OwnContainer<int> own_container;
 
-    constexpr ParameterType                                              ptype = ParameterType::recv_counts;
-    UserAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
+    constexpr ParameterType                                                     ptype = ParameterType::recv_counts;
+    constexpr BufferType                                                        btype = BufferType::in_buffer;
+    UserAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container(
+        own_container);
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_own_container.resize(requested_size);
@@ -216,17 +225,19 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_containers_other_tha
 
 TEST(UserAllocatedContainerBasedBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType ptype = ParameterType::send_counts;
+    constexpr BufferType    btype = BufferType::in_buffer;
     std::vector<int>        container{1, 2, 3};
     const auto              const_container = container; // ensure that container is not altered
-    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer1(container);
-    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer2(std::move(buffer1));
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer1(container);
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(buffer2.get().size(), const_container.size());
     EXPECT_TRUE(std::equal(const_container.begin(), const_container.end(), buffer2.get().data()));
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
-    constexpr ParameterType                                   ptype = ParameterType::recv_counts;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer_based_on_int_vector;
+    constexpr ParameterType                                          ptype = ParameterType::recv_counts;
+    constexpr BufferType                                             btype = BufferType::in_buffer;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer_based_on_int_vector;
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_int_vector.resize(requested_size);
@@ -259,8 +270,9 @@ TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, extract_containers_other_than_vector) {
-    constexpr ParameterType                                             ptype = ParameterType::recv_counts;
-    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container;
+    constexpr ParameterType                                                    ptype = ParameterType::recv_counts;
+    constexpr BufferType                                                       btype = BufferType::in_buffer;
+    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container;
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_own_container.resize(requested_size);
@@ -280,15 +292,16 @@ TEST(LibAllocatedContainerBasedBufferTest, extract_containers_other_than_vector)
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, move_ctor_assignment_operator_is_enabled) {
-    constexpr ParameterType                                             ptype = ParameterType::recv_counts;
-    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer1;
-    const size_t                                                        size = 3;
+    constexpr ParameterType                                                    ptype = ParameterType::recv_counts;
+    constexpr BufferType                                                       btype = BufferType::in_buffer;
+    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer1;
+    const size_t                                                               size = 3;
     buffer1.resize(size);
     buffer1.get().data()[0] = 0;
     buffer1.get().data()[1] = 1;
     buffer1.get().data()[2] = 2;
-    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer2(std::move(buffer1));
-    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer3;
+    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer2(std::move(buffer1));
+    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer3;
     buffer3 = std::move(buffer2);
     EXPECT_EQ(buffer3.get().size(), 3);
     EXPECT_EQ(buffer3.get().data()[0], 0);
@@ -297,9 +310,10 @@ TEST(LibAllocatedContainerBasedBufferTest, move_ctor_assignment_operator_is_enab
 }
 
 TEST(SingleElementConstBufferTest, get_basics) {
-    constexpr ParameterType              ptype = ParameterType::send_counts;
-    int                                  value = 5;
-    SingleElementConstBuffer<int, ptype> int_buffer(value);
+    constexpr ParameterType                     ptype = ParameterType::send_counts;
+    constexpr BufferType                        btype = BufferType::in_buffer;
+    int                                         value = 5;
+    SingleElementConstBuffer<int, ptype, btype> int_buffer(value);
 
     EXPECT_EQ(int_buffer.size(), 1);
     EXPECT_EQ(int_buffer.get().size(), 1);
@@ -314,18 +328,20 @@ TEST(SingleElementConstBufferTest, get_basics) {
 }
 
 TEST(SingleElementConstBufferTest, move_constructor_is_enabled) {
-    constexpr ParameterType              ptype = ParameterType::send_counts;
-    const int                            elem  = 42;
-    SingleElementConstBuffer<int, ptype> buffer1(elem);
-    SingleElementConstBuffer<int, ptype> buffer2(std::move(buffer1));
+    constexpr ParameterType                     ptype = ParameterType::send_counts;
+    constexpr BufferType                        btype = BufferType::in_buffer;
+    const int                                   elem  = 42;
+    SingleElementConstBuffer<int, ptype, btype> buffer1(elem);
+    SingleElementConstBuffer<int, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), elem);
     EXPECT_EQ(*buffer2.data(), elem);
     EXPECT_EQ(buffer2.get_single_element(), elem);
 }
 
 TEST(SingleElementOwningBufferTest, get_basics) {
-    constexpr ParameterType               ptype = ParameterType::send_counts;
-    SingleElementOwningBuffer<int, ptype> int_buffer(5);
+    constexpr ParameterType                      ptype = ParameterType::send_counts;
+    constexpr BufferType                         btype = BufferType::in_buffer;
+    SingleElementOwningBuffer<int, ptype, btype> int_buffer(5);
 
     EXPECT_EQ(int_buffer.size(), 1);
     EXPECT_EQ(int_buffer.get().size(), 1);
@@ -342,9 +358,10 @@ TEST(SingleElementOwningBufferTest, get_basics) {
 }
 
 TEST(SingleElementOwningBufferTest, move_constructor_is_enabled) {
-    constexpr ParameterType               ptype = ParameterType::send_counts;
-    SingleElementOwningBuffer<int, ptype> buffer1(42);
-    SingleElementOwningBuffer<int, ptype> buffer2(std::move(buffer1));
+    constexpr ParameterType                      ptype = ParameterType::send_counts;
+    constexpr BufferType                         btype = BufferType::in_buffer;
+    SingleElementOwningBuffer<int, ptype, btype> buffer1(42);
+    SingleElementOwningBuffer<int, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), 42);
     EXPECT_EQ(*buffer2.data(), 42);
     EXPECT_EQ(buffer2.underlying(), 42);
@@ -352,20 +369,22 @@ TEST(SingleElementOwningBufferTest, move_constructor_is_enabled) {
 }
 
 TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
-    constexpr ParameterType                   ptype      = ParameterType::send_counts;
-    int                                       elem       = 42;
-    const int                                 const_elem = elem;
-    SingleElementModifiableBuffer<int, ptype> buffer1(elem);
-    SingleElementModifiableBuffer<int, ptype> buffer2(std::move(buffer1));
+    constexpr ParameterType                          ptype      = ParameterType::send_counts;
+    constexpr BufferType                             btype      = BufferType::in_buffer;
+    int                                              elem       = 42;
+    const int                                        const_elem = elem;
+    SingleElementModifiableBuffer<int, ptype, btype> buffer1(elem);
+    SingleElementModifiableBuffer<int, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), const_elem);
     EXPECT_EQ(*buffer2.data(), const_elem);
     EXPECT_EQ(buffer2.get_single_element(), const_elem);
 }
 
 TEST(SingleElementModifiableBufferTest, get_basics) {
-    constexpr ParameterType                   ptype = ParameterType::send_counts;
-    int                                       value = 5;
-    SingleElementModifiableBuffer<int, ptype> int_buffer(value);
+    constexpr ParameterType                          ptype = ParameterType::send_counts;
+    constexpr BufferType                             btype = BufferType::in_buffer;
+    int                                              value = 5;
+    SingleElementModifiableBuffer<int, ptype, btype> int_buffer(value);
 
     EXPECT_EQ(int_buffer.size(), 1);
     int_buffer.resize(1);
@@ -392,21 +411,23 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
 }
 
 TEST(LibAllocatedSingleElementBufferTest, move_constructor_is_enabled) {
-    constexpr ParameterType                     ptype      = ParameterType::send_counts;
-    int                                         elem       = 42;
-    const int                                   const_elem = elem;
-    LibAllocatedSingleElementBuffer<int, ptype> buffer1{};
+    constexpr ParameterType                            ptype      = ParameterType::send_counts;
+    constexpr BufferType                               btype      = BufferType::in_buffer;
+    int                                                elem       = 42;
+    const int                                          const_elem = elem;
+    LibAllocatedSingleElementBuffer<int, ptype, btype> buffer1{};
     *buffer1.get().data() = elem;
-    LibAllocatedSingleElementBuffer<int, ptype> buffer2(std::move(buffer1));
+    LibAllocatedSingleElementBuffer<int, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), const_elem);
     EXPECT_EQ(*buffer2.data(), const_elem);
     EXPECT_EQ(buffer2.get_single_element(), const_elem);
 }
 
 TEST(LibAllocatedSingleElementBufferTest, get_basics) {
-    constexpr ParameterType                     ptype = ParameterType::send_counts;
-    int                                         value = 5;
-    LibAllocatedSingleElementBuffer<int, ptype> int_buffer{};
+    constexpr ParameterType                            ptype = ParameterType::send_counts;
+    constexpr BufferType                               btype = BufferType::in_buffer;
+    int                                                value = 5;
+    LibAllocatedSingleElementBuffer<int, ptype, btype> int_buffer{};
 
     *int_buffer.get().data() = value;
 
@@ -458,15 +479,16 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
     std::vector<int>        data(20, 0);
     Span<int>               container = {data.data(), data.size()};
     constexpr ParameterType ptype     = ParameterType::send_counts;
+    constexpr BufferType    btype     = BufferType::in_buffer;
 
-    UserAllocatedContainerBasedBuffer<Span<int>, ptype> span_buffer(container);
+    UserAllocatedContainerBasedBuffer<Span<int>, ptype, btype> span_buffer(container);
 
     for (size_t i = 0; i <= 20; ++i) {
         span_buffer.resize(i);
         EXPECT_EQ(20, span_buffer.size());
     }
 
-    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> vec_buffer(data);
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> vec_buffer(data);
 
     for (size_t i = 0; i <= 20; ++i) {
         vec_buffer.resize(i);
@@ -478,18 +500,18 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferOutType::non_out_buffer, BufferAllocation::lib_allocated> >,
+            BufferType::in_buffer, BufferAllocation::lib_allocated> >,
         "Library allocated DataBuffers must have an extract() member function");
     static_assert(
         !has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferOutType::non_out_buffer, BufferAllocation::user_allocated> >,
+            BufferType::in_buffer, BufferAllocation::user_allocated> >,
         "User allocated DataBuffers must not have an extract() member function");
 }
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf> buffer;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf, BufferType::in_buffer> buffer;
 
     buffer.data();
     buffer.size();
@@ -503,11 +525,11 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mpi_result) {
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf>    recv_buffer;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts> recv_counts;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_count>  recv_count;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs> recv_displs;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs> send_displs;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf, BufferType::in_buffer>    recv_buffer;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::in_buffer> recv_counts;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_count, BufferType::in_buffer>  recv_count;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, BufferType::in_buffer> recv_displs;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, BufferType::in_buffer> send_displs;
 
     MPIResult result(
         std::move(recv_buffer), std::move(recv_counts), std::move(recv_count), std::move(recv_displs),

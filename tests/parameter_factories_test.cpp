@@ -247,17 +247,21 @@ TEST(ParameterFactoriesTest, send_buf_switch) {
     [[maybe_unused]] auto gen_single_element_owning_buffer = send_buf(uint8_t(0));
     [[maybe_unused]] auto gen_int_vec_owning_buffer        = send_buf(std::vector<uint8_t>{0, 0, 0, 0, 0, 0});
 
-    bool const single_result =
-        std::is_same_v<decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_buf>>;
+    bool const single_result = std::is_same_v<
+        decltype(gen_single_element_buffer),
+        SingleElementConstBuffer<uint8_t, ParameterType::send_buf, BufferType::in_buffer>>;
     EXPECT_TRUE(single_result);
     bool const vec_result = std::is_same_v<
-        decltype(gen_int_vec_buffer), ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
+        decltype(gen_int_vec_buffer),
+        ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_buf, BufferType::in_buffer>>;
     EXPECT_TRUE(vec_result);
     bool const owning_single_result = std::is_same_v<
-        decltype(gen_single_element_owning_buffer), SingleElementOwningBuffer<uint8_t, ParameterType::send_buf>>;
+        decltype(gen_single_element_owning_buffer),
+        SingleElementOwningBuffer<uint8_t, ParameterType::send_buf, BufferType::in_buffer>>;
     EXPECT_TRUE(owning_single_result);
     bool const owning_vec_result = std::is_same_v<
-        decltype(gen_int_vec_owning_buffer), ContainerBasedOwningBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
+        decltype(gen_int_vec_owning_buffer),
+        ContainerBasedOwningBuffer<std::vector<uint8_t>, ParameterType::send_buf, BufferType::in_buffer>>;
     EXPECT_TRUE(owning_vec_result);
 }
 
@@ -523,10 +527,12 @@ TEST(ParameterFactoriesTest, single_and_multiple_element_const_send_recv_buffer_
     auto gen_int_vec_buffer        = send_recv_buf(values);
 
     bool const single_result = std::is_same_v<
-        decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_recv_buf>>;
+        decltype(gen_single_element_buffer),
+        SingleElementConstBuffer<uint8_t, ParameterType::send_recv_buf, BufferType::in_out_buffer>>;
     EXPECT_TRUE(single_result);
     bool const vec_result = std::is_same_v<
-        decltype(gen_int_vec_buffer), ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_recv_buf>>;
+        decltype(gen_int_vec_buffer),
+        ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_recv_buf, BufferType::in_out_buffer>>;
     EXPECT_TRUE(vec_result);
 }
 
@@ -538,11 +544,13 @@ TEST(ParameterFactoriesTest, single_and_multiple_element_modifiable_send_recv_bu
     auto gen_int_vec_buffer        = send_recv_buf(values);
 
     bool const single_result = std::is_same_v<
-        decltype(gen_single_element_buffer), SingleElementModifiableBuffer<uint8_t, ParameterType::send_recv_buf>>;
+        decltype(gen_single_element_buffer),
+        SingleElementModifiableBuffer<uint8_t, ParameterType::send_recv_buf, BufferType::in_out_buffer>>;
     EXPECT_TRUE(single_result);
     bool const vec_result = std::is_same_v<
         decltype(gen_int_vec_buffer),
-        UserAllocatedContainerBasedBuffer<std::vector<uint8_t>, ParameterType::send_recv_buf>>;
+        UserAllocatedContainerBasedBuffer<
+            std::vector<uint8_t>, ParameterType::send_recv_buf, BufferType::in_out_buffer>>;
     EXPECT_TRUE(vec_result);
 }
 

@@ -114,7 +114,8 @@ auto kamping::Communicator::scatter(Args... args) const {
     // Default: compute value based on send_buf.size on root
 
     auto&& recv_count_param = internal::select_parameter_type_or_default<
-        internal::ParameterType::recv_count, LibAllocatedSingleElementBuffer<int, internal::ParameterType::recv_count>>(
+        internal::ParameterType::recv_count,
+        LibAllocatedSingleElementBuffer<int, internal::ParameterType::recv_count, internal::BufferType::in_buffer>>(
         std::tuple(), args...);
 
     constexpr bool is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;

@@ -78,7 +78,7 @@ void test_recv_count_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
 
-    LibAllocatedSingleElementBuffer<int, ParameterType::recv_count> recv_count_wrapper{};
+    LibAllocatedSingleElementBuffer<int, ParameterType::recv_count, BufferType::in_buffer> recv_count_wrapper{};
     *recv_count_wrapper.get().data() = 42;
     MPIResult mpi_result{
         BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, std::move(recv_count_wrapper), BufferCategoryNotUsed{},
