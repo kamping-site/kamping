@@ -385,9 +385,11 @@ public:
         static_assert(
             ownership == BufferOwnership::owning, "Moving out of a reference should not be done because it would leave "
                                                   "a users container in an unspecified state.");
-        auto extracted = std::move(underlying());
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         KASSERT(!is_extracted, "Cannot extract a buffer that has already been extracted.", assert::normal);
+#endif
+        auto extracted = std::move(underlying());
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         is_extracted = true;
 #endif
         return extracted;
