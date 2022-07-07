@@ -298,7 +298,8 @@ private:
 /// ContainerBasedConstBuffer wraps read-only buffer storage provided by an std-like container like std::vector. The
 /// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
+/// @tparam parameter_type Parameter type represented by this buffer.
+/// @tparam buffer_type BuffType This buffer's buffer type.
 template <typename Container, ParameterType parameter_type, BufferType buffer_type>
 using ContainerBasedConstBuffer =
     DataBuffer<Container, parameter_type, BufferModifiability::constant, BufferOwnership::referencing, buffer_type>;
@@ -309,7 +310,8 @@ using ContainerBasedConstBuffer =
 /// This is the owning variant of \ref ContainerBasedConstBuffer. The Container type must provide \c data(), \c
 /// size() and expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
+/// @tparam parameter_type Parameter type represented by this buffer.
+/// @tparam buffer_type BuffType This buffer's buffer type.
 template <typename Container, ParameterType parameter_type, BufferType buffer_type>
 using ContainerBasedOwningBuffer =
     DataBuffer<Container, parameter_type, BufferModifiability::constant, BufferOwnership::owning, buffer_type>;
@@ -321,7 +323,8 @@ using ContainerBasedOwningBuffer =
 /// std::vector that has already been allocated by the user. The Container type must provide \c data(), \c size()
 /// and \c resize() and expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
+/// @tparam parameter_type Parameter type represented by this buffer.
+/// @tparam buffer_type BuffType This buffer's buffer type.
 template <typename Container, ParameterType parameter_type, BufferType buffer_type>
 using UserAllocatedContainerBasedBuffer =
     DataBuffer<Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing, buffer_type>;
@@ -332,11 +335,11 @@ using UserAllocatedContainerBasedBuffer =
 /// std::vector that will be allocated by KaMPIng. The Container type must provide \c data(), \c size() and \c
 /// resize() and expose the type definition \c value_type. type.
 /// @tparam Container Container on which this buffer is based.
-/// @tparam ParamType Parameter type represented by this buffer.
-/// @tparam BuffType BuffType This buffer's buffer type.
-template <typename Container, ParameterType ParamType, BufferType BuffType>
+/// @tparam parameter_type Parameter type represented by this buffer.
+/// @tparam buffer_type BuffType This buffer's buffer type.
+template <typename Container, ParameterType parameter_type, BufferType buffer_type>
 using LibAllocatedContainerBasedBuffer = DataBuffer<
-    Container, ParamType, BufferModifiability::modifiable, BufferOwnership::owning, BuffType,
+    Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::owning, buffer_type,
     BufferAllocation::lib_allocated>;
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
@@ -373,7 +376,8 @@ public:
 /// SingleElementConstBuffer wraps a read-only value and is used instead of \ref ContainerBasedConstBuffer if only a
 /// single element is sent or received and no container is needed.
 /// @tparam DataType Type of the element wrapped.
-/// @tparam ParameterType Parameter type represented by this buffer.
+/// @tparam parameter_type Parameter type represented by this buffer.
+/// @tparam buffer_type BuffType This buffer's buffer type.
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
 using SingleElementConstBuffer =
     DataBuffer<DataType, parameter_type, BufferModifiability::constant, BufferOwnership::referencing, buffer_type>;
@@ -383,7 +387,8 @@ using SingleElementConstBuffer =
 /// SingleElementOwningBuffer wraps a read-only value and takes ownership of it. It is the owning variant of \ref
 /// SingleElementConstBuffer.
 /// @tparam DataType Type of the element wrapped.
-/// @tparam ParameterType Parameter type represented by this buffer.
+/// @tparam parameter_type Parameter type represented by this buffer.
+/// @tparam buffer_type BuffType This buffer's buffer type.
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
 using SingleElementOwningBuffer =
     DataBuffer<DataType, parameter_type, BufferModifiability::constant, BufferOwnership::owning, buffer_type>;
@@ -391,9 +396,9 @@ using SingleElementOwningBuffer =
 /// @brief Buffer based on a single element type that has been allocated by the library.
 ///
 /// @tparam DataType Type of the element wrapped.
-/// @tparam ParamType parameter type represented by this buffer.
-///  @tparam BuffType BuffType This buffer's buffer type.
-template <typename DataType, ParameterType ParamType, BufferType BuffType>
+/// @tparam parameter_type Parameter type represented by this buffer.
+/// @tparam buffer_type BuffType This buffer's buffer type.
+template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
 using LibAllocatedSingleElementBuffer = DataBuffer<
     DataType, ParamType, BufferModifiability::modifiable, BufferOwnership::owning, BuffType,
     BufferAllocation::lib_allocated>;
@@ -403,7 +408,8 @@ using LibAllocatedSingleElementBuffer = DataBuffer<
 /// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by
 /// the user.
 /// @tparam DataType Type of the element wrapped.
-/// @tparam ParameterType parameter type represented by this buffer.
+/// @tparam parameter_type Parameter type represented by this buffer.
+/// @tparam buffer_type BuffType This buffer's buffer type.
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
 using SingleElementModifiableBuffer =
     DataBuffer<DataType, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing, buffer_type>;
