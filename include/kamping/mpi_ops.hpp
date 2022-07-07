@@ -58,7 +58,7 @@ struct max_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T const& operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(const T& lhs, const T& rhs) const {
         return std::max(lhs, rhs);
     }
 };
@@ -76,7 +76,7 @@ struct min_impl {
     /// @param lhs the first operand
     /// @param rhs the second operand
     /// @return the maximum
-    constexpr T const& operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(const T& lhs, const T& rhs) const {
         return std::min(lhs, rhs);
     }
 };
@@ -92,7 +92,7 @@ struct min_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T& operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(const T& lhs, const T& rhs) const {
         return std::min(lhs, rhs);
     }
 };
