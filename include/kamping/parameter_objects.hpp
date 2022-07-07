@@ -200,9 +200,13 @@ public:
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
                                                                          ///< non-const depending on
                                                                          ///< modifiability.
-    static_assert(
-        !is_vector_bool_v<MemberType>,
-        "Passing a std::vector<bool> is not supported, use std::vector<kamping::kabool> instead.");
+
+    // We can not do the check for std::vector<bool> here, because to use a DataBuffer of std::vector<bool> as an unused
+    // default parameter is allowed, as long the buffer is never used. Therefore the check for std::vector<bool> happens
+    // only when the underlying member is actually accessed and the corresponding accessor method is instantiated.
+    // static_assert(
+    //     !is_vector_bool_v<MemberType>,
+    //     "Passing a std::vector<bool> is not supported, use std::vector<kamping::kabool> instead.");
 
     using MemberTypeWithConstAndRef = std::conditional_t<
         ownership == BufferOwnership::owning, MemberTypeWithConst,
@@ -255,7 +259,7 @@ public:
         if constexpr (is_single_element) {
             return 1;
         } else {
-            return _data.size();
+            return underlying().size();
         }
     }
 
@@ -270,6 +274,9 @@ public:
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
     void resize(size_t size) {
+        static_assert(
+            !is_vector_bool_v<MemberType>,
+            "Passing a std::vector<bool> is not supported, use std::vector<kamping::kabool> instead.");
         // This works because in template classes, only functions that are actually called are instantiated
         // Technically not needed here because _data is const in this case, so we can't call resize() anyways. But this
         // gives a nicer error message.
@@ -284,7 +291,7 @@ public:
         } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
             KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
         } else {
-            _data.resize(size);
+            underlying().resize(size);
         }
     }
 
@@ -295,9 +302,9 @@ public:
         KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::normal);
 #endif
         if constexpr (is_single_element) {
-            return &_data;
+            return &underlying();
         } else {
-            return std::data(_data);
+            return std::data(underlying());
         }
     }
 
@@ -308,9 +315,9 @@ public:
         KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::normal);
 #endif
         if constexpr (is_single_element) {
-            return &_data;
+            return &underlying();
         } else {
-            return std::data(_data);
+            return std::data(underlying());
         }
     }
 
@@ -339,7 +346,7 @@ public:
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         KASSERT(!is_extracted, "Cannot get an element from a buffer that has already been extracted.", assert::normal);
 #endif
-        return _data;
+        return underlying();
     }
 
     /// @brief Provides access to the underlying data.
@@ -348,6 +355,24 @@ public:
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
 #endif
+        // this assertion is only checked if the buffer is actually accessed.
+        static_assert(
+            !is_vector_bool_v<MemberType>,
+            "Passing a std::vector<bool> is not supported, use std::vector<kamping::kabool> instead.");
+        return _data;
+    }
+
+    /// @brief Provides access to the underlying data.
+    /// @return A reference to the data.
+    template <bool enabled = modifiability == BufferModifiability::modifiable, std::enable_if_t<enabled, bool> = true>
+    MemberType& underlying() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
+#endif
+        // this assertion is only checked if the buffer is actually accessed.
+        static_assert(
+            !is_vector_bool_v<MemberType>,
+            "Passing a std::vector<bool> is not supported, use std::vector<kamping::kabool> instead.");
         return _data;
     }
 
@@ -360,11 +385,12 @@ public:
         static_assert(
             ownership == BufferOwnership::owning, "Moving out of a reference should not be done because it would leave "
                                                   "a users container in an unspecified state.");
+        auto extracted = std::move(underlying());
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         KASSERT(!is_extracted, "Cannot extract a buffer that has already been extracted.", assert::normal);
         is_extracted = true;
 #endif
-        return std::move(_data);
+        return extracted;
     }
 
 private:
