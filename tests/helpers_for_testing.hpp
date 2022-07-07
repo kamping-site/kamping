@@ -167,8 +167,18 @@ struct CustomAllocator {
     using pointer    = T*;
     using size_type  = size_t;
 
-    pointer allocate(size_type n) {
-        return malloc(n * sizeof(value_type));
+    CustomAllocator() = default;
+
+    template <class U>
+    constexpr CustomAllocator(CustomAllocator<U> const&) noexcept {}
+
+    template <typename T1>
+    struct rebind {
+        using other = CustomAllocator<T1>;
+    };
+
+    pointer allocate(size_type n = 0) {
+        return (pointer)malloc(n * sizeof(value_type));
     }
     void deallocate(pointer p, size_type) {
         free(p);
