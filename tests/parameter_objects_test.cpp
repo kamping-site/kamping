@@ -24,6 +24,21 @@
 using namespace ::kamping;
 using namespace ::kamping::internal;
 
+TEST(HasDataMemberTest, has_data_member_basics) {
+    EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<int>>);
+    EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<double>>);
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::vector<double, testing::CustomAllocator<double>>>));
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::string>));
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::array<int, 42>>));
+
+    EXPECT_FALSE((kamping::internal::has_data_member_v<int>));
+    EXPECT_FALSE((kamping::internal::has_data_member_v<bool>));
+
+    // on some compilers vector<bool> still has .data() but it returns void
+    // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool>>));
+    // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool, testing::CustomAllocator<bool>>>));
+}
+
 // Tests the basic functionality of EmptyBuffer
 TEST(EmptyBufferTest, get_basics) {
     constexpr ParameterType              ptype = ParameterType::send_counts;
@@ -475,12 +490,12 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferAllocation::lib_allocated> >,
+            BufferAllocation::lib_allocated>>,
         "Library allocated DataBuffers must have an extract() member function");
     static_assert(
         !has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferAllocation::user_allocated> >,
+            BufferAllocation::user_allocated>>,
         "User allocated DataBuffers must not have an extract() member function");
 }
 
