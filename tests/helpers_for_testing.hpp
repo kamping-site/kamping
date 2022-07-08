@@ -16,7 +16,9 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdlib>
 #include <initializer_list>
 #include <memory>
 #include <vector>
@@ -35,45 +37,93 @@ namespace testing {
 template <typename T>
 class OwnContainer {
 public:
-    using value_type = T;
+    using value_type     = T;
+    using iterator       = T*;
+    using const_iterator = T const*;
 
     OwnContainer() : OwnContainer(0) {}
-    OwnContainer(size_t size) : _vec(size), _copy_count(std::make_shared<size_t>(0)) {}
-    OwnContainer(size_t size, T value) : _vec(size, value), _copy_count(std::make_shared<size_t>(0)) {}
-    OwnContainer(std::initializer_list<T> elems) : _vec(elems), _copy_count(std::make_shared<size_t>(0)) {}
-    OwnContainer(OwnContainer<T> const& rhs) : _vec(rhs._vec), _copy_count(rhs._copy_count) {
+
+    OwnContainer(size_t size) : OwnContainer(size, T{}) {}
+    OwnContainer(size_t size, T value) : _data(nullptr), _size(size), _copy_count(std::make_shared<size_t>(0)) {
+        _data = new T[_size];
+        std::for_each(this->begin(), this->end(), [&value](T& val) { val = value; });
+    }
+    OwnContainer(std::initializer_list<T> elems)
+        : _data(nullptr),
+          _size(elems.size()),
+          _copy_count(std::make_shared<size_t>(0)) {
+        _data = new T[_size];
+        std::copy(elems.begin(), elems.end(), _data);
+    }
+    OwnContainer(OwnContainer<T> const& rhs) : _data(nullptr), _size(rhs.size()), _copy_count(rhs._copy_count) {
+        _data = new T[_size];
+        std::copy(rhs.begin(), rhs.end(), _data);
         (*_copy_count)++;
     }
-    OwnContainer(OwnContainer<T>&& rhs) : _vec(std::move(rhs._vec)), _copy_count(rhs._copy_count) {}
+    OwnContainer(OwnContainer<T>&& rhs) : _data(rhs._data), _size(rhs._size), _copy_count(rhs._copy_count) {
+        rhs._data       = nullptr;
+        rhs._size       = 0;
+        rhs._copy_count = std::make_shared<size_t>(0);
+    }
+
+    ~OwnContainer() {
+        if (_data != nullptr) {
+            delete[] _data;
+            _data = nullptr;
+        }
+    }
+
     OwnContainer<T>& operator=(OwnContainer<T> const& rhs) {
-        this->_vec        = rhs._vec;
+        this->_data = new T[rhs._size];
+        this->_size = rhs._size;
+        std::copy(rhs.begin(), rhs.end(), _data);
         this->_copy_count = rhs._copy_count;
         (*_copy_count)++;
         return *this;
     }
 
+    OwnContainer<T>& operator=(OwnContainer<T>&& rhs) {
+        delete[] _data;
+        _data           = rhs._data;
+        _size           = rhs._size;
+        _copy_count     = rhs._copy_count;
+        rhs._data       = nullptr;
+        rhs._size       = 0;
+        rhs._copy_count = std::make_shared<size_t>(0);
+        return *this;
+    }
+
     T* data() noexcept {
-        return _vec.data();
+        return _data;
     }
 
     const T* data() const noexcept {
-        return _vec.data();
+        return _data;
     }
 
     std::size_t size() const {
-        return _vec.size();
+        return _size;
     }
 
     void resize(std::size_t new_size) {
-        _vec.resize(new_size);
+        if (new_size <= this->size()) {
+            _size = new_size;
+            return;
+        }
+        T* new_data = new T[new_size];
+        std::copy(this->begin(), this->end(), new_data);
+        std::for_each(new_data + this->size(), new_data + new_size, [](T& val) { val = T{}; });
+        _size = new_size;
+        delete[] _data;
+        _data = new_data;
     }
 
     const T& operator[](size_t i) const {
-        return _vec[i];
+        return _data[i];
     }
 
     T& operator[](size_t i) {
-        return _vec[i];
+        return _data[i];
     }
 
     size_t copy_count() const {
@@ -81,19 +131,40 @@ public:
     }
 
     bool operator==(const OwnContainer<T>& other) const {
-        return _vec == other._vec;
+        if (other.size() != this->size()) {
+            return false;
+        }
+        for (size_t i = 0; i < _size; i++) {
+            if (!(other[i] == this->operator[](i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    auto begin() {
-        return _vec.begin();
+    bool operator!=(const OwnContainer<T>& other) const {
+        return !(*this == other);
     }
 
-    auto end() {
-        return _vec.end();
+    T* begin() const {
+        return _data;
+    }
+
+    T* end() const {
+        return _data + _size;
+    }
+
+    const T* cbegin() const {
+        return _data;
+    }
+
+    const T* cend() const {
+        return _data + _size;
     }
 
 private:
-    std::vector<T>          _vec;
+    T*                      _data;
+    size_t                  _size;
     std::shared_ptr<size_t> _copy_count;
 };
 
@@ -111,8 +182,18 @@ struct CustomAllocator {
     using pointer    = T*;
     using size_type  = size_t;
 
-    pointer allocate(size_type n) {
-        return malloc(n * sizeof(value_type));
+    CustomAllocator() = default;
+
+    template <class U>
+    constexpr CustomAllocator(CustomAllocator<U> const&) noexcept {}
+
+    template <typename T1>
+    struct rebind {
+        using other = CustomAllocator<T1>;
+    };
+
+    pointer allocate(size_type n = 0) {
+        return (pointer)malloc(n * sizeof(value_type));
     }
     void deallocate(pointer p, size_type) {
         free(p);
