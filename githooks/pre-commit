@@ -1,7 +1,11 @@
 #!/bin/bash 
 
-# git executes hooks from the repository root
-formatter=$("$(pwd)/scripts/get_clang_format.sh")
+# "Before Git invokes a hook it changes its working directory to [...] the root of the working tree [..]"
+# see https://git-scm.com/docs/githooks
+git_root=$(pwd)
+
+formatter=$("$git_root/scripts/get_clang_format.sh")
+
 for file in $(git diff --cached --name-only | grep -E '.*\.(c|cpp|h|hpp)\b'); do 
 	if [[ -f "$file" ]]; then 
 		$formatter --dry-run --Werror "$file" || exit 1

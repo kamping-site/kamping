@@ -9,10 +9,11 @@ else
     formatter=clang-format
 fi
 
+# get the actual version used
 version_string=$($formatter --version)
-pattern='.* clang-format version ([0-9]+).'
-[[ "$version_string" =~ $pattern ]]
-actual_version="${BASH_REMATCH[1]}"
+pattern='.* clang-format version ([0-9]+).' # regex
+[[ "$version_string" =~ $pattern ]] # match the regex
+actual_version="${BASH_REMATCH[1]}" # get the first match group
 
 if [[ "$actual_version" != "$clang_format_version" ]]; then
     >&2 echo "WARNING: You are using clang-format version $actual_version instead of $clang_format_version."
