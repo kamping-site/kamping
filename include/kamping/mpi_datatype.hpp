@@ -51,12 +51,12 @@ namespace kamping {
 class kabool {
 public:
     /// @brief default constructor for a \c kabool with value \c false
-    kabool() noexcept : _value() {}
+    constexpr kabool() noexcept : _value() {}
     /// @brief constructor to construct a \c kabool out of a \c bool
-    kabool(bool value) noexcept : _value(value) {}
+    constexpr kabool(bool value) noexcept : _value(value) {}
 
     /// @brief implicit cast of \c kabool to \c bool
-    inline operator bool() const noexcept {
+    inline constexpr operator bool() const noexcept {
         return _value;
     }
 
