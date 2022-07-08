@@ -32,22 +32,22 @@ public:
 };
 
 template <>
-int OwnContainerTest<int>::get_non_default_value() {
+inline int OwnContainerTest<int>::get_non_default_value() {
     return 42;
 }
 
 template <>
-double OwnContainerTest<double>::get_non_default_value() {
+inline double OwnContainerTest<double>::get_non_default_value() {
     return 3.14;
 }
 
 template <>
-bool OwnContainerTest<bool>::get_non_default_value() {
+inline bool OwnContainerTest<bool>::get_non_default_value() {
     return true;
 }
 
 template <>
-std::tuple<int, double> OwnContainerTest<std::tuple<int, double>>::get_non_default_value() {
+inline std::tuple<int, double> OwnContainerTest<std::tuple<int, double>>::get_non_default_value() {
     return {42, 3.14};
 }
 
