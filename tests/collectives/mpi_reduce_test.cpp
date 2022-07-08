@@ -31,7 +31,7 @@ TEST(ReduceTest, reduce_no_receive_buffer) {
     auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
-    if (comm.rank() == comm.root()) {
+    if (comm.is_root()) {
         EXPECT_EQ(result.size(), 2);
         EXPECT_EQ(result, expected_result);
     } else {

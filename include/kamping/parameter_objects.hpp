@@ -206,7 +206,7 @@ public:
     // only when the underlying member is actually accessed and the corresponding accessor method is instantiated.
     // static_assert(
     //     !is_vector_bool_v<MemberType>,
-    //     "Passing a std::vector<bool> is not supported, use std::vector<kamping::kabool> instead.");
+    //     "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead.");
 
     using MemberTypeWithConstAndRef = std::conditional_t<
         ownership == BufferOwnership::owning, MemberTypeWithConst,
@@ -274,9 +274,6 @@ public:
     ///
     /// @param size Size the container is resized to if it is not a \c Span.
     void resize(size_t size) {
-        static_assert(
-            !is_vector_bool_v<MemberType>,
-            "Passing a std::vector<bool> is not supported, use std::vector<kamping::kabool> instead.");
         // This works because in template classes, only functions that are actually called are instantiated
         // Technically not needed here because _data is const in this case, so we can't call resize() anyways. But this
         // gives a nicer error message.
@@ -358,7 +355,7 @@ public:
         // this assertion is only checked if the buffer is actually accessed.
         static_assert(
             !is_vector_bool_v<MemberType>,
-            "Passing a std::vector<bool> is not supported, use std::vector<kamping::kabool> instead.");
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead.");
         return _data;
     }
 
@@ -372,7 +369,7 @@ public:
         // this assertion is only checked if the buffer is actually accessed.
         static_assert(
             !is_vector_bool_v<MemberType>,
-            "Passing a std::vector<bool> is not supported, use std::vector<kamping::kabool> instead.");
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead.");
         return _data;
     }
 
@@ -390,6 +387,7 @@ public:
 #endif
         auto extracted = std::move(underlying());
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        // we set is_extracted here because otherwise the call to underlying() would fail
         is_extracted = true;
 #endif
         return extracted;

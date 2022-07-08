@@ -112,9 +112,9 @@ kamping_register_compilation_failure_test(
   test_vector_bool_compilation_failure
   FILES vector_bool_compilation_failures_test.cpp
   SECTIONS "SINGLE_BOOL_VEC_BOOL"
-           "SINGLE_KABOOL_VEC_BOOL"
-           "SEND_VEC_BOOL"
-           "SEND_VEC_KABOOL_RECV_VEC_BOOL"
+  "SINGLE_KABOOL_VEC_BOOL"
+  "SEND_VEC_BOOL"
+  "SEND_VEC_KABOOL_RECV_VEC_BOOL"
   LIBRARIES kamping_base
 )
 
