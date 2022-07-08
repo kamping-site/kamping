@@ -39,7 +39,7 @@ class OwnContainer {
 public:
     using value_type     = T;
     using iterator       = T*;
-    using const_iterator = const T*;
+    using const_iterator = T const*;
 
     OwnContainer() : OwnContainer(0) {}
 
