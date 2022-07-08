@@ -18,6 +18,7 @@ kamping_register_test(test_named_parameter_selection FILES named_parameter_selec
 kamping_register_test(test_parameter_factories FILES parameter_factories_test.cpp)
 kamping_register_test(test_parameter_objects FILES parameter_objects_test.cpp)
 kamping_register_test(test_span FILES span_test.cpp)
+kamping_register_test(test_helpers_for_testing FILES helpers_for_testing_test.cpp)
 
 # Registering tests with MPI:
 

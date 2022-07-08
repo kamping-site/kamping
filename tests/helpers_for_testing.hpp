@@ -37,24 +37,26 @@ namespace testing {
 template <typename T>
 class OwnContainer {
 public:
-    using value_type = T;
+    using value_type     = T;
+    using iterator       = T*;
+    using const_iterator = T const*;
 
     OwnContainer() : OwnContainer(0) {}
 
     OwnContainer(size_t size) : OwnContainer(size, T{}) {}
     OwnContainer(size_t size, T value) : _data(nullptr), _size(size), _copy_count(std::make_shared<size_t>(0)) {
-        _data = (T*)malloc(sizeof(T) * _size);
+        _data = new T[_size];
         std::for_each(this->begin(), this->end(), [&value](T& val) { val = value; });
     }
     OwnContainer(std::initializer_list<T> elems)
         : _data(nullptr),
           _size(elems.size()),
           _copy_count(std::make_shared<size_t>(0)) {
-        _data = (T*)malloc(sizeof(T) * _size);
+        _data = new T[_size];
         std::copy(elems.begin(), elems.end(), _data);
     }
     OwnContainer(OwnContainer<T> const& rhs) : _data(nullptr), _size(rhs.size()), _copy_count(rhs._copy_count) {
-        _data = (T*)malloc(sizeof(T) * _size);
+        _data = new T[_size];
         std::copy(rhs.begin(), rhs.end(), _data);
         (*_copy_count)++;
     }
@@ -66,13 +68,13 @@ public:
 
     ~OwnContainer() {
         if (_data != nullptr) {
-            free(_data);
+            delete[] _data;
             _data = nullptr;
         }
     }
 
     OwnContainer<T>& operator=(OwnContainer<T> const& rhs) {
-        this->_data = (T*)malloc(sizeof(T) * rhs._size);
+        this->_data = new T[rhs._size];
         this->_size = rhs._size;
         std::copy(rhs.begin(), rhs.end(), _data);
         this->_copy_count = rhs._copy_count;
@@ -81,6 +83,7 @@ public:
     }
 
     OwnContainer<T>& operator=(OwnContainer<T>&& rhs) {
+        delete[] _data;
         _data           = rhs._data;
         _size           = rhs._size;
         _copy_count     = rhs._copy_count;
@@ -107,11 +110,11 @@ public:
             _size = new_size;
             return;
         }
-        T* new_data = (T*)malloc(sizeof(T) * new_size);
+        T* new_data = new T[new_size];
         std::copy(this->begin(), this->end(), new_data);
         std::for_each(new_data + this->size(), new_data + new_size, [](T& val) { val = T{}; });
         _size = new_size;
-        free(_data);
+        delete[] _data;
         _data = new_data;
     }
 
@@ -139,11 +142,23 @@ public:
         return true;
     }
 
-    auto begin() const {
+    bool operator!=(const OwnContainer<T>& other) const {
+        return !(*this == other);
+    }
+
+    T* begin() const {
         return _data;
     }
 
-    auto end() const {
+    T* end() const {
+        return _data + _size;
+    }
+
+    const T* cbegin() const {
+        return _data;
+    }
+
+    const T* cend() const {
         return _data + _size;
     }
 
