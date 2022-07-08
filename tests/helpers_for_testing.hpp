@@ -37,7 +37,9 @@ namespace testing {
 template <typename T>
 class OwnContainer {
 public:
-    using value_type = T;
+    using value_type     = T;
+    using iterator       = T*;
+    using const_iterator = const T*;
 
     OwnContainer() : OwnContainer(0) {}
 
@@ -81,6 +83,7 @@ public:
     }
 
     OwnContainer<T>& operator=(OwnContainer<T>&& rhs) {
+        free(_data);
         _data           = rhs._data;
         _size           = rhs._size;
         _copy_count     = rhs._copy_count;
@@ -139,11 +142,23 @@ public:
         return true;
     }
 
-    auto begin() const {
+    bool operator!=(const OwnContainer<T>& other) const {
+        return !(*this == other);
+    }
+
+    T* begin() const {
         return _data;
     }
 
-    auto end() const {
+    T* end() const {
+        return _data + _size;
+    }
+
+    const T* cbegin() const {
+        return _data;
+    }
+
+    const T* cend() const {
         return _data + _size;
     }
 
