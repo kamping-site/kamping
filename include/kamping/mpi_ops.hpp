@@ -40,7 +40,8 @@ struct max_impl {
     /// @param lhs the first operand
     /// @param rhs the second operand
     /// @return the maximum
-    constexpr T& operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(const T& lhs, const T& rhs) const {
+        // return std::max<const T&>(lhs, rhs);
         return std::max(lhs, rhs);
     }
 };
@@ -57,7 +58,7 @@ struct max_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T const& operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(const T& lhs, const T& rhs) const {
         return std::max(lhs, rhs);
     }
 };
@@ -75,7 +76,7 @@ struct min_impl {
     /// @param lhs the first operand
     /// @param rhs the second operand
     /// @return the maximum
-    constexpr T const& operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(const T& lhs, const T& rhs) const {
         return std::min(lhs, rhs);
     }
 };
@@ -91,7 +92,7 @@ struct min_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T& operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(const T& lhs, const T& rhs) const {
         return std::min(lhs, rhs);
     }
 };
@@ -219,9 +220,15 @@ struct mpi_operation_traits {
     /// Note that this is only true if the \c MPI_Datatype corresponding to the C++ datatype \c Datatype supports the
     /// operation according to the standard. If MPI supports the operation for this type, then this is true for functors
     /// defined in \c kamping::ops and there corresponding type-aliased equivalents in the standard library.
-    ///
-    ///
     static constexpr bool is_builtin;
+
+    /// @brief The identity of this operation applied on this datatype.
+    ///
+    /// The identity of a {value, operation} pair is the value for which the following two equaltion hold:
+    /// - `identity operation value = value`
+    /// - `value operation identity = value`
+    static constexpr T identity;
+
     /// @brief get the MPI_Op for a builtin type
     ///
     /// This member is only defined if \c value is \c true. It can then be used to query the predefined constant of
@@ -244,8 +251,8 @@ struct mpi_operation_traits<
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::floating)>::type> {
     static constexpr bool is_builtin = true;
-
-    static MPI_Op op() {
+    static constexpr T    identity   = std::numeric_limits<T>::lowest();
+    static MPI_Op         op() {
         return MPI_MAX;
     }
 };
@@ -257,8 +264,8 @@ struct mpi_operation_traits<
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::floating)>::type> {
     static constexpr bool is_builtin = true;
-
-    static MPI_Op op() {
+    static constexpr T    identity   = std::numeric_limits<T>::max();
+    static MPI_Op         op() {
         return MPI_MIN;
     }
 };
@@ -270,8 +277,8 @@ struct mpi_operation_traits<
         mpi_type_traits<T>::category == TypeCategory::integer || mpi_type_traits<T>::category == TypeCategory::floating
         || mpi_type_traits<T>::category == TypeCategory::complex)>::type> {
     static constexpr bool is_builtin = true;
-
-    static MPI_Op op() {
+    static constexpr T    identity   = 0;
+    static MPI_Op         op() {
         return MPI_SUM;
     }
 };
@@ -283,8 +290,8 @@ struct mpi_operation_traits<
         mpi_type_traits<T>::category == TypeCategory::integer || mpi_type_traits<T>::category == TypeCategory::floating
         || mpi_type_traits<T>::category == TypeCategory::complex)>::type> {
     static constexpr bool is_builtin = true;
-
-    static MPI_Op op() {
+    static constexpr T    identity   = 1;
+    static MPI_Op         op() {
         return MPI_PROD;
     }
 };
@@ -296,8 +303,8 @@ struct mpi_operation_traits<
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::logical)>::type> {
     static constexpr bool is_builtin = true;
-
-    static MPI_Op op() {
+    static constexpr T    identity   = true;
+    static MPI_Op         op() {
         return MPI_LAND;
     }
 };
@@ -309,8 +316,8 @@ struct mpi_operation_traits<
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::logical)>::type> {
     static constexpr bool is_builtin = true;
-
-    static MPI_Op op() {
+    static constexpr T    identity   = false;
+    static MPI_Op         op() {
         return MPI_LOR;
     }
 };
@@ -322,8 +329,8 @@ struct mpi_operation_traits<
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::logical)>::type> {
     static constexpr bool is_builtin = true;
-
-    static MPI_Op op() {
+    static constexpr T    identity   = false;
+    static MPI_Op         op() {
         return MPI_LXOR;
     }
 };
@@ -335,8 +342,8 @@ struct mpi_operation_traits<
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
-
-    static MPI_Op op() {
+    static constexpr T    identity   = ~(T{0});
+    static MPI_Op         op() {
         return MPI_BAND;
     }
 };
@@ -348,8 +355,8 @@ struct mpi_operation_traits<
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
-
-    static MPI_Op op() {
+    static constexpr T    identity   = T{0};
+    static MPI_Op         op() {
         return MPI_BOR;
     }
 };
@@ -361,8 +368,8 @@ struct mpi_operation_traits<
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::byte)>::type> {
     static constexpr bool is_builtin = true;
-
-    static MPI_Op op() {
+    static constexpr T    identity   = 0;
+    static MPI_Op         op() {
         return MPI_BXOR;
     }
 };
