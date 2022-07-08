@@ -392,8 +392,11 @@ public:
     static_assert(
         std::is_default_constructible_v<Op>,
         "This wrapper only works with default constructible functors, i.e., not with lambdas.");
+
     void operator=(UserOperationWrapper<is_commutative, T, Op>&) = delete;
+
     void operator=(UserOperationWrapper<is_commutative, T, Op>&&) = delete;
+
     /// @brief creates an MPI operation for the specified functor
     /// @param op the functor to call for reduction.
     ///  this has to be a binary function applicable to two arguments of type \c T which return a result of type  \c T
@@ -521,7 +524,8 @@ public:
     ReduceOperation(Op&& op, Commutative) : _operation(std::move(op)) {}
     static constexpr bool is_builtin  = false;
     static constexpr bool commutative = std::is_same_v<Commutative, kamping::internal::commutative_tag>;
-    MPI_Op                op() {
+
+    MPI_Op op() {
         return _operation.get_mpi_op();
     }
 
@@ -539,7 +543,8 @@ public:
     ReduceOperation(Op&&, Commutative) {}
     static constexpr bool is_builtin  = true;
     static constexpr bool commutative = true; // builtin operations are always commutative
-    MPI_Op                op() {
+
+    MPI_Op op() {
         return mpi_operation_traits<Op, T>::op();
     }
 };
@@ -568,7 +573,8 @@ public:
     }
     static constexpr bool is_builtin  = false;
     static constexpr bool commutative = std::is_same_v<Commutative, kamping::internal::commutative_tag>;
-    MPI_Op                op() {
+
+    MPI_Op op() {
         return _operation.get_mpi_op();
     }
 

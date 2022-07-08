@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 #include "helpers_for_testing.hpp"
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/parameter_factories.hpp"
 #include "kamping/parameter_objects.hpp"
@@ -740,6 +741,126 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<int>>,
             "Owning buffers must hold their data directly.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+}
+
+TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
+    // use a custom container, because std::vector<bool> is not supported (see compilation failure tests)
+    {
+        // Constant, container, referencing, user allocated
+        testing::OwnContainer<bool>       vec  = {true, false};
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf                          = internal::make_data_buffer<type, BufferModifiability::constant>(vec);
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_FALSE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
+        EXPECT_EQ(&vec, &data_buf.underlying());
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool> const&>,
+            "Referencing buffers must hold a reference to their data.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+    {
+        // Modifiable, container, referencing, user allocated
+        testing::OwnContainer<bool>       vec  = {true, false};
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf                          = internal::make_data_buffer<type, BufferModifiability::modifiable>(vec);
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_TRUE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
+        EXPECT_EQ(&vec, &data_buf.underlying());
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool>&>,
+            "Referencing buffers must hold a reference to their data.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+    {
+        // Constant, single element, referencing, user allocated
+        bool                              single_bool;
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf = internal::make_data_buffer<type, BufferModifiability::constant>(single_bool);
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_FALSE(data_buf.is_modifiable);
+        EXPECT_TRUE(data_buf.is_single_element);
+        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
+        EXPECT_EQ(&single_bool, &data_buf.underlying());
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, bool const&>,
+            "Referencing buffers must hold a reference to their data.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+    {
+        // Constant, container, owning, user allocated
+        testing::OwnContainer<bool>       vec  = {true, false};
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf = internal::make_data_buffer<type, BufferModifiability::constant>(std::move(vec));
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_FALSE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool> const>,
+            "Owning buffers must hold their data directly.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+
+    {
+        // modifiable, container, owning, library allocated
+        constexpr internal::ParameterType type     = internal::ParameterType::send_buf;
+        auto                              data_buf = internal::make_data_buffer<type, BufferModifiability::modifiable>(
+            NewContainer<testing::OwnContainer<bool>>{});
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_TRUE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool>>,
+            "Owning buffers must hold their data directly.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
+    }
+    {
+        // Modifiable, single element, owning, lib_allocated
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf = internal::make_data_buffer<type, BufferModifiability::modifiable>(NewContainer<bool>{});
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_TRUE(data_buf.is_modifiable);
+        EXPECT_TRUE(data_buf.is_single_element);
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, bool>,
+            "Owning buffers must hold their data directly.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
+    }
+    {
+        // Modifiable, container, owning, user_allocated with initializer_list
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf = internal::make_data_buffer<type, BufferModifiability::modifiable>({true, false, true});
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_TRUE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<kabool>>,
+            "Initializer lists of type bool have to be converted to std::vector<kabool>.");
+        // extract() as proxy for lib allocated DataBuffers
+        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+    }
+    {
+        // Constant, container, owning, user_allocated with initializer_list
+        constexpr internal::ParameterType type = internal::ParameterType::send_buf;
+        auto data_buf = internal::make_data_buffer<type, BufferModifiability::constant>({true, false, true});
+        EXPECT_EQ(data_buf.parameter_type, type);
+        EXPECT_FALSE(data_buf.is_modifiable);
+        EXPECT_FALSE(data_buf.is_single_element);
+        static_assert(
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<kabool>>,
+            "Initializer lists of type bool have to be converted to std::vector<kabool>.");
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
