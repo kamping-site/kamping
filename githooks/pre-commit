@@ -1,7 +1,10 @@
 #!/bin/bash 
+
+# git executes hooks from the repository root
+formatter=$("$(pwd)/scripts/get_clang_format.sh")
 for file in $(git diff --cached --name-only | grep -E '.*\.(c|cpp|h|hpp)\b'); do 
 	if [[ -f "$file" ]]; then 
-		clang-format --dry-run --Werror "$file" || exit 1
+		$formatter --dry-run --Werror "$file" || exit 1
 	fi
 done
 
