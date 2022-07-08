@@ -95,6 +95,22 @@ TYPED_TEST(OwnContainerTest, create_non_default_intialized) {
     EXPECT_EQ(container.copy_count(), 0);
 }
 
+TYPED_TEST(OwnContainerTest, create_initializer_list) {
+    testing::OwnContainer<typename TestFixture::value_type> container(
+        {TestFixture::get_default_value(), TestFixture::get_non_default_value()});
+
+    EXPECT_EQ(container.size(), 2);
+    EXPECT_THAT(container, BeginEndDistanceIs(2));
+
+    std::vector expected{TestFixture::get_default_value(), TestFixture::get_non_default_value()};
+    EXPECT_THAT(container, ElementsAreArray(expected));
+
+    EXPECT_EQ(container[0], TestFixture::get_default_value());
+    EXPECT_EQ(container[1], TestFixture::get_non_default_value());
+
+    EXPECT_EQ(container.copy_count(), 0);
+}
+
 TYPED_TEST(OwnContainerTest, modify_container) {
     auto value = TestFixture::get_non_default_value();
 
