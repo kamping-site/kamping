@@ -115,10 +115,10 @@ TYPED_TEST(OwnContainerTest, modify_container) {
     auto value = TestFixture::get_non_default_value();
 
     testing::OwnContainer<typename TestFixture::value_type> container(10);
-    container[3] = TestFixture::get_non_default_value();
+    container[3] = value;
 
     std::vector<typename TestFixture::value_type> vec(10);
-    vec[3] = TestFixture::get_non_default_value();
+    vec[3] = value;
 
     EXPECT_EQ(container.size(), 10);
     EXPECT_THAT(container, BeginEndDistanceIs(10));
