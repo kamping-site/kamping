@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
@@ -55,7 +56,6 @@ auto make_data_buffer(Data&& data) {
     constexpr bool is_const_buffer    = modifiability == BufferModifiability::constant;
     // Implication: is_const_data_type => is_const_buffer.
     static_assert(!is_const_data_type || is_const_buffer);
-
     return DataBuffer<
         std::remove_const_t<std::remove_reference_t<Data>>, parameter_type, modifiability, ownership,
         BufferAllocation::user_allocated>(std::forward<Data>(data));
@@ -80,6 +80,8 @@ auto make_data_buffer(NewContainer<Data>&&) {
 ///
 /// Creates an owning DataBuffer with the given template parameters.
 ///
+/// An initializer list of type \c bool will be converted to a \c std::vector<kamping::kabool>.
+///
 /// @tparam parameter_type parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -89,9 +91,19 @@ auto make_data_buffer(NewContainer<Data>&&) {
 /// @return A library allocated DataBuffer with the given template parameters.
 template <ParameterType parameter_type, BufferModifiability modifiability, typename Data>
 auto make_data_buffer(std::initializer_list<Data> data) {
-    std::vector<Data> data_vec{data};
+    auto data_vec = [&]() {
+        if constexpr (std::is_same_v<Data, bool>) {
+            return std::vector<kabool>(data.begin(), data.end());
+            // We only use automatic conversion of bool to kabool for initializer lists, but not for single elements of
+            // type bool. The reason for that is, that sometimes single element conversion may not be desired.
+            // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
+            // send_recv_buf = bool&
+        } else {
+            return std::vector<Data>{data};
+        }
+    }();
     return DataBuffer<
-        std::vector<Data>, parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::user_allocated>(
+        decltype(data_vec), parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::user_allocated>(
         std::move(data_vec));
 }
 
@@ -157,8 +169,8 @@ auto send_recv_buf(Data&& data) {
     return internal::make_data_buffer<internal::ParameterType::send_recv_buf, modifiability>(std::forward<Data>(data));
 }
 
-/// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must contain
-/// the send counts to each relevant PE.
+/// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must
+/// contain the send counts to each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
 /// value_type
@@ -183,8 +195,8 @@ auto send_counts(std::initializer_list<T> counts) {
         std::move(counts));
 }
 
-/// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must contain
-/// the recv counts from each relevant PE.
+/// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must
+/// contain the recv counts from each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
 /// value_type
@@ -238,8 +250,8 @@ inline auto recv_count_out(NewContainer<int>&&) {
         NewContainer<int>{});
 }
 
-/// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage must
-/// contain the send displacements to each relevant PE.
+/// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
+/// must contain the send displacements to each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
 /// value_type
@@ -264,8 +276,8 @@ auto send_displs(std::initializer_list<T> displs) {
         std::move(displs));
 }
 
-/// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage must
-/// contain the recv displacements from each relevant PE.
+/// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage
+/// must contain the recv displacements from each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
 /// value_type
@@ -329,10 +341,10 @@ auto recv_counts_out(Container&& container) {
         std::forward<Container>(container));
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying storage
-/// will contained the receive displacements when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
+/// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
+/// storage will contained the receive displacements when the \c MPI call has been completed. The underlying
+/// container must provide a \c data(), \c resize() and \c size() member function and expose the contained \c
+/// value_type
 /// @tparam Container Container type which contains the receive displacements.
 /// @param container Container which will contain the receive displacements.
 /// @return Object referring to the storage containing the receive displacements.
@@ -342,8 +354,8 @@ auto recv_displs_out(Container&& container) {
         std::forward<Container>(container));
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like \c
-/// MPI_Gather.
+/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
+/// \c MPI_Gather.
 ///
 /// @param rank Rank of the root PE.
 /// @returns Root Object containing the rank information of the root PE.
@@ -351,8 +363,8 @@ inline auto root(int rank) {
     return internal::Root(rank);
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like \c
-/// MPI_Gather.
+/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
+/// \c MPI_Gather.
 ///
 /// @param rank Rank of the root PE.
 /// @returns Root Object containing the rank information of the root PE.
@@ -366,9 +378,9 @@ inline auto root(size_t rank) {
 /// @tparam Commutative tag whether the operation is commutative
 /// @param op the operation
 /// @param commute the commutativity tag
-///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only supported
-///     for builtin operations. This is used to streamline the interface so that the use does not have to provide
-///     commutativity info when the operation is builtin.
+///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
+///     supported for builtin operations. This is used to streamline the interface so that the use does not have
+///     to provide commutativity info when the operation is builtin.
 template <typename Op, typename Commutative = internal::undefined_commutative_tag>
 internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = internal::undefined_commutative_tag{}) {
     return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);

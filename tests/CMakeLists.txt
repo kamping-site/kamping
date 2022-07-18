@@ -18,6 +18,7 @@ kamping_register_test(test_named_parameter_selection FILES named_parameter_selec
 kamping_register_test(test_parameter_factories FILES parameter_factories_test.cpp)
 kamping_register_test(test_parameter_objects FILES parameter_objects_test.cpp)
 kamping_register_test(test_span FILES span_test.cpp)
+kamping_register_test(test_helpers_for_testing FILES helpers_for_testing_test.cpp)
 
 # Registering tests with MPI:
 
@@ -32,6 +33,7 @@ kamping_register_mpi_test(test_mpi_gather FILES collectives/mpi_gather_test.cpp 
 kamping_register_mpi_test(test_mpi_reduce FILES collectives/mpi_reduce_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_mpi_bcast FILES collectives/mpi_bcast_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_mpi_allreduce FILES collectives/mpi_allreduce_test.cpp CORES 1 4)
+kamping_register_mpi_test(test_mpi_scan FILES collectives/mpi_scan_test.cpp CORES 1 4)
 kamping_register_mpi_test(test_operation_wrapper FILES mpi_operation_wrapper_test.cpp CORES 1)
 kamping_register_mpi_test(test_parameter_factories_mpi FILES parameter_factories_mpi_test.cpp CORES 1)
 kamping_register_mpi_test(test_multiple_compilation_units FILES multiple_compilation_units_test/main.cpp multiple_compilation_units_test/gatherer.cpp CORES 1 4)
@@ -93,6 +95,28 @@ kamping_register_compilation_failure_test(
   FILES parameter_objects_compilation_failures_test.cpp
   SECTIONS "COPY_CONSTRUCT_CONTAINER_CONST_BUFFER" "COPY_ASSIGN_CONTAINER_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_CONST_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_CONST_BUFFER" "COPY_CONSTRUCT_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_ASSIGN_SINGLE_ELMENT_MODIFIABLE_BUFFER" "COPY_CONSTRUCT_USER_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_USER_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_CONTAINER_BUFFER" "COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER" "COPY_CONSTRUCT_LIB_ALLOC_SINGLE_ELEMENT_BUFFER" "COPY_ASSIGN_LIB_ALLOC_SINGLE_ELEMENT_BUFFER" "COPY_CONSTRUCT_ROOT_BUFFER" "COPY_ASSIGN_ROOT_BUFFER" "COPY_CONSTRUCT_OP_BUILDER_BUFFER" "COPY_ASSIGN_OP_BUILDER_BUFFER" "VALUE_CONSTRUCTOR_REFERENCING_DATA_BUFFER" "DEFAULT_CONSTRUCT_USER_ALLOCATED_DATA_BUFFER" "EXTRACT_USER_ALLOCATED_DATA_BUFFER" "RESIZE_CONST_DATA_BUFFER"
   "GET_SINGLE_ELEMENT_ON_VECTOR"
+  "ACCESS_CONST_VECTOR_BOOL"
+  "ACCESS_VECTOR_BOOL"
+  LIBRARIES kamping_base
+)
+
+kamping_register_compilation_failure_test(
+  test_parameter_factories_compilation_failure
+  FILES parameter_factories_compilation_failure_test.cpp
+  SECTIONS "VECTOR_BOOL_LVALUE"
+  "VECTOR_BOOL_RVALUE"
+  "VECTOR_BOOL_CUSTOM_ALLOCATOR"
+  "VECTOR_BOOL_NEW_CONTAINER"
+  LIBRARIES kamping_base
+)
+
+kamping_register_compilation_failure_test(
+  test_vector_bool_compilation_failure
+  FILES vector_bool_compilation_failures_test.cpp
+  SECTIONS "SINGLE_BOOL_VEC_BOOL"
+  "SINGLE_KABOOL_VEC_BOOL"
+  "SEND_VEC_BOOL"
+  "SEND_VEC_KABOOL_RECV_VEC_BOOL"
   LIBRARIES kamping_base
 )
 
