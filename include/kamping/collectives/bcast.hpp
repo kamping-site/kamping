@@ -69,9 +69,10 @@ auto kamping::Communicator::bcast(Args... args) const {
     // }
 
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
-    auto&& recv_count_param = internal::select_parameter_type_or_default<
-        ParameterType::recv_count, LibAllocatedSingleElementBuffer<int, ParameterType::recv_count>>(
-        std::tuple(), args...);
+    using default_recv_count_type = decltype(kamping::recv_count_out(NewContainer<int>{}));
+    auto&& recv_count_param =
+        internal::select_parameter_type_or_default<ParameterType::recv_count, default_recv_count_type>(
+            std::tuple(), args...);
 
     constexpr bool recv_count_is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;
     KASSERT(
@@ -127,3 +128,12 @@ auto kamping::Communicator::bcast(Args... args) const {
         std::move(send_recv_buf), BufferCategoryNotUsed{}, std::move(recv_count_param), BufferCategoryNotUsed{},
         BufferCategoryNotUsed{});
 } // namespace kamping::internal
+
+template <typename... Args>
+auto kamping::Communicator::bcast_single(Args... args) const {
+    //! If your expand this function to not being only a simple wrapper arount bcast, you have to write more unit tests!
+    // In contrast to bcast(...), the recv_count is not a possible parameter.
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root));
+
+    return this->bcast(std::forward<Args>(args)..., recv_count(1));
+}

@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPIng Authors
+// Copyright 2021-2022 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -44,6 +44,69 @@
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
+
+namespace internal {
+
+/// @brief Boolean value helping to decide if type has a \c value_type member type.
+/// @return \c true if class has \c value_type method and \c false otherwise.
+template <typename, typename = void>
+static constexpr bool has_value_type_v = false;
+
+/// @brief Boolean value helping to decide if type has a \c value_type member type.
+/// @return \c true if class has \c value_type method and \c false otherwise.
+template <typename T>
+static constexpr bool has_value_type_v<T, std::void_t<typename T::value_type>> = true;
+
+/// @brief Type trait to check if a type is an instance of a templated type.
+///
+/// based on https://stackoverflow.com/a/31763111
+/// @tparam T The concrete type.
+/// @tparam Template The type template.
+/// @return \c true if the type is an instance and \c false otherwise.
+template <class T, template <class...> class Template>
+struct is_specialization : std::false_type {};
+
+/// @brief Type trait to check if a type is an instance of a templated type.
+///
+/// based on https://stackoverflow.com/a/31763111
+///
+/// A little note on how this works:
+/// - consider <tt>is_specialization<std::vector<bool, my_alloc>, std::vector></tt>
+/// - this gets template matched with the following specialization such that
+///    - <tt>Template = template<T...> std::vector<T...></tt>
+///    - <tt>Args... = bool, my_alloc</tt>
+/// - but this may only be matched in the case that <tt>Template<Args...> = std::vector<bool, my_alloc></tt>
+/// @tparam T The concrete type.
+/// @tparam Template the type template
+/// @return \c true if the type is an instance and \c false otherwise.
+template <template <class...> class Template, class... Args>
+struct is_specialization<Template<Args...>, Template> : std::true_type {};
+
+/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
+/// @tparam T The type.
+/// @return \c true if \c T is an template instance of \c std::vector<bool>, \c false otherwise.
+template <typename T, typename = void>
+static constexpr bool is_vector_bool_v = false;
+
+/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
+/// This catches the edge case of elements which do not have a value type, they can not be a vector bool.
+///
+/// @tparam T The type.
+/// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
+template <typename T>
+static constexpr bool is_vector_bool_v<
+    T, typename std::enable_if<!has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> = false;
+
+/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
+/// @tparam T The type.
+/// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
+template <typename T>
+static constexpr bool
+    is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
+        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
+            std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
+
+} // namespace internal
 
 /// @brief Type used for tag dispatching.
 ///
@@ -91,6 +154,25 @@ public:
     using value_type = typename T::value_type; ///< The value type of T.
 };
 
+/// @brief The set of parameter types that must be of type `int`
+constexpr std::array int_parameter_types{
+    ParameterType::recv_count, ParameterType::recv_counts, ParameterType::send_counts, ParameterType::recv_displs,
+    ParameterType::send_displs};
+
+/// @brief Checks whether buffers of a given type should have `value_type` `int`.
+///
+/// @param parameter_type The parameter type to check.
+///
+/// @return `true` if parameter_type should be of type `int`, `false` otherwise.
+bool constexpr inline is_int_type(ParameterType parameter_type) {
+    for (ParameterType int_parameter_type: int_parameter_types) {
+        if (parameter_type == int_parameter_type) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /// @brief Data buffer used for named parameters.
 ///
 /// DataBuffer wraps all buffer storages provided by an std-like container like std::vector or single values. A
@@ -118,6 +200,14 @@ public:
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
                                                                          ///< non-const depending on
                                                                          ///< modifiability.
+
+    // We can not do the check for std::vector<bool> here, because to use a DataBuffer of std::vector<bool> as an unused
+    // default parameter is allowed, as long the buffer is never used. Therefore the check for std::vector<bool> happens
+    // only when the underlying member is actually accessed and the corresponding accessor method is instantiated.
+    // static_assert(
+    //     !is_vector_bool_v<MemberType>,
+    //     "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead.");
+
     using MemberTypeWithConstAndRef = std::conditional_t<
         ownership == BufferOwnership::owning, MemberTypeWithConst,
         MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
@@ -125,6 +215,8 @@ public:
 
     using value_type =
         typename ValueTypeWrapper<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
+    // Logical implication: is_int_type(type) => std::is_same_v<value_type, int>
+    static_assert(!is_int_type(type) || std::is_same_v<value_type, int>, "The given data must be of type int");
     using value_type_with_const =
         std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending
                                                                          ///< on modifiability
@@ -167,7 +259,7 @@ public:
         if constexpr (is_single_element) {
             return 1;
         } else {
-            return _data.size();
+            return underlying().size();
         }
     }
 
@@ -196,7 +288,7 @@ public:
         } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
             KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
         } else {
-            _data.resize(size);
+            underlying().resize(size);
         }
     }
 
@@ -207,9 +299,9 @@ public:
         KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::normal);
 #endif
         if constexpr (is_single_element) {
-            return &_data;
+            return &underlying();
         } else {
-            return std::data(_data);
+            return std::data(underlying());
         }
     }
 
@@ -220,9 +312,9 @@ public:
         KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::normal);
 #endif
         if constexpr (is_single_element) {
-            return &_data;
+            return &underlying();
         } else {
-            return std::data(_data);
+            return std::data(underlying());
         }
     }
 
@@ -251,7 +343,7 @@ public:
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         KASSERT(!is_extracted, "Cannot get an element from a buffer that has already been extracted.", assert::normal);
 #endif
-        return _data;
+        return underlying();
     }
 
     /// @brief Provides access to the underlying data.
@@ -260,6 +352,24 @@ public:
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
 #endif
+        // this assertion is only checked if the buffer is actually accessed.
+        static_assert(
+            !is_vector_bool_v<MemberType>,
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead.");
+        return _data;
+    }
+
+    /// @brief Provides access to the underlying data.
+    /// @return A reference to the data.
+    template <bool enabled = modifiability == BufferModifiability::modifiable, std::enable_if_t<enabled, bool> = true>
+    MemberType& underlying() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
+#endif
+        // this assertion is only checked if the buffer is actually accessed.
+        static_assert(
+            !is_vector_bool_v<MemberType>,
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead.");
         return _data;
     }
 
@@ -274,9 +384,13 @@ public:
                                                   "a users container in an unspecified state.");
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         KASSERT(!is_extracted, "Cannot extract a buffer that has already been extracted.", assert::normal);
+#endif
+        auto extracted = std::move(underlying());
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        // we set is_extracted here because otherwise the call to underlying() would fail
         is_extracted = true;
 #endif
-        return std::move(_data);
+        return extracted;
     }
 
 private:
@@ -285,49 +399,6 @@ private:
     bool is_extracted = false; ///< Has the container been extracted and is therefore in an invalid state?
 #endif
 };
-
-/// @brief Constant buffer based on a container type.
-///
-/// ContainerBasedConstBuffer wraps read-only buffer storage provided by an std-like container like std::vector. The
-/// Container type must provide \c data(), \c size() and expose the type definition \c value_type. type.
-/// @tparam Container Container on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
-template <typename Container, ParameterType type>
-using ContainerBasedConstBuffer =
-    DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::referencing>;
-
-/// @brief Read-only buffer owning a container type passed to it.
-///
-/// ContainerBasedOwningBuffer wraps read-only buffer storage provided by an std-like container like std::vector.
-/// This is the owning variant of \ref ContainerBasedConstBuffer. The Container type must provide \c data(), \c
-/// size() and expose the type definition \c value_type. type.
-/// @tparam Container Container on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
-template <typename Container, ParameterType type>
-using ContainerBasedOwningBuffer = DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::owning>;
-
-/// @brief Buffer based on a container type that has been allocated by the user (but may be resized if the provided
-/// space is not sufficient).
-///
-/// UserAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like
-/// std::vector that has already been allocated by the user. The Container type must provide \c data(), \c size()
-/// and \c resize() and expose the type definition \c value_type. type.
-/// @tparam Container Container on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
-template <typename Container, ParameterType parameter_type>
-using UserAllocatedContainerBasedBuffer =
-    DataBuffer<Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing>;
-
-/// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
-///
-/// LibAllocatedContainerBasedBuffer wraps modifiable buffer storage provided by an std-like container like
-/// std::vector that will be allocated by KaMPIng. The Container type must provide \c data(), \c size() and \c
-/// resize() and expose the type definition \c value_type. type.
-/// @tparam Container Container on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
-template <typename Container, ParameterType type>
-using LibAllocatedContainerBasedBuffer = DataBuffer<
-    Container, type, BufferModifiability::modifiable, BufferOwnership::owning, BufferAllocation::lib_allocated>;
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
@@ -357,33 +428,6 @@ public:
         return {nullptr, 0};
     }
 };
-
-/// @brief Constant buffer for a single type, i.e., not a container.
-///
-/// SingleElementConstBuffer wraps a read-only value and is used instead of \ref ContainerBasedConstBuffer if only a
-/// single element is sent or received and no container is needed.
-/// @tparam DataType Type of the element wrapped.
-/// @tparam ParameterType Parameter type represented by this buffer.
-template <typename DataType, ParameterType type>
-using SingleElementConstBuffer =
-    DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::referencing>;
-
-/// @brief Buffer for a single element, which is not a container. The element is owned by the buffer.
-///
-/// SingleElementOwningBuffer wraps a read-only value and takes ownership of it. It is the owning variant of \ref
-/// SingleElementConstBuffer.
-/// @tparam DataType Type of the element wrapped.
-/// @tparam ParameterType Parameter type represented by this buffer.
-template <typename DataType, ParameterType type>
-using SingleElementOwningBuffer = DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::owning>;
-
-/// @brief Buffer based on a single element type that has been allocated by the library.
-///
-/// @tparam DataType Type of the element wrapped.
-/// @tparam ParameterType parameter type represented by this buffer.
-template <typename DataType, ParameterType type>
-using LibAllocatedSingleElementBuffer = DataBuffer<
-    DataType, type, BufferModifiability::modifiable, BufferOwnership::owning, BufferAllocation::lib_allocated>;
 
 /// @brief Buffer based on a single element type that has been allocated by the user.
 ///

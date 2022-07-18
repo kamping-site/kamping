@@ -12,16 +12,80 @@
 // <https://www.gnu.org/licenses/>.
 
 #include "gtest/gtest.h"
+#include <array>
+#include <deque>
 #include <type_traits>
+#include <vector>
 
 #include <gtest/gtest.h>
 
 #include "helpers_for_testing.hpp"
 #include "kamping/assertion_levels.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "legacy_parameter_objects.hpp"
 
 using namespace ::kamping;
 using namespace ::kamping::internal;
+
+TEST(HasDataMemberTest, has_data_member_basics) {
+    EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<int>>);
+    EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<double>>);
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::vector<double, testing::CustomAllocator<double>>>));
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::string>));
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::array<int, 42>>));
+
+    EXPECT_FALSE((kamping::internal::has_data_member_v<int>));
+    EXPECT_FALSE((kamping::internal::has_data_member_v<bool>));
+
+    // on some compilers vector<bool> still has .data() but it returns void
+    // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool>>));
+    // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool, testing::CustomAllocator<bool>>>));
+}
+
+TEST(IsSpecializationTest, is_specialization_basics) {
+    EXPECT_TRUE((kamping::internal::is_specialization<std::vector<int>, std::vector>::value));
+    EXPECT_TRUE((kamping::internal::is_specialization<std::vector<bool>, std::vector>::value));
+    EXPECT_TRUE(
+        (kamping::internal::is_specialization<std::vector<int, testing::CustomAllocator<int>>, std::vector>::value));
+    EXPECT_TRUE((kamping::internal::is_specialization<
+                 std::vector<double, testing::CustomAllocator<double>>, std::vector>::value));
+    EXPECT_TRUE((kamping::internal::is_specialization<std::deque<int>, std::deque>::value));
+
+    EXPECT_FALSE((kamping::internal::is_specialization<std::array<int, 2>, std::vector>::value));
+    EXPECT_FALSE((kamping::internal::is_specialization<std::deque<int>, std::vector>::value));
+    EXPECT_FALSE((kamping::internal::is_specialization<int, std::vector>::value));
+}
+TEST(HasValueTypeTest, has_value_type_basics) {
+    EXPECT_TRUE(kamping::internal::has_value_type_v<std::vector<int>>);
+    EXPECT_TRUE(kamping::internal::has_value_type_v<std::vector<bool>>);
+    EXPECT_TRUE((kamping::internal::has_value_type_v<std::array<int, 42>>));
+    EXPECT_TRUE((kamping::internal::has_value_type_v<std::string>));
+
+    EXPECT_FALSE((kamping::internal::has_value_type_v<int>));
+    EXPECT_FALSE((kamping::internal::has_value_type_v<double>));
+    EXPECT_FALSE((kamping::internal::has_value_type_v<bool>));
+}
+
+TEST(IsVectorBoolTest, is_vector_bool_basics) {
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>>);
+    EXPECT_TRUE((kamping::internal::is_vector_bool_v<std::vector<bool, testing::CustomAllocator<bool>>>));
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<const std::vector<bool>>);
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>&>);
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool> const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>>);
+    EXPECT_FALSE((kamping::internal::is_vector_bool_v<std::vector<int, testing::CustomAllocator<int>>>));
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int> const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool>>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool>&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool> const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<bool>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<bool&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<bool const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int const&>);
+}
 
 // Tests the basic functionality of EmptyBuffer
 TEST(EmptyBufferTest, get_basics) {
@@ -60,7 +124,7 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
 TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
     std::string                                                  str = "I am underlying storage";
     testing::OwnContainer<int>                                   own_container;
-    constexpr ParameterType                                      ptype = ParameterType::send_counts;
+    constexpr ParameterType                                      ptype = ParameterType::send_buf;
     ContainerBasedConstBuffer<std::string, ptype>                buffer_based_on_string(str);
     ContainerBasedConstBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
 
@@ -121,7 +185,7 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
 }
 
 TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
-    constexpr ParameterType ptype = ParameterType::send_counts;
+    constexpr ParameterType ptype = ParameterType::send_buf;
 
     // string
     std::string                                    str      = "I am underlying storage";
@@ -474,13 +538,24 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferAllocation::lib_allocated> >,
+            BufferAllocation::lib_allocated>>,
         "Library allocated DataBuffers must have an extract() member function");
     static_assert(
         !has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferAllocation::user_allocated> >,
+            BufferAllocation::user_allocated>>,
         "User allocated DataBuffers must not have an extract() member function");
+}
+
+TEST(ParameterFactoriesTest, is_int_type) {
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_buf));
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::recv_buf));
+    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_recv_buf));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_counts));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_displs));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_count));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_counts));
+    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_displs));
 }
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
