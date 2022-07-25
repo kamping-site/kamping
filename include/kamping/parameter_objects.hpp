@@ -429,16 +429,6 @@ public:
     }
 };
 
-/// @brief Buffer based on a single element type that has been allocated by the user.
-///
-/// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by
-/// the user.
-/// @tparam DataType Type of the element wrapped.
-/// @tparam ParameterType parameter type represented by this buffer.
-template <typename DataType, ParameterType type>
-using SingleElementModifiableBuffer =
-    DataBuffer<DataType, type, BufferModifiability::modifiable, BufferOwnership::referencing>;
-
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
 class Root {
 public:
