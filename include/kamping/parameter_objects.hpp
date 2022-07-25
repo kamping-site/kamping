@@ -382,7 +382,7 @@ private:
     /// @brief Throws an assertion if the extracted flag is set, i.e. the underlying data has been moved out.
     ///
     /// @param message The message for the assertion.
-    void kassert_not_extracted(std::string const message) const {
+    void kassert_not_extracted(std::string const message [[maybe_unused]]) const {
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         KASSERT(!is_extracted, message, assert::normal);
 #endif
