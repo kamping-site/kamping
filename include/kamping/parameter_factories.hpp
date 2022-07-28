@@ -258,7 +258,7 @@ inline auto recv_count(int recv_count) {
 /// @return Buffer that can be filled by the library.
 inline auto recv_count_out() {
     return internal::LibAllocatedSingleElementBuffer<
-        int, internal::ParameterType::recv_count, internal::BufferType::in_buffer>();
+        int, internal::ParameterType::recv_count, internal::BufferType::out_buffer>();
 }
 
 /// @brief Generates a wrapper for a recv count output parameter.
@@ -361,7 +361,7 @@ auto recv_displs(std::initializer_list<T> displs) {
 template <typename Container>
 auto recv_buf(Container& container) {
     return internal::UserAllocatedContainerBasedBuffer<
-        Container, internal::ParameterType::recv_buf, internal::BufferType::in_buffer>(container);
+        Container, internal::ParameterType::recv_buf, internal::BufferType::out_buffer>(container);
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
@@ -374,7 +374,7 @@ auto recv_buf(Container& container) {
 template <typename Container>
 auto recv_buf(NewContainer<Container>&&) {
     return internal::LibAllocatedContainerBasedBuffer<
-        Container, internal::ParameterType::recv_buf, internal::BufferType::in_buffer>();
+        Container, internal::ParameterType::recv_buf, internal::BufferType::out_buffer>();
 }
 
 /// @brief Generates buffer wrapper based on a std::vector<int> for the send displacements, i.e., the underlying storage

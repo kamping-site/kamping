@@ -112,6 +112,9 @@ template <
 class DataBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
+
+    static constexpr BufferType buffer_type = out_type; ///< The type of the buffer, i.e., in, out, or in_out.
+
     /// @brief \c true if the buffer is an out or in/out buffer that results will be written to and \c false
     /// otherwise.
     static constexpr bool is_out_buffer = (out_type == BufferType::out_buffer || out_type == BufferType::in_out_buffer);
