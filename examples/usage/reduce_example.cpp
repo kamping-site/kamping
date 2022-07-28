@@ -69,9 +69,11 @@ int main() {
         int           x;
         double        y;
         unsigned long z;
-        Point         operator+(Point& rhs) const {
+
+        Point operator+(Point& rhs) const {
             return {x + rhs.x, y + rhs.y, z + rhs.z};
         }
+
         bool operator<(Point const& rhs) const {
             return x < rhs.x || (x == rhs.x && y < rhs.y) || (x == rhs.x && y == rhs.y && z < rhs.z);
         }
