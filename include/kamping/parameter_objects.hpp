@@ -242,7 +242,7 @@ public:
     /// @brief Constructor for owning ContainerBasedBuffer.
     /// @param container Container holding the actual data.
     template <bool enabled = ownership == BufferOwnership::owning, std::enable_if_t<enabled, bool> = true>
-    Databuffer(MemberType container) : _data(std::move(container)) {}
+    DataBuffer(MemberType container) : _data(std::move(container)) {}
 
     /// @brief Constructor for lib allocated ContainerBasedBuffer.
     template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>

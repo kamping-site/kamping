@@ -940,3 +940,30 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
 }
+
+TEST(ParameterFactoriesTest, out_parameter_without_passed_parameters) {
+    {
+        auto data_buf = recv_count_out();
+        EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::recv_count);
+        EXPECT_EQ(data_buf.is_modifiable, true);
+        EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
+    }
+    {
+        auto data_buf = send_displs_out();
+        EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::send_displs);
+        EXPECT_EQ(data_buf.is_modifiable, true);
+        EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
+    }
+    {
+        auto data_buf = recv_counts_out();
+        EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::recv_counts);
+        EXPECT_EQ(data_buf.is_modifiable, true);
+        EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
+    }
+    {
+        auto data_buf = recv_displs_out();
+        EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::recv_displs);
+        EXPECT_EQ(data_buf.is_modifiable, true);
+        EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
+    }
+}

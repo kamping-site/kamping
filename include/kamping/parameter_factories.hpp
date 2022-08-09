@@ -245,7 +245,13 @@ inline auto recv_count(int recv_count) {
         std::move(recv_count));
 }
 
-/// @TODO recv_cout_out()
+/// @brief Generates a wrapper for a recv count output parameter without any user input.
+/// @return Wrapper for the recv count that can be retrieved as structured binding.
+inline auto recv_count_out() {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_count, internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(NewContainer<int>{});
+}
 
 /// @brief Generates a wrapper for a recv count output parameter.
 /// @param recv_count_out Reference for the output parameter.
@@ -266,7 +272,7 @@ inline auto recv_count_out(NewContainer<int>&&) {
     // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
     return internal::make_data_buffer<
         internal::ParameterType::recv_count, internal::BufferModifiability::modifiable,
-        internal::BufferType::in_buffer>(NewContainer<int>{});
+        internal::BufferType::out_buffer>(NewContainer<int>{});
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
@@ -339,7 +345,13 @@ auto recv_buf(Container&& container) {
         std::forward<Container>(container));
 }
 
-/// @TODO recv_displs_out()
+/// @brief Generates a wrapper for a send displs output parameter without any user input.
+/// @return Wrapper for the send displs that can be retrieved as structured binding.
+inline auto send_displs_out() {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_displs, internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(NewContainer<int>{});
+}
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
 /// will contain the send displacements when the \c MPI call has been completed.
@@ -355,7 +367,13 @@ auto send_displs_out(Container&& container) {
         internal::BufferType::out_buffer>(std::forward<Container>(container));
 }
 
-/// @todo recv_counts_out()
+/// @brief Generates a wrapper for a recv counts output parameter without any user input.
+/// @return Wrapper for the recv counts that can be retrieved as structured binding.
+inline auto recv_counts_out() {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(NewContainer<int>{});
+}
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
 /// will contain the receive counts when the \c MPI call has been completed.
@@ -371,7 +389,13 @@ auto recv_counts_out(Container&& container) {
         internal::BufferType::out_buffer>(std::forward<Container>(container));
 }
 
-/// @todo recv_displs_out()
+/// @brief Generates a wrapper for a recv displs output parameter without any user input.
+/// @return Wrapper for the recv displs that can be retrieved as structured binding.
+inline auto recv_displs_out() {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_displs, internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(NewContainer<int>{});
+}
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
 /// storage will contained the receive displacements when the \c MPI call has been completed. The underlying
