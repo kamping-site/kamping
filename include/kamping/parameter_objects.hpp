@@ -201,6 +201,9 @@ public:
     /// otherwise.
     static constexpr bool is_out_buffer = (out_type == BufferType::out_buffer || out_type == BufferType::in_out_buffer);
 
+    /// @brief Indicates whether the buffer is allocated by KaMPIng.
+    static constexpr bool is_lib_allocated = allocation == BufferAllocation::lib_allocated;
+
     static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
     static constexpr bool is_single_element =
@@ -239,7 +242,7 @@ public:
     /// @brief Constructor for owning ContainerBasedBuffer.
     /// @param container Container holding the actual data.
     template <bool enabled = ownership == BufferOwnership::owning, std::enable_if_t<enabled, bool> = true>
-    DataBuffer(MemberType container) : _data(std::move(container)) {}
+    Databuffer(MemberType container) : _data(std::move(container)) {}
 
     /// @brief Constructor for lib allocated ContainerBasedBuffer.
     template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>

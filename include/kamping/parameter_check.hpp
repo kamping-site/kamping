@@ -348,8 +348,10 @@ struct parameters_to_integral_constant {
         std::tuple<typename parameter_type_to_integral_constant<Parameters::parameter_type>::type>{}...));
 };
 
-/// @brief Checks if the buffer has to be computed by kamping, i.e. if it is an output parameter
+/// @brief Checks if the buffer has to be computed by kamping, i.e. if it is an output parameter or the buffer has been
+/// allocated by KaMPIng.
 /// @tparam BufferType The buffer type to be checked
 template <typename BufferType>
-constexpr static bool has_to_be_computed = std::remove_reference_t<BufferType>::is_out_buffer;
+constexpr static bool has_to_be_computed =
+    std::remove_reference_t<BufferType>::is_out_buffer || std::remove_reference_t<BufferType>::is_lib_allocated;
 } // namespace kamping::internal
