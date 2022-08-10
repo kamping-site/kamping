@@ -253,7 +253,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = std::numeric_limits<T>::lowest();
     static MPI_Op         op() {
-        return MPI_MAX;
+                return MPI_MAX;
     }
 };
 
@@ -266,7 +266,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = std::numeric_limits<T>::max();
     static MPI_Op         op() {
-        return MPI_MIN;
+                return MPI_MIN;
     }
 };
 
@@ -279,7 +279,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = 0;
     static MPI_Op         op() {
-        return MPI_SUM;
+                return MPI_SUM;
     }
 };
 
@@ -292,7 +292,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = 1;
     static MPI_Op         op() {
-        return MPI_PROD;
+                return MPI_PROD;
     }
 };
 
@@ -305,7 +305,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = true;
     static MPI_Op         op() {
-        return MPI_LAND;
+                return MPI_LAND;
     }
 };
 
@@ -318,7 +318,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = false;
     static MPI_Op         op() {
-        return MPI_LOR;
+                return MPI_LOR;
     }
 };
 
@@ -331,7 +331,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = false;
     static MPI_Op         op() {
-        return MPI_LXOR;
+                return MPI_LXOR;
     }
 };
 
@@ -344,7 +344,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = ~(T{0});
     static MPI_Op         op() {
-        return MPI_BAND;
+                return MPI_BAND;
     }
 };
 
@@ -357,7 +357,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = T{0};
     static MPI_Op         op() {
-        return MPI_BOR;
+                return MPI_BOR;
     }
 };
 
@@ -370,7 +370,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = 0;
     static MPI_Op         op() {
-        return MPI_BXOR;
+                return MPI_BXOR;
     }
 };
 #endif
