@@ -109,7 +109,8 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     { // use lambda inline
         auto result = comm.scan(
                               send_buf(input),
-                              op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::commutative))
+                              op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::commutative)
+        )
                           .extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
