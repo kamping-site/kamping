@@ -132,10 +132,12 @@ void test_send_displs_in_MPIResult() {
 TEST(MpiResultTest, has_extract_v_basics) {
     static_assert(
         has_extract_v<testing::StructWithExtract>,
-        "StructWithExtract contains extract() member function -> needs to be detected.");
+        "StructWithExtract contains extract() member function -> needs to be detected."
+    );
     static_assert(
         !has_extract_v<testing::StructWithoutExtract>,
-        "StructWithoutExtract does not contain extract() member function.");
+        "StructWithoutExtract does not contain extract() member function."
+    );
 }
 
 TEST(MpiResultTest, extract_recv_buffer_basics) {

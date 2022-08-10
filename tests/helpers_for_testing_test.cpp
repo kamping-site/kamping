@@ -97,7 +97,8 @@ TYPED_TEST(OwnContainerTest, create_non_default_intialized) {
 
 TYPED_TEST(OwnContainerTest, create_initializer_list) {
     testing::OwnContainer<typename TestFixture::value_type> container(
-        {TestFixture::get_default_value(), TestFixture::get_non_default_value()});
+        {TestFixture::get_default_value(), TestFixture::get_non_default_value()}
+    );
 
     EXPECT_EQ(container.size(), 2);
     EXPECT_THAT(container, BeginEndDistanceIs(2));

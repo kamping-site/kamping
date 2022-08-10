@@ -304,7 +304,8 @@ template <typename T>
     // Check if we got a pointer type -> error
     static_assert(
         !std::is_pointer_v<T_no_cv>,
-        "MPI does not support pointer types. Why do you want to transfer a pointer over MPI?");
+        "MPI does not support pointer types. Why do you want to transfer a pointer over MPI?"
+    );
 
     // Check if we got a function type -> error
     static_assert(!std::is_function_v<T_no_cv>, "MPI does not support function types.");

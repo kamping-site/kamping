@@ -71,13 +71,15 @@ template <typename... Args>
 auto kamping::Communicator::scatter(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_count));
+        Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_count)
+    );
 
     // Optional parameter: root()
     // Default: communicator root
     using root_param_type = decltype(kamping::root(0));
     auto&& root_param     = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
-        std::tuple(root()), args...);
+        std::tuple(root()), args...
+    );
     size_t const root     = root_param.rank();
     int const    int_root = root_param.rank_signed();
     KASSERT(is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << size(), assert::light);
@@ -94,7 +96,8 @@ auto kamping::Communicator::scatter(Args... args) const {
     KASSERT(
         send_buf.size() % size() == 0u, "Size of the send buffer ("
                                             << send_buf.size() << ") is not divisible by the number of PEs (" << size()
-                                            << ") in the communicator.");
+                                            << ") in the communicator."
+    );
     int const send_count = asserting_cast<int>(send_buf.size() / size());
 
     // Optional parameter: recv_buf()
@@ -102,13 +105,15 @@ auto kamping::Communicator::scatter(Args... args) const {
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
-            std::tuple(), args...);
+            std::tuple(), args...
+        );
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
     // Make sure that send and recv buffers use the same type
     static_assert(
-        std::is_same_v<send_value_type, recv_value_type>, "Mismatching send_buf() and recv_buf() value types.");
+        std::is_same_v<send_value_type, recv_value_type>, "Mismatching send_buf() and recv_buf() value types."
+    );
 
     // Optional parameter: recv_count()
     // Default: compute value based on send_buf.size on root
@@ -116,13 +121,15 @@ auto kamping::Communicator::scatter(Args... args) const {
     using default_recv_count_type = decltype(kamping::recv_count_out(NewContainer<int>{}));
     auto&& recv_count_param =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
-            std::tuple(), args...);
+            std::tuple(), args...
+        );
 
     constexpr bool is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;
 
     KASSERT(
         is_same_on_all_ranks(is_output_parameter),
-        "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.", assert::light_communication);
+        "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.", assert::light_communication
+    );
 
     // If it is an output parameter, broadcast send_count to get recv_count
     if constexpr (is_output_parameter) {
@@ -134,16 +141,19 @@ auto kamping::Communicator::scatter(Args... args) const {
     // Validate against send_count
     KASSERT(
         recv_count == bcast_value(*this, send_count, int_root), "Specified recv_count() does not match the send count.",
-        assert::light_communication);
+        assert::light_communication
+    );
 
     recv_buf.resize(static_cast<std::size_t>(recv_count));
     auto* recv_buf_ptr = recv_buf.data();
 
     [[maybe_unused]] int const err = MPI_Scatter(
-        send_buf_ptr, send_count, mpi_send_type, recv_buf_ptr, recv_count, mpi_recv_type, int_root, mpi_communicator());
+        send_buf_ptr, send_count, mpi_send_type, recv_buf_ptr, recv_count, mpi_recv_type, int_root, mpi_communicator()
+    );
     THROW_IF_MPI_ERROR(err, MPI_Scatter);
 
     return MPIResult(
         std::move(recv_buf), internal::BufferCategoryNotUsed{}, std::move(recv_count_param),
-        internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{});
+        internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{}
+    );
 }
