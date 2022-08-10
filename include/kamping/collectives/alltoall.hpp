@@ -99,8 +99,8 @@ auto kamping::Communicator::alltoall(Args... args) const {
         internal::BufferCategoryNotUsed{}, // recv_counts
         internal::BufferCategoryNotUsed{}, // recv_count
         internal::BufferCategoryNotUsed{}, // recv_displs
-        internal::BufferCategoryNotUsed{}
-    ); // send_displs
+        internal::BufferCategoryNotUsed{}  // send_displs
+    );
 }
 
 /// @brief Wrapper for \c MPI_Alltoallv.
@@ -261,6 +261,6 @@ auto kamping::Communicator::alltoallv(Args... args) const {
         std::move(recv_counts),            // recv_counts
         internal::BufferCategoryNotUsed{}, // recv_count
         std::move(recv_displs),            // recv_displs
-        std::move(send_displs)
-    ); // send_displs
+        std::move(send_displs)             // send_displs
+    );
 }
