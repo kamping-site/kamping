@@ -15,9 +15,6 @@
 #include <numeric>
 #include <vector>
 
-#include <gmock/gmock-matchers.h>
-#include <gtest/gtest.h>
-
 #include "helpers_for_examples.hpp"
 #include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/bcast.hpp"
@@ -26,7 +23,6 @@
 #include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping;
-using namespace ::testing;
 
 int main() {
     using namespace kamping;
@@ -69,14 +65,14 @@ int main() {
     // [PE 3] 0
     // -------------------
     // [PE 0] 0
-    // [PE 0] 1
+    // [PE 1] 0
     // [PE 2] 0
     // [PE 3] 0
     // -------------------
     // [PE 0] 1
     // [PE 0] 1
     // [PE 0] 1
-    // [PE 1] 0
+    // [PE 0] 1
     // [PE 1] 1
     // [PE 1] 1
     // [PE 1] 1
