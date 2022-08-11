@@ -47,7 +47,8 @@ int main() {
     print_result_on_root(result2, comm);
 
     auto result3 [[maybe_unused]] = comm.reduce(
-        send_buf({1.0, 2.0, 3.0}), recv_buf(output), op([](auto a, auto b) { return a + b; }, non_commutative));
+        send_buf({1.0, 2.0, 3.0}), recv_buf(output), op([](auto a, auto b) { return a + b; }, non_commutative)
+    );
     print_result_on_root(output, comm);
 
     std::vector<std::pair<int, double>> input2 = {{3, 0.25}};
@@ -58,7 +59,9 @@ int main() {
                                                      // dummy
                                                      return std::pair(a.first + b.first, a.second + b.second);
                                                  },
-                                                 commutative))
+                                                 commutative
+                                             )
+    )
                        .extract_recv_buffer();
     if (comm.rank() == 0) {
         for (auto& elem: result4) {
