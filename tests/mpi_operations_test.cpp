@@ -136,9 +136,7 @@ TYPED_TEST(TypedOperationsTest, test_builtin_operations) {
     using namespace kamping::internal;
     using T = typename TestFixture::operation_type;
 
-    if constexpr (
-        kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer
-        || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::floating) {
+    if constexpr (kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::floating) {
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::max<T>, T>::is_builtin));
         EXPECT_EQ((mpi_operation_traits<kamping::ops::max<T>, T>::op()), MPI_MAX);
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::max<>, T>::is_builtin));
@@ -160,10 +158,7 @@ TYPED_TEST(TypedOperationsTest, test_builtin_operations) {
         }
     }
 
-    if constexpr (
-        kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer
-        || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::floating
-        || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::complex) {
+    if constexpr (kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::floating || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::complex) {
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::plus<T>, T>::is_builtin));
         EXPECT_EQ((mpi_operation_traits<kamping::ops::plus<T>, T>::op()), MPI_SUM);
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::plus<>, T>::is_builtin));
@@ -190,9 +185,7 @@ TYPED_TEST(TypedOperationsTest, test_builtin_operations) {
         }
     }
 
-    if constexpr (
-        kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer
-        || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::logical) {
+    if constexpr (kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::logical) {
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::logical_and<T>, T>::is_builtin));
         EXPECT_EQ((mpi_operation_traits<kamping::ops::logical_and<T>, T>::op()), MPI_LAND);
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::logical_and<>, T>::is_builtin));
@@ -228,9 +221,7 @@ TYPED_TEST(TypedOperationsTest, test_builtin_operations) {
         }
     }
 
-    if constexpr (
-        kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer
-        || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::byte) {
+    if constexpr (kamping::mpi_type_traits<T>::category == kamping::TypeCategory::integer || kamping::mpi_type_traits<T>::category == kamping::TypeCategory::byte) {
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::bit_and<T>, T>::is_builtin));
         EXPECT_EQ((mpi_operation_traits<kamping::ops::bit_and<T>, T>::op()), MPI_BAND);
         EXPECT_TRUE((mpi_operation_traits<kamping::ops::bit_and<>, T>::is_builtin));

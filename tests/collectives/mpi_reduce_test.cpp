@@ -294,7 +294,8 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     // use lambda inline
     result = comm.reduce(
                      send_buf(input),
-                     op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::commutative))
+                     op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::commutative)
+    )
                  .extract_recv_buffer();
 
     if (comm.is_root()) {
