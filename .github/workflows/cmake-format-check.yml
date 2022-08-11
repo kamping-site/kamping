@@ -17,8 +17,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-      with:
-        submodules: false
+    - name: Delete extern directory
+      # Very hacky but the action doesn't allow excluding directories
+      # and for some reason the checkout action checks out submodules even though it shouldn't
+      run: rm -rf ./extern
     - name: Format CMake files
       id: cmake-format
       uses: Hespian/cmake-format-action@main
