@@ -9,7 +9,7 @@ on:
       - main
   workflow_dispatch:
 jobs:
-  formatting-check:
+  cpp-formatting-check:
     name: C++ Formatting Check
     runs-on: self-hosted
     container:

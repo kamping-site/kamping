@@ -9,7 +9,7 @@ on:
       - main
   workflow_dispatch:
 jobs:
-  formatting-check:
+  cmake-formatting-check:
     name: CMake Formatting Check
     runs-on: self-hosted
     container:
