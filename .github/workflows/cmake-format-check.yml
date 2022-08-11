@@ -17,11 +17,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-      with:
-        submodules: false
-
-    - name: Format CMake files
+    - name: Install cmake-format
+      run: pip install cmakelang
+    - name: Check formatting
       id: cmake-format
-      uses: PuneetMatharu/cmake-format-lint-action@v1.0.0
-      with:
-        args: --config-files .cmake-format.py --check
+      run: |
+        cmake-format --check $(find . -name 'CMakeLists.txt' -not -path "./extern/*")
