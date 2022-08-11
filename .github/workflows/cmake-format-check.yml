@@ -1,0 +1,25 @@
+name: cmake-format check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  formatting-check:
+    name: Formatting Check
+    runs-on: self-hosted
+    container:
+      image: "localhost:5000/kamping-ci"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Format CMake files
+      id: cmake-format
+      uses: PuneetMatharu/cmake-format-lint-action@v1.0.0
+      with:
+        args: --config-files .cmake-format.py --check
