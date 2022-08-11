@@ -18,7 +18,8 @@ if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
         if (DOXYGEN_VERSION VERSION_LESS "1.9.2")
             message(
                 WARNING
-                    "Doxygen must be version 1.9.2 or newer. Documentation may not be displayed correctly and CI may not pass even if checks pass locally."
+                    "Doxygen must be version 1.9.2 or newer. Documentation may not be displayed correctly and CI may "
+                    "not pass even if checks pass locally."
             )
         endif ()
         add_custom_target(
@@ -38,7 +39,8 @@ file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
 if (EXISTS "${LOC_PATH}")
     message(
         FATAL_ERROR
-            "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles."
+            "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build "
+            "subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles."
     )
 endif ()
 
@@ -121,13 +123,17 @@ endif ()
 
 # The assertion level controls which assertions are enabled during runtime:
 #
-# Level 0: Disable all assertions Level 10: Exception assertions = only enable exceptions (if not in exception mode)
-# Level 20: Light assertions = assertions that do not affect the running time of library operations significantly. Level
-# 30: Normal assertions = assertions that might slow down some operations of the library by a constant factor. Should
-# only be used in debug mode. Level 40: Light communication assertions = assertions that perform additional
-# communication causing small running time overheads. Level 50: Heavy communication assertions = assertions that perform
-# additional communication causing significant running time overheads. Level 60: Heavy assertions = assertions that
-# introduce overhead which renders some library operations infeasible when invoked with any significant work load.
+# * Level 0: Disable all assertions
+# * Level 10: Exception assertions = only enable exceptions (if not in exception mode)
+# * Level 20: Light assertions = assertions that do not affect the running time of library operations significantly.
+# * Level 30: Normal assertions = assertions that might slow down some operations of the library by a constant factor.
+#   Should only be used in debug mode.
+# * Level 40: Light communication assertions = assertions that perform additional communication causing small running
+#   time overheads.
+# * Level 50: Heavy communication assertions = assertions that perform additional communication causing significant
+#   running time overheads.
+# * Level 60: Heavy assertions = assertions that introduce overhead which renders some library operations infeasible
+#   when invoked with any significant work load.
 #
 # Assertion levels can be set explicitly using the -DKAMPING_ASSERTION_LEVEL=... flag. If no level is set explicitly, we
 # set it to 10 (exceptions only) in Release mode and 30 (up to normal assertions) in Debug mode.
