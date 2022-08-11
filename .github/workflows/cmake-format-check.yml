@@ -19,8 +19,8 @@ jobs:
       uses: actions/checkout@v2
     - name: Install cmake-format
       run: |
-        apt-get install python3 python3-pip
-        pip3 install cmakelang
+        apt-get install python3 python3-pip -y
+        pip3 install cmakelang -y
     - name: Check formatting
       id: cmake-format
       run: |
