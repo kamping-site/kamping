@@ -25,4 +25,4 @@ jobs:
     - name: Check formatting
       id: cmake-format
       run: |
-        cmake-format --check $(find . -name 'CMakeLists.txt' -not -path "./extern/*")
+        cmake-format --check $(find . -name '*.cmake' -o -name 'CMakeLists.txt' -not -path "./extern/*" -not -path "./.*"))
