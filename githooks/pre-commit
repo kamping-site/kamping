@@ -35,4 +35,4 @@ else
     echo "Warning: cmake-format not found, skipping."
 fi
 
-exit EXIT_SUCCESS
+exit $EXIT_SUCCESS
