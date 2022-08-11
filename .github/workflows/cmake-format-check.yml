@@ -18,7 +18,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
     - name: Install cmake-format
-      run: pip install cmakelang
+      run: pip3 install cmakelang
     - name: Check formatting
       id: cmake-format
       run: |
