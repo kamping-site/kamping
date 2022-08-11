@@ -17,12 +17,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-    - name: Install cmake-format
-      run: |
-        apt-get update
-        apt-get install python3 python3-pip -y
-        pip3 install cmakelang -y
-    - name: Check formatting
+
+    - name: Format CMake files
       id: cmake-format
-      run: |
-        cmake-format --check $(find . -name '*.cmake' -o -name 'CMakeLists.txt' -not -path "./extern/*" -not -path "./.*"))
+      uses: Hespian/cmake-format-action@main
+      with:
+        args: --config-files .cmake-format.py --check
