@@ -97,7 +97,7 @@ TEST(Bcasttest, vector_partial_transfer) {
 
     std::iota(values.begin(), values.end(), comm.rank() * 10);
     num_transferred_values = -1;
-    comm.bcast(send_recv_buf(transfer_view), recv_count_out(num_transferred_values));
+    comm.bcast(send_recv_buf(transfer_view), recv_counts_out(num_transferred_values));
     EXPECT_EQ(values.size(), 5);
     EXPECT_EQ(num_transferred_values, 3);
     EXPECT_THAT(values, ElementsAre(0, 1, 2, comm.rank() * 10 + 3, comm.rank() * 10 + 4));
@@ -223,7 +223,7 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
         }
 
         int num_elements_received = -1;
-        comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received));
+        comm.bcast(send_recv_buf(values), recv_counts_out(num_elements_received));
         EXPECT_EQ(values.size(), 4);
         EXPECT_EQ(num_elements_received, values.size());
         EXPECT_THAT(values, Each(Eq(comm.root())));
@@ -239,7 +239,7 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
         }
 
         int num_elements_received = -1;
-        comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received));
+        comm.bcast(send_recv_buf(values), recv_counts_out(num_elements_received));
         EXPECT_EQ(values.size(), 100);
         EXPECT_EQ(num_elements_received, values.size());
         EXPECT_THAT(values, Each(Eq(comm.root())));
@@ -258,7 +258,7 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
         }
 
         int num_elements_received = -1;
-        comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received));
+        comm.bcast(send_recv_buf(values), recv_counts_out(num_elements_received));
         EXPECT_EQ(values.size(), 43);
         EXPECT_EQ(num_elements_received, values.size());
         EXPECT_THAT(values, Each(Eq(comm.root())));
@@ -294,7 +294,7 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
         } else {
             values.resize(comm.rank());
             int num_elements_received = -1;
-            comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received));
+            comm.bcast(send_recv_buf(values), recv_counts_out(num_elements_received));
             EXPECT_EQ(num_elements, num_elements_received);
             EXPECT_EQ(num_elements_received, values.size());
         }

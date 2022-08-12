@@ -633,7 +633,7 @@ TEST(ParameterFactoriesTest, recv_counts_single_value_in_basics) {
 
 TEST(ParameterFactoriesTest, recv_count_out_basics) {
     int  recv_count;
-    auto recv_count_out_obj          = recv_count_out(recv_count);
+    auto recv_count_out_obj          = recv_counts_out(recv_count);
     *recv_count_out_obj.get().data() = 42;
     EXPECT_EQ(*recv_count_out_obj.get().data(), 42);
     EXPECT_EQ(recv_count, 42);

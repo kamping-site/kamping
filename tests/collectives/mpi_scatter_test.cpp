@@ -85,7 +85,7 @@ TEST(ScatterTest, scatter_extract_recv_count) {
     EXPECT_EQ(comm.scatter(send_buf(input)).extract_recv_counts(), 1);
 
     int recv_count_value;
-    comm.scatter(send_buf(input), recv_count_out(recv_count_value));
+    comm.scatter(send_buf(input), recv_counts_out(recv_count_value));
     EXPECT_EQ(recv_count_value, 1);
 }
 
@@ -154,7 +154,7 @@ TEST(ScatterTest, scatter_with_recv_count_out) {
 
     auto const input = create_input_vector_on_root(comm, 2);
     int        recv_count;
-    auto const result = comm.scatter(send_buf(input), recv_count_out(recv_count)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input), recv_counts_out(recv_count)).extract_recv_buffer();
 
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(recv_count, 2);

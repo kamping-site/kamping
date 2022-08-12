@@ -242,15 +242,6 @@ auto recv_counts_out(Container&& container) {
     );
 }
 
-/// @brief Generates a wrapper for a recv count output parameter.
-/// @param recv_count_out Reference for the output parameter.
-/// @return Wrapper around the given reference.
-inline auto recv_count_out(int& recv_count_out) {
-    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
-        recv_count_out
-    );
-}
-
 /// @brief Generates a wrapper for a recv count output parameter allocated by KaMPIng.
 ///
 /// This is primarily used by KaMPIng internally because not passing this to a function will have the same effect as
