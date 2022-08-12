@@ -55,7 +55,7 @@ int bcast_value(kamping::Communicator const& comm, T const bcast_value, int cons
 /// buffer by passing `kamping::ignore` to \ref kamping::send_buf().
 ///
 /// The following parameters are optional but incur communication overhead if omitted:
-/// - \ref kamping::recv_count() specifying the number of elements sent to each PE. If this parameter is omitted,
+/// - \ref kamping::recv_counts() specifying the number of elements sent to each PE. If this parameter is omitted,
 /// the number of elements sent to each PE is computed based on the size of the \ref kamping::send_buf() on the root
 /// PE and broadcasted to other PEs.
 ///
