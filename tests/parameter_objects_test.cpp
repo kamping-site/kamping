@@ -585,14 +585,10 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mpi_result) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf>    recv_buffer;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts> recv_counts;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts> recv_count;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs> recv_displs;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs> send_displs;
 
-    MPIResult result(
-        std::move(recv_buffer), std::move(recv_counts), std::move(recv_count), std::move(recv_displs),
-        std::move(send_displs)
-    );
+    MPIResult result(std::move(recv_buffer), std::move(recv_counts), std::move(recv_displs), std::move(send_displs));
 
     std::ignore = result.extract_recv_buffer();
     EXPECT_KASSERT_FAILS(result.extract_recv_buffer(), "Cannot extract a buffer that has already been extracted.");

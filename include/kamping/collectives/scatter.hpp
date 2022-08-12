@@ -153,7 +153,7 @@ auto kamping::Communicator::scatter(Args... args) const {
     THROW_IF_MPI_ERROR(err, MPI_Scatter);
 
     return MPIResult(
-        std::move(recv_buf), internal::BufferCategoryNotUsed{}, std::move(recv_count_param),
-        internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{}
+        std::move(recv_buf), std::move(recv_count_param), internal::BufferCategoryNotUsed{},
+        internal::BufferCategoryNotUsed{}
     );
 }

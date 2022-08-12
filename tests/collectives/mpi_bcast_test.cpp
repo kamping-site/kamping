@@ -290,7 +290,7 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
             values.resize(asserting_cast<size_t>(num_elements));
             std::fill(values.begin(), values.end(), comm.rank());
             auto result = comm.bcast(send_recv_buf(values));
-            EXPECT_EQ(result.extract_recv_count(), num_elements);
+            EXPECT_EQ(result.extract_recv_counts(), num_elements);
         } else {
             values.resize(comm.rank());
             int num_elements_received = -1;

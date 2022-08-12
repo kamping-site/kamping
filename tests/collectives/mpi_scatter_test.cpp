@@ -82,7 +82,7 @@ TEST(ScatterTest, scatter_extract_recv_count) {
 
     auto const input = create_input_vector_on_root(comm, 1);
 
-    EXPECT_EQ(comm.scatter(send_buf(input)).extract_recv_count(), 1);
+    EXPECT_EQ(comm.scatter(send_buf(input)).extract_recv_counts(), 1);
 
     int recv_count_value;
     comm.scatter(send_buf(input), recv_count_out(recv_count_value));
