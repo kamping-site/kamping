@@ -641,7 +641,7 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
 }
 
 TEST(ParameterFactoriesTest, recv_count_out_lib_allocated_basics) {
-    auto recv_count_out_obj          = recv_count_out(NewContainer<int>{});
+    auto recv_count_out_obj          = recv_counts_out(NewContainer<int>{});
     *recv_count_out_obj.get().data() = 42;
     EXPECT_EQ(*recv_count_out_obj.get().data(), 42);
     EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);

@@ -248,7 +248,7 @@ auto recv_counts_out(Container&& container) {
 /// passing it.
 ///
 /// @return Wrapper around a new recv_count ouptput integer.
-inline auto recv_count_out(NewContainer<int>&&) {
+inline auto recv_counts_out(NewContainer<int>&&) {
     // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
     return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
         NewContainer<int>{}
