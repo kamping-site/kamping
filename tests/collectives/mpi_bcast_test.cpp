@@ -125,7 +125,9 @@ TEST(BcastTest, vector_recv_count) {
 
             std::vector<int> values(num_values);
             if (comm.is_root()) {
-                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_values)), "");
+                EXPECT_KASSERT_FAILS(
+                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(num_values))), ""
+                );
             } else {
                 EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values)), "");
             }
@@ -137,9 +139,13 @@ TEST(BcastTest, vector_recv_count) {
 
             std::vector<int> values(num_values);
             if (comm.is_root()) {
-                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_values)), "");
+                EXPECT_KASSERT_FAILS(
+                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(num_values))), ""
+                );
             } else {
-                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(alternative_num_values)), "");
+                EXPECT_KASSERT_FAILS(
+                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(alternative_num_values))), ""
+                );
             }
         }
     }
@@ -272,11 +278,11 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
 
             if (comm.is_root()) {
                 values.resize(asserting_cast<size_t>(num_elements));
-                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_elements)), "");
+                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_counts(num_elements)), "");
             } else {
                 values.resize(comm.rank());
                 [[maybe_unused]] int num_elements_received = -1;
-                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count_out(num_elements_received)), "");
+                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_counts_out(num_elements_received)), "");
             }
         }
     }
