@@ -228,16 +228,6 @@ auto recv_counts(std::initializer_list<T> counts) {
     );
 }
 
-/// @brief Generates a wrapper for a recv count input parameter.
-/// @param recv_count The recv count to be encapsulated.
-/// @return Wrapper around the given recv count.
-inline auto recv_count(int recv_count) {
-    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::constant>(
-        std::move(recv_count)
-    );
-    // return internal::SingleElementOwningBuffer<int, internal::ParameterType::recv_count>(recv_count);
-}
-
 /// @brief Generates a wrapper for a recv count output parameter.
 /// @param recv_count_out Reference for the output parameter.
 /// @return Wrapper around the given reference.

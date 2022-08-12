@@ -71,7 +71,7 @@ TEST(ScatterTest, scatter_single_element_with_recv_count) {
     Communicator comm;
 
     auto const input  = create_input_vector_on_root(comm, 1);
-    auto const result = comm.scatter(send_buf(input), recv_count(1)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input), recv_counts(1)).extract_recv_buffer();
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());

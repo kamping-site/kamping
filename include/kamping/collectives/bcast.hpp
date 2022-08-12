@@ -140,5 +140,5 @@ auto kamping::Communicator::bcast_single(Args... args) const {
     // In contrast to bcast(...), the recv_count is not a possible parameter.
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root));
 
-    return this->bcast(std::forward<Args>(args)..., recv_count(1));
+    return this->bcast(std::forward<Args>(args)..., recv_counts(1));
 }

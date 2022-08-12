@@ -615,17 +615,17 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_container_library_alloc) {
     );
 }
 
-TEST(ParameterFactoriesTest, recv_count_in_basics) {
+TEST(ParameterFactoriesTest, recv_counts_single_value_in_basics) {
     {
         int  value             = 42;
-        auto recv_count_in_obj = recv_count(value);
+        auto recv_count_in_obj = recv_counts(value);
         EXPECT_EQ(*recv_count_in_obj.get().data(), 42);
         EXPECT_FALSE(decltype(recv_count_in_obj)::is_modifiable);
     }
 
     {
         // passed as rvalue
-        auto recv_count_in_obj = recv_count(42);
+        auto recv_count_in_obj = recv_counts(42);
         EXPECT_EQ(*recv_count_in_obj.get().data(), 42);
         EXPECT_FALSE(decltype(recv_count_in_obj)::is_modifiable);
     }
