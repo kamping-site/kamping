@@ -71,7 +71,7 @@ template <typename... Args>
 auto kamping::Communicator::scatter(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_count)
+        Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_counts)
     );
 
     // Optional parameter: root()
@@ -120,7 +120,7 @@ auto kamping::Communicator::scatter(Args... args) const {
 
     using default_recv_count_type = decltype(kamping::recv_count_out(NewContainer<int>{}));
     auto&& recv_count_param =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
             std::tuple(), args...
         );
 

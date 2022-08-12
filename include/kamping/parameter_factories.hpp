@@ -232,7 +232,7 @@ auto recv_counts(std::initializer_list<T> counts) {
 /// @param recv_count The recv count to be encapsulated.
 /// @return Wrapper around the given recv count.
 inline auto recv_count(int recv_count) {
-    return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::constant>(
+    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::constant>(
         std::move(recv_count)
     );
     // return internal::SingleElementOwningBuffer<int, internal::ParameterType::recv_count>(recv_count);
@@ -242,7 +242,7 @@ inline auto recv_count(int recv_count) {
 /// @param recv_count_out Reference for the output parameter.
 /// @return Wrapper around the given reference.
 inline auto recv_count_out(int& recv_count_out) {
-    return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
+    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
         recv_count_out
     );
 }
@@ -255,7 +255,7 @@ inline auto recv_count_out(int& recv_count_out) {
 /// @return Wrapper around a new recv_count ouptput integer.
 inline auto recv_count_out(NewContainer<int>&&) {
     // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
-    return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
+    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
         NewContainer<int>{}
     );
 }

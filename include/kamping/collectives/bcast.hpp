@@ -51,7 +51,7 @@ template <typename... Args>
 auto kamping::Communicator::bcast(Args... args) const {
     using namespace ::kamping::internal;
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_count)
+        Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_counts)
     );
 
     // Get the root PE
@@ -72,7 +72,7 @@ auto kamping::Communicator::bcast(Args... args) const {
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
     using default_recv_count_type = decltype(kamping::recv_count_out(NewContainer<int>{}));
     auto&& recv_count_param =
-        internal::select_parameter_type_or_default<ParameterType::recv_count, default_recv_count_type>(
+        internal::select_parameter_type_or_default<ParameterType::recv_counts, default_recv_count_type>(
             std::tuple(), args...
         );
 
