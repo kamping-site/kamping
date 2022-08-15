@@ -9,8 +9,8 @@ on:
       - main
   workflow_dispatch:
 jobs:
-  formatting-check:
-    name: Formatting Check
+  cpp-formatting-check:
+    name: C++ Formatting Check
     runs-on: self-hosted
     container:
       image: "localhost:5000/kamping-ci"
