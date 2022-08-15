@@ -6,7 +6,7 @@ EXIT_SUCCESS=0
 # see https://git-scm.com/docs/githooks
 git_root=$(pwd)
 
-format-files() {
+format_files() {
     formatter="${1:?'No formatter provided'}"
     file_regex="${2:?'No file RegEx provided'}"
 
@@ -22,7 +22,7 @@ format-files() {
 if clang_format="$("$git_root/scripts/get_clang_format.sh")"; then
     clang_format="$clang_format --dry-run -Werror"
     clang_file_regex='.*\.(c|cpp|h|hpp)\b'
-    format-files "$clang_format" "$clang_file_regex"
+    format_files "$clang_format" "$clang_file_regex"
 else
     echo "Warning: clang-format not found, skipping."
 fi
@@ -30,7 +30,7 @@ fi
 if cmake_format="$("$git_root/scripts/get_cmake_format.sh")"; then
     cmake_format="$cmake_format --check"
     cmake_file_regex='(CMakeLists.txt|.*\.cmake)\b'
-    format-files "$cmake_format" "$cmake_file_regex"
+    format_files "$cmake_format" "$cmake_file_regex"
 else
     echo "Warning: cmake-format not found, skipping."
 fi
