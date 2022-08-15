@@ -50,7 +50,8 @@ enum class ParameterType {
     sender,      ///< Tag used to represent the sending PE in a \c MPI call.
     op,          ///< Tag used to represent a reduce operation in a \c MPI call.
     receiver,    ///< Tag used to represent the receiving PE in a \c MPI call.
-    root         ///< Tag used to represent the root PE in a \c MPI collectives call.
+    root,        ///< Tag used to represent the root PE in a \c MPI collectives call.
+    on_rank_0    ///< Tag used to represent the value of the exclusive scan operation on rank 0.
 };
 /// @}
 } // namespace internal
