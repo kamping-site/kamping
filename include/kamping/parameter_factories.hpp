@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/parameter_type_definitions.hpp"
@@ -55,7 +56,6 @@ auto make_data_buffer(Data&& data) {
     constexpr bool is_const_buffer    = modifiability == BufferModifiability::constant;
     // Implication: is_const_data_type => is_const_buffer.
     static_assert(!is_const_data_type || is_const_buffer);
-
     return DataBuffer<
         std::remove_const_t<std::remove_reference_t<Data>>, parameter_type, modifiability, ownership,
         BufferAllocation::user_allocated>(std::forward<Data>(data));
@@ -80,6 +80,8 @@ auto make_data_buffer(NewContainer<Data>&&) {
 ///
 /// Creates an owning DataBuffer with the given template parameters.
 ///
+/// An initializer list of type \c bool will be converted to a \c std::vector<kamping::kabool>.
+///
 /// @tparam parameter_type parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -89,10 +91,21 @@ auto make_data_buffer(NewContainer<Data>&&) {
 /// @return A library allocated DataBuffer with the given template parameters.
 template <ParameterType parameter_type, BufferModifiability modifiability, typename Data>
 auto make_data_buffer(std::initializer_list<Data> data) {
-    std::vector<Data> data_vec{data};
+    auto data_vec = [&]() {
+        if constexpr (std::is_same_v<Data, bool>) {
+            return std::vector<kabool>(data.begin(), data.end());
+            // We only use automatic conversion of bool to kabool for initializer lists, but not for single elements of
+            // type bool. The reason for that is, that sometimes single element conversion may not be desired.
+            // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
+            // send_recv_buf = bool&
+        } else {
+            return std::vector<Data>{data};
+        }
+    }();
     return DataBuffer<
-        std::vector<Data>, parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::user_allocated>(
-        std::move(data_vec));
+        decltype(data_vec), parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::user_allocated>(
+        std::move(data_vec)
+    );
 }
 
 } // namespace internal
@@ -127,7 +140,8 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
 template <typename Data>
 auto send_buf(Data&& data) {
     return internal::make_data_buffer<internal::ParameterType::send_buf, internal::BufferModifiability::constant>(
-        std::forward<Data>(data));
+        std::forward<Data>(data)
+    );
 }
 
 /// @brief Generates a buffer taking ownership of the data pass to the send buffer as an initializer list.
@@ -138,7 +152,8 @@ auto send_buf(Data&& data) {
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
     return internal::make_data_buffer<internal::ParameterType::send_buf, internal::BufferModifiability::constant>(
-        std::move(data));
+        std::move(data)
+    );
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
@@ -157,8 +172,8 @@ auto send_recv_buf(Data&& data) {
     return internal::make_data_buffer<internal::ParameterType::send_recv_buf, modifiability>(std::forward<Data>(data));
 }
 
-/// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must contain
-/// the send counts to each relevant PE.
+/// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must
+/// contain the send counts to each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
 /// value_type
@@ -168,7 +183,8 @@ auto send_recv_buf(Data&& data) {
 template <typename Container>
 auto send_counts(Container&& container) {
     return internal::make_data_buffer<internal::ParameterType::send_counts, internal::BufferModifiability::constant>(
-        std::forward<Container>(container));
+        std::forward<Container>(container)
+    );
 }
 
 /// @brief Generates a buffer wrapper for the send counts based on an initializer list, i.e. the
@@ -180,11 +196,12 @@ auto send_counts(Container&& container) {
 template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
     return internal::make_data_buffer<internal::ParameterType::send_counts, internal::BufferModifiability::constant>(
-        std::move(counts));
+        std::move(counts)
+    );
 }
 
-/// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must contain
-/// the recv counts from each relevant PE.
+/// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must
+/// contain the recv counts from each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
 /// value_type
@@ -194,7 +211,8 @@ auto send_counts(std::initializer_list<T> counts) {
 template <typename Container>
 auto recv_counts(Container&& container) {
     return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::constant>(
-        std::forward<Container>(container));
+        std::forward<Container>(container)
+    );
 }
 
 /// @brief Generates a buffer wrapper for the recv counts based on an initializer list, i.e. the
@@ -206,7 +224,8 @@ auto recv_counts(Container&& container) {
 template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
     return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::constant>(
-        std::move(counts));
+        std::move(counts)
+    );
 }
 
 /// @brief Generates a wrapper for a recv count input parameter.
@@ -214,7 +233,8 @@ auto recv_counts(std::initializer_list<T> counts) {
 /// @return Wrapper around the given recv count.
 inline auto recv_count(int recv_count) {
     return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::constant>(
-        std::move(recv_count));
+        std::move(recv_count)
+    );
     // return internal::SingleElementOwningBuffer<int, internal::ParameterType::recv_count>(recv_count);
 }
 
@@ -223,7 +243,8 @@ inline auto recv_count(int recv_count) {
 /// @return Wrapper around the given reference.
 inline auto recv_count_out(int& recv_count_out) {
     return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
-        recv_count_out);
+        recv_count_out
+    );
 }
 
 /// @brief Generates a wrapper for a recv count output parameter allocated by KaMPIng.
@@ -235,11 +256,12 @@ inline auto recv_count_out(int& recv_count_out) {
 inline auto recv_count_out(NewContainer<int>&&) {
     // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
     return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
-        NewContainer<int>{});
+        NewContainer<int>{}
+    );
 }
 
-/// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage must
-/// contain the send displacements to each relevant PE.
+/// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
+/// must contain the send displacements to each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
 /// value_type
@@ -249,7 +271,8 @@ inline auto recv_count_out(NewContainer<int>&&) {
 template <typename Container>
 auto send_displs(Container&& container) {
     return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::constant>(
-        std::forward<Container>(container));
+        std::forward<Container>(container)
+    );
 }
 
 /// @brief Generates a buffer wrapper for the send displacements based on an initializer list, i.e. the
@@ -261,11 +284,12 @@ auto send_displs(Container&& container) {
 template <typename T>
 auto send_displs(std::initializer_list<T> displs) {
     return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::constant>(
-        std::move(displs));
+        std::move(displs)
+    );
 }
 
-/// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage must
-/// contain the recv displacements from each relevant PE.
+/// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage
+/// must contain the recv displacements from each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
 /// value_type
@@ -275,7 +299,8 @@ auto send_displs(std::initializer_list<T> displs) {
 template <typename Container>
 auto recv_displs(Container&& container) {
     return internal::make_data_buffer<internal::ParameterType::recv_displs, internal::BufferModifiability::constant>(
-        std::forward<Container>(container));
+        std::forward<Container>(container)
+    );
 }
 
 /// @brief Generates a buffer wrapper for the receive displacements based on an initializer list, i.e. the
@@ -287,7 +312,8 @@ auto recv_displs(Container&& container) {
 template <typename T>
 auto recv_displs(std::initializer_list<T> displs) {
     return internal::make_data_buffer<internal::ParameterType::recv_displs, internal::BufferModifiability::constant>(
-        std::move(displs));
+        std::move(displs)
+    );
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
@@ -300,7 +326,8 @@ auto recv_displs(std::initializer_list<T> displs) {
 template <typename Container>
 auto recv_buf(Container&& container) {
     return internal::make_data_buffer<internal::ParameterType::recv_buf, internal::BufferModifiability::modifiable>(
-        std::forward<Container>(container));
+        std::forward<Container>(container)
+    );
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
@@ -313,7 +340,8 @@ auto recv_buf(Container&& container) {
 template <typename Container>
 auto send_displs_out(Container&& container) {
     return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::modifiable>(
-        std::forward<Container>(container));
+        std::forward<Container>(container)
+    );
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
@@ -326,24 +354,26 @@ auto send_displs_out(Container&& container) {
 template <typename Container>
 auto recv_counts_out(Container&& container) {
     return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
-        std::forward<Container>(container));
+        std::forward<Container>(container)
+    );
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying storage
-/// will contained the receive displacements when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
+/// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
+/// storage will contained the receive displacements when the \c MPI call has been completed. The underlying
+/// container must provide a \c data(), \c resize() and \c size() member function and expose the contained \c
+/// value_type
 /// @tparam Container Container type which contains the receive displacements.
 /// @param container Container which will contain the receive displacements.
 /// @return Object referring to the storage containing the receive displacements.
 template <typename Container>
 auto recv_displs_out(Container&& container) {
     return internal::make_data_buffer<internal::ParameterType::recv_displs, internal::BufferModifiability::modifiable>(
-        std::forward<Container>(container));
+        std::forward<Container>(container)
+    );
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like \c
-/// MPI_Gather.
+/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
+/// \c MPI_Gather.
 ///
 /// @param rank Rank of the root PE.
 /// @returns Root Object containing the rank information of the root PE.
@@ -351,8 +381,8 @@ inline auto root(int rank) {
     return internal::Root(rank);
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like \c
-/// MPI_Gather.
+/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
+/// \c MPI_Gather.
 ///
 /// @param rank Rank of the root PE.
 /// @returns Root Object containing the rank information of the root PE.
@@ -366,9 +396,9 @@ inline auto root(size_t rank) {
 /// @tparam Commutative tag whether the operation is commutative
 /// @param op the operation
 /// @param commute the commutativity tag
-///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only supported
-///     for builtin operations. This is used to streamline the interface so that the use does not have to provide
-///     commutativity info when the operation is builtin.
+///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
+///     supported for builtin operations. This is used to streamline the interface so that the use does not have
+///     to provide commutativity info when the operation is builtin.
 template <typename Op, typename Commutative = internal::undefined_commutative_tag>
 internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = internal::undefined_commutative_tag{}) {
     return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);

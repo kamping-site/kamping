@@ -117,6 +117,9 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
     if constexpr (std::is_same_v<T_no_cv, bool>) {
         possible_mpi_datatypes.push_back(MPI_CXX_BOOL);
     }
+    if constexpr (std::is_same_v<T_no_cv, kamping::kabool>) {
+        possible_mpi_datatypes.push_back(MPI_CXX_BOOL);
+    }
     if constexpr (std::is_same_v<T_no_cv, std::complex<float>>) {
         possible_mpi_datatypes.push_back(MPI_CXX_FLOAT_COMPLEX);
     }
@@ -165,10 +168,12 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
     EXPECT_THAT(possible_mpi_datatypes<uint32_t>(), Contains(mpi_datatype<uint32_t>()));
     EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(mpi_datatype<uint64_t>()));
     EXPECT_THAT(possible_mpi_datatypes<bool>(), Contains(mpi_datatype<bool>()));
+    EXPECT_THAT(possible_mpi_datatypes<kamping::kabool>(), Contains(mpi_datatype<kamping::kabool>()));
     EXPECT_THAT(possible_mpi_datatypes<std::complex<double>>(), Contains(mpi_datatype<std::complex<double>>()));
     EXPECT_THAT(possible_mpi_datatypes<std::complex<float>>(), Contains(mpi_datatype<std::complex<float>>()));
     EXPECT_THAT(
-        possible_mpi_datatypes<std::complex<long double>>(), Contains(mpi_datatype<std::complex<long double>>()));
+        possible_mpi_datatypes<std::complex<long double>>(), Contains(mpi_datatype<std::complex<long double>>())
+    );
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_const_and_volatile) {
@@ -191,12 +196,14 @@ TEST(MpiDataTypeTest, mpi_datatype_size_t) {
     // size_t, which should be one of the unsigned integer types with at least 16 bits (as of C++11).
     EXPECT_THAT(
         (std::array{MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG}),
-        Contains(mpi_datatype<size_t>()));
+        Contains(mpi_datatype<size_t>())
+    );
 
     // As should std::size_t, which should be one of the unsigned integer types with at least 16 bits (as of C++11).
     EXPECT_THAT(
         (std::array{MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG}),
-        Contains(mpi_datatype<std::size_t>()));
+        Contains(mpi_datatype<std::size_t>())
+    );
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_enum) {
@@ -338,6 +345,7 @@ TEST(MPIDataTypeTest, test_type_groups) {
     EXPECT_EQ(kamping::mpi_type_traits<long double>::category, kamping::TypeCategory::floating);
 
     EXPECT_EQ(kamping::mpi_type_traits<bool>::category, kamping::TypeCategory::logical);
+    EXPECT_EQ(kamping::mpi_type_traits<kamping::kabool>::category, kamping::TypeCategory::logical);
 
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<float>>::category, kamping::TypeCategory::complex);
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<double>>::category, kamping::TypeCategory::complex);
@@ -375,4 +383,22 @@ TEST(MpiDataTypeTest, mpi_datatype_size) {
         EXPECT_THAT(e.what(), HasSubstr("MPI_Type_size failed"));
     }
     EXPECT_TRUE(has_thrown);
+}
+
+TEST(MpiDataTypeTest, kabool_basics) {
+    // size matches bool
+    EXPECT_EQ(sizeof(kabool), sizeof(bool));
+    // construction + explicit conversion
+    EXPECT_EQ(static_cast<bool>(kabool{}), false);
+    EXPECT_EQ(static_cast<bool>(kabool{false}), false);
+    EXPECT_EQ(static_cast<bool>(kabool{true}), true);
+    EXPECT_EQ(static_cast<kabool>(false), kabool{false});
+    EXPECT_EQ(static_cast<kabool>(true), kabool{true});
+    // implicit conversion
+    EXPECT_EQ(kabool{false}, false);
+    EXPECT_EQ(kabool{true}, true);
+    EXPECT_EQ(kabool{true} && kabool{false}, false);
+    EXPECT_EQ(kabool{true} && kabool{true}, true);
+    EXPECT_EQ(kabool{false} || kabool{false}, false);
+    EXPECT_EQ(kabool{true} || kabool{false}, true);
 }

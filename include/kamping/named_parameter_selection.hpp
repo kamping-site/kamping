@@ -121,7 +121,8 @@ template <ParameterType parameter_type, typename DefaultParameterType, typename.
 decltype(auto) select_parameter_type_or_default(std::tuple<DefaultArguments...> default_arguments, Args&... args) {
     static_assert(
         std::is_constructible_v<DefaultParameterType, DefaultArguments...>,
-        "The default parameter cannot be constructed from the provided arguments");
+        "The default parameter cannot be constructed from the provided arguments"
+    );
     if constexpr (has_parameter_type<parameter_type, Args...>()) {
         constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
         return std::get<selected_index>(std::forward_as_tuple(args...));

@@ -73,7 +73,8 @@ public:
     /// the constructor instead of an actual buffer object.
     MPIResult(
         RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvCount&& recv_count, RecvDispls&& recv_displs,
-        SendDispls&& send_displs)
+        SendDispls&& send_displs
+    )
         : _recv_buffer(std::forward<RecvBuf>(recv_buf)),
           _recv_counts(std::forward<RecvCounts>(recv_counts)),
           _recv_count(std::forward<RecvCount>(recv_count)),

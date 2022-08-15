@@ -15,38 +15,40 @@
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
-#include "kamping/collectives/allreduce.hpp"
+#include "kamping/collectives/scan.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
 
-TEST(AllreduceTest, allreduce_no_receive_buffer) {
+TEST(ScanTest, scan_no_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
 
-    auto result = comm.allreduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+    auto result = comm.scan(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
 
-    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+    std::vector<int> expected_result = {
+        ((comm.rank_signed() + 1) * comm.rank_signed()) / 2, (comm.rank_signed() + 1) * 42};
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AllreduceTest, allreduce_with_receive_buffer) {
+TEST(ScanTest, scan_with_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.scan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
     EXPECT_EQ(result.size(), 2);
 
-    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+    std::vector<int> expected_result = {
+        ((comm.rank_signed() + 1) * comm.rank_signed()) / 2, (comm.rank_signed() + 1) * 42};
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AllreduceTest, allreduce_builtin_op_on_non_builtin_type) {
+TEST(ScanTest, scan_builtin_op_on_non_builtin_type) {
     Communicator comm;
 
     struct MyInt {
@@ -62,10 +64,10 @@ TEST(AllreduceTest, allreduce_builtin_op_on_non_builtin_type) {
     };
     std::vector<MyInt> input = {comm.rank_signed(), 42};
 
-    auto result =
-        comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative)).extract_recv_buffer();
+    auto result = comm.scan(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative)).extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
-    std::vector<MyInt> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+    std::vector<MyInt> expected_result = {
+        ((comm.rank_signed() + 1) * comm.rank_signed()) / 2, (comm.rank_signed() + 1) * 42};
     EXPECT_EQ(result, expected_result);
 }
 
@@ -73,7 +75,7 @@ int add_plus_42_function(int const& lhs, int const& rhs) {
     return lhs + rhs + 42;
 }
 
-TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
+TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     Communicator comm;
 
     auto add_plus_42_lambda = [](auto const& lhs, auto const& rhs) {
@@ -83,31 +85,29 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     { // use function ptr
-        auto result =
-            comm.allreduce(send_buf(input), op(add_plus_42_function, kamping::commutative)).extract_recv_buffer();
+        auto result = comm.scan(send_buf(input), op(add_plus_42_function, kamping::commutative)).extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
-            comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            (comm.rank_signed() + 1) * 0 + (comm.rank_signed()) * 42,
+            (comm.rank_signed() + 1) * 17 + (comm.rank_signed()) * 42,
+            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42};
         EXPECT_EQ(result, expected_result);
     }
 
     { // use lambda
-        auto result =
-            comm.allreduce(send_buf(input), op(add_plus_42_lambda, kamping::commutative)).extract_recv_buffer();
+        auto result = comm.scan(send_buf(input), op(add_plus_42_lambda, kamping::commutative)).extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
-            comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            (comm.rank_signed() + 1) * 0 + (comm.rank_signed()) * 42,
+            (comm.rank_signed() + 1) * 17 + (comm.rank_signed()) * 42,
+            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42};
         EXPECT_EQ(result, expected_result);
     }
 
     { // use lambda inline
-        auto result = comm.allreduce(
+        auto result = comm.scan(
                               send_buf(input),
                               op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::commutative)
         )
@@ -115,9 +115,9 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
-            comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            (comm.rank_signed() + 1) * 0 + (comm.rank_signed()) * 42,
+            (comm.rank_signed() + 1) * 17 + (comm.rank_signed()) * 42,
+            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42};
         EXPECT_EQ(result, expected_result);
     }
 
@@ -127,18 +127,18 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
                 return lhs + rhs + 42;
             }
         };
-        auto result = comm.allreduce(send_buf(input), op(MySum42{}, kamping::commutative)).extract_recv_buffer();
+        auto result = comm.scan(send_buf(input), op(MySum42{}, kamping::commutative)).extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
-            comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            (comm.rank_signed() + 1) * 0 + (comm.rank_signed()) * 42,
+            (comm.rank_signed() + 1) * 17 + (comm.rank_signed()) * 42,
+            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42};
         EXPECT_EQ(result, expected_result);
     }
 }
 
-TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type_non_commutative) {
+TEST(ScanTest, scan_custom_operation_on_builtin_type_non_commutative) {
     Communicator comm;
 
     auto get_right = [](auto const&, auto const& rhs) {
@@ -147,14 +147,14 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type_non_commutative) 
 
     std::vector<int> input = {comm.rank_signed() + 17};
 
-    auto result = comm.allreduce(send_buf(input), op(get_right, kamping::non_commutative)).extract_recv_buffer();
+    auto result = comm.scan(send_buf(input), op(get_right, kamping::non_commutative)).extract_recv_buffer();
 
     EXPECT_EQ(result.size(), 1);
-    std::vector<int> expected_result = {comm.size_signed() - 1 + 17};
+    std::vector<int> expected_result = {comm.rank_signed() + 17};
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AllreduceTest, allreduce_custom_operation_on_custom_type) {
+TEST(ScanTest, scan_custom_operation_on_custom_type) {
     Communicator comm;
 
     struct Aggregate {
@@ -181,27 +181,12 @@ TEST(AllreduceTest, allreduce_custom_operation_on_custom_type) {
     Aggregate              agg2  = {comm.rank_signed() + 42, comm.rank_signed() + 42, false, 1};
     std::vector<Aggregate> input = {agg1, agg2};
 
-    Aggregate              agg1_expected   = {0, comm.size_signed() - 1, true, comm.size_signed()};
-    Aggregate              agg2_expected   = {42, comm.size_signed() - 1 + 42, false, comm.size_signed()};
+    Aggregate              agg1_expected   = {0, comm.rank_signed(), true, comm.rank_signed() + 1};
+    Aggregate              agg2_expected   = {42, comm.rank_signed() + 42, false, comm.rank_signed() + 1};
     std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
 
-    auto result = comm.allreduce(send_buf(input), op(my_op, kamping::commutative)).extract_recv_buffer();
+    auto result = comm.scan(send_buf(input), op(my_op, kamping::commutative)).extract_recv_buffer();
 
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(result, expected_result);
 }
-
-// Death test + MPI does not work
-/// @todo Add a prober test for the input validation.
-// TEST(AllreduceTest, different_send_buf_sizes_fails) {
-//     Communicator comm;
-//
-//     std::vector<int> input(comm.rank());
-//     assert(input.size() == comm.rank());
-//
-//     if (kassert::internal::assertion_enabled(assert::light_communication)) {
-//         EXPECT_KASSERT_FAILS(
-//             comm.allreduce(send_buf(input), op(kamping::ops::plus<>{})),
-//             "The send buffer has to be the same size on all ranks.");
-//     }
-// }

@@ -45,6 +45,69 @@ namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
 
+namespace internal {
+
+/// @brief Boolean value helping to decide if type has a \c value_type member type.
+/// @return \c true if class has \c value_type method and \c false otherwise.
+template <typename, typename = void>
+static constexpr bool has_value_type_v = false;
+
+/// @brief Boolean value helping to decide if type has a \c value_type member type.
+/// @return \c true if class has \c value_type method and \c false otherwise.
+template <typename T>
+static constexpr bool has_value_type_v<T, std::void_t<typename T::value_type>> = true;
+
+/// @brief Type trait to check if a type is an instance of a templated type.
+///
+/// based on https://stackoverflow.com/a/31763111
+/// @tparam T The concrete type.
+/// @tparam Template The type template.
+/// @return \c true if the type is an instance and \c false otherwise.
+template <class T, template <class...> class Template>
+struct is_specialization : std::false_type {};
+
+/// @brief Type trait to check if a type is an instance of a templated type.
+///
+/// based on https://stackoverflow.com/a/31763111
+///
+/// A little note on how this works:
+/// - consider <tt>is_specialization<std::vector<bool, my_alloc>, std::vector></tt>
+/// - this gets template matched with the following specialization such that
+///    - <tt>Template = template<T...> std::vector<T...></tt>
+///    - <tt>Args... = bool, my_alloc</tt>
+/// - but this may only be matched in the case that <tt>Template<Args...> = std::vector<bool, my_alloc></tt>
+/// @tparam T The concrete type.
+/// @tparam Template the type template
+/// @return \c true if the type is an instance and \c false otherwise.
+template <template <class...> class Template, class... Args>
+struct is_specialization<Template<Args...>, Template> : std::true_type {};
+
+/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
+/// @tparam T The type.
+/// @return \c true if \c T is an template instance of \c std::vector<bool>, \c false otherwise.
+template <typename T, typename = void>
+static constexpr bool is_vector_bool_v = false;
+
+/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
+/// This catches the edge case of elements which do not have a value type, they can not be a vector bool.
+///
+/// @tparam T The type.
+/// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
+template <typename T>
+static constexpr bool is_vector_bool_v<
+    T, typename std::enable_if<!has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> = false;
+
+/// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
+/// @tparam T The type.
+/// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
+template <typename T>
+static constexpr bool
+    is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
+        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
+            std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
+
+} // namespace internal
+
 /// @brief Type used for tag dispatching.
 ///
 /// This types needs to be used to select internal::LibAllocContainerBasedBuffer as buffer type.
@@ -137,6 +200,14 @@ public:
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
                                                                          ///< non-const depending on
                                                                          ///< modifiability.
+
+    // We can not do the check for std::vector<bool> here, because to use a DataBuffer of std::vector<bool> as an unused
+    // default parameter is allowed, as long the buffer is never used. Therefore the check for std::vector<bool> happens
+    // only when the underlying member is actually accessed and the corresponding accessor method is instantiated.
+    // static_assert(
+    //     !is_vector_bool_v<MemberType>,
+    //     "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead.");
+
     using MemberTypeWithConstAndRef = std::conditional_t<
         ownership == BufferOwnership::owning, MemberTypeWithConst,
         MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
@@ -182,13 +253,11 @@ public:
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage.
     size_t size() const {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get the size of a buffer that has already been extracted.", assert::normal);
-#endif
+        kassert_not_extracted("Cannot get the size of a buffer that has already been extracted.");
         if constexpr (is_single_element) {
             return 1;
         } else {
-            return _data.size();
+            return underlying().size();
         }
     }
 
@@ -207,61 +276,52 @@ public:
         // Technically not needed here because _data is const in this case, so we can't call resize() anyways. But this
         // gives a nicer error message.
         static_assert(is_modifiable, "Trying to resize a constant DataBuffer");
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot resize a buffer that has already been extracted.", assert::normal);
-#endif
+        kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
         if constexpr (is_single_element) {
             KASSERT(
                 size == 1u, "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                            "element buffers always hold exactly one element.");
+                            "element buffers always hold exactly one element."
+            );
         } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
             KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
         } else {
-            _data.resize(size);
+            underlying().resize(size);
         }
     }
 
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type const* data() const {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::normal);
-#endif
+        kassert_not_extracted("Cannot get a pointer to a buffer that has already been extracted.");
         if constexpr (is_single_element) {
-            return &_data;
+            return &underlying();
         } else {
-            return std::data(_data);
+            return std::data(underlying());
         }
     }
 
     /// @brief Get access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type_with_const* data() {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get a pointer to a buffer that has already been extracted.", assert::normal);
-#endif
+        kassert_not_extracted("Cannot get a pointer to a buffer that has already been extracted.");
         if constexpr (is_single_element) {
-            return &_data;
+            return &underlying();
         } else {
-            return std::data(_data);
+            return std::data(underlying());
         }
     }
 
     /// @brief Get read-only access to the underlying storage.
     /// @return Span referring the underlying storage.
     Span<value_type const> get() const {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
-#endif
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
         return {this->data(), this->size()};
     }
 
     /// @brief Get access to the underlying storage.
     /// @return Span referring to the underlying storage.
     Span<value_type_with_const> get() {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
-#endif
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
         return {this->data(), this->size()};
     }
 
@@ -269,18 +329,32 @@ public:
     /// @return The single element wrapped by this object.
     template <bool enabled = is_single_element, std::enable_if_t<enabled, bool> = true>
     value_type const get_single_element() const {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get an element from a buffer that has already been extracted.", assert::normal);
-#endif
-        return _data;
+        kassert_not_extracted("Cannot get an element from a buffer that has already been extracted.");
+        return underlying();
     }
 
     /// @brief Provides access to the underlying data.
     /// @return A reference to the data.
     MemberType const& underlying() const {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot get a buffer that has already been extracted.", assert::normal);
-#endif
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
+        // this assertion is only checked if the buffer is actually accessed.
+        static_assert(
+            !is_vector_bool_v<MemberType>,
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead."
+        );
+        return _data;
+    }
+
+    /// @brief Provides access to the underlying data.
+    /// @return A reference to the data.
+    template <bool enabled = modifiability == BufferModifiability::modifiable, std::enable_if_t<enabled, bool> = true>
+    MemberType& underlying() {
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
+        // this assertion is only checked if the buffer is actually accessed.
+        static_assert(
+            !is_vector_bool_v<MemberType>,
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead."
+        );
         return _data;
     }
 
@@ -292,15 +366,32 @@ public:
     MemberTypeWithConst extract() {
         static_assert(
             ownership == BufferOwnership::owning, "Moving out of a reference should not be done because it would leave "
-                                                  "a users container in an unspecified state.");
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, "Cannot extract a buffer that has already been extracted.", assert::normal);
-        is_extracted = true;
-#endif
-        return std::move(_data);
+                                                  "a users container in an unspecified state."
+        );
+        kassert_not_extracted("Cannot extract a buffer that has already been extracted.");
+        auto extracted = std::move(underlying());
+        // we set is_extracted here because otherwise the call to underlying() would fail
+        set_extracted();
+        return extracted;
     }
 
 private:
+    /// @brief Set the extracted flag to indicate that the data stored in this buffer has been moved out.
+    void set_extracted() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        is_extracted = true;
+#endif
+    }
+
+    /// @brief Throws an assertion if the extracted flag is set, i.e. the underlying data has been moved out.
+    ///
+    /// @param message The message for the assertion.
+    void kassert_not_extracted(std::string const message [[maybe_unused]]) const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, message, assert::normal);
+#endif
+    }
+
     MemberTypeWithConstAndRef _data; ///< Container which holds the actual data.
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     bool is_extracted = false; ///< Has the container been extracted and is therefore in an invalid state?
@@ -335,16 +426,6 @@ public:
         return {nullptr, 0};
     }
 };
-
-/// @brief Buffer based on a single element type that has been allocated by the user.
-///
-/// SingleElementModifiableBuffer wraps modifiable single-element buffer storage that has already been allocated by
-/// the user.
-/// @tparam DataType Type of the element wrapped.
-/// @tparam ParameterType parameter type represented by this buffer.
-template <typename DataType, ParameterType type>
-using SingleElementModifiableBuffer =
-    DataBuffer<DataType, type, BufferModifiability::modifiable, BufferOwnership::referencing>;
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
 class Root {

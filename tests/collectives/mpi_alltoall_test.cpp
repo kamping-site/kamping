@@ -80,7 +80,8 @@ TEST(AlltoallTest, custom_type_custom_container) {
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
+
+        bool operator==(const CustomType& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -211,7 +212,8 @@ TEST(AlltoallvTest, custom_type_custom_container) {
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
+
+        bool operator==(const CustomType& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -228,7 +230,8 @@ TEST(AlltoallvTest, custom_type_custom_container) {
     // Do the alltoallv - receive into a library allocated OwnContainer
     auto result =
         comm.alltoallv(
-                send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}), kamping::send_counts(send_counts))
+                send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}), kamping::send_counts(send_counts)
+        )
             .extract_recv_buffer();
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), comm.size());
@@ -250,7 +253,8 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
+
+        bool operator==(const CustomType& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -276,7 +280,8 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
     auto mpi_result = comm.alltoallv(
         send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}), kamping::send_counts(send_counts),
         send_displs_out(NewContainer<OwnContainer<int>>{}), recv_counts_out(NewContainer<OwnContainer<int>>{}),
-        recv_displs_out(NewContainer<OwnContainer<int>>{}));
+        recv_displs_out(NewContainer<OwnContainer<int>>{})
+    );
 
     // Check recv buffer
     OwnContainer<CustomType> result = mpi_result.extract_recv_buffer();
@@ -322,7 +327,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
+
+        bool operator==(const CustomType& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -350,7 +356,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
     OwnContainer<int>        recv_displs;
     comm.alltoallv(
         send_buf(input), recv_buf(result), kamping::send_counts(send_counts), send_displs_out(send_displs),
-        recv_counts_out(recv_counts), recv_displs_out(recv_displs));
+        recv_counts_out(recv_counts), recv_displs_out(recv_displs)
+    );
 
     // Check recv buffer
     ASSERT_NE(result.data(), nullptr);
@@ -395,7 +402,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
+
+        bool operator==(const CustomType& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -426,7 +434,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
     OwnContainer<int>        recv_displs;
     comm.alltoallv(
         send_buf(input), recv_buf(result), kamping::send_counts(send_counts), send_displs_out(send_displs),
-        kamping::recv_counts(recv_counts), recv_displs_out(recv_displs));
+        kamping::recv_counts(recv_counts), recv_displs_out(recv_displs)
+    );
 
     // Check recv buffer
     ASSERT_NE(result.data(), nullptr);
@@ -466,7 +475,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
+
+        bool operator==(const CustomType& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -499,7 +509,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
     // Do the alltoallv - all counts and displacements are already pre-calculated
     comm.alltoallv(
         send_buf(input), recv_buf(result), kamping::send_counts(send_counts), kamping::send_displs(send_displs),
-        kamping::recv_counts(recv_counts), kamping::recv_displs(recv_displs));
+        kamping::recv_counts(recv_counts), kamping::recv_displs(recv_displs)
+    );
 
     // Check recv buffer
     ASSERT_NE(result.data(), nullptr);
@@ -529,7 +540,8 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
     struct CustomType {
         size_t sendingRank;
         size_t receivingRank;
-        bool   operator==(const CustomType& other) const {
+
+        bool operator==(const CustomType& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -562,7 +574,8 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
     // Do the alltoallv - all counts and displacements are already pre-calculated
     auto mpi_result = comm.alltoallv(
         send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}), kamping::send_counts(send_counts),
-        kamping::send_displs(send_displs), kamping::recv_counts(recv_counts), kamping::recv_displs(recv_displs));
+        kamping::send_displs(send_displs), kamping::recv_counts(recv_counts), kamping::recv_displs(recv_displs)
+    );
 
     // Check recv buffer
     OwnContainer<CustomType> result = mpi_result.extract_recv_buffer();

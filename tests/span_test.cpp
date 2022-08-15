@@ -57,41 +57,52 @@ TEST(SpanTest, basic_functionality) {
 
     static_assert(
         std::is_pointer_v<decltype(int_span.data())>,
-        "Member data() of internal::Span<T*, size_t> does not return a pointer.");
+        "Member data() of internal::Span<T*, size_t> does not return a pointer."
+    );
     static_assert(
         std::is_pointer_v<decltype(const_int_span.data())>,
-        "Member data() of internal::Span<T const *, size_t> does not return a pointer.");
+        "Member data() of internal::Span<T const *, size_t> does not return a pointer."
+    );
     static_assert(
         std::is_const_v<std::remove_pointer_t<decltype(const_int_span.data())>>,
-        "Member data() of internal::Span<T const *, size_t> does not return a pointer pointing to const memory.");
+        "Member data() of internal::Span<T const *, size_t> does not return a pointer pointing to const memory."
+    );
     static_assert(
         !std::is_const_v<std::remove_pointer_t<decltype(int_span.data())>>,
-        "Member data() of internal::Span<T*, size_t> does return a pointer pointing to const memory.");
+        "Member data() of internal::Span<T*, size_t> does return a pointer pointing to const memory."
+    );
 
     static_assert(
         std::is_same_v<decltype(int_span)::value_type, decltype(values)::value_type>,
-        "Member value_type of internal::Span<T*, size_t> does not match the element type of the underlying container.");
+        "Member value_type of internal::Span<T*, size_t> does not match the element type of the underlying container."
+    );
     static_assert(
         std::is_same_v<decltype(int_span)::size_type, decltype(values)::size_type>,
-        "Member size_type of internal::Span<T*, size_t> does not match the element type of the underlying container.");
+        "Member size_type of internal::Span<T*, size_t> does not match the element type of the underlying container."
+    );
     static_assert(
         std::is_same_v<decltype(int_span)::difference_type, decltype(values)::difference_type>,
         "Member difference_type of internal::Span<T*, difference_t> does not match the element type of the underlying "
-        "container.");
+        "container."
+    );
     static_assert(
         std::is_same_v<decltype(int_span)::pointer, decltype(values)::pointer>,
         "Member pointer of internal::Span<T*, difference_t> does not match the element type of the underlying "
-        "container.");
+        "container."
+    );
     static_assert(
         std::is_same_v<decltype(int_span)::const_pointer, decltype(values)::const_pointer>,
         "Member const_pointer of internal::Span<T*, difference_t> does not match the element type of the underlying "
-        "container.");
+        "container."
+    );
     static_assert(
         std::is_same_v<decltype(int_span)::reference, decltype(values)::reference>,
         "Member reference of internal::Span<T*, difference_t> does not match the element type of the underlying "
-        "container.");
+        "container."
+    );
     static_assert(
         std::is_same_v<decltype(int_span)::const_reference, decltype(values)::const_reference>,
         "Member const_reference of internal::Span<T*, difference_t> does not match the element type of the underlying "
-        "container.");
+        "container."
+    );
 }

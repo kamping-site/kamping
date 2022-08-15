@@ -87,7 +87,8 @@ TEST(CheckingCastTest, asserting_cast) {
             fprintf(stderr, "Still alive!");
             exit(0);
         },
-        ::testing::ExitedWithCode(0), "Still alive");
+        ::testing::ExitedWithCode(0), "Still alive"
+    );
 
     if constexpr (KASSERT_ASSERTION_LEVEL >= kamping::assert::normal) {
         // According to the googletest documentation, throwing an exception is not considered a death.
@@ -100,7 +101,8 @@ TEST(CheckingCastTest, asserting_cast) {
                 fprintf(stderr, "Still alive!");
                 exit(0);
             },
-            ::testing::ExitedWithCode(0), "Still alive");
+            ::testing::ExitedWithCode(0), "Still alive"
+        );
     }
 }
 
@@ -124,7 +126,8 @@ void checkThrowOrAssert(Lambda&& callable, [[maybe_unused]] std::string const& w
                 fprintf(stderr, "Still alive!");
                 exit(0);
             },
-            ::testing::ExitedWithCode(0), "Still alive");
+            ::testing::ExitedWithCode(0), "Still alive"
+        );
     }
 #else
     EXPECT_THROW(callable(), std::range_error);

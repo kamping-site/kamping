@@ -12,7 +12,10 @@
 // <https://www.gnu.org/licenses/>.
 
 #include "gtest/gtest.h"
+#include <array>
+#include <deque>
 #include <type_traits>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -23,6 +26,68 @@
 
 using namespace ::kamping;
 using namespace ::kamping::internal;
+
+TEST(HasDataMemberTest, has_data_member_basics) {
+    EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<int>>);
+    EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<double>>);
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::vector<double, testing::CustomAllocator<double>>>));
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::string>));
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::array<int, 42>>));
+
+    EXPECT_FALSE((kamping::internal::has_data_member_v<int>));
+    EXPECT_FALSE((kamping::internal::has_data_member_v<bool>));
+
+    // on some compilers vector<bool> still has .data() but it returns void
+    // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool>>));
+    // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool, testing::CustomAllocator<bool>>>));
+}
+
+TEST(IsSpecializationTest, is_specialization_basics) {
+    EXPECT_TRUE((kamping::internal::is_specialization<std::vector<int>, std::vector>::value));
+    EXPECT_TRUE((kamping::internal::is_specialization<std::vector<bool>, std::vector>::value));
+    EXPECT_TRUE(
+        (kamping::internal::is_specialization<std::vector<int, testing::CustomAllocator<int>>, std::vector>::value)
+    );
+    EXPECT_TRUE((
+        kamping::internal::is_specialization<std::vector<double, testing::CustomAllocator<double>>, std::vector>::value
+    ));
+    EXPECT_TRUE((kamping::internal::is_specialization<std::deque<int>, std::deque>::value));
+
+    EXPECT_FALSE((kamping::internal::is_specialization<std::array<int, 2>, std::vector>::value));
+    EXPECT_FALSE((kamping::internal::is_specialization<std::deque<int>, std::vector>::value));
+    EXPECT_FALSE((kamping::internal::is_specialization<int, std::vector>::value));
+}
+TEST(HasValueTypeTest, has_value_type_basics) {
+    EXPECT_TRUE(kamping::internal::has_value_type_v<std::vector<int>>);
+    EXPECT_TRUE(kamping::internal::has_value_type_v<std::vector<bool>>);
+    EXPECT_TRUE((kamping::internal::has_value_type_v<std::array<int, 42>>));
+    EXPECT_TRUE((kamping::internal::has_value_type_v<std::string>));
+
+    EXPECT_FALSE((kamping::internal::has_value_type_v<int>));
+    EXPECT_FALSE((kamping::internal::has_value_type_v<double>));
+    EXPECT_FALSE((kamping::internal::has_value_type_v<bool>));
+}
+
+TEST(IsVectorBoolTest, is_vector_bool_basics) {
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>>);
+    EXPECT_TRUE((kamping::internal::is_vector_bool_v<std::vector<bool, testing::CustomAllocator<bool>>>));
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<const std::vector<bool>>);
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>&>);
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool> const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>>);
+    EXPECT_FALSE((kamping::internal::is_vector_bool_v<std::vector<int, testing::CustomAllocator<int>>>));
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int> const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool>>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool>&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool> const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<bool>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<bool&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<bool const&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int&>);
+    EXPECT_FALSE(kamping::internal::is_vector_bool_v<int const&>);
+}
 
 // Tests the basic functionality of EmptyBuffer
 TEST(EmptyBufferTest, get_basics) {
@@ -133,8 +198,10 @@ TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
     EXPECT_EQ(
         std::string(
             buffer_based_on_string.get().data(),
-            buffer_based_on_string.get().data() + buffer_based_on_string.get().size()),
-        expected);
+            buffer_based_on_string.get().data() + buffer_based_on_string.get().size()
+        ),
+        expected
+    );
     {
         auto const& underlying_container = buffer_based_on_string.underlying();
         EXPECT_EQ(underlying_container, expected);
@@ -143,8 +210,8 @@ TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
     testing::OwnContainer<int> own_container{1, 2, 3};
     EXPECT_EQ(own_container.copy_count(), 0);
 
-    ContainerBasedOwningBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(
-        std::move(own_container));
+    ContainerBasedOwningBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(std::move(own_container)
+    );
     EXPECT_EQ(own_container.copy_count(), 0);
     EXPECT_EQ(buffer_based_on_own_container.underlying().copy_count(), 0);
 
@@ -372,10 +439,12 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
     EXPECT_DEATH(
         int_buffer.resize(0), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element.");
+                              "element buffers always hold exactly one element."
+    );
     EXPECT_DEATH(
         int_buffer.resize(2), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element.");
+                              "element buffers always hold exactly one element."
+    );
 #endif
 
     EXPECT_EQ(int_buffer.get().size(), 1);
@@ -414,10 +483,12 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
     EXPECT_DEATH(
         int_buffer.resize(0), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element.");
+                              "element buffers always hold exactly one element."
+    );
     EXPECT_DEATH(
         int_buffer.resize(2), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element.");
+                              "element buffers always hold exactly one element."
+    );
 #endif
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
@@ -475,13 +546,15 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferAllocation::lib_allocated> >,
-        "Library allocated DataBuffers must have an extract() member function");
+            BufferAllocation::lib_allocated>>,
+        "Library allocated DataBuffers must have an extract() member function"
+    );
     static_assert(
         !has_extract_v<DataBuffer<
             int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferAllocation::user_allocated> >,
-        "User allocated DataBuffers must not have an extract() member function");
+            BufferAllocation::user_allocated>>,
+        "User allocated DataBuffers must not have an extract() member function"
+    );
 }
 
 TEST(ParameterFactoriesTest, is_int_type) {
@@ -519,7 +592,8 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
 
     MPIResult result(
         std::move(recv_buffer), std::move(recv_counts), std::move(recv_count), std::move(recv_displs),
-        std::move(send_displs));
+        std::move(send_displs)
+    );
 
     std::ignore = result.extract_recv_buffer();
     EXPECT_KASSERT_FAILS(result.extract_recv_buffer(), "Cannot extract a buffer that has already been extracted.");

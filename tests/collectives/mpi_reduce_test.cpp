@@ -17,6 +17,8 @@
 #include "kamping/collectives/reduce.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/mpi_ops.hpp"
+#include "kamping/parameter_factories.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -28,15 +30,12 @@ TEST(ReduceTest, reduce_no_receive_buffer) {
 
     auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
 
-    if (comm.rank() == comm.root()) {
-        EXPECT_EQ(result.size(), 2);
-    } else {
-        EXPECT_EQ(result.size(), 0);
-    }
-
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
     if (comm.is_root()) {
+        EXPECT_EQ(result.size(), 2);
         EXPECT_EQ(result, expected_result);
+    } else {
+        EXPECT_EQ(result.size(), 0);
     }
 
     // Change default root and test with communicator's default root again
@@ -63,6 +62,108 @@ TEST(ReduceTest, reduce_no_receive_buffer) {
     }
 }
 
+TEST(ReduceTest, reduce_no_receive_buffer_bool) {
+    Communicator comm;
+
+    std::vector<kabool> input = {false, false};
+    if (comm.rank() == 1 % comm.size()) {
+        input[1] = true;
+    }
+
+    auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{})).extract_recv_buffer();
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_EQ(result.size(), 2);
+        std::vector<kabool> expected_result = {false, true};
+        EXPECT_EQ(result, expected_result);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(ReduceTest, reduce_no_receive_buffer_kabool_custom_operation) {
+    Communicator comm;
+
+    std::vector<kabool> input = {false, false};
+    if (comm.rank() == 1 % comm.size()) {
+        input[1] = true;
+    }
+
+    // test that we can use a operation defined on bool even though wrap them as kabool
+    auto my_or = [&](bool lhs, bool rhs) {
+        return lhs || rhs;
+    };
+    auto result = comm.reduce(send_buf(input), op(my_or, commutative)).extract_recv_buffer();
+
+    if (comm.is_root()) {
+        std::vector<kabool> expected_result = {false, true};
+        EXPECT_EQ(result.size(), 2);
+        EXPECT_EQ(result, expected_result);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(ReduceTest, reduce_single_element_no_receive_buffer_kabool) {
+    Communicator comm;
+
+    kabool input = false;
+    if (comm.rank() == 1 % comm.size()) {
+        input = true;
+    }
+
+    auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{})).extract_recv_buffer();
+
+    if (comm.is_root()) {
+        EXPECT_EQ(result.size(), 1);
+        std::vector<kabool> expected_result = {true};
+        EXPECT_EQ(result, expected_result);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(ReduceTest, reduce_single_element_initializer_list_bool_no_receive_buffer) {
+    Communicator comm;
+
+    bool input = false;
+    if (comm.rank() == 1 % comm.size()) {
+        input = true;
+    }
+
+    // reduce does not support single element bool when no recv_buf is specified, because the default would be
+    // std::vector<bool>, which is not supported
+    auto result = comm.reduce(send_buf({input}), op(ops::logical_or<>{})).extract_recv_buffer();
+
+    if (comm.is_root()) {
+        EXPECT_EQ(result.size(), 1);
+        std::vector<kabool> expected_result = {true};
+        EXPECT_EQ(result, expected_result);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
+    Communicator comm;
+
+    bool               input = false;
+    OwnContainer<bool> result;
+    if (comm.rank() == 1 % comm.size()) {
+        input = true;
+    }
+
+    comm.reduce(send_buf(input), recv_buf(result), op(ops::logical_or<>{}));
+
+    if (comm.is_root()) {
+        EXPECT_EQ(result.size(), 1);
+        OwnContainer<bool> expected_result = {true};
+        EXPECT_EQ(result, expected_result);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
 TEST(ReduceTest, reduce_with_receive_buffer) {
     Communicator comm;
 
@@ -71,15 +172,13 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
 
     comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
 
+    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), 2);
+        EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
-    }
-
-    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
-    if (comm.is_root()) {
-        EXPECT_EQ(result, expected_result);
     }
 
     // Change default root and test with communicator's default root again
@@ -195,7 +294,8 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     // use lambda inline
     result = comm.reduce(
                      send_buf(input),
-                     op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::commutative))
+                     op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::commutative)
+    )
                  .extract_recv_buffer();
 
     if (comm.is_root()) {

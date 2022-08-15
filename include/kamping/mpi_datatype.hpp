@@ -47,6 +47,22 @@ inline MPI_Datatype construct_custom_continuous_type(size_t const num_bytes_unsi
 } // namespace kamping::internal
 
 namespace kamping {
+/// @brief Wrapper around bool to allow handling containers of boolean values
+class kabool {
+public:
+    /// @brief default constructor for a \c kabool with value \c false
+    constexpr kabool() noexcept : _value() {}
+    /// @brief constructor to construct a \c kabool out of a \c bool
+    constexpr kabool(bool value) noexcept : _value(value) {}
+
+    /// @brief implicit cast of \c kabool to \c bool
+    inline constexpr operator bool() const noexcept {
+        return _value;
+    }
+
+private:
+    bool _value; /// < the wrapped boolean value
+};
 
 /// @addtogroup kamping_mpi_utility
 /// @{
@@ -231,6 +247,15 @@ struct mpi_type_traits_impl<bool> : is_builtin_mpi_type_true {
     }
     static constexpr TypeCategory category = TypeCategory::logical;
 };
+
+template <>
+struct mpi_type_traits_impl<kabool> : is_builtin_mpi_type_true {
+    static MPI_Datatype data_type() {
+        return MPI_CXX_BOOL;
+    }
+    static constexpr TypeCategory category = TypeCategory::logical;
+};
+
 template <>
 struct mpi_type_traits_impl<std::complex<float>> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
@@ -279,7 +304,8 @@ template <typename T>
     // Check if we got a pointer type -> error
     static_assert(
         !std::is_pointer_v<T_no_cv>,
-        "MPI does not support pointer types. Why do you want to transfer a pointer over MPI?");
+        "MPI does not support pointer types. Why do you want to transfer a pointer over MPI?"
+    );
 
     // Check if we got a function type -> error
     static_assert(!std::is_function_v<T_no_cv>, "MPI does not support function types.");
