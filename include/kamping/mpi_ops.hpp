@@ -224,7 +224,7 @@ struct mpi_operation_traits {
 
     /// @brief The identity of this operation applied on this datatype.
     ///
-    /// The identity of a {value, operation} pair is the value for which the following two equaltion hold:
+    /// The identity of a {value, operation} pair is the value for which the following two equation holds:
     /// - `identity operation value = value`
     /// - `value operation identity = value`
     static constexpr T identity;

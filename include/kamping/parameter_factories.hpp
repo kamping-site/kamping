@@ -252,7 +252,7 @@ inline auto recv_count_out(int& recv_count_out) {
 /// This is primarily used by KaMPIng internally because not passing this to a function will have the same effect as
 /// passing it.
 ///
-/// @return Wrapper around a new recv_count ouptput integer.
+/// @return Wrapper around a new recv_count output integer.
 inline auto recv_count_out(NewContainer<int>&&) {
     // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
     return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
