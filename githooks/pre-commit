@@ -12,7 +12,7 @@ format_files() {
 
     for file in $(git diff --cached --name-only | grep -E "$file_regex"); do
         if [[ -f "$file" ]]; then
-            "$formatter" "$file" || exit 1
+            $formatter "$file" || exit 1
         fi
     done
 
