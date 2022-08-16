@@ -121,7 +121,8 @@ TEST_F(CommunicatorTest, rank_shifted_checked) {
   for (int i = -(2 * size); i < (2 * size); ++i) {
     if (i + rank < 0 || i + rank >= size) {
       EXPECT_THROW(
-        ((void)comm.rank_shifted_checked(i)), kassert::KassertException
+        ((void)comm.rank_shifted_checked(i)),
+        kassert::KassertException
       );
     } else {
       EXPECT_EQ(rank + i, comm.rank_shifted_checked(i));
@@ -178,14 +179,16 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
       );
       if (expected_rank_in_splitted_comm != MPI_UNDEFINED) {
         EXPECT_EQ(
-          rank_to_test, comm.convert_rank_from_communicator(
-                          expected_rank_in_splitted_comm, splitted_comm
-                        )
+          rank_to_test,
+          comm.convert_rank_from_communicator(
+            expected_rank_in_splitted_comm,
+            splitted_comm
+          )
         );
         EXPECT_EQ(
-          rank_to_test, splitted_comm.convert_rank_to_communicator(
-                          expected_rank_in_splitted_comm, comm
-                        )
+          rank_to_test,
+          splitted_comm
+            .convert_rank_to_communicator(expected_rank_in_splitted_comm, comm)
         );
       }
     }
@@ -219,14 +222,16 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
       );
       if (expected_rank_rn_splitted_comm != MPI_UNDEFINED) {
         EXPECT_EQ(
-          rank_to_test, comm.convert_rank_from_communicator(
-                          expected_rank_rn_splitted_comm, splitted_comm
-                        )
+          rank_to_test,
+          comm.convert_rank_from_communicator(
+            expected_rank_rn_splitted_comm,
+            splitted_comm
+          )
         );
         EXPECT_EQ(
-          rank_to_test, splitted_comm.convert_rank_to_communicator(
-                          expected_rank_rn_splitted_comm, comm
-                        )
+          rank_to_test,
+          splitted_comm
+            .convert_rank_to_communicator(expected_rank_rn_splitted_comm, comm)
         );
       }
     }

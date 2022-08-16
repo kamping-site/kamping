@@ -81,7 +81,8 @@ TEST(GatherTest, gather_single_custom_element_no_receive_buffer) {
   }; // struct custom_data_type
 
   CustomDataType value = {
-    comm.rank_signed(), comm.size_signed() - comm.rank_signed()};
+    comm.rank_signed(),
+    comm.size_signed() - comm.rank_signed()};
 
   // Test default root of communicator
   auto result = comm.gather(send_buf(value)).extract_recv_buffer();
@@ -174,7 +175,9 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
 TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
   Communicator     comm;
   std::vector<int> values = {
-    comm.rank_signed(), comm.rank_signed(), comm.rank_signed(),
+    comm.rank_signed(),
+    comm.rank_signed(),
+    comm.rank_signed(),
     comm.rank_signed()};
   auto result = comm.gather(send_buf(values)).extract_recv_buffer();
 
@@ -218,7 +221,9 @@ TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
 TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
   Communicator     comm;
   std::vector<int> values = {
-    comm.rank_signed(), comm.rank_signed(), comm.rank_signed(),
+    comm.rank_signed(),
+    comm.rank_signed(),
+    comm.rank_signed(),
     comm.rank_signed()};
   std::vector<int> result(0);
 
@@ -264,7 +269,9 @@ TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
 TEST(GatherTest, gather_receive_custom_container) {
   Communicator     comm;
   std::vector<int> values = {
-    comm.rank_signed(), comm.rank_signed(), comm.rank_signed(),
+    comm.rank_signed(),
+    comm.rank_signed(),
+    comm.rank_signed(),
     comm.rank_signed()};
   OwnContainer<int> result;
 

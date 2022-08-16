@@ -203,10 +203,10 @@ TEST(ScanTest, scan_custom_operation_on_custom_type) {
   Aggregate agg2 = {comm.rank_signed() + 42, comm.rank_signed() + 42, false, 1};
   std::vector<Aggregate> input = {agg1, agg2};
 
-  Aggregate agg1_expected = {
-    0, comm.rank_signed(), true, comm.rank_signed() + 1};
-  Aggregate agg2_expected = {
-    42, comm.rank_signed() + 42, false, comm.rank_signed() + 1};
+  Aggregate agg1_expected =
+    {0, comm.rank_signed(), true, comm.rank_signed() + 1};
+  Aggregate agg2_expected =
+    {42, comm.rank_signed() + 42, false, comm.rank_signed() + 1};
   std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
 
   auto result = comm.scan(send_buf(input), op(my_op, kamping::commutative))

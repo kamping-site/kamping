@@ -58,16 +58,20 @@ template <typename... Args>
 auto kamping::Communicator::bcast(Args... args) const {
   using namespace ::kamping::internal;
   KAMPING_CHECK_PARAMETERS(
-    Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf),
+    Args,
+    KAMPING_REQUIRED_PARAMETERS(send_recv_buf),
     KAMPING_OPTIONAL_PARAMETERS(root, recv_counts)
   );
 
   // Get the root PE
   auto&& root = select_parameter_type_or_default<ParameterType::root, Root>(
-    std::tuple(this->root()), args...
+    std::tuple(this->root()),
+    args...
   );
   KASSERT(
-    this->is_valid_rank(root.rank()), "Invalid rank as root.", assert::light
+    this->is_valid_rank(root.rank()),
+    "Invalid rank as root.",
+    assert::light
   );
 
   // Get the send_recv_buf; for now, the user *has* to provide a send-receive
@@ -95,7 +99,8 @@ auto kamping::Communicator::bcast(Args... args) const {
   using default_recv_count_type =
     decltype(kamping::recv_counts_out(NewContainer<int>{}));
   auto&& recv_count_param = internal::select_parameter_type_or_default<
-    ParameterType::recv_counts, default_recv_count_type>(std::tuple(), args...);
+    ParameterType::recv_counts,
+    default_recv_count_type>(std::tuple(), args...);
 
   constexpr bool recv_count_is_output_parameter =
     has_to_be_computed<decltype(recv_count_param)>;
@@ -138,7 +143,8 @@ auto kamping::Communicator::bcast(Args... args) const {
   }
   KASSERT(
     this->is_same_on_all_ranks(recv_count),
-    "The recv_count must be equal on all ranks.", assert::light_communication
+    "The recv_count must be equal on all ranks.",
+    assert::light_communication
   );
 
   // Resize my send_recv_buf to be able to hold all received data.
@@ -158,8 +164,10 @@ auto kamping::Communicator::bcast(Args... args) const {
   THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
   return MPIResult(
-    std::move(send_recv_buf), std::move(recv_count_param),
-    BufferCategoryNotUsed{}, BufferCategoryNotUsed{}
+    std::move(send_recv_buf),
+    std::move(recv_count_param),
+    BufferCategoryNotUsed{},
+    BufferCategoryNotUsed{}
   );
 } // namespace kamping::internal
 
@@ -169,7 +177,8 @@ auto kamping::Communicator::bcast_single(Args... args) const {
   //! bcast, you have to write more unit tests!
   // In contrast to bcast(...), the recv_count is not a possible parameter.
   KAMPING_CHECK_PARAMETERS(
-    Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf),
+    Args,
+    KAMPING_REQUIRED_PARAMETERS(send_recv_buf),
     KAMPING_OPTIONAL_PARAMETERS(root)
   );
 

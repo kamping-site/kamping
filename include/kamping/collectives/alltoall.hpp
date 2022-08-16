@@ -55,7 +55,8 @@
 template <typename... Args>
 auto kamping::Communicator::alltoall(Args... args) const {
   KAMPING_CHECK_PARAMETERS(
-    Args, KAMPING_REQUIRED_PARAMETERS(send_buf),
+    Args,
+    KAMPING_REQUIRED_PARAMETERS(send_buf),
     KAMPING_OPTIONAL_PARAMETERS(recv_buf)
   );
 
@@ -70,9 +71,8 @@ auto kamping::Communicator::alltoall(Args... args) const {
     NewContainer<std::vector<default_recv_value_type>>{}
   ));
   auto&& recv_buf             = internal::select_parameter_type_or_default<
-    internal::ParameterType::recv_buf, default_recv_buf_type>(
-    std::tuple(), args...
-  );
+    internal::ParameterType::recv_buf,
+    default_recv_buf_type>(std::tuple(), args...);
   using recv_value_type =
     typename std::remove_reference_t<decltype(recv_buf)>::value_type;
   MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
@@ -87,7 +87,8 @@ auto kamping::Communicator::alltoall(Args... args) const {
   );
   KASSERT(
     mpi_send_type == mpi_recv_type,
-    "The MPI receive type does not match the MPI send type.", assert::light
+    "The MPI receive type does not match the MPI send type.",
+    assert::light
   );
 
   // Get the send and receive counts
@@ -112,8 +113,13 @@ auto kamping::Communicator::alltoall(Args... args) const {
   KASSERT(recv_buf.data() != nullptr, assert::light);
 
   [[maybe_unused]] int err = MPI_Alltoall(
-    send_buf.data(), send_count, mpi_send_type, recv_buf.data(), recv_count,
-    mpi_recv_type, mpi_communicator()
+    send_buf.data(),
+    send_count,
+    mpi_send_type,
+    recv_buf.data(),
+    recv_count,
+    mpi_recv_type,
+    mpi_communicator()
   );
 
   THROW_IF_MPI_ERROR(err, MPI_Alltoall);
@@ -163,7 +169,8 @@ template <typename... Args>
 auto kamping::Communicator::alltoallv(Args... args) const {
   // Get all parameter objects
   KAMPING_CHECK_PARAMETERS(
-    Args, KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
+    Args,
+    KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
     KAMPING_OPTIONAL_PARAMETERS(recv_counts, recv_buf, send_displs, recv_displs)
   );
 
@@ -192,9 +199,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
   using default_recv_counts_type =
     decltype(kamping::recv_counts_out(NewContainer<std::vector<int>>{}));
   auto&& recv_counts = internal::select_parameter_type_or_default<
-    internal::ParameterType::recv_counts, default_recv_counts_type>(
-    std::tuple(), args...
-  );
+    internal::ParameterType::recv_counts,
+    default_recv_counts_type>(std::tuple(), args...);
   using recv_counts_type =
     typename std::remove_reference_t<decltype(recv_counts)>::value_type;
   static_assert(
@@ -207,9 +213,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     NewContainer<std::vector<default_recv_value_type>>{}
   ));
   auto&& recv_buf             = internal::select_parameter_type_or_default<
-    internal::ParameterType::recv_buf, default_recv_buf_type>(
-    std::tuple(), args...
-  );
+    internal::ParameterType::recv_buf,
+    default_recv_buf_type>(std::tuple(), args...);
   using recv_value_type =
     typename std::remove_reference_t<decltype(recv_buf)>::value_type;
   MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
@@ -218,9 +223,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
   using default_send_displs_type =
     decltype(kamping::send_displs_out(NewContainer<std::vector<int>>{}));
   auto&& send_displs = internal::select_parameter_type_or_default<
-    internal::ParameterType::send_displs, default_send_displs_type>(
-    std::tuple(), args...
-  );
+    internal::ParameterType::send_displs,
+    default_send_displs_type>(std::tuple(), args...);
   using send_displs_type =
     typename std::remove_reference_t<decltype(send_displs)>::value_type;
   static_assert(
@@ -232,9 +236,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
   using default_recv_displs_type =
     decltype(kamping::recv_displs_out(NewContainer<std::vector<int>>{}));
   auto&& recv_displs = internal::select_parameter_type_or_default<
-    internal::ParameterType::recv_displs, default_recv_displs_type>(
-    std::tuple(), args...
-  );
+    internal::ParameterType::recv_displs,
+    default_recv_displs_type>(std::tuple(), args...);
   using recv_displs_type =
     typename std::remove_reference_t<decltype(recv_displs)>::value_type;
   static_assert(
@@ -253,7 +256,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
   );
   KASSERT(
     mpi_send_type == mpi_recv_type,
-    "The MPI receive type does not match the MPI send type.", assert::light
+    "The MPI receive type does not match the MPI send type.",
+    assert::light
   );
 
   // Calculate recv_counts if necessary
@@ -269,7 +273,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     /// skipped
     recv_counts.resize(this->size());
     this->alltoall(
-      kamping::send_buf(send_counts.get()), kamping::recv_buf(recv_counts.get())
+      kamping::send_buf(send_counts.get()),
+      kamping::recv_buf(recv_counts.get())
     );
   }
   KASSERT(recv_counts.size() == this->size(), assert::light);
@@ -286,8 +291,10 @@ auto kamping::Communicator::alltoallv(Args... args) const {
   if constexpr (do_calculate_send_displs) {
     send_displs.resize(this->size());
     std::exclusive_scan(
-      send_counts.data(), send_counts.data() + send_counts.size(),
-      send_displs.data(), 0
+      send_counts.data(),
+      send_counts.data() + send_counts.size(),
+      send_displs.data(),
+      0
     );
   }
   KASSERT(send_displs.size() == this->size(), assert::light);
@@ -313,8 +320,10 @@ auto kamping::Communicator::alltoallv(Args... args) const {
   if constexpr (do_calculate_recv_displs) {
     recv_displs.resize(this->size());
     std::exclusive_scan(
-      recv_counts.data(), recv_counts.data() + recv_counts.size(),
-      recv_displs.data(), 0
+      recv_counts.data(),
+      recv_counts.data() + recv_counts.size(),
+      recv_displs.data(),
+      0
     );
   }
   KASSERT(recv_displs.size() == this->size(), assert::light);

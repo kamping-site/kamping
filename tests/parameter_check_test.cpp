@@ -36,7 +36,8 @@ TEST(ParameterCheckTest, check_required_and_optional) {
   std::vector<int> v;
   testing::test_required_send_buf_optional_recv_buf(kamping::send_buf(v));
   testing::test_required_send_buf_optional_recv_buf(
-    kamping::send_buf(v), kamping::recv_buf(v)
+    kamping::send_buf(v),
+    kamping::recv_buf(v)
   );
 }
 
@@ -65,7 +66,11 @@ TEST(ParameterCheckTest, check_many_required_parameters) {
   using namespace kamping;
   std::vector<int> v;
   testing::test_require_many_parameters(
-    send_buf(v), recv_buf(v), root(0), recv_counts(v), send_counts(v)
+    send_buf(v),
+    recv_buf(v),
+    root(0),
+    recv_counts(v),
+    send_counts(v)
   );
 }
 

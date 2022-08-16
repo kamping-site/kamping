@@ -35,8 +35,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
     Environment environment(argc, argv);
 #else
     static_assert(
-      false, "Define either KAMPING_ENVIRONMENT_TEST_NO_PARAM or "
-             "KAMPING_ENVIRONMENT_TEST_WITH_PARAM"
+      false,
+      "Define either KAMPING_ENVIRONMENT_TEST_NO_PARAM or "
+      "KAMPING_ENVIRONMENT_TEST_WITH_PARAM"
     );
 #endif
 

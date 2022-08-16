@@ -52,8 +52,8 @@ constexpr bool in_range(From value) noexcept {
   static_assert(std::is_integral_v<From>, "From has to be an integral type.");
   static_assert(std::is_integral_v<To>, "To has to be an integral type.");
 
-  // Check that the 0 is included in From and To. 0 is always included in
-  // signed types.
+  // Check that the 0 is included in From and To. 0 is always included in signed
+  // types.
   static_assert(
     std::is_signed_v<From> || std::numeric_limits<From>::min() == 0,
     "The type From has to include the number 0."
@@ -152,7 +152,8 @@ constexpr To asserting_cast(From value) KAMPING_NOEXCEPT {
 template <class To, class From>
 constexpr To throwing_cast(From value) {
   THROWING_KASSERT_SPECIFIED(
-    in_range<To>(value), value << " is not representable by the target type.",
+    in_range<To>(value),
+    value << " is not representable by the target type.",
     std::range_error
   );
   return static_cast<To>(value);

@@ -144,9 +144,8 @@ TEST(
     input = true;
   }
 
-  // reduce does not support single element bool when no recv_buf is
-  // specified, because the default would be std::vector<bool>, which is not
-  // supported
+  // reduce does not support single element bool when no recv_buf is specified,
+  // because the default would be std::vector<bool>, which is not supported
   auto result = comm.reduce(send_buf({input}), op(ops::logical_or<>{}))
                   .extract_recv_buffer();
 
@@ -214,7 +213,10 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
   for (size_t i = 0; i < comm.size(); ++i) {
     result = {};
     comm.reduce(
-      send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result), root(i)
+      send_buf(input),
+      op(kamping::ops::plus<>{}),
+      recv_buf(result),
+      root(i)
     );
     if (comm.rank() == i) {
       EXPECT_EQ(comm.root(), comm.size() - 1);
@@ -416,10 +418,10 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_type) {
   Aggregate agg2 = {comm.rank_signed() + 42, comm.rank_signed() + 42, false, 1};
   std::vector<Aggregate> input = {agg1, agg2};
 
-  Aggregate agg1_expected = {
-    0, comm.size_signed() - 1, true, comm.size_signed()};
-  Aggregate agg2_expected = {
-    42, comm.size_signed() - 1 + 42, false, comm.size_signed()};
+  Aggregate agg1_expected =
+    {0, comm.size_signed() - 1, true, comm.size_signed()};
+  Aggregate agg2_expected =
+    {42, comm.size_signed() - 1 + 42, false, comm.size_signed()};
   std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
 
   auto result = comm.reduce(send_buf(input), op(my_op, kamping::commutative))

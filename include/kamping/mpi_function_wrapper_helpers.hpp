@@ -80,7 +80,9 @@ public:
   /// results, the empty placeholder type BufferCategoryNotUsed must be passed
   /// to the constructor instead of an actual buffer object.
   MPIResult(
-    RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvDispls&& recv_displs,
+    RecvBuf&&    recv_buf,
+    RecvCounts&& recv_counts,
+    RecvDispls&& recv_displs,
     SendDispls&& send_displs
   )
     : _recv_buffer(std::forward<RecvBuf>(recv_buf)),

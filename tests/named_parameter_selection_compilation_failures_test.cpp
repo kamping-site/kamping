@@ -35,9 +35,8 @@ int main(int /*argc*/, char** /*argv*/) {
   // if the default argument cannot be constructed from the given parameters
   // this should fail to compile
   auto&& selected_args = select_parameter_type_or_default<
-    ParameterType::send_counts, DefaultArgument>(
-    std::tuple("Hello World"), arg0, arg1
-  );
+    ParameterType::send_counts,
+    DefaultArgument>(std::tuple("Hello World"), arg0, arg1);
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif

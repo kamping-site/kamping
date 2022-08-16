@@ -235,10 +235,10 @@ struct mpi_operation_traits {
   /// operation for the type \c Datatype
   ///
   /// Note that this is only true if the \c MPI_Datatype corresponding to the
-  /// C++ datatype \c Datatype supports the operation according to the
-  /// standard. If MPI supports the operation for this type, then this is true
-  /// for functors defined in \c kamping::ops and there corresponding
-  /// type-aliased equivalents in the standard library.
+  /// C++ datatype \c Datatype supports the operation according to the standard.
+  /// If MPI supports the operation for this type, then this is true for
+  /// functors defined in \c kamping::ops and there corresponding type-aliased
+  /// equivalents in the standard library.
   static constexpr bool is_builtin;
 
   /// @brief The identity of this operation applied on this datatype.
@@ -251,8 +251,8 @@ struct mpi_operation_traits {
 
   /// @brief get the MPI_Op for a builtin type
   ///
-  /// This member is only defined if \c value is \c true. It can then be used
-  /// to query the predefined constant of type \c MPI_OP matching the functor
+  /// This member is only defined if \c value is \c true. It can then be used to
+  /// query the predefined constant of type \c MPI_OP matching the functor
   /// defined by type \c Op, e.g. returns \c MPI_SUM if \c Op is \c
   /// kamping::ops::plus<>.
   /// @returns the builtin \c MPI_Op constant
@@ -267,7 +267,8 @@ struct mpi_operation_traits {
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-  kamping::ops::max<S>, T,
+  kamping::ops::max<S>,
+  T,
   typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
     mpi_type_traits<T>::category == TypeCategory::integer
     || mpi_type_traits<T>::category == TypeCategory::floating
@@ -281,7 +282,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-  kamping::ops::min<S>, T,
+  kamping::ops::min<S>,
+  T,
   typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
     mpi_type_traits<T>::category == TypeCategory::integer
     || mpi_type_traits<T>::category == TypeCategory::floating
@@ -295,7 +297,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-  kamping::ops::plus<S>, T,
+  kamping::ops::plus<S>,
+  T,
   typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
     mpi_type_traits<T>::category == TypeCategory::integer
     || mpi_type_traits<T>::category == TypeCategory::floating
@@ -310,7 +313,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-  kamping::ops::multiplies<S>, T,
+  kamping::ops::multiplies<S>,
+  T,
   typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
     mpi_type_traits<T>::category == TypeCategory::integer
     || mpi_type_traits<T>::category == TypeCategory::floating
@@ -325,7 +329,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-  kamping::ops::logical_and<S>, T,
+  kamping::ops::logical_and<S>,
+  T,
   typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
     mpi_type_traits<T>::category == TypeCategory::integer
     || mpi_type_traits<T>::category == TypeCategory::logical
@@ -339,7 +344,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-  kamping::ops::logical_or<S>, T,
+  kamping::ops::logical_or<S>,
+  T,
   typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
     mpi_type_traits<T>::category == TypeCategory::integer
     || mpi_type_traits<T>::category == TypeCategory::logical
@@ -353,7 +359,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-  kamping::ops::logical_xor<S>, T,
+  kamping::ops::logical_xor<S>,
+  T,
   typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
     mpi_type_traits<T>::category == TypeCategory::integer
     || mpi_type_traits<T>::category == TypeCategory::logical
@@ -367,7 +374,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-  kamping::ops::bit_and<S>, T,
+  kamping::ops::bit_and<S>,
+  T,
   typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
     mpi_type_traits<T>::category == TypeCategory::integer
     || mpi_type_traits<T>::category == TypeCategory::byte
@@ -381,7 +389,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-  kamping::ops::bit_or<S>, T,
+  kamping::ops::bit_or<S>,
+  T,
   typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
     mpi_type_traits<T>::category == TypeCategory::integer
     || mpi_type_traits<T>::category == TypeCategory::byte
@@ -395,7 +404,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-  kamping::ops::bit_xor<S>, T,
+  kamping::ops::bit_xor<S>,
+  T,
   typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
     mpi_type_traits<T>::category == TypeCategory::integer
     || mpi_type_traits<T>::category == TypeCategory::byte
@@ -435,15 +445,16 @@ public:
 
   /// @brief creates an MPI operation for the specified functor
   /// @param op the functor to call for reduction.
-  ///  this has to be a binary function applicable to two arguments of type \c
-  ///  T which return a result of type  \c T
+  ///  this has to be a binary function applicable to two arguments of type \c T
+  ///  which return a result of type  \c T
   UserOperationWrapper(Op&& op [[maybe_unused]]) {
     static_assert(
       std::is_invocable_r_v<T, Op, T&, T&>,
       "Type of custom operation does not match."
     );
     MPI_Op_create(
-      UserOperationWrapper<is_commutative, T, Op>::execute, is_commutative,
+      UserOperationWrapper<is_commutative, T, Op>::execute,
+      is_commutative,
       &_mpi_op
     );
   }
@@ -463,9 +474,9 @@ public:
 
   /// @returns the \c MPI_Op constructed for the provided functor.
   ///
-  /// Do not free this operation manually, because the destructor calls it.
-  /// Some MPI implementations silently segfault if an \c MPI_Op is freed
-  /// multiple times.
+  /// Do not free this operation manually, because the destructor calls it. Some
+  /// MPI implementations silently segfault if an \c MPI_Op is freed multiple
+  /// times.
   MPI_Op get_mpi_op() {
     return _mpi_op;
   }
@@ -510,8 +521,8 @@ public:
   }
   /// @brief creates an MPI operation for the specified function pointer
   /// @param ptr the functor to call for reduction
-  /// this parameter must match the semantics of the function pointer passed
-  /// to \c MPI_Op_create according to the MPI standard.
+  /// this parameter must match the semantics of the function pointer passed to
+  /// \c MPI_Op_create according to the MPI standard.
   UserOperationPtrWrapper(mpi_custom_operation_type ptr) : _no_op(false) {
     KASSERT(ptr != nullptr);
     MPI_Op_create(ptr, is_commutative, &_mpi_op);
@@ -525,17 +536,17 @@ public:
 
   /// @returns the \c MPI_Op constructed for the provided functor.
   ///
-  /// Do not free this operation manually, because the destructor calls it.
-  /// Some MPI implementations silently segfault if an \c MPI_Op is freed
-  /// multiple times.
+  /// Do not free this operation manually, because the destructor calls it. Some
+  /// MPI implementations silently segfault if an \c MPI_Op is freed multiple
+  /// times.
   MPI_Op get_mpi_op() {
     return _mpi_op;
   }
 
 private:
-  bool _no_op;    ///< indicates if this operation is empty or was moved, so we
-                  ///< can avoid freeing the same operation multiple times upon
-                  ///< destruction
+  bool _no_op; ///< indicates if this operation is empty or was moved, so we can
+               ///< avoid freeing the same operation multiple times upon
+               ///< destruction
   MPI_Op _mpi_op; ///< the \c MPI_Op referencing the user defined operation
 };
 
@@ -594,7 +605,9 @@ private:
 
 template <typename T, typename Op, typename Commutative>
 class ReduceOperation<
-  T, Op, Commutative,
+  T,
+  Op,
+  Commutative,
   typename std::enable_if<mpi_operation_traits<Op, T>::is_builtin>::type> {
   static_assert(
     std::is_same_v<Commutative, kamping::internal::undefined_commutative_tag>,
@@ -615,7 +628,9 @@ public:
 
 template <typename T, typename Op, typename Commutative>
 class ReduceOperation<
-  T, Op, Commutative,
+  T,
+  Op,
+  Commutative,
   typename std::enable_if<!std::is_default_constructible_v<Op> >::type> {
   static_assert(
     std::is_same_v<
@@ -627,20 +642,18 @@ class ReduceOperation<
 
 public:
   ReduceOperation(Op&& op, Commutative) : _operation() {
-    // A lambda is may not be default constructed nor copied, so we need
-    // some hacks to deal with them. Because each lambda has a distinct type
-    // we initiate the static Op here and can access it from the static
-    // context of function pointer created afterwards.
+    // A lambda is may not be default constructed nor copied, so we need some
+    // hacks to deal with them. Because each lambda has a distinct type we
+    // initiate the static Op here and can access it from the static context of
+    // function pointer created afterwards.
     static Op func = op;
 
-    mpi_custom_operation_type ptr = [](
-                                      void* invec, void* inoutvec, int* len,
-                                      MPI_Datatype* /*datatype*/
-                                    ) {
-      T* invec_    = static_cast<T*>(invec);
-      T* inoutvec_ = static_cast<T*>(inoutvec);
-      std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, func);
-    };
+    mpi_custom_operation_type ptr =
+      [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
+        T* invec_    = static_cast<T*>(invec);
+        T* inoutvec_ = static_cast<T*>(inoutvec);
+        std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, func);
+      };
     _operation = {ptr};
   }
   static constexpr bool is_builtin = false;

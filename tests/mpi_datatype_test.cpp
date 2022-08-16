@@ -153,16 +153,20 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
     Contains(mpi_datatype<unsigned char>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<signed char>(), Contains(mpi_datatype<signed char>())
+    possible_mpi_datatypes<signed char>(),
+    Contains(mpi_datatype<signed char>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<uint8_t>(), Contains(mpi_datatype<uint8_t>())
+    possible_mpi_datatypes<uint8_t>(),
+    Contains(mpi_datatype<uint8_t>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t>())
+    possible_mpi_datatypes<int8_t>(),
+    Contains(mpi_datatype<int8_t>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<wchar_t>(), Contains(mpi_datatype<wchar_t>())
+    possible_mpi_datatypes<wchar_t>(),
+    Contains(mpi_datatype<wchar_t>())
   );
   EXPECT_THAT(possible_mpi_datatypes<short>(), Contains(mpi_datatype<short>()));
   EXPECT_THAT(
@@ -175,7 +179,8 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
   );
   EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(mpi_datatype<int>()));
   EXPECT_THAT(
-    possible_mpi_datatypes<unsigned>(), Contains(mpi_datatype<unsigned>())
+    possible_mpi_datatypes<unsigned>(),
+    Contains(mpi_datatype<unsigned>())
   );
   EXPECT_THAT(possible_mpi_datatypes<long>(), Contains(mpi_datatype<long>()));
   EXPECT_THAT(
@@ -192,34 +197,44 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
   );
   EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(mpi_datatype<float>()));
   EXPECT_THAT(
-    possible_mpi_datatypes<double>(), Contains(mpi_datatype<double>())
+    possible_mpi_datatypes<double>(),
+    Contains(mpi_datatype<double>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<long double>(), Contains(mpi_datatype<long double>())
+    possible_mpi_datatypes<long double>(),
+    Contains(mpi_datatype<long double>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t>())
+    possible_mpi_datatypes<int8_t>(),
+    Contains(mpi_datatype<int8_t>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<int16_t>(), Contains(mpi_datatype<int16_t>())
+    possible_mpi_datatypes<int16_t>(),
+    Contains(mpi_datatype<int16_t>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<int32_t>(), Contains(mpi_datatype<int32_t>())
+    possible_mpi_datatypes<int32_t>(),
+    Contains(mpi_datatype<int32_t>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<int64_t>(), Contains(mpi_datatype<int64_t>())
+    possible_mpi_datatypes<int64_t>(),
+    Contains(mpi_datatype<int64_t>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<uint8_t>(), Contains(mpi_datatype<uint8_t>())
+    possible_mpi_datatypes<uint8_t>(),
+    Contains(mpi_datatype<uint8_t>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<uint16_t>(), Contains(mpi_datatype<uint16_t>())
+    possible_mpi_datatypes<uint16_t>(),
+    Contains(mpi_datatype<uint16_t>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<uint32_t>(), Contains(mpi_datatype<uint32_t>())
+    possible_mpi_datatypes<uint32_t>(),
+    Contains(mpi_datatype<uint32_t>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<uint64_t>(), Contains(mpi_datatype<uint64_t>())
+    possible_mpi_datatypes<uint64_t>(),
+    Contains(mpi_datatype<uint64_t>())
   );
   EXPECT_THAT(possible_mpi_datatypes<bool>(), Contains(mpi_datatype<bool>()));
   EXPECT_THAT(
@@ -243,10 +258,12 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
 TEST(MpiDataTypeTest, mpi_datatype_const_and_volatile) {
   // Ignore const and volatile qualifiers.
   EXPECT_THAT(
-    possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<const int8_t>())
+    possible_mpi_datatypes<int8_t>(),
+    Contains(mpi_datatype<const int8_t>())
   );
   EXPECT_THAT(
-    possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<volatile int8_t>())
+    possible_mpi_datatypes<int8_t>(),
+    Contains(mpi_datatype<volatile int8_t>())
   );
   EXPECT_THAT(
     possible_mpi_datatypes<int8_t>(),
@@ -261,16 +278,19 @@ TEST(MpiDataTypeTest, mpi_datatype_typedefs_and_using) {
 
   using myFloat = float;
   EXPECT_THAT(
-    possible_mpi_datatypes<float>(), Contains(mpi_datatype<myFloat>())
+    possible_mpi_datatypes<float>(),
+    Contains(mpi_datatype<myFloat>())
   );
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_size_t) {
-  // size_t, which should be one of the unsigned integer types with at least
-  // 16 bits (as of C++11).
+  // size_t, which should be one of the unsigned integer types with at least 16
+  // bits (as of C++11).
   EXPECT_THAT(
     (std::array{
-      MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG,
+      MPI_UNSIGNED_SHORT,
+      MPI_UNSIGNED,
+      MPI_UNSIGNED_LONG,
       MPI_UNSIGNED_LONG_LONG}),
     Contains(mpi_datatype<size_t>())
   );
@@ -279,7 +299,9 @@ TEST(MpiDataTypeTest, mpi_datatype_size_t) {
   // with at least 16 bits (as of C++11).
   EXPECT_THAT(
     (std::array{
-      MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG,
+      MPI_UNSIGNED_SHORT,
+      MPI_UNSIGNED,
+      MPI_UNSIGNED_LONG,
       MPI_UNSIGNED_LONG_LONG}),
     Contains(mpi_datatype<std::size_t>())
   );
@@ -398,7 +420,8 @@ TEST(MpiDataTypeTest, mpi_datatype_c_array) {
   EXPECT_NE(MPI_CXX_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
   EXPECT_NE(MPI_CXX_LONG_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
   EXPECT_EQ(
-    mpi_datatype_size(mpi_datatype<decltype(c_array)>()), 3 * sizeof(int)
+    mpi_datatype_size(mpi_datatype<decltype(c_array)>()),
+    3 * sizeof(int)
   );
 }
 
@@ -408,21 +431,24 @@ TEST(MPIDataTypeTest, test_type_groups) {
     char b;
   };
   EXPECT_EQ(
-    kamping::mpi_type_traits<int>::category, kamping::TypeCategory::integer
+    kamping::mpi_type_traits<int>::category,
+    kamping::TypeCategory::integer
   );
   EXPECT_EQ(
     kamping::mpi_type_traits<signed int>::category,
     kamping::TypeCategory::integer
   );
   EXPECT_EQ(
-    kamping::mpi_type_traits<long>::category, kamping::TypeCategory::integer
+    kamping::mpi_type_traits<long>::category,
+    kamping::TypeCategory::integer
   );
   EXPECT_EQ(
     kamping::mpi_type_traits<signed long>::category,
     kamping::TypeCategory::integer
   );
   EXPECT_EQ(
-    kamping::mpi_type_traits<short>::category, kamping::TypeCategory::integer
+    kamping::mpi_type_traits<short>::category,
+    kamping::TypeCategory::integer
   );
   EXPECT_EQ(
     kamping::mpi_type_traits<signed short>::category,
@@ -433,7 +459,8 @@ TEST(MPIDataTypeTest, test_type_groups) {
     kamping::TypeCategory::integer
   );
   EXPECT_EQ(
-    kamping::mpi_type_traits<unsigned>::category, kamping::TypeCategory::integer
+    kamping::mpi_type_traits<unsigned>::category,
+    kamping::TypeCategory::integer
   );
   EXPECT_EQ(
     kamping::mpi_type_traits<unsigned int>::category,
@@ -469,30 +496,38 @@ TEST(MPIDataTypeTest, test_type_groups) {
   );
 
   EXPECT_EQ(
-    kamping::mpi_type_traits<int8_t>::category, kamping::TypeCategory::integer
+    kamping::mpi_type_traits<int8_t>::category,
+    kamping::TypeCategory::integer
   );
   EXPECT_EQ(
-    kamping::mpi_type_traits<int16_t>::category, kamping::TypeCategory::integer
+    kamping::mpi_type_traits<int16_t>::category,
+    kamping::TypeCategory::integer
   );
   EXPECT_EQ(
-    kamping::mpi_type_traits<int32_t>::category, kamping::TypeCategory::integer
-  );
-
-  EXPECT_EQ(
-    kamping::mpi_type_traits<uint8_t>::category, kamping::TypeCategory::integer
-  );
-  EXPECT_EQ(
-    kamping::mpi_type_traits<uint16_t>::category, kamping::TypeCategory::integer
-  );
-  EXPECT_EQ(
-    kamping::mpi_type_traits<uint32_t>::category, kamping::TypeCategory::integer
+    kamping::mpi_type_traits<int32_t>::category,
+    kamping::TypeCategory::integer
   );
 
   EXPECT_EQ(
-    kamping::mpi_type_traits<float>::category, kamping::TypeCategory::floating
+    kamping::mpi_type_traits<uint8_t>::category,
+    kamping::TypeCategory::integer
   );
   EXPECT_EQ(
-    kamping::mpi_type_traits<double>::category, kamping::TypeCategory::floating
+    kamping::mpi_type_traits<uint16_t>::category,
+    kamping::TypeCategory::integer
+  );
+  EXPECT_EQ(
+    kamping::mpi_type_traits<uint32_t>::category,
+    kamping::TypeCategory::integer
+  );
+
+  EXPECT_EQ(
+    kamping::mpi_type_traits<float>::category,
+    kamping::TypeCategory::floating
+  );
+  EXPECT_EQ(
+    kamping::mpi_type_traits<double>::category,
+    kamping::TypeCategory::floating
   );
   EXPECT_EQ(
     kamping::mpi_type_traits<long double>::category,
@@ -500,7 +535,8 @@ TEST(MPIDataTypeTest, test_type_groups) {
   );
 
   EXPECT_EQ(
-    kamping::mpi_type_traits<bool>::category, kamping::TypeCategory::logical
+    kamping::mpi_type_traits<bool>::category,
+    kamping::TypeCategory::logical
   );
   EXPECT_EQ(
     kamping::mpi_type_traits<kamping::kabool>::category,
@@ -525,7 +561,8 @@ TEST(MPIDataTypeTest, test_type_groups) {
     kamping::TypeCategory::undefined
   );
   EXPECT_EQ(
-    kamping::mpi_type_traits<char>::category, kamping::TypeCategory::undefined
+    kamping::mpi_type_traits<char>::category,
+    kamping::TypeCategory::undefined
   );
   EXPECT_EQ(
     kamping::mpi_type_traits<DummyType>::category,
@@ -548,8 +585,8 @@ TEST(MpiDataTypeTest, mpi_datatype_size) {
   } catch (kamping::MpiErrorException& e) {
     has_thrown = true;
 
-    // The error code is implementation dependent, so we get the error class
-    // and test that.
+    // The error code is implementation dependent, so we get the error class and
+    // test that.
     int error_code = e.mpi_error_code();
     int error_class;
     MPI_Error_class(error_code, &error_class);
@@ -558,7 +595,8 @@ TEST(MpiDataTypeTest, mpi_datatype_size) {
     EXPECT_EQ(e.mpi_error_class(), MPI_ERR_TYPE);
 
     EXPECT_THAT(
-      e.what(), HasSubstr("Failed with the following error message:")
+      e.what(),
+      HasSubstr("Failed with the following error message:")
     );
     EXPECT_THAT(e.what(), HasSubstr("MPI_Type_size failed"));
   }

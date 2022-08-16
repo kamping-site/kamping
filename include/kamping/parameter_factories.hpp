@@ -52,7 +52,8 @@ struct ignore_t {};
 /// @return A user allocated DataBuffer with the given template parameters and
 /// matching ownership.
 template <
-  ParameterType parameter_type, BufferModifiability modifiability,
+  ParameterType       parameter_type,
+  BufferModifiability modifiability,
   typename Data>
 auto make_data_buffer(Data&& data) {
   constexpr BufferOwnership ownership = std::is_rvalue_reference_v<Data&&>
@@ -68,10 +69,11 @@ auto make_data_buffer(Data&& data) {
   // Implication: is_const_data_type => is_const_buffer.
   static_assert(!is_const_data_type || is_const_buffer);
   return DataBuffer<
-    std::remove_const_t<std::remove_reference_t<Data>>, parameter_type,
-    modifiability, ownership, BufferAllocation::user_allocated>(
-    std::forward<Data>(data)
-  );
+    std::remove_const_t<std::remove_reference_t<Data>>,
+    parameter_type,
+    modifiability,
+    ownership,
+    BufferAllocation::user_allocated>(std::forward<Data>(data));
 }
 
 /// @brief Creates a library allocated DataBuffer with the given container or
@@ -86,11 +88,15 @@ auto make_data_buffer(Data&& data) {
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
 template <
-  ParameterType parameter_type, BufferModifiability modifiability,
+  ParameterType       parameter_type,
+  BufferModifiability modifiability,
   typename Data>
 auto make_data_buffer(NewContainer<Data>&&) {
   return DataBuffer<
-    Data, parameter_type, modifiability, BufferOwnership::owning,
+    Data,
+    parameter_type,
+    modifiability,
+    BufferOwnership::owning,
     BufferAllocation::lib_allocated>();
 }
 
@@ -110,7 +116,8 @@ auto make_data_buffer(NewContainer<Data>&&) {
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
 template <
-  ParameterType parameter_type, BufferModifiability modifiability,
+  ParameterType       parameter_type,
+  BufferModifiability modifiability,
   typename Data>
 auto make_data_buffer(std::initializer_list<Data> data) {
   auto data_vec = [&]() {
@@ -126,7 +133,10 @@ auto make_data_buffer(std::initializer_list<Data> data) {
     }
   }();
   return DataBuffer<
-    decltype(data_vec), parameter_type, modifiability, BufferOwnership::owning,
+    decltype(data_vec),
+    parameter_type,
+    modifiability,
+    BufferOwnership::owning,
     BufferAllocation::user_allocated>(std::move(data_vec));
 }
 
@@ -169,9 +179,8 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
 template <typename Data>
 auto send_buf(Data&& data) {
   return internal::make_data_buffer<
-    internal::ParameterType::send_buf, internal::BufferModifiability::constant>(
-    std::forward<Data>(data)
-  );
+    internal::ParameterType::send_buf,
+    internal::BufferModifiability::constant>(std::forward<Data>(data));
 }
 
 /// @brief Generates a buffer taking ownership of the data pass to the send
@@ -184,9 +193,8 @@ auto send_buf(Data&& data) {
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
   return internal::make_data_buffer<
-    internal::ParameterType::send_buf, internal::BufferModifiability::constant>(
-    std::move(data)
-  );
+    internal::ParameterType::send_buf,
+    internal::BufferModifiability::constant>(std::move(data));
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or
@@ -207,9 +215,8 @@ auto send_recv_buf(Data&& data) {
       ? internal::BufferModifiability::constant
       : internal::BufferModifiability::modifiable;
   return internal::make_data_buffer<
-    internal::ParameterType::send_recv_buf, modifiability>(
-    std::forward<Data>(data)
-  );
+    internal::ParameterType::send_recv_buf,
+    modifiability>(std::forward<Data>(data));
 }
 
 /// @brief Generates buffer wrapper based on a container for the send counts,
@@ -442,11 +449,13 @@ inline auto root(size_t rank) {
 ///     used to streamline the interface so that the use does not have to
 ///     provide commutativity info when the operation is builtin.
 template <
-  typename Op, typename Commutative = internal::undefined_commutative_tag>
+  typename Op,
+  typename Commutative = internal::undefined_commutative_tag>
 internal::OperationBuilder<Op, Commutative>
 op(Op&& op, Commutative commute = internal::undefined_commutative_tag{}) {
   return internal::OperationBuilder<Op, Commutative>(
-    std::forward<Op>(op), commute
+    std::forward<Op>(op),
+    commute
   );
 }
 

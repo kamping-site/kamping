@@ -109,8 +109,9 @@ static constexpr bool is_vector_bool_v = false;
 /// false otherwise.
 template <typename T>
 static constexpr bool is_vector_bool_v<
-  T, typename std::enable_if<
-       !has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
+  T,
+  typename std::enable_if<
+    !has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
   false;
 
 /// @brief Boolean value helping to check if a type is an instance of \c
@@ -120,11 +121,13 @@ static constexpr bool is_vector_bool_v<
 /// false otherwise.
 template <typename T>
 static constexpr bool is_vector_bool_v<
-  T, typename std::enable_if<
-       has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
+  T,
+  typename std::enable_if<
+    has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
   is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::
     value&& std::is_same_v<
-      typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
+      typename std::remove_cv_t<std::remove_reference_t<T>>::value_type,
+      bool>;
 
 } // namespace internal
 
@@ -182,8 +185,10 @@ public:
 
 /// @brief The set of parameter types that must be of type `int`
 constexpr std::array int_parameter_types{
-  ParameterType::recv_counts, ParameterType::send_counts,
-  ParameterType::recv_displs, ParameterType::send_displs};
+  ParameterType::recv_counts,
+  ParameterType::send_counts,
+  ParameterType::recv_displs,
+  ParameterType::send_displs};
 
 /// @brief Checks whether buffers of a given type should have `value_type`
 /// `int`.
@@ -214,9 +219,11 @@ bool constexpr inline is_int_type(ParameterType parameter_type) {
 /// @tparam allocation `lib_allocated` if the buffer was allocated by the
 /// library, `user_allocated` if it was allocated by the user.
 template <
-  typename MemberType, ParameterType type, BufferModifiability modifiability,
-  BufferOwnership  ownership,
-  BufferAllocation allocation = BufferAllocation::user_allocated>
+  typename MemberType,
+  ParameterType       type,
+  BufferModifiability modifiability,
+  BufferOwnership     ownership,
+  BufferAllocation    allocation = BufferAllocation::user_allocated>
 class DataBuffer {
 public:
   static constexpr ParameterType parameter_type =
@@ -230,7 +237,8 @@ public:
                                     ///< singe element, `false` if the
                                     ///< DataBuffer represents a container.
   using MemberTypeWithConst = std::conditional_t<
-    is_modifiable, MemberType,
+    is_modifiable,
+    MemberType,
     MemberType const>; ///< The ContainerType as const or
                        ///< non-const depending on
                        ///< modifiability.
@@ -245,20 +253,22 @@ public:
   //     std::vector<kamping::kabool> instead.");
 
   using MemberTypeWithConstAndRef = std::conditional_t<
-    ownership == BufferOwnership::owning, MemberTypeWithConst,
+    ownership == BufferOwnership::owning,
+    MemberTypeWithConst,
     MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see
                            ///< ContainerTypeWithConst) and reference or
                            ///< non-reference depending on ownership.
 
-  using value_type = typename ValueTypeWrapper<
-    !is_single_element, MemberType>::value_type; ///< Value type of the buffer.
+  using value_type = typename ValueTypeWrapper<!is_single_element, MemberType>::
+    value_type; ///< Value type of the buffer.
   // Logical implication: is_int_type(type) => std::is_same_v<value_type, int>
   static_assert(
     !is_int_type(type) || std::is_same_v<value_type, int>,
     "The given data must be of type int"
   );
   using value_type_with_const = std::conditional_t<
-    is_modifiable, value_type,
+    is_modifiable,
+    value_type,
     value_type const>; ///< Value type as const or non-const depending
                        ///< on modifiability
 
@@ -339,9 +349,10 @@ public:
     );
     if constexpr (is_single_element) {
       KASSERT(
-        size == 1u, "Cannot resize a single element buffer to hold zero or "
-                    "more than one element. Single "
-                    "element buffers always hold exactly one element."
+        size == 1u,
+        "Cannot resize a single element buffer to hold zero or more than one "
+        "element. Single "
+        "element buffers always hold exactly one element."
       );
     } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
       KASSERT(
@@ -398,7 +409,8 @@ public:
   /// @brief Get the single element wrapped by this object.
   /// @return The single element wrapped by this object.
   template <
-    bool enabled = is_single_element, std::enable_if_t<enabled, bool> = true>
+    bool enabled                    = is_single_element,
+    std::enable_if_t<enabled, bool> = true>
   value_type const get_single_element() const {
     kassert_not_extracted(
       "Cannot get an element from a buffer that has already been extracted."
@@ -610,7 +622,8 @@ public:
       "Type of custom operation does not match."
     );
     return ReduceOperation<T, Op, Commutative>(
-      std::forward<Op>(_op), Commutative{}
+      std::forward<Op>(_op),
+      Commutative{}
     );
   }
 

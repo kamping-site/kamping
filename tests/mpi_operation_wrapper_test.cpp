@@ -94,7 +94,11 @@ TEST(UserOperationPtrWrapper, test_local_reduction_with_wrapped_function_ptr) {
       int* invec_    = static_cast<int*>(invec);
       int* inoutvec_ = static_cast<int*>(inoutvec);
       std::transform(
-        invec_, invec_ + *len, inoutvec_, inoutvec_, std::plus<>{}
+        invec_,
+        invec_ + *len,
+        inoutvec_,
+        inoutvec_,
+        std::plus<>{}
       );
     };
   {
@@ -126,7 +130,8 @@ TEST(UserOperationPtrWrapper, test_local_reduction_with_wrapped_function_ptr) {
 template <typename T, typename Op, typename Commutative>
 auto make_op(Op&& op, Commutative commutative) {
   return kamping::internal::ReduceOperation<T, Op, Commutative>(
-    std::move(op), commutative
+    std::move(op),
+    commutative
   );
 }
 
@@ -142,7 +147,8 @@ TEST(
   // builtin operation
   {
     auto op = make_op<int>(
-      std::plus<>{}, kamping::internal::undefined_commutative_tag{}
+      std::plus<>{},
+      kamping::internal::undefined_commutative_tag{}
     );
     EXPECT_EQ(op.op(), MPI_SUM);
     EXPECT_TRUE(decltype(op)::is_builtin);
@@ -213,7 +219,8 @@ TEST(
   // lambda on builtin type non-commutative
   {
     auto op = make_op<int>(
-      [](auto a, auto b) { return a + b; }, kamping::non_commutative
+      [](auto a, auto b) { return a + b; },
+      kamping::non_commutative
     );
     EXPECT_NE(op.op(), MPI_SUM);
     EXPECT_FALSE(decltype(op)::is_builtin);
@@ -232,7 +239,8 @@ TEST(
   // lambda on custom type commutative
   {
     auto op = make_op<WrappedInt>(
-      [](auto a, auto b) { return a + b; }, kamping::commutative
+      [](auto a, auto b) { return a + b; },
+      kamping::commutative
     );
     EXPECT_NE(op.op(), MPI_SUM);
     EXPECT_FALSE(decltype(op)::is_builtin);
@@ -251,7 +259,8 @@ TEST(
   // lambda on custom type non-commutative
   {
     auto op = make_op<WrappedInt>(
-      [](auto a, auto b) { return a + b; }, kamping::non_commutative
+      [](auto a, auto b) { return a + b; },
+      kamping::non_commutative
     );
     EXPECT_NE(op.op(), MPI_SUM);
     EXPECT_FALSE(decltype(op)::is_builtin);

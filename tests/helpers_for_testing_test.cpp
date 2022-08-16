@@ -107,7 +107,8 @@ TYPED_TEST(OwnContainerTest, create_initializer_list) {
   EXPECT_THAT(container, BeginEndDistanceIs(2));
 
   std::vector expected{
-    TestFixture::get_default_value(), TestFixture::get_non_default_value()};
+    TestFixture::get_default_value(),
+    TestFixture::get_non_default_value()};
   EXPECT_THAT(container, ElementsAreArray(expected));
 
   EXPECT_EQ(container[0], TestFixture::get_default_value());
@@ -169,7 +170,8 @@ TYPED_TEST(OwnContainerTest, data_works) {
   auto value = TestFixture::get_non_default_value();
   {
     testing::OwnContainer<typename TestFixture::value_type> container(
-      10, value
+      10,
+      value
     );
     EXPECT_EQ(container.data(), container.begin());
     EXPECT_EQ(container.data(), &container[0]);
@@ -177,7 +179,8 @@ TYPED_TEST(OwnContainerTest, data_works) {
   }
   {
     const testing::OwnContainer<typename TestFixture::value_type> container(
-      10, value
+      10,
+      value
     );
     EXPECT_EQ(container.data(), container.begin());
     EXPECT_EQ(container.data(), &container[0]);

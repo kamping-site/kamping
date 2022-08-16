@@ -60,21 +60,26 @@ TEST(NamedParameterTest, has_parameter_type_basics_compile_time) {
   testing::Argument<ParameterType::recv_buf>    arg1{1};
   testing::Argument<ParameterType::send_counts> arg2{2};
 
-  static_assert(
-    has_parameter_type<
-      ParameterType::send_buf, decltype(arg0), decltype(arg1), decltype(arg2)>()
-  );
-  static_assert(
-    has_parameter_type<
-      ParameterType::recv_buf, decltype(arg0), decltype(arg1), decltype(arg2)>()
-  );
   static_assert(has_parameter_type<
-                ParameterType::send_counts, decltype(arg0), decltype(arg1),
+                ParameterType::send_buf,
+                decltype(arg0),
+                decltype(arg1),
                 decltype(arg2)>());
-  static_assert(
-    !has_parameter_type<
-      ParameterType::root, decltype(arg0), decltype(arg1), decltype(arg2)>()
-  );
+  static_assert(has_parameter_type<
+                ParameterType::recv_buf,
+                decltype(arg0),
+                decltype(arg1),
+                decltype(arg2)>());
+  static_assert(has_parameter_type<
+                ParameterType::send_counts,
+                decltype(arg0),
+                decltype(arg1),
+                decltype(arg2)>());
+  static_assert(!has_parameter_type<
+                ParameterType::root,
+                decltype(arg0),
+                decltype(arg1),
+                decltype(arg2)>());
 }
 
 TEST(NamedParameterTest, default_parameters) {
@@ -91,32 +96,32 @@ TEST(NamedParameterTest, default_parameters) {
 
   {
     auto&& selected_arg = select_parameter_type_or_default<
-      ParameterType::send_buf, DefaultArgument>(
-      std::tuple(42), arg0, arg1, arg2
-    );
+      ParameterType::send_buf,
+      DefaultArgument>(std::tuple(42), arg0, arg1, arg2);
     static_assert(std::is_same_v<decltype(selected_arg), decltype(arg0)&>);
     EXPECT_EQ(selected_arg._i, 0);
   }
   {
     auto&& selected_arg = select_parameter_type_or_default<
-      ParameterType::recv_buf, DefaultArgument>(
-      std::tuple(42), arg0, arg1, arg2
-    );
+      ParameterType::recv_buf,
+      DefaultArgument>(std::tuple(42), arg0, arg1, arg2);
     static_assert(std::is_same_v<decltype(selected_arg), decltype(arg1)&>);
     EXPECT_EQ(selected_arg._i, 1);
   }
   {
     auto&& selected_arg = select_parameter_type_or_default<
-      ParameterType::send_counts, DefaultArgument>(
-      std::tuple(42), arg0, arg1, arg2
-    );
+      ParameterType::send_counts,
+      DefaultArgument>(std::tuple(42), arg0, arg1, arg2);
     static_assert(std::is_same_v<decltype(selected_arg), decltype(arg2)&>);
     EXPECT_EQ(selected_arg._i, 2);
   }
   {
     auto&& selected_arg =
       select_parameter_type_or_default<ParameterType::root, DefaultArgument>(
-        std::tuple(42), arg0, arg1, arg2
+        std::tuple(42),
+        arg0,
+        arg1,
+        arg2
       );
     static_assert(std::is_same_v<decltype(selected_arg), DefaultArgument&&>);
     EXPECT_EQ(selected_arg._value, 42);
@@ -125,7 +130,10 @@ TEST(NamedParameterTest, default_parameters) {
   {
     auto&& selected_arg =
       select_parameter_type_or_default<ParameterType::root, DefaultArgument>(
-        std::tuple(42, "KaMPIng"), arg0, arg1, arg2
+        std::tuple(42, "KaMPIng"),
+        arg0,
+        arg1,
+        arg2
       );
     static_assert(std::is_same_v<decltype(selected_arg), DefaultArgument&&>);
     EXPECT_EQ(selected_arg._value, 42);
@@ -139,8 +147,8 @@ TEST(NamedParameterTest, select_parameter_type_duplicates) {
   testing::Argument<ParameterType::send_counts> arg2{2};
   testing::Argument<ParameterType::send_buf>    arg3{3};
   {
-    // If two arguments have the same ParameterType the first occurrence in
-    // the argument list is selected.
+    // If two arguments have the same ParameterType the first occurrence in the
+    // argument list is selected.
     const auto& selected_arg =
       select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2, arg3);
     EXPECT_EQ(selected_arg._i, 0);
