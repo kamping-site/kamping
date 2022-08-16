@@ -22,7 +22,6 @@ int main(int /*argc*/, char** /*argv*/) {
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
         BufferCategoryNotUsed{}};
 #if defined(RECV_BUFFER_NOT_EXTRACTABLE)
     std::ignore = mpi_result.extract_recv_buffer();

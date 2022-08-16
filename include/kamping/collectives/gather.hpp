@@ -120,7 +120,6 @@ auto kamping::Communicator::gather(Args... args) const {
         std::move(recv_buf),
         internal::BufferCategoryNotUsed{},
         internal::BufferCategoryNotUsed{},
-        internal::BufferCategoryNotUsed{},
         internal::BufferCategoryNotUsed{}
     );
 }

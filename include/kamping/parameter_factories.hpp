@@ -233,22 +233,17 @@ auto recv_counts(std::initializer_list<T> counts) {
     );
 }
 
-/// @brief Generates a wrapper for a recv count input parameter.
-/// @param recv_count The recv count to be encapsulated.
-/// @return Wrapper around the given recv count.
-inline auto recv_count(int recv_count) {
-    return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::constant>(
-        std::move(recv_count)
-    );
-    // return internal::SingleElementOwningBuffer<int, internal::ParameterType::recv_count>(recv_count);
-}
-
-/// @brief Generates a wrapper for a recv count output parameter.
-/// @param recv_count_out Reference for the output parameter.
-/// @return Wrapper around the given reference.
-inline auto recv_count_out(int& recv_count_out) {
-    return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
-        recv_count_out
+/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
+/// will contained the receive counts when the \c MPI call has been completed.
+/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
+/// contained \c value_type
+/// @tparam Container Container type which contains the receive counts.
+/// @param container Container which will contain the receive counts.
+/// @return Object referring to the storage containing the receive counts.
+template <typename Container>
+auto recv_counts_out(Container&& container) {
+    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
+        std::forward<Container>(container)
     );
 }
 
@@ -258,9 +253,9 @@ inline auto recv_count_out(int& recv_count_out) {
 /// passing it.
 ///
 /// @return Wrapper around a new recv_count ouptput integer.
-inline auto recv_count_out(NewContainer<int>&&) {
+inline auto recv_counts_out(NewContainer<int>&&) {
     // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
-    return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
+    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
         NewContainer<int>{}
     );
 }
@@ -345,20 +340,6 @@ auto recv_buf(Container&& container) {
 template <typename Container>
 auto send_displs_out(Container&& container) {
     return internal::make_data_buffer<internal::ParameterType::send_displs, internal::BufferModifiability::modifiable>(
-        std::forward<Container>(container)
-    );
-}
-
-/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
-/// will contained the receive counts when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the receive counts.
-/// @param container Container which will contain the receive counts.
-/// @return Object referring to the storage containing the receive counts.
-template <typename Container>
-auto recv_counts_out(Container&& container) {
-    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
         std::forward<Container>(container)
     );
 }

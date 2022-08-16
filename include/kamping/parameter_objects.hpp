@@ -157,11 +157,7 @@ public:
 
 /// @brief The set of parameter types that must be of type `int`
 constexpr std::array int_parameter_types{
-    ParameterType::recv_count,
-    ParameterType::recv_counts,
-    ParameterType::send_counts,
-    ParameterType::recv_displs,
-    ParameterType::send_displs};
+    ParameterType::recv_counts, ParameterType::send_counts, ParameterType::recv_displs, ParameterType::send_displs};
 
 /// @brief Checks whether buffers of a given type should have `value_type` `int`.
 ///

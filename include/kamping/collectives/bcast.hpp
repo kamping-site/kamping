@@ -36,7 +36,7 @@
 /// and provide this buffer as it's needed for deducing the value type. The container will be resized on non-root ranks
 /// to fit exactly the received data.
 /// The following parameter is optional but causes additional communication if not present.
-/// - \ref kamping::recv_count() specifying how many elements are broadcasted. If not specified, will be
+/// - \ref kamping::recv_counts() specifying how many elements are broadcasted. If not specified, will be
 /// communicated through an additional bcast. If not specified, we broadcast the whole send_recv_buf. If specified,
 /// has to be the same on all ranks (including the root). Has to either be specified or not specified on all ranks. The
 /// following parameter is optional:
@@ -53,7 +53,7 @@ auto kamping::Communicator::bcast(Args... args) const {
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_recv_buf),
-        KAMPING_OPTIONAL_PARAMETERS(root, recv_count)
+        KAMPING_OPTIONAL_PARAMETERS(root, recv_counts)
     );
 
     // Get the root PE
@@ -72,9 +72,9 @@ auto kamping::Communicator::bcast(Args... args) const {
     // }
 
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
-    using default_recv_count_type = decltype(kamping::recv_count_out(NewContainer<int>{}));
+    using default_recv_count_type = decltype(kamping::recv_counts_out(NewContainer<int>{}));
     auto&& recv_count_param =
-        internal::select_parameter_type_or_default<ParameterType::recv_count, default_recv_count_type>(
+        internal::select_parameter_type_or_default<ParameterType::recv_counts, default_recv_count_type>(
             std::tuple(),
             args...
         );
@@ -136,7 +136,6 @@ auto kamping::Communicator::bcast(Args... args) const {
 
     return MPIResult(
         std::move(send_recv_buf),
-        BufferCategoryNotUsed{},
         std::move(recv_count_param),
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{}
@@ -149,5 +148,5 @@ auto kamping::Communicator::bcast_single(Args... args) const {
     // In contrast to bcast(...), the recv_count is not a possible parameter.
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root));
 
-    return this->bcast(std::forward<Args>(args)..., recv_count(1));
+    return this->bcast(std::forward<Args>(args)..., recv_counts(1));
 }
