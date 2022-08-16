@@ -2,14 +2,16 @@
 //
 // Copyright 2021 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// KaMPIng is free software : you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version. KaMPIng is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License
+// along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <vector>
 
@@ -22,117 +24,139 @@ int main(int /*argc*/, char** /*argv*/) {
     using ContainerType                = std::vector<int>;
     const ParameterType parameter_type = ParameterType::recv_buf;
 
-    const ContainerType                                      const_container;
-    ContainerBasedConstBuffer<ContainerType, parameter_type> container_based_const_buffer(const_container);
+    const ContainerType const_container;
+    ContainerBasedConstBuffer<ContainerType, parameter_type>
+      container_based_const_buffer(const_container);
 
     SingleElementConstBuffer<int, parameter_type> single_elem_const_buffer(42);
 
-    int                                                elem = 42;
-    SingleElementModifiableBuffer<int, parameter_type> single_elem_modifiable_buffer(elem);
+    int elem = 42;
+    SingleElementModifiableBuffer<int, parameter_type>
+      single_elem_modifiable_buffer(elem);
 
-    LibAllocatedSingleElementBuffer<int, parameter_type> lib_alloc_single_element_buffer;
+    LibAllocatedSingleElementBuffer<int, parameter_type>
+      lib_alloc_single_element_buffer;
 
-    ContainerType                                                    container;
-    UserAllocatedContainerBasedBuffer<ContainerType, parameter_type> user_alloc_container_based_buffer(container);
+    ContainerType container;
+    UserAllocatedContainerBasedBuffer<ContainerType, parameter_type>
+      user_alloc_container_based_buffer(container);
 
-    LibAllocatedContainerBasedBuffer<ContainerType, parameter_type> lib_alloc_container_based_buffer;
+    LibAllocatedContainerBasedBuffer<ContainerType, parameter_type>
+      lib_alloc_container_based_buffer;
 
     Root root(42);
 
     OperationBuilder op_builder(ops::plus<>(), commutative);
 
 #if defined(COPY_CONSTRUCT_CONTAINER_CONST_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct a buffer (for performance
+    // reasons)
     auto tmp = container_based_const_buffer;
 #elif defined(COPY_ASSIGN_CONTAINER_CONST_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     container_based_const_buffer = container_based_const_buffer;
 #elif defined(COPY_CONSTRUCT_SINGLE_ELMENT_CONST_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct a buffer (for performance
+    // reasons)
     auto tmp = single_elem_const_buffer;
 #elif defined(COPY_ASSIGN_SINGLE_ELMENT_CONST_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     single_elem_const_buffer = single_elem_const_buffer;
 #elif defined(COPY_CONSTRUCT_SINGLE_ELMENT_MODIFIABLE_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct a buffer (for performance
+    // reasons)
     auto tmp = single_elem_modifiable_buffer;
 #elif defined(COPY_ASSIGN_SINGLE_ELMENT_MODIFIABLE_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     single_elem_modifiable_buffer = single_elem_modifiable_buffer;
 #elif defined(COPY_CONSTRUCT_USER_ALLOC_CONTAINER_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct a buffer (for performance
+    // reasons)
     auto tmp = user_alloc_container_based_buffer;
 #elif defined(COPY_ASSIGN_USER_ALLOC_CONTAINER_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     user_alloc_container_based_buffer = user_alloc_container_based_buffer;
 #elif defined(COPY_CONSTRUCT_LIB_ALLOC_CONTAINER_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct a buffer (for performance
+    // reasons)
     auto tmp = lib_alloc_container_based_buffer;
 #elif defined(COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     lib_alloc_container_based_buffer = lib_alloc_container_based_buffer;
 #elif defined(COPY_CONSTRUCT_LIB_ALLOC_SINGLE_ELEMENT_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct a buffer (for performance
+    // reasons)
     auto tmp = lib_alloc_single_element_buffer;
 #elif defined(COPY_ASSIGN_LIB_ALLOC_SINGLE_ELEMENT_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     lib_alloc_single_element_buffer = lib_alloc_single_element_buffer;
 #elif defined(COPY_CONSTRUCT_ROOT_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct a buffer (for performance
+    // reasons)
     auto tmp = root;
 #elif defined(COPY_ASSIGN_ROOT_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     root = root;
 #elif defined(COPY_CONSTRUCT_OP_BUILDER_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct a buffer (for performance
+    // reasons)
     auto tmp = op_builder;
 #elif defined(COPY_ASSIGN_OP_BUILDER_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     op_builder = op_builder;
 #elif defined(VALUE_CONSTRUCTOR_REFERENCING_DATA_BUFFER)
-    // should not be possible to value (or rvalue) construct a referencing DataBuffer
-    DataBuffer<std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::referencing>
-        foo{std::vector<int>()};
+    // should not be possible to value (or rvalue) construct a referencing
+    // DataBuffer
+    DataBuffer<
+      std::vector<int>, ParameterType::send_buf,
+      BufferModifiability::modifiable, BufferOwnership::referencing>
+      foo{std::vector<int>()};
 #elif defined(DEFAULT_CONSTRUCT_USER_ALLOCATED_DATA_BUFFER)
     // should not be possible to default construct a user defined DataBuffer
     DataBuffer<
-        std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-        BufferAllocation::user_allocated>
-        foo{};
+      std::vector<int>, ParameterType::send_buf,
+      BufferModifiability::modifiable, BufferOwnership::owning,
+      BufferAllocation::user_allocated>
+      foo{};
 #elif defined(EXTRACT_USER_ALLOCATED_DATA_BUFFER)
     // should not be possible to extract a user allocated DataBuffer
     DataBuffer<
-        std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-        BufferAllocation::user_allocated>
+      std::vector<int>, ParameterType::send_buf,
+      BufferModifiability::modifiable, BufferOwnership::owning,
+      BufferAllocation::user_allocated>
          foo{std::vector<int>()};
     auto bar = foo.extract();
 #elif defined(RESIZE_CONST_DATA_BUFFER)
     // should not be possible to resize a constant DataBuffer
     DataBuffer<
-        std::vector<int>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
-        BufferAllocation::user_allocated>
+      std::vector<int>, ParameterType::send_buf, BufferModifiability::constant,
+      BufferOwnership::owning, BufferAllocation::user_allocated>
          foo{std::vector<int>()};
     auto bar = foo.resize(0);
 #elif defined(GET_SINGLE_ELEMENT_ON_VECTOR)
-    // should not be possible to call `get_single_element()` on a container based buffer
+    // should not be possible to call `get_single_element()` on a container
+    // based buffer
     DataBuffer<
-        std::vector<int>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
-        BufferAllocation::user_allocated>
-        foo{std::vector<int>()};
+      std::vector<int>, ParameterType::send_buf, BufferModifiability::constant,
+      BufferOwnership::owning, BufferAllocation::user_allocated>
+      foo{std::vector<int>()};
     foo.get_single_element();
 #elif defined(ACCESS_CONST_VECTOR_BOOL)
-    // should not be possible to do something useful with a container based on std::vector<bool>
+    // should not be possible to do something useful with a container based on
+    // std::vector<bool>
     const DataBuffer<
-        std::vector<bool>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
-        BufferAllocation::user_allocated>
-        foo{std::vector<bool>()};
+      std::vector<bool>, ParameterType::send_buf, BufferModifiability::constant,
+      BufferOwnership::owning, BufferAllocation::user_allocated>
+      foo{std::vector<bool>()};
     foo.underlying();
 #elif defined(ACCESS_VECTOR_BOOL)
-    // should not be possible to do something useful with a container based on std::vector<bool>
+    // should not be possible to do something useful with a container based on
+    // std::vector<bool>
     DataBuffer<
-        std::vector<bool>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-        BufferAllocation::user_allocated>
-        foo{std::vector<bool>()};
+      std::vector<bool>, ParameterType::send_buf,
+      BufferModifiability::modifiable, BufferOwnership::owning,
+      BufferAllocation::user_allocated>
+      foo{std::vector<bool>()};
     foo.underlying();
 #else
 // If none of the above sections is active, this file will compile successfully.

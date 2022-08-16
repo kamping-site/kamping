@@ -2,14 +2,16 @@
 //
 // Copyright 2021-2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// KaMPIng is free software : you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version. KaMPIng is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License
+// along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
 /// @file
 /// @brief Some mock objects etc. used in multiple test scenarios.
@@ -32,7 +34,8 @@
 #include "kamping/parameter_type_definitions.hpp"
 
 namespace testing {
-/// @brief Simple Container type. Can be used to test library function with containers other than vector.
+/// @brief Simple Container type. Can be used to test library function with
+/// containers other than vector.
 ///
 template <typename T>
 class OwnContainer {
@@ -44,23 +47,34 @@ public:
     OwnContainer() : OwnContainer(0) {}
 
     OwnContainer(size_t size) : OwnContainer(size, T{}) {}
-    OwnContainer(size_t size, T value) : _data(nullptr), _size(size), _copy_count(std::make_shared<size_t>(0)) {
+    OwnContainer(size_t size, T value)
+      : _data(nullptr),
+        _size(size),
+        _copy_count(std::make_shared<size_t>(0)) {
         _data = new T[_size];
-        std::for_each(this->begin(), this->end(), [&value](T& val) { val = value; });
+        std::for_each(this->begin(), this->end(), [&value](T& val) {
+            val = value;
+        });
     }
     OwnContainer(std::initializer_list<T> elems)
-        : _data(nullptr),
-          _size(elems.size()),
-          _copy_count(std::make_shared<size_t>(0)) {
+      : _data(nullptr),
+        _size(elems.size()),
+        _copy_count(std::make_shared<size_t>(0)) {
         _data = new T[_size];
         std::copy(elems.begin(), elems.end(), _data);
     }
-    OwnContainer(OwnContainer<T> const& rhs) : _data(nullptr), _size(rhs.size()), _copy_count(rhs._copy_count) {
+    OwnContainer(OwnContainer<T> const& rhs)
+      : _data(nullptr),
+        _size(rhs.size()),
+        _copy_count(rhs._copy_count) {
         _data = new T[_size];
         std::copy(rhs.begin(), rhs.end(), _data);
         (*_copy_count)++;
     }
-    OwnContainer(OwnContainer<T>&& rhs) : _data(rhs._data), _size(rhs._size), _copy_count(rhs._copy_count) {
+    OwnContainer(OwnContainer<T>&& rhs)
+      : _data(rhs._data),
+        _size(rhs._size),
+        _copy_count(rhs._copy_count) {
         rhs._data       = nullptr;
         rhs._size       = 0;
         rhs._copy_count = std::make_shared<size_t>(0);
@@ -112,7 +126,9 @@ public:
         }
         T* new_data = new T[new_size];
         std::copy(this->begin(), this->end(), new_data);
-        std::for_each(new_data + this->size(), new_data + new_size, [](T& val) { val = T{}; });
+        std::for_each(new_data + this->size(), new_data + new_size, [](T& val) {
+            val = T{};
+        });
         _size = new_size;
         delete[] _data;
         _data = new_data;
@@ -171,7 +187,8 @@ private:
 /// @ Mock argument for wrapped \c MPI calls.
 template <kamping::internal::ParameterType _parameter_type>
 struct Argument {
-    static constexpr kamping::internal::ParameterType parameter_type = _parameter_type;
+    static constexpr kamping::internal::ParameterType parameter_type =
+      _parameter_type;
     Argument(int i) : _i{i} {}
     int _i;
 };
@@ -202,15 +219,19 @@ struct CustomAllocator {
 
 //
 // Makros to test for failed KASSERT() statements.
-// Note that these makros could already be defined if we included the header that turns assertions into exceptions.
-// In this case, we keep the current definition.
+// Note that these makros could already be defined if we included the header
+// that turns assertions into exceptions. In this case, we keep the current
+// definition.
 //
 
 #ifndef EXPECT_KASSERT_FAILS
     #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // EXPECT that a KASSERT assertion failed and that the error message contains a certain failure_message.
-        #define EXPECT_KASSERT_FAILS(code, failure_message) \
-            EXPECT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
+        // EXPECT that a KASSERT assertion failed and that the error message
+        // contains a certain failure_message.
+        #define EXPECT_KASSERT_FAILS(code, failure_message)                \
+            EXPECT_EXIT(                                                   \
+              { code; }, testing::KilledBySignal(SIGABRT), failure_message \
+            );
     #else // Otherwise, we do not test for failed assertions
         #define EXPECT_KASSERT_FAILS(code, failure_message)
     #endif
@@ -218,9 +239,12 @@ struct CustomAllocator {
 
 #ifndef ASSERT_KASSERT_FAILS
     #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // ASSERT that a KASSERT assertion failed and that the error message contains a certain failure_message.
-        #define ASSERT_KASSERT_FAILS(code, failure_message) \
-            ASSERT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
+        // ASSERT that a KASSERT assertion failed and that the error message
+        // contains a certain failure_message.
+        #define ASSERT_KASSERT_FAILS(code, failure_message)                \
+            ASSERT_EXIT(                                                   \
+              { code; }, testing::KilledBySignal(SIGABRT), failure_message \
+            );
     #else // Otherwise, we do not test for failed assertions
         #define ASSERT_KASSERT_FAILS(code, failure_message)
     #endif

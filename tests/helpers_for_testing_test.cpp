@@ -2,14 +2,16 @@
 //
 // Copyright 2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// KaMPIng is free software : you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version. KaMPIng is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License
+// along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -47,7 +49,8 @@ inline bool OwnContainerTest<bool>::get_non_default_value() {
 }
 
 template <>
-inline std::tuple<int, double> OwnContainerTest<std::tuple<int, double>>::get_non_default_value() {
+inline std::tuple<int, double>
+OwnContainerTest<std::tuple<int, double>>::get_non_default_value() {
     return {42, 3.14};
 }
 
@@ -81,7 +84,9 @@ TYPED_TEST(OwnContainerTest, create_default_intialized) {
 TYPED_TEST(OwnContainerTest, create_non_default_intialized) {
     auto value = TestFixture::get_non_default_value();
 
-    testing::OwnContainer<typename TestFixture::value_type> container(10, value);
+    testing::OwnContainer<typename TestFixture::value_type> container(
+      10, value
+    );
 
     EXPECT_EQ(container.size(), 10);
     EXPECT_THAT(container, BeginEndDistanceIs(10));
@@ -97,13 +102,14 @@ TYPED_TEST(OwnContainerTest, create_non_default_intialized) {
 
 TYPED_TEST(OwnContainerTest, create_initializer_list) {
     testing::OwnContainer<typename TestFixture::value_type> container(
-        {TestFixture::get_default_value(), TestFixture::get_non_default_value()}
+      {TestFixture::get_default_value(), TestFixture::get_non_default_value()}
     );
 
     EXPECT_EQ(container.size(), 2);
     EXPECT_THAT(container, BeginEndDistanceIs(2));
 
-    std::vector expected{TestFixture::get_default_value(), TestFixture::get_non_default_value()};
+    std::vector expected{
+      TestFixture::get_default_value(), TestFixture::get_non_default_value()};
     EXPECT_THAT(container, ElementsAreArray(expected));
 
     EXPECT_EQ(container[0], TestFixture::get_default_value());
@@ -140,7 +146,9 @@ TYPED_TEST(OwnContainerTest, modify_container) {
 TYPED_TEST(OwnContainerTest, resize_container) {
     auto value = TestFixture::get_non_default_value();
 
-    testing::OwnContainer<typename TestFixture::value_type> container(10, value);
+    testing::OwnContainer<typename TestFixture::value_type> container(
+      10, value
+    );
     container.resize(15);
 
     std::vector<typename TestFixture::value_type> vec(10, value);
@@ -164,13 +172,17 @@ TYPED_TEST(OwnContainerTest, resize_container) {
 TYPED_TEST(OwnContainerTest, data_works) {
     auto value = TestFixture::get_non_default_value();
     {
-        testing::OwnContainer<typename TestFixture::value_type> container(10, value);
+        testing::OwnContainer<typename TestFixture::value_type> container(
+          10, value
+        );
         EXPECT_EQ(container.data(), container.begin());
         EXPECT_EQ(container.data(), &container[0]);
         EXPECT_EQ(container.copy_count(), 0);
     }
     {
-        const testing::OwnContainer<typename TestFixture::value_type> container(10, value);
+        const testing::OwnContainer<typename TestFixture::value_type> container(
+          10, value
+        );
         EXPECT_EQ(container.data(), container.begin());
         EXPECT_EQ(container.data(), &container[0]);
         EXPECT_EQ(container.copy_count(), 0);

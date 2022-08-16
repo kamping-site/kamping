@@ -25,11 +25,11 @@ BreakBeforeBraces: Custom
 BreakBeforeTernaryOperators: 'true'
 BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
-ColumnLimit: '120'
+ColumnLimit: '80'
 CompactNamespaces: 'false'
 ConstructorInitializerAllOnOneLineOrOnePerLine: 'true'
-ConstructorInitializerIndentWidth: '4'
-ContinuationIndentWidth: '4'
+ConstructorInitializerIndentWidth: '2'
+ContinuationIndentWidth: '2'
 Cpp11BracedListStyle: 'true'
 IncludeBlocks: Regroup
 IncludeCategories:
