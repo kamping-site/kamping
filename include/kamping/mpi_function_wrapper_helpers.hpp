@@ -72,7 +72,10 @@ public:
     /// owns) the memory for the associated results, the empty placeholder type BufferCategoryNotUsed must be passed to
     /// the constructor instead of an actual buffer object.
     MPIResult(
-        RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvCount&& recv_count, RecvDispls&& recv_displs,
+        RecvBuf&&    recv_buf,
+        RecvCounts&& recv_counts,
+        RecvCount&&  recv_count,
+        RecvDispls&& recv_displs,
         SendDispls&& send_displs
     )
         : _recv_buffer(std::forward<RecvBuf>(recv_buf)),
@@ -99,7 +102,8 @@ public:
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the receive counts.
     template <
-        typename RecvCounts_ = RecvCounts, std::enable_if_t<kamping::internal::has_extract_v<RecvCounts_>, bool> = true>
+        typename RecvCounts_                                                  = RecvCounts,
+        std::enable_if_t<kamping::internal::has_extract_v<RecvCounts_>, bool> = true>
     decltype(auto) extract_recv_counts() {
         return _recv_counts.extract();
     }
@@ -111,7 +115,8 @@ public:
     /// member function \c extract().
     /// @return Returns the underlying recv count.
     template <
-        typename RecvCount_ = RecvCount, std::enable_if_t<kamping::internal::has_extract_v<RecvCount_>, bool> = true>
+        typename RecvCount_                                                  = RecvCount,
+        std::enable_if_t<kamping::internal::has_extract_v<RecvCount_>, bool> = true>
     decltype(auto) extract_recv_count() {
         return _recv_count.extract();
     }
@@ -123,7 +128,8 @@ public:
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the receive displacements.
     template <
-        typename RecvDispls_ = RecvDispls, std::enable_if_t<kamping::internal::has_extract_v<RecvDispls_>, bool> = true>
+        typename RecvDispls_                                                  = RecvDispls,
+        std::enable_if_t<kamping::internal::has_extract_v<RecvDispls_>, bool> = true>
     decltype(auto) extract_recv_displs() {
         return _recv_displs.extract();
     }
@@ -135,7 +141,8 @@ public:
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the send displacements.
     template <
-        typename SendDispls_ = SendDispls, std::enable_if_t<kamping::internal::has_extract_v<SendDispls_>, bool> = true>
+        typename SendDispls_                                                  = SendDispls,
+        std::enable_if_t<kamping::internal::has_extract_v<SendDispls_>, bool> = true>
     decltype(auto) extract_send_displs() {
         return _send_displs.extract();
     }

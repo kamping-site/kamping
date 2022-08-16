@@ -50,10 +50,12 @@ constexpr bool in_range(From value) noexcept {
 
     // Check that the 0 is included in From and To. 0 is always included in signed types.
     static_assert(
-        std::is_signed_v<From> || std::numeric_limits<From>::min() == 0, "The type From has to include the number 0."
+        std::is_signed_v<From> || std::numeric_limits<From>::min() == 0,
+        "The type From has to include the number 0."
     );
     static_assert(
-        std::is_signed_v<To> || std::numeric_limits<To>::min() == 0, "The type To has to include the number 0."
+        std::is_signed_v<To> || std::numeric_limits<To>::min() == 0,
+        "The type To has to include the number 0."
     );
 
     // Check if we can safely cast To and From into (u)intmax_t.
@@ -63,7 +65,8 @@ constexpr bool in_range(From value) noexcept {
             "From has more bits than intmax_t."
         );
         static_assert(
-            std::numeric_limits<To>::digits <= std::numeric_limits<intmax_t>::digits, "To has more bits than intmax_t."
+            std::numeric_limits<To>::digits <= std::numeric_limits<intmax_t>::digits,
+            "To has more bits than intmax_t."
         );
     } else {
         static_assert(
@@ -131,7 +134,9 @@ constexpr To asserting_cast(From value) KAMPING_NOEXCEPT {
 template <class To, class From>
 constexpr To throwing_cast(From value) {
     THROWING_KASSERT_SPECIFIED(
-        in_range<To>(value), value << " is not representable by the target type.", std::range_error
+        in_range<To>(value),
+        value << " is not representable by the target type.",
+        std::range_error
     );
     return static_cast<To>(value);
 }

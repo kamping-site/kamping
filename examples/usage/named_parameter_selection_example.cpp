@@ -67,7 +67,11 @@ int main() {
         // arguments to the default parameter are passed as a tuple
         auto&& selected_arg =
             internal::select_parameter_type_or_default<internal::ParameterType::root, DefaultArgument>(
-                std::tuple(42, "KaMPIng"), arg_id_2, arg_id_1, arg_id_3, arg_id_4
+                std::tuple(42, "KaMPIng"),
+                arg_id_2,
+                arg_id_1,
+                arg_id_3,
+                arg_id_4
             );
         std::cout << "parameters of default argument: " << selected_arg._value << " " << selected_arg._message
                   << std::endl;

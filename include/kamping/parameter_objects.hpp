@@ -95,7 +95,8 @@ static constexpr bool is_vector_bool_v = false;
 /// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
 template <typename T>
 static constexpr bool is_vector_bool_v<
-    T, typename std::enable_if<!has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> = false;
+    T,
+    typename std::enable_if<!has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> = false;
 
 /// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
 /// @tparam T The type.
@@ -156,7 +157,10 @@ public:
 
 /// @brief The set of parameter types that must be of type `int`
 constexpr std::array int_parameter_types{
-    ParameterType::recv_count, ParameterType::recv_counts, ParameterType::send_counts, ParameterType::recv_displs,
+    ParameterType::recv_count,
+    ParameterType::recv_counts,
+    ParameterType::send_counts,
+    ParameterType::recv_displs,
     ParameterType::send_displs};
 
 /// @brief Checks whether buffers of a given type should have `value_type` `int`.
@@ -186,8 +190,11 @@ bool constexpr inline is_int_type(ParameterType parameter_type) {
 /// @tparam allocation `lib_allocated` if the buffer was allocated by the library,
 /// `user_allocated` if it was allocated by the user.
 template <
-    typename MemberType, ParameterType type, BufferModifiability modifiability, BufferOwnership ownership,
-    BufferAllocation allocation = BufferAllocation::user_allocated>
+    typename MemberType,
+    ParameterType       type,
+    BufferModifiability modifiability,
+    BufferOwnership     ownership,
+    BufferAllocation    allocation = BufferAllocation::user_allocated>
 class DataBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
@@ -209,7 +216,8 @@ public:
     //     "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead.");
 
     using MemberTypeWithConstAndRef = std::conditional_t<
-        ownership == BufferOwnership::owning, MemberTypeWithConst,
+        ownership == BufferOwnership::owning,
+        MemberTypeWithConst,
         MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
                                ///< reference or non-reference depending on ownership.
 
@@ -279,8 +287,9 @@ public:
         kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
         if constexpr (is_single_element) {
             KASSERT(
-                size == 1u, "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                            "element buffers always hold exactly one element."
+                size == 1u,
+                "Cannot resize a single element buffer to hold zero or more than one element. Single "
+                "element buffers always hold exactly one element."
             );
         } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
             KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
@@ -365,8 +374,9 @@ public:
     template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>
     MemberTypeWithConst extract() {
         static_assert(
-            ownership == BufferOwnership::owning, "Moving out of a reference should not be done because it would leave "
-                                                  "a users container in an unspecified state."
+            ownership == BufferOwnership::owning,
+            "Moving out of a reference should not be done because it would leave "
+            "a users container in an unspecified state."
         );
         kassert_not_extracted("Cannot extract a buffer that has already been extracted.");
         auto extracted = std::move(underlying());

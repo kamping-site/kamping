@@ -50,12 +50,15 @@ template <typename... Args>
 auto kamping::Communicator::reduce(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, root)
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf, op),
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, root)
     );
 
     // Get all parameters
     auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
-        std::tuple(this->root()), args...
+        std::tuple(this->root()),
+        args...
     );
 
     const auto& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
@@ -65,7 +68,8 @@ auto kamping::Communicator::reduce(Args... args) const {
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
-            std::tuple(), args...
+            std::tuple(),
+            args...
         );
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
@@ -82,7 +86,9 @@ auto kamping::Communicator::reduce(Args... args) const {
 
     KASSERT(is_valid_rank(root.rank()), "The provided root rank is invalid.", assert::light);
     KASSERT(
-        this->is_same_on_all_ranks(root.rank()), "Root has to be the same on all ranks.", assert::light_communication
+        this->is_same_on_all_ranks(root.rank()),
+        "Root has to be the same on all ranks.",
+        assert::light_communication
     );
 
     send_value_type* recv_buf_ptr = nullptr;
@@ -91,13 +97,21 @@ auto kamping::Communicator::reduce(Args... args) const {
         recv_buf_ptr = recv_buf.data();
     }
     [[maybe_unused]] int err = MPI_Reduce(
-        send_buf.data(), recv_buf_ptr, asserting_cast<int>(send_buf.size()), type, operation.op(), root.rank_signed(),
+        send_buf.data(),
+        recv_buf_ptr,
+        asserting_cast<int>(send_buf.size()),
+        type,
+        operation.op(),
+        root.rank_signed(),
         mpi_communicator()
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
     return MPIResult(
-        std::move(recv_buf), internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{},
-        internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{}
+        std::move(recv_buf),
+        internal::BufferCategoryNotUsed{},
+        internal::BufferCategoryNotUsed{},
+        internal::BufferCategoryNotUsed{},
+        internal::BufferCategoryNotUsed{}
     );
 }
