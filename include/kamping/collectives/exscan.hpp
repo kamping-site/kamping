@@ -83,9 +83,8 @@ auto kamping::Communicator::exscan(Args... args) const {
     auto  operation       = operation_param.template build_operation<send_value_type>();
 
     // Resize the recv buffer to the same size as the send buffer; get the pointer needed for the MPI call.
-    send_value_type* recv_buf_ptr = nullptr;
     recv_buf.resize(send_buf.size());
-    recv_buf_ptr = recv_buf.data();
+    recv_value_type* recv_buf_ptr = recv_buf.data();
     KASSERT(recv_buf_ptr != nullptr, assert::light);
     KASSERT(recv_buf.size() == send_buf.size(), assert::light);
     // send_buf.size() is equal on all ranks, as checked above.
