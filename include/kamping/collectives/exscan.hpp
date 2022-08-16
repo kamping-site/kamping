@@ -33,17 +33,17 @@
 /// @brief Wrapper for \c MPI_Exscan.
 ///
 /// This wraps \c MPI_Exscan, which is used to perform an exclusive prefix reduction on data distributed across the
-/// calling processes. / \c exscan(...) returns in the recvbuf of the process with rank \c i, the reduction (calculated
-/// according to the function op) of the values in the sendbufs of processes with ranks 0, ..., i (exclusive).
-/// We set the value of the \c recv_buf on rank 0 to the value of on_rank_0 if provided. If \c on_rank_0 is not provided
-/// and \c op is a build-in operation and we are working on a built in data-type, we set the value on rank 0 to the
-/// identity of that operation. The type of operations supported, their semantics, and the constraints on send and
-/// receive buffers are as for MPI_Reduce. The following parameters are required:
+/// calling processes. / \c exscan(...) returns in the \c recv_buf of the process with rank \c i, the reduction
+/// (calculated according to the function \c op) of the values in the sendbufs of processes with ranks 0, ..., i
+/// (exclusive). We set the value of the \c recv_buf on rank 0 to the value of \c on_rank_0 if provided. If \c on_rank_0
+/// is not provided and \c op is a built-in operation and we are working on a built in data-type, we set the value on
+/// rank 0 to the identity of that operation. The type of operations supported, their semantics, and the constraints on
+/// send and receive buffers are as for \c MPI_Reduce. The following parameters are required:
 ///  - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 ///  each rank.
-///  - \ref kamping::op() wrapping the operation to apply to the input.
+///  - \ref kamping::op() the operation to apply to the input.
 ///
-/// The following parameter is required if the operation is not a build-in operation or the data-type is not a build-in
+/// The following parameter is required if the operation is not a built-in operation or the data-type is not a built-in
 /// data type:
 ///  - \ref kamping::on_rank_0() containing the value that is returned in the \c recv_buf of rank 0.
 ///
@@ -99,8 +99,9 @@ auto kamping::Communicator::exscan(Args... args) const {
         mpi_communicator()                    // communicator
     );
 
-    // MPI_Exscan leaves the recvbuf on rank 0 in an undefined state, we set it to the value of on_rank_0 if defined or
-    // the identity of the operation otherwise (works only for build-in operations on build-in data types).
+    // MPI_Exscan leaves the recv_buf on rank 0 in an undefined state. We set it to the value provided via on_rank_0()
+    // if given. If on_rank_0() is not given and the operation is a built-in operation on a built-in data-type, we set
+    // the value on rank 0 to the identity of that operation on that datatype (e.g. 0 for addition on integers).
     if (rank() == 0) {
         constexpr bool on_root_param_provided = has_parameter_type<ParameterType::on_rank_0, Args...>();
         static_assert(
