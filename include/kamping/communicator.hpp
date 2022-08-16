@@ -57,7 +57,7 @@ public:
     /// @brief Number of MPI processes in this communicator as `int`.
     /// @return Number of MPI processes in this communicator `int`.
     [[nodiscard]] int size_signed() const {
-        return asserting_cast<int>(_size);
+        return asserting_cast<  int>(_size);
     }
 
     /// @brief Number of MPI processes in this communicator as `size_t`.
