@@ -76,7 +76,8 @@ public:
     /// @param new_root The new default root.
     void root(int const new_root) {
         THROWING_KASSERT(
-            is_valid_rank(new_root), "invalid root rank " << new_root << " in communicator of size " << size()
+            is_valid_rank(new_root),
+            "invalid root rank " << new_root << " in communicator of size " << size()
         );
         _root = asserting_cast<size_t>(new_root);
     }
@@ -85,7 +86,8 @@ public:
     /// @param new_root The new default root.
     void root(size_t const new_root) {
         THROWING_KASSERT(
-            is_valid_rank(new_root), "invalid root rank " << new_root << " in communicator of size " << size()
+            is_valid_rank(new_root),
+            "invalid root rank " << new_root << " in communicator of size " << size()
         );
         _root = new_root;
     }

@@ -30,8 +30,9 @@ using namespace ::kamping::internal;
 namespace testing {
 template <typename ExpectedValueType, typename GeneratedBuffer, typename T>
 void test_const_buffer(
-    const GeneratedBuffer& generated_buffer, kamping::internal::ParameterType expected_parameter_type,
-    Span<T>& expected_span
+    const GeneratedBuffer&           generated_buffer,
+    kamping::internal::ParameterType expected_parameter_type,
+    Span<T>&                         expected_span
 ) {
     // value_type of a buffer should be the same as the value_type of the underlying container
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
@@ -56,8 +57,9 @@ void test_const_buffer(
 
 template <typename ExpectedValueType, typename GeneratedBuffer, typename ExpectedValueContainer>
 void test_owning_buffer(
-    const GeneratedBuffer& generated_buffer, kamping::internal::ParameterType expected_parameter_type,
-    ExpectedValueContainer&& expected_value_container
+    const GeneratedBuffer&           generated_buffer,
+    kamping::internal::ParameterType expected_parameter_type,
+    ExpectedValueContainer&&         expected_value_container
 ) {
     // value_type of a buffer should be the same as the value_type of the underlying container
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
@@ -105,8 +107,9 @@ void test_modifiable_buffer(
 
 template <typename ExpectedValueType, typename GeneratedBuffer, typename UnderlyingContainer>
 void test_user_allocated_buffer(
-    GeneratedBuffer& generated_buffer, kamping::internal::ParameterType expected_parameter_type,
-    UnderlyingContainer& underlying_container
+    GeneratedBuffer&                 generated_buffer,
+    kamping::internal::ParameterType expected_parameter_type,
+    UnderlyingContainer&             underlying_container
 ) {
     // value_type of a buffer should be the same as the value_type of the underlying container
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
@@ -148,8 +151,10 @@ void test_library_allocated_buffer(
 
 template <typename ExpectedValueType, typename GeneratedBuffer>
 void test_single_element_buffer(
-    GeneratedBuffer const& generatedbuffer, kamping::internal::ParameterType expected_parameter_type,
-    ExpectedValueType const value, bool should_be_modifiable = false
+    GeneratedBuffer const&           generatedbuffer,
+    kamping::internal::ParameterType expected_parameter_type,
+    ExpectedValueType const          value,
+    bool                             should_be_modifiable = false
 ) {
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
@@ -249,7 +254,9 @@ TEST(ParameterFactoriesTest, send_buf_single_element) {
         {
             auto gen_single_element_buffer = send_buf(CustomType{843290834, -482, 'a'});
             testing::test_single_element_buffer(
-                gen_single_element_buffer, ParameterType::send_buf, CustomType{843290834, -482, 'a'}
+                gen_single_element_buffer,
+                ParameterType::send_buf,
+                CustomType{843290834, -482, 'a'}
             );
         }
     }
@@ -268,13 +275,16 @@ TEST(ParameterFactoriesTest, send_buf_switch) {
         std::is_same_v<decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_buf>>;
     EXPECT_TRUE(single_result);
     bool const vec_result = std::is_same_v<
-        decltype(gen_int_vec_buffer), ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
+        decltype(gen_int_vec_buffer),
+        ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
     EXPECT_TRUE(vec_result);
     bool const owning_single_result = std::is_same_v<
-        decltype(gen_single_element_owning_buffer), SingleElementOwningBuffer<uint8_t, ParameterType::send_buf>>;
+        decltype(gen_single_element_owning_buffer),
+        SingleElementOwningBuffer<uint8_t, ParameterType::send_buf>>;
     EXPECT_TRUE(owning_single_result);
     bool const owning_vec_result = std::is_same_v<
-        decltype(gen_int_vec_owning_buffer), ContainerBasedOwningBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
+        decltype(gen_int_vec_owning_buffer),
+        ContainerBasedOwningBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
     EXPECT_TRUE(owning_vec_result);
 }
 
@@ -415,7 +425,9 @@ TEST(ParameterFactoriesTest, recv_buf_basics_user_alloc) {
     auto             buffer_on_user_alloc_vector = recv_buf(int_vec);
     using ExpectedValueType                      = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
-        buffer_on_user_alloc_vector, ParameterType::recv_buf, int_vec
+        buffer_on_user_alloc_vector,
+        ParameterType::recv_buf,
+        int_vec
     );
 }
 
@@ -423,7 +435,8 @@ TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc) {
     auto buffer_based_on_library_alloc_vector = recv_buf(NewContainer<std::vector<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::recv_buf
+        buffer_based_on_library_alloc_vector,
+        ParameterType::recv_buf
     );
 }
 
@@ -433,7 +446,9 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
     auto             buffer_based_on_user_alloc_vector = send_displs_out(int_vec);
     using ExpectedValueType                            = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_user_alloc_vector, ParameterType::send_displs, int_vec
+        buffer_based_on_user_alloc_vector,
+        ParameterType::send_displs,
+        int_vec
     );
 }
 
@@ -441,7 +456,8 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc) {
     auto buffer_based_on_library_alloc_vector = send_displs_out(NewContainer<std::vector<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::send_displs
+        buffer_based_on_library_alloc_vector,
+        ParameterType::send_displs
     );
 }
 
@@ -452,7 +468,9 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_user_alloc) {
     auto             buffer_based_on_library_alloc_vector = recv_counts_out(NewContainer<std::vector<int>>{});
     using ExpectedValueType                               = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_user_alloc_buffer, ParameterType::recv_counts, int_vec
+        buffer_based_on_user_alloc_buffer,
+        ParameterType::recv_counts,
+        int_vec
     );
 }
 
@@ -460,7 +478,8 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc) {
     auto buffer_based_on_library_alloc_vector = recv_counts_out(NewContainer<std::vector<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::recv_counts
+        buffer_based_on_library_alloc_vector,
+        ParameterType::recv_counts
     );
 }
 
@@ -470,7 +489,9 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
     auto             buffer_based_on_user_alloc_vector = recv_displs_out(int_vec);
     using ExpectedValueType                            = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_user_alloc_vector, ParameterType::recv_displs, int_vec
+        buffer_based_on_user_alloc_vector,
+        ParameterType::recv_displs,
+        int_vec
     );
 }
 
@@ -478,7 +499,8 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
     auto buffer_based_on_library_alloc_vector = recv_displs_out(NewContainer<std::vector<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::recv_displs
+        buffer_based_on_library_alloc_vector,
+        ParameterType::recv_displs
     );
 }
 
@@ -547,11 +569,12 @@ TEST(ParameterFactoriesTest, single_and_multiple_element_const_send_recv_buffer_
     auto gen_single_element_buffer = send_recv_buf(value);
     auto gen_int_vec_buffer        = send_recv_buf(values);
 
-    bool const single_result = std::is_same_v<
-        decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_recv_buf>>;
+    bool const single_result = std::
+        is_same_v<decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_recv_buf>>;
     EXPECT_TRUE(single_result);
     bool const vec_result = std::is_same_v<
-        decltype(gen_int_vec_buffer), ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_recv_buf>>;
+        decltype(gen_int_vec_buffer),
+        ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_recv_buf>>;
     EXPECT_TRUE(vec_result);
 }
 
@@ -563,7 +586,8 @@ TEST(ParameterFactoriesTest, single_and_multiple_element_modifiable_send_recv_bu
     auto gen_int_vec_buffer        = send_recv_buf(values);
 
     bool const single_result = std::is_same_v<
-        decltype(gen_single_element_buffer), SingleElementModifiableBuffer<uint8_t, ParameterType::send_recv_buf>>;
+        decltype(gen_single_element_buffer),
+        SingleElementModifiableBuffer<uint8_t, ParameterType::send_recv_buf>>;
     EXPECT_TRUE(single_result);
     bool const vec_result = std::is_same_v<
         decltype(gen_int_vec_buffer),
@@ -577,7 +601,9 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_user_alloc) {
     auto             buffer_on_user_alloc_vector = send_recv_buf(int_vec);
     using ExpectedValueType                      = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
-        buffer_on_user_alloc_vector, ParameterType::send_recv_buf, int_vec
+        buffer_on_user_alloc_vector,
+        ParameterType::send_recv_buf,
+        int_vec
     );
 }
 
@@ -585,7 +611,8 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_library_alloc) {
     auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<std::vector<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf
+        buffer_based_on_library_alloc_vector,
+        ParameterType::send_recv_buf
     );
 }
 
@@ -603,7 +630,8 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_type_library_alloc) {
     auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<std::vector<CustomType>>{});
     using ExpectedValueType                   = CustomType;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf
+        buffer_based_on_library_alloc_vector,
+        ParameterType::send_recv_buf
     );
 }
 
@@ -611,7 +639,8 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_container_library_alloc) {
     auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<testing::OwnContainer<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf
+        buffer_based_on_library_alloc_vector,
+        ParameterType::send_recv_buf
     );
 }
 

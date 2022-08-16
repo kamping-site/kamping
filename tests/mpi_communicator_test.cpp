@@ -166,10 +166,12 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
             EXPECT_EQ(expected_rank_in_splitted_comm, splitted_comm.convert_rank_from_communicator(rank_to_test, comm));
             if (expected_rank_in_splitted_comm != MPI_UNDEFINED) {
                 EXPECT_EQ(
-                    rank_to_test, comm.convert_rank_from_communicator(expected_rank_in_splitted_comm, splitted_comm)
+                    rank_to_test,
+                    comm.convert_rank_from_communicator(expected_rank_in_splitted_comm, splitted_comm)
                 );
                 EXPECT_EQ(
-                    rank_to_test, splitted_comm.convert_rank_to_communicator(expected_rank_in_splitted_comm, comm)
+                    rank_to_test,
+                    splitted_comm.convert_rank_to_communicator(expected_rank_in_splitted_comm, comm)
                 );
             }
         }
@@ -195,10 +197,12 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
             EXPECT_EQ(expected_rank_rn_splitted_comm, splitted_comm.convert_rank_from_communicator(rank_to_test, comm));
             if (expected_rank_rn_splitted_comm != MPI_UNDEFINED) {
                 EXPECT_EQ(
-                    rank_to_test, comm.convert_rank_from_communicator(expected_rank_rn_splitted_comm, splitted_comm)
+                    rank_to_test,
+                    comm.convert_rank_from_communicator(expected_rank_rn_splitted_comm, splitted_comm)
                 );
                 EXPECT_EQ(
-                    rank_to_test, splitted_comm.convert_rank_to_communicator(expected_rank_rn_splitted_comm, comm)
+                    rank_to_test,
+                    splitted_comm.convert_rank_to_communicator(expected_rank_rn_splitted_comm, comm)
                 );
             }
         }

@@ -55,7 +55,8 @@ auto kamping::Communicator::allreduce(Args... args) const {
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
     KASSERT(
-        is_same_on_all_ranks(send_buf.size()), "The send buffer has to be the same size on all ranks.",
+        is_same_on_all_ranks(send_buf.size()),
+        "The send buffer has to be the same size on all ranks.",
         assert::light_communication
     );
 

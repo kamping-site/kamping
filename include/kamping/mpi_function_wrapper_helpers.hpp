@@ -94,7 +94,8 @@ public:
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the receive counts.
     template <
-        typename RecvCounts_ = RecvCounts, std::enable_if_t<kamping::internal::has_extract_v<RecvCounts_>, bool> = true>
+        typename RecvCounts_                                                  = RecvCounts,
+        std::enable_if_t<kamping::internal::has_extract_v<RecvCounts_>, bool> = true>
     decltype(auto) extract_recv_counts() {
         return _recv_counts.extract();
     }
@@ -106,7 +107,8 @@ public:
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the receive displacements.
     template <
-        typename RecvDispls_ = RecvDispls, std::enable_if_t<kamping::internal::has_extract_v<RecvDispls_>, bool> = true>
+        typename RecvDispls_                                                  = RecvDispls,
+        std::enable_if_t<kamping::internal::has_extract_v<RecvDispls_>, bool> = true>
     decltype(auto) extract_recv_displs() {
         return _recv_displs.extract();
     }
@@ -118,7 +120,8 @@ public:
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the send displacements.
     template <
-        typename SendDispls_ = SendDispls, std::enable_if_t<kamping::internal::has_extract_v<SendDispls_>, bool> = true>
+        typename SendDispls_                                                  = SendDispls,
+        std::enable_if_t<kamping::internal::has_extract_v<SendDispls_>, bool> = true>
     decltype(auto) extract_send_displs() {
         return _send_displs.extract();
     }
