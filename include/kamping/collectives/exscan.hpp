@@ -35,17 +35,17 @@
 /// This wraps \c MPI_Exscan, which is used to perform an exclusive prefix reduction on data distributed across the
 /// calling processes. / \c exscan(...) returns in the \c recv_buf of the process with rank \c i, the reduction
 /// (calculated according to the function \c op) of the values in the sendbufs of processes with ranks 0, ..., i
-/// (exclusive). We set the value of the \c recv_buf on rank 0 to the value of \c on_rank_0 if provided. If \c on_rank_0
-/// is not provided and \c op is a built-in operation and we are working on a built in data-type, we set the value on
-/// rank 0 to the identity of that operation. The type of operations supported, their semantics, and the constraints on
-/// send and receive buffers are as for \c MPI_Reduce. The following parameters are required:
+/// (exclusive). We set the value of the \c recv_buf on rank 0 to the value of \c values_on_rank_0 if provided. If \c
+/// values_on_rank_0 is not provided and \c op is a built-in operation and we are working on a built in data-type, we
+/// set the value on rank 0 to the identity of that operation. The type of operations supported, their semantics, and
+/// the constraints on send and receive buffers are as for \c MPI_Reduce. The following parameters are required:
 ///  - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 ///  each rank.
 ///  - \ref kamping::op() the operation to apply to the input.
 ///
 /// The following parameter is required if the operation is not a built-in operation or the data-type is not a built-in
 /// data type:
-///  - \ref kamping::on_rank_0() containing the value that is returned in the \c recv_buf of rank 0.
+///  - \ref kamping::values_on_rank_0() containing the value that is returned in the \c recv_buf of rank 0.
 ///
 ///  The following parameters are optional:
 ///  - \ref kamping::recv_buf() containing a buffer for the output.
@@ -56,7 +56,7 @@ template <typename... Args>
 auto kamping::Communicator::exscan(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, on_rank_0)
+        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
     );
 
     // Get the send buffer and deduce the send and recv value types.
@@ -99,28 +99,30 @@ auto kamping::Communicator::exscan(Args... args) const {
         mpi_communicator()                    // communicator
     );
 
-    // MPI_Exscan leaves the recv_buf on rank 0 in an undefined state. We set it to the value provided via on_rank_0()
-    // if given. If on_rank_0() is not given and the operation is a built-in operation on a built-in data-type, we set
-    // the value on rank 0 to the identity of that operation on that datatype (e.g. 0 for addition on integers).
+    // MPI_Exscan leaves the recv_buf on rank 0 in an undefined state. We set it to the value provided via
+    //  values_on_rank_0() if given. If values_on_rank_0() is not given and the operation is a built-in operation on a
+    // built-in data-type, we set the value on rank 0 to the identity of that operation on that datatype (e.g. 0 for
+    // addition on integers).
     if (rank() == 0) {
-        constexpr bool is_on_root_param_provided = has_parameter_type<ParameterType::on_rank_0, Args...>();
+        constexpr bool has_values_on_root_param = has_parameter_type<ParameterType::values_on_rank_0, Args...>();
         // We decided not to enforce this, at it would introduce a parameter which is required in some situtations in
         // KaMPIng, but never in MPI.
         //
         // static_assert(
         //     is_on_root_param_provided || operation.is_builtin,
-        //     "The user did not provide on_rank_0(...) and the operation is not built-in (at least on this type)."
+        //     "The user did not provide values_on_rank_0(...) and the operation is not built-in (at least on this
+        //     type)."
         // );
-        if constexpr (is_on_root_param_provided) {
-            const auto& on_rank_0_param = select_parameter_type<ParameterType::on_rank_0>(args...);
+        if constexpr (has_values_on_root_param) {
+            const auto& values_on_rank_0_param = select_parameter_type<ParameterType::values_on_rank_0>(args...);
             KASSERT(
-                (on_rank_0_param.size() == 1 || on_rank_0_param.size() == recv_buf.size()),
+                (values_on_rank_0_param.size() == 1 || values_on_rank_0_param.size() == recv_buf.size()),
                 "on_rank_0 has to either be of size 1 or of the same size as the recv_buf.", assert::light
             );
-            if (on_rank_0_param.size() == 1) {
-                std::fill_n(recv_buf.data(), recv_buf.size(), *on_rank_0_param.data());
+            if (values_on_rank_0_param.size() == 1) {
+                std::fill_n(recv_buf.data(), recv_buf.size(), *values_on_rank_0_param.data());
             } else {
-                std::copy_n(on_rank_0_param.data(), on_rank_0_param.size(), recv_buf.data());
+                std::copy_n(values_on_rank_0_param.data(), values_on_rank_0_param.size(), recv_buf.data());
             }
         } else if constexpr (operation.is_builtin) {
             std::fill_n(recv_buf.data(), recv_buf.size(), operation.identity());

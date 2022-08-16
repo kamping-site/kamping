@@ -409,10 +409,9 @@ internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = in
 /// @param value Value to return on the first rank.
 /// @returns OnRank0 Object containing the information which value to return on the first rank.
 template <typename T>
-inline auto on_rank_0(const T& value) {
-    return internal::make_data_buffer<internal::ParameterType::on_rank_0, internal::BufferModifiability::constant>(
-        std::move(value)
-    );
+inline auto values_on_rank_0(const T& value) {
+    return internal::make_data_buffer<
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(value));
 }
 
 /// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
@@ -420,10 +419,9 @@ inline auto on_rank_0(const T& value) {
 /// @param value Value to return on the first rank.
 /// @returns OnRank0 Object containing the information which value to return on the first rank.
 template <typename T>
-inline auto on_rank_0(std::vector<T const>& values) {
-    return internal::make_data_buffer<internal::ParameterType::on_rank_0, internal::BufferModifiability::constant>(
-        std::move(values)
-    );
+inline auto values_on_rank_0(std::vector<T const>& values) {
+    return internal::make_data_buffer<
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(values));
 }
 
 /// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
@@ -432,8 +430,9 @@ inline auto on_rank_0(std::vector<T const>& values) {
 /// @returns OnRank0 Object containing the information which value to return on the first rank.
 // TODO zero-overhead
 template <typename T>
-inline auto on_rank_0(std::initializer_list<T>&& initializer_list) {
-    return internal::make_data_buffer<internal::ParameterType::on_rank_0, internal::BufferModifiability::constant>(
+inline auto values_on_rank_0(std::initializer_list<T>&& initializer_list) {
+    return internal::make_data_buffer<
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(
         std::move(std::vector<T>(std::forward<std::initializer_list<T>>(initializer_list)))
     );
 }

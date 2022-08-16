@@ -63,19 +63,21 @@ TEST(exscanTest, exscan_builtin_op_on_non_builtin_type) {
     };
     std::vector<MyInt> input = {comm.rank_signed(), 42};
 
-    auto result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative), on_rank_0(MyInt{0}))
-                      .extract_recv_buffer();
+    auto result =
+        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative), values_on_rank_0(MyInt{0}))
+            .extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {((comm.rank_signed() - 1) * comm.rank_signed()) / 2, comm.rank_signed() * 42};
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(exscanTest, exscan_no_identity_on_rank_0) {
+TEST(exscanTest, exscan_no_identity_values_on_rank_0) {
     Communicator comm;
 
     std::vector<int> input = {0};
 
-    auto result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), on_rank_0(1337)).extract_recv_buffer();
+    auto result =
+        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), values_on_rank_0(1337)).extract_recv_buffer();
     EXPECT_EQ(result.size(), 1);
 
     std::vector<int> expected_result;
@@ -101,8 +103,9 @@ TEST(exscanTest, exscan_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     { // use function ptr
-        auto result = comm.exscan(send_buf(input), op(add_plus_42_function, kamping::commutative), on_rank_0({0, 1, 2}))
-                          .extract_recv_buffer();
+        auto result =
+            comm.exscan(send_buf(input), op(add_plus_42_function, kamping::commutative), values_on_rank_0({0, 1, 2}))
+                .extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         if (comm.rank() == 0) {
@@ -117,8 +120,9 @@ TEST(exscanTest, exscan_custom_operation_on_builtin_type) {
     }
 
     { // use lambda
-        auto result = comm.exscan(send_buf(input), op(add_plus_42_lambda, kamping::commutative), on_rank_0({0, 1, 2}))
-                          .extract_recv_buffer();
+        auto result =
+            comm.exscan(send_buf(input), op(add_plus_42_lambda, kamping::commutative), values_on_rank_0({0, 1, 2}))
+                .extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         if (comm.rank() == 0) {
@@ -136,7 +140,7 @@ TEST(exscanTest, exscan_custom_operation_on_builtin_type) {
         auto result = comm.exscan(
                               send_buf(input),
                               op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::commutative),
-                              on_rank_0({0, 1, 2})
+                              values_on_rank_0({0, 1, 2})
         )
                           .extract_recv_buffer();
 
@@ -158,7 +162,7 @@ TEST(exscanTest, exscan_custom_operation_on_builtin_type) {
                 return lhs + rhs + 42;
             }
         };
-        auto result = comm.exscan(send_buf(input), op(MySum42{}, kamping::commutative), on_rank_0({0, 1, 2}))
+        auto result = comm.exscan(send_buf(input), op(MySum42{}, kamping::commutative), values_on_rank_0({0, 1, 2}))
                           .extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
@@ -183,8 +187,8 @@ TEST(exscanTest, exscan_custom_operation_on_builtin_type_non_commutative) {
 
     std::vector<int> input = {comm.rank_signed() + 17};
 
-    auto result =
-        comm.exscan(send_buf(input), op(get_right, kamping::non_commutative), on_rank_0(0)).extract_recv_buffer();
+    auto result = comm.exscan(send_buf(input), op(get_right, kamping::non_commutative), values_on_rank_0(0))
+                      .extract_recv_buffer();
 
     EXPECT_EQ(result.size(), 1);
     if (comm.rank() == 0) {
@@ -196,4 +200,4 @@ TEST(exscanTest, exscan_custom_operation_on_builtin_type_non_commutative) {
 }
 
 /// @todo Once our helper macros support checking for KASSERTs which are thrown on some ranks only, write a test for
-/// and on_rank_0 size which is not 1 and not equal the length of the recv_buf.
+/// and values_on_rank_0 size which is not 1 and not equal the length of the recv_buf.
