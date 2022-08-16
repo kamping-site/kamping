@@ -96,40 +96,58 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif defined(DEFAULT_CONSTRUCT_USER_ALLOCATED_DATA_BUFFER)
     // should not be possible to default construct a user defined DataBuffer
     DataBuffer<
-        std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+        std::vector<int>,
+        ParameterType::send_buf,
+        BufferModifiability::modifiable,
+        BufferOwnership::owning,
         BufferAllocation::user_allocated>
         foo{};
 #elif defined(EXTRACT_USER_ALLOCATED_DATA_BUFFER)
     // should not be possible to extract a user allocated DataBuffer
     DataBuffer<
-        std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+        std::vector<int>,
+        ParameterType::send_buf,
+        BufferModifiability::modifiable,
+        BufferOwnership::owning,
         BufferAllocation::user_allocated>
          foo{std::vector<int>()};
     auto bar = foo.extract();
 #elif defined(RESIZE_CONST_DATA_BUFFER)
     // should not be possible to resize a constant DataBuffer
     DataBuffer<
-        std::vector<int>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
+        std::vector<int>,
+        ParameterType::send_buf,
+        BufferModifiability::constant,
+        BufferOwnership::owning,
         BufferAllocation::user_allocated>
          foo{std::vector<int>()};
     auto bar = foo.resize(0);
 #elif defined(GET_SINGLE_ELEMENT_ON_VECTOR)
     // should not be possible to call `get_single_element()` on a container based buffer
     DataBuffer<
-        std::vector<int>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
+        std::vector<int>,
+        ParameterType::send_buf,
+        BufferModifiability::constant,
+        BufferOwnership::owning,
         BufferAllocation::user_allocated>
         foo{std::vector<int>()};
     foo.get_single_element();
 #elif defined(ACCESS_CONST_VECTOR_BOOL)
     // should not be possible to do something useful with a container based on std::vector<bool>
     DataBuffer<
-        std::vector<bool>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
+        std::vector<bool>,
+        ParameterType::send_buf,
+        BufferModifiability::constant,
+        BufferOwnership::owning,
         BufferAllocation::user_allocated> const foo{std::vector<bool>()};
     foo.underlying();
 #elif defined(ACCESS_VECTOR_BOOL)
     // should not be possible to do something useful with a container based on std::vector<bool>
     DataBuffer<
-        std::vector<bool>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+        std::vector<bool>,
+        ParameterType::send_buf,
+        BufferModifiability::modifiable,
+        BufferOwnership::owning,
         BufferAllocation::user_allocated>
         foo{std::vector<bool>()};
     foo.underlying();

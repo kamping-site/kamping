@@ -57,7 +57,10 @@ auto make_data_buffer(Data&& data) {
     // Implication: is_const_data_type => is_const_buffer.
     static_assert(!is_const_data_type || is_const_buffer);
     return DataBuffer<
-        std::remove_const_t<std::remove_reference_t<Data>>, parameter_type, modifiability, ownership,
+        std::remove_const_t<std::remove_reference_t<Data>>,
+        parameter_type,
+        modifiability,
+        ownership,
         BufferAllocation::user_allocated>(std::forward<Data>(data));
 }
 
@@ -103,9 +106,11 @@ auto make_data_buffer(std::initializer_list<Data> data) {
         }
     }();
     return DataBuffer<
-        decltype(data_vec), parameter_type, modifiability, BufferOwnership::owning, BufferAllocation::user_allocated>(
-        std::move(data_vec)
-    );
+        decltype(data_vec),
+        parameter_type,
+        modifiability,
+        BufferOwnership::owning,
+        BufferAllocation::user_allocated>(std::move(data_vec));
 }
 
 } // namespace internal

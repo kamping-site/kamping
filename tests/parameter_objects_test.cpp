@@ -438,12 +438,14 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
     EXPECT_DEATH(
-        int_buffer.resize(0), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element."
+        int_buffer.resize(0),
+        "Cannot resize a single element buffer to hold zero or more than one element. Single "
+        "element buffers always hold exactly one element."
     );
     EXPECT_DEATH(
-        int_buffer.resize(2), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element."
+        int_buffer.resize(2),
+        "Cannot resize a single element buffer to hold zero or more than one element. Single "
+        "element buffers always hold exactly one element."
     );
 #endif
 
@@ -482,12 +484,14 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
     EXPECT_DEATH(
-        int_buffer.resize(0), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element."
+        int_buffer.resize(0),
+        "Cannot resize a single element buffer to hold zero or more than one element. Single "
+        "element buffers always hold exactly one element."
     );
     EXPECT_DEATH(
-        int_buffer.resize(2), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element."
+        int_buffer.resize(2),
+        "Cannot resize a single element buffer to hold zero or more than one element. Single "
+        "element buffers always hold exactly one element."
     );
 #endif
     EXPECT_EQ(int_buffer.get().size(), 1);
@@ -545,13 +549,19 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
 TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
-            int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+            int,
+            ParameterType::send_buf,
+            BufferModifiability::modifiable,
+            BufferOwnership::owning,
             BufferAllocation::lib_allocated>>,
         "Library allocated DataBuffers must have an extract() member function"
     );
     static_assert(
         !has_extract_v<DataBuffer<
-            int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
+            int,
+            ParameterType::send_buf,
+            BufferModifiability::modifiable,
+            BufferOwnership::owning,
             BufferAllocation::user_allocated>>,
         "User allocated DataBuffers must not have an extract() member function"
     );

@@ -126,7 +126,8 @@ TEST(BcastTest, vector_recv_count) {
             std::vector<int> values(num_values);
             if (comm.is_root()) {
                 EXPECT_KASSERT_FAILS(
-                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(num_values))), ""
+                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(num_values))),
+                    ""
                 );
             } else {
                 EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values)), "");
@@ -140,11 +141,13 @@ TEST(BcastTest, vector_recv_count) {
             std::vector<int> values(num_values);
             if (comm.is_root()) {
                 EXPECT_KASSERT_FAILS(
-                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(num_values))), ""
+                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(num_values))),
+                    ""
                 );
             } else {
                 EXPECT_KASSERT_FAILS(
-                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(alternative_num_values))), ""
+                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(alternative_num_values))),
+                    ""
                 );
             }
         }

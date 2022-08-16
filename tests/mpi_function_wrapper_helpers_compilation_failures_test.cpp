@@ -19,7 +19,10 @@ int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping::internal;
     // none of the extract function should work if the underlying buffer does not provide a member extract().
     kamping::MPIResult mpi_result{
-        BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{}};
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{}};
 #if defined(RECV_BUFFER_NOT_EXTRACTABLE)
     std::ignore = mpi_result.extract_recv_buffer();
 #elif defined(RECV_COUNTS_NOT_EXTRACTABLE)
