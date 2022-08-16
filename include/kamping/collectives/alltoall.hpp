@@ -122,7 +122,6 @@ auto kamping::Communicator::alltoall(Args... args) const {
     return MPIResult(
         std::move(recv_buf),               // recv_buf
         internal::BufferCategoryNotUsed{}, // recv_counts
-        internal::BufferCategoryNotUsed{}, // recv_count
         internal::BufferCategoryNotUsed{}, // recv_displs
         internal::BufferCategoryNotUsed{}  // send_displs
     );
@@ -351,10 +350,9 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     THROW_IF_MPI_ERROR(err, MPI_Alltoallv);
 
     return MPIResult(
-        std::move(recv_buf),               // recv_buf
-        std::move(recv_counts),            // recv_counts
-        internal::BufferCategoryNotUsed{}, // recv_count
-        std::move(recv_displs),            // recv_displs
-        std::move(send_displs)             // send_displs
+        std::move(recv_buf),    // recv_buf
+        std::move(recv_counts), // recv_counts
+        std::move(recv_displs), // recv_displs
+        std::move(send_displs)  // send_displs
     );
 }

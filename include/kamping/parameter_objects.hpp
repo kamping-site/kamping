@@ -183,9 +183,8 @@ public:
 
 /// @brief The set of parameter types that must be of type `int`
 constexpr std::array int_parameter_types{
-    ParameterType::recv_count, ParameterType::recv_counts,
-    ParameterType::send_counts, ParameterType::recv_displs,
-    ParameterType::send_displs};
+    ParameterType::recv_counts, ParameterType::send_counts,
+    ParameterType::recv_displs, ParameterType::send_displs};
 
 /// @brief Checks whether buffers of a given type should have `value_type`
 /// `int`.
@@ -230,7 +229,7 @@ public:
                                             ///< modifiable.
     static constexpr bool is_single_element =
         !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents
-                                        ///< a singe element, `false` if the
+                                        ///<a singe element, `false` if the
                                         ///< DataBuffer represents a container.
     using MemberTypeWithConst = std::conditional_t<
         is_modifiable, MemberType,
