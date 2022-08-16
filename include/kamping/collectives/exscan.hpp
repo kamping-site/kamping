@@ -103,18 +103,20 @@ auto kamping::Communicator::exscan(Args... args) const {
     // if given. If on_rank_0() is not given and the operation is a built-in operation on a built-in data-type, we set
     // the value on rank 0 to the identity of that operation on that datatype (e.g. 0 for addition on integers).
     if (rank() == 0) {
-        constexpr bool on_root_param_provided = has_parameter_type<ParameterType::on_rank_0, Args...>();
-        static_assert(
-            on_root_param_provided || operation.is_builtin,
-            "The user did not provide on_rank_0(...) and the operation is not built-in (at least on this type)."
-        );
-        if constexpr (on_root_param_provided) {
+        constexpr bool is_on_root_param_provided = has_parameter_type<ParameterType::on_rank_0, Args...>();
+        // We decided not to enforce this, at it would introduce a parameter which is required in some situtations in
+        // KaMPIng, but never in MPI.
+        //
+        // static_assert(
+        //     is_on_root_param_provided || operation.is_builtin,
+        //     "The user did not provide on_rank_0(...) and the operation is not built-in (at least on this type)."
+        // );
+        if constexpr (is_on_root_param_provided) {
             const auto& on_rank_0_param = select_parameter_type<ParameterType::on_rank_0>(args...);
             KASSERT(
                 (on_rank_0_param.size() == 1 || on_rank_0_param.size() == recv_buf.size()),
                 "on_rank_0 has to either be of size 1 or of the same size as the recv_buf.", assert::light
             );
-            // May be kamping::undefined
             if (on_rank_0_param.size() == 1) {
                 std::fill_n(recv_buf.data(), recv_buf.size(), *on_rank_0_param.data());
             } else {
@@ -122,8 +124,6 @@ auto kamping::Communicator::exscan(Args... args) const {
             }
         } else if constexpr (operation.is_builtin) {
             std::fill_n(recv_buf.data(), recv_buf.size(), operation.identity());
-        } else {
-            assert(false);
         }
     }
 
