@@ -229,7 +229,7 @@ public:
                                             ///< modifiable.
     static constexpr bool is_single_element =
         !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents
-                                        ///<a singe element, `false` if the
+                                        ///< a singe element, `false` if the
                                         ///< DataBuffer represents a container.
     using MemberTypeWithConst = std::conditional_t<
         is_modifiable, MemberType,
