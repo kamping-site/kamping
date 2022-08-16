@@ -59,7 +59,6 @@ struct BufferCategoryNotUsed {};
 ///
 /// @tparam RecvBuf Buffer type containing the received elements.
 /// @tparam RecvCounts Buffer type containing the numbers of received elements.
-/// @tparam RecvCount Value wrapper type containing the number of received elements.
 /// @tparam RecvDispls Buffer type containing the displacements of the received elements.
 /// @tparam SendDispls Buffer type containing the displacements of the sent elements.
 /// @tparam MPIStatusObject Buffer type containing the \c MPI status object(s).
