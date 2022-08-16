@@ -63,8 +63,8 @@ auto kamping::Communicator::reduce(Args... args) const {
     using default_recv_value_type = std::remove_const_t<send_value_type>;
 
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
-    auto&& recv_buf =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
+    auto&& recv_buf
+        = internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(), args...
         );
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;

@@ -62,8 +62,8 @@ TEST(AllreduceTest, allreduce_builtin_op_on_non_builtin_type) {
     };
     std::vector<MyInt> input = {comm.rank_signed(), 42};
 
-    auto result =
-        comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative)).extract_recv_buffer();
+    auto result
+        = comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative)).extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
     EXPECT_EQ(result, expected_result);
@@ -83,26 +83,26 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     { // use function ptr
-        auto result =
-            comm.allreduce(send_buf(input), op(add_plus_42_function, kamping::commutative)).extract_recv_buffer();
+        auto result
+            = comm.allreduce(send_buf(input), op(add_plus_42_function, kamping::commutative)).extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
-        std::vector<int> expected_result = {
-            comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+        std::vector<int> expected_result
+            = {comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
+               comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
+               comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
         EXPECT_EQ(result, expected_result);
     }
 
     { // use lambda
-        auto result =
-            comm.allreduce(send_buf(input), op(add_plus_42_lambda, kamping::commutative)).extract_recv_buffer();
+        auto result
+            = comm.allreduce(send_buf(input), op(add_plus_42_lambda, kamping::commutative)).extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
-        std::vector<int> expected_result = {
-            comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+        std::vector<int> expected_result
+            = {comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
+               comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
+               comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
         EXPECT_EQ(result, expected_result);
     }
 
@@ -114,10 +114,10 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
                           .extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
-        std::vector<int> expected_result = {
-            comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+        std::vector<int> expected_result
+            = {comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
+               comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
+               comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
         EXPECT_EQ(result, expected_result);
     }
 
@@ -130,10 +130,10 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
         auto result = comm.allreduce(send_buf(input), op(MySum42{}, kamping::commutative)).extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
-        std::vector<int> expected_result = {
-            comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+        std::vector<int> expected_result
+            = {comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
+               comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
+               comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
         EXPECT_EQ(result, expected_result);
     }
 }

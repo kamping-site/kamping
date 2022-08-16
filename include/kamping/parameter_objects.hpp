@@ -101,10 +101,10 @@ static constexpr bool is_vector_bool_v<
 /// @tparam T The type.
 /// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
 template <typename T>
-static constexpr bool
-    is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
-        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
-            std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
+static constexpr bool is_vector_bool_v<
+    T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::
+           type> = is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
+    std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
 
 } // namespace internal
 
@@ -191,15 +191,15 @@ template <
 class DataBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable =
-        modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
-    static constexpr bool is_single_element =
-        !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
-                                        ///< DataBuffer represents a container.
-    using MemberTypeWithConst =
-        std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
-                                                                         ///< non-const depending on
-                                                                         ///< modifiability.
+    static constexpr bool          is_modifiable
+        = modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
+    static constexpr bool is_single_element
+        = !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
+                                          ///< DataBuffer represents a container.
+    using MemberTypeWithConst
+        = std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
+                                                                           ///< non-const depending on
+                                                                           ///< modifiability.
 
     // We can not do the check for std::vector<bool> here, because to use a DataBuffer of std::vector<bool> as an unused
     // default parameter is allowed, as long the buffer is never used. Therefore the check for std::vector<bool> happens
@@ -217,9 +217,9 @@ public:
         typename ValueTypeWrapper<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
     // Logical implication: is_int_type(type) => std::is_same_v<value_type, int>
     static_assert(!is_int_type(type) || std::is_same_v<value_type, int>, "The given data must be of type int");
-    using value_type_with_const =
-        std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending
-                                                                         ///< on modifiability
+    using value_type_with_const
+        = std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const
+                                                                           ///< depending on modifiability
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.
@@ -404,8 +404,8 @@ template <typename Data, ParameterType type>
 class EmptyBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable =
-        false;               ///< This pseudo buffer is not modifiable since it represents no actual buffer.
+    static constexpr bool          is_modifiable
+        = false;             ///< This pseudo buffer is not modifiable since it represents no actual buffer.
     using value_type = Data; ///< Value type of the buffer.
 
     /// @brief Get the number of elements in the underlying storage.
@@ -430,8 +430,8 @@ public:
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
 class Root {
 public:
-    static constexpr ParameterType parameter_type =
-        ParameterType::root; ///< The type of parameter this object encapsulates.
+    static constexpr ParameterType parameter_type
+        = ParameterType::root; ///< The type of parameter this object encapsulates.
 
     /// @ Constructor for Root.
     /// @param rank Rank of the root PE.
@@ -481,8 +481,8 @@ private:
 template <typename Op, typename Commutative>
 class OperationBuilder {
 public:
-    static constexpr ParameterType parameter_type =
-        ParameterType::op; ///< The type of parameter this object encapsulates.
+    static constexpr ParameterType parameter_type
+        = ParameterType::op; ///< The type of parameter this object encapsulates.
 
     /// @brief constructs an Operation builder
     /// @param op the operation

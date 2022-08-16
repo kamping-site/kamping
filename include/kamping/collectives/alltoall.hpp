@@ -56,8 +56,8 @@ auto kamping::Communicator::alltoall(Args... args) const {
     MPI_Datatype mpi_send_type    = mpi_datatype<send_value_type>();
 
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
-    auto&& recv_buf =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
+    auto&& recv_buf
+        = internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(), args...
         );
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
@@ -150,8 +150,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
 
     // Get recv_counts
     using default_recv_counts_type = decltype(kamping::recv_counts_out(NewContainer<std::vector<int>>{}));
-    auto&& recv_counts =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
+    auto&& recv_counts
+        = internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
             std::tuple(), args...
         );
     using recv_counts_type = typename std::remove_reference_t<decltype(recv_counts)>::value_type;
@@ -159,8 +159,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
 
     // Get recv_buf
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
-    auto&& recv_buf =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
+    auto&& recv_buf
+        = internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(), args...
         );
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
@@ -168,8 +168,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
 
     // Get send_displs
     using default_send_displs_type = decltype(kamping::send_displs_out(NewContainer<std::vector<int>>{}));
-    auto&& send_displs =
-        internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
+    auto&& send_displs
+        = internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
             std::tuple(), args...
         );
     using send_displs_type = typename std::remove_reference_t<decltype(send_displs)>::value_type;
@@ -177,8 +177,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
 
     // Get recv_displs
     using default_recv_displs_type = decltype(kamping::recv_displs_out(NewContainer<std::vector<int>>{}));
-    auto&& recv_displs =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
+    auto&& recv_displs
+        = internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
             std::tuple(), args...
         );
     using recv_displs_type = typename std::remove_reference_t<decltype(recv_displs)>::value_type;

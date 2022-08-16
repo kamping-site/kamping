@@ -189,8 +189,8 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
 
         // Check for all rank ids whether they correctly convert to the splitted communicator
         for (int rank_to_test = 0; rank_to_test < size; ++rank_to_test) {
-            int const expected_rank_rn_splitted_comm =
-                rank_to_test % i == color ? expected_size - (rank_to_test / i) - 1 : MPI_UNDEFINED;
+            int const expected_rank_rn_splitted_comm
+                = rank_to_test % i == color ? expected_size - (rank_to_test / i) - 1 : MPI_UNDEFINED;
             EXPECT_EQ(expected_rank_rn_splitted_comm, comm.convert_rank_to_communicator(rank_to_test, splitted_comm));
             EXPECT_EQ(expected_rank_rn_splitted_comm, splitted_comm.convert_rank_from_communicator(rank_to_test, comm));
             if (expected_rank_rn_splitted_comm != MPI_UNDEFINED) {

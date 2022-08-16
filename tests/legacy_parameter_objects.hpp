@@ -29,8 +29,8 @@ namespace kamping::internal {
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
-using ContainerBasedConstBuffer =
-    DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::referencing>;
+using ContainerBasedConstBuffer
+    = DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::referencing>;
 
 /// @brief Read-only buffer owning a container type passed to it.
 ///
@@ -51,8 +51,8 @@ using ContainerBasedOwningBuffer = DataBuffer<Container, type, BufferModifiabili
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType parameter_type>
-using UserAllocatedContainerBasedBuffer =
-    DataBuffer<Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing>;
+using UserAllocatedContainerBasedBuffer
+    = DataBuffer<Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing>;
 
 /// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
 ///
@@ -72,8 +72,8 @@ using LibAllocatedContainerBasedBuffer = DataBuffer<
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType Parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
-using SingleElementConstBuffer =
-    DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::referencing>;
+using SingleElementConstBuffer
+    = DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::referencing>;
 
 /// @brief Buffer for a single element, which is not a container. The element is owned by the buffer.
 ///
@@ -99,7 +99,7 @@ using LibAllocatedSingleElementBuffer = DataBuffer<
 /// @tparam DataType Type of the element wrapped.
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
-using SingleElementModifiableBuffer =
-    DataBuffer<DataType, type, BufferModifiability::modifiable, BufferOwnership::referencing>;
+using SingleElementModifiableBuffer
+    = DataBuffer<DataType, type, BufferModifiability::modifiable, BufferOwnership::referencing>;
 
 } // namespace kamping::internal

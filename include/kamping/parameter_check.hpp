@@ -298,10 +298,10 @@ struct has_no_unused_parameters {
     }
 
     /// @brief \c true if and only if no unused parameter can be found in \c Args.
-    static constexpr bool assertion =
-        (std::tuple_size_v<all_available_parameters> >= number_distinct_parameters(
-             std::make_index_sequence<std::tuple_size_v<all_available_parameters>>{}
-         ));
+    static constexpr bool assertion
+        = (std::tuple_size_v<all_available_parameters> >= number_distinct_parameters(
+               std::make_index_sequence<std::tuple_size_v<all_available_parameters>>{}
+           ));
 
 }; // struct has_no_unused_parameters
 
@@ -338,8 +338,8 @@ struct parameter_type_to_integral_constant {
 template <ParameterType... ParameterTypes>
 struct parameter_types_to_integral_constants {
     /// @brief Type of the tuple.
-    using type =
-        decltype(std::tuple_cat(std::tuple<typename parameter_type_to_integral_constant<ParameterTypes>::type>{}...));
+    using type
+        = decltype(std::tuple_cat(std::tuple<typename parameter_type_to_integral_constant<ParameterTypes>::type>{}...));
 };
 
 /// @brief Wrapper to get a tuple of \c std::integral_constant for each kamping::internal::ParameterType

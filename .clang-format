@@ -20,7 +20,7 @@ AlwaysBreakBeforeMultilineStrings: 'false'
 AlwaysBreakTemplateDeclarations: 'Yes'
 BinPackArguments: 'true'
 BinPackParameters: 'true'
-BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBinaryOperators: All
 BreakBeforeBraces: Custom
 BreakBeforeTernaryOperators: 'true'
 BreakConstructorInitializers: BeforeColon

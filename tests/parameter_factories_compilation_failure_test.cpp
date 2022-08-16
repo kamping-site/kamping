@@ -43,8 +43,9 @@ int main(int /*argc*/, char** /*argv*/) {
     // vector<bool> is not allowed
     std::vector<bool, testing::CustomAllocator<bool> > v = {true, false};
 
-    auto buf =
-        internal::make_data_buffer<type, internal::BufferModifiability::modifiable>(NewContainer<std::vector<bool> >{});
+    auto buf
+        = internal::make_data_buffer<type, internal::BufferModifiability::modifiable>(NewContainer<std::vector<bool> >{}
+        );
     buf.size() :
 // If none of the above sections is active, this file will compile successfully.
 #endif

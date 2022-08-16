@@ -128,8 +128,8 @@ struct some_values<std::complex<double>> {
 template <typename T>
 std::vector<T> some_values_v = some_values<T>::value();
 
-using MyTypes =
-    ::testing::Types<int32_t, u_int32_t, int64_t, u_int64_t, float, double, std::complex<double>, DummyType>;
+using MyTypes
+    = ::testing::Types<int32_t, u_int32_t, int64_t, u_int64_t, float, double, std::complex<double>, DummyType>;
 TYPED_TEST_SUITE(TypedOperationsTest, MyTypes, );
 
 TYPED_TEST(TypedOperationsTest, test_builtin_operations) {

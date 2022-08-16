@@ -91,8 +91,8 @@ TEST(AlltoallTest, custom_type_custom_container) {
         input[i] = {comm.rank(), i};
     }
 
-    auto result =
-        comm.alltoall(send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{})).extract_recv_buffer();
+    auto result
+        = comm.alltoall(send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{})).extract_recv_buffer();
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), comm.size());
 
@@ -228,11 +228,11 @@ TEST(AlltoallvTest, custom_type_custom_container) {
     std::vector<int> send_counts(comm.size(), 1);
 
     // Do the alltoallv - receive into a library allocated OwnContainer
-    auto result =
-        comm.alltoallv(
-                send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}), kamping::send_counts(send_counts)
+    auto result
+        = comm.alltoallv(
+                  send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}), kamping::send_counts(send_counts)
         )
-            .extract_recv_buffer();
+              .extract_recv_buffer();
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), comm.size());
 

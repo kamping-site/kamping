@@ -47,8 +47,8 @@ struct ignore_t {};
 /// @return A user allocated DataBuffer with the given template parameters and matching ownership.
 template <ParameterType parameter_type, BufferModifiability modifiability, typename Data>
 auto make_data_buffer(Data&& data) {
-    constexpr BufferOwnership ownership =
-        std::is_rvalue_reference_v<Data&&> ? BufferOwnership::owning : BufferOwnership::referencing;
+    constexpr BufferOwnership ownership
+        = std::is_rvalue_reference_v<Data&&> ? BufferOwnership::owning : BufferOwnership::referencing;
 
     // Make sure that Data is const, the buffer created is constant (so we don't really remove constness in the return
     // statement below).

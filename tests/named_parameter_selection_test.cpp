@@ -93,8 +93,8 @@ TEST(NamedParameterTest, default_parameters) {
         EXPECT_EQ(selected_arg._i, 2);
     }
     {
-        auto&& selected_arg =
-            select_parameter_type_or_default<ParameterType::root, DefaultArgument>(std::tuple(42), arg0, arg1, arg2);
+        auto&& selected_arg
+            = select_parameter_type_or_default<ParameterType::root, DefaultArgument>(std::tuple(42), arg0, arg1, arg2);
         static_assert(std::is_same_v<decltype(selected_arg), DefaultArgument&&>);
         EXPECT_EQ(selected_arg._value, 42);
         EXPECT_EQ(selected_arg._message, "Hello");

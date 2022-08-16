@@ -264,8 +264,8 @@ TEST(ParameterFactoriesTest, send_buf_switch) {
     [[maybe_unused]] auto gen_single_element_owning_buffer = send_buf(uint8_t(0));
     [[maybe_unused]] auto gen_int_vec_owning_buffer        = send_buf(std::vector<uint8_t>{0, 0, 0, 0, 0, 0});
 
-    bool const single_result =
-        std::is_same_v<decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_buf>>;
+    bool const single_result = std::is_same_v<
+        decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::send_buf>>;
     EXPECT_TRUE(single_result);
     bool const vec_result = std::is_same_v<
         decltype(gen_int_vec_buffer), ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::send_buf>>;
@@ -719,8 +719,8 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
     {
         // modifiable, container, owning, library allocated
         constexpr internal::ParameterType type = internal::ParameterType::send_buf;
-        auto                              data_buf =
-            internal::make_data_buffer<type, BufferModifiability::modifiable>(NewContainer<std::vector<int>>{});
+        auto                              data_buf
+            = internal::make_data_buffer<type, BufferModifiability::modifiable>(NewContainer<std::vector<int>>{});
         EXPECT_EQ(data_buf.parameter_type, type);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);

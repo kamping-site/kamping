@@ -79,12 +79,12 @@ TEST(UserOperationWrapperTest, test_local_reduction_function_object) {
 }
 
 TEST(UserOperationPtrWrapper, test_local_reduction_with_wrapped_function_ptr) {
-    kamping::internal::mpi_custom_operation_type op_ptr = [](void* invec, void* inoutvec, int* len,
-                                                             MPI_Datatype* /*datatype*/) {
-        int* invec_    = static_cast<int*>(invec);
-        int* inoutvec_ = static_cast<int*>(inoutvec);
-        std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, std::plus<>{});
-    };
+    kamping::internal::mpi_custom_operation_type op_ptr
+        = [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
+              int* invec_    = static_cast<int*>(invec);
+              int* inoutvec_ = static_cast<int*>(inoutvec);
+              std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, std::plus<>{});
+          };
     {
         kamping::internal::UserOperationPtrWrapper<true> op(op_ptr);
         std::array<int, 2>                               a = {42, 69};
