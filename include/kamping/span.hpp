@@ -22,7 +22,7 @@ namespace kamping {
 /// @tparam T type for which the span is defined.
 template <typename T>
 class Span {
-  public:
+public:
   using element_type = T; ///< Element type; i.e. \c T.
   using value_type =
     std::remove_cv_t<T>; ///< Value type; i.e. \c T with volatile and const
@@ -81,7 +81,7 @@ class Span {
     return _size == 0;
   }
 
-  protected:
+protected:
   pointer   _ptr;  ///< Pointer to the data referred to by Span.
   size_type _size; ///< Number of elements of type T referred to by Span.
 };

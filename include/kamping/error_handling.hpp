@@ -48,7 +48,7 @@ namespace kamping {
 /// `THROWING_KASSERT_SPECIFIED(err == MPI_SUCCESS,
 /// "<MPI function that failed> failed", MpiErrorException, err);`
 class MpiErrorException : public std::exception {
-  public:
+public:
   /// @brief Constructs the exception
   /// @param message A custom error message.
   /// @param mpi_error_code The error code returned by the MPI call.
@@ -86,7 +86,7 @@ class MpiErrorException : public std::exception {
     return error_class;
   }
 
-  private:
+private:
   /// @brief The description of this exception.
   std::string _what;
   /// @brief The error code returned by the MPI call.

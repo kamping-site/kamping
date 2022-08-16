@@ -25,7 +25,7 @@ using ::testing::ElementsAreArray;
 
 template <typename T>
 class OwnContainerTest : public ::testing::Test {
-  public:
+public:
   using value_type = T;
   static T get_non_default_value();
   static T get_default_value() {

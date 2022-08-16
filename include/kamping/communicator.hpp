@@ -30,7 +30,7 @@ namespace kamping {
 /// size() of the communicator. The \ref Communicator is also access point to
 /// all MPI communications provided by KaMPIng.
 class Communicator {
-  public:
+public:
   /// @brief Default constructor not specifying any MPI communicator and using
   /// \c MPI_COMM_WORLD by default.
   Communicator() : Communicator(MPI_COMM_WORLD) {}
@@ -258,7 +258,7 @@ class Communicator {
   template <typename Value>
   bool is_same_on_all_ranks(Value const& value) const;
 
-  private:
+private:
   /// @brief Compute the rank of the current MPI process computed using \c
   /// MPI_Comm_rank.
   /// @return Rank of the current MPI process in the communicator.

@@ -168,7 +168,7 @@ enum class BufferAllocation { lib_allocated, user_allocated };
 /// @tparam T The type to get the value_type of
 template <bool has_value_type_member /*= false */, typename T>
 class ValueTypeWrapper {
-  public:
+public:
   using value_type = T; ///< The value type of T.
 };
 
@@ -176,7 +176,7 @@ class ValueTypeWrapper {
 /// @tparam T The type to get the value_type of
 template <typename T>
 class ValueTypeWrapper</*has_value_type_member =*/true, T> {
-  public:
+public:
   using value_type = typename T::value_type; ///< The value type of T.
 };
 
@@ -219,7 +219,7 @@ template <
   BufferOwnership  ownership,
   BufferAllocation allocation = BufferAllocation::user_allocated>
 class DataBuffer {
-  public:
+public:
   static constexpr ParameterType parameter_type =
     type; ///< The type of parameter this buffer represents.
   static constexpr bool is_modifiable =
@@ -462,7 +462,7 @@ class DataBuffer {
     return extracted;
   }
 
-  private:
+private:
   /// @brief Set the extracted flag to indicate that the data stored in this
   /// buffer has been moved out.
   void set_extracted() {
@@ -493,7 +493,7 @@ class DataBuffer {
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
 template <typename Data, ParameterType type>
 class EmptyBuffer {
-  public:
+public:
   static constexpr ParameterType parameter_type =
     type; ///< The type of parameter this buffer represents.
   static constexpr bool is_modifiable =
@@ -523,7 +523,7 @@ class EmptyBuffer {
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI
 /// collectives like \c MPI_Gather.
 class Root {
-  public:
+public:
   static constexpr ParameterType parameter_type =
     ParameterType::root; ///< The type of parameter this object encapsulates.
 
@@ -562,7 +562,7 @@ class Root {
     return asserting_cast<int>(_rank);
   }
 
-  private:
+private:
   size_t _rank; ///< Rank of the root PE.
 };
 
@@ -577,7 +577,7 @@ class Root {
 /// @tparam Commutative tag specifying if the operation is commutative
 template <typename Op, typename Commutative>
 class OperationBuilder {
-  public:
+public:
   static constexpr ParameterType parameter_type =
     ParameterType::op; ///< The type of parameter this object encapsulates.
 
@@ -616,7 +616,7 @@ class OperationBuilder {
     );
   }
 
-  private:
+private:
   Op _op; ///< the operation which is encapsulated
 };
 

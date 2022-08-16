@@ -33,7 +33,7 @@ enum InitMPIMode { InitFinalize, NoInitFinalize };
 /// Environment object (or directly vie the MPI_* calls).
 template <InitMPIMode init_finalize_mode = InitFinalize>
 class Environment {
-  public:
+public:
   /// @brief Calls MPI_Init with arguments.
   ///
   /// @param argc Number of arguments.

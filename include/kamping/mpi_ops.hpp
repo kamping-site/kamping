@@ -422,7 +422,7 @@ using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
 /// @tparam Op type of the functor object to wrap
 template <bool is_commutative, typename T, typename Op>
 class UserOperationWrapper {
-  public:
+public:
   static_assert(
     std::is_default_constructible_v<Op>,
     "This wrapper only works with default constructible functors, i.e., not "
@@ -470,7 +470,7 @@ class UserOperationWrapper {
     return _mpi_op;
   }
 
-  private:
+private:
   MPI_Op _mpi_op; ///< the \c MPI_Op referencing the user defined operation
 };
 
@@ -481,7 +481,7 @@ class UserOperationWrapper {
 /// @tparam is_commutative whether the operation is commutative or not
 template <bool is_commutative>
 class UserOperationPtrWrapper {
-  public:
+public:
   UserOperationPtrWrapper<is_commutative>&
   operator=(UserOperationPtrWrapper<is_commutative> const&) = delete;
 
@@ -532,7 +532,7 @@ class UserOperationPtrWrapper {
     return _mpi_op;
   }
 
-  private:
+private:
   bool _no_op;    ///< indicates if this operation is empty or was moved, so we
                   ///< can avoid freeing the same operation multiple times upon
                   ///< destruction
@@ -548,7 +548,7 @@ class UserOperationPtrWrapper {
 /// @tparam Commutative tag indicating if this type is commutative
 template <typename T, typename Op, typename Commutative>
 class ReduceOperation {
-  public:
+public:
   /// @brief Constructs on operation wrapper
   /// @param op the operation
   /// maybe a function object a lambda or a \c std::function
@@ -578,7 +578,7 @@ class ReduceOperation {
     "For custom operations you have to specify whether they are commutative."
   );
 
-  public:
+public:
   ReduceOperation(Op&& op, Commutative) : _operation(std::move(op)) {}
   static constexpr bool is_builtin = false;
   static constexpr bool commutative =
@@ -588,7 +588,7 @@ class ReduceOperation {
     return _operation.get_mpi_op();
   }
 
-  private:
+private:
   UserOperationWrapper<commutative, T, Op> _operation;
 };
 
@@ -602,7 +602,7 @@ class ReduceOperation<
     "commutative."
   );
 
-  public:
+public:
   ReduceOperation(Op&&, Commutative) {}
   static constexpr bool is_builtin = true;
   static constexpr bool commutative =
@@ -625,7 +625,7 @@ class ReduceOperation<
     "For custom operations you have to specify whether they are commutative."
   );
 
-  public:
+public:
   ReduceOperation(Op&& op, Commutative) : _operation() {
     // A lambda is may not be default constructed nor copied, so we need
     // some hacks to deal with them. Because each lambda has a distinct type
@@ -651,7 +651,7 @@ class ReduceOperation<
     return _operation.get_mpi_op();
   }
 
-  private:
+private:
   UserOperationPtrWrapper<commutative> _operation;
 };
 #endif

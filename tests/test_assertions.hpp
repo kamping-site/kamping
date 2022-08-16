@@ -85,7 +85,7 @@
 // Dummy exception class used for remapping assertions to throwing exceptions.
 namespace kamping::testing {
 class KassertTestingException : public std::exception {
-  public:
+public:
   // Assertion message (no expression decomposition)
   KassertTestingException(std::string message) : _message(std::move(message)) {}
 
@@ -93,7 +93,7 @@ class KassertTestingException : public std::exception {
     return _message.c_str();
   }
 
-  private:
+private:
   std::string _message;
 };
 } // namespace kamping::testing

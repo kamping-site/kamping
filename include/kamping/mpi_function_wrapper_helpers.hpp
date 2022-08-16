@@ -76,7 +76,7 @@ template <
   class RecvBuf, class RecvCounts, class RecvCount, class RecvDispls,
   class SendDispls>
 class MPIResult {
-  public:
+public:
   /// @brief Constructor of MPIResult.
   ///
   /// If any of the buffer categories are not used by the wrapped \c MPI call
@@ -168,7 +168,7 @@ class MPIResult {
     return _send_displs.extract();
   }
 
-  private:
+private:
   RecvBuf _recv_buffer; ///< Buffer object containing the received elements. May
                         ///< be empty if the received elements have been written
                         ///< into storage owned by the caller of KaMPIng.

@@ -14,7 +14,7 @@
 
 template <size_t K, typename ValueType>
 class TopK {
-  public:
+public:
   explicit TopK() {}
   ValueType& operator[](size_t i) {
     return elements[i];
@@ -23,7 +23,7 @@ class TopK {
     return elements[i];
   }
 
-  private:
+private:
   std::array<ValueType, K> elements;
 };
 

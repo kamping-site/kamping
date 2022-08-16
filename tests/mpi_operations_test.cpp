@@ -25,7 +25,7 @@
 
 template <typename T>
 class TypedOperationsTest : public ::testing::Test {
-  public:
+public:
   using operation_type = T;
 };
 

@@ -39,7 +39,7 @@ namespace testing {
 ///
 template <typename T>
 class OwnContainer {
-  public:
+public:
   using value_type     = T;
   using iterator       = T*;
   using const_iterator = T const*;
@@ -178,7 +178,7 @@ class OwnContainer {
     return _data + _size;
   }
 
-  private:
+private:
   T*                      _data;
   size_t                  _size;
   std::shared_ptr<size_t> _copy_count;

@@ -22,7 +22,7 @@
 
 /// @brief A class that provides a gather function for single ints
 class Gatherer {
-  public:
+public:
   /// @brief Collective operation: Gather the ints provided on each rank on
   /// the root.
   ///

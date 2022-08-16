@@ -52,7 +52,7 @@ construct_custom_continuous_type(size_t const num_bytes_unsigned) {
 namespace kamping {
 /// @brief Wrapper around bool to allow handling containers of boolean values
 class kabool {
-  public:
+public:
   /// @brief default constructor for a \c kabool with value \c false
   constexpr kabool() noexcept : _value() {}
   /// @brief constructor to construct a \c kabool out of a \c bool
@@ -63,7 +63,7 @@ class kabool {
     return _value;
   }
 
-  private:
+private:
   bool _value; /// < the wrapped boolean value
 };
 
