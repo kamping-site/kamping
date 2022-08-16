@@ -228,20 +228,6 @@ auto recv_counts(std::initializer_list<T> counts) {
     );
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
-/// will contained the receive counts when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the receive counts.
-/// @param container Container which will contain the receive counts.
-/// @return Object referring to the storage containing the receive counts.
-template <typename Container>
-auto recv_counts_out(Container&& container) {
-    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
-        std::forward<Container>(container)
-    );
-}
-
 /// @brief Generates a wrapper for a recv count output parameter allocated by KaMPIng.
 ///
 /// This is primarily used by KaMPIng internally because not passing this to a function will have the same effect as
@@ -399,5 +385,37 @@ internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = in
     return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);
 }
 
+/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+///
+/// @param value Value to return on the first rank.
+/// @returns OnRank0 Object containing the information which value to return on the first rank.
+template <typename T>
+inline auto values_on_rank_0(const T& value) {
+    return internal::make_data_buffer<
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(value));
+}
+
+/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+///
+/// @param value Value to return on the first rank.
+/// @returns OnRank0 Object containing the information which value to return on the first rank.
+template <typename T>
+inline auto values_on_rank_0(std::vector<T const>& values) {
+    return internal::make_data_buffer<
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(values));
+}
+
+/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+///
+/// @param value Value to return on the first rank.
+/// @returns OnRank0 Object containing the information which value to return on the first rank.
+// TODO zero-overhead
+template <typename T>
+inline auto values_on_rank_0(std::initializer_list<T>&& initializer_list) {
+    return internal::make_data_buffer<
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(
+        std::move(std::vector<T>(std::forward<std::initializer_list<T>>(initializer_list)))
+    );
+}
 /// @}
 } // namespace kamping
