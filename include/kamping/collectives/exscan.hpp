@@ -116,12 +116,12 @@ auto kamping::Communicator::exscan(Args... args) const {
             );
             // May be kamping::undefined
             if (on_rank_0_param.size() == 1) {
-                std::fill(recv_buf.data(), recv_buf.data() + recv_buf.size(), *on_rank_0_param.data());
+                std::fill_n(recv_buf.data(), recv_buf.size(), *on_rank_0_param.data());
             } else {
-                std::copy(on_rank_0_param.data(), on_rank_0_param.data() + on_rank_0_param.size(), recv_buf.data());
+                std::copy_n(on_rank_0_param.data(), on_rank_0_param.size(), recv_buf.data());
             }
         } else if constexpr (operation.is_builtin) {
-            std::fill(recv_buf.data(), recv_buf.data() + recv_buf.size(), operation.identity());
+            std::fill_n(recv_buf.data(), recv_buf.size(), operation.identity());
         } else {
             assert(false);
         }
