@@ -228,22 +228,17 @@ auto recv_counts(std::initializer_list<T> counts) {
     );
 }
 
-/// @brief Generates a wrapper for a recv count input parameter.
-/// @param recv_count The recv count to be encapsulated.
-/// @return Wrapper around the given recv count.
-inline auto recv_count(int recv_count) {
-    return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::constant>(
-        std::move(recv_count)
-    );
-    // return internal::SingleElementOwningBuffer<int, internal::ParameterType::recv_count>(recv_count);
-}
-
-/// @brief Generates a wrapper for a recv count output parameter.
-/// @param recv_count_out Reference for the output parameter.
-/// @return Wrapper around the given reference.
-inline auto recv_count_out(int& recv_count_out) {
-    return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
-        recv_count_out
+/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
+/// will contained the receive counts when the \c MPI call has been completed.
+/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
+/// contained \c value_type
+/// @tparam Container Container type which contains the receive counts.
+/// @param container Container which will contain the receive counts.
+/// @return Object referring to the storage containing the receive counts.
+template <typename Container>
+auto recv_counts_out(Container&& container) {
+    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
+        std::forward<Container>(container)
     );
 }
 
@@ -255,7 +250,7 @@ inline auto recv_count_out(int& recv_count_out) {
 /// @return Wrapper around a new recv_count output integer.
 inline auto recv_count_out(NewContainer<int>&&) {
     // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
-    return internal::make_data_buffer<internal::ParameterType::recv_count, internal::BufferModifiability::modifiable>(
+    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
         NewContainer<int>{}
     );
 }
@@ -404,37 +399,5 @@ internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = in
     return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);
 }
 
-/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
-///
-/// @param value Value to return on the first rank.
-/// @returns OnRank0 Object containing the information which value to return on the first rank.
-template <typename T>
-inline auto values_on_rank_0(const T& value) {
-    return internal::make_data_buffer<
-        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(value));
-}
-
-/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
-///
-/// @param value Value to return on the first rank.
-/// @returns OnRank0 Object containing the information which value to return on the first rank.
-template <typename T>
-inline auto values_on_rank_0(std::vector<T const>& values) {
-    return internal::make_data_buffer<
-        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(values));
-}
-
-/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
-///
-/// @param value Value to return on the first rank.
-/// @returns OnRank0 Object containing the information which value to return on the first rank.
-// TODO zero-overhead
-template <typename T>
-inline auto values_on_rank_0(std::initializer_list<T>&& initializer_list) {
-    return internal::make_data_buffer<
-        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(
-        std::move(std::vector<T>(std::forward<std::initializer_list<T>>(initializer_list)))
-    );
-}
 /// @}
 } // namespace kamping

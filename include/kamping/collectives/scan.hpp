@@ -93,8 +93,5 @@ auto kamping::Communicator::scan(Args... args) const {
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return MPIResult(
-        std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}
-    );
+    return MPIResult(std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{});
 }
