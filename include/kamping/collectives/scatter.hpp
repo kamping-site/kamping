@@ -55,7 +55,7 @@ int bcast_value(kamping::Communicator const& comm, T const bcast_value, int cons
 /// buffer by passing `kamping::ignore` to \ref kamping::send_buf().
 ///
 /// The following parameters are optional but incur communication overhead if omitted:
-/// - \ref kamping::recv_count() specifying the number of elements sent to each PE. If this parameter is omitted,
+/// - \ref kamping::recv_counts() specifying the number of elements sent to each PE. If this parameter is omitted,
 /// the number of elements sent to each PE is computed based on the size of the \ref kamping::send_buf() on the root
 /// PE and broadcasted to other PEs.
 ///
@@ -71,7 +71,7 @@ template <typename... Args>
 auto kamping::Communicator::scatter(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_count)
+        Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_counts)
     );
 
     // Optional parameter: root()
@@ -118,9 +118,9 @@ auto kamping::Communicator::scatter(Args... args) const {
     // Optional parameter: recv_count()
     // Default: compute value based on send_buf.size on root
 
-    using default_recv_count_type = decltype(kamping::recv_count_out(NewContainer<int>{}));
+    using default_recv_count_type = decltype(kamping::recv_counts_out(NewContainer<int>{}));
     auto&& recv_count_param =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
             std::tuple(), args...
         );
 
@@ -153,7 +153,7 @@ auto kamping::Communicator::scatter(Args... args) const {
     THROW_IF_MPI_ERROR(err, MPI_Scatter);
 
     return MPIResult(
-        std::move(recv_buf), internal::BufferCategoryNotUsed{}, std::move(recv_count_param),
-        internal::BufferCategoryNotUsed{}, internal::BufferCategoryNotUsed{}
+        std::move(recv_buf), std::move(recv_count_param), internal::BufferCategoryNotUsed{},
+        internal::BufferCategoryNotUsed{}
     );
 }
