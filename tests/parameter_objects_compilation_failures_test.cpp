@@ -122,10 +122,9 @@ int main(int /*argc*/, char** /*argv*/) {
     foo.get_single_element();
 #elif defined(ACCESS_CONST_VECTOR_BOOL)
     // should not be possible to do something useful with a container based on std::vector<bool>
-    const DataBuffer<
+    DataBuffer<
         std::vector<bool>, ParameterType::send_buf, BufferModifiability::constant, BufferOwnership::owning,
-        BufferAllocation::user_allocated>
-        foo{std::vector<bool>()};
+        BufferAllocation::user_allocated> const foo{std::vector<bool>()};
     foo.underlying();
 #elif defined(ACCESS_VECTOR_BOOL)
     // should not be possible to do something useful with a container based on std::vector<bool>

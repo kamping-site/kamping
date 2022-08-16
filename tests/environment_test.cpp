@@ -23,7 +23,7 @@ using namespace ::kamping;
 
 TEST(EnvironmentTest, wtime) {
     const std::chrono::milliseconds::rep milliseconds_to_sleep = 10;
-    const double                         seconds_to_sleep      = static_cast<double>(milliseconds_to_sleep) / 1000.0;
+    double const                         seconds_to_sleep      = static_cast<double>(milliseconds_to_sleep) / 1000.0;
     // Get the first time from an object
     Environment<kamping::NoInitFinalize> env;
     double                               start_time = env.wtime();

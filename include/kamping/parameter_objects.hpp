@@ -163,7 +163,7 @@ constexpr std::array int_parameter_types{
 /// @param parameter_type The parameter type to check.
 ///
 /// @return `true` if parameter_type should be of type `int`, `false` otherwise.
-bool constexpr inline is_int_type(ParameterType parameter_type) {
+inline constexpr bool is_int_type(ParameterType parameter_type) {
     for (ParameterType int_parameter_type: int_parameter_types) {
         if (parameter_type == int_parameter_type) {
             return true;

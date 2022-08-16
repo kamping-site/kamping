@@ -98,14 +98,14 @@ public:
     /// @brief Returns the elapsed time since an arbitrary time in the past.
     ///
     /// @return The elapsed time in seconds.
-    double static wtime() {
+    static double wtime() {
         return MPI_Wtime();
     }
 
     /// @brief Returns the resolution of Environment::wtime().
     ///
     /// @return The resolution in seconds.
-    double static wtick() {
+    static double wtick() {
         return MPI_Wtick();
     }
 
@@ -132,6 +132,6 @@ public:
 ///
 /// Because everything in Environment is const, it doesn't matter that every compilation unit will have its own copy of
 /// this.
-static const Environment<InitMPIMode::NoInitFinalize> mpi_env;
+static Environment<InitMPIMode::NoInitFinalize> const mpi_env;
 
 } // namespace kamping

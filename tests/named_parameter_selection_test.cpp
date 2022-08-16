@@ -26,15 +26,15 @@ TEST(NamedParameterTest, select_parameter_type_basics) {
     testing::Argument<ParameterType::recv_buf>    arg1{1};
     testing::Argument<ParameterType::send_counts> arg2{2};
     {
-        const auto& selected_arg = select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2);
+        auto const& selected_arg = select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2);
         EXPECT_EQ(selected_arg._i, 0);
     }
     {
-        const auto& selected_arg = select_parameter_type<ParameterType::recv_buf>(arg0, arg1, arg2);
+        auto const& selected_arg = select_parameter_type<ParameterType::recv_buf>(arg0, arg1, arg2);
         EXPECT_EQ(selected_arg._i, 1);
     }
     {
-        const auto& selected_arg = select_parameter_type<ParameterType::send_counts>(arg0, arg1, arg2);
+        auto const& selected_arg = select_parameter_type<ParameterType::send_counts>(arg0, arg1, arg2);
         EXPECT_EQ(selected_arg._i, 2);
     }
 }
@@ -116,7 +116,7 @@ TEST(NamedParameterTest, select_parameter_type_duplicates) {
     testing::Argument<ParameterType::send_buf>    arg3{3};
     {
         // If two arguments have the same ParameterType the first occurrence in the argument list is selected.
-        const auto& selected_arg = select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2, arg3);
+        auto const& selected_arg = select_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2, arg3);
         EXPECT_EQ(selected_arg._i, 0);
     }
 }

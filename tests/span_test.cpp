@@ -36,7 +36,7 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_EQ(values.data(), tuple_constructed_span.data());
     EXPECT_EQ(tuple_constructed_span.data(), int_span.data());
 
-    Span<const int> const_int_span = {values.data(), values.size()};
+    Span<int const> const_int_span = {values.data(), values.size()};
     EXPECT_EQ(values.size(), const_int_span.size());
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), const_int_span.size_bytes());
     EXPECT_FALSE(const_int_span.empty());
