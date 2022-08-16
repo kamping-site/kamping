@@ -93,7 +93,8 @@ TEST(CheckingCastTest, asserting_cast) {
             fprintf(stderr, "Still alive!");
             exit(0);
         },
-        ::testing::ExitedWithCode(0), "Still alive"
+        ::testing::ExitedWithCode(0),
+        "Still alive"
     );
 
     if constexpr (KASSERT_ASSERTION_LEVEL >= kamping::assert::normal) {
@@ -108,7 +109,8 @@ TEST(CheckingCastTest, asserting_cast) {
                 fprintf(stderr, "Still alive!");
                 exit(0);
             },
-            ::testing::ExitedWithCode(0), "Still alive"
+            ::testing::ExitedWithCode(0),
+            "Still alive"
         );
     }
 }
@@ -137,7 +139,8 @@ void checkThrowOrAssert(
                 fprintf(stderr, "Still alive!");
                 exit(0);
             },
-            ::testing::ExitedWithCode(0), "Still alive"
+            ::testing::ExitedWithCode(0),
+            "Still alive"
         );
     }
 #else

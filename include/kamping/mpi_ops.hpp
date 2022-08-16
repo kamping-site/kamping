@@ -267,7 +267,8 @@ struct mpi_operation_traits {
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-    kamping::ops::max<S>, T,
+    kamping::ops::max<S>,
+    T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::floating
@@ -281,7 +282,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-    kamping::ops::min<S>, T,
+    kamping::ops::min<S>,
+    T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::floating
@@ -295,7 +297,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-    kamping::ops::plus<S>, T,
+    kamping::ops::plus<S>,
+    T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::floating
@@ -310,7 +313,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-    kamping::ops::multiplies<S>, T,
+    kamping::ops::multiplies<S>,
+    T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::floating
@@ -325,7 +329,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-    kamping::ops::logical_and<S>, T,
+    kamping::ops::logical_and<S>,
+    T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::logical
@@ -339,7 +344,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-    kamping::ops::logical_or<S>, T,
+    kamping::ops::logical_or<S>,
+    T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::logical
@@ -353,7 +359,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-    kamping::ops::logical_xor<S>, T,
+    kamping::ops::logical_xor<S>,
+    T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::logical
@@ -367,7 +374,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-    kamping::ops::bit_and<S>, T,
+    kamping::ops::bit_and<S>,
+    T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::byte
@@ -381,7 +389,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-    kamping::ops::bit_or<S>, T,
+    kamping::ops::bit_or<S>,
+    T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::byte
@@ -395,7 +404,8 @@ struct mpi_operation_traits<
 
 template <typename T, typename S>
 struct mpi_operation_traits<
-    kamping::ops::bit_xor<S>, T,
+    kamping::ops::bit_xor<S>,
+    T,
     typename std::enable_if<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         mpi_type_traits<T>::category == TypeCategory::integer
         || mpi_type_traits<T>::category == TypeCategory::byte
