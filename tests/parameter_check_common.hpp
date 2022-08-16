@@ -66,7 +66,7 @@ void test_require_many_parameters(Args...) {
   KAMPING_CHECK_PARAMETERS(
     Args,
     KAMPING_REQUIRED_PARAMETERS(
-      send_buf, recv_buf, root, recv_count, recv_counts, send_counts
+      send_buf, recv_buf, root, recv_counts, send_counts
     ),
     KAMPING_OPTIONAL_PARAMETERS()
   );

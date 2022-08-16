@@ -65,31 +65,26 @@ struct BufferCategoryNotUsed {};
 ///
 /// @tparam RecvBuf Buffer type containing the received elements.
 /// @tparam RecvCounts Buffer type containing the numbers of received elements.
-/// @tparam RecvCount Value wrapper type containing the number of received
-/// elements.
 /// @tparam RecvDispls Buffer type containing the displacements of the received
 /// elements.
 /// @tparam SendDispls Buffer type containing the displacements of the sent
 /// elements.
 /// @tparam MPIStatusObject Buffer type containing the \c MPI status object(s).
-template <
-  class RecvBuf, class RecvCounts, class RecvCount, class RecvDispls,
-  class SendDispls>
+template <class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls>
 class MPIResult {
 public:
   /// @brief Constructor of MPIResult.
   ///
-  /// If any of the buffer categories are not used by the wrapped \c MPI call
-  /// or if the caller has provided (and still owns) the memory for the
-  /// associated results, the empty placeholder type BufferCategoryNotUsed
-  /// must be passed to the constructor instead of an actual buffer object.
+  /// If any of the buffer categories are not used by the wrapped \c MPI call or
+  /// if the caller has provided (and still owns) the memory for the associated
+  /// results, the empty placeholder type BufferCategoryNotUsed must be passed
+  /// to the constructor instead of an actual buffer object.
   MPIResult(
-    RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvCount&& recv_count,
-    RecvDispls&& recv_displs, SendDispls&& send_displs
+    RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvDispls&& recv_displs,
+    SendDispls&& send_displs
   )
     : _recv_buffer(std::forward<RecvBuf>(recv_buf)),
       _recv_counts(std::forward<RecvCounts>(recv_counts)),
-      _recv_count(std::forward<RecvCount>(recv_count)),
       _recv_displs(std::forward<RecvDispls>(recv_displs)),
       _send_displs(std::forward<SendDispls>(send_displs)) {}
 
@@ -122,20 +117,6 @@ public:
     return _recv_counts.extract();
   }
 
-  /// @brief Extracts the \c recv_count from the MPIResult object.
-  ///
-  /// This function is only available if the MPIResult object owns a recv
-  /// count.
-  /// @tparam RecvCount_ Template parameter helper only needed to remove this
-  /// function if RecvCount does not possess a member function \c extract().
-  /// @return Returns the underlying recv count.
-  template <
-    typename RecvCount_ = RecvCount,
-    std::enable_if_t<kamping::internal::has_extract_v<RecvCount_>, bool> = true>
-  decltype(auto) extract_recv_count() {
-    return _recv_count.extract();
-  }
-
   /// @brief Extracts the \c recv_displs from the MPIResult object.
   ///
   /// This function is only available if the underlying memory is owned by the
@@ -158,8 +139,7 @@ public:
   /// MPIResult object.
   /// @tparam SendDispls_ Template parameter helper only needed to remove this
   /// function if SendDispls does not possess a member function \c extract().
-  /// @return Returns the underlying storage containing the send
-  /// displacements.
+  /// @return Returns the underlying storage containing the send displacements.
   template <
     typename SendDispls_ = SendDispls,
     std::enable_if_t<kamping::internal::has_extract_v<SendDispls_>, bool> =
@@ -175,8 +155,6 @@ private:
   RecvCounts _recv_counts; ///< Buffer object containing the receive counts. May
                            ///< be empty if the receive counts have been written
                            ///< into storage owned by the caller of KaMPIng.
-  RecvCount _recv_count; ///< Object containing the receive count. May be empty
-                         ///< if the operation does not yield a receive count.
   RecvDispls
     _recv_displs; ///< Buffer object containing the receive displacements. May
                   ///< be empty if the receive displacements have been written

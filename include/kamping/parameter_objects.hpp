@@ -182,9 +182,8 @@ public:
 
 /// @brief The set of parameter types that must be of type `int`
 constexpr std::array int_parameter_types{
-  ParameterType::recv_count, ParameterType::recv_counts,
-  ParameterType::send_counts, ParameterType::recv_displs,
-  ParameterType::send_displs};
+  ParameterType::recv_counts, ParameterType::send_counts,
+  ParameterType::recv_displs, ParameterType::send_displs};
 
 /// @brief Checks whether buffers of a given type should have `value_type`
 /// `int`.
@@ -237,11 +236,10 @@ public:
                        ///< modifiability.
 
   // We can not do the check for std::vector<bool> here, because to use a
-  // DataBuffer of std::vector<bool> as an unused default parameter is
-  // allowed, as long the buffer is never used. Therefore the check for
-  // std::vector<bool> happens only when the underlying member is actually
-  // accessed and the corresponding accessor method is instantiated.
-  // static_assert(
+  // DataBuffer of std::vector<bool> as an unused default parameter is allowed,
+  // as long the buffer is never used. Therefore the check for std::vector<bool>
+  // happens only when the underlying member is actually accessed and the
+  // corresponding accessor method is instantiated. static_assert(
   //     !is_vector_bool_v<MemberType>,
   //     "Buffers based on std::vector<bool> are not supported, use
   //     std::vector<kamping::kabool> instead.");
@@ -316,33 +314,33 @@ public:
     }
   }
 
-  /// @brief Resizes the underlying container such that it holds exactly \c
-  /// size elements of \c value_type if the \c MemberType is not a \c Span or
-  /// a single elements.
+  /// @brief Resizes the underlying container such that it holds exactly \c size
+  /// elements of \c value_type if the \c MemberType is not a \c Span or a
+  /// single elements.
   ///
-  /// This function calls \c resize on the container if the container is not
-  /// of type \c Span or a single value. If the container is a \c Span,
-  /// KaMPIng assumes that the memory is managed by the user and that resizing
-  /// is not wanted. In this case it is \c KASSERTed that the memory provided
-  /// by the span is sufficient. If the buffer stores only a single value, it
-  /// is KASSERTed that the requested size is exactly 1. Whether new memory is
+  /// This function calls \c resize on the container if the container is not of
+  /// type \c Span or a single value. If the container is a \c Span,  KaMPIng
+  /// assumes that the memory is managed by the user and that resizing is not
+  /// wanted. In this case it is \c KASSERTed that the memory provided by the
+  /// span is sufficient. If the buffer stores only a single value, it is
+  /// KASSERTed that the requested size is exactly 1. Whether new memory is
   /// allocated and/or data is copied depends in the implementation of the
   /// container.
   ///
   /// @param size Size the container is resized to if it is not a \c Span.
   void resize(size_t size) {
-    // This works because in template classes, only functions that are
-    // actually called are instantiated Technically not needed here because
-    // _data is const in this case, so we can't call resize() anyways. But
-    // this gives a nicer error message.
+    // This works because in template classes, only functions that are actually
+    // called are instantiated Technically not needed here because _data is
+    // const in this case, so we can't call resize() anyways. But this gives a
+    // nicer error message.
     static_assert(is_modifiable, "Trying to resize a constant DataBuffer");
     kassert_not_extracted(
       "Cannot resize a buffer that has already been extracted."
     );
     if constexpr (is_single_element) {
       KASSERT(
-        size == 1u, "Cannot resize a single element buffer to hold zero "
-                    "or more than one element. Single "
+        size == 1u, "Cannot resize a single element buffer to hold zero or "
+                    "more than one element. Single "
                     "element buffers always hold exactly one element."
       );
     } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
@@ -439,8 +437,8 @@ public:
     return _data;
   }
 
-  /// @brief Extract the underlying container. This will leave the DataBuffer
-  /// in an unspecified state.
+  /// @brief Extract the underlying container. This will leave the DataBuffer in
+  /// an unspecified state.
   ///
   /// @return Moves the underlying container out of the DataBuffer.
   template <
@@ -456,8 +454,8 @@ public:
       "Cannot extract a buffer that has already been extracted."
     );
     auto extracted = std::move(underlying());
-    // we set is_extracted here because otherwise the call to underlying()
-    // would fail
+    // we set is_extracted here because otherwise the call to underlying() would
+    // fail
     set_extracted();
     return extracted;
   }
@@ -583,8 +581,8 @@ public:
 
   /// @brief constructs an Operation builder
   /// @param op the operation
-  /// @param commutative_tag tag indicating if the operation is commutative
-  /// (see \c kamping::op for details)
+  /// @param commutative_tag tag indicating if the operation is commutative (see
+  /// \c kamping::op for details)
   OperationBuilder(Op&& op, Commutative commutative_tag [[maybe_unused]])
     : _op(op) {}
 

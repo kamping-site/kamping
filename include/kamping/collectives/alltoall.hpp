@@ -120,7 +120,6 @@ auto kamping::Communicator::alltoall(Args... args) const {
   return MPIResult(
     std::move(recv_buf),               // recv_buf
     internal::BufferCategoryNotUsed{}, // recv_counts
-    internal::BufferCategoryNotUsed{}, // recv_count
     internal::BufferCategoryNotUsed{}, // recv_displs
     internal::BufferCategoryNotUsed{}  // send_displs
   );
@@ -262,13 +261,12 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     internal::has_to_be_computed<decltype(recv_counts)>;
   KASSERT(
     is_same_on_all_ranks(do_calculate_recv_counts),
-    "Receive counts are given on some ranks and have to be computed on "
-    "others",
+    "Receive counts are given on some ranks and have to be computed on others",
     assert::light_communication
   );
   if constexpr (do_calculate_recv_counts) {
-    /// @todo make it possible to test whether this additional communication
-    /// is skipped
+    /// @todo make it possible to test whether this additional communication is
+    /// skipped
     recv_counts.resize(this->size());
     this->alltoall(
       kamping::send_buf(send_counts.get()), kamping::recv_buf(recv_counts.get())
@@ -308,8 +306,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     internal::has_to_be_computed<decltype(recv_displs)>;
   KASSERT(
     is_same_on_all_ranks(do_calculate_recv_displs),
-    "Receive displacements are given on some ranks and have to be computed "
-    "on others",
+    "Receive displacements are given on some ranks and have to be computed on "
+    "others",
     assert::light_communication
   );
   if constexpr (do_calculate_recv_displs) {
@@ -344,10 +342,9 @@ auto kamping::Communicator::alltoallv(Args... args) const {
   THROW_IF_MPI_ERROR(err, MPI_Alltoallv);
 
   return MPIResult(
-    std::move(recv_buf),               // recv_buf
-    std::move(recv_counts),            // recv_counts
-    internal::BufferCategoryNotUsed{}, // recv_count
-    std::move(recv_displs),            // recv_displs
-    std::move(send_displs)             // send_displs
+    std::move(recv_buf),    // recv_buf
+    std::move(recv_counts), // recv_counts
+    std::move(recv_displs), // recv_displs
+    std::move(send_displs)  // send_displs
   );
 }

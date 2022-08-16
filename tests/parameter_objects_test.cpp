@@ -374,8 +374,8 @@ TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
   const size_t last_resize = 9;
   resize_write_check(last_resize);
 
-  // The buffer will be in an invalid state after extraction; that's why we
-  // have to access these attributes beforehand.
+  // The buffer will be in an invalid state after extraction; that's why we have
+  // to access these attributes beforehand.
   const auto size_of_buffer        = buffer_based_on_int_vector.size();
   const auto data_of_buffer        = buffer_based_on_int_vector.data();
   const auto size_of_get_of_buffer = buffer_based_on_int_vector.get().size();
@@ -511,13 +511,13 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
   EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
   EXPECT_DEATH(
-    int_buffer.resize(0), "Cannot resize a single element buffer to hold "
-                          "zero or more than one element. Single "
+    int_buffer.resize(0), "Cannot resize a single element buffer to hold zero "
+                          "or more than one element. Single "
                           "element buffers always hold exactly one element."
   );
   EXPECT_DEATH(
-    int_buffer.resize(2), "Cannot resize a single element buffer to hold "
-                          "zero or more than one element. Single "
+    int_buffer.resize(2), "Cannot resize a single element buffer to hold zero "
+                          "or more than one element. Single "
                           "element buffers always hold exactly one element."
   );
 #endif
@@ -558,13 +558,13 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
   EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
   EXPECT_DEATH(
-    int_buffer.resize(0), "Cannot resize a single element buffer to hold "
-                          "zero or more than one element. Single "
+    int_buffer.resize(0), "Cannot resize a single element buffer to hold zero "
+                          "or more than one element. Single "
                           "element buffers always hold exactly one element."
   );
   EXPECT_DEATH(
-    int_buffer.resize(2), "Cannot resize a single element buffer to hold "
-                          "zero or more than one element. Single "
+    int_buffer.resize(2), "Cannot resize a single element buffer to hold zero "
+                          "or more than one element. Single "
                           "element buffers always hold exactly one element."
   );
 #endif
@@ -642,7 +642,6 @@ TEST(ParameterFactoriesTest, is_int_type) {
   EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_recv_buf));
   EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_counts));
   EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_displs));
-  EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_count));
   EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_counts));
   EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_displs));
 }
@@ -683,16 +682,14 @@ TEST(
     recv_buffer;
   LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts>
     recv_counts;
-  LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_count>
-    recv_count;
   LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs>
     recv_displs;
   LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs>
     send_displs;
 
   MPIResult result(
-    std::move(recv_buffer), std::move(recv_counts), std::move(recv_count),
-    std::move(recv_displs), std::move(send_displs)
+    std::move(recv_buffer), std::move(recv_counts), std::move(recv_displs),
+    std::move(send_displs)
   );
 
   std::ignore = result.extract_recv_buffer();

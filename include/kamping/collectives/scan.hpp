@@ -91,8 +91,8 @@ auto kamping::Communicator::scan(Args... args) const {
   auto& operation_param = select_parameter_type<ParameterType::op>(args...);
   auto  operation = operation_param.template build_operation<send_value_type>();
 
-  // Resize the recv buffer to the same size as the send buffer; get the
-  // pointer needed for the MPI call.
+  // Resize the recv buffer to the same size as the send buffer; get the pointer
+  // needed for the MPI call.
   send_value_type* recv_buf_ptr = nullptr;
   recv_buf.resize(send_buf.size());
   recv_buf_ptr = recv_buf.data();
@@ -113,6 +113,6 @@ auto kamping::Communicator::scan(Args... args) const {
   THROW_IF_MPI_ERROR(err, MPI_Reduce);
   return MPIResult(
     std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
-    BufferCategoryNotUsed{}, BufferCategoryNotUsed{}
+    BufferCategoryNotUsed{}
   );
 }

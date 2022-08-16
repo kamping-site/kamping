@@ -39,7 +39,7 @@
 /// needed for deducing the value type. The container will be resized on
 /// non-root ranks to fit exactly the received data. The following parameter is
 /// optional but causes additional communication if not present.
-/// - \ref kamping::recv_count() specifying how many elements are broadcasted.
+/// - \ref kamping::recv_counts() specifying how many elements are broadcasted.
 /// If not specified, will be communicated through an additional bcast. If not
 /// specified, we broadcast the whole send_recv_buf. If specified, has to be the
 /// same on all ranks (including the root). Has to either be specified or not
@@ -59,7 +59,7 @@ auto kamping::Communicator::bcast(Args... args) const {
   using namespace ::kamping::internal;
   KAMPING_CHECK_PARAMETERS(
     Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf),
-    KAMPING_OPTIONAL_PARAMETERS(root, recv_count)
+    KAMPING_OPTIONAL_PARAMETERS(root, recv_counts)
   );
 
   // Get the root PE
@@ -93,9 +93,9 @@ auto kamping::Communicator::bcast(Args... args) const {
   // Get the optional recv_count parameter. If the parameter is not given,
   // allocate a new container.
   using default_recv_count_type =
-    decltype(kamping::recv_count_out(NewContainer<int>{}));
+    decltype(kamping::recv_counts_out(NewContainer<int>{}));
   auto&& recv_count_param = internal::select_parameter_type_or_default<
-    ParameterType::recv_count, default_recv_count_type>(std::tuple(), args...);
+    ParameterType::recv_counts, default_recv_count_type>(std::tuple(), args...);
 
   constexpr bool recv_count_is_output_parameter =
     has_to_be_computed<decltype(recv_count_param)>;
@@ -131,8 +131,8 @@ auto kamping::Communicator::bcast(Args... args) const {
   if (this->is_root(root.rank())) {
     KASSERT(
       asserting_cast<size_t>(recv_count) == send_recv_buf.size(),
-      "If a recv_count() is provided on the root rank, it has to be equal "
-      "to the number of elements in the "
+      "If a recv_count() is provided on the root rank, it has to be equal to "
+      "the number of elements in the "
       "send_recv_buf. For partial transfers, use a kamping::Span."
     );
   }
@@ -158,9 +158,8 @@ auto kamping::Communicator::bcast(Args... args) const {
   THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
   return MPIResult(
-    std::move(send_recv_buf), BufferCategoryNotUsed{},
-    std::move(recv_count_param), BufferCategoryNotUsed{},
-    BufferCategoryNotUsed{}
+    std::move(send_recv_buf), std::move(recv_count_param),
+    BufferCategoryNotUsed{}, BufferCategoryNotUsed{}
   );
 } // namespace kamping::internal
 
@@ -174,5 +173,5 @@ auto kamping::Communicator::bcast_single(Args... args) const {
     KAMPING_OPTIONAL_PARAMETERS(root)
   );
 
-  return this->bcast(std::forward<Args>(args)..., recv_count(1));
+  return this->bcast(std::forward<Args>(args)..., recv_counts(1));
 }
