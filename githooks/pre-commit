@@ -1,15 +1,38 @@
-#!/bin/bash 
+#!/bin/bash
+
+EXIT_SUCCESS=0  
 
 # "Before Git invokes a hook it changes its working directory to [...] the root of the working tree [..]"
 # see https://git-scm.com/docs/githooks
 git_root=$(pwd)
 
-formatter=$("$git_root/scripts/get_clang_format.sh")
+format_files() {
+    formatter="${1:?'No formatter provided'}"
+    file_regex="${2:?'No file RegEx provided'}"
 
-for file in $(git diff --cached --name-only | grep -E '.*\.(c|cpp|h|hpp)\b'); do 
-	if [[ -f "$file" ]]; then 
-		$formatter --dry-run --Werror "$file" || exit 1
-	fi
-done
+    for file in $(git diff --cached --name-only | grep -E "$file_regex"); do
+        if [[ -f "$file" ]]; then
+            "$formatter" "$file" || exit 1
+        fi
+    done
 
-exit 0
+    return 0
+}
+
+if clang_format="$("$git_root/scripts/get_clang_format.sh")"; then
+    clang_format="$clang_format --dry-run -Werror"
+    clang_file_regex='.*\.(c|cpp|h|hpp)\b'
+    format_files "$clang_format" "$clang_file_regex"
+else
+    echo "Warning: clang-format not found, skipping."
+fi
+
+if cmake_format="$("$git_root/scripts/get_cmake_format.sh")"; then
+    cmake_format="$cmake_format --check"
+    cmake_file_regex='(CMakeLists.txt|.*\.cmake)\b'
+    format_files "$cmake_format" "$cmake_file_regex"
+else
+    echo "Warning: cmake-format not found, skipping."
+fi
+
+exit $EXIT_SUCCESS
