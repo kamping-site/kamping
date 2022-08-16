@@ -55,7 +55,8 @@ template <typename... Args>
 auto kamping::Communicator::allreduce(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op),
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf, op),
         KAMPING_OPTIONAL_PARAMETERS(recv_buf)
     );
 
@@ -77,7 +78,8 @@ auto kamping::Communicator::allreduce(Args... args) const {
         NewContainer<std::vector<default_recv_value_type>>{}
     ));
     auto&& recv_buf             = select_parameter_type_or_default<
-        ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
+        ParameterType::recv_buf,
+        default_recv_buf_type>(std::tuple(), args...);
     using recv_value_type =
         typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
@@ -112,7 +114,9 @@ auto kamping::Communicator::allreduce(Args... args) const {
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
     return MPIResult(
-        std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
+        std::move(recv_buf),
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
         BufferCategoryNotUsed{}
     );
 }

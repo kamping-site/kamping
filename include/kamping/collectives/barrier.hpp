@@ -32,7 +32,8 @@ template <typename... Args>
 void kamping::Communicator::barrier(Args... args) const {
     using namespace kamping::internal;
     static_assert(
-        sizeof...(args) == 0, "You may not pass any arguments to barrier()."
+        sizeof...(args) == 0,
+        "You may not pass any arguments to barrier()."
     );
 
     [[maybe_unused]] int err = MPI_Barrier(mpi_communicator());

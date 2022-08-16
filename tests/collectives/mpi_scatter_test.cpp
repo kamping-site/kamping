@@ -208,7 +208,8 @@ TEST(ScatterTest, scatter_different_roots_on_different_processes) {
     auto const   input = create_input_vector_on_root(comm, 1);
     if (comm.size() > 1) {
         EXPECT_KASSERT_FAILS(
-            comm.scatter(send_buf(input), root(comm.rank())), ""
+            comm.scatter(send_buf(input), root(comm.rank())),
+            ""
         );
     }
 }

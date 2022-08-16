@@ -67,7 +67,10 @@ constexpr size_t find_pos() {
 /// @return Position of first argument with matched trait.
 /// @return \c std::numeric_limits<std::size_t>::max() if not found
 template <
-    ParameterType parameter_type, size_t Index, typename Arg, typename Arg2,
+    ParameterType parameter_type,
+    size_t        Index,
+    typename Arg,
+    typename Arg2,
     typename... Args>
 constexpr size_t find_pos() {
     if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type) {
@@ -137,8 +140,10 @@ constexpr bool has_parameter_type() {
 /// @return The first parameter whose type has the requested parameter type or
 /// the constructed default parameter if none is found.
 template <
-    ParameterType parameter_type, typename DefaultParameterType,
-    typename... DefaultArguments, typename... Args>
+    ParameterType parameter_type,
+    typename DefaultParameterType,
+    typename... DefaultArguments,
+    typename... Args>
 decltype(auto) select_parameter_type_or_default(
     std::tuple<DefaultArguments...> default_arguments, Args&... args
 ) {

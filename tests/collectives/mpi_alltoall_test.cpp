@@ -2,14 +2,16 @@
 //
 // Copyright 2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// KaMPIng is free software : you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version. KaMPIng is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License
+// along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <algorithm>
 #include <numeric>
@@ -61,16 +63,24 @@ TEST(AlltoallTest, multiple_elements) {
 
     std::vector<int> input(comm.size() * num_elements_per_processor_pair);
     std::iota(input.begin(), input.end(), 0);
-    std::transform(input.begin(), input.end(), input.begin(), [](const int element) -> int {
-        return element / num_elements_per_processor_pair;
-    });
+    std::transform(
+        input.begin(),
+        input.end(),
+        input.begin(),
+        [](const int element) -> int {
+            return element / num_elements_per_processor_pair;
+        }
+    );
 
     std::vector<int> result;
     comm.alltoall(send_buf(input), recv_buf(result));
 
     EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
 
-    std::vector<int> expected_result(comm.size() * num_elements_per_processor_pair, comm.rank_signed());
+    std::vector<int> expected_result(
+        comm.size() * num_elements_per_processor_pair,
+        comm.rank_signed()
+    );
     EXPECT_EQ(result, expected_result);
 }
 
@@ -82,7 +92,8 @@ TEST(AlltoallTest, custom_type_custom_container) {
         size_t receivingRank;
 
         bool operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+            return sendingRank == other.sendingRank
+                   && receivingRank == other.receivingRank;
         }
     };
 
@@ -91,8 +102,11 @@ TEST(AlltoallTest, custom_type_custom_container) {
         input[i] = {comm.rank(), i};
     }
 
-    auto result =
-        comm.alltoall(send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{})).extract_recv_buffer();
+    auto result = comm.alltoall(
+                          send_buf(input),
+                          recv_buf(NewContainer<OwnContainer<CustomType>>{})
+    )
+                      .extract_recv_buffer();
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), comm.size());
 
@@ -107,7 +121,8 @@ TEST(AlltoallTest, custom_type_custom_container) {
 // Alltoallv tests
 
 TEST(AlltoallvTest, single_element_no_parameters) {
-    // Sends a single element from each rank to each other rank with only the mandatory parameters
+    // Sends a single element from each rank to each other rank with only the
+    // mandatory parameters
     Communicator comm;
 
     // Prepare send buffer (all zeros)
@@ -118,7 +133,8 @@ TEST(AlltoallvTest, single_element_no_parameters) {
     std::vector<int> send_counts(comm.size(), 1);
 
     // Do the alltoallv
-    auto mpi_result = comm.alltoallv(send_buf(input), kamping::send_counts(send_counts));
+    auto mpi_result =
+        comm.alltoallv(send_buf(input), kamping::send_counts(send_counts));
 
     // Check recv buf
     auto result = mpi_result.extract_recv_buffer();
@@ -142,7 +158,8 @@ TEST(AlltoallvTest, single_element_no_parameters) {
 }
 
 TEST(AlltoallvTest, single_element_with_receive_buffer) {
-    // Sends a single element from each rank to each other rank with the recv buffer as an input parameter
+    // Sends a single element from each rank to each other rank with the recv
+    // buffer as an input parameter
     Communicator comm;
 
     // Prepare send buffer and counts
@@ -151,7 +168,11 @@ TEST(AlltoallvTest, single_element_with_receive_buffer) {
 
     // Do the alltoallv
     std::vector<int> result;
-    comm.alltoallv(send_buf(input), recv_buf(result), kamping::send_counts(send_counts));
+    comm.alltoallv(
+        send_buf(input),
+        recv_buf(result),
+        kamping::send_counts(send_counts)
+    );
 
     // Check recv buf
     EXPECT_EQ(result.size(), comm.size());
@@ -170,20 +191,32 @@ TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
     // Prepare send_buffer
     std::vector<int> input(comm.size() * num_elements_per_processor_pair);
     std::iota(input.begin(), input.end(), 0);
-    std::transform(input.begin(), input.end(), input.begin(), [](int const element) -> int {
-        return element / num_elements_per_processor_pair;
-    });
+    std::transform(
+        input.begin(),
+        input.end(),
+        input.begin(),
+        [](int const element) -> int {
+            return element / num_elements_per_processor_pair;
+        }
+    );
 
     // Calculate send counts
     std::vector<int> send_counts(comm.size(), num_elements_per_processor_pair);
 
     // Do the alltoallv
     std::vector<int> result;
-    auto             mpi_result = comm.alltoallv(send_buf(input), recv_buf(result), kamping::send_counts(send_counts));
+    auto             mpi_result = comm.alltoallv(
+        send_buf(input),
+        recv_buf(result),
+        kamping::send_counts(send_counts)
+    );
 
     // Check recv buffer
     EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
-    std::vector<int> expected_result(comm.size() * num_elements_per_processor_pair, comm.rank_signed());
+    std::vector<int> expected_result(
+        comm.size() * num_elements_per_processor_pair,
+        comm.rank_signed()
+    );
     EXPECT_EQ(result, expected_result);
 
     // Check recv counts
@@ -193,9 +226,12 @@ TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
     // Check displacements (same for recv and send)
     std::vector<int> expected_displs(comm.size());
     std::iota(expected_displs.begin(), expected_displs.end(), 0);
-    std::transform(expected_displs.begin(), expected_displs.end(), expected_displs.begin(), [](int const value) {
-        return value * num_elements_per_processor_pair;
-    });
+    std::transform(
+        expected_displs.begin(),
+        expected_displs.end(),
+        expected_displs.begin(),
+        [](int const value) { return value * num_elements_per_processor_pair; }
+    );
 
     auto send_displs = mpi_result.extract_send_displs();
     EXPECT_EQ(send_displs, expected_displs);
@@ -205,7 +241,8 @@ TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
 }
 
 TEST(AlltoallvTest, custom_type_custom_container) {
-    // Sends a single element of a custom type in a custom container from each rank to each other rank
+    // Sends a single element of a custom type in a custom container from each
+    // rank to each other rank
     Communicator comm;
 
     // Declare custom container
@@ -214,7 +251,8 @@ TEST(AlltoallvTest, custom_type_custom_container) {
         size_t receivingRank;
 
         bool operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+            return sendingRank == other.sendingRank
+                   && receivingRank == other.receivingRank;
         }
     };
 
@@ -247,7 +285,8 @@ TEST(AlltoallvTest, custom_type_custom_container) {
 
 TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
     // Send 1 element to rank 0, 2 elements to rank 1, ...
-    // Using a custom type and container and custom containers allocated by the library for counts and displacements.
+    // Using a custom type and container and custom containers allocated by the
+    // library for counts and displacements.
     Communicator comm;
 
     // Declare custom type
@@ -256,7 +295,8 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
         size_t receivingRank;
 
         bool operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+            return sendingRank == other.sendingRank
+                   && receivingRank == other.receivingRank;
         }
     };
 
@@ -275,7 +315,10 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
     // Prepare send counts
     std::vector<int> send_counts(comm.size());
     std::iota(send_counts.begin(), send_counts.end(), 1);
-    ASSERT_EQ(std::accumulate(send_counts.begin(), send_counts.end(), 0), input.size());
+    ASSERT_EQ(
+        std::accumulate(send_counts.begin(), send_counts.end(), 0),
+        input.size()
+    );
 
     // Do the alltoallv - put all outputs into a custom container
     auto mpi_result = comm.alltoallv(
@@ -296,7 +339,8 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
     {
         size_t i = 0;
         for (size_t rank = 0; rank < comm.size(); ++rank) {
-            for (size_t duplicate = 0; duplicate < comm.rank() + 1; ++duplicate) {
+            for (size_t duplicate = 0; duplicate < comm.rank() + 1;
+                 ++duplicate) {
                 expected_result[i++] = {rank, comm.rank()};
             }
         }
@@ -307,7 +351,12 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
     // Check send displs
     OwnContainer<int> send_displs = mpi_result.extract_send_displs();
     OwnContainer<int> expected_send_displs(comm.size());
-    std::exclusive_scan(send_counts.begin(), send_counts.end(), expected_send_displs.begin(), 0);
+    std::exclusive_scan(
+        send_counts.begin(),
+        send_counts.end(),
+        expected_send_displs.begin(),
+        0
+    );
     EXPECT_EQ(send_displs, expected_send_displs);
 
     // Check recv counts
@@ -318,7 +367,12 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
     // Check recv displs
     OwnContainer<int> recv_displs = mpi_result.extract_recv_displs();
     OwnContainer<int> expected_recv_displs(comm.size());
-    std::exclusive_scan(recv_counts.begin(), recv_counts.end(), expected_recv_displs.begin(), 0);
+    std::exclusive_scan(
+        recv_counts.begin(),
+        recv_counts.end(),
+        expected_recv_displs.begin(),
+        0
+    );
     EXPECT_EQ(recv_displs, expected_recv_displs);
 }
 
@@ -333,7 +387,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
         size_t receivingRank;
 
         bool operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+            return sendingRank == other.sendingRank
+                   && receivingRank == other.receivingRank;
         }
     };
 
@@ -342,7 +397,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
     {
         size_t i = 0;
         for (size_t rank = 0; rank < comm.size(); ++rank) {
-            for (size_t duplicate = 0; duplicate < comm.rank() + 1; ++duplicate) {
+            for (size_t duplicate = 0; duplicate < comm.rank() + 1;
+                 ++duplicate) {
                 input[i++] = {comm.rank(), rank};
             }
         }
@@ -351,7 +407,10 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
 
     // Prepare send counts
     OwnContainer<int> send_counts(comm.size(), comm.rank_signed() + 1);
-    ASSERT_EQ(std::accumulate(send_counts.begin(), send_counts.end(), 0), input.size());
+    ASSERT_EQ(
+        std::accumulate(send_counts.begin(), send_counts.end(), 0),
+        input.size()
+    );
 
     // Do the alltoallv - use output parameters
     OwnContainer<CustomType> result;
@@ -371,7 +430,9 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), (comm.size() * (comm.size() + 1)) / 2);
 
-    OwnContainer<CustomType> expected_result((comm.size() * (comm.size() + 1)) / 2);
+    OwnContainer<CustomType> expected_result(
+        (comm.size() * (comm.size() + 1)) / 2
+    );
     {
         size_t i = 0;
         for (size_t rank = 0; rank < comm.size(); ++rank) {
@@ -385,7 +446,12 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
 
     // Check send displs
     OwnContainer<int> expected_send_displs(comm.size());
-    std::exclusive_scan(send_counts.begin(), send_counts.end(), expected_send_displs.begin(), 0);
+    std::exclusive_scan(
+        send_counts.begin(),
+        send_counts.end(),
+        expected_send_displs.begin(),
+        0
+    );
     EXPECT_EQ(send_displs, expected_send_displs);
 
     // Check recv counts
@@ -395,11 +461,19 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
 
     // Check recv displs
     OwnContainer<int> expected_recv_displs(comm.size());
-    std::exclusive_scan(recv_counts.begin(), recv_counts.end(), expected_recv_displs.begin(), 0);
+    std::exclusive_scan(
+        recv_counts.begin(),
+        recv_counts.end(),
+        expected_recv_displs.begin(),
+        0
+    );
     EXPECT_EQ(recv_displs, expected_recv_displs);
 }
 
-TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_recv_counts) {
+TEST(
+    AlltoallvTest,
+    custom_type_custom_container_rank_i_sends_i_plus_one_given_recv_counts
+) {
     // Rank 0 send 1 element to each other rank, rank 1 sends 2 elements ...
     // This time with given recv counts
 
@@ -412,7 +486,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
         size_t receivingRank;
 
         bool operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+            return sendingRank == other.sendingRank
+                   && receivingRank == other.receivingRank;
         }
     };
 
@@ -421,7 +496,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
     {
         size_t i = 0;
         for (size_t rank = 0; rank < comm.size(); ++rank) {
-            for (size_t duplicate = 0; duplicate < comm.rank() + 1; ++duplicate) {
+            for (size_t duplicate = 0; duplicate < comm.rank() + 1;
+                 ++duplicate) {
                 input[i++] = {comm.rank(), rank};
             }
         }
@@ -430,7 +506,10 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
 
     // Prepare send counts
     OwnContainer<int> send_counts(comm.size(), comm.rank_signed() + 1);
-    ASSERT_EQ(std::accumulate(send_counts.begin(), send_counts.end(), 0), input.size());
+    ASSERT_EQ(
+        std::accumulate(send_counts.begin(), send_counts.end(), 0),
+        input.size()
+    );
 
     // Prepare recv counts
     OwnContainer<int> recv_counts(comm.size());
@@ -453,7 +532,9 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), (comm.size() * (comm.size() + 1)) / 2);
 
-    OwnContainer<CustomType> expected_result((comm.size() * (comm.size() + 1)) / 2);
+    OwnContainer<CustomType> expected_result(
+        (comm.size() * (comm.size() + 1)) / 2
+    );
     {
         size_t i = 0;
         for (size_t rank = 0; rank < comm.size(); ++rank) {
@@ -467,16 +548,29 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
 
     // Check send displs
     OwnContainer<int> expected_send_displs(comm.size());
-    std::exclusive_scan(send_counts.begin(), send_counts.end(), expected_send_displs.begin(), 0);
+    std::exclusive_scan(
+        send_counts.begin(),
+        send_counts.end(),
+        expected_send_displs.begin(),
+        0
+    );
     EXPECT_EQ(send_displs, expected_send_displs);
 
     // Check recv displs
     OwnContainer<int> expected_recv_displs(comm.size());
-    std::exclusive_scan(recv_counts.begin(), recv_counts.end(), expected_recv_displs.begin(), 0);
+    std::exclusive_scan(
+        recv_counts.begin(),
+        recv_counts.end(),
+        expected_recv_displs.begin(),
+        0
+    );
     EXPECT_EQ(recv_displs, expected_recv_displs);
 }
 
-TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_parameters_given) {
+TEST(
+    AlltoallvTest,
+    custom_type_custom_container_rank_i_sends_i_plus_one_all_parameters_given
+) {
     // Rank 0 send 1 element to each other rank, rank 1 sends 2 elements ...
     // This time with all parameters given
 
@@ -489,7 +583,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
         size_t receivingRank;
 
         bool operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+            return sendingRank == other.sendingRank
+                   && receivingRank == other.receivingRank;
         }
     };
 
@@ -498,7 +593,8 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
     {
         size_t i = 0;
         for (size_t rank = 0; rank < comm.size(); ++rank) {
-            for (size_t duplicate = 0; duplicate < comm.rank() + 1; ++duplicate) {
+            for (size_t duplicate = 0; duplicate < comm.rank() + 1;
+                 ++duplicate) {
                 input[i++] = {comm.rank(), rank};
             }
         }
@@ -507,18 +603,32 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
 
     // Prepare send counts
     OwnContainer<int> send_counts(comm.size(), comm.rank_signed() + 1);
-    ASSERT_EQ(std::accumulate(send_counts.begin(), send_counts.end(), 0), input.size());
+    ASSERT_EQ(
+        std::accumulate(send_counts.begin(), send_counts.end(), 0),
+        input.size()
+    );
 
     // Prepare all counts and displacements
     OwnContainer<CustomType> result;
     OwnContainer<int>        send_displs(comm.size());
-    std::exclusive_scan(send_counts.begin(), send_counts.end(), send_displs.begin(), 0);
+    std::exclusive_scan(
+        send_counts.begin(),
+        send_counts.end(),
+        send_displs.begin(),
+        0
+    );
     OwnContainer<int> recv_counts(comm.size());
     std::iota(recv_counts.begin(), recv_counts.end(), 1);
     OwnContainer<int> recv_displs(comm.size());
-    std::exclusive_scan(recv_counts.begin(), recv_counts.end(), recv_displs.begin(), 0);
+    std::exclusive_scan(
+        recv_counts.begin(),
+        recv_counts.end(),
+        recv_displs.begin(),
+        0
+    );
 
-    // Do the alltoallv - all counts and displacements are already pre-calculated
+    // Do the alltoallv - all counts and displacements are already
+    // pre-calculated
     comm.alltoallv(
         send_buf(input),
         recv_buf(result),
@@ -532,7 +642,9 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), (comm.size() * (comm.size() + 1)) / 2);
 
-    OwnContainer<CustomType> expected_result((comm.size() * (comm.size() + 1)) / 2);
+    OwnContainer<CustomType> expected_result(
+        (comm.size() * (comm.size() + 1)) / 2
+    );
     {
         size_t i = 0;
         for (size_t rank = 0; rank < comm.size(); ++rank) {
@@ -545,7 +657,10 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_all_parameters_given) {
+TEST(
+    AlltoallvTest,
+    custom_type_custom_container_i_pus_one_elements_to_rank_i_all_parameters_given
+) {
     // Send 1 element to rank 0, 2 elements to rank 1, ...
     // This time with all parameters given
 
@@ -558,7 +673,8 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
         size_t receivingRank;
 
         bool operator==(const CustomType& other) const {
-            return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
+            return sendingRank == other.sendingRank
+                   && receivingRank == other.receivingRank;
         }
     };
 
@@ -577,17 +693,31 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
     // Prepare all counts and displacements
     std::vector<int> send_counts(comm.size());
     std::iota(send_counts.begin(), send_counts.end(), 1);
-    ASSERT_EQ(std::accumulate(send_counts.begin(), send_counts.end(), 0), input.size());
+    ASSERT_EQ(
+        std::accumulate(send_counts.begin(), send_counts.end(), 0),
+        input.size()
+    );
 
     OwnContainer<int> send_displs(comm.size());
-    std::exclusive_scan(send_counts.begin(), send_counts.end(), send_displs.begin(), 0);
+    std::exclusive_scan(
+        send_counts.begin(),
+        send_counts.end(),
+        send_displs.begin(),
+        0
+    );
 
     OwnContainer<int> recv_counts(comm.size(), comm.rank_signed() + 1);
 
     OwnContainer<int> recv_displs(comm.size());
-    std::exclusive_scan(recv_counts.begin(), recv_counts.end(), recv_displs.begin(), 0);
+    std::exclusive_scan(
+        recv_counts.begin(),
+        recv_counts.end(),
+        recv_displs.begin(),
+        0
+    );
 
-    // Do the alltoallv - all counts and displacements are already pre-calculated
+    // Do the alltoallv - all counts and displacements are already
+    // pre-calculated
     auto mpi_result = comm.alltoallv(
         send_buf(input),
         recv_buf(NewContainer<OwnContainer<CustomType>>{}),
@@ -606,7 +736,8 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
     {
         size_t i = 0;
         for (size_t rank = 0; rank < comm.size(); ++rank) {
-            for (size_t duplicate = 0; duplicate < comm.rank() + 1; ++duplicate) {
+            for (size_t duplicate = 0; duplicate < comm.rank() + 1;
+                 ++duplicate) {
                 expected_result[i++] = {rank, comm.rank()};
             }
         }

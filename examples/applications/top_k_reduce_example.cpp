@@ -84,7 +84,9 @@ mpi_top_k(TopK<K, ValueType> const& local_top_k, MPI_Comm comm) {
 
     // create a custom reduce operation
     MPI_Op             topK_merge_op;
-    MPI_User_function* merge_op = [](void* invec, void* inoutvec, int* len,
+    MPI_User_function* merge_op = [](void* invec,
+                                     void* inoutvec,
+                                     int*  len,
                                      MPI_Datatype*) {
         TopK<K, ValueType>* invec_ = static_cast<TopK<K, ValueType>*>(invec);
         TopK<K, ValueType>* inoutvec_ =
@@ -97,7 +99,13 @@ mpi_top_k(TopK<K, ValueType> const& local_top_k, MPI_Comm comm) {
     // the actual MPI call
     TopK<K, ValueType> global_top_k;
     MPI_Reduce(
-        &local_top_k, &global_top_k, 1, topK_type, topK_merge_op, 0, comm
+        &local_top_k,
+        &global_top_k,
+        1,
+        topK_type,
+        topK_merge_op,
+        0,
+        comm
     );
 
     // cleanup

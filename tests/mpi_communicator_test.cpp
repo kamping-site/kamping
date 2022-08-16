@@ -2,14 +2,16 @@
 //
 // Copyright 2021-2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// KaMPIng is free software : you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version. KaMPIng is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License
+// along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <gtest/gtest.h>
 #include <kassert/kassert.hpp>
@@ -65,13 +67,22 @@ TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
 TEST_F(CommunicatorTest, constructor_with_mpi_communicator_and_root) {
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i < 0 || i >= size) {
-            EXPECT_THROW(Communicator(MPI_COMM_WORLD, i), kassert::KassertException);
-            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), kassert::KassertException);
+            EXPECT_THROW(
+                Communicator(MPI_COMM_WORLD, i),
+                kassert::KassertException
+            );
+            EXPECT_THROW(
+                Communicator(MPI_COMM_NULL, i),
+                kassert::KassertException
+            );
         } else {
             Communicator comm(MPI_COMM_WORLD, i);
             ASSERT_EQ(comm.root(), i);
 
-            EXPECT_THROW(Communicator(MPI_COMM_NULL, i), kassert::KassertException);
+            EXPECT_THROW(
+                Communicator(MPI_COMM_NULL, i),
+                kassert::KassertException
+            );
         }
     }
 }
@@ -118,7 +129,10 @@ TEST_F(CommunicatorTest, rank_shifted_checked) {
 
     for (int i = -(2 * size); i < (2 * size); ++i) {
         if (i + rank < 0 || i + rank >= size) {
-            EXPECT_THROW(((void)comm.rank_shifted_checked(i)), kassert::KassertException);
+            EXPECT_THROW(
+                ((void)comm.rank_shifted_checked(i)),
+                kassert::KassertException
+            );
         } else {
             EXPECT_EQ(rank + i, comm.rank_shifted_checked(i));
         }
@@ -159,19 +173,33 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
         EXPECT_EQ(splitted_comm.size(), expected_size);
         EXPECT_EQ(splitted_comm.size_signed(), expected_size);
 
-        // Check for all rank ids whether they correctly convert to the splitted communicator
+        // Check for all rank ids whether they correctly convert to the splitted
+        // communicator
         for (int rank_to_test = 0; rank_to_test < size; ++rank_to_test) {
-            int const expected_rank_in_splitted_comm = rank_to_test % i == color ? rank_to_test / i : MPI_UNDEFINED;
-            EXPECT_EQ(expected_rank_in_splitted_comm, comm.convert_rank_to_communicator(rank_to_test, splitted_comm));
-            EXPECT_EQ(expected_rank_in_splitted_comm, splitted_comm.convert_rank_from_communicator(rank_to_test, comm));
+            int const expected_rank_in_splitted_comm =
+                rank_to_test % i == color ? rank_to_test / i : MPI_UNDEFINED;
+            EXPECT_EQ(
+                expected_rank_in_splitted_comm,
+                comm.convert_rank_to_communicator(rank_to_test, splitted_comm)
+            );
+            EXPECT_EQ(
+                expected_rank_in_splitted_comm,
+                splitted_comm.convert_rank_from_communicator(rank_to_test, comm)
+            );
             if (expected_rank_in_splitted_comm != MPI_UNDEFINED) {
                 EXPECT_EQ(
                     rank_to_test,
-                    comm.convert_rank_from_communicator(expected_rank_in_splitted_comm, splitted_comm)
+                    comm.convert_rank_from_communicator(
+                        expected_rank_in_splitted_comm,
+                        splitted_comm
+                    )
                 );
                 EXPECT_EQ(
                     rank_to_test,
-                    splitted_comm.convert_rank_to_communicator(expected_rank_in_splitted_comm, comm)
+                    splitted_comm.convert_rank_to_communicator(
+                        expected_rank_in_splitted_comm,
+                        comm
+                    )
                 );
             }
         }
@@ -186,23 +214,38 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
         EXPECT_EQ(splitted_comm.size_signed(), expected_size);
 
         int const smaller_ranks_in_split = rank / i;
-        int const expected_rank          = expected_size - smaller_ranks_in_split - 1;
+        int const expected_rank = expected_size - smaller_ranks_in_split - 1;
         EXPECT_EQ(splitted_comm.rank(), expected_rank);
 
-        // Check for all rank ids whether they correctly convert to the splitted communicator
+        // Check for all rank ids whether they correctly convert to the splitted
+        // communicator
         for (int rank_to_test = 0; rank_to_test < size; ++rank_to_test) {
             int const expected_rank_rn_splitted_comm =
-                rank_to_test % i == color ? expected_size - (rank_to_test / i) - 1 : MPI_UNDEFINED;
-            EXPECT_EQ(expected_rank_rn_splitted_comm, comm.convert_rank_to_communicator(rank_to_test, splitted_comm));
-            EXPECT_EQ(expected_rank_rn_splitted_comm, splitted_comm.convert_rank_from_communicator(rank_to_test, comm));
+                rank_to_test % i == color
+                    ? expected_size - (rank_to_test / i) - 1
+                    : MPI_UNDEFINED;
+            EXPECT_EQ(
+                expected_rank_rn_splitted_comm,
+                comm.convert_rank_to_communicator(rank_to_test, splitted_comm)
+            );
+            EXPECT_EQ(
+                expected_rank_rn_splitted_comm,
+                splitted_comm.convert_rank_from_communicator(rank_to_test, comm)
+            );
             if (expected_rank_rn_splitted_comm != MPI_UNDEFINED) {
                 EXPECT_EQ(
                     rank_to_test,
-                    comm.convert_rank_from_communicator(expected_rank_rn_splitted_comm, splitted_comm)
+                    comm.convert_rank_from_communicator(
+                        expected_rank_rn_splitted_comm,
+                        splitted_comm
+                    )
                 );
                 EXPECT_EQ(
                     rank_to_test,
-                    splitted_comm.convert_rank_to_communicator(expected_rank_rn_splitted_comm, comm)
+                    splitted_comm.convert_rank_to_communicator(
+                        expected_rank_rn_splitted_comm,
+                        comm
+                    )
                 );
             }
         }

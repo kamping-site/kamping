@@ -454,7 +454,8 @@ public:
         );
         MPI_Op_create(
             UserOperationWrapper<is_commutative, T, Op>::execute,
-            is_commutative, &_mpi_op
+            is_commutative,
+            &_mpi_op
         );
     }
 
@@ -605,11 +606,14 @@ private:
 
 template <typename T, typename Op, typename Commutative>
 class ReduceOperation<
-    T, Op, Commutative,
+    T,
+    Op,
+    Commutative,
     typename std::enable_if<mpi_operation_traits<Op, T>::is_builtin>::type> {
     static_assert(
         std::is_same_v<
-            Commutative, kamping::internal::undefined_commutative_tag>,
+            Commutative,
+            kamping::internal::undefined_commutative_tag>,
         "For builtin operations you don't need to specify whether they are "
         "commutative."
     );
@@ -627,7 +631,9 @@ public:
 
 template <typename T, typename Op, typename Commutative>
 class ReduceOperation<
-    T, Op, Commutative,
+    T,
+    Op,
+    Commutative,
     typename std::enable_if<!std::is_default_constructible_v<Op> >::type> {
     static_assert(
         std::is_same_v<
@@ -646,8 +652,9 @@ public:
         // context of function pointer created afterwards.
         static Op func = op;
 
-        mpi_custom_operation_type ptr = [](void* invec, void* inoutvec,
-                                           int* len,
+        mpi_custom_operation_type ptr = [](void* invec,
+                                           void* inoutvec,
+                                           int*  len,
                                            MPI_Datatype* /*datatype*/) {
             T* invec_    = static_cast<T*>(invec);
             T* inoutvec_ = static_cast<T*>(inoutvec);

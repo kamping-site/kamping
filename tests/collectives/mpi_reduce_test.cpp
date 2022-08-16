@@ -215,7 +215,9 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     for (size_t i = 0; i < comm.size(); ++i) {
         result = {};
         comm.reduce(
-            send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result),
+            send_buf(input),
+            op(kamping::ops::plus<>{}),
+            recv_buf(result),
             root(i)
         );
         if (comm.rank() == i) {
@@ -235,7 +237,9 @@ TEST(ReduceTest, reduce_with_receive_buffer_on_root) {
     if (comm.is_root()) {
         std::vector<int> result;
         comm.reduce(
-            send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result)
+            send_buf(input),
+            op(kamping::ops::plus<>{}),
+            recv_buf(result)
         );
         EXPECT_EQ(result.size(), 2);
         std::vector<int> expected_result = {
@@ -265,9 +269,9 @@ TEST(ReduceTest, reduce_builtin_op_on_non_builtin_type) {
     };
     std::vector<MyInt> input  = {comm.rank_signed(), 42};
     auto               result = comm.reduce(
-                                        send_buf(input),
-                                        op(kamping::ops::plus<>{}, kamping::commutative)
-                  )
+                          send_buf(input),
+                          op(kamping::ops::plus<>{}, kamping::commutative)
+    )
                       .extract_recv_buffer();
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 2);
@@ -294,11 +298,11 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     // use function ptr
-    auto result =
-        comm.reduce(
-                send_buf(input), op(add_plus_42_function, kamping::commutative)
-        )
-            .extract_recv_buffer();
+    auto result = comm.reduce(
+                          send_buf(input),
+                          op(add_plus_42_function, kamping::commutative)
+    )
+                      .extract_recv_buffer();
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -312,11 +316,11 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     }
 
     // use lambda
-    result =
-        comm.reduce(
-                send_buf(input), op(add_plus_42_lambda, kamping::commutative)
-        )
-            .extract_recv_buffer();
+    result = comm.reduce(
+                     send_buf(input),
+                     op(add_plus_42_lambda, kamping::commutative)
+    )
+                 .extract_recv_buffer();
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -331,9 +335,10 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
 
     // use lambda inline
     result = comm.reduce(
-                     send_buf(input), op([](auto const& lhs, auto const& rhs
-                                         ) { return lhs + rhs + 42; },
-                                         kamping::commutative)
+                     send_buf(input),
+                     op([](auto const& lhs,
+                           auto const& rhs) { return lhs + rhs + 42; },
+                        kamping::commutative)
     )
                  .extract_recv_buffer();
 
@@ -418,14 +423,14 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_type) {
     if (comm.is_root()) {
         agg1.flag = true;
     }
-    Aggregate agg2 = {
-        comm.rank_signed() + 42, comm.rank_signed() + 42, false, 1};
+    Aggregate agg2 =
+        {comm.rank_signed() + 42, comm.rank_signed() + 42, false, 1};
     std::vector<Aggregate> input = {agg1, agg2};
 
-    Aggregate agg1_expected = {
-        0, comm.size_signed() - 1, true, comm.size_signed()};
-    Aggregate agg2_expected = {
-        42, comm.size_signed() - 1 + 42, false, comm.size_signed()};
+    Aggregate agg1_expected =
+        {0, comm.size_signed() - 1, true, comm.size_signed()};
+    Aggregate agg2_expected =
+        {42, comm.size_signed() - 1 + 42, false, comm.size_signed()};
     std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
 
     auto result = comm.reduce(send_buf(input), op(my_op, kamping::commutative))

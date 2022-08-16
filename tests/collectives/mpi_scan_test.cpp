@@ -125,13 +125,13 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     }
 
     { // use lambda inline
-        auto result =
-            comm.scan(
-                    send_buf(input), op([](auto const& lhs, auto const& rhs
-                                        ) { return lhs + rhs + 42; },
-                                        kamping::commutative)
-            )
-                .extract_recv_buffer();
+        auto result = comm.scan(
+                              send_buf(input),
+                              op([](auto const& lhs,
+                                    auto const& rhs) { return lhs + rhs + 42; },
+                                 kamping::commutative)
+        )
+                          .extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -203,14 +203,14 @@ TEST(ScanTest, scan_custom_operation_on_custom_type) {
 
     Aggregate agg1 = {comm.rank_signed(), comm.rank_signed(), false, 1};
     agg1.flag      = true;
-    Aggregate agg2 = {
-        comm.rank_signed() + 42, comm.rank_signed() + 42, false, 1};
+    Aggregate agg2 =
+        {comm.rank_signed() + 42, comm.rank_signed() + 42, false, 1};
     std::vector<Aggregate> input = {agg1, agg2};
 
-    Aggregate agg1_expected = {
-        0, comm.rank_signed(), true, comm.rank_signed() + 1};
-    Aggregate agg2_expected = {
-        42, comm.rank_signed() + 42, false, comm.rank_signed() + 1};
+    Aggregate agg1_expected =
+        {0, comm.rank_signed(), true, comm.rank_signed() + 1};
+    Aggregate agg2_expected =
+        {42, comm.rank_signed() + 42, false, comm.rank_signed() + 1};
     std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
 
     auto result = comm.scan(send_buf(input), op(my_op, kamping::commutative))

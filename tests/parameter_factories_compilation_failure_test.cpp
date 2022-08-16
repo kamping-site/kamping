@@ -27,32 +27,33 @@ int main(int /*argc*/, char** /*argv*/) {
     // vector<bool> is not allowed
     std::vector<bool> v = {true, false};
 
-    auto buf = internal::make_data_buffer<
-        type, internal::BufferModifiability::modifiable>(v);
+    auto buf = internal::
+        make_data_buffer<type, internal::BufferModifiability::modifiable>(v);
     buf.size();
 #elif VECTOR_BOOL_RVALUE
     // vector<bool> is not allowed
     std::vector<bool> v = {true, false};
 
     auto buf = internal::make_data_buffer<
-        type, internal::BufferModifiability::modifiable>(std::move(v));
+        type,
+        internal::BufferModifiability::modifiable>(std::move(v));
     buf.size();
 #elif VECTOR_BOOL_CUSTOM_ALLOCATOR
     // vector<bool> is not allowed, also if a custom allocator is used, because
     // the STL may still do optimizations
     std::vector<bool, testing::CustomAllocator<bool> > v = {true, false};
 
-    auto buf = internal::make_data_buffer<
-        type, internal::BufferModifiability::modifiable>(v);
+    auto buf = internal::
+        make_data_buffer<type, internal::BufferModifiability::modifiable>(v);
     buf.size();
 #elif VECTOR_BOOL_NEW_CONTAINER
     // vector<bool> is not allowed
     std::vector<bool, testing::CustomAllocator<bool> > v = {true, false};
 
-    auto buf = internal::make_data_buffer<
-        type, internal::BufferModifiability::modifiable>(
-        NewContainer<std::vector<bool> >{}
-    );
+    auto buf = internal::
+        make_data_buffer<type, internal::BufferModifiability::modifiable>(
+            NewContainer<std::vector<bool> >{}
+        );
     buf.size() :
 // If none of the above sections is active, this file will compile successfully.
 #endif

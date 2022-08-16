@@ -34,8 +34,9 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_FALSE(int_span.empty());
     EXPECT_EQ(values.data(), int_span.data());
 
-    Span<int> tuple_constructed_span(std::tuple<int*, size_t>{
-        values.data(), values.size()});
+    Span<int> tuple_constructed_span(
+        std::tuple<int*, size_t>{values.data(), values.size()}
+    );
     EXPECT_EQ(values.size(), tuple_constructed_span.size());
     EXPECT_EQ(
         values.size() * sizeof(decltype(values)::value_type),
@@ -89,13 +90,15 @@ TEST(SpanTest, basic_functionality) {
 
     static_assert(
         std::is_same_v<
-            decltype(int_span)::value_type, decltype(values)::value_type>,
+            decltype(int_span)::value_type,
+            decltype(values)::value_type>,
         "Member value_type of internal::Span<T*, size_t> does not match the "
         "element type of the underlying container."
     );
     static_assert(
         std::is_same_v<
-            decltype(int_span)::size_type, decltype(values)::size_type>,
+            decltype(int_span)::size_type,
+            decltype(values)::size_type>,
         "Member size_type of internal::Span<T*, size_t> does not match the "
         "element type of the underlying container."
     );
@@ -115,14 +118,16 @@ TEST(SpanTest, basic_functionality) {
     );
     static_assert(
         std::is_same_v<
-            decltype(int_span)::const_pointer, decltype(values)::const_pointer>,
+            decltype(int_span)::const_pointer,
+            decltype(values)::const_pointer>,
         "Member const_pointer of internal::Span<T*, difference_t> does not "
         "match the element type of the underlying "
         "container."
     );
     static_assert(
         std::is_same_v<
-            decltype(int_span)::reference, decltype(values)::reference>,
+            decltype(int_span)::reference,
+            decltype(values)::reference>,
         "Member reference of internal::Span<T*, difference_t> does not match "
         "the element type of the underlying "
         "container."

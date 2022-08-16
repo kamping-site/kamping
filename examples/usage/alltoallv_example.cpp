@@ -34,7 +34,9 @@ int main() {
     // Rank i sends i values to rank 0, i+1 values to rank 1, ...
     std::vector<int> counts_per_rank(comm.size());
     std::iota(
-        counts_per_rank.begin(), counts_per_rank.end(), comm.rank_signed()
+        counts_per_rank.begin(),
+        counts_per_rank.end(),
+        comm.rank_signed()
     );
 
     int num_elements =

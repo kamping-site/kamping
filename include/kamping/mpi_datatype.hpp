@@ -79,7 +79,8 @@ private:
 template <size_t NumBytes>
 [[nodiscard]] MPI_Datatype mpi_custom_continuous_type() KAMPING_NOEXCEPT {
     static_assert(
-        NumBytes > 0, "You cannot create a continuous type with 0 bytes."
+        NumBytes > 0,
+        "You cannot create a continuous type with 0 bytes."
     );
     // Create a new MPI datatype only the first type per NumBytes this function
     // is called. By initializing this in the same line as the static
@@ -331,12 +332,14 @@ template <typename T>
 
     // Check if we got a function type -> error
     static_assert(
-        !std::is_function_v<T_no_cv>, "MPI does not support function types."
+        !std::is_function_v<T_no_cv>,
+        "MPI does not support function types."
     );
 
     // Check if we got a union type -> error
     static_assert(
-        !std::is_union_v<T_no_cv>, "MPI does not support union types."
+        !std::is_union_v<T_no_cv>,
+        "MPI does not support union types."
     );
 
     // Check if we got void -> error
