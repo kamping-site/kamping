@@ -28,16 +28,16 @@
 #include "kamping/parameter_objects.hpp"
 
 int main() {
-    using namespace kamping;
-    kamping::Environment  e;
-    kamping::Communicator comm;
-    std::vector<int>      input(comm.size());
-    std::iota(input.begin(), input.end(), 0);
-    std::vector<int> output;
+  using namespace kamping;
+  kamping::Environment  e;
+  kamping::Communicator comm;
+  std::vector<int>      input(comm.size());
+  std::iota(input.begin(), input.end(), 0);
+  std::vector<int> output;
 
-    comm.gather(send_buf(input), recv_buf(output), root(0));
+  comm.gather(send_buf(input), recv_buf(output), root(0));
 
-    print_result_on_root(output, comm);
+  print_result_on_root(output, comm);
 
-    return 0;
+  return 0;
 }

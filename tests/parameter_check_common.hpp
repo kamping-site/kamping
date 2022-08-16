@@ -18,57 +18,57 @@
 namespace testing {
 template <typename... Args>
 void test_empty_arguments(Args...) {
-    KAMPING_CHECK_PARAMETERS(
-      Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS()
-    );
+  KAMPING_CHECK_PARAMETERS(
+    Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS()
+  );
 }
 
 template <typename... Args>
 void test_required_send_buf(Args...) {
-    KAMPING_CHECK_PARAMETERS(
-      Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS()
-    );
+  KAMPING_CHECK_PARAMETERS(
+    Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS()
+  );
 }
 
 template <typename... Args>
 void test_required_send_buf_optional_recv_buf(Args...) {
-    KAMPING_CHECK_PARAMETERS(
-      Args, KAMPING_REQUIRED_PARAMETERS(send_buf),
-      KAMPING_OPTIONAL_PARAMETERS(recv_buf)
-    );
+  KAMPING_CHECK_PARAMETERS(
+    Args, KAMPING_REQUIRED_PARAMETERS(send_buf),
+    KAMPING_OPTIONAL_PARAMETERS(recv_buf)
+  );
 }
 
 template <typename... Args>
 void test_optional_recv_buf(Args...) {
-    KAMPING_CHECK_PARAMETERS(
-      Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(recv_buf)
-    );
+  KAMPING_CHECK_PARAMETERS(
+    Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(recv_buf)
+  );
 }
 
 template <typename... Args>
 void test_required_send_recv_buf(Args...) {
-    KAMPING_CHECK_PARAMETERS(
-      Args, KAMPING_REQUIRED_PARAMETERS(send_buf, recv_buf),
-      KAMPING_OPTIONAL_PARAMETERS()
-    );
+  KAMPING_CHECK_PARAMETERS(
+    Args, KAMPING_REQUIRED_PARAMETERS(send_buf, recv_buf),
+    KAMPING_OPTIONAL_PARAMETERS()
+  );
 }
 
 template <typename... Args>
 void test_optional_send_recv_buf(Args...) {
-    KAMPING_CHECK_PARAMETERS(
-      Args, KAMPING_REQUIRED_PARAMETERS(),
-      KAMPING_OPTIONAL_PARAMETERS(send_buf, recv_buf)
-    );
+  KAMPING_CHECK_PARAMETERS(
+    Args, KAMPING_REQUIRED_PARAMETERS(),
+    KAMPING_OPTIONAL_PARAMETERS(send_buf, recv_buf)
+  );
 }
 
 template <typename... Args>
 void test_require_many_parameters(Args...) {
-    KAMPING_CHECK_PARAMETERS(
-      Args,
-      KAMPING_REQUIRED_PARAMETERS(
-        send_buf, recv_buf, root, recv_count, recv_counts, send_counts
-      ),
-      KAMPING_OPTIONAL_PARAMETERS()
-    );
+  KAMPING_CHECK_PARAMETERS(
+    Args,
+    KAMPING_REQUIRED_PARAMETERS(
+      send_buf, recv_buf, root, recv_count, recv_counts, send_counts
+    ),
+    KAMPING_OPTIONAL_PARAMETERS()
+  );
 }
 } // namespace testing

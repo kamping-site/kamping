@@ -33,106 +33,106 @@ enum InitMPIMode { InitFinalize, NoInitFinalize };
 /// Environment object (or directly vie the MPI_* calls).
 template <InitMPIMode init_finalize_mode = InitFinalize>
 class Environment {
-public:
-    /// @brief Calls MPI_Init with arguments.
-    ///
-    /// @param argc Number of arguments.
-    /// @param argv The arguments.
-    Environment(int& argc, char**& argv) {
-        if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
-            init(argc, argv);
-        }
+  public:
+  /// @brief Calls MPI_Init with arguments.
+  ///
+  /// @param argc Number of arguments.
+  /// @param argv The arguments.
+  Environment(int& argc, char**& argv) {
+    if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
+      init(argc, argv);
     }
+  }
 
-    /// @brief Calls MPI_Init without arguments.
-    Environment() {
-        if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
-            init();
-        }
+  /// @brief Calls MPI_Init without arguments.
+  Environment() {
+    if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
+      init();
     }
+  }
 
-    /// @brief Calls MPI_Init without arguments.
-    void init() const {
-        KASSERT(!initialized(), "Trying to call MPI_Init twice");
-        [[maybe_unused]] int err = MPI_Init(NULL, NULL);
-        THROW_IF_MPI_ERROR(err, MPI_Init);
-    }
+  /// @brief Calls MPI_Init without arguments.
+  void init() const {
+    KASSERT(!initialized(), "Trying to call MPI_Init twice");
+    [[maybe_unused]] int err = MPI_Init(NULL, NULL);
+    THROW_IF_MPI_ERROR(err, MPI_Init);
+  }
 
-    /// @brief Calls MPI_Init with arguments.
-    ///
-    /// @param argc Number of arguments.
-    /// @param argv The arguments.
-    void init(int& argc, char**& argv) const {
-        KASSERT(!initialized(), "Trying to call MPI_Init twice");
-        [[maybe_unused]] int err = MPI_Init(&argc, &argv);
-        THROW_IF_MPI_ERROR(err, MPI_Init);
-    }
+  /// @brief Calls MPI_Init with arguments.
+  ///
+  /// @param argc Number of arguments.
+  /// @param argv The arguments.
+  void init(int& argc, char**& argv) const {
+    KASSERT(!initialized(), "Trying to call MPI_Init twice");
+    [[maybe_unused]] int err = MPI_Init(&argc, &argv);
+    THROW_IF_MPI_ERROR(err, MPI_Init);
+  }
 
-    /// @brief Calls MPI_Finalize
-    ///
-    /// Even if you chose InitMPIMode::InitFinalize, you might want to call this
-    /// function: As MPI_Finalize could potentially return an error, this
-    /// function can be used if you want to be able to handle that error.
-    /// Otherwise the destructor will call MPI_Finalize and not throw on any
-    /// errors returned.
-    void finalize() const {
-        KASSERT(!finalized(), "Trying to call MPI_Finalize twice");
+  /// @brief Calls MPI_Finalize
+  ///
+  /// Even if you chose InitMPIMode::InitFinalize, you might want to call this
+  /// function: As MPI_Finalize could potentially return an error, this
+  /// function can be used if you want to be able to handle that error.
+  /// Otherwise the destructor will call MPI_Finalize and not throw on any
+  /// errors returned.
+  void finalize() const {
+    KASSERT(!finalized(), "Trying to call MPI_Finalize twice");
+    [[maybe_unused]] int err = MPI_Finalize();
+    THROW_IF_MPI_ERROR(err, MPI_Finalize);
+  }
+
+  /// @brief Checks whether MPI_Init has been called.
+  ///
+  /// @return \c true if MPI_Init has been called, \c false otherwise.
+  bool initialized() const {
+    int                  result;
+    [[maybe_unused]] int err = MPI_Initialized(&result);
+    THROW_IF_MPI_ERROR(err, MPI_Initialized);
+    return result == true;
+  }
+
+  /// @brief Checks whether MPI_Finalize has been called.
+  ///
+  /// @return \c true if MPI_Finalize has been called, \c false otherwise.
+  bool finalized() const {
+    int                  result;
+    [[maybe_unused]] int err = MPI_Finalized(&result);
+    THROW_IF_MPI_ERROR(err, MPI_Finalized);
+    return result == true;
+  }
+
+  /// @brief Returns the elapsed time since an arbitrary time in the past.
+  ///
+  /// @return The elapsed time in seconds.
+  double static wtime() {
+    return MPI_Wtime();
+  }
+
+  /// @brief Returns the resolution of Environment::wtime().
+  ///
+  /// @return The resolution in seconds.
+  double static wtick() {
+    return MPI_Wtick();
+  }
+
+  /// @brief Calls MPI_Finalize if finalize() has not been called before.
+  ~Environment() {
+    if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
+      bool is_already_finalized = false;
+      try {
+        is_already_finalized = finalized();
+      } catch (MpiErrorException&) {
+        // Just kassert. We can't throw exceptions in the destructor.
+        KASSERT(false, "MPI_Finalized call failed.");
+      }
+      if (!is_already_finalized) {
+        // Just kassert the error code. We can't throw exceptions in the
+        // destructor.
         [[maybe_unused]] int err = MPI_Finalize();
-        THROW_IF_MPI_ERROR(err, MPI_Finalize);
+        KASSERT(err == MPI_SUCCESS, "MPI_Finalize call failed.");
+      }
     }
-
-    /// @brief Checks whether MPI_Init has been called.
-    ///
-    /// @return \c true if MPI_Init has been called, \c false otherwise.
-    bool initialized() const {
-        int                  result;
-        [[maybe_unused]] int err = MPI_Initialized(&result);
-        THROW_IF_MPI_ERROR(err, MPI_Initialized);
-        return result == true;
-    }
-
-    /// @brief Checks whether MPI_Finalize has been called.
-    ///
-    /// @return \c true if MPI_Finalize has been called, \c false otherwise.
-    bool finalized() const {
-        int                  result;
-        [[maybe_unused]] int err = MPI_Finalized(&result);
-        THROW_IF_MPI_ERROR(err, MPI_Finalized);
-        return result == true;
-    }
-
-    /// @brief Returns the elapsed time since an arbitrary time in the past.
-    ///
-    /// @return The elapsed time in seconds.
-    double static wtime() {
-        return MPI_Wtime();
-    }
-
-    /// @brief Returns the resolution of Environment::wtime().
-    ///
-    /// @return The resolution in seconds.
-    double static wtick() {
-        return MPI_Wtick();
-    }
-
-    /// @brief Calls MPI_Finalize if finalize() has not been called before.
-    ~Environment() {
-        if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
-            bool is_already_finalized = false;
-            try {
-                is_already_finalized = finalized();
-            } catch (MpiErrorException&) {
-                // Just kassert. We can't throw exceptions in the destructor.
-                KASSERT(false, "MPI_Finalized call failed.");
-            }
-            if (!is_already_finalized) {
-                // Just kassert the error code. We can't throw exceptions in the
-                // destructor.
-                [[maybe_unused]] int err = MPI_Finalize();
-                KASSERT(err == MPI_SUCCESS, "MPI_Finalize call failed.");
-            }
-        }
-    }
+  }
 }; // class Environment
 
 /// @brief A global environment object to use when you don't want to create a

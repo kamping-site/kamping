@@ -17,27 +17,27 @@
 #include "kamping/named_parameter_selection.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
-    using namespace ::kamping;
-    using namespace ::kamping::internal;
-    testing::Argument<ParameterType::send_buf> arg0{0};
-    testing::Argument<ParameterType::recv_buf> arg1{1};
-    /// @brief dummy default argument
-    struct DefaultArgument {
-        DefaultArgument(int member) : _member(member){};
-        int _member;
-    };
-    // if the requested ParameterType is not given, parameter selection should
-    // fail to compile.
+  using namespace ::kamping;
+  using namespace ::kamping::internal;
+  testing::Argument<ParameterType::send_buf> arg0{0};
+  testing::Argument<ParameterType::recv_buf> arg1{1};
+  /// @brief dummy default argument
+  struct DefaultArgument {
+    DefaultArgument(int member) : _member(member){};
+    int _member;
+  };
+  // if the requested ParameterType is not given, parameter selection should
+  // fail to compile.
 #if defined(REQUESTED_PARAMETER_NOT_GIVEN)
-    const auto& selected_arg =
-      select_parameter_type<ParameterType::send_counts>(arg0, arg1);
+  const auto& selected_arg =
+    select_parameter_type<ParameterType::send_counts>(arg0, arg1);
 #elif defined(DEFAULT_ARGUMENTS_DO_NOT_MATCH)
-    // if the default argument cannot be constructed from the given parameters
-    // this should fail to compile
-    auto&& selected_args = select_parameter_type_or_default<
-      ParameterType::send_counts, DefaultArgument>(
-      std::tuple("Hello World"), arg0, arg1
-    );
+  // if the default argument cannot be constructed from the given parameters
+  // this should fail to compile
+  auto&& selected_args = select_parameter_type_or_default<
+    ParameterType::send_counts, DefaultArgument>(
+    std::tuple("Hello World"), arg0, arg1
+  );
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif

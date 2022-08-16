@@ -37,21 +37,21 @@
 /// @brief The main function for this tests. Gathers the ranks on the root (done
 /// in a different compilation unit), calls a barrier and checks the result
 TEST(TwoCompilationUnitsTest, main) {
-    using namespace kamping;
-    EXPECT_TRUE(mpi_env.initialized());
+  using namespace kamping;
+  EXPECT_TRUE(mpi_env.initialized());
 
-    Communicator comm;
+  Communicator comm;
 
-    Gatherer gatherer;
-    auto     gathered_data = gatherer.gather(comm.rank_signed());
+  Gatherer gatherer;
+  auto     gathered_data = gatherer.gather(comm.rank_signed());
 
-    comm.barrier();
+  comm.barrier();
 
-    if (comm.rank() == 0) {
-        std::vector<int> expected_result(static_cast<size_t>(comm.size()));
-        std::iota(expected_result.begin(), expected_result.end(), 0);
-        EXPECT_EQ(gathered_data, expected_result);
-    } else {
-        EXPECT_TRUE(gathered_data.empty());
-    }
+  if (comm.rank() == 0) {
+    std::vector<int> expected_result(static_cast<size_t>(comm.size()));
+    std::iota(expected_result.begin(), expected_result.end(), 0);
+    EXPECT_EQ(gathered_data, expected_result);
+  } else {
+    EXPECT_TRUE(gathered_data.empty());
+  }
 }

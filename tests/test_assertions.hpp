@@ -26,7 +26,7 @@
 
 #if defined(KASSERT) || defined(EXPECT_KASSERT_FAILS) \
   || defined(ASSERT_KASSERT_FAILS) || defined(KAMPING_NOEXCEPT)
-    #error "Bad #include order: this header must be included first"
+  #error "Bad #include order: this header must be included first"
 #endif
 
 #include <exception>
@@ -52,50 +52,48 @@
 
 // Redefine KASSERT implementation to throw an exception
 #undef KASSERT_KASSERT_HPP_KASSERT_IMPL
-#define KASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level) \
-    do {                                                                   \
-        if constexpr (kassert::internal::assertion_enabled(level)) {       \
-            if (!(expression)) {                                           \
-                throw kamping::testing::KassertTestingException(           \
-                  (kassert::internal::RrefOStringstreamLogger{             \
-                     std::ostringstream{}}                                 \
-                   << message)                                             \
-                    .stream()                                              \
-                    .str()                                                 \
-                );                                                         \
-            }                                                              \
-        }                                                                  \
-    } while (false)
+#define KASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level)  \
+  do {                                                                      \
+    if constexpr (kassert::internal::assertion_enabled(level)) {            \
+      if (!(expression)) {                                                  \
+        throw kamping::testing::KassertTestingException(                    \
+          (kassert::internal::RrefOStringstreamLogger{std::ostringstream{}} \
+           << message)                                                      \
+            .stream()                                                       \
+            .str()                                                          \
+        );                                                                  \
+      }                                                                     \
+    }                                                                       \
+  } while (false)
 
 // Makros to test for failed KASSERTs
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-    // EXPECT that any KASSERT assertion failed. The failure message is ignored
-    // since EXPECT_THROW does not support one.
-    #define EXPECT_KASSERT_FAILS(code, failure_message) \
-        EXPECT_THROW({ code; }, ::kamping::testing::KassertTestingException);
+  // EXPECT that any KASSERT assertion failed. The failure message is ignored
+  // since EXPECT_THROW does not support one.
+  #define EXPECT_KASSERT_FAILS(code, failure_message) \
+    EXPECT_THROW({ code; }, ::kamping::testing::KassertTestingException);
 
-    // ASSERT that any KASSERT assertion failed. The failure message is ignored
-    // since ASSERT_THROW does not support one.
-    #define ASSERT_KASSERT_FAILS(code, failure_message) \
-        ASSERT_THROW({ code; }, ::kamping::testing::KassertTestingException);
+  // ASSERT that any KASSERT assertion failed. The failure message is ignored
+  // since ASSERT_THROW does not support one.
+  #define ASSERT_KASSERT_FAILS(code, failure_message) \
+    ASSERT_THROW({ code; }, ::kamping::testing::KassertTestingException);
 #else // Otherwise, we do not test for failed assertions
-    #define EXPECT_KASSERT_FAILS(code, failure_message)
-    #define ASSERT_KASSERT_FAILS(code, failure_message)
+  #define EXPECT_KASSERT_FAILS(code, failure_message)
+  #define ASSERT_KASSERT_FAILS(code, failure_message)
 #endif
 
 // Dummy exception class used for remapping assertions to throwing exceptions.
 namespace kamping::testing {
 class KassertTestingException : public std::exception {
-public:
-    // Assertion message (no expression decomposition)
-    KassertTestingException(std::string message)
-      : _message(std::move(message)) {}
+  public:
+  // Assertion message (no expression decomposition)
+  KassertTestingException(std::string message) : _message(std::move(message)) {}
 
-    const char* what() const noexcept override {
-        return _message.c_str();
-    }
+  const char* what() const noexcept override {
+    return _message.c_str();
+  }
 
-private:
-    std::string _message;
+  private:
+  std::string _message;
 };
 } // namespace kamping::testing

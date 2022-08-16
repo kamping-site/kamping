@@ -35,7 +35,7 @@ namespace kamping::internal {
 /// @return \c std::numeric_limits<std::size_t>::max().
 template <ParameterType parameter_type, size_t Index>
 constexpr size_t find_pos() {
-    return std::numeric_limits<std::size_t>::max();
+  return std::numeric_limits<std::size_t>::max();
 }
 
 /// @brief Returns the Index parameter if the parameter type of Arg matches the
@@ -50,11 +50,11 @@ constexpr size_t find_pos() {
 /// @return \c std::numeric_limits<std::size_t>::max() if not found
 template <ParameterType parameter_type, size_t Index, typename Arg>
 constexpr size_t find_pos() {
-    constexpr bool found_arg =
-      std::remove_reference_t<Arg>::parameter_type == parameter_type;
-    // when we do not find the parameter type here, it is not given
-    // a we fail to compile with a useful message
-    return found_arg ? Index : std::numeric_limits<std::size_t>::max();
+  constexpr bool found_arg =
+    std::remove_reference_t<Arg>::parameter_type == parameter_type;
+  // when we do not find the parameter type here, it is not given
+  // a we fail to compile with a useful message
+  return found_arg ? Index : std::numeric_limits<std::size_t>::max();
 }
 
 /// @brief Returns position of first argument in Args with Trait trait.
@@ -70,13 +70,13 @@ template <
   ParameterType parameter_type, size_t Index, typename Arg, typename Arg2,
   typename... Args>
 constexpr size_t find_pos() {
-    if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type) {
-        return Index;
-    } else {
-        // We need to unpack the next two arguments, so we can unambiguously
-        // check for the case of a single remaining argument.
-        return find_pos<parameter_type, Index + 1, Arg2, Args...>();
-    }
+  if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type) {
+    return Index;
+  } else {
+    // We need to unpack the next two arguments, so we can unambiguously
+    // check for the case of a single remaining argument.
+    return find_pos<parameter_type, Index + 1, Arg2, Args...>();
+  }
 }
 
 /// @brief Returns parameter with requested parameter type.
@@ -89,12 +89,12 @@ constexpr size_t find_pos() {
 /// @returns The first parameter whose type has the requested parameter type.
 template <ParameterType parameter_type, typename... Args>
 auto& select_parameter_type(Args&... args) {
-    constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
-    static_assert(
-      selected_index < sizeof...(args),
-      "Could not find the requested parameter type."
-    );
-    return std::get<selected_index>(std::forward_as_tuple(args...));
+  constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
+  static_assert(
+    selected_index < sizeof...(args),
+    "Could not find the requested parameter type."
+  );
+  return std::get<selected_index>(std::forward_as_tuple(args...));
 }
 
 /// @brief Checks if parameter with requested parameter type exists.
@@ -106,7 +106,7 @@ auto& select_parameter_type(Args&... args) {
 /// @return \c true iff. `Args` contains a parameter of type `parameter_type`.
 template <ParameterType parameter_type, typename... Args>
 bool has_parameter_type(Args const&... args) {
-    return find_pos<parameter_type, 0, Args...>() < sizeof...(args);
+  return find_pos<parameter_type, 0, Args...>() < sizeof...(args);
 }
 
 /// @brief Checks if parameter with requested parameter type exists.
@@ -117,7 +117,7 @@ bool has_parameter_type(Args const&... args) {
 /// @return \c true iff. `Args` contains a parameter of type `parameter_type`.
 template <ParameterType parameter_type, typename... Args>
 constexpr bool has_parameter_type() {
-    return find_pos<parameter_type, 0, Args...>() < sizeof...(Args);
+  return find_pos<parameter_type, 0, Args...>() < sizeof...(Args);
 }
 
 /// @brief Checks if parameter with requested parameter type exists, if not
@@ -142,19 +142,18 @@ template <
 decltype(auto) select_parameter_type_or_default(
   std::tuple<DefaultArguments...> default_arguments, Args&... args
 ) {
-    static_assert(
-      std::is_constructible_v<DefaultParameterType, DefaultArguments...>,
-      "The default parameter cannot be constructed from the provided arguments"
+  static_assert(
+    std::is_constructible_v<DefaultParameterType, DefaultArguments...>,
+    "The default parameter cannot be constructed from the provided arguments"
+  );
+  if constexpr (has_parameter_type<parameter_type, Args...>()) {
+    constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
+    return std::get<selected_index>(std::forward_as_tuple(args...));
+  } else {
+    return std::make_from_tuple<DefaultParameterType>(
+      std::move(default_arguments)
     );
-    if constexpr (has_parameter_type<parameter_type, Args...>()) {
-        constexpr size_t selected_index =
-          find_pos<parameter_type, 0, Args...>();
-        return std::get<selected_index>(std::forward_as_tuple(args...));
-    } else {
-        return std::make_from_tuple<DefaultParameterType>(
-          std::move(default_arguments)
-        );
-    }
+  }
 }
 
 /// @}

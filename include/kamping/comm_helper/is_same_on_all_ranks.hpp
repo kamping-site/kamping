@@ -37,56 +37,56 @@ namespace kamping {
 /// @return `true` if all ranks have provided the same value, `false` otherwise.
 template <typename Value>
 bool Communicator::is_same_on_all_ranks(Value const& value) const {
-    // TODO Assert that two values are comparable.
-    // std::pair<> is not trivially_copyable and we don't want to forbid
-    // comparing std::pair<>s for equality.
-    /// @todo How to handle more complex data types, e.g. std::pair<>, user
-    /// defined classes, std::vector (here and elsewhere)?
-    // static_assert(
-    //     std::is_trivially_copyable_v<Value>,
-    //     "Value must be a trivial type (more complex types are not implemented
-    //     yet).");
-    static_assert(
-      !std::is_pointer_v<Value>,
-      "Comparing pointers from different machines does not make sense."
-    );
+  // TODO Assert that two values are comparable.
+  // std::pair<> is not trivially_copyable and we don't want to forbid
+  // comparing std::pair<>s for equality.
+  /// @todo How to handle more complex data types, e.g. std::pair<>, user
+  /// defined classes, std::vector (here and elsewhere)?
+  // static_assert(
+  //     std::is_trivially_copyable_v<Value>,
+  //     "Value must be a trivial type (more complex types are not implemented
+  //     yet).");
+  static_assert(
+    !std::is_pointer_v<Value>,
+    "Comparing pointers from different machines does not make sense."
+  );
 
-    /// @todo Expose this functionality to the user, he might find it useful,
-    /// too.
-    /// @todo Implement this for complex types.
+  /// @todo Expose this functionality to the user, he might find it useful,
+  /// too.
+  /// @todo Implement this for complex types.
 
-    struct ValueEqual {
-        Value value; // The value to compare, init on each rank with the local
-                     // value.
-        bool equal;  // Have we seen only equal values in the reduction so far?
-    };
-    ValueEqual value_equal = {value, true};
-    const auto datatype    = mpi_datatype<ValueEqual>();
+  struct ValueEqual {
+    Value value; // The value to compare, init on each rank with the local
+                 // value.
+    bool equal;  // Have we seen only equal values in the reduction so far?
+  };
+  ValueEqual value_equal = {value, true};
+  const auto datatype    = mpi_datatype<ValueEqual>();
 
-    // Build the operation for the reduction.
-    auto operation_param = kamping::op(
-      [](auto a, auto b) {
-          if (a.equal && b.equal && a.value == b.value) {
-              return ValueEqual{a.value, true};
-          } else {
-              return ValueEqual{a.value, false};
-          }
-      },
-      kamping::commutative
-    );
-    auto operation = operation_param.template build_operation<ValueEqual>();
+  // Build the operation for the reduction.
+  auto operation_param = kamping::op(
+    [](auto a, auto b) {
+      if (a.equal && b.equal && a.value == b.value) {
+        return ValueEqual{a.value, true};
+      } else {
+        return ValueEqual{a.value, false};
+      }
+    },
+    kamping::commutative
+  );
+  auto operation = operation_param.template build_operation<ValueEqual>();
 
-    // Perform the reduction and return.
-    MPI_Allreduce(
-      MPI_IN_PLACE,            // sendbuf
-      &value_equal,            // recvbuf
-      1,                       // count
-      datatype,                // datatype,
-      operation.op(),          // operation,
-      this->mpi_communicator() // communicator
-    );
+  // Perform the reduction and return.
+  MPI_Allreduce(
+    MPI_IN_PLACE,            // sendbuf
+    &value_equal,            // recvbuf
+    1,                       // count
+    datatype,                // datatype,
+    operation.op(),          // operation,
+    this->mpi_communicator() // communicator
+  );
 
-    return value_equal.equal;
+  return value_equal.equal;
 }
 
 } // namespace kamping

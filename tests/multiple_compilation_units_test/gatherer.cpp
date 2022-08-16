@@ -32,9 +32,9 @@
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
 std::vector<int> Gatherer::gather(int data) {
-    using namespace kamping;
-    KASSERT(mpi_env.initialized());
-    Communicator comm;
-    auto         result = comm.gather(send_buf(data)).extract_recv_buffer();
-    return result;
+  using namespace kamping;
+  KASSERT(mpi_env.initialized());
+  Communicator comm;
+  auto         result = comm.gather(send_buf(data)).extract_recv_buffer();
+  return result;
 }

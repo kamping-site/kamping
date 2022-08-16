@@ -43,7 +43,7 @@ IncludeCategories:
     Priority: 1
 IndentCaseLabels: 'true'
 IndentPPDirectives: BeforeHash
-IndentWidth: '4'
+IndentWidth: '2'
 IndentWrappedFunctionNames: 'false'
 KeepEmptyLinesAtTheStartOfBlocks: 'false'
 Language: Cpp

@@ -27,65 +27,65 @@
 using namespace ::kamping;
 
 int main() {
-    using namespace kamping;
-    kamping::Environment  e;
-    kamping::Communicator comm;
+  using namespace kamping;
+  kamping::Environment  e;
+  kamping::Communicator comm;
 
-    /// @todo Expand these examples, once we have send_recv_buf as unnamed first
-    /// parameter.
+  /// @todo Expand these examples, once we have send_recv_buf as unnamed first
+  /// parameter.
 
-    size_t value = comm.rank();
-    comm.bcast(send_recv_buf(value));
-    print_result(value, comm);
+  size_t value = comm.rank();
+  comm.bcast(send_recv_buf(value));
+  print_result(value, comm);
 
-    comm.barrier();
-    if (comm.is_root()) {
-        std::cout << "-------------------" << std::endl;
-    }
-    comm.barrier();
+  comm.barrier();
+  if (comm.is_root()) {
+    std::cout << "-------------------" << std::endl;
+  }
+  comm.barrier();
 
-    value = comm.rank();
-    comm.bcast_single(send_recv_buf(value));
-    print_result(value, comm);
+  value = comm.rank();
+  comm.bcast_single(send_recv_buf(value));
+  print_result(value, comm);
 
-    comm.barrier();
-    if (comm.is_root()) {
-        std::cout << "-------------------" << std::endl;
-    }
-    comm.barrier();
+  comm.barrier();
+  if (comm.is_root()) {
+    std::cout << "-------------------" << std::endl;
+  }
+  comm.barrier();
 
-    std::vector<int> values(4);
-    std::fill(values.begin(), values.end(), comm.rank());
-    comm.bcast(send_recv_buf(values), recv_count(4), root(1));
-    print_result(values, comm);
+  std::vector<int> values(4);
+  std::fill(values.begin(), values.end(), comm.rank());
+  comm.bcast(send_recv_buf(values), recv_count(4), root(1));
+  print_result(values, comm);
 
-    // The expected output on 4 ranks is a permutation of the following lines:
-    /// @todo Update expected output, once we have the logger which collects
-    /// output on the root rank to avoid interleaving output.
-    // [PE 0] 0
-    // [PE 1] 0
-    // [PE 2] 0
-    // [PE 3] 0
-    // -------------------
-    // [PE 0] 0
-    // [PE 1] 0
-    // [PE 2] 0
-    // [PE 3] 0
-    // -------------------
-    // [PE 0] 1
-    // [PE 0] 1
-    // [PE 0] 1
-    // [PE 0] 1
-    // [PE 1] 1
-    // [PE 1] 1
-    // [PE 1] 1
-    // [PE 1] 1
-    // [PE 2] 1
-    // [PE 2] 1
-    // [PE 2] 1
-    // [PE 2] 1
-    // [PE 3] 1
-    // [PE 3] 1
-    // [PE 3] 1
-    // [PE 3] 1
+  // The expected output on 4 ranks is a permutation of the following lines:
+  /// @todo Update expected output, once we have the logger which collects
+  /// output on the root rank to avoid interleaving output.
+  // [PE 0] 0
+  // [PE 1] 0
+  // [PE 2] 0
+  // [PE 3] 0
+  // -------------------
+  // [PE 0] 0
+  // [PE 1] 0
+  // [PE 2] 0
+  // [PE 3] 0
+  // -------------------
+  // [PE 0] 1
+  // [PE 0] 1
+  // [PE 0] 1
+  // [PE 0] 1
+  // [PE 1] 1
+  // [PE 1] 1
+  // [PE 1] 1
+  // [PE 1] 1
+  // [PE 2] 1
+  // [PE 2] 1
+  // [PE 2] 1
+  // [PE 2] 1
+  // [PE 3] 1
+  // [PE 3] 1
+  // [PE 3] 1
+  // [PE 3] 1
 }

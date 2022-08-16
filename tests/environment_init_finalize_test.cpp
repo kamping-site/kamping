@@ -26,32 +26,32 @@ using namespace ::kamping;
 // This is not using google test because our test setup would call MPI_Init
 // before running any tests
 int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
-    KASSERT(!mpi_env.initialized());
-    KASSERT(!mpi_env.finalized());
-    {
+  KASSERT(!mpi_env.initialized());
+  KASSERT(!mpi_env.finalized());
+  {
 #if defined(KAMPING_ENVIRONMENT_TEST_NO_PARAM)
-        Environment environment;
+    Environment environment;
 #elif defined(KAMPING_ENVIRONMENT_TEST_WITH_PARAM)
-        Environment environment(argc, argv);
+    Environment environment(argc, argv);
 #else
-        static_assert(
-          false, "Define either KAMPING_ENVIRONMENT_TEST_NO_PARAM or "
-                 "KAMPING_ENVIRONMENT_TEST_WITH_PARAM"
-        );
+    static_assert(
+      false, "Define either KAMPING_ENVIRONMENT_TEST_NO_PARAM or "
+             "KAMPING_ENVIRONMENT_TEST_WITH_PARAM"
+    );
 #endif
 
-        KASSERT(environment.initialized());
-        KASSERT(!environment.finalized());
+    KASSERT(environment.initialized());
+    KASSERT(!environment.finalized());
 #if defined(KAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE)
-        // Test that destructor works correctly even if finalize was called on a
-        // different object.
-        mpi_env.finalize();
-        KASSERT(environment.finalized());
+    // Test that destructor works correctly even if finalize was called on a
+    // different object.
+    mpi_env.finalize();
+    KASSERT(environment.finalized());
 #endif
-        // If KAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE is not defined,
-        // MPI_Init() is called by `Environment`s destructor after this closing
-        // bracket.
-    }
-    KASSERT(mpi_env.finalized());
-    return 0;
+    // If KAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE is not defined,
+    // MPI_Init() is called by `Environment`s destructor after this closing
+    // bracket.
+  }
+  KASSERT(mpi_env.finalized());
+  return 0;
 }

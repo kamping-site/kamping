@@ -53,66 +53,65 @@
 /// parameter.
 template <typename... Args>
 auto kamping::Communicator::allreduce(Args... args) const {
-    using namespace kamping::internal;
-    KAMPING_CHECK_PARAMETERS(
-      Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op),
-      KAMPING_OPTIONAL_PARAMETERS(recv_buf)
-    );
+  using namespace kamping::internal;
+  KAMPING_CHECK_PARAMETERS(
+    Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op),
+    KAMPING_OPTIONAL_PARAMETERS(recv_buf)
+  );
 
-    // Get the send buffer and deduce the send and recv value types.
-    const auto& send_buf =
-      select_parameter_type<ParameterType::send_buf>(args...).get();
-    using send_value_type =
-      typename std::remove_reference_t<decltype(send_buf)>::value_type;
-    using default_recv_value_type = std::remove_const_t<send_value_type>;
-    KASSERT(
-      is_same_on_all_ranks(send_buf.size()),
-      "The send buffer has to be the same size on all ranks.",
-      assert::light_communication
-    );
+  // Get the send buffer and deduce the send and recv value types.
+  const auto& send_buf =
+    select_parameter_type<ParameterType::send_buf>(args...).get();
+  using send_value_type =
+    typename std::remove_reference_t<decltype(send_buf)>::value_type;
+  using default_recv_value_type = std::remove_const_t<send_value_type>;
+  KASSERT(
+    is_same_on_all_ranks(send_buf.size()),
+    "The send buffer has to be the same size on all ranks.",
+    assert::light_communication
+  );
 
-    // Deduce the recv buffer type and get (if provided) the recv buffer or
-    // allocate one (if not provided).
-    using default_recv_buf_type = decltype(kamping::recv_buf(
-      NewContainer<std::vector<default_recv_value_type>>{}
-    ));
-    auto&& recv_buf             = select_parameter_type_or_default<
-      ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
-    using recv_value_type =
-      typename std::remove_reference_t<decltype(recv_buf)>::value_type;
-    static_assert(
-      std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
-      "Types of send and receive buffers do not match."
-    );
+  // Deduce the recv buffer type and get (if provided) the recv buffer or
+  // allocate one (if not provided).
+  using default_recv_buf_type = decltype(kamping::recv_buf(
+    NewContainer<std::vector<default_recv_value_type>>{}
+  ));
+  auto&& recv_buf             = select_parameter_type_or_default<
+    ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
+  using recv_value_type =
+    typename std::remove_reference_t<decltype(recv_buf)>::value_type;
+  static_assert(
+    std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
+    "Types of send and receive buffers do not match."
+  );
 
-    // Get the operation used for the reduction. The signature of the provided
-    // function is checked while building.
-    auto& operation_param = select_parameter_type<ParameterType::op>(args...);
-    auto  operation =
-      operation_param.template build_operation<send_value_type>();
+  // Get the operation used for the reduction. The signature of the provided
+  // function is checked while building.
+  auto& operation_param = select_parameter_type<ParameterType::op>(args...);
+  auto  operation = operation_param.template build_operation<send_value_type>();
 
-    // Resize the recv buffer to the same size as the send buffer; get the
-    // pointer needed for the MPI call.
-    send_value_type* recv_buf_ptr = nullptr;
-    recv_buf.resize(send_buf.size());
-    recv_buf_ptr = recv_buf.data();
-    KASSERT(recv_buf_ptr != nullptr, assert::light);
-    KASSERT(recv_buf.size() == send_buf.size(), assert::light);
-    // send_buf.size() is equal on all ranks, as checked above.
+  // Resize the recv buffer to the same size as the send buffer; get the
+  // pointer needed for the MPI call.
+  send_value_type* recv_buf_ptr = nullptr;
+  recv_buf.resize(send_buf.size());
+  recv_buf_ptr = recv_buf.data();
+  KASSERT(recv_buf_ptr != nullptr, assert::light);
+  KASSERT(recv_buf.size() == send_buf.size(), assert::light);
+  // send_buf.size() is equal on all ranks, as checked above.
 
-    // Perform the MPI_Allreduce call and return.
-    [[maybe_unused]] int err = MPI_Allreduce(
-      send_buf.data(),                      // sendbuf
-      recv_buf_ptr,                         // recvbuf,
-      asserting_cast<int>(send_buf.size()), // count
-      mpi_datatype<send_value_type>(),      // datatype,
-      operation.op(),                       // op
-      mpi_communicator()                    // communicator
-    );
+  // Perform the MPI_Allreduce call and return.
+  [[maybe_unused]] int err = MPI_Allreduce(
+    send_buf.data(),                      // sendbuf
+    recv_buf_ptr,                         // recvbuf,
+    asserting_cast<int>(send_buf.size()), // count
+    mpi_datatype<send_value_type>(),      // datatype,
+    operation.op(),                       // op
+    mpi_communicator()                    // communicator
+  );
 
-    THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return MPIResult(
-      std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
-      BufferCategoryNotUsed{}, BufferCategoryNotUsed{}
-    );
+  THROW_IF_MPI_ERROR(err, MPI_Reduce);
+  return MPIResult(
+    std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
+    BufferCategoryNotUsed{}, BufferCategoryNotUsed{}
+  );
 }

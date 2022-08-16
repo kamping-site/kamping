@@ -39,182 +39,182 @@ namespace testing {
 ///
 template <typename T>
 class OwnContainer {
-public:
-    using value_type     = T;
-    using iterator       = T*;
-    using const_iterator = T const*;
+  public:
+  using value_type     = T;
+  using iterator       = T*;
+  using const_iterator = T const*;
 
-    OwnContainer() : OwnContainer(0) {}
+  OwnContainer() : OwnContainer(0) {}
 
-    OwnContainer(size_t size) : OwnContainer(size, T{}) {}
-    OwnContainer(size_t size, T value)
-      : _data(nullptr),
-        _size(size),
-        _copy_count(std::make_shared<size_t>(0)) {
-        _data = new T[_size];
-        std::for_each(this->begin(), this->end(), [&value](T& val) {
-            val = value;
-        });
-    }
-    OwnContainer(std::initializer_list<T> elems)
-      : _data(nullptr),
-        _size(elems.size()),
-        _copy_count(std::make_shared<size_t>(0)) {
-        _data = new T[_size];
-        std::copy(elems.begin(), elems.end(), _data);
-    }
-    OwnContainer(OwnContainer<T> const& rhs)
-      : _data(nullptr),
-        _size(rhs.size()),
-        _copy_count(rhs._copy_count) {
-        _data = new T[_size];
-        std::copy(rhs.begin(), rhs.end(), _data);
-        (*_copy_count)++;
-    }
-    OwnContainer(OwnContainer<T>&& rhs)
-      : _data(rhs._data),
-        _size(rhs._size),
-        _copy_count(rhs._copy_count) {
-        rhs._data       = nullptr;
-        rhs._size       = 0;
-        rhs._copy_count = std::make_shared<size_t>(0);
-    }
+  OwnContainer(size_t size) : OwnContainer(size, T{}) {}
+  OwnContainer(size_t size, T value)
+    : _data(nullptr),
+      _size(size),
+      _copy_count(std::make_shared<size_t>(0)) {
+    _data = new T[_size];
+    std::for_each(this->begin(), this->end(), [&value](T& val) {
+      val = value;
+    });
+  }
+  OwnContainer(std::initializer_list<T> elems)
+    : _data(nullptr),
+      _size(elems.size()),
+      _copy_count(std::make_shared<size_t>(0)) {
+    _data = new T[_size];
+    std::copy(elems.begin(), elems.end(), _data);
+  }
+  OwnContainer(OwnContainer<T> const& rhs)
+    : _data(nullptr),
+      _size(rhs.size()),
+      _copy_count(rhs._copy_count) {
+    _data = new T[_size];
+    std::copy(rhs.begin(), rhs.end(), _data);
+    (*_copy_count)++;
+  }
+  OwnContainer(OwnContainer<T>&& rhs)
+    : _data(rhs._data),
+      _size(rhs._size),
+      _copy_count(rhs._copy_count) {
+    rhs._data       = nullptr;
+    rhs._size       = 0;
+    rhs._copy_count = std::make_shared<size_t>(0);
+  }
 
-    ~OwnContainer() {
-        if (_data != nullptr) {
-            delete[] _data;
-            _data = nullptr;
-        }
+  ~OwnContainer() {
+    if (_data != nullptr) {
+      delete[] _data;
+      _data = nullptr;
     }
+  }
 
-    OwnContainer<T>& operator=(OwnContainer<T> const& rhs) {
-        this->_data = new T[rhs._size];
-        this->_size = rhs._size;
-        std::copy(rhs.begin(), rhs.end(), _data);
-        this->_copy_count = rhs._copy_count;
-        (*_copy_count)++;
-        return *this;
+  OwnContainer<T>& operator=(OwnContainer<T> const& rhs) {
+    this->_data = new T[rhs._size];
+    this->_size = rhs._size;
+    std::copy(rhs.begin(), rhs.end(), _data);
+    this->_copy_count = rhs._copy_count;
+    (*_copy_count)++;
+    return *this;
+  }
+
+  OwnContainer<T>& operator=(OwnContainer<T>&& rhs) {
+    delete[] _data;
+    _data           = rhs._data;
+    _size           = rhs._size;
+    _copy_count     = rhs._copy_count;
+    rhs._data       = nullptr;
+    rhs._size       = 0;
+    rhs._copy_count = std::make_shared<size_t>(0);
+    return *this;
+  }
+
+  T* data() noexcept {
+    return _data;
+  }
+
+  const T* data() const noexcept {
+    return _data;
+  }
+
+  std::size_t size() const {
+    return _size;
+  }
+
+  void resize(std::size_t new_size) {
+    if (new_size <= this->size()) {
+      _size = new_size;
+      return;
     }
+    T* new_data = new T[new_size];
+    std::copy(this->begin(), this->end(), new_data);
+    std::for_each(new_data + this->size(), new_data + new_size, [](T& val) {
+      val = T{};
+    });
+    _size = new_size;
+    delete[] _data;
+    _data = new_data;
+  }
 
-    OwnContainer<T>& operator=(OwnContainer<T>&& rhs) {
-        delete[] _data;
-        _data           = rhs._data;
-        _size           = rhs._size;
-        _copy_count     = rhs._copy_count;
-        rhs._data       = nullptr;
-        rhs._size       = 0;
-        rhs._copy_count = std::make_shared<size_t>(0);
-        return *this;
+  const T& operator[](size_t i) const {
+    return _data[i];
+  }
+
+  T& operator[](size_t i) {
+    return _data[i];
+  }
+
+  size_t copy_count() const {
+    return *_copy_count;
+  }
+
+  bool operator==(const OwnContainer<T>& other) const {
+    if (other.size() != this->size()) {
+      return false;
     }
-
-    T* data() noexcept {
-        return _data;
+    for (size_t i = 0; i < _size; i++) {
+      if (!(other[i] == this->operator[](i))) {
+        return false;
+      }
     }
+    return true;
+  }
 
-    const T* data() const noexcept {
-        return _data;
-    }
+  bool operator!=(const OwnContainer<T>& other) const {
+    return !(*this == other);
+  }
 
-    std::size_t size() const {
-        return _size;
-    }
+  T* begin() const {
+    return _data;
+  }
 
-    void resize(std::size_t new_size) {
-        if (new_size <= this->size()) {
-            _size = new_size;
-            return;
-        }
-        T* new_data = new T[new_size];
-        std::copy(this->begin(), this->end(), new_data);
-        std::for_each(new_data + this->size(), new_data + new_size, [](T& val) {
-            val = T{};
-        });
-        _size = new_size;
-        delete[] _data;
-        _data = new_data;
-    }
+  T* end() const {
+    return _data + _size;
+  }
 
-    const T& operator[](size_t i) const {
-        return _data[i];
-    }
+  const T* cbegin() const {
+    return _data;
+  }
 
-    T& operator[](size_t i) {
-        return _data[i];
-    }
+  const T* cend() const {
+    return _data + _size;
+  }
 
-    size_t copy_count() const {
-        return *_copy_count;
-    }
-
-    bool operator==(const OwnContainer<T>& other) const {
-        if (other.size() != this->size()) {
-            return false;
-        }
-        for (size_t i = 0; i < _size; i++) {
-            if (!(other[i] == this->operator[](i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    bool operator!=(const OwnContainer<T>& other) const {
-        return !(*this == other);
-    }
-
-    T* begin() const {
-        return _data;
-    }
-
-    T* end() const {
-        return _data + _size;
-    }
-
-    const T* cbegin() const {
-        return _data;
-    }
-
-    const T* cend() const {
-        return _data + _size;
-    }
-
-private:
-    T*                      _data;
-    size_t                  _size;
-    std::shared_ptr<size_t> _copy_count;
+  private:
+  T*                      _data;
+  size_t                  _size;
+  std::shared_ptr<size_t> _copy_count;
 };
 
 /// @ Mock argument for wrapped \c MPI calls.
 template <kamping::internal::ParameterType _parameter_type>
 struct Argument {
-    static constexpr kamping::internal::ParameterType parameter_type =
-      _parameter_type;
-    Argument(int i) : _i{i} {}
-    int _i;
+  static constexpr kamping::internal::ParameterType parameter_type =
+    _parameter_type;
+  Argument(int i) : _i{i} {}
+  int _i;
 };
 
 template <typename T>
 struct CustomAllocator {
-    using value_type = T;
-    using pointer    = T*;
-    using size_type  = size_t;
+  using value_type = T;
+  using pointer    = T*;
+  using size_type  = size_t;
 
-    CustomAllocator() = default;
+  CustomAllocator() = default;
 
-    template <class U>
-    constexpr CustomAllocator(CustomAllocator<U> const&) noexcept {}
+  template <class U>
+  constexpr CustomAllocator(CustomAllocator<U> const&) noexcept {}
 
-    template <typename T1>
-    struct rebind {
-        using other = CustomAllocator<T1>;
-    };
+  template <typename T1>
+  struct rebind {
+    using other = CustomAllocator<T1>;
+  };
 
-    pointer allocate(size_type n = 0) {
-        return (pointer)malloc(n * sizeof(value_type));
-    }
-    void deallocate(pointer p, size_type) {
-        free(p);
-    }
+  pointer allocate(size_type n = 0) {
+    return (pointer)malloc(n * sizeof(value_type));
+  }
+  void deallocate(pointer p, size_type) {
+    free(p);
+  }
 };
 
 //
@@ -225,29 +225,25 @@ struct CustomAllocator {
 //
 
 #ifndef EXPECT_KASSERT_FAILS
-    #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // EXPECT that a KASSERT assertion failed and that the error message
-        // contains a certain failure_message.
-        #define EXPECT_KASSERT_FAILS(code, failure_message)                \
-            EXPECT_EXIT(                                                   \
-              { code; }, testing::KilledBySignal(SIGABRT), failure_message \
-            );
-    #else // Otherwise, we do not test for failed assertions
-        #define EXPECT_KASSERT_FAILS(code, failure_message)
-    #endif
+  #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
+    // EXPECT that a KASSERT assertion failed and that the error message
+    // contains a certain failure_message.
+    #define EXPECT_KASSERT_FAILS(code, failure_message) \
+      EXPECT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
+  #else // Otherwise, we do not test for failed assertions
+    #define EXPECT_KASSERT_FAILS(code, failure_message)
+  #endif
 #endif
 
 #ifndef ASSERT_KASSERT_FAILS
-    #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // ASSERT that a KASSERT assertion failed and that the error message
-        // contains a certain failure_message.
-        #define ASSERT_KASSERT_FAILS(code, failure_message)                \
-            ASSERT_EXIT(                                                   \
-              { code; }, testing::KilledBySignal(SIGABRT), failure_message \
-            );
-    #else // Otherwise, we do not test for failed assertions
-        #define ASSERT_KASSERT_FAILS(code, failure_message)
-    #endif
+  #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
+    // ASSERT that a KASSERT assertion failed and that the error message
+    // contains a certain failure_message.
+    #define ASSERT_KASSERT_FAILS(code, failure_message) \
+      ASSERT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
+  #else // Otherwise, we do not test for failed assertions
+    #define ASSERT_KASSERT_FAILS(code, failure_message)
+  #endif
 #endif
 
 /// @}

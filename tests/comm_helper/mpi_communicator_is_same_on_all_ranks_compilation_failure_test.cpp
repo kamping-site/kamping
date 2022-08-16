@@ -17,16 +17,16 @@
 #include "kamping/communicator.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
-    using namespace ::kamping;
-    using namespace ::kamping::internal;
+  using namespace ::kamping;
+  using namespace ::kamping::internal;
 
-    [[maybe_unused]] Communicator comm;
-    using NotAPod = std::vector<int>;
-    static_assert(!std::is_pod_v<NotAPod>);
-    [[maybe_unused]] int value = 0;
+  [[maybe_unused]] Communicator comm;
+  using NotAPod = std::vector<int>;
+  static_assert(!std::is_pod_v<NotAPod>);
+  [[maybe_unused]] int value = 0;
 
 #if defined(VALUE_IS_A_POINTER)
-    std::ignore = comm.is_same_on_all_ranks(&value);
+  std::ignore = comm.is_same_on_all_ranks(&value);
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif

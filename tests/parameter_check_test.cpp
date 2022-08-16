@@ -24,60 +24,60 @@
 #include "parameter_check_common.hpp"
 
 TEST(ParameterCheckTest, check_empty) {
-    testing::test_empty_arguments();
+  testing::test_empty_arguments();
 }
 
 TEST(ParameterCheckTest, check_required) {
-    std::vector<int> v;
-    testing::test_required_send_buf(kamping::send_buf(v));
+  std::vector<int> v;
+  testing::test_required_send_buf(kamping::send_buf(v));
 }
 
 TEST(ParameterCheckTest, check_required_and_optional) {
-    std::vector<int> v;
-    testing::test_required_send_buf_optional_recv_buf(kamping::send_buf(v));
-    testing::test_required_send_buf_optional_recv_buf(
-      kamping::send_buf(v), kamping::recv_buf(v)
-    );
+  std::vector<int> v;
+  testing::test_required_send_buf_optional_recv_buf(kamping::send_buf(v));
+  testing::test_required_send_buf_optional_recv_buf(
+    kamping::send_buf(v), kamping::recv_buf(v)
+  );
 }
 
 TEST(ParameterCheckTest, check_optional) {
-    std::vector<int> v;
-    testing::test_optional_recv_buf();
-    testing::test_optional_recv_buf(kamping::recv_buf(v));
+  std::vector<int> v;
+  testing::test_optional_recv_buf();
+  testing::test_optional_recv_buf(kamping::recv_buf(v));
 }
 
 TEST(ParameterCheckTest, check_two_required_parameters) {
-    using namespace kamping;
-    std::vector<int> v;
-    testing::test_required_send_recv_buf(send_buf(v), recv_buf(v));
+  using namespace kamping;
+  std::vector<int> v;
+  testing::test_required_send_recv_buf(send_buf(v), recv_buf(v));
 }
 
 TEST(ParameterCheckTest, check_two_optional_parameters) {
-    using namespace kamping;
-    std::vector<int> v;
-    testing::test_optional_send_recv_buf(send_buf(v), recv_buf(v));
-    testing::test_optional_send_recv_buf(send_buf(v));
-    testing::test_optional_send_recv_buf(recv_buf(v));
-    testing::test_optional_send_recv_buf();
+  using namespace kamping;
+  std::vector<int> v;
+  testing::test_optional_send_recv_buf(send_buf(v), recv_buf(v));
+  testing::test_optional_send_recv_buf(send_buf(v));
+  testing::test_optional_send_recv_buf(recv_buf(v));
+  testing::test_optional_send_recv_buf();
 }
 
 TEST(ParameterCheckTest, check_many_required_parameters) {
-    using namespace kamping;
-    std::vector<int> v;
-    testing::test_require_many_parameters(
-      send_buf(v), recv_buf(v), root(0), recv_count(0), recv_counts(v),
-      send_counts(v)
-    );
+  using namespace kamping;
+  std::vector<int> v;
+  testing::test_require_many_parameters(
+    send_buf(v), recv_buf(v), root(0), recv_count(0), recv_counts(v),
+    send_counts(v)
+  );
 }
 
 TEST(NamedParameterTest, has_to_be_computed) {
-    using namespace kamping::internal;
+  using namespace kamping::internal;
 
-    std::vector<int> dummy_recv_counts;
-    auto             recv_counts_in = kamping::recv_counts(dummy_recv_counts);
-    EXPECT_FALSE(has_to_be_computed<decltype(recv_counts_in)>);
+  std::vector<int> dummy_recv_counts;
+  auto             recv_counts_in = kamping::recv_counts(dummy_recv_counts);
+  EXPECT_FALSE(has_to_be_computed<decltype(recv_counts_in)>);
 
-    auto recv_counts_out =
-      kamping::recv_counts_out(kamping::NewContainer<std::vector<int>>{});
-    EXPECT_TRUE(has_to_be_computed<decltype(recv_counts_out)>);
+  auto recv_counts_out =
+    kamping::recv_counts_out(kamping::NewContainer<std::vector<int>>{});
+  EXPECT_TRUE(has_to_be_computed<decltype(recv_counts_out)>);
 }

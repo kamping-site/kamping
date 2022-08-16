@@ -22,12 +22,12 @@
 
 /// @brief A class that provides a gather function for single ints
 class Gatherer {
-public:
-    /// @brief Collective operation: Gather the ints provided on each rank on
-    /// the root.
-    ///
-    /// @param data the int provided on this rank.
-    /// @return The gathered data on the root. An empty vector on all other
-    /// ranks.
-    std::vector<int> gather(int data);
+  public:
+  /// @brief Collective operation: Gather the ints provided on each rank on
+  /// the root.
+  ///
+  /// @param data the int provided on this rank.
+  /// @return The gathered data on the root. An empty vector on all other
+  /// ranks.
+  std::vector<int> gather(int data);
 };
