@@ -93,39 +93,40 @@
 /// KAMPING_REQUIRED_PARAMETERS macro.
 /// @param optional A list of optional parameter type names wrapped in a
 /// KAMPING_OPTIONAL_PARAMETERS macro.
-#define KAMPING_CHECK_PARAMETERS(args, required, optional)                      \
-    do {                                                                        \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(                 \
-            args,                                                               \
-            required                                                            \
-        );                                                                      \
-                                                                                \
-        using required_parameters_types =                                       \
-            typename kamping::internal::parameter_types_to_integral_constants<  \
-                KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(required          \
-                )>::type;                                                       \
-        using optional_parameters_types =                                       \
-            typename kamping::internal::parameter_types_to_integral_constants<  \
-                KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(optional          \
-                )>::type;                                                       \
-        using parameter_types =                                                 \
-            typename kamping::internal::parameters_to_integral_constant<        \
-                args...>::type;                                                 \
-        static_assert(                                                          \
-            kamping::internal::has_no_unused_parameters<                        \
-                required_parameters_types,                                      \
-                optional_parameters_types,                                      \
-                args...>::assertion,                                            \
-            "There are unsupported parameters, only support required "          \
-            "parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(required   \
-            ) " and optional "                                                  \
-              "parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(optional \
-              )                                                                 \
-        );                                                                      \
-        static_assert(                                                          \
-            kamping::internal::all_unique_v<parameter_types>,                   \
-            "There are duplicate parameter types."                              \
-        );                                                                      \
+#define KAMPING_CHECK_PARAMETERS(args, required, optional)                     \
+    do {                                                                       \
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(                \
+            args,                                                              \
+            required                                                           \
+        );                                                                     \
+                                                                               \
+        using required_parameters_types =                                      \
+            typename kamping::internal::parameter_types_to_integral_constants< \
+                KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(required         \
+                )>::type;                                                      \
+        using optional_parameters_types =                                      \
+            typename kamping::internal::parameter_types_to_integral_constants< \
+                KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(optional         \
+                )>::type;                                                      \
+        using parameter_types =                                                \
+            typename kamping::internal::parameters_to_integral_constant<       \
+                args...>::type;                                                \
+        static_assert(                                                         \
+            kamping::internal::has_no_unused_parameters<                       \
+                required_parameters_types,                                     \
+                optional_parameters_types,                                     \
+                args...>::assertion,                                           \
+            "There are unsupported parameters, only support required "         \
+            "parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(required  \
+            ) " and optional "                                                 \
+              "parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(        \
+                  optional                                                     \
+              )                                                                \
+        );                                                                     \
+        static_assert(                                                         \
+            kamping::internal::all_unique_v<parameter_types>,                  \
+            "There are duplicate parameter types."                             \
+        );                                                                     \
     } while (false)
 
 /// @cond IMPLEMENTATION
