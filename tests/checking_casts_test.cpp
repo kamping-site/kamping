@@ -2,14 +2,16 @@
 //
 // Copyright 2021 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// KaMPIng is free software : you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version. KaMPIng is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License
+// along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <cstddef>
 #include <cstdint>
@@ -64,8 +66,11 @@ TEST(CheckingCastTest, in_range) {
 
     // Cast large values into narrower types.
     EXPECT_FALSE(in_range<uint8_t>(std::numeric_limits<uint16_t>::max()));
-    EXPECT_FALSE(in_range<uint16_t>(std::numeric_limits<uint32_t>::max() - 1000));
-    EXPECT_FALSE(in_range<uint32_t>(std::numeric_limits<uint64_t>::max() - 133742));
+    EXPECT_FALSE(in_range<uint16_t>(std::numeric_limits<uint32_t>::max() - 1000)
+    );
+    EXPECT_FALSE(
+        in_range<uint32_t>(std::numeric_limits<uint64_t>::max() - 133742)
+    );
 
     EXPECT_FALSE(in_range<int8_t>(std::numeric_limits<int16_t>::max()));
     EXPECT_FALSE(in_range<int8_t>(std::numeric_limits<int16_t>::min()));
@@ -79,8 +84,9 @@ TEST(CheckingCastTest, asserting_cast) {
     uint8_t u8val = 200;
 
     // Verify that asserting_cast does not crash
-    // This works by exiting with a 0 code after the expression and letting gtest check whether that exit occurred.
-    // From https://stackoverflow.com/questions/60594487/expect-no-death-in-google-test
+    // This works by exiting with a 0 code after the expression and letting
+    // gtest check whether that exit occurred. From
+    // https://stackoverflow.com/questions/60594487/expect-no-death-in-google-test
     EXPECT_EXIT(
         {
             asserting_cast<uint8_t>(u8val);
@@ -91,8 +97,9 @@ TEST(CheckingCastTest, asserting_cast) {
     );
 
     if constexpr (KASSERT_ASSERTION_LEVEL >= kamping::assert::normal) {
-        // According to the googletest documentation, throwing an exception is not considered a death.
-        // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
+        // According to the googletest documentation, throwing an exception is
+        // not considered a death. This ASSERT should therefore only succeed if
+        // an assert() fails, not if an exception is thrown.
         EXPECT_DEATH(asserting_cast<int8_t>(u8val), "FAILED ASSERTION");
     } else {
         EXPECT_EXIT(
@@ -107,15 +114,19 @@ TEST(CheckingCastTest, asserting_cast) {
 }
 
 ///
-/// @brief Checks if a functions fails with a std::range_error exception if exception mode is enabled and an assertion
-/// when exception mode is disabled using google test.
+/// @brief Checks if a functions fails with a std::range_error exception if
+/// exception mode is enabled and an assertion when exception mode is disabled
+/// using google test.
 ///
 /// @tparam Lambda Function to check for failures.
 /// @param callable Function to check for failures.
-/// @param what Substring that should be contained in the output of what() of the thrown exception. Ignored if empty.
+/// @param what Substring that should be contained in the output of what() of
+/// the thrown exception. Ignored if empty.
 ///
 template <typename Lambda>
-void checkThrowOrAssert(Lambda&& callable, [[maybe_unused]] std::string const& what = std::string()) {
+void checkThrowOrAssert(
+    Lambda&& callable, [[maybe_unused]] std::string const& what = std::string()
+) {
 #if KASSERT_EXCEPTION_MODE == 0
     if constexpr (KASSERT_ASSERTION_LEVEL >= kassert::assert::kthrow) {
         EXPECT_DEATH(callable(), "FAILED");
@@ -151,8 +162,14 @@ TEST(CheckingCastTest, throwing_cast) {
     checkThrowOrAssert([&]() { return throwing_cast<int8_t>(u8val); });
 
     // Check the error messages.
-    checkThrowOrAssert([&]() { return throwing_cast<int8_t>(1337); }, "1337 is not representable by the target type.");
+    checkThrowOrAssert(
+        [&]() { return throwing_cast<int8_t>(1337); },
+        "1337 is not representable by the target type."
+    );
 
     // ... for negative values.
-    checkThrowOrAssert([&]() { return throwing_cast<uint8_t>(-42); }, "-42 is not representable by the target type.");
+    checkThrowOrAssert(
+        [&]() { return throwing_cast<uint8_t>(-42); },
+        "-42 is not representable by the target type."
+    );
 }

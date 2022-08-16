@@ -12,10 +12,12 @@ namespace kamping::assert {
 /// @brief Assertion level for lightweight assertions.
 constexpr int light = KAMPING_ASSERTION_LEVEL_LIGHT;
 
-/// @brief Default assertion level. This level is used if no assertion level is specified.
+/// @brief Default assertion level. This level is used if no assertion level is
+/// specified.
 #define KAMPING_ASSERTION_LEVEL_NORMAL 30
 
-/// @brief Default assertion level. This level is used if no assertion level is specified.
+/// @brief Default assertion level. This level is used if no assertion level is
+/// specified.
 constexpr int normal = KAMPING_ASSERTION_LEVEL_NORMAL;
 
 /// @brief Assertions that perform lightweight communication.

@@ -28,7 +28,8 @@ private:
 };
 
 template <size_t K, typename ValueType>
-TopK<K, ValueType> merge(TopK<K, ValueType> const& lhs, TopK<K, ValueType> const& rhs) {
+TopK<K, ValueType>
+merge(TopK<K, ValueType> const& lhs, TopK<K, ValueType> const& rhs) {
     size_t          lhs_current = 0;
     size_t          rhs_current = 0;
     TopK<K, size_t> merged;
@@ -58,9 +59,13 @@ std::ostream& operator<<(std::ostream& os, TopK<K, ValueType> const& top_k) {
 }
 
 template <size_t K, typename ValueType>
-auto kamping_top_k(TopK<K, ValueType> const& local_top_k, kamping::Communicator& comm) {
+auto kamping_top_k(
+    TopK<K, ValueType> const& local_top_k, kamping::Communicator& comm
+) {
     using namespace kamping;
-    auto result = comm.reduce(send_buf(local_top_k), op(merge<K, size_t>, commutative)).extract_recv_buffer();
+    auto result =
+        comm.reduce(send_buf(local_top_k), op(merge<K, size_t>, commutative))
+            .extract_recv_buffer();
     if (comm.is_root()) {
         return std::make_optional(result[0]);
     } else {
@@ -69,7 +74,8 @@ auto kamping_top_k(TopK<K, ValueType> const& local_top_k, kamping::Communicator&
 }
 
 template <size_t K, typename ValueType>
-std::optional<TopK<K, ValueType>> mpi_top_k(TopK<K, ValueType> const& local_top_k, MPI_Comm comm) {
+std::optional<TopK<K, ValueType>>
+mpi_top_k(TopK<K, ValueType> const& local_top_k, MPI_Comm comm) {
     // create a custom datatype
     MPI_Datatype topK_type;
     // to make it truly generic we rely on KaMPIng
@@ -78,16 +84,21 @@ std::optional<TopK<K, ValueType>> mpi_top_k(TopK<K, ValueType> const& local_top_
 
     // create a custom reduce operation
     MPI_Op             topK_merge_op;
-    MPI_User_function* merge_op = [](void* invec, void* inoutvec, int* len, MPI_Datatype*) {
-        TopK<K, ValueType>* invec_    = static_cast<TopK<K, ValueType>*>(invec);
-        TopK<K, ValueType>* inoutvec_ = static_cast<TopK<K, ValueType>*>(inoutvec);
-        std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, merge<K, size_t>);
+    MPI_User_function* merge_op = [](void* invec, void* inoutvec, int* len,
+                                     MPI_Datatype*) {
+        TopK<K, ValueType>* invec_ = static_cast<TopK<K, ValueType>*>(invec);
+        TopK<K, ValueType>* inoutvec_ =
+            static_cast<TopK<K, ValueType>*>(inoutvec);
+        std::
+            transform(invec_, invec_ + *len, inoutvec_, inoutvec_, merge<K, size_t>);
     };
     MPI_Op_create(merge_op, true, &topK_merge_op);
 
     // the actual MPI call
     TopK<K, ValueType> global_top_k;
-    MPI_Reduce(&local_top_k, &global_top_k, 1, topK_type, topK_merge_op, 0, comm);
+    MPI_Reduce(
+        &local_top_k, &global_top_k, 1, topK_type, topK_merge_op, 0, comm
+    );
 
     // cleanup
     MPI_Op_free(&topK_merge_op);
@@ -116,7 +127,8 @@ int main(int argc, char* argv[]) {
 
     auto kamping_result = kamping_top_k(input, comm);
     if (comm.is_root()) {
-        std::cout << "global_result_kamping=" << kamping_result.value() << std::endl;
+        std::cout << "global_result_kamping=" << kamping_result.value()
+                  << std::endl;
     }
 
     auto mpi_result = mpi_top_k(input, MPI_COMM_WORLD);

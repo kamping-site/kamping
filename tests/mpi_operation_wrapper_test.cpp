@@ -2,14 +2,16 @@
 //
 // Copyright 2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// KaMPIng is free software : you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version. KaMPIng is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License
+// along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <array>
 #include <type_traits>
@@ -21,9 +23,11 @@
 
 TEST(UserOperationWrapperTest, test_local_reduction_stl_operation) {
     {
-        kamping::internal::UserOperationWrapper<true, int, std::plus<>> op(std::plus<>{});
-        std::array<int, 2>                                              a = {42, 69};
-        std::array<int, 2>                                              b = {24, 96};
+        kamping::internal::UserOperationWrapper<true, int, std::plus<>> op(
+            std::plus<>{}
+        );
+        std::array<int, 2> a = {42, 69};
+        std::array<int, 2> b = {24, 96};
         MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get_mpi_op());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
@@ -33,9 +37,11 @@ TEST(UserOperationWrapperTest, test_local_reduction_stl_operation) {
         ASSERT_TRUE(commute);
     }
     {
-        kamping::internal::UserOperationWrapper<false, int, std::plus<>> op(std::plus<>{});
-        std::array<int, 2>                                               a = {42, 69};
-        std::array<int, 2>                                               b = {24, 96};
+        kamping::internal::UserOperationWrapper<false, int, std::plus<>> op(
+            std::plus<>{}
+        );
+        std::array<int, 2> a = {42, 69};
+        std::array<int, 2> b = {24, 96};
         MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get_mpi_op());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
@@ -53,9 +59,11 @@ TEST(UserOperationWrapperTest, test_local_reduction_function_object) {
         }
     };
     {
-        kamping::internal::UserOperationWrapper<true, int, MyOperation> op(MyOperation{});
-        std::array<int, 2>                                              a = {42, 69};
-        std::array<int, 2>                                              b = {24, 96};
+        kamping::internal::UserOperationWrapper<true, int, MyOperation> op(
+            MyOperation{}
+        );
+        std::array<int, 2> a = {42, 69};
+        std::array<int, 2> b = {24, 96};
         MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get_mpi_op());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
@@ -65,9 +73,11 @@ TEST(UserOperationWrapperTest, test_local_reduction_function_object) {
         ASSERT_TRUE(commute);
     }
     {
-        kamping::internal::UserOperationWrapper<false, int, MyOperation> op(MyOperation{});
-        std::array<int, 2>                                               a = {42, 69};
-        std::array<int, 2>                                               b = {24, 96};
+        kamping::internal::UserOperationWrapper<false, int, MyOperation> op(
+            MyOperation{}
+        );
+        std::array<int, 2> a = {42, 69};
+        std::array<int, 2> b = {24, 96};
         MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get_mpi_op());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
@@ -79,12 +89,14 @@ TEST(UserOperationWrapperTest, test_local_reduction_function_object) {
 }
 
 TEST(UserOperationPtrWrapper, test_local_reduction_with_wrapped_function_ptr) {
-    kamping::internal::mpi_custom_operation_type op_ptr = [](void* invec, void* inoutvec, int* len,
-                                                             MPI_Datatype* /*datatype*/) {
-        int* invec_    = static_cast<int*>(invec);
-        int* inoutvec_ = static_cast<int*>(inoutvec);
-        std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, std::plus<>{});
-    };
+    kamping::internal::mpi_custom_operation_type op_ptr =
+        [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
+            int* invec_    = static_cast<int*>(invec);
+            int* inoutvec_ = static_cast<int*>(inoutvec);
+            std::transform(
+                invec_, invec_ + *len, inoutvec_, inoutvec_, std::plus<>{}
+            );
+        };
     {
         kamping::internal::UserOperationPtrWrapper<true> op(op_ptr);
         std::array<int, 2>                               a = {42, 69};
@@ -113,10 +125,14 @@ TEST(UserOperationPtrWrapper, test_local_reduction_with_wrapped_function_ptr) {
 
 template <typename T, typename Op, typename Commutative>
 auto make_op(Op&& op, Commutative commutative) {
-    return kamping::internal::ReduceOperation<T, Op, Commutative>(std::move(op), commutative);
+    return kamping::internal::ReduceOperation<T, Op, Commutative>(
+        std::move(op), commutative
+    );
 }
 
-TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) {
+TEST(
+    ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda
+) {
     struct WrappedInt {
         int        value;
         WrappedInt operator+(WrappedInt const& a) const noexcept {
@@ -125,7 +141,9 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     };
     // builtin operation
     {
-        auto op = make_op<int>(std::plus<>{}, kamping::internal::undefined_commutative_tag{});
+        auto op = make_op<int>(
+            std::plus<>{}, kamping::internal::undefined_commutative_tag{}
+        );
         EXPECT_EQ(op.op(), MPI_SUM);
         EXPECT_TRUE(decltype(op)::is_builtin);
 
@@ -176,7 +194,9 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     }
     // lambda on builtin type commutative
     {
-        auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::commutative);
+        auto op = make_op<int>(
+            [](auto a, auto b) { return a + b; }, kamping::commutative
+        );
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
@@ -193,7 +213,9 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     }
     // lambda on builtin type non-commutative
     {
-        auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::non_commutative);
+        auto op = make_op<int>(
+            [](auto a, auto b) { return a + b; }, kamping::non_commutative
+        );
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
@@ -210,7 +232,9 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     }
     // lambda on custom type commutative
     {
-        auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::commutative);
+        auto op = make_op<WrappedInt>(
+            [](auto a, auto b) { return a + b; }, kamping::commutative
+        );
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
@@ -227,7 +251,9 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     }
     // lambda on custom type non-commutative
     {
-        auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::non_commutative);
+        auto op = make_op<WrappedInt>(
+            [](auto a, auto b) { return a + b; }, kamping::non_commutative
+        );
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
