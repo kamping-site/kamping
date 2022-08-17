@@ -374,7 +374,7 @@ internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = in
 
 /// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
 ///
-/// @param value Value to return on the first rank.
+/// @param container Value(s) to return on the first rank.
 /// @returns OnRank0 Object containing the information which value to return on the first rank.
 template <typename Container>
 inline auto values_on_rank_0(Container&& container) {
@@ -386,7 +386,7 @@ inline auto values_on_rank_0(Container&& container) {
 
 /// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
 ///
-/// @param value Value to return on the first rank.
+/// @param values Value(s) to return on the first rank.
 /// @returns OnRank0 Object containing the information which value to return on the first rank.
 // TODO zero-overhead
 template <typename T>
