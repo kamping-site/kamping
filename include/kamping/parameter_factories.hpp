@@ -376,20 +376,12 @@ internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = in
 ///
 /// @param value Value to return on the first rank.
 /// @returns OnRank0 Object containing the information which value to return on the first rank.
-template <typename T>
-inline auto values_on_rank_0(const T& value) {
+template <typename Container>
+inline auto values_on_rank_0(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(value));
-}
-
-/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
-///
-/// @param value Value to return on the first rank.
-/// @returns OnRank0 Object containing the information which value to return on the first rank.
-template <typename T>
-inline auto values_on_rank_0(std::vector<T const>& values) {
-    return internal::make_data_buffer<
-        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(values));
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(
+        std::forward<Container>(container)
+    );
 }
 
 /// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
@@ -398,11 +390,9 @@ inline auto values_on_rank_0(std::vector<T const>& values) {
 /// @returns OnRank0 Object containing the information which value to return on the first rank.
 // TODO zero-overhead
 template <typename T>
-inline auto values_on_rank_0(std::initializer_list<T>&& initializer_list) {
+inline auto values_on_rank_0(std::initializer_list<T> values) {
     return internal::make_data_buffer<
-        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(
-        std::move(std::vector<T>(std::forward<std::initializer_list<T>>(initializer_list)))
-    );
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(values));
 }
 /// @}
 } // namespace kamping
