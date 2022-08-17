@@ -613,7 +613,7 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mpi_result) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf, BufferType::in_buffer>    recv_buffer;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::in_buffer> recv_counts;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_count, BufferType::in_buffer>  recv_count;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::in_buffer> recv_count;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, BufferType::in_buffer> recv_displs;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, BufferType::in_buffer> send_displs;
 
