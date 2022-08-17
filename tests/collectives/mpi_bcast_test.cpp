@@ -2,14 +2,14 @@
 //
 // Copyright 2022 The KaMPI.ng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPI.ng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 #include "../test_assertions.hpp"
 
@@ -146,7 +146,10 @@ TEST(BcastTest, vector_recv_count) {
                 );
             } else {
                 EXPECT_KASSERT_FAILS(
-                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(alternative_num_values))),
+                    comm.bcast(
+                        send_recv_buf(values),
+                        recv_counts(asserting_cast<int>(alternative_num_values))
+                    ),
                     ""
                 );
             }
@@ -163,7 +166,8 @@ TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
     //     const int    num_transferred_values = num_values - 1;
 
     //     std::vector<int> values(num_values);
-    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)), "");
+    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values),
+    //     recv_count(num_transferred_values)), "");
     // }
 
     /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
@@ -172,7 +176,8 @@ TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
     //     const int    num_transferred_values = num_values + 1;
 
     //     std::vector<int> values(num_values);
-    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)), "");
+    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values),
+    //     recv_count(num_transferred_values)), "");
     // }
 }
 
@@ -281,11 +286,17 @@ TEST(BcastTest, vector_recv_count_as_out_parameter) {
 
             if (comm.is_root()) {
                 values.resize(asserting_cast<size_t>(num_elements));
-                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_counts(num_elements)), "");
+                EXPECT_KASSERT_FAILS(
+                    comm.bcast(send_recv_buf(values), recv_counts(num_elements)),
+                    ""
+                );
             } else {
                 values.resize(comm.rank());
                 [[maybe_unused]] int num_elements_received = -1;
-                EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_counts_out(num_elements_received)), "");
+                EXPECT_KASSERT_FAILS(
+                    comm.bcast(send_recv_buf(values), recv_counts_out(num_elements_received)),
+                    ""
+                );
             }
         }
     }
@@ -354,7 +365,8 @@ TEST(BcastTest, bcast_single) {
     EXPECT_NO_THROW(comm.bcast_single(send_recv_buf(value_vector)));
     EXPECT_EQ(value_vector[0], 0);
 
-    /// @todo Uncomment, once EXPECT_KASSERT_FAILS() supports checking for assertions which fail only on some ranks.
+    /// @todo Uncomment, once EXPECT_KASSERT_FAILS() supports checking for assertions which fail
+    /// only on some ranks.
     // value_vector.resize(2);
     // EXPECT_KASSERT_FAILS(comm.bcast_single(send_recv_buf(value_vector)), "");
     //

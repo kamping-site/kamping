@@ -2,14 +2,14 @@
 //
 // Copyright 2021-2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 #include <cstdint>
 #include <type_traits>
@@ -24,8 +24,8 @@
 using namespace ::kamping;
 using namespace ::testing;
 
-// Returns a std::vector containing all MPI_Datatypes equivalent to the given C++ datatype on this machine.
-// Removes the topmost level of const and volatile qualifiers.
+// Returns a std::vector containing all MPI_Datatypes equivalent to the given C++ datatype on this
+// machine. Removes the topmost level of const and volatile qualifiers.
 template <typename T>
 std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
     // Remove const and volatile qualifiers.
@@ -33,7 +33,8 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
 
     // Check if we got a array type -> create a continuous type.
     if constexpr (std::is_array_v<T_no_cv>) {
-        // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
+        // sizeof(arrayType) returns the total length of the array not just the length of the first
+        // element. :-)
         return std::vector<MPI_Datatype>{mpi_custom_continuous_type<sizeof(T_no_cv)>()};
     }
 
@@ -42,8 +43,8 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
         return possible_mpi_datatypes<std::underlying_type_t<T_no_cv>>();
     }
 
-    // For each supported C++ datatype, check if it is equivalent to the T_no_cv and if so, add the corresponding MPI
-    // datatype to the list of possible types.
+    // For each supported C++ datatype, check if it is equivalent to the T_no_cv and if so, add the
+    // corresponding MPI datatype to the list of possible types.
     std::vector<MPI_Datatype> possible_mpi_datatypes;
     if constexpr (std::is_same_v<T_no_cv, char>) {
         possible_mpi_datatypes.push_back(MPI_CHAR);
@@ -154,8 +155,14 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
     EXPECT_THAT(possible_mpi_datatypes<unsigned>(), Contains(mpi_datatype<unsigned>()));
     EXPECT_THAT(possible_mpi_datatypes<long>(), Contains(mpi_datatype<long>()));
     EXPECT_THAT(possible_mpi_datatypes<unsigned long>(), Contains(mpi_datatype<unsigned long>()));
-    EXPECT_THAT(possible_mpi_datatypes<signed long long int>(), Contains(mpi_datatype<signed long long int>()));
-    EXPECT_THAT(possible_mpi_datatypes<unsigned long long int>(), Contains(mpi_datatype<unsigned long long int>()));
+    EXPECT_THAT(
+        possible_mpi_datatypes<signed long long int>(),
+        Contains(mpi_datatype<signed long long int>())
+    );
+    EXPECT_THAT(
+        possible_mpi_datatypes<unsigned long long int>(),
+        Contains(mpi_datatype<unsigned long long int>())
+    );
     EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(mpi_datatype<float>()));
     EXPECT_THAT(possible_mpi_datatypes<double>(), Contains(mpi_datatype<double>()));
     EXPECT_THAT(possible_mpi_datatypes<long double>(), Contains(mpi_datatype<long double>()));
@@ -168,9 +175,18 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
     EXPECT_THAT(possible_mpi_datatypes<uint32_t>(), Contains(mpi_datatype<uint32_t>()));
     EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(mpi_datatype<uint64_t>()));
     EXPECT_THAT(possible_mpi_datatypes<bool>(), Contains(mpi_datatype<bool>()));
-    EXPECT_THAT(possible_mpi_datatypes<kamping::kabool>(), Contains(mpi_datatype<kamping::kabool>()));
-    EXPECT_THAT(possible_mpi_datatypes<std::complex<double>>(), Contains(mpi_datatype<std::complex<double>>()));
-    EXPECT_THAT(possible_mpi_datatypes<std::complex<float>>(), Contains(mpi_datatype<std::complex<float>>()));
+    EXPECT_THAT(
+        possible_mpi_datatypes<kamping::kabool>(),
+        Contains(mpi_datatype<kamping::kabool>())
+    );
+    EXPECT_THAT(
+        possible_mpi_datatypes<std::complex<double>>(),
+        Contains(mpi_datatype<std::complex<double>>())
+    );
+    EXPECT_THAT(
+        possible_mpi_datatypes<std::complex<float>>(),
+        Contains(mpi_datatype<std::complex<float>>())
+    );
     EXPECT_THAT(
         possible_mpi_datatypes<std::complex<long double>>(),
         Contains(mpi_datatype<std::complex<long double>>())
@@ -194,13 +210,15 @@ TEST(MpiDataTypeTest, mpi_datatype_typedefs_and_using) {
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_size_t) {
-    // size_t, which should be one of the unsigned integer types with at least 16 bits (as of C++11).
+    // size_t, which should be one of the unsigned integer types with at least 16 bits (as of
+    // C++11).
     EXPECT_THAT(
         (std::array{MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG}),
         Contains(mpi_datatype<size_t>())
     );
 
-    // As should std::size_t, which should be one of the unsigned integer types with at least 16 bits (as of C++11).
+    // As should std::size_t, which should be one of the unsigned integer types with at least 16
+    // bits (as of C++11).
     EXPECT_THAT(
         (std::array{MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG}),
         Contains(mpi_datatype<std::size_t>())
@@ -239,8 +257,8 @@ TEST(MpiDataTypeTest, mpi_datatype_continuous_type) {
         int b;
     };
 
-    // There seems to be no way to check if a given datatype in MPI is a custom type, we therefore rule out that it's
-    // equal to any of the other types, including the NULL type.
+    // There seems to be no way to check if a given datatype in MPI is a custom type, we therefore
+    // rule out that it's equal to any of the other types, including the NULL type.
     EXPECT_NE(MPI_DATATYPE_NULL, mpi_datatype<TestStruct>());
     EXPECT_NE(MPI_CHAR, mpi_datatype<TestStruct>());
     EXPECT_NE(MPI_CHAR, mpi_datatype<TestStruct>());
@@ -277,8 +295,8 @@ TEST(MpiDataTypeTest, mpi_datatype_c_array) {
     // Calling mpi_datatype with an array should return a continuous datatype.
     int c_array[3];
 
-    // There seems to be no way to check if a given datatype in MPI is a custom type, we therefore rule out that it's
-    // equal to any of the other types, including the NULL type.
+    // There seems to be no way to check if a given datatype in MPI is a custom type, we therefore
+    // rule out that it's equal to any of the other types, including the NULL type.
     EXPECT_NE(MPI_DATATYPE_NULL, mpi_datatype<decltype(c_array)>());
     EXPECT_NE(MPI_CHAR, mpi_datatype<decltype(c_array)>());
     EXPECT_NE(MPI_CHAR, mpi_datatype<decltype(c_array)>());
@@ -329,7 +347,10 @@ TEST(MPIDataTypeTest, test_type_groups) {
     EXPECT_EQ(kamping::mpi_type_traits<long long int>::category, kamping::TypeCategory::integer);
     EXPECT_EQ(kamping::mpi_type_traits<long long>::category, kamping::TypeCategory::integer);
     EXPECT_EQ(kamping::mpi_type_traits<signed long long>::category, kamping::TypeCategory::integer);
-    EXPECT_EQ(kamping::mpi_type_traits<unsigned long long>::category, kamping::TypeCategory::integer);
+    EXPECT_EQ(
+        kamping::mpi_type_traits<unsigned long long>::category,
+        kamping::TypeCategory::integer
+    );
     EXPECT_EQ(kamping::mpi_type_traits<signed char>::category, kamping::TypeCategory::integer);
     EXPECT_EQ(kamping::mpi_type_traits<unsigned char>::category, kamping::TypeCategory::integer);
 
@@ -348,11 +369,23 @@ TEST(MPIDataTypeTest, test_type_groups) {
     EXPECT_EQ(kamping::mpi_type_traits<bool>::category, kamping::TypeCategory::logical);
     EXPECT_EQ(kamping::mpi_type_traits<kamping::kabool>::category, kamping::TypeCategory::logical);
 
-    EXPECT_EQ(kamping::mpi_type_traits<std::complex<float>>::category, kamping::TypeCategory::complex);
-    EXPECT_EQ(kamping::mpi_type_traits<std::complex<double>>::category, kamping::TypeCategory::complex);
-    EXPECT_EQ(kamping::mpi_type_traits<std::complex<long double>>::category, kamping::TypeCategory::complex);
+    EXPECT_EQ(
+        kamping::mpi_type_traits<std::complex<float>>::category,
+        kamping::TypeCategory::complex
+    );
+    EXPECT_EQ(
+        kamping::mpi_type_traits<std::complex<double>>::category,
+        kamping::TypeCategory::complex
+    );
+    EXPECT_EQ(
+        kamping::mpi_type_traits<std::complex<long double>>::category,
+        kamping::TypeCategory::complex
+    );
 
-    EXPECT_EQ(kamping::mpi_type_traits<std::complex<int>>::category, kamping::TypeCategory::undefined);
+    EXPECT_EQ(
+        kamping::mpi_type_traits<std::complex<int>>::category,
+        kamping::TypeCategory::undefined
+    );
     EXPECT_EQ(kamping::mpi_type_traits<char>::category, kamping::TypeCategory::undefined);
     EXPECT_EQ(kamping::mpi_type_traits<DummyType>::category, kamping::TypeCategory::undefined);
 }

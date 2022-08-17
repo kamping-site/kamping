@@ -2,14 +2,14 @@
 //
 // Copyright 2021-2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 /// @file
 /// @brief Some mock objects etc. used in multiple test scenarios.
@@ -32,7 +32,8 @@
 #include "kamping/parameter_type_definitions.hpp"
 
 namespace testing {
-/// @brief Simple Container type. Can be used to test library function with containers other than vector.
+/// @brief Simple Container type. Can be used to test library function with containers other than
+/// vector.
 ///
 template <typename T>
 class OwnContainer {
@@ -44,7 +45,10 @@ public:
     OwnContainer() : OwnContainer(0) {}
 
     OwnContainer(size_t size) : OwnContainer(size, T{}) {}
-    OwnContainer(size_t size, T value) : _data(nullptr), _size(size), _copy_count(std::make_shared<size_t>(0)) {
+    OwnContainer(size_t size, T value)
+        : _data(nullptr),
+          _size(size),
+          _copy_count(std::make_shared<size_t>(0)) {
         _data = new T[_size];
         std::for_each(this->begin(), this->end(), [&value](T& val) { val = value; });
     }
@@ -55,12 +59,18 @@ public:
         _data = new T[_size];
         std::copy(elems.begin(), elems.end(), _data);
     }
-    OwnContainer(OwnContainer<T> const& rhs) : _data(nullptr), _size(rhs.size()), _copy_count(rhs._copy_count) {
+    OwnContainer(OwnContainer<T> const& rhs)
+        : _data(nullptr),
+          _size(rhs.size()),
+          _copy_count(rhs._copy_count) {
         _data = new T[_size];
         std::copy(rhs.begin(), rhs.end(), _data);
         (*_copy_count)++;
     }
-    OwnContainer(OwnContainer<T>&& rhs) : _data(rhs._data), _size(rhs._size), _copy_count(rhs._copy_count) {
+    OwnContainer(OwnContainer<T>&& rhs)
+        : _data(rhs._data),
+          _size(rhs._size),
+          _copy_count(rhs._copy_count) {
         rhs._data       = nullptr;
         rhs._size       = 0;
         rhs._copy_count = std::make_shared<size_t>(0);
@@ -202,13 +212,14 @@ struct CustomAllocator {
 
 //
 // Makros to test for failed KASSERT() statements.
-// Note that these makros could already be defined if we included the header that turns assertions into exceptions.
-// In this case, we keep the current definition.
+// Note that these makros could already be defined if we included the header that turns assertions
+// into exceptions. In this case, we keep the current definition.
 //
 
 #ifndef EXPECT_KASSERT_FAILS
     #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // EXPECT that a KASSERT assertion failed and that the error message contains a certain failure_message.
+        // EXPECT that a KASSERT assertion failed and that the error message contains a certain
+        // failure_message.
         #define EXPECT_KASSERT_FAILS(code, failure_message) \
             EXPECT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
     #else // Otherwise, we do not test for failed assertions
@@ -218,7 +229,8 @@ struct CustomAllocator {
 
 #ifndef ASSERT_KASSERT_FAILS
     #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // ASSERT that a KASSERT assertion failed and that the error message contains a certain failure_message.
+        // ASSERT that a KASSERT assertion failed and that the error message contains a certain
+        // failure_message.
         #define ASSERT_KASSERT_FAILS(code, failure_message) \
             ASSERT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
     #else // Otherwise, we do not test for failed assertions

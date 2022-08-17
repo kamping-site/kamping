@@ -2,19 +2,20 @@
 //
 // Copyright 2021-2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.:
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.:
 
 #pragma once
 
 /// @file
-/// @brief Some functions and types simplifying/enabling the development of wrapped \c MPI calls in KaMPIng.
+/// @brief Some functions and types simplifying/enabling the development of wrapped \c MPI calls in
+/// KaMPIng.
 
 #include <utility>
 
@@ -43,7 +44,8 @@ struct has_extract : decltype(internal::test_extract<T>(0)) {};
 template <typename T>
 inline constexpr bool has_extract_v = has_extract<T>::value;
 
-/// @brief Use this type if one of the template parameters of MPIResult is not used for a specific wrapped \c MPI call.
+/// @brief Use this type if one of the template parameters of MPIResult is not used for a specific
+/// wrapped \c MPI call.
 struct BufferCategoryNotUsed {};
 } // namespace internal
 
@@ -55,7 +57,8 @@ struct BufferCategoryNotUsed {};
 /// by/transferred to KaMPIng, the content of the buffers can be extracted using
 /// extract_<result>.
 /// Note that not all below-listed buffer categories needs to be used by every wrapped \c MPI call.
-/// If a specific call does not use a buffer category, you have to provide BufferCategoryNotUsed instead.
+/// If a specific call does not use a buffer category, you have to provide BufferCategoryNotUsed
+/// instead.
 ///
 /// @tparam RecvBuf Buffer type containing the received elements.
 /// @tparam RecvCounts Buffer type containing the numbers of received elements.
@@ -67,10 +70,15 @@ class MPIResult {
 public:
     /// @brief Constructor of MPIResult.
     ///
-    /// If any of the buffer categories are not used by the wrapped \c MPI call or if the caller has provided (and still
-    /// owns) the memory for the associated results, the empty placeholder type BufferCategoryNotUsed must be passed to
-    /// the constructor instead of an actual buffer object.
-    MPIResult(RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvDispls&& recv_displs, SendDispls&& send_displs)
+    /// If any of the buffer categories are not used by the wrapped \c MPI call or if the caller has
+    /// provided (and still owns) the memory for the associated results, the empty placeholder type
+    /// BufferCategoryNotUsed must be passed to the constructor instead of an actual buffer object.
+    MPIResult(
+        RecvBuf&&    recv_buf,
+        RecvCounts&& recv_counts,
+        RecvDispls&& recv_displs,
+        SendDispls&& send_displs
+    )
         : _recv_buffer(std::forward<RecvBuf>(recv_buf)),
           _recv_counts(std::forward<RecvCounts>(recv_counts)),
           _recv_displs(std::forward<RecvDispls>(recv_displs)),
@@ -79,10 +87,12 @@ public:
     /// @brief Extracts the \c recv_buffer from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam RecvBuf_ Template parameter helper only needed to remove this function if RecvBuf does not possess a
-    /// member function \c extract().
+    /// @tparam RecvBuf_ Template parameter helper only needed to remove this function if RecvBuf
+    /// does not possess a member function \c extract().
     /// @return Returns the underlying storage containing the received elements.
-    template <typename RecvBuf_ = RecvBuf, std::enable_if_t<kamping::internal::has_extract_v<RecvBuf_>, bool> = true>
+    template <
+        typename RecvBuf_                                                  = RecvBuf,
+        std::enable_if_t<kamping::internal::has_extract_v<RecvBuf_>, bool> = true>
     decltype(auto) extract_recv_buffer() {
         return _recv_buffer.extract();
     }
@@ -90,8 +100,8 @@ public:
     /// @brief Extracts the \c recv_counts from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam RecvCounts_ Template parameter helper only needed to remove this function if RecvCounts does not possess
-    /// a member function \c extract().
+    /// @tparam RecvCounts_ Template parameter helper only needed to remove this function if
+    /// RecvCounts does not possess a member function \c extract().
     /// @return Returns the underlying storage containing the receive counts.
     template <
         typename RecvCounts_                                                  = RecvCounts,
@@ -103,8 +113,8 @@ public:
     /// @brief Extracts the \c recv_displs from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam RecvDispls_ Template parameter helper only needed to remove this function if RecvDispls does not possess
-    /// a member function \c extract().
+    /// @tparam RecvDispls_ Template parameter helper only needed to remove this function if
+    /// RecvDispls does not possess a member function \c extract().
     /// @return Returns the underlying storage containing the receive displacements.
     template <
         typename RecvDispls_                                                  = RecvDispls,
@@ -116,8 +126,8 @@ public:
     /// @brief Extracts the \c send_displs from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam SendDispls_ Template parameter helper only needed to remove this function if SendDispls does not possess
-    /// a member function \c extract().
+    /// @tparam SendDispls_ Template parameter helper only needed to remove this function if
+    /// SendDispls does not possess a member function \c extract().
     /// @return Returns the underlying storage containing the send displacements.
     template <
         typename SendDispls_                                                  = SendDispls,
@@ -127,14 +137,18 @@ public:
     }
 
 private:
-    RecvBuf _recv_buffer;    ///< Buffer object containing the received elements. May be empty if the received elements
-                             ///< have been written into storage owned by the caller of KaMPIng.
-    RecvCounts _recv_counts; ///< Buffer object containing the receive counts. May be empty if the receive counts have
-                             ///< been written into storage owned by the caller of KaMPIng.
-    RecvDispls _recv_displs; ///< Buffer object containing the receive displacements. May be empty if the receive
-                             ///< displacements have been written into storage owned by the caller of KaMPIng.
-    SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if the send
-                             ///< displacements have been written into storage owned by the caller of KaMPIng.
+    RecvBuf _recv_buffer; ///< Buffer object containing the received elements. May be empty if the
+                          ///< received elements have been written into storage owned by the caller
+                          ///< of KaMPIng.
+    RecvCounts
+        _recv_counts; ///< Buffer object containing the receive counts. May be empty if the receive
+                      ///< counts have been written into storage owned by the caller of KaMPIng.
+    RecvDispls _recv_displs; ///< Buffer object containing the receive displacements. May be empty
+                             ///< if the receive displacements have been written into storage owned
+                             ///< by the caller of KaMPIng.
+    SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if
+                             ///< the send displacements have been written into storage owned by the
+                             ///< caller of KaMPIng.
 };
 
 } // namespace kamping

@@ -2,14 +2,14 @@
 //
 // Copyright 2021-2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 /// @file
 /// @brief Utility that maps C++ types to types that can be understood by MPI.
@@ -83,15 +83,15 @@ template <size_t NumBytes>
     return type;
 }
 
-/// @brief the members specify which group the datatype belongs to according to the type groups specified in
-/// Section 5.9.2 of the MPI 3.1 standard.
+/// @brief the members specify which group the datatype belongs to according to the type groups
+/// specified in Section 5.9.2 of the MPI 3.1 standard.
 enum class TypeCategory { integer, floating, complex, logical, byte, undefined };
 
 #ifdef KAMPING_DOXYGEN_ONLY
 /// @brief maps C++ types to builtin \c MPI_Datatypes
 ///
-/// the members specify which group the datatype belongs to according to the type groups specified in Section 5.9.2 of
-/// the MPI 3.1 standard.
+/// the members specify which group the datatype belongs to according to the type groups specified
+/// in Section 5.9.2 of the MPI 3.1 standard.
 /// @tparam T Type to map to a \c MPI_Datatype.
 template <typename T>
 struct mpi_type_traits {
@@ -99,9 +99,10 @@ struct mpi_type_traits {
     static constexpr bool is_builtin;
     /// @brief Category the type belongs to according to the MPI standard.
     static constexpr TypeCategory category;
-    /// @brief This member function is only available if \c is_builtin is true. If this is the case, it returns the \c
-    /// MPI_Datatype
-    /// @returns Constant of type \c MPI_Datatype mapping to type \c T according the the MPI standard.
+    /// @brief This member function is only available if \c is_builtin is true. If this is the case,
+    /// it returns the \c MPI_Datatype
+    /// @returns Constant of type \c MPI_Datatype mapping to type \c T according the the MPI
+    /// standard.
     static MPI_Datatype data_type();
 };
 #else
@@ -284,8 +285,8 @@ template <typename T>
 struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
 #endif
 
-/// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
-/// new custom continuous type.
+/// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype
+/// exists, we will create new custom continuous type.
 ///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
 /// To check if type \c T maps to a builtin \c MPI_Datatype at compile-time, use \c mpi_type_traits.
 /// @tparam T The type to translate into a MPI_Datatype.
@@ -318,7 +319,8 @@ template <typename T>
 
     // Check if we got a array type -> create a continuous type.
     if constexpr (std::is_array_v<T_no_cv>) {
-        // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
+        // sizeof(arrayType) returns the total length of the array not just the length of the first
+        // element. :-)
         return mpi_custom_continuous_type<sizeof(T_no_cv)>();
     }
 

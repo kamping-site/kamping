@@ -2,14 +2,14 @@
 //
 // Copyright 2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
@@ -22,11 +22,13 @@ namespace kamping {
 
 enum InitMPIMode { InitFinalize, NoInitFinalize };
 
-/// @brief Wrapper for MPI functions that don't require a communicator. If the template parameter `init_finalize` is set
-/// to true (default), MPI_Init is called in the constructor, and MPI_Finalize is called in the destructor.
+/// @brief Wrapper for MPI functions that don't require a communicator. If the template parameter
+/// `init_finalize` is set to true (default), MPI_Init is called in the constructor, and
+/// MPI_Finalize is called in the destructor.
 ///
-/// Note that MPI_Init and MPI_Finalize are global, meaning that if they are called on an Environment object they must
-/// not be called again in any Environment object (or directly vie the MPI_* calls).
+/// Note that MPI_Init and MPI_Finalize are global, meaning that if they are called on an
+/// Environment object they must not be called again in any Environment object (or directly vie the
+/// MPI_* calls).
 template <InitMPIMode init_finalize_mode = InitFinalize>
 class Environment {
 public:
@@ -66,9 +68,10 @@ public:
 
     /// @brief Calls MPI_Finalize
     ///
-    /// Even if you chose InitMPIMode::InitFinalize, you might want to call this function: As MPI_Finalize could
-    /// potentially return an error, this function can be used if you want to be able to handle that error. Otherwise
-    /// the destructor will call MPI_Finalize and not throw on any errors returned.
+    /// Even if you chose InitMPIMode::InitFinalize, you might want to call this function: As
+    /// MPI_Finalize could potentially return an error, this function can be used if you want to be
+    /// able to handle that error. Otherwise the destructor will call MPI_Finalize and not throw on
+    /// any errors returned.
     void finalize() const {
         KASSERT(!finalized(), "Trying to call MPI_Finalize twice");
         [[maybe_unused]] int err = MPI_Finalize();
@@ -128,10 +131,11 @@ public:
     }
 }; // class Environment
 
-/// @brief A global environment object to use when you don't want to create a new Environment object.
+/// @brief A global environment object to use when you don't want to create a new Environment
+/// object.
 ///
-/// Because everything in Environment is const, it doesn't matter that every compilation unit will have its own copy of
-/// this.
+/// Because everything in Environment is const, it doesn't matter that every compilation unit will
+/// have its own copy of this.
 static const Environment<InitMPIMode::NoInitFinalize> mpi_env;
 
 } // namespace kamping

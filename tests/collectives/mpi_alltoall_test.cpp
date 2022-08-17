@@ -2,14 +2,14 @@
 //
 // Copyright 2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 #include <algorithm>
 #include <numeric>
@@ -70,7 +70,10 @@ TEST(AlltoallTest, multiple_elements) {
 
     EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
 
-    std::vector<int> expected_result(comm.size() * num_elements_per_processor_pair, comm.rank_signed());
+    std::vector<int> expected_result(
+        comm.size() * num_elements_per_processor_pair,
+        comm.rank_signed()
+    );
     EXPECT_EQ(result, expected_result);
 }
 
@@ -91,8 +94,8 @@ TEST(AlltoallTest, custom_type_custom_container) {
         input[i] = {comm.rank(), i};
     }
 
-    auto result =
-        comm.alltoall(send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{})).extract_recv_buffer();
+    auto result = comm.alltoall(send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}))
+                      .extract_recv_buffer();
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), comm.size());
 
@@ -142,7 +145,8 @@ TEST(AlltoallvTest, single_element_no_parameters) {
 }
 
 TEST(AlltoallvTest, single_element_with_receive_buffer) {
-    // Sends a single element from each rank to each other rank with the recv buffer as an input parameter
+    // Sends a single element from each rank to each other rank with the recv buffer as an input
+    // parameter
     Communicator comm;
 
     // Prepare send buffer and counts
@@ -179,11 +183,15 @@ TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
 
     // Do the alltoallv
     std::vector<int> result;
-    auto             mpi_result = comm.alltoallv(send_buf(input), recv_buf(result), kamping::send_counts(send_counts));
+    auto             mpi_result =
+        comm.alltoallv(send_buf(input), recv_buf(result), kamping::send_counts(send_counts));
 
     // Check recv buffer
     EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
-    std::vector<int> expected_result(comm.size() * num_elements_per_processor_pair, comm.rank_signed());
+    std::vector<int> expected_result(
+        comm.size() * num_elements_per_processor_pair,
+        comm.rank_signed()
+    );
     EXPECT_EQ(result, expected_result);
 
     // Check recv counts
@@ -193,9 +201,12 @@ TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
     // Check displacements (same for recv and send)
     std::vector<int> expected_displs(comm.size());
     std::iota(expected_displs.begin(), expected_displs.end(), 0);
-    std::transform(expected_displs.begin(), expected_displs.end(), expected_displs.begin(), [](int const value) {
-        return value * num_elements_per_processor_pair;
-    });
+    std::transform(
+        expected_displs.begin(),
+        expected_displs.end(),
+        expected_displs.begin(),
+        [](int const value) { return value * num_elements_per_processor_pair; }
+    );
 
     auto send_displs = mpi_result.extract_send_displs();
     EXPECT_EQ(send_displs, expected_displs);
@@ -205,7 +216,8 @@ TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
 }
 
 TEST(AlltoallvTest, custom_type_custom_container) {
-    // Sends a single element of a custom type in a custom container from each rank to each other rank
+    // Sends a single element of a custom type in a custom container from each rank to each other
+    // rank
     Communicator comm;
 
     // Declare custom container
@@ -247,7 +259,8 @@ TEST(AlltoallvTest, custom_type_custom_container) {
 
 TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
     // Send 1 element to rank 0, 2 elements to rank 1, ...
-    // Using a custom type and container and custom containers allocated by the library for counts and displacements.
+    // Using a custom type and container and custom containers allocated by the library for counts
+    // and displacements.
     Communicator comm;
 
     // Declare custom type
@@ -545,7 +558,9 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_all_parameters_given) {
+TEST(
+    AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_all_parameters_given
+) {
     // Send 1 element to rank 0, 2 elements to rank 1, ...
     // This time with all parameters given
 

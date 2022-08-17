@@ -2,14 +2,14 @@
 //
 // Copyright 2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 #include <array>
 #include <type_traits>
@@ -227,7 +227,8 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     }
     // lambda on custom type non-commutative
     {
-        auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::non_commutative);
+        auto op =
+            make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::is_builtin);
 

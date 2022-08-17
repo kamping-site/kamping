@@ -2,14 +2,14 @@
 //
 // Copyright 2021-2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 #include <gtest/gtest.h>
 #include <kassert/kassert.hpp>
@@ -161,13 +161,23 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
 
         // Check for all rank ids whether they correctly convert to the splitted communicator
         for (int rank_to_test = 0; rank_to_test < size; ++rank_to_test) {
-            int const expected_rank_in_splitted_comm = rank_to_test % i == color ? rank_to_test / i : MPI_UNDEFINED;
-            EXPECT_EQ(expected_rank_in_splitted_comm, comm.convert_rank_to_communicator(rank_to_test, splitted_comm));
-            EXPECT_EQ(expected_rank_in_splitted_comm, splitted_comm.convert_rank_from_communicator(rank_to_test, comm));
+            int const expected_rank_in_splitted_comm =
+                rank_to_test % i == color ? rank_to_test / i : MPI_UNDEFINED;
+            EXPECT_EQ(
+                expected_rank_in_splitted_comm,
+                comm.convert_rank_to_communicator(rank_to_test, splitted_comm)
+            );
+            EXPECT_EQ(
+                expected_rank_in_splitted_comm,
+                splitted_comm.convert_rank_from_communicator(rank_to_test, comm)
+            );
             if (expected_rank_in_splitted_comm != MPI_UNDEFINED) {
                 EXPECT_EQ(
                     rank_to_test,
-                    comm.convert_rank_from_communicator(expected_rank_in_splitted_comm, splitted_comm)
+                    comm.convert_rank_from_communicator(
+                        expected_rank_in_splitted_comm,
+                        splitted_comm
+                    )
                 );
                 EXPECT_EQ(
                     rank_to_test,
@@ -193,12 +203,21 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
         for (int rank_to_test = 0; rank_to_test < size; ++rank_to_test) {
             int const expected_rank_rn_splitted_comm =
                 rank_to_test % i == color ? expected_size - (rank_to_test / i) - 1 : MPI_UNDEFINED;
-            EXPECT_EQ(expected_rank_rn_splitted_comm, comm.convert_rank_to_communicator(rank_to_test, splitted_comm));
-            EXPECT_EQ(expected_rank_rn_splitted_comm, splitted_comm.convert_rank_from_communicator(rank_to_test, comm));
+            EXPECT_EQ(
+                expected_rank_rn_splitted_comm,
+                comm.convert_rank_to_communicator(rank_to_test, splitted_comm)
+            );
+            EXPECT_EQ(
+                expected_rank_rn_splitted_comm,
+                splitted_comm.convert_rank_from_communicator(rank_to_test, comm)
+            );
             if (expected_rank_rn_splitted_comm != MPI_UNDEFINED) {
                 EXPECT_EQ(
                     rank_to_test,
-                    comm.convert_rank_from_communicator(expected_rank_rn_splitted_comm, splitted_comm)
+                    comm.convert_rank_from_communicator(
+                        expected_rank_rn_splitted_comm,
+                        splitted_comm
+                    )
                 );
                 EXPECT_EQ(
                     rank_to_test,

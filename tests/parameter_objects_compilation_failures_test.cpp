@@ -2,14 +2,14 @@
 //
 // Copyright 2021 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 #include <vector>
 
@@ -23,7 +23,9 @@ int main(int /*argc*/, char** /*argv*/) {
     const ParameterType parameter_type = ParameterType::recv_buf;
 
     const ContainerType                                      const_container;
-    ContainerBasedConstBuffer<ContainerType, parameter_type> container_based_const_buffer(const_container);
+    ContainerBasedConstBuffer<ContainerType, parameter_type> container_based_const_buffer(
+        const_container
+    );
 
     SingleElementConstBuffer<int, parameter_type> single_elem_const_buffer(42);
 
@@ -32,10 +34,12 @@ int main(int /*argc*/, char** /*argv*/) {
 
     LibAllocatedSingleElementBuffer<int, parameter_type> lib_alloc_single_element_buffer;
 
-    ContainerType                                                    container;
-    UserAllocatedContainerBasedBuffer<ContainerType, parameter_type> user_alloc_container_based_buffer(container);
+    ContainerType container;
+    UserAllocatedContainerBasedBuffer<ContainerType, parameter_type>
+        user_alloc_container_based_buffer(container);
 
-    LibAllocatedContainerBasedBuffer<ContainerType, parameter_type> lib_alloc_container_based_buffer;
+    LibAllocatedContainerBasedBuffer<ContainerType, parameter_type>
+        lib_alloc_container_based_buffer;
 
     Root root(42);
 
@@ -91,7 +95,11 @@ int main(int /*argc*/, char** /*argv*/) {
     op_builder = op_builder;
 #elif defined(VALUE_CONSTRUCTOR_REFERENCING_DATA_BUFFER)
     // should not be possible to value (or rvalue) construct a referencing DataBuffer
-    DataBuffer<std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::referencing>
+    DataBuffer<
+        std::vector<int>,
+        ParameterType::send_buf,
+        BufferModifiability::modifiable,
+        BufferOwnership::referencing>
         foo{std::vector<int>()};
 #elif defined(DEFAULT_CONSTRUCT_USER_ALLOCATED_DATA_BUFFER)
     // should not be possible to default construct a user defined DataBuffer

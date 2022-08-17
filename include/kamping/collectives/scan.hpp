@@ -3,14 +3,14 @@
 //
 // Copyright 2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
@@ -32,13 +32,14 @@
 
 /// @brief Wrapper for \c MPI_Scan.
 ///
-/// This wraps \c MPI_Scan, which is used to perform an inclusive prefix reduction on data distributed across the
-/// calling processes. / \c scan(...) returns in the recvbuf of the process with rank \c i, the reduction (calculated
-/// according to the function op) of the values in the sendbufs of processes with ranks 0, ..., i (inclusive). The type
-/// of operations supported, their semantics, and the constraints on send and receive buffers are as for MPI_Reduce.
-/// The following parameters are required:
-/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
-/// each rank.
+/// This wraps \c MPI_Scan, which is used to perform an inclusive prefix reduction on data
+/// distributed across the calling processes. / \c scan(...) returns in the recvbuf of the process
+/// with rank \c i, the reduction (calculated according to the function op) of the values in the
+/// sendbufs of processes with ranks 0, ..., i (inclusive). The type of operations supported, their
+/// semantics, and the constraints on send and receive buffers are as for MPI_Reduce. The following
+/// parameters are required:
+/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be
+/// the same size at each rank.
 /// - \ref kamping::op() wrapping the operation to apply to the input.
 ///
 /// The following parameters are optional:
@@ -49,11 +50,15 @@
 template <typename... Args>
 auto kamping::Communicator::scan(Args... args) const {
     using namespace kamping::internal;
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
+    KAMPING_CHECK_PARAMETERS(
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf, op),
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf)
+    );
 
     // Get the send buffer and deduce the send and recv value types.
-    const auto& send_buf          = select_parameter_type<ParameterType::send_buf>(args...).get();
-    using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+    const auto& send_buf  = select_parameter_type<ParameterType::send_buf>(args...).get();
+    using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
     KASSERT(
         is_same_on_all_ranks(send_buf.size()),
@@ -61,21 +66,28 @@ auto kamping::Communicator::scan(Args... args) const {
         assert::light_communication
     );
 
-    // Deduce the recv buffer type and get (if provided) the recv buffer or allocate one (if not provided).
-    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
+    // Deduce the recv buffer type and get (if provided) the recv buffer or allocate one (if not
+    // provided).
+    using default_recv_buf_type =
+        decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
     auto&& recv_buf =
-        select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
+        select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(
+            std::tuple(),
+            args...
+        );
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
         std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
         "Types of send and receive buffers do not match."
     );
 
-    // Get the operation used for the reduction. The signature of the provided function is checked while building.
+    // Get the operation used for the reduction. The signature of the provided function is checked
+    // while building.
     auto& operation_param = select_parameter_type<ParameterType::op>(args...);
     auto  operation       = operation_param.template build_operation<send_value_type>();
 
-    // Resize the recv buffer to the same size as the send buffer; get the pointer needed for the MPI call.
+    // Resize the recv buffer to the same size as the send buffer; get the pointer needed for the
+    // MPI call.
     send_value_type* recv_buf_ptr = nullptr;
     recv_buf.resize(send_buf.size());
     recv_buf_ptr = recv_buf.data();
@@ -94,5 +106,10 @@ auto kamping::Communicator::scan(Args... args) const {
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return MPIResult(std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{});
+    return MPIResult(
+        std::move(recv_buf),
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{}
+    );
 }

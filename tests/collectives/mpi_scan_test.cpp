@@ -3,14 +3,14 @@
 //
 // Copyright 2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 #include <gtest/gtest.h>
 
@@ -66,7 +66,8 @@ TEST(ScanTest, scan_builtin_op_on_non_builtin_type) {
     };
     std::vector<MyInt> input = {comm.rank_signed(), 42};
 
-    auto result = comm.scan(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative)).extract_recv_buffer();
+    auto result = comm.scan(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative))
+                      .extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {
         ((comm.rank_signed() + 1) * comm.rank_signed()) / 2,
@@ -88,7 +89,8 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     { // use function ptr
-        auto result = comm.scan(send_buf(input), op(add_plus_42_function, kamping::commutative)).extract_recv_buffer();
+        auto result = comm.scan(send_buf(input), op(add_plus_42_function, kamping::commutative))
+                          .extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -99,7 +101,8 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     }
 
     { // use lambda
-        auto result = comm.scan(send_buf(input), op(add_plus_42_lambda, kamping::commutative)).extract_recv_buffer();
+        auto result = comm.scan(send_buf(input), op(add_plus_42_lambda, kamping::commutative))
+                          .extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -112,7 +115,8 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     { // use lambda inline
         auto result = comm.scan(
                               send_buf(input),
-                              op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::commutative)
+                              op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; },
+                                 kamping::commutative)
         )
                           .extract_recv_buffer();
 
@@ -130,7 +134,8 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
                 return lhs + rhs + 42;
             }
         };
-        auto result = comm.scan(send_buf(input), op(MySum42{}, kamping::commutative)).extract_recv_buffer();
+        auto result =
+            comm.scan(send_buf(input), op(MySum42{}, kamping::commutative)).extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -150,7 +155,8 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type_non_commutative) {
 
     std::vector<int> input = {comm.rank_signed() + 17};
 
-    auto result = comm.scan(send_buf(input), op(get_right, kamping::non_commutative)).extract_recv_buffer();
+    auto result =
+        comm.scan(send_buf(input), op(get_right, kamping::non_commutative)).extract_recv_buffer();
 
     EXPECT_EQ(result.size(), 1);
     std::vector<int> expected_result = {comm.rank_signed() + 17};
@@ -167,7 +173,8 @@ TEST(ScanTest, scan_custom_operation_on_custom_type) {
         int  sum;
 
         bool operator==(Aggregate const& rhs) const {
-            return this->min == rhs.min && this->max == rhs.max && this->flag == rhs.flag && this->sum == rhs.sum;
+            return this->min == rhs.min && this->max == rhs.max && this->flag == rhs.flag
+                   && this->sum == rhs.sum;
         }
     };
     auto my_op = [](Aggregate const& lhs, Aggregate const& rhs) {
@@ -184,8 +191,8 @@ TEST(ScanTest, scan_custom_operation_on_custom_type) {
     Aggregate              agg2  = {comm.rank_signed() + 42, comm.rank_signed() + 42, false, 1};
     std::vector<Aggregate> input = {agg1, agg2};
 
-    Aggregate              agg1_expected   = {0, comm.rank_signed(), true, comm.rank_signed() + 1};
-    Aggregate              agg2_expected   = {42, comm.rank_signed() + 42, false, comm.rank_signed() + 1};
+    Aggregate agg1_expected = {0, comm.rank_signed(), true, comm.rank_signed() + 1};
+    Aggregate agg2_expected = {42, comm.rank_signed() + 42, false, comm.rank_signed() + 1};
     std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
 
     auto result = comm.scan(send_buf(input), op(my_op, kamping::commutative)).extract_recv_buffer();

@@ -2,18 +2,18 @@
 //
 // Copyright 2022 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 /// @file
-/// @brief The main file (and first compilation unit) of a test that checks if compiling and running works correctly
-/// when linking two compilation units that both use KaMPIng
+/// @brief The main file (and first compilation unit) of a test that checks if compiling and running
+/// works correctly when linking two compilation units that both use KaMPIng
 
 #include <cstddef>
 #include <numeric>
@@ -31,8 +31,8 @@
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
 
-/// @brief The main function for this tests. Gathers the ranks on the root (done in a different compilation unit), calls
-/// a barrier and checks the result
+/// @brief The main function for this tests. Gathers the ranks on the root (done in a different
+/// compilation unit), calls a barrier and checks the result
 TEST(TwoCompilationUnitsTest, main) {
     using namespace kamping;
     EXPECT_TRUE(mpi_env.initialized());

@@ -2,14 +2,14 @@
 //
 // Copyright 2021 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.
 
 #include "gtest/gtest.h"
 #include <array>
@@ -30,7 +30,8 @@ using namespace ::kamping::internal;
 TEST(HasDataMemberTest, has_data_member_basics) {
     EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<int>>);
     EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<double>>);
-    EXPECT_TRUE((kamping::internal::has_data_member_v<std::vector<double, testing::CustomAllocator<double>>>));
+    EXPECT_TRUE((kamping::internal::has_data_member_v<
+                 std::vector<double, testing::CustomAllocator<double>>>));
     EXPECT_TRUE((kamping::internal::has_data_member_v<std::string>));
     EXPECT_TRUE((kamping::internal::has_data_member_v<std::array<int, 42>>));
 
@@ -39,18 +40,20 @@ TEST(HasDataMemberTest, has_data_member_basics) {
 
     // on some compilers vector<bool> still has .data() but it returns void
     // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool>>));
-    // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool, testing::CustomAllocator<bool>>>));
+    // EXPECT_FALSE((kamping::internal::has_data_member_v<std::vector<bool,
+    // testing::CustomAllocator<bool>>>));
 }
 
 TEST(IsSpecializationTest, is_specialization_basics) {
     EXPECT_TRUE((kamping::internal::is_specialization<std::vector<int>, std::vector>::value));
     EXPECT_TRUE((kamping::internal::is_specialization<std::vector<bool>, std::vector>::value));
     EXPECT_TRUE(
-        (kamping::internal::is_specialization<std::vector<int, testing::CustomAllocator<int>>, std::vector>::value)
+        (kamping::internal::
+             is_specialization<std::vector<int, testing::CustomAllocator<int>>, std::vector>::value)
     );
-    EXPECT_TRUE((
-        kamping::internal::is_specialization<std::vector<double, testing::CustomAllocator<double>>, std::vector>::value
-    ));
+    EXPECT_TRUE((kamping::internal::is_specialization<
+                 std::vector<double, testing::CustomAllocator<double>>,
+                 std::vector>::value));
     EXPECT_TRUE((kamping::internal::is_specialization<std::deque<int>, std::deque>::value));
 
     EXPECT_FALSE((kamping::internal::is_specialization<std::array<int, 2>, std::vector>::value));
@@ -70,12 +73,16 @@ TEST(HasValueTypeTest, has_value_type_basics) {
 
 TEST(IsVectorBoolTest, is_vector_bool_basics) {
     EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>>);
-    EXPECT_TRUE((kamping::internal::is_vector_bool_v<std::vector<bool, testing::CustomAllocator<bool>>>));
+    EXPECT_TRUE(
+        (kamping::internal::is_vector_bool_v<std::vector<bool, testing::CustomAllocator<bool>>>)
+    );
     EXPECT_TRUE(kamping::internal::is_vector_bool_v<const std::vector<bool>>);
     EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>&>);
     EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool> const&>);
     EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>>);
-    EXPECT_FALSE((kamping::internal::is_vector_bool_v<std::vector<int, testing::CustomAllocator<int>>>));
+    EXPECT_FALSE(
+        (kamping::internal::is_vector_bool_v<std::vector<int, testing::CustomAllocator<int>>>)
+    );
     EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>&>);
     EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int> const&>);
     EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool>>);
@@ -107,7 +114,9 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
 
     constexpr ParameterType                            ptype = ParameterType::send_counts;
     ContainerBasedConstBuffer<std::vector<int>, ptype> buffer_based_on_int_vector(int_vec);
-    ContainerBasedConstBuffer<std::vector<int>, ptype> buffer_based_on_const_int_vector(int_vec_const);
+    ContainerBasedConstBuffer<std::vector<int>, ptype> buffer_based_on_const_int_vector(
+        int_vec_const
+    );
 
     EXPECT_EQ(buffer_based_on_int_vector.size(), int_vec.size());
     EXPECT_EQ(buffer_based_on_int_vector.get().size(), int_vec.size());
@@ -118,7 +127,9 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
 
     EXPECT_EQ(buffer_based_on_const_int_vector.get().size(), int_vec_const.size());
     EXPECT_EQ(buffer_based_on_const_int_vector.get().data(), int_vec_const.data());
-    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.get().data()), const int*>);
+    static_assert(std::is_same_v<
+                  decltype(buffer_based_on_const_int_vector.get().data()),
+                  const int*>);
     EXPECT_EQ(buffer_based_on_const_int_vector.data(), int_vec_const.data());
     static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.data()), const int*>);
 }
@@ -128,7 +139,9 @@ TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
     testing::OwnContainer<int>                                   own_container;
     constexpr ParameterType                                      ptype = ParameterType::send_buf;
     ContainerBasedConstBuffer<std::string, ptype>                buffer_based_on_string(str);
-    ContainerBasedConstBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
+    ContainerBasedConstBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(
+        own_container
+    );
 
     EXPECT_EQ(buffer_based_on_string.get().size(), str.size());
     EXPECT_EQ(buffer_based_on_string.get().data(), str.data());
@@ -151,8 +164,12 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
     std::vector<int> int_vec{1, 2, 3};
 
     constexpr ParameterType                             ptype = ParameterType::send_counts;
-    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer_based_on_moved_vector(std::move(int_vec));
-    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer_based_on_rvalue_vector(std::vector<int>{1, 2, 3});
+    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer_based_on_moved_vector(
+        std::move(int_vec)
+    );
+    ContainerBasedOwningBuffer<std::vector<int>, ptype> buffer_based_on_rvalue_vector(
+        std::vector<int>{1, 2, 3}
+    );
 
     EXPECT_EQ(buffer_based_on_moved_vector.size(), 3);
     EXPECT_EQ(buffer_based_on_moved_vector.get().size(), 3);
@@ -210,7 +227,8 @@ TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
     testing::OwnContainer<int> own_container{1, 2, 3};
     EXPECT_EQ(own_container.copy_count(), 0);
 
-    ContainerBasedOwningBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(std::move(own_container)
+    ContainerBasedOwningBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(
+        std::move(own_container)
     );
     EXPECT_EQ(own_container.copy_count(), 0);
     EXPECT_EQ(buffer_based_on_own_container.underlying().copy_count(), 0);
@@ -233,7 +251,9 @@ TEST(ContainerBasedOwningBufferTest, move_constructor_is_enabled) {
     EXPECT_EQ(buffer2.get().size(), 3);
 
     const std::vector<int> expected_container{1, 2, 3};
-    EXPECT_TRUE(std::equal(expected_container.begin(), expected_container.end(), buffer2.get().data()));
+    EXPECT_TRUE(
+        std::equal(expected_container.begin(), expected_container.end(), buffer2.get().data())
+    );
 }
 
 TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
@@ -264,8 +284,9 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
 TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_containers_other_than_vector) {
     testing::OwnContainer<int> own_container;
 
-    constexpr ParameterType                                              ptype = ParameterType::recv_counts;
-    UserAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container(own_container);
+    constexpr ParameterType ptype = ParameterType::recv_counts;
+    UserAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype>
+        buffer_based_on_own_container(own_container);
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_own_container.resize(requested_size);
@@ -310,8 +331,8 @@ TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
     const size_t last_resize = 9;
     resize_write_check(last_resize);
 
-    // The buffer will be in an invalid state after extraction; that's why we have to access these attributes
-    // beforehand.
+    // The buffer will be in an invalid state after extraction; that's why we have to access these
+    // attributes beforehand.
     const auto       size_of_buffer        = buffer_based_on_int_vector.size();
     const auto       data_of_buffer        = buffer_based_on_int_vector.data();
     const auto       size_of_get_of_buffer = buffer_based_on_int_vector.get().size();
@@ -327,8 +348,9 @@ TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, extract_containers_other_than_vector) {
-    constexpr ParameterType                                             ptype = ParameterType::recv_counts;
-    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer_based_on_own_container;
+    constexpr ParameterType ptype = ParameterType::recv_counts;
+    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype>
+        buffer_based_on_own_container;
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_own_container.resize(requested_size);
@@ -348,7 +370,7 @@ TEST(LibAllocatedContainerBasedBufferTest, extract_containers_other_than_vector)
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, move_ctor_assignment_operator_is_enabled) {
-    constexpr ParameterType                                             ptype = ParameterType::recv_counts;
+    constexpr ParameterType ptype = ParameterType::recv_counts;
     LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype> buffer1;
     const size_t                                                        size = 3;
     buffer1.resize(size);
@@ -585,11 +607,23 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
     buffer.size();
     buffer.resize(10);
     std::ignore = buffer.extract();
-    EXPECT_KASSERT_FAILS(buffer.extract(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(
+        buffer.extract(),
+        "Cannot extract a buffer that has already been extracted."
+    );
     EXPECT_KASSERT_FAILS(buffer.get(), "Cannot get a buffer that has already been extracted.");
-    EXPECT_KASSERT_FAILS(buffer.data(), "Cannot get a pointer to a buffer that has already been extracted.");
-    EXPECT_KASSERT_FAILS(buffer.size(), "Cannot get the size of a buffer that has already been extracted.");
-    EXPECT_KASSERT_FAILS(buffer.resize(20), "Cannot resize a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(
+        buffer.data(),
+        "Cannot get a pointer to a buffer that has already been extracted."
+    );
+    EXPECT_KASSERT_FAILS(
+        buffer.size(),
+        "Cannot get the size of a buffer that has already been extracted."
+    );
+    EXPECT_KASSERT_FAILS(
+        buffer.resize(20),
+        "Cannot resize a buffer that has already been extracted."
+    );
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mpi_result) {
@@ -598,18 +632,35 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs> recv_displs;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs> send_displs;
 
-    MPIResult result(std::move(recv_buffer), std::move(recv_counts), std::move(recv_displs), std::move(send_displs));
+    MPIResult result(
+        std::move(recv_buffer),
+        std::move(recv_counts),
+        std::move(recv_displs),
+        std::move(send_displs)
+    );
 
     std::ignore = result.extract_recv_buffer();
-    EXPECT_KASSERT_FAILS(result.extract_recv_buffer(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(
+        result.extract_recv_buffer(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_recv_counts();
-    EXPECT_KASSERT_FAILS(result.extract_recv_counts(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(
+        result.extract_recv_counts(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_recv_displs();
-    EXPECT_KASSERT_FAILS(result.extract_recv_displs(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(
+        result.extract_recv_displs(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_send_displs();
-    EXPECT_KASSERT_FAILS(result.extract_send_displs(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KASSERT_FAILS(
+        result.extract_send_displs(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 }
 #endif

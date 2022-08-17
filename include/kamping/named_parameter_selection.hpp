@@ -2,14 +2,14 @@
 //
 // Copyright 2021 The KaMPIng Authors
 //
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU
+// Lesser General Public License as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version. KaMPIng is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.:
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If
+// not, see <https://www.gnu.org/licenses/>.:
 
 /// @file
 /// @brief Template magic to implement named parameters in cpp
@@ -26,7 +26,8 @@ namespace kamping::internal {
 /// @addtogroup kamping_utility
 /// @{
 
-/// @brief Base case if there are no parameters: always returns max index indicating that the parameter was not found.
+/// @brief Base case if there are no parameters: always returns max index indicating that the
+/// parameter was not found.
 /// @tparam parameter_type The parameter type which to be searched for.
 /// @tparam Index Index of current argument to evaluate (ignored).
 /// @return \c std::numeric_limits<std::size_t>::max().
@@ -35,8 +36,8 @@ constexpr size_t find_pos() {
     return std::numeric_limits<std::size_t>::max();
 }
 
-/// @brief Returns the Index parameter if the parameter type of Arg matches the requested parameter type. If not, this
-/// fails to compile.
+/// @brief Returns the Index parameter if the parameter type of Arg matches the requested parameter
+/// type. If not, this fails to compile.
 ///
 /// This is the base case of the recursion.
 ///
@@ -107,18 +108,26 @@ constexpr bool has_parameter_type() {
     return find_pos<parameter_type, 0, Args...>() < sizeof...(Args);
 }
 
-/// @brief Checks if parameter with requested parameter type exists, if not constructs a default value.
+/// @brief Checks if parameter with requested parameter type exists, if not constructs a default
+/// value.
 ///
 /// @tparam parameter_type The parameter type with which a parameter should be found.
 /// @tparam Args All parameter types to be searched.
 /// @tparam DefaultParameterType The type of the default parameter to be constructed.
-/// @tparam DefaultArguments The types of parameters passed to the constructor \c DefaultParameterType.
-/// @param default_arguments Tuple of the arguments passed to the constructor of \c DefaultParameterType.
+/// @tparam DefaultArguments The types of parameters passed to the constructor \c
+/// DefaultParameterType.
+/// @param default_arguments Tuple of the arguments passed to the constructor of \c
+/// DefaultParameterType.
 /// @param args All parameters from which a parameter with the correct type is selected.
-/// @return The first parameter whose type has the requested parameter type or the constructed default parameter if
-/// none is found.
-template <ParameterType parameter_type, typename DefaultParameterType, typename... DefaultArguments, typename... Args>
-decltype(auto) select_parameter_type_or_default(std::tuple<DefaultArguments...> default_arguments, Args&... args) {
+/// @return The first parameter whose type has the requested parameter type or the constructed
+/// default parameter if none is found.
+template <
+    ParameterType parameter_type,
+    typename DefaultParameterType,
+    typename... DefaultArguments,
+    typename... Args>
+decltype(auto)
+select_parameter_type_or_default(std::tuple<DefaultArguments...> default_arguments, Args&... args) {
     static_assert(
         std::is_constructible_v<DefaultParameterType, DefaultArguments...>,
         "The default parameter cannot be constructed from the provided arguments"
