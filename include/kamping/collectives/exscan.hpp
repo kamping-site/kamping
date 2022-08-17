@@ -38,16 +38,16 @@
 /// values_on_rank_0 is not provided and \c op is a built-in operation and we are working on a built in data-type, we
 /// set the value on rank 0 to the identity of that operation. The type of operations supported, their semantics, and
 /// the constraints on send and receive buffers are as for \c MPI_Reduce. The following parameters are required:
-///  - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
-///  each rank.
+///  - \ref kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be the
+///  same size at each rank.
 ///  - \ref kamping::op() the operation to apply to the input.
-///
-/// The following parameter is required if the operation is not a built-in operation or the data-type is not a built-in
-/// data type:
-///  - \ref kamping::values_on_rank_0() containing the value that is returned in the \c recv_buf of rank 0.
 ///
 ///  The following parameters are optional:
 ///  - \ref kamping::recv_buf() containing a buffer for the output.
+///  - \ref kamping::values_on_rank_0() containing the value(s) that is/are returned in the \c recv_buf of rank 0. If
+///  \c send_buf is a single value, \c values_on_rank_0 must be a single value. If \c send_buf is a vector, \c
+///  values_on_rank_0 must be a vector of the same size or a single value (which will be reused for all elements of the
+///  vector).
 ///  @tparam Args Automatically deducted template parameters.
 ///  @param args All required and any number of the optional buffers described above.
 ///  @return Result type wrapping the output buffer if not specified as input parameter.
