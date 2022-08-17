@@ -31,19 +31,24 @@
 /// @brief Wrapper for \c MPI_Bcast
 ///
 /// This wrapper for \c MPI_Bcast sends data from the root to all other ranks.
+///
 /// The following buffer is required:
 /// - \ref kamping::send_recv_buf() containing the data that is sent to the other ranks. Non-root ranks must allocate
 /// and provide this buffer as it's needed for deducing the value type. The container will be resized on non-root ranks
 /// to fit exactly the received data.
+///
 /// The following parameter is optional but causes additional communication if not present.
 /// - \ref kamping::recv_counts() specifying how many elements are broadcasted. If not specified, will be
 /// communicated through an additional bcast. If not specified, we broadcast the whole send_recv_buf. If specified,
-/// has to be the same on all ranks (including the root). Has to either be specified or not specified on all ranks. The
-/// following parameter is optional:
+/// has to be the same on all ranks (including the root). Has to either be specified or not specified on all ranks.
+///
+/// The following parameter is optional:
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c
 /// Communicator is used, see root().
+///
 /// @todo Add support for `bcast<int>(..)` style deduction of send_recv_buf's type on non-root ranks.
 /// @todo Add support for unnamed first parameter send_recv_buf.
+///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
