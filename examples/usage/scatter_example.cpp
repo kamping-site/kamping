@@ -22,18 +22,18 @@
 #include "kamping/environment.hpp"
 
 int main(int argc, char* argv[]) {
-    using namespace kamping;
+  using namespace kamping;
 
-    Environment e(argc, argv);
+  Environment e(argc, argv);
 
-    Communicator     comm;
-    std::vector<int> in(static_cast<std::size_t>(comm.size()));
-    std::vector<int> out;
+  Communicator     comm;
+  std::vector<int> in(static_cast<std::size_t>(comm.size()));
+  std::vector<int> out;
 
-    std::iota(in.begin(), in.end(), 0);
+  std::iota(in.begin(), in.end(), 0);
 
-    comm.scatter(send_buf(in), recv_buf(out));
-    print_result(out, comm);
+  comm.scatter(send_buf(in), recv_buf(out));
+  print_result(out, comm);
 
-    return 0;
+  return 0;
 }

@@ -18,17 +18,17 @@
 
 int main(int /* argc */, char** /* argv */) {
 #if defined(MISSING_REQUIRED_PARAMETER)
-    testing::test_required_send_buf();
+  testing::test_required_send_buf();
 #elif defined(UNSUPPORTED_PARAMETER_NO_PARAMETERS)
-    std::vector<int> v;
-    testing::test_empty_arguments(kamping::send_buf(v));
+  std::vector<int> v;
+  testing::test_empty_arguments(kamping::send_buf(v));
 #elif defined(UNSUPPORTED_PARAMETER_ONLY_OPTIONAL_PARAMETERS)
-    std::vector<int> v;
-    testing::test_optional_recv_buf(kamping::send_buf(v));
+  std::vector<int> v;
+  testing::test_optional_recv_buf(kamping::send_buf(v));
 #elif defined(DUPLICATE_PARAMETERS)
-    std::vector<int> v;
-    testing::test_required_send_buf(kamping::send_buf(v), kamping::send_buf(v));
+  std::vector<int> v;
+  testing::test_required_send_buf(kamping::send_buf(v), kamping::send_buf(v));
 #else
-    // If none of the above sections is active, this file will compile successfully.
+  // If none of the above sections is active, this file will compile successfully.
 #endif
 }

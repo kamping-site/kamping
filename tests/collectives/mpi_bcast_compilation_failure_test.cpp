@@ -19,14 +19,14 @@ using namespace ::kamping;
 using namespace ::testing;
 
 int main(int /*argc*/, char** /*argv*/) {
-    using namespace ::kamping;
-    Communicator comm;
-    int          value = comm.rank_signed();
+  using namespace ::kamping;
+  Communicator comm;
+  int          value = comm.rank_signed();
 
 #if defined(RECV_COUNT_GIVEN)
-    comm.bcast_single(send_recv_buf(value), recv_count(1));
+  comm.bcast_single(send_recv_buf(value), recv_count(1));
 #else
-    // If none of the above sections is active, this file will compile successfully.
-    comm.bcast_single(send_recv_buf(value));
+  // If none of the above sections is active, this file will compile successfully.
+  comm.bcast_single(send_recv_buf(value));
 #endif
 }

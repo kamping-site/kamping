@@ -46,59 +46,56 @@ namespace kamping {
 ///
 template <class To, class From>
 constexpr bool in_range(From value) noexcept {
-    static_assert(std::is_integral_v<From>, "From has to be an integral type.");
-    static_assert(std::is_integral_v<To>, "To has to be an integral type.");
+  static_assert(std::is_integral_v<From>, "From has to be an integral type.");
+  static_assert(std::is_integral_v<To>, "To has to be an integral type.");
 
-    // Check that the 0 is included in From and To. 0 is always included in signed types.
+  // Check that the 0 is included in From and To. 0 is always included in signed types.
+  static_assert(
+    std::is_signed_v<From> || std::numeric_limits<From>::min() == 0,
+    "The type From has to include the number 0."
+  );
+  static_assert(
+    std::is_signed_v<To> || std::numeric_limits<To>::min() == 0,
+    "The type To has to include the number 0."
+  );
+
+  // Check if we can safely cast To and From into (u)intmax_t.
+  if constexpr (std::is_signed_v<From> && std::is_signed_v<To>) {
     static_assert(
-        std::is_signed_v<From> || std::numeric_limits<From>::min() == 0,
-        "The type From has to include the number 0."
+      std::numeric_limits<From>::digits <= std::numeric_limits<intmax_t>::digits,
+      "From has more bits than intmax_t."
     );
     static_assert(
-        std::is_signed_v<To> || std::numeric_limits<To>::min() == 0,
-        "The type To has to include the number 0."
+      std::numeric_limits<To>::digits <= std::numeric_limits<intmax_t>::digits,
+      "To has more bits than intmax_t."
     );
+  } else {
+    static_assert(
+      std::numeric_limits<From>::digits <= std::numeric_limits<uintmax_t>::digits,
+      "From has more bits than uintmax_t."
+    );
+    static_assert(
+      std::numeric_limits<To>::digits <= std::numeric_limits<uintmax_t>::digits,
+      "To has more bits than uintmax_t."
+    );
+  }
 
-    // Check if we can safely cast To and From into (u)intmax_t.
-    if constexpr (std::is_signed_v<From> && std::is_signed_v<To>) {
-        static_assert(
-            std::numeric_limits<From>::digits <= std::numeric_limits<intmax_t>::digits,
-            "From has more bits than intmax_t."
-        );
-        static_assert(
-            std::numeric_limits<To>::digits <= std::numeric_limits<intmax_t>::digits,
-            "To has more bits than intmax_t."
-        );
+  // Check if the parameters value is inside To's range.
+  if constexpr (std::is_unsigned_v<From> && std::is_unsigned_v<To>) {
+    return static_cast<uintmax_t>(value) <= static_cast<uintmax_t>(std::numeric_limits<To>::max());
+  } else if constexpr (std::is_signed_v<From> && std::is_signed_v<To>) {
+    return static_cast<intmax_t>(value) >= static_cast<intmax_t>(std::numeric_limits<To>::min())
+           && static_cast<intmax_t>(value) <= static_cast<intmax_t>(std::numeric_limits<To>::max());
+  } else if constexpr (std::is_signed_v<From> && std::is_unsigned_v<To>) {
+    if (value < 0) {
+      return false;
     } else {
-        static_assert(
-            std::numeric_limits<From>::digits <= std::numeric_limits<uintmax_t>::digits,
-            "From has more bits than uintmax_t."
-        );
-        static_assert(
-            std::numeric_limits<To>::digits <= std::numeric_limits<uintmax_t>::digits,
-            "To has more bits than uintmax_t."
-        );
+      return static_cast<uintmax_t>(value)
+             <= static_cast<uintmax_t>(std::numeric_limits<To>::max());
     }
-
-    // Check if the parameters value is inside To's range.
-    if constexpr (std::is_unsigned_v<From> && std::is_unsigned_v<To>) {
-        return static_cast<uintmax_t>(value)
-               <= static_cast<uintmax_t>(std::numeric_limits<To>::max());
-    } else if constexpr (std::is_signed_v<From> && std::is_signed_v<To>) {
-        return static_cast<intmax_t>(value) >= static_cast<intmax_t>(std::numeric_limits<To>::min())
-               && static_cast<intmax_t>(value)
-                      <= static_cast<intmax_t>(std::numeric_limits<To>::max());
-    } else if constexpr (std::is_signed_v<From> && std::is_unsigned_v<To>) {
-        if (value < 0) {
-            return false;
-        } else {
-            return static_cast<uintmax_t>(value)
-                   <= static_cast<uintmax_t>(std::numeric_limits<To>::max());
-        }
-    } else if constexpr (std::is_unsigned_v<From> && std::is_signed_v<To>) {
-        return static_cast<uintmax_t>(value)
-               <= static_cast<uintmax_t>(std::numeric_limits<To>::max());
-    }
+  } else if constexpr (std::is_unsigned_v<From> && std::is_signed_v<To>) {
+    return static_cast<uintmax_t>(value) <= static_cast<uintmax_t>(std::numeric_limits<To>::max());
+  }
 }
 
 ///
@@ -120,8 +117,8 @@ constexpr bool in_range(From value) noexcept {
 ///
 template <class To, class From>
 constexpr To asserting_cast(From value) KAMPING_NOEXCEPT {
-    KASSERT(in_range<To>(value));
-    return static_cast<To>(value);
+  KASSERT(in_range<To>(value));
+  return static_cast<To>(value);
 }
 
 ///
@@ -142,12 +139,12 @@ constexpr To asserting_cast(From value) KAMPING_NOEXCEPT {
 ///
 template <class To, class From>
 constexpr To throwing_cast(From value) {
-    THROWING_KASSERT_SPECIFIED(
-        in_range<To>(value),
-        value << " is not representable by the target type.",
-        std::range_error
-    );
-    return static_cast<To>(value);
+  THROWING_KASSERT_SPECIFIED(
+    in_range<To>(value),
+    value << " is not representable by the target type.",
+    std::range_error
+  );
+  return static_cast<To>(value);
 }
 
 /// @}

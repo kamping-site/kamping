@@ -31,7 +31,7 @@ namespace kamping::internal {
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
 using ContainerBasedConstBuffer =
-    DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::referencing>;
+  DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::referencing>;
 
 /// @brief Read-only buffer owning a container type passed to it.
 ///
@@ -42,7 +42,7 @@ using ContainerBasedConstBuffer =
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
 using ContainerBasedOwningBuffer =
-    DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::owning>;
+  DataBuffer<Container, type, BufferModifiability::constant, BufferOwnership::owning>;
 
 /// @brief Buffer based on a container type that has been allocated by the user (but may be resized
 /// if the provided space is not sufficient).
@@ -54,10 +54,10 @@ using ContainerBasedOwningBuffer =
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType parameter_type>
 using UserAllocatedContainerBasedBuffer = DataBuffer<
-    Container,
-    parameter_type,
-    BufferModifiability::modifiable,
-    BufferOwnership::referencing>;
+  Container,
+  parameter_type,
+  BufferModifiability::modifiable,
+  BufferOwnership::referencing>;
 
 /// @brief Buffer based on a container type that will be allocated by the library (using the
 /// container's allocator)
@@ -69,11 +69,11 @@ using UserAllocatedContainerBasedBuffer = DataBuffer<
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename Container, ParameterType type>
 using LibAllocatedContainerBasedBuffer = DataBuffer<
-    Container,
-    type,
-    BufferModifiability::modifiable,
-    BufferOwnership::owning,
-    BufferAllocation::lib_allocated>;
+  Container,
+  type,
+  BufferModifiability::modifiable,
+  BufferOwnership::owning,
+  BufferAllocation::lib_allocated>;
 
 /// @brief Constant buffer for a single type, i.e., not a container.
 ///
@@ -84,7 +84,7 @@ using LibAllocatedContainerBasedBuffer = DataBuffer<
 /// @tparam ParameterType Parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
 using SingleElementConstBuffer =
-    DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::referencing>;
+  DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::referencing>;
 
 /// @brief Buffer for a single element, which is not a container. The element is owned by the
 /// buffer.
@@ -95,7 +95,7 @@ using SingleElementConstBuffer =
 /// @tparam ParameterType Parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
 using SingleElementOwningBuffer =
-    DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::owning>;
+  DataBuffer<DataType, type, BufferModifiability::constant, BufferOwnership::owning>;
 
 /// @brief Buffer based on a single element type that has been allocated by the library.
 ///
@@ -103,11 +103,11 @@ using SingleElementOwningBuffer =
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
 using LibAllocatedSingleElementBuffer = DataBuffer<
-    DataType,
-    type,
-    BufferModifiability::modifiable,
-    BufferOwnership::owning,
-    BufferAllocation::lib_allocated>;
+  DataType,
+  type,
+  BufferModifiability::modifiable,
+  BufferOwnership::owning,
+  BufferAllocation::lib_allocated>;
 
 /// @brief Buffer based on a single element type that has been allocated by the user.
 ///
@@ -117,6 +117,6 @@ using LibAllocatedSingleElementBuffer = DataBuffer<
 /// @tparam ParameterType parameter type represented by this buffer.
 template <typename DataType, ParameterType type>
 using SingleElementModifiableBuffer =
-    DataBuffer<DataType, type, BufferModifiability::modifiable, BufferOwnership::referencing>;
+  DataBuffer<DataType, type, BufferModifiability::modifiable, BufferOwnership::referencing>;
 
 } // namespace kamping::internal

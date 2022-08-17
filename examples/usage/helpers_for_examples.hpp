@@ -22,10 +22,10 @@ namespace kamping {
 /// @param comm KaMPIng communicator to get the rank of the PE.
 template <typename T>
 void print_result(std::vector<T> const& result, Communicator const& comm) {
-    for (auto const& elem: result) {
-        std::cout << "[PE " << comm.rank() << "] " << elem << "\n";
-    }
-    std::cout << std::flush;
+  for (auto const& elem: result) {
+    std::cout << "[PE " << comm.rank() << "] " << elem << "\n";
+  }
+  std::cout << std::flush;
 }
 
 /// @brief Print the given element, prefixed with the rank of the current PE.
@@ -34,7 +34,7 @@ void print_result(std::vector<T> const& result, Communicator const& comm) {
 /// @param comm KaMPIng communicator to get the rank of the PE.
 template <typename T>
 void print_result(T const& result, Communicator const& comm) {
-    std::cout << "[PE " << comm.rank() << "] " << result << std::endl;
+  std::cout << "[PE " << comm.rank() << "] " << result << std::endl;
 }
 
 /// @brief Print all elements in a container only on the root PE.
@@ -43,8 +43,8 @@ void print_result(T const& result, Communicator const& comm) {
 /// @param comm KaMPIng communicator to determine which PE is the root PE.
 template <typename T>
 void print_result_on_root(std::vector<T> const& result, Communicator const& comm) {
-    if (comm.is_root()) {
-        print_result(result, comm);
-    }
+  if (comm.is_root()) {
+    print_result(result, comm);
+  }
 }
 } // namespace kamping

@@ -20,27 +20,27 @@ using namespace ::kamping;
 using namespace ::kamping::internal;
 
 TEST(ParameterFactoriesTest, op_commutativity_tags_work) {
-    struct MySum {
-        int operator()(int const& a, int const& b) const {
-            return a + b;
-        }
-    };
-    {
-        auto op_object = op(std::plus<>{});
-        auto op        = op_object.build_operation<int>();
-        EXPECT_EQ(op.op(), MPI_SUM);
-        EXPECT_TRUE(decltype(op)::commutative);
+  struct MySum {
+    int operator()(int const& a, int const& b) const {
+      return a + b;
     }
-    {
-        auto op_object = op(MySum{}, kamping::commutative);
-        auto op        = op_object.build_operation<int>();
-        EXPECT_NE(op.op(), MPI_SUM);
-        EXPECT_TRUE(decltype(op)::commutative);
-    }
-    {
-        auto op_object = op(MySum{}, kamping::non_commutative);
-        auto op        = op_object.build_operation<int>();
-        EXPECT_NE(op.op(), MPI_SUM);
-        EXPECT_FALSE(decltype(op)::commutative);
-    }
+  };
+  {
+    auto op_object = op(std::plus<>{});
+    auto op        = op_object.build_operation<int>();
+    EXPECT_EQ(op.op(), MPI_SUM);
+    EXPECT_TRUE(decltype(op)::commutative);
+  }
+  {
+    auto op_object = op(MySum{}, kamping::commutative);
+    auto op        = op_object.build_operation<int>();
+    EXPECT_NE(op.op(), MPI_SUM);
+    EXPECT_TRUE(decltype(op)::commutative);
+  }
+  {
+    auto op_object = op(MySum{}, kamping::non_commutative);
+    auto op        = op_object.build_operation<int>();
+    EXPECT_NE(op.op(), MPI_SUM);
+    EXPECT_FALSE(decltype(op)::commutative);
+  }
 }

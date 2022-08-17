@@ -27,9 +27,9 @@
 /// function even when it's not used.
 template <typename... Args>
 void kamping::Communicator::barrier(Args... args) const {
-    using namespace kamping::internal;
-    static_assert(sizeof...(args) == 0, "You may not pass any arguments to barrier().");
+  using namespace kamping::internal;
+  static_assert(sizeof...(args) == 0, "You may not pass any arguments to barrier().");
 
-    [[maybe_unused]] int err = MPI_Barrier(mpi_communicator());
-    THROW_IF_MPI_ERROR(err, MPI_Barrier);
+  [[maybe_unused]] int err = MPI_Barrier(mpi_communicator());
+  THROW_IF_MPI_ERROR(err, MPI_Barrier);
 }

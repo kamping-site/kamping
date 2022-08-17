@@ -24,24 +24,24 @@
 #include "kamping/environment.hpp"
 
 int main() {
-    using namespace kamping;
+  using namespace kamping;
 
-    kamping::Environment e;
-    Communicator         comm;
+  kamping::Environment e;
+  Communicator         comm;
 
-    // Rank i sends i values to rank 0, i+1 values to rank 1, ...
-    std::vector<int> counts_per_rank(comm.size());
-    std::iota(counts_per_rank.begin(), counts_per_rank.end(), comm.rank_signed());
+  // Rank i sends i values to rank 0, i+1 values to rank 1, ...
+  std::vector<int> counts_per_rank(comm.size());
+  std::iota(counts_per_rank.begin(), counts_per_rank.end(), comm.rank_signed());
 
-    int num_elements = std::reduce(counts_per_rank.begin(), counts_per_rank.end(), 0);
-    std::vector<size_t> input(asserting_cast<size_t>(num_elements));
-    // Rank i sends it own rank to all others
-    std::fill(input.begin(), input.end(), comm.rank());
+  int                 num_elements = std::reduce(counts_per_rank.begin(), counts_per_rank.end(), 0);
+  std::vector<size_t> input(asserting_cast<size_t>(num_elements));
+  // Rank i sends it own rank to all others
+  std::fill(input.begin(), input.end(), comm.rank());
 
-    std::vector<size_t> output =
-        comm.alltoallv(send_buf(input), send_counts(counts_per_rank)).extract_recv_buffer();
+  std::vector<size_t> output =
+    comm.alltoallv(send_buf(input), send_counts(counts_per_rank)).extract_recv_buffer();
 
-    print_result_on_root(output, comm);
+  print_result_on_root(output, comm);
 
-    return 0;
+  return 0;
 }

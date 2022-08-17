@@ -31,12 +31,12 @@
 /// 1. The error code returned by the MPI call.
 /// 2. The MPI function that returned the error code.
 #define THROW_IF_MPI_ERROR(error_code, function) \
-    THROWING_KASSERT_SPECIFIED(                  \
-        error_code == MPI_SUCCESS,               \
-        #function << " failed!",                 \
-        kamping::MpiErrorException,              \
-        error_code                               \
-    );
+  THROWING_KASSERT_SPECIFIED(                    \
+    error_code == MPI_SUCCESS,                   \
+    #function << " failed!",                     \
+    kamping::MpiErrorException,                  \
+    error_code                                   \
+  );
 
 namespace kamping {
 
@@ -47,46 +47,46 @@ namespace kamping {
 /// "<MPI function that failed> failed", MpiErrorException, err);`
 class MpiErrorException : public std::exception {
 public:
-    /// @brief Constructs the exception
-    /// @param message A custom error message.
-    /// @param mpi_error_code The error code returned by the MPI call.
-    MpiErrorException(std::string message, int mpi_error_code) : _mpi_error_code(mpi_error_code) {
-        int                                    errorStringLen;
-        std::array<char, MPI_MAX_ERROR_STRING> errorString;
-        int err = MPI_Error_string(_mpi_error_code, errorString.data(), &errorStringLen);
-        if (err == MPI_SUCCESS) {
-            _what = message + "Failed with the following error message:\n"
-                    + std::string(errorString.data()) + "\n";
-        } else {
-            _what = message + "Error message could not be retrieved\n";
-        }
+  /// @brief Constructs the exception
+  /// @param message A custom error message.
+  /// @param mpi_error_code The error code returned by the MPI call.
+  MpiErrorException(std::string message, int mpi_error_code) : _mpi_error_code(mpi_error_code) {
+    int                                    errorStringLen;
+    std::array<char, MPI_MAX_ERROR_STRING> errorString;
+    int err = MPI_Error_string(_mpi_error_code, errorString.data(), &errorStringLen);
+    if (err == MPI_SUCCESS) {
+      _what = message + "Failed with the following error message:\n"
+              + std::string(errorString.data()) + "\n";
+    } else {
+      _what = message + "Error message could not be retrieved\n";
     }
+  }
 
-    /// @brief Gets a description of this exception.
-    /// @return A description of this exception.
-    [[nodiscard]] char const* what() const noexcept final {
-        return _what.c_str();
-    }
+  /// @brief Gets a description of this exception.
+  /// @return A description of this exception.
+  [[nodiscard]] char const* what() const noexcept final {
+    return _what.c_str();
+  }
 
-    /// @brief Gets the error code returned by the mpi call.
-    /// @return The error code returned by the mpi call.
-    [[nodiscard]] int mpi_error_code() const {
-        return _mpi_error_code;
-    }
+  /// @brief Gets the error code returned by the mpi call.
+  /// @return The error code returned by the mpi call.
+  [[nodiscard]] int mpi_error_code() const {
+    return _mpi_error_code;
+  }
 
-    /// @brief Gets the error class corresponding to the error code.
-    /// @return The error class corresponding to the error code.
-    [[nodiscard]] int mpi_error_class() const {
-        int error_class;
-        MPI_Error_class(_mpi_error_code, &error_class);
-        return error_class;
-    }
+  /// @brief Gets the error class corresponding to the error code.
+  /// @return The error class corresponding to the error code.
+  [[nodiscard]] int mpi_error_class() const {
+    int error_class;
+    MPI_Error_class(_mpi_error_code, &error_class);
+    return error_class;
+  }
 
 private:
-    /// @brief The description of this exception.
-    std::string _what;
-    /// @brief The error code returned by the MPI call.
-    int _mpi_error_code;
+  /// @brief The description of this exception.
+  std::string _what;
+  /// @brief The error code returned by the MPI call.
+  int _mpi_error_code;
 };
 
 } // namespace kamping
