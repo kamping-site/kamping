@@ -61,7 +61,7 @@ auto kamping::Communicator::bcast(Args... args) const {
     // Get the send_recv_buf; for now, the user *has* to provide a send-receive buffer.
     auto&& send_recv_buf = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
     using value_type     = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
-    static_assert(!std::is_const_v<decltype(send_recv_buf)>, "Const send_recv_buf'fers are not allowed.");
+    static_assert(!std::is_const_v<decltype(send_recv_buf)>, "Const send_recv_buffers are not allowed.");
     auto mpi_value_type = mpi_datatype<value_type>();
 
     /// @todo Uncomment, once the send_recv_buf is optional.
@@ -137,7 +137,7 @@ auto kamping::Communicator::bcast(Args... args) const {
 template <typename... Args>
 auto kamping::Communicator::bcast_single(Args... args) const {
     //! If your expand this function to not being only a simple wrapper around bcast, you have to write more unit tests!
-    // In contrast to bcast(...), the recv_count is not a possible parameter.
+    // In contrast to bcast(...), the recv_counts is not a possible parameter.
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root));
 
     return this->bcast(std::forward<Args>(args)..., recv_counts(1));
