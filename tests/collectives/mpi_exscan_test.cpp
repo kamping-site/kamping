@@ -1,4 +1,3 @@
-
 // This file is part of KaMPIng.
 //
 // Copyright 2022 The KaMPIng Authors
@@ -69,6 +68,30 @@ TEST(ExscanTest, builtin_op_on_non_builtin_type) {
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {((comm.rank_signed() - 1) * comm.rank_signed()) / 2, comm.rank_signed() * 42};
     EXPECT_EQ(result, expected_result);
+}
+
+TEST(ExscanTest, identity_not_auto_deducible_and_no_values_on_rank_0_provided) {
+    Communicator comm;
+
+    struct MyInt {
+        MyInt() : _value(0) {}
+        MyInt(int value) : _value(value) {}
+        int _value;
+        int operator+(MyInt const& rhs) const noexcept {
+            return this->_value + rhs._value;
+        }
+        bool operator==(MyInt const& rhs) const {
+            return this->_value == rhs._value;
+        }
+    };
+    std::vector<MyInt> input = {comm.rank_signed(), 42};
+
+    auto result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative)).extract_recv_buffer();
+    EXPECT_EQ(result.size(), 2);
+    std::vector<MyInt> expected_result = {((comm.rank_signed() - 1) * comm.rank_signed()) / 2, comm.rank_signed() * 42};
+    if (comm.rank() != 0) { // The result of this exscan() is not defined on rank 0.
+        EXPECT_EQ(result, expected_result);
+    }
 }
 
 TEST(ExscanTest, non_identity_values_on_rank_0) {
@@ -200,4 +223,4 @@ TEST(ExscanTest, custom_operation_on_builtin_type_non_commutative) {
 }
 
 /// @todo Once our helper macros support checking for KASSERTs which are thrown on some ranks only, write a test for
-/// and values_on_rank_0 size which is not 1 and not equal the length of the recv_buf.
+/// and values_on_rank_0 size which is not 1 and not equal to the length of recv_buf.

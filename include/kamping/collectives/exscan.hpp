@@ -1,4 +1,3 @@
-
 // This file is part of KaMPIng.
 //
 // Copyright 2022 The KaMPIng Authors
@@ -104,16 +103,11 @@ auto kamping::Communicator::exscan(Args... args) const {
     // built-in data-type, we set the value on rank 0 to the identity of that operation on that datatype (e.g. 0 for
     // addition on integers).
     if (rank() == 0) {
-        constexpr bool has_values_on_root_param = has_parameter_type<ParameterType::values_on_rank_0, Args...>();
-        // We decided not to enforce this, at it would introduce a parameter which is required in some situtations in
+        constexpr bool has_values_on_rank_0_param = has_parameter_type<ParameterType::values_on_rank_0, Args...>();
+        // We decided not to enforce having to provide values_on_rank_0() for a operation for which we cannot
+        // auto-deduce the identity, as this would introduce a parameter which is required in some situtations in
         // KaMPIng, but never in MPI.
-        //
-        // static_assert(
-        //     is_on_root_param_provided || operation.is_builtin,
-        //     "The user did not provide values_on_rank_0(...) and the operation is not built-in (at least on this
-        //     type)."
-        // );
-        if constexpr (has_values_on_root_param) {
+        if constexpr (has_values_on_rank_0_param) {
             const auto& values_on_rank_0_param = select_parameter_type<ParameterType::values_on_rank_0>(args...);
             KASSERT(
                 (values_on_rank_0_param.size() == 1 || values_on_rank_0_param.size() == recv_buf.size()),
