@@ -338,7 +338,7 @@ TEST(BcastTest, message_of_size_0) {
 }
 
 TEST(BcastTest, bcast_single) {
-    // bcast_single is a wrapper arount bcast, providing the recv_count(1).
+    // bcast_single is a wrapper around bcast, providing the recv_count(1).
     // There is not much we can test here, that's not already tested by the tests for bcast.
 
     Communicator comm;
