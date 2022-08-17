@@ -362,8 +362,7 @@ TEST(BcastTest, bcast_single) {
 TEST(BcastTest, bcast_single_invalid_parameters) {
     Communicator comm;
 
-    std::vector<int>     input = {42, 1};
-    [[maybe_unused]] int result;
+    std::vector<int> input = {42, 1};
 
     EXPECT_KASSERT_FAILS(
         (comm.bcast_single(send_recv_buf(input))), "The send/receive buffer has to be of size 1 on all ranks."
