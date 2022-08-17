@@ -22,7 +22,7 @@
 using namespace ::kamping;
 using namespace ::testing;
 
-TEST(exscanTest, exscan_no_receive_buffer) {
+TEST(ExscanTest, no_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
@@ -34,7 +34,7 @@ TEST(exscanTest, exscan_no_receive_buffer) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(exscanTest, exscan_with_receive_buffer) {
+TEST(ExscanTest, with_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
@@ -47,7 +47,7 @@ TEST(exscanTest, exscan_with_receive_buffer) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(exscanTest, exscan_builtin_op_on_non_builtin_type) {
+TEST(ExscanTest, builtin_op_on_non_builtin_type) {
     Communicator comm;
 
     struct MyInt {
@@ -71,7 +71,7 @@ TEST(exscanTest, exscan_builtin_op_on_non_builtin_type) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(exscanTest, exscan_no_identity_values_on_rank_0) {
+TEST(ExscanTest, non_identity_values_on_rank_0) {
     Communicator comm;
 
     std::vector<int> input = {0};
@@ -93,7 +93,7 @@ int add_plus_42_function(int const& lhs, int const& rhs) {
     return lhs + rhs + 42;
 }
 
-TEST(exscanTest, exscan_custom_operation_on_builtin_type) {
+TEST(ExscanTest, custom_operation_on_builtin_type) {
     Communicator comm;
 
     auto add_plus_42_lambda = [](auto const& lhs, auto const& rhs) {
@@ -178,7 +178,7 @@ TEST(exscanTest, exscan_custom_operation_on_builtin_type) {
     }
 }
 
-TEST(exscanTest, exscan_custom_operation_on_builtin_type_non_commutative) {
+TEST(ExscanTest, custom_operation_on_builtin_type_non_commutative) {
     Communicator comm;
 
     auto get_right = [](auto const&, auto const& rhs) {
