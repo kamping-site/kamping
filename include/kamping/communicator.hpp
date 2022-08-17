@@ -209,6 +209,9 @@ public:
     auto scan(Args... args) const;
 
     template <typename... Args>
+    auto scan_single(Args... args) const;
+
+    template <typename... Args>
     auto exscan(Args... args) const;
 
     template <typename... Args>
