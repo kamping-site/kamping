@@ -719,7 +719,7 @@ TEST(ParameterFactoriesTest, recv_counts_single_value_in_basics) {
 TEST(ParameterFactoriesTest, recv_count_out_basics) {
     {
         int  recv_count;
-        auto recv_count_out_obj          = recv_count_out(recv_count);
+        auto recv_count_out_obj          = recv_counts_out(recv_count);
         *recv_count_out_obj.get().data() = 42;
         EXPECT_EQ(*recv_count_out_obj.get().data(), 42);
         EXPECT_EQ(recv_count, 42);
@@ -727,7 +727,7 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
         EXPECT_EQ(decltype(recv_count_out_obj)::buffer_type, internal::BufferType::out_buffer);
     }
     {
-        auto recv_count_out_obj = recv_count_out();
+        auto recv_count_out_obj = recv_counts_out();
         EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
         EXPECT_EQ(decltype(recv_count_out_obj)::buffer_type, internal::BufferType::out_buffer);
     }
@@ -1015,8 +1015,8 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
 
 TEST(ParameterFactoriesTest, out_parameter_without_passed_parameters) {
     {
-        auto data_buf = recv_count_out();
-        EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::recv_count);
+        auto data_buf = recv_counts_out();
+        EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::recv_counts);
         EXPECT_EQ(data_buf.is_modifiable, true);
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
     }

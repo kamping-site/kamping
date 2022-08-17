@@ -243,20 +243,6 @@ auto recv_counts(std::initializer_list<T> counts) {
     );
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
-/// will contained the receive counts when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the receive counts.
-/// @param container Container which will contain the receive counts.
-/// @return Object referring to the storage containing the receive counts.
-template <typename Container>
-auto recv_counts_out(Container&& container) {
-    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
-        std::forward<Container>(container)
-    );
-}
-
 /// @brief Generates a wrapper for a recv count output parameter allocated by KaMPIng.
 ///
 /// This is primarily used by KaMPIng internally because not passing this to a function will have the same effect as
@@ -266,7 +252,7 @@ auto recv_counts_out(Container&& container) {
 inline auto recv_counts_out(NewContainer<int>&&) {
     // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
     return internal::make_data_buffer<
-        internal::ParameterType::recv_count, internal::BufferModifiability::modifiable,
+        internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer>(NewContainer<int>{});
 }
 
