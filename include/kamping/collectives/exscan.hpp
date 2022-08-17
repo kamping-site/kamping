@@ -157,7 +157,7 @@ auto kamping::Communicator::exscan(Args... args) const {
 ///  vector.
 template <typename... Args>
 auto kamping::Communicator::exscan_single(Args... args) const {
-    //! If your expand this function to not being only a simple wrapper around exscan, you have to write more unit
+    //! If you expand this function to not being only a simple wrapper around exscan, you have to write more unit
     //! tests!
 
     using namespace kamping::internal;

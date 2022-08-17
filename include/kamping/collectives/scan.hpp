@@ -118,7 +118,7 @@ auto kamping::Communicator::scan(Args... args) const {
 /// @return Result type wrapping the output buffer if not specified as input parameter.
 template <typename... Args>
 auto kamping::Communicator::scan_single(Args... args) const {
-    //! If your expand this function to not being only a simple wrapper around scan, you have to write more unit
+    //! If you expand this function to not being only a simple wrapper around scan, you have to write more unit
     //! tests!
 
     using namespace kamping::internal;
