@@ -84,6 +84,7 @@ TEST(ExscanTest, exscan_single_vector_of_size_1_without_recv_buf) {
     }
 }
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
 TEST(ExscanTest, exscan_single_vector_of_size_2_with_recv_buf) {
     Communicator comm;
 
@@ -118,6 +119,7 @@ TEST(ExscanTest, exscan_single_vector_of_size_2_without_recv_buf) {
         "The send buffer has to be of size 1 on all ranks."
     );
 }
+#endif
 
 TEST(ExscanTest, no_receive_buffer) {
     Communicator comm;

@@ -168,7 +168,7 @@ auto kamping::Communicator::exscan_single(Args... args) const {
         Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
     );
 
-#ifndef NDEBUG
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
     const auto& send_buf = select_parameter_type<ParameterType::send_buf>(args...).get();
     KASSERT(send_buf.size() == 1u, "The send buffer has to be of size 1 on all ranks.", assert::light);
 #endif
