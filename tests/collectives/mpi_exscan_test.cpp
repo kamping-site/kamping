@@ -88,8 +88,8 @@ TEST(ExscanTest, exscan_single_vector_of_size_2_with_recv_buf) {
     Communicator comm;
 
     {
-        std::vector<int> input = {42, 1};
-        int              result;
+        std::vector<int>     input = {42, 1};
+        [[maybe_unused]] int result;
 
         EXPECT_KASSERT_FAILS(
             (comm.exscan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}))),
@@ -98,8 +98,8 @@ TEST(ExscanTest, exscan_single_vector_of_size_2_with_recv_buf) {
     }
 
     {
-        std::vector<int> input = {42, 1};
-        std::vector<int> result;
+        std::vector<int>                  input = {42, 1};
+        [[maybe_unused]] std::vector<int> result;
 
         EXPECT_KASSERT_FAILS(
             (comm.exscan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}))),
