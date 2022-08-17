@@ -37,8 +37,8 @@
 /// according to the function op) of the values in the sendbufs of processes with ranks 0, ..., i (inclusive). The type
 /// of operations supported, their semantics, and the constraints on send and receive buffers are as for MPI_Reduce.
 /// The following parameters are required:
-/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
-/// each rank.
+/// - \ref kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be the
+///  same size at each rank.
 /// - \ref kamping::op() wrapping the operation to apply to the input.
 ///
 /// The following parameters are optional:
