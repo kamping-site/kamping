@@ -31,7 +31,8 @@ namespace testing {
 template <typename ExpectedValueType, typename GeneratedBuffer, typename T>
 void test_const_buffer(
     const GeneratedBuffer& generated_buffer, kamping::internal::ParameterType expected_parameter_type,
-    kamping::internal::BufferType expected_buffer_type, Span<T>& expected_span) {
+    kamping::internal::BufferType expected_buffer_type, Span<T>& expected_span
+) {
     // value_type of a buffer should be the same as the value_type of the underlying container
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
@@ -43,7 +44,8 @@ void test_const_buffer(
     static_assert(std::is_pointer_v<decltype(span.data())>, "Member ptr of internal::Span is not a pointer.");
     static_assert(
         std::is_const_v<std::remove_pointer_t<decltype(span.data())>>,
-        "Member data() of internal::Span does not point to const memory.");
+        "Member data() of internal::Span does not point to const memory."
+    );
 
     EXPECT_EQ(span.data(), expected_span.data());
     EXPECT_EQ(span.size(), expected_span.size());
@@ -56,7 +58,8 @@ void test_const_buffer(
 template <typename ExpectedValueType, typename GeneratedBuffer, typename ExpectedValueContainer>
 void test_owning_buffer(
     const GeneratedBuffer& generated_buffer, kamping::internal::ParameterType expected_parameter_type,
-    kamping::internal::BufferType expected_buffer_type, ExpectedValueContainer&& expected_value_container) {
+    kamping::internal::BufferType expected_buffer_type, ExpectedValueContainer&& expected_value_container
+) {
     // value_type of a buffer should be the same as the value_type of the underlying container
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
@@ -68,7 +71,8 @@ void test_owning_buffer(
     static_assert(std::is_pointer_v<decltype(span.data())>, "Member ptr of internal::Span is not a pointer.");
     static_assert(
         std::is_const_v<std::remove_pointer_t<decltype(span.data())>>,
-        "Member data() of internal::Span does not point to const memory.");
+        "Member data() of internal::Span does not point to const memory."
+    );
 
     EXPECT_EQ(span.size(), expected_value_container.size());
     for (size_t i = 0; i < expected_value_container.size(); ++i) {
@@ -79,7 +83,8 @@ void test_owning_buffer(
 template <typename ExpectedValueType, typename GeneratedBuffer, typename T>
 void test_modifiable_buffer(
     GeneratedBuffer& generated_buffer, kamping::internal::ParameterType expected_parameter_type,
-    kamping::internal::BufferType expected_buffer_type, Span<T>& expected_span) {
+    kamping::internal::BufferType expected_buffer_type, Span<T>& expected_span
+) {
     // value_type of a buffer should be the same as the value_type of the underlying container
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
@@ -91,7 +96,8 @@ void test_modifiable_buffer(
     static_assert(std::is_pointer_v<decltype(span.data())>, "Member ptr of internal::Span is not a pointer.");
     static_assert(
         !std::is_const_v<std::remove_pointer_t<decltype(span.data())>>,
-        "Member data() of internal::Span does point to const memory.");
+        "Member data() of internal::Span does point to const memory."
+    );
 
     EXPECT_EQ(span.data(), expected_span.data());
     EXPECT_EQ(span.size(), expected_span.size());
@@ -104,7 +110,8 @@ void test_modifiable_buffer(
 template <typename ExpectedValueType, typename GeneratedBuffer, typename UnderlyingContainer>
 void test_user_allocated_buffer(
     GeneratedBuffer& generated_buffer, kamping::internal::ParameterType expected_parameter_type,
-    kamping::internal::BufferType expected_buffer_type, UnderlyingContainer& underlying_container) {
+    kamping::internal::BufferType expected_buffer_type, UnderlyingContainer& underlying_container
+) {
     // value_type of a buffer should be the same as the value_type of the underlying container
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
@@ -129,7 +136,8 @@ void test_user_allocated_buffer(
 template <typename ExpectedValueType, typename GeneratedBuffer>
 void test_library_allocated_buffer(
     GeneratedBuffer& generated_buffer, kamping::internal::ParameterType expected_parameter_type,
-    kamping::internal::BufferType expected_buffer_type) {
+    kamping::internal::BufferType expected_buffer_type
+) {
     // value_type of a buffer should be the same as the value_type of the underlying container
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
@@ -148,8 +156,8 @@ void test_library_allocated_buffer(
 template <typename ExpectedValueType, typename GeneratedBuffer>
 void test_single_element_buffer(
     GeneratedBuffer const& generatedbuffer, kamping::internal::ParameterType expected_parameter_type,
-    kamping::internal::BufferType expected_buffer_type, ExpectedValueType const value,
-    bool should_be_modifiable = false) {
+    kamping::internal::BufferType expected_buffer_type, ExpectedValueType const value, bool should_be_modifiable = false
+) {
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
     EXPECT_EQ(GeneratedBuffer::is_modifiable, should_be_modifiable);
@@ -169,7 +177,8 @@ TEST(ParameterFactoriesTest, send_buf_basics_int_vector) {
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_int_vec, ParameterType::send_buf, internal::BufferType::in_buffer, expected_span);
+        gen_via_int_vec, ParameterType::send_buf, internal::BufferType::in_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, send_buf_basics_const_int_vector) {
@@ -178,7 +187,8 @@ TEST(ParameterFactoriesTest, send_buf_basics_const_int_vector) {
     Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_const_int_vec, ParameterType::send_buf, internal::BufferType::in_buffer, expected_span);
+        gen_via_const_int_vec, ParameterType::send_buf, internal::BufferType::in_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, send_buf_basics_moved_vector) {
@@ -187,7 +197,8 @@ TEST(ParameterFactoriesTest, send_buf_basics_moved_vector) {
     auto                   gen_via_moved_vec = send_buf(std::move(const_int_vec));
     using ExpectedValueType                  = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_moved_vec, ParameterType::send_buf, internal::BufferType::in_buffer, expected);
+        gen_via_moved_vec, ParameterType::send_buf, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, send_buf_basics_vector_from_function) {
@@ -199,7 +210,8 @@ TEST(ParameterFactoriesTest, send_buf_basics_vector_from_function) {
     auto                   gen_via_vec_from_function = send_buf(make_vector());
     using ExpectedValueType                          = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_vec_from_function, ParameterType::send_buf, internal::BufferType::in_buffer, expected);
+        gen_via_vec_from_function, ParameterType::send_buf, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, send_buf_basics_vector_from_initializer_list) {
@@ -207,7 +219,8 @@ TEST(ParameterFactoriesTest, send_buf_basics_vector_from_initializer_list) {
     auto             gen_via_vec_from_function = send_buf({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1});
     using ExpectedValueType                    = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_vec_from_function, ParameterType::send_buf, internal::BufferType::in_buffer, expected);
+        gen_via_vec_from_function, ParameterType::send_buf, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, send_buf_single_element) {
@@ -215,31 +228,36 @@ TEST(ParameterFactoriesTest, send_buf_single_element) {
         uint8_t value                     = 11;
         auto    gen_single_element_buffer = send_buf(value);
         testing::test_single_element_buffer(
-            gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, value);
+            gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, value
+        );
     }
     {
         uint16_t value                     = 4211;
         auto     gen_single_element_buffer = send_buf(value);
         testing::test_single_element_buffer(
-            gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, value);
+            gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, value
+        );
     }
     {
         uint32_t value                     = 4096;
         auto     gen_single_element_buffer = send_buf(value);
         testing::test_single_element_buffer(
-            gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, value);
+            gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, value
+        );
     }
     {
         uint64_t value                     = 555555;
         auto     gen_single_element_buffer = send_buf(value);
         testing::test_single_element_buffer(
-            gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, value);
+            gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, value
+        );
     }
     {
         // pass value as rvalue
         auto gen_single_element_buffer = send_buf(42051);
         testing::test_single_element_buffer(
-            gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, 42051);
+            gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, 42051
+        );
     }
     {
         struct CustomType {
@@ -255,13 +273,15 @@ TEST(ParameterFactoriesTest, send_buf_single_element) {
             CustomType value                     = {843290834, -482, 'a'};
             auto       gen_single_element_buffer = send_buf(value);
             testing::test_single_element_buffer(
-                gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, value);
+                gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer, value
+            );
         }
         {
             auto gen_single_element_buffer = send_buf(CustomType{843290834, -482, 'a'});
             testing::test_single_element_buffer(
                 gen_single_element_buffer, ParameterType::send_buf, internal::BufferType::in_buffer,
-                CustomType{843290834, -482, 'a'});
+                CustomType{843290834, -482, 'a'}
+            );
         }
     }
 }
@@ -305,7 +325,8 @@ TEST(ParameterFactoriesTest, send_counts_basics_int_vector) {
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_int_vec, ParameterType::send_counts, internal::BufferType::in_buffer, expected_span);
+        gen_via_int_vec, ParameterType::send_counts, internal::BufferType::in_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, send_counts_basics_const_int_vector) {
@@ -314,7 +335,8 @@ TEST(ParameterFactoriesTest, send_counts_basics_const_int_vector) {
     Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_const_int_vec, ParameterType::send_counts, internal::BufferType::in_buffer, expected_span);
+        gen_via_const_int_vec, ParameterType::send_counts, internal::BufferType::in_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, send_counts_basics_moved_int_vector) {
@@ -324,7 +346,8 @@ TEST(ParameterFactoriesTest, send_counts_basics_moved_int_vector) {
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_int_vec, ParameterType::send_counts, internal::BufferType::in_buffer, expected);
+        gen_via_int_vec, ParameterType::send_counts, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, send_counts_basics_initializer_list) {
@@ -332,7 +355,8 @@ TEST(ParameterFactoriesTest, send_counts_basics_initializer_list) {
     auto             gen_via_int_initializer_list = send_counts({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1});
     using ExpectedValueType                       = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_int_initializer_list, ParameterType::send_counts, internal::BufferType::in_buffer, expected);
+        gen_via_int_initializer_list, ParameterType::send_counts, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_counts_in_basics_int_vector) {
@@ -341,7 +365,8 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_int_vector) {
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_int_vec, ParameterType::recv_counts, internal::BufferType::in_buffer, expected_span);
+        gen_via_int_vec, ParameterType::recv_counts, internal::BufferType::in_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_counts_in_basics_const_int_vector) {
@@ -350,7 +375,8 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_const_int_vector) {
     Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_const_int_vec, ParameterType::recv_counts, internal::BufferType::in_buffer, expected_span);
+        gen_via_const_int_vec, ParameterType::recv_counts, internal::BufferType::in_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_counts_in_basics_moved_vector) {
@@ -359,7 +385,8 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_moved_vector) {
     auto             gen_via_moved_vec = recv_counts(std::move(int_vec));
     using ExpectedValueType            = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_moved_vec, ParameterType::recv_counts, internal::BufferType::in_buffer, expected);
+        gen_via_moved_vec, ParameterType::recv_counts, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_counts_in_basics_initializer_list) {
@@ -367,7 +394,8 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_initializer_list) {
     auto             gen_via_initializer_list = recv_counts({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1});
     using ExpectedValueType                   = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_initializer_list, ParameterType::recv_counts, internal::BufferType::in_buffer, expected);
+        gen_via_initializer_list, ParameterType::recv_counts, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, send_displs_in_basics_int_vector) {
@@ -376,7 +404,8 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_int_vector) {
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_int_vec, ParameterType::send_displs, internal::BufferType::in_buffer, expected_span);
+        gen_via_int_vec, ParameterType::send_displs, internal::BufferType::in_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, send_displs_in_basics_const_int_vector) {
@@ -385,7 +414,8 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_const_int_vector) {
     Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_const_int_vec, ParameterType::send_displs, internal::BufferType::in_buffer, expected_span);
+        gen_via_const_int_vec, ParameterType::send_displs, internal::BufferType::in_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, send_displs_in_basics_moved_vector) {
@@ -394,7 +424,8 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_moved_vector) {
     auto             gen_via_moved_vec = send_displs(std::move(int_vec));
     using ExpectedValueType            = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_moved_vec, ParameterType::send_displs, internal::BufferType::in_buffer, expected);
+        gen_via_moved_vec, ParameterType::send_displs, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, send_displs_in_basics_initializer_list) {
@@ -402,7 +433,8 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_initializer_list) {
     auto             gen_via_initializer_list = send_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1});
     using ExpectedValueType                   = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_initializer_list, ParameterType::send_displs, internal::BufferType::in_buffer, expected);
+        gen_via_initializer_list, ParameterType::send_displs, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_displs_in_basics_int_vector) {
@@ -411,7 +443,8 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_int_vector) {
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_int_vec, ParameterType::recv_displs, internal::BufferType::in_buffer, expected_span);
+        gen_via_int_vec, ParameterType::recv_displs, internal::BufferType::in_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_displs_in_basics_const_int_vector) {
@@ -420,7 +453,8 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_const_int_vector) {
     Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_const_int_vec, ParameterType::recv_displs, internal::BufferType::in_buffer, expected_span);
+        gen_via_const_int_vec, ParameterType::recv_displs, internal::BufferType::in_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_displs_in_basics_moved_vector) {
@@ -429,7 +463,8 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_moved_vector) {
     auto             gen_via_moved_vec = recv_displs(std::move(int_vec));
     using ExpectedValueType            = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_moved_vec, ParameterType::recv_displs, internal::BufferType::in_buffer, expected);
+        gen_via_moved_vec, ParameterType::recv_displs, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_displs_in_basics_initializer_list) {
@@ -437,7 +472,8 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_initializer_list) {
     auto             gen_via_initializer_list = recv_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1});
     using ExpectedValueType                   = int;
     testing::test_owning_buffer<ExpectedValueType>(
-        gen_via_initializer_list, ParameterType::recv_displs, internal::BufferType::in_buffer, expected);
+        gen_via_initializer_list, ParameterType::recv_displs, internal::BufferType::in_buffer, expected
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_buf_basics_user_alloc) {
@@ -446,14 +482,16 @@ TEST(ParameterFactoriesTest, recv_buf_basics_user_alloc) {
     auto             buffer_on_user_alloc_vector = recv_buf(int_vec);
     using ExpectedValueType                      = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
-        buffer_on_user_alloc_vector, ParameterType::recv_buf, internal::BufferType::out_buffer, int_vec);
+        buffer_on_user_alloc_vector, ParameterType::recv_buf, internal::BufferType::out_buffer, int_vec
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc) {
     auto buffer_based_on_library_alloc_vector = recv_buf(NewContainer<std::vector<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::recv_buf, internal::BufferType::out_buffer);
+        buffer_based_on_library_alloc_vector, ParameterType::recv_buf, internal::BufferType::out_buffer
+    );
 }
 
 TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
@@ -462,14 +500,16 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
     auto             buffer_based_on_user_alloc_vector = send_displs_out(int_vec);
     using ExpectedValueType                            = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_user_alloc_vector, ParameterType::send_displs, internal::BufferType::out_buffer, int_vec);
+        buffer_based_on_user_alloc_vector, ParameterType::send_displs, internal::BufferType::out_buffer, int_vec
+    );
 }
 
 TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc) {
     auto buffer_based_on_library_alloc_vector = send_displs_out(NewContainer<std::vector<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::send_displs, internal::BufferType::out_buffer);
+        buffer_based_on_library_alloc_vector, ParameterType::send_displs, internal::BufferType::out_buffer
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_counts_out_basics_user_alloc) {
@@ -479,14 +519,16 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_user_alloc) {
     auto             buffer_based_on_library_alloc_vector = recv_counts_out(NewContainer<std::vector<int>>{});
     using ExpectedValueType                               = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_user_alloc_buffer, ParameterType::recv_counts, internal::BufferType::out_buffer, int_vec);
+        buffer_based_on_user_alloc_buffer, ParameterType::recv_counts, internal::BufferType::out_buffer, int_vec
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc) {
     auto buffer_based_on_library_alloc_vector = recv_counts_out(NewContainer<std::vector<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::recv_counts, internal::BufferType::out_buffer);
+        buffer_based_on_library_alloc_vector, ParameterType::recv_counts, internal::BufferType::out_buffer
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
@@ -495,14 +537,16 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
     auto             buffer_based_on_user_alloc_vector = recv_displs_out(int_vec);
     using ExpectedValueType                            = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_user_alloc_vector, ParameterType::recv_displs, internal::BufferType::out_buffer, int_vec);
+        buffer_based_on_user_alloc_vector, ParameterType::recv_displs, internal::BufferType::out_buffer, int_vec
+    );
 }
 
 TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
     auto buffer_based_on_library_alloc_vector = recv_displs_out(NewContainer<std::vector<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::recv_displs, internal::BufferType::out_buffer);
+        buffer_based_on_library_alloc_vector, ParameterType::recv_displs, internal::BufferType::out_buffer
+    );
 }
 
 TEST(ParameterFactoriesTest, root_basics) {
@@ -516,7 +560,8 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_int_vector) {
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
     testing::test_modifiable_buffer<ExpectedValueType>(
-        gen_via_int_vec, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, expected_span);
+        gen_via_int_vec, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_basics_const_int_vector) {
@@ -525,7 +570,8 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_const_int_vector) {
     Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
-        gen_via_const_int_vec, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, expected_span);
+        gen_via_const_int_vec, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, expected_span
+    );
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_single_element) {
@@ -533,25 +579,29 @@ TEST(ParameterFactoriesTest, send_recv_buf_single_element) {
         uint8_t value                     = 11;
         auto    gen_single_element_buffer = send_recv_buf(value);
         testing::test_single_element_buffer(
-            gen_single_element_buffer, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, value, true);
+            gen_single_element_buffer, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, value, true
+        );
     }
     {
         uint16_t value                     = 4211;
         auto     gen_single_element_buffer = send_recv_buf(value);
         testing::test_single_element_buffer(
-            gen_single_element_buffer, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, value, true);
+            gen_single_element_buffer, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, value, true
+        );
     }
     {
         const uint32_t value                     = 4096;
         auto           gen_single_element_buffer = send_recv_buf(value);
         testing::test_single_element_buffer(
-            gen_single_element_buffer, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, value, false);
+            gen_single_element_buffer, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, value, false
+        );
     }
     {
         const uint64_t value                     = 555555;
         auto           gen_single_element_buffer = send_recv_buf(value);
         testing::test_single_element_buffer(
-            gen_single_element_buffer, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, value, false);
+            gen_single_element_buffer, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, value, false
+        );
     }
     {
         struct CustomType {
@@ -566,7 +616,8 @@ TEST(ParameterFactoriesTest, send_recv_buf_single_element) {
         CustomType value                     = {843290834, -482, 'a'};
         auto       gen_single_element_buffer = send_recv_buf(value);
         testing::test_single_element_buffer(
-            gen_single_element_buffer, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, value, true);
+            gen_single_element_buffer, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, value, true
+        );
     }
 }
 
@@ -611,14 +662,16 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_user_alloc) {
     auto             buffer_on_user_alloc_vector = send_recv_buf(int_vec);
     using ExpectedValueType                      = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
-        buffer_on_user_alloc_vector, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, int_vec);
+        buffer_on_user_alloc_vector, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer, int_vec
+    );
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_basics_library_alloc) {
     auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<std::vector<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer);
+        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer
+    );
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_custom_type_library_alloc) {
@@ -635,27 +688,29 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_type_library_alloc) {
     auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<std::vector<CustomType>>{});
     using ExpectedValueType                   = CustomType;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer);
+        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer
+    );
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_custom_container_library_alloc) {
     auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<testing::OwnContainer<int>>{});
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
-        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer);
+        buffer_based_on_library_alloc_vector, ParameterType::send_recv_buf, internal::BufferType::in_out_buffer
+    );
 }
 
-TEST(ParameterFactoriesTest, recv_count_in_basics) {
+TEST(ParameterFactoriesTest, recv_counts_single_value_in_basics) {
     {
         int  value             = 42;
-        auto recv_count_in_obj = recv_count(value);
+        auto recv_count_in_obj = recv_counts(value);
         EXPECT_EQ(*recv_count_in_obj.get().data(), 42);
         EXPECT_FALSE(decltype(recv_count_in_obj)::is_modifiable);
     }
 
     {
         // passed as rvalue
-        auto recv_count_in_obj = recv_count(42);
+        auto recv_count_in_obj = recv_counts(42);
         EXPECT_EQ(*recv_count_in_obj.get().data(), 42);
         EXPECT_FALSE(decltype(recv_count_in_obj)::is_modifiable);
     }
@@ -672,14 +727,14 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
         EXPECT_EQ(decltype(recv_count_out_obj)::buffer_type, internal::BufferType::out_buffer);
     }
     {
-        // auto recv_count_out_obj = recv_count_out();
-        //   EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
-        //   EXPECT_EQ(decltype(recv_count_out_obj)::buffer_type, internal::BufferType::out_buffer);
+        auto recv_count_out_obj = recv_count_out();
+        EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
+        EXPECT_EQ(decltype(recv_count_out_obj)::buffer_type, internal::BufferType::out_buffer);
     }
 }
 
-TEST(ParameterFactoriesTest, recv_count_out_lib_allocated_basics) {
-    auto recv_count_out_obj          = recv_count_out(NewContainer<int>{});
+TEST(ParameterFactoriesTest, recv_counts_out_single_value_lib_allocated_basics) {
+    auto recv_count_out_obj          = recv_counts_out(NewContainer<int>{});
     *recv_count_out_obj.get().data() = 42;
     EXPECT_EQ(*recv_count_out_obj.get().data(), 42);
     EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
@@ -700,7 +755,8 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const&>,
-            "Referencing buffers must hold a reference to their data.");
+            "Referencing buffers must hold a reference to their data."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -717,7 +773,8 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>&>,
-            "Referencing buffers must hold a reference to their data.");
+            "Referencing buffers must hold a reference to their data."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -734,7 +791,8 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(&single_int, &data_buf.underlying());
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, int const&>,
-            "Referencing buffers must hold a reference to their data.");
+            "Referencing buffers must hold a reference to their data."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -749,7 +807,8 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_FALSE(data_buf.is_single_element);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const>,
-            "Owning buffers must hold their data directly.");
+            "Owning buffers must hold their data directly."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -765,7 +824,8 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_FALSE(data_buf.is_single_element);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>>,
-            "Owning buffers must hold their data directly.");
+            "Owning buffers must hold their data directly."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
@@ -779,7 +839,8 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_TRUE(data_buf.is_single_element);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, int>,
-            "Owning buffers must hold their data directly.");
+            "Owning buffers must hold their data directly."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
@@ -793,7 +854,8 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_FALSE(data_buf.is_single_element);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>>,
-            "Owning buffers must hold their data directly.");
+            "Owning buffers must hold their data directly."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -807,7 +869,8 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_FALSE(data_buf.is_single_element);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<int>>,
-            "Owning buffers must hold their data directly.");
+            "Owning buffers must hold their data directly."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -828,7 +891,8 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool> const&>,
-            "Referencing buffers must hold a reference to their data.");
+            "Referencing buffers must hold a reference to their data."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -845,7 +909,8 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool>&>,
-            "Referencing buffers must hold a reference to their data.");
+            "Referencing buffers must hold a reference to their data."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -862,7 +927,8 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(&single_bool, &data_buf.underlying());
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, bool const&>,
-            "Referencing buffers must hold a reference to their data.");
+            "Referencing buffers must hold a reference to their data."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -877,7 +943,8 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_FALSE(data_buf.is_single_element);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool> const>,
-            "Owning buffers must hold their data directly.");
+            "Owning buffers must hold their data directly."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -887,13 +954,15 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
         auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(
-            NewContainer<testing::OwnContainer<bool>>{});
+            NewContainer<testing::OwnContainer<bool>>{}
+        );
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool>>,
-            "Owning buffers must hold their data directly.");
+            "Owning buffers must hold their data directly."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
@@ -907,7 +976,8 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_TRUE(data_buf.is_single_element);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, bool>,
-            "Owning buffers must hold their data directly.");
+            "Owning buffers must hold their data directly."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
@@ -921,7 +991,8 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_FALSE(data_buf.is_single_element);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<kabool>>,
-            "Initializer lists of type bool have to be converted to std::vector<kabool>.");
+            "Initializer lists of type bool have to be converted to std::vector<kabool>."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
@@ -935,7 +1006,8 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_FALSE(data_buf.is_single_element);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<kabool>>,
-            "Initializer lists of type bool have to be converted to std::vector<kabool>.");
+            "Initializer lists of type bool have to be converted to std::vector<kabool>."
+        );
         // extract() as proxy for lib allocated DataBuffers
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }

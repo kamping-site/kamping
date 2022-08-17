@@ -172,7 +172,8 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
     EXPECT_THAT(possible_mpi_datatypes<std::complex<double>>(), Contains(mpi_datatype<std::complex<double>>()));
     EXPECT_THAT(possible_mpi_datatypes<std::complex<float>>(), Contains(mpi_datatype<std::complex<float>>()));
     EXPECT_THAT(
-        possible_mpi_datatypes<std::complex<long double>>(), Contains(mpi_datatype<std::complex<long double>>()));
+        possible_mpi_datatypes<std::complex<long double>>(), Contains(mpi_datatype<std::complex<long double>>())
+    );
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_const_and_volatile) {
@@ -195,12 +196,14 @@ TEST(MpiDataTypeTest, mpi_datatype_size_t) {
     // size_t, which should be one of the unsigned integer types with at least 16 bits (as of C++11).
     EXPECT_THAT(
         (std::array{MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG}),
-        Contains(mpi_datatype<size_t>()));
+        Contains(mpi_datatype<size_t>())
+    );
 
     // As should std::size_t, which should be one of the unsigned integer types with at least 16 bits (as of C++11).
     EXPECT_THAT(
         (std::array{MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG}),
-        Contains(mpi_datatype<std::size_t>()));
+        Contains(mpi_datatype<std::size_t>())
+    );
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_enum) {

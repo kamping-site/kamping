@@ -35,7 +35,8 @@ int main(int /*argc*/, char** /*argv*/) {
 
     ContainerType                                                                 container;
     UserAllocatedContainerBasedBuffer<ContainerType, parameter_type, buffer_type> user_alloc_container_based_buffer(
-        container);
+        container
+    );
 
     LibAllocatedContainerBasedBuffer<ContainerType, parameter_type, buffer_type> lib_alloc_container_based_buffer;
 

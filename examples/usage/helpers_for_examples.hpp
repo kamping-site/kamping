@@ -28,6 +28,15 @@ void print_result(std::vector<T> const& result, Communicator const& comm) {
     std::cout << std::flush;
 }
 
+/// @brief Print the given element, prefixed with the rank of the current PE.
+/// @tparam T Type of the element.
+/// @param result The elements to be printed. Streamed to std::cout.
+/// @param comm KaMPIng communicator to get the rank of the PE.
+template <typename T>
+void print_result(T const& result, Communicator const& comm) {
+    std::cout << "[PE " << comm.rank() << "] " << result << std::endl;
+}
+
 /// @brief Print all elements in a container only on the root PE.
 /// @tparam T Type of the elements contained in the container.
 /// @param result The container whose elements are printed on the root PE.

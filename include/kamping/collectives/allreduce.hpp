@@ -56,7 +56,8 @@ auto kamping::Communicator::allreduce(Args... args) const {
     using default_recv_value_type = std::remove_const_t<send_value_type>;
     KASSERT(
         is_same_on_all_ranks(send_buf.size()), "The send buffer has to be the same size on all ranks.",
-        assert::light_communication);
+        assert::light_communication
+    );
 
     // Deduce the recv buffer type and get (if provided) the recv buffer or allocate one (if not provided).
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
@@ -65,7 +66,8 @@ auto kamping::Communicator::allreduce(Args... args) const {
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
         std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
-        "Types of send and receive buffers do not match.");
+        "Types of send and receive buffers do not match."
+    );
 
     // Get the operation used for the reduction. The signature of the provided function is checked while building.
     auto& operation_param = select_parameter_type<ParameterType::op>(args...);
@@ -90,7 +92,5 @@ auto kamping::Communicator::allreduce(Args... args) const {
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return MPIResult(
-        std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{});
+    return MPIResult(std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{});
 }

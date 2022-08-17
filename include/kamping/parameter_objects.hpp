@@ -159,8 +159,7 @@ public:
 
 /// @brief The set of parameter types that must be of type `int`
 constexpr std::array int_parameter_types{
-    ParameterType::recv_count, ParameterType::recv_counts, ParameterType::send_counts, ParameterType::recv_displs,
-    ParameterType::send_displs};
+    ParameterType::recv_counts, ParameterType::send_counts, ParameterType::recv_displs, ParameterType::send_displs};
 
 /// @brief Checks whether buffers of a given type should have `value_type` `int`.
 ///
@@ -293,7 +292,8 @@ public:
         if constexpr (is_single_element) {
             KASSERT(
                 size == 1u, "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                            "element buffers always hold exactly one element.");
+                            "element buffers always hold exactly one element."
+            );
         } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
             KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
         } else {
@@ -352,7 +352,8 @@ public:
         // this assertion is only checked if the buffer is actually accessed.
         static_assert(
             !is_vector_bool_v<MemberType>,
-            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead.");
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead."
+        );
         return _data;
     }
 
@@ -364,7 +365,8 @@ public:
         // this assertion is only checked if the buffer is actually accessed.
         static_assert(
             !is_vector_bool_v<MemberType>,
-            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead.");
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead."
+        );
         return _data;
     }
 
@@ -376,7 +378,8 @@ public:
     MemberTypeWithConst extract() {
         static_assert(
             ownership == BufferOwnership::owning, "Moving out of a reference should not be done because it would leave "
-                                                  "a users container in an unspecified state.");
+                                                  "a users container in an unspecified state."
+        );
         kassert_not_extracted("Cannot extract a buffer that has already been extracted.");
         auto extracted = std::move(underlying());
         // we set is_extracted here because otherwise the call to underlying() would fail

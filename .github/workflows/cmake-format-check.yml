@@ -1,0 +1,26 @@
+name: cmake-format check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+jobs:
+  cmake-formatting-check:
+    name: CMake Formatting Check
+    runs-on: self-hosted
+    container:
+      image: "localhost:5000/kamping-ci"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Delete extern directory
+      # Very hacky but the action doesn't allow excluding directories
+      # and for some reason the checkout action checks out submodules even though it shouldn't
+      run: rm -rf ./extern
+    - name: Format CMake files
+      id: cmake-format
+      uses: Hespian/cmake-format-action@main
+      with:
+        args: --config-files .cmake-format.py --check

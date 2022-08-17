@@ -89,8 +89,9 @@
             kamping::internal::has_no_unused_parameters<                                                         \
                 required_parameters_types, optional_parameters_types, args...>::assertion,                       \
             "There are unsupported parameters, only support required "                                           \
-            "parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(                                            \
-                required) " and optional parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(optional));     \
+            "parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(required                                    \
+            ) " and optional parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(optional)                   \
+        );                                                                                                       \
         static_assert(kamping::internal::all_unique_v<parameter_types>, "There are duplicate parameter types."); \
     } while (false)
 
@@ -185,7 +186,8 @@
         KAMPING_PARAMETER_CHECK_HPP_PREFIX6(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX5(__VA_ARGS__), \
         KAMPING_PARAMETER_CHECK_HPP_PREFIX4(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX3(__VA_ARGS__), \
         KAMPING_PARAMETER_CHECK_HPP_PREFIX2(__VA_ARGS__), KAMPING_PARAMETER_CHECK_HPP_PREFIX1(__VA_ARGS__), \
-        KAMPING_PARAMETER_CHECK_HPP_PREFIX0(__VA_ARGS__), ignore)
+        KAMPING_PARAMETER_CHECK_HPP_PREFIX0(__VA_ARGS__), ignore                                            \
+    )
 
 #define KAMPING_PARAMETER_CHECK_HPP_PREFIX0(ignore)
 #define KAMPING_PARAMETER_CHECK_HPP_PREFIX1(ignore, x1) kamping::internal::ParameterType::x1
@@ -226,13 +228,15 @@
         KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER3(args, __VA_ARGS__),              \
         KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER2(args, __VA_ARGS__),              \
         KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, __VA_ARGS__),              \
-        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0(args, __VA_ARGS__), ignore)
+        KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0(args, __VA_ARGS__), ignore       \
+    )
 
 #define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER0(args, ignore)
 #define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, ignore, x1)                \
     static_assert(                                                                              \
         kamping::internal::has_parameter_type<kamping::internal::ParameterType::x1, args...>(), \
-        "Missing required parameter " #x1);
+        "Missing required parameter " #x1                                                       \
+    );
 #define KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER2(args, ignore, x1, x2) \
     KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, ignore, x1);        \
     KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, ignore, x2)
@@ -289,14 +293,15 @@ struct has_no_unused_parameters {
         return std::tuple_size_v<decltype(std::tuple_cat(
                    std::conditional_t<
                        !has_parameter_type<std::tuple_element_t<Indices, all_available_parameters>::value, Args...>(),
-                       std::tuple<std::tuple_element_t<Indices, all_available_parameters>>,
-                       std::tuple<>>{}...))> + sizeof...(Args);
+                       std::tuple<std::tuple_element_t<Indices, all_available_parameters>>, std::tuple<>>{}...
+               ))> + sizeof...(Args);
     }
 
     /// @brief \c true if and only if no unused parameter can be found in \c Args.
     static constexpr bool assertion =
         (std::tuple_size_v<all_available_parameters> >= number_distinct_parameters(
-             std::make_index_sequence<std::tuple_size_v<all_available_parameters>>{}));
+             std::make_index_sequence<std::tuple_size_v<all_available_parameters>>{}
+         ));
 
 }; // struct has_no_unused_parameters
 
@@ -345,7 +350,8 @@ template <typename... Parameters>
 struct parameters_to_integral_constant {
     /// @brief Type of the tuple.
     using type = decltype(std::tuple_cat(
-        std::tuple<typename parameter_type_to_integral_constant<Parameters::parameter_type>::type>{}...));
+        std::tuple<typename parameter_type_to_integral_constant<Parameters::parameter_type>::type>{}...
+    ));
 };
 
 /// @brief Checks if the buffer has to be computed by kamping, i.e. if it is an output parameter or the buffer has been
