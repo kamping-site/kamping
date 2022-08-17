@@ -136,7 +136,7 @@ auto kamping::Communicator::bcast(Args... args) const {
 
 template <typename... Args>
 auto kamping::Communicator::bcast_single(Args... args) const {
-    //! If your expand this function to not being only a simple wrapper arount bcast, you have to write more unit tests!
+    //! If your expand this function to not being only a simple wrapper around bcast, you have to write more unit tests!
     // In contrast to bcast(...), the recv_count is not a possible parameter.
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root));
 
