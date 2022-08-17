@@ -31,23 +31,26 @@
 
 /// @brief Wrapper for \c MPI_Exscan.
 ///
-/// This wraps \c MPI_Exscan, which is used to perform an exclusive prefix reduction on data distributed across the
-/// calling processes. / \c exscan(...) returns in the \c recv_buf of the process with rank \c i, the reduction
-/// (calculated according to the function \c op) of the values in the sendbufs of processes with ranks 0, ..., i
-/// (exclusive). We set the value of the \c recv_buf on rank 0 to the value of \c values_on_rank_0 if provided. If \c
-/// values_on_rank_0 is not provided and \c op is a built-in operation and we are working on a built in data-type, we
-/// set the value on rank 0 to the identity of that operation. The type of operations supported, their semantics, and
-/// the constraints on send and receive buffers are as for \c MPI_Reduce. The following parameters are required:
+/// \c exscan() wraps \c MPI_Exscan, which is used to perform an exclusive prefix reduction on data distributed across
+/// the calling processes. \c exscan() returns in the \c recv_buf of the process with rank \f$i > 0\f$, the
+/// reduction (calculated according to the function \c op) of the values in the \c send_bufs of processes with ranks
+/// \f$0, \ldots, i - 1\f$ (i.e. excluding i as opposed to \c scan()). The value of the \c recv_buf on rank 0 is set to
+/// the value of \c values_on_rank_0 if provided. If \c values_on_rank_0 is not provided and \c op is a built-in
+/// operation on the data-type used, the value on rank 0 is set to the identity of that operation. If the operation is
+/// not built-in on the data-type used and no \c values_on_rank_0() is provided, the contents of \c recv_buf on rank
+/// 0 are undefined.
+///
+/// The following parameters are required:
 ///  - \ref kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be the
 ///  same size at each rank.
 ///  - \ref kamping::op() the operation to apply to the input.
 ///
 ///  The following parameters are optional:
 ///  - \ref kamping::recv_buf() containing a buffer for the output.
-///  - \ref kamping::values_on_rank_0() containing the value(s) that is/are returned in the \c recv_buf of rank 0. If
-///  \c send_buf is a single value, \c values_on_rank_0 must be a single value. If \c send_buf is a vector, \c
-///  values_on_rank_0 must be a vector of the same size or a single value (which will be reused for all elements of the
-///  vector).
+///  - \ref kamping::values_on_rank_0() containing the value(s) that is/are returned in the \c recv_buf of rank 0. \c
+///  values_on_rank_0 must be a container of the same size as \c recv_buf or a single value (which will be reused for
+///  all elements of the \c recv_buf).
+///
 ///  @tparam Args Automatically deducted template parameters.
 ///  @param args All required and any number of the optional buffers described above.
 ///  @return Result type wrapping the output buffer if not specified as input parameter.
@@ -97,6 +100,7 @@ auto kamping::Communicator::exscan(Args... args) const {
         operation.op(),                       // op
         mpi_communicator()                    // communicator
     );
+    THROW_IF_MPI_ERROR(err, MPI_Reduce);
 
     // MPI_Exscan leaves the recv_buf on rank 0 in an undefined state. We set it to the value provided via
     //  values_on_rank_0() if given. If values_on_rank_0() is not given and the operation is a built-in operation on a
@@ -123,6 +127,5 @@ auto kamping::Communicator::exscan(Args... args) const {
         }
     }
 
-    THROW_IF_MPI_ERROR(err, MPI_Reduce);
     return MPIResult(std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{});
 }
