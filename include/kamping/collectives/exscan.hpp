@@ -129,3 +129,53 @@ auto kamping::Communicator::exscan(Args... args) const {
 
     return MPIResult(std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{});
 }
+
+/// @brief Wrapper for \c MPI_exscan for single elements.
+///
+/// This is functionally equivalent to \c exscan() but provided for uniformity with other operations (e.g. \c
+/// bcast_single()). \c exscan_single() wraps \c MPI_Exscan, which is used to perform an exclusive prefix reduction on
+/// data distributed across the calling processes. \c exscan_single() returns in the \c recv_buf of the process with
+/// rank \f$i > 0\f$, the reduction (calculated according to the function \c op) of the values in the \c send_bufs of
+/// processes with ranks \f$0, \ldots, i - 1\f$ (i.e. excluding i as opposed to \c scan()). The value of the \c recv_buf
+/// on rank 0 is set to the value of \c values_on_rank_0 if provided. If \c values_on_rank_0 is not provided and \c op
+/// is a built-in operation on the data-type used, the value on rank 0 is set to the identity of that operation. If the
+/// operation is not built-in on the data-type used and no \c values_on_rank_0() is provided, the contents of \c
+/// recv_buf on rank 0 are undefined.
+///
+/// The following parameters are required:
+///  - \ref kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be of
+///  size 1 on each rank.
+///  - \ref kamping::op() the operation to apply to the input.
+///
+///  The following parameters are optional:
+///  - \ref kamping::recv_buf() containing a (single element) buffer for the output.
+///  - \ref kamping::values_on_rank_0() containing the single value that is returned in the \c recv_buf of rank 0.///
+///
+///  @tparam Args Automatically deducted template parameters.
+///  @param args All required and any number of the optional buffers described above.
+///  @return The single element result of the exclusive scan. A single element is returned even if \c recv_buf was a
+///  vector.
+template <typename... Args>
+auto kamping::Communicator::exscan_single(Args... args) const {
+    //! If you expand this function to not being only a simple wrapper around exscan, you have to write more unit
+    //! tests!
+
+    using namespace kamping::internal;
+
+    // The send and recv buffers are always of the same size in exscan, thus, there is no additional exchange of
+    // recv_counts.
+    KAMPING_CHECK_PARAMETERS(
+        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
+    );
+
+    KASSERT(
+        select_parameter_type<ParameterType::send_buf>(args...).size() == 1u,
+        "The send buffer has to be of size 1 on all ranks.", assert::light
+    );
+
+    if constexpr (has_parameter_type<ParameterType::recv_buf, Args...>()) {
+        return this->exscan(std::forward<Args>(args)...);
+    } else {
+        return this->exscan(std::forward<Args>(args)...).extract_recv_buffer()[0];
+    }
+}

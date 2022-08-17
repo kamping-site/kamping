@@ -21,6 +21,104 @@
 using namespace ::kamping;
 using namespace ::testing;
 
+TEST(ExscanTest, exscan_single_without_recv_buf) {
+    Communicator comm;
+
+    int input = 42;
+
+    auto result = comm.exscan_single(send_buf(input), op(kamping::ops::plus<>{}));
+    static_assert(std::is_same_v<decltype(result), decltype(input)>);
+    if (comm.rank() != 0) {
+        int expected_result = comm.rank_signed() * 42;
+        EXPECT_EQ(result, expected_result);
+    }
+}
+
+TEST(ExscanTest, exscan_single_with_recv_buf) {
+    Communicator comm;
+
+    int input = 42;
+    int result;
+
+    comm.exscan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}));
+    if (comm.rank() != 0) {
+        int expected_result = comm.rank_signed() * 42;
+        EXPECT_EQ(result, expected_result);
+    }
+}
+
+TEST(ExscanTest, exscan_single_values_on_rank_0) {
+    Communicator comm;
+
+    int input = 42;
+    int result;
+
+    comm.exscan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}), values_on_rank_0(0));
+    int expected_result = comm.rank_signed() * 42;
+    EXPECT_EQ(result, expected_result);
+}
+
+TEST(ExscanTest, exscan_single_vector_of_size_1_with_recv_buf) {
+    Communicator comm;
+
+    std::vector<int> input = {42};
+    int              result;
+
+    comm.exscan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}));
+    if (comm.rank() != 0) {
+        int expected_result = comm.rank_signed() * 42;
+        EXPECT_EQ(result, expected_result);
+    }
+}
+
+TEST(ExscanTest, exscan_single_vector_of_size_1_without_recv_buf) {
+    Communicator comm;
+
+    std::vector<int> input = {42};
+
+    auto result = comm.exscan_single(send_buf(input), op(kamping::ops::plus<>{}));
+    static_assert(std::is_same_v<decltype(result), decltype(input)::value_type>);
+    if (comm.rank() != 0) {
+        int expected_result = comm.rank_signed() * 42;
+        EXPECT_EQ(result, expected_result);
+    }
+}
+
+TEST(ExscanTest, exscan_single_vector_of_size_2_with_recv_buf) {
+    Communicator comm;
+
+    {
+        std::vector<int>     input = {42, 1};
+        [[maybe_unused]] int result;
+
+        EXPECT_KASSERT_FAILS(
+            (comm.exscan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}))),
+            "The send buffer has to be of size 1 on all ranks."
+        );
+    }
+
+    {
+        std::vector<int>                  input = {42, 1};
+        [[maybe_unused]] std::vector<int> result;
+
+        EXPECT_KASSERT_FAILS(
+            (comm.exscan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}))),
+            "The send buffer has to be of size 1 on all ranks."
+        );
+    }
+}
+
+TEST(ExscanTest, exscan_single_vector_of_size_2_without_recv_buf) {
+    Communicator comm;
+
+    std::vector<int> input = {42, 1};
+
+    EXPECT_KASSERT_FAILS(
+        (comm.exscan_single(send_buf(input), op(kamping::ops::plus<>{}))),
+        "The send buffer has to be of size 1 on all ranks."
+    );
+}
+
 TEST(ExscanTest, no_receive_buffer) {
     Communicator comm;
 
