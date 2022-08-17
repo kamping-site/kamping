@@ -155,18 +155,6 @@ auto kamping::Communicator::exscan(Args... args) const {
 ///  @param args All required and any number of the optional buffers described above.
 ///  @return The single element result of the exclusive scan. A single element is returned even if \c recv_buf was a
 ///  vector.
-///
-/// The following parameters are required:
-/// - \ref kamping::send_buf() containing the data for which to perform the exclusive exscan. This buffer has to be of
-/// size 1 on each rank.
-/// - \ref kamping::op() wrapping the operation to apply to the input.
-///
-/// The following parameters are optional:
-/// - \ref kamping::recv_buf() containing a buffer for the output.
-///
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
 template <typename... Args>
 auto kamping::Communicator::exscan_single(Args... args) const {
     //! If your expand this function to not being only a simple wrapper around exscan, you have to write more unit
