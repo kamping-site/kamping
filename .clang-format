@@ -75,4 +75,4 @@ UseTab: Never
 EmptyLineBeforeAccessModifier: LogicalBlock
 EmptyLineAfterAccessModifier: Never
 QualifierAlignment: Custom
-QualifierOrder: ['static', 'inline', 'constexpr', 'restrict', 'type', 'const', 'volatile']
+QualifierOrder: ['static', 'inline', 'constexpr', 'type', 'const', 'volatile']
