@@ -116,12 +116,16 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
     static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.get().data()), const int*>);
     EXPECT_EQ(buffer_based_on_int_vector.data(), int_vec.data());
     static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.data()), const int*>);
+    EXPECT_FALSE(decltype(buffer_based_on_int_vector)::is_out_buffer);
+    EXPECT_FALSE(decltype(buffer_based_on_int_vector)::is_lib_allocated);
 
     EXPECT_EQ(buffer_based_on_const_int_vector.get().size(), int_vec_const.size());
     EXPECT_EQ(buffer_based_on_const_int_vector.get().data(), int_vec_const.data());
     static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.get().data()), const int*>);
     EXPECT_EQ(buffer_based_on_const_int_vector.data(), int_vec_const.data());
     static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.data()), const int*>);
+    EXPECT_FALSE(decltype(buffer_based_on_const_int_vector)::is_out_buffer);
+    EXPECT_FALSE(decltype(buffer_based_on_const_int_vector)::is_lib_allocated);
 }
 
 TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
@@ -168,6 +172,8 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_moved_vector.data()[1], 2);
     EXPECT_EQ(buffer_based_on_moved_vector.data()[2], 3);
     static_assert(std::is_same_v<decltype(buffer_based_on_moved_vector.data()), int const*>);
+    EXPECT_FALSE(decltype(buffer_based_on_moved_vector)::is_out_buffer);
+    EXPECT_FALSE(decltype(buffer_based_on_moved_vector)::is_lib_allocated);
 
     EXPECT_EQ(buffer_based_on_rvalue_vector.size(), 3);
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().size(), 3);
@@ -179,6 +185,8 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_rvalue_vector.data()[1], 2);
     EXPECT_EQ(buffer_based_on_rvalue_vector.data()[2], 3);
     static_assert(std::is_same_v<decltype(buffer_based_on_rvalue_vector.data()), int const*>);
+    EXPECT_FALSE(decltype(buffer_based_on_rvalue_vector)::is_out_buffer);
+    EXPECT_FALSE(decltype(buffer_based_on_rvalue_vector)::is_lib_allocated);
 
     {
         auto const& underlying_container = buffer_based_on_moved_vector.underlying();
@@ -251,6 +259,8 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
     UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer_based_on_int_vector(int_vec);
     EXPECT_EQ(int_vec.size(), buffer_based_on_int_vector.get().size());
     EXPECT_EQ(int_vec.data(), buffer_based_on_int_vector.get().data());
+    EXPECT_FALSE(decltype(buffer_based_on_int_vector)::is_out_buffer);
+    EXPECT_FALSE(decltype(buffer_based_on_int_vector)::is_lib_allocated);
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_int_vector.resize(requested_size);
@@ -308,6 +318,8 @@ TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
     constexpr ParameterType                                          ptype = ParameterType::recv_counts;
     constexpr BufferType                                             btype = BufferType::in_buffer;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer_based_on_int_vector;
+    EXPECT_FALSE(decltype(buffer_based_on_int_vector)::is_out_buffer);
+    EXPECT_TRUE(decltype(buffer_based_on_int_vector)::is_lib_allocated);
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_int_vector.resize(requested_size);
@@ -370,13 +382,16 @@ TEST(LibAllocatedContainerBasedBufferTest, move_ctor_assignment_operator_is_enab
     buffer1.get().data()[0] = 0;
     buffer1.get().data()[1] = 1;
     buffer1.get().data()[2] = 2;
+    EXPECT_EQ(decltype(buffer1)::parameter_type, ptype);
     LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer2(std::move(buffer1));
+    EXPECT_EQ(decltype(buffer2)::parameter_type, ptype);
     LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer3;
     buffer3 = std::move(buffer2);
     EXPECT_EQ(buffer3.get().size(), 3);
     EXPECT_EQ(buffer3.get().data()[0], 0);
     EXPECT_EQ(buffer3.get().data()[1], 1);
     EXPECT_EQ(buffer3.get().data()[2], 2);
+    EXPECT_EQ(decltype(buffer3)::parameter_type, ptype);
 }
 
 TEST(SingleElementConstBufferTest, get_basics) {
@@ -384,6 +399,8 @@ TEST(SingleElementConstBufferTest, get_basics) {
     constexpr BufferType                        btype = BufferType::in_buffer;
     int                                         value = 5;
     SingleElementConstBuffer<int, ptype, btype> int_buffer(value);
+    EXPECT_FALSE(decltype(int_buffer)::is_out_buffer);
+    EXPECT_FALSE(decltype(int_buffer)::is_lib_allocated);
 
     EXPECT_EQ(int_buffer.size(), 1);
     EXPECT_EQ(int_buffer.get().size(), 1);
@@ -412,6 +429,8 @@ TEST(SingleElementOwningBufferTest, get_basics) {
     constexpr ParameterType                      ptype = ParameterType::send_counts;
     constexpr BufferType                         btype = BufferType::in_buffer;
     SingleElementOwningBuffer<int, ptype, btype> int_buffer(5);
+    EXPECT_FALSE(decltype(int_buffer)::is_out_buffer);
+    EXPECT_FALSE(decltype(int_buffer)::is_lib_allocated);
 
     EXPECT_EQ(int_buffer.size(), 1);
     EXPECT_EQ(int_buffer.get().size(), 1);
@@ -445,6 +464,10 @@ TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
     const int                                        const_elem = elem;
     SingleElementModifiableBuffer<int, ptype, btype> buffer1(elem);
     SingleElementModifiableBuffer<int, ptype, btype> buffer2(std::move(buffer1));
+    EXPECT_FALSE(decltype(buffer1)::is_out_buffer);
+    EXPECT_FALSE(decltype(buffer1)::is_lib_allocated);
+    EXPECT_FALSE(decltype(buffer2)::is_out_buffer);
+    EXPECT_FALSE(decltype(buffer2)::is_lib_allocated);
     EXPECT_EQ(*buffer2.get().data(), const_elem);
     EXPECT_EQ(*buffer2.data(), const_elem);
     EXPECT_EQ(buffer2.get_single_element(), const_elem);
@@ -493,6 +516,10 @@ TEST(LibAllocatedSingleElementBufferTest, move_constructor_is_enabled) {
     EXPECT_EQ(*buffer2.get().data(), const_elem);
     EXPECT_EQ(*buffer2.data(), const_elem);
     EXPECT_EQ(buffer2.get_single_element(), const_elem);
+    EXPECT_FALSE(decltype(buffer1)::is_out_buffer);
+    EXPECT_TRUE(decltype(buffer1)::is_lib_allocated);
+    EXPECT_FALSE(decltype(buffer2)::is_out_buffer);
+    EXPECT_TRUE(decltype(buffer2)::is_lib_allocated);
 }
 
 TEST(LibAllocatedSingleElementBufferTest, get_basics) {
