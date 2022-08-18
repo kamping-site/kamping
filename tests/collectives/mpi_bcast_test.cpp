@@ -341,7 +341,7 @@ TEST(BcastTest, message_of_size_0) {
 }
 
 TEST(BcastTest, bcast_single) {
-    // bcast_single is a wrapper arount bcast, providing the recv_count(1).
+    // bcast_single is a wrapper around bcast, providing the recv_count(1).
     // There is not much we can test here, that's not already tested by the tests for bcast.
 
     Communicator comm;
@@ -360,4 +360,14 @@ TEST(BcastTest, bcast_single) {
     //
     // value_vector.resize(0);
     // EXPECT_KASSERT_FAILS(comm.bcast_single(send_recv_buf(value_vector)), "");
+}
+
+TEST(BcastTest, bcast_single_invalid_parameters) {
+    Communicator comm;
+
+    std::vector<int> input = {42, 1};
+
+    EXPECT_KASSERT_FAILS(
+        (comm.bcast_single(send_recv_buf(input))), "The send/receive buffer has to be of size 1 on all ranks."
+    );
 }

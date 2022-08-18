@@ -75,6 +75,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_mpi_exscan
+    FILES collectives/mpi_exscan_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_operation_wrapper
     FILES mpi_operation_wrapper_test.cpp
     CORES 1

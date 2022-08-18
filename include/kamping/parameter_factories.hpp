@@ -247,19 +247,6 @@ auto recv_counts_out(Container&& container) {
     );
 }
 
-/// @brief Generates a wrapper for a recv count output parameter allocated by KaMPIng.
-///
-/// This is primarily used by KaMPIng internally because not passing this to a function will have the same effect as
-/// passing it.
-///
-/// @return Wrapper around a new recv_count ouptput integer.
-inline auto recv_counts_out(NewContainer<int>&&) {
-    // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
-    return internal::make_data_buffer<internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable>(
-        NewContainer<int>{}
-    );
-}
-
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
 /// must contain the send displacements to each relevant PE.
 ///
@@ -390,5 +377,27 @@ internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = in
     return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);
 }
 
+/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+///
+/// @param container Value(s) to return on the first rank.
+/// @returns OnRank0 Object containing the information which value to return on the first rank.
+template <typename Container>
+inline auto values_on_rank_0(Container&& container) {
+    return internal::make_data_buffer<
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(
+        std::forward<Container>(container)
+    );
+}
+
+/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+///
+/// @param values Value(s) to return on the first rank.
+/// @returns OnRank0 Object containing the information which value to return on the first rank.
+// TODO zero-overhead
+template <typename T>
+inline auto values_on_rank_0(std::initializer_list<T> values) {
+    return internal::make_data_buffer<
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(values));
+}
 /// @}
 } // namespace kamping

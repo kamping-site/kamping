@@ -932,3 +932,143 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
 }
+
+// values_on_rank_0 can never be an out parameter and never be lib allocated, it's always an in parameter.
+TEST(ParameterFactoriesTest, values_on_rank_0_single_value_in_basics) {
+    {
+        int  value         = 42;
+        auto values_in_obj = values_on_rank_0(value);
+        EXPECT_EQ(*values_in_obj.get().data(), 42);
+        EXPECT_FALSE(decltype(values_in_obj)::is_modifiable);
+    }
+
+    {
+        // passed as rvalue
+        auto values_in_obj = values_on_rank_0(42);
+        EXPECT_EQ(*values_in_obj.get().data(), 42);
+        EXPECT_FALSE(decltype(values_in_obj)::is_modifiable);
+    }
+}
+
+TEST(ParameterFactoriesTest, values_on_rank_0_basics_int_vector) {
+    std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
+    auto             gen_via_int_vec = values_on_rank_0(int_vec);
+    Span<int>        expected_span{int_vec.data(), int_vec.size()};
+    using ExpectedValueType = int;
+    testing::test_const_buffer<ExpectedValueType>(gen_via_int_vec, ParameterType::values_on_rank_0, expected_span);
+}
+
+TEST(ParameterFactoriesTest, values_on_rank_0_basics_const_int_vector) {
+    std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
+    auto                   gen_via_const_int_vec = values_on_rank_0(const_int_vec);
+    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
+    using ExpectedValueType = int;
+    testing::test_const_buffer<ExpectedValueType>(
+        gen_via_const_int_vec, ParameterType::values_on_rank_0, expected_span
+    );
+}
+
+TEST(ParameterFactoriesTest, values_on_rank_0_basics_moved_vector) {
+    std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
+    std::vector<int> const expected          = const_int_vec;
+    auto                   gen_via_moved_vec = values_on_rank_0(std::move(const_int_vec));
+    using ExpectedValueType                  = int;
+    testing::test_owning_buffer<ExpectedValueType>(gen_via_moved_vec, ParameterType::values_on_rank_0, expected);
+}
+
+TEST(ParameterFactoriesTest, values_on_rank_0_basics_vector_from_function) {
+    auto make_vector = []() {
+        std::vector<int> vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
+        return vec;
+    };
+    std::vector<int> const expected                  = make_vector();
+    auto                   gen_via_vec_from_function = values_on_rank_0(make_vector());
+    using ExpectedValueType                          = int;
+    testing::test_owning_buffer<ExpectedValueType>(
+        gen_via_vec_from_function, ParameterType::values_on_rank_0, expected
+    );
+}
+
+TEST(ParameterFactoriesTest, values_on_rank_0_basics_vector_from_initializer_list) {
+    std::vector<int> expected                  = {1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
+    auto             gen_via_vec_from_function = values_on_rank_0({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1});
+    using ExpectedValueType                    = int;
+    testing::test_owning_buffer<ExpectedValueType>(
+        gen_via_vec_from_function, ParameterType::values_on_rank_0, expected
+    );
+}
+
+TEST(ParameterFactoriesTest, values_on_rank_0_single_element) {
+    {
+        uint8_t value                     = 11;
+        auto    gen_single_element_buffer = values_on_rank_0(value);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::values_on_rank_0, value);
+    }
+    {
+        uint16_t value                     = 4211;
+        auto     gen_single_element_buffer = values_on_rank_0(value);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::values_on_rank_0, value);
+    }
+    {
+        uint32_t value                     = 4096;
+        auto     gen_single_element_buffer = values_on_rank_0(value);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::values_on_rank_0, value);
+    }
+    {
+        uint64_t value                     = 555555;
+        auto     gen_single_element_buffer = values_on_rank_0(value);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::values_on_rank_0, value);
+    }
+    {
+        // pass value as rvalue
+        auto gen_single_element_buffer = values_on_rank_0(42051);
+        testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::values_on_rank_0, 42051);
+    }
+    {
+        struct CustomType {
+            uint64_t v1;
+            int      v2;
+            char     v3;
+
+            bool operator==(CustomType const& other) const {
+                return std::tie(v1, v2, v3) == std::tie(other.v1, other.v2, other.v3);
+            }
+        }; // struct CustomType
+        {
+            CustomType value                     = {843290834, -482, 'a'};
+            auto       gen_single_element_buffer = values_on_rank_0(value);
+            testing::test_single_element_buffer(gen_single_element_buffer, ParameterType::values_on_rank_0, value);
+        }
+        {
+            auto gen_single_element_buffer = values_on_rank_0(CustomType{843290834, -482, 'a'});
+            testing::test_single_element_buffer(
+                gen_single_element_buffer, ParameterType::values_on_rank_0, CustomType{843290834, -482, 'a'}
+            );
+        }
+    }
+}
+
+TEST(ParameterFactoriesTest, values_on_rank_0_switch) {
+    uint8_t              value  = 0;
+    std::vector<uint8_t> values = {0, 0, 0, 0, 0, 0};
+
+    [[maybe_unused]] auto gen_single_element_buffer        = values_on_rank_0(value);
+    [[maybe_unused]] auto gen_int_vec_buffer               = values_on_rank_0(values);
+    [[maybe_unused]] auto gen_single_element_owning_buffer = values_on_rank_0(uint8_t(0));
+    [[maybe_unused]] auto gen_int_vec_owning_buffer        = values_on_rank_0(std::vector<uint8_t>{0, 0, 0, 0, 0, 0});
+
+    bool const single_result = std::is_same_v<
+        decltype(gen_single_element_buffer), SingleElementConstBuffer<uint8_t, ParameterType::values_on_rank_0>>;
+    EXPECT_TRUE(single_result);
+    bool const vec_result = std::is_same_v<
+        decltype(gen_int_vec_buffer), ContainerBasedConstBuffer<std::vector<uint8_t>, ParameterType::values_on_rank_0>>;
+    EXPECT_TRUE(vec_result);
+    bool const owning_single_result = std::is_same_v<
+        decltype(gen_single_element_owning_buffer),
+        SingleElementOwningBuffer<uint8_t, ParameterType::values_on_rank_0>>;
+    EXPECT_TRUE(owning_single_result);
+    bool const owning_vec_result = std::is_same_v<
+        decltype(gen_int_vec_owning_buffer),
+        ContainerBasedOwningBuffer<std::vector<uint8_t>, ParameterType::values_on_rank_0>>;
+    EXPECT_TRUE(owning_vec_result);
+}

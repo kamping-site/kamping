@@ -31,19 +31,24 @@
 /// @brief Wrapper for \c MPI_Bcast
 ///
 /// This wrapper for \c MPI_Bcast sends data from the root to all other ranks.
+///
 /// The following buffer is required:
 /// - \ref kamping::send_recv_buf() containing the data that is sent to the other ranks. Non-root ranks must allocate
 /// and provide this buffer as it's needed for deducing the value type. The container will be resized on non-root ranks
 /// to fit exactly the received data.
+///
 /// The following parameter is optional but causes additional communication if not present.
 /// - \ref kamping::recv_counts() specifying how many elements are broadcasted. If not specified, will be
 /// communicated through an additional bcast. If not specified, we broadcast the whole send_recv_buf. If specified,
-/// has to be the same on all ranks (including the root). Has to either be specified or not specified on all ranks. The
-/// following parameter is optional:
+/// has to be the same on all ranks (including the root). Has to either be specified or not specified on all ranks.
+///
+/// The following parameter is optional:
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c
 /// Communicator is used, see root().
+///
 /// @todo Add support for `bcast<int>(..)` style deduction of send_recv_buf's type on non-root ranks.
 /// @todo Add support for unnamed first parameter send_recv_buf.
+///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
@@ -63,7 +68,7 @@ auto kamping::Communicator::bcast(Args... args) const {
     // Get the send_recv_buf; for now, the user *has* to provide a send-receive buffer.
     auto&& send_recv_buf = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
     using value_type     = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
-    static_assert(!std::is_const_v<decltype(send_recv_buf)>, "Const send_recv_buf'fers are not allowed.");
+    static_assert(!std::is_const_v<decltype(send_recv_buf)>, "Const send_recv_buffers are not allowed.");
     auto mpi_value_type = mpi_datatype<value_type>();
 
     /// @todo Uncomment, once the send_recv_buf is optional.
@@ -142,11 +147,39 @@ auto kamping::Communicator::bcast(Args... args) const {
     );
 } // namespace kamping::internal
 
+/// @brief Wrapper for \c MPI_Bcast
+///
+/// This wrapper for \c MPI_Bcast sends a single value from the root to all other ranks. Calling \c bcast_single() is a
+/// shorthand for calling `bcast(..., recv_counts(1))`. It always issues only a single \c MPI_Bcast call, as no receive
+/// counts have to be exchanged.
+///
+/// The following buffer is required:
+/// - \ref kamping::send_recv_buf() containing the single value that is sent to the other ranks. Non-root ranks must
+/// allocate and provide this buffer as it's needed for deducing the value type.
+///
+/// The following parameter is optional:
+/// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator is
+/// used, see root().
+///
+/// @todo Add support for `bcast<int>(..)` style deduction of send_recv_buf's type on non-root ranks.
+/// @todo Add support for unnamed first parameter send_recv_buf.
+///
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described above.
+/// @return Result type wrapping the output buffer if not specified as input parameter.
 template <typename... Args>
 auto kamping::Communicator::bcast_single(Args... args) const {
-    //! If your expand this function to not being only a simple wrapper arount bcast, you have to write more unit tests!
-    // In contrast to bcast(...), the recv_count is not a possible parameter.
+    //! If you expand this function to not being only a simple wrapper around bcast, you have to write more unit tests!
+
+    using namespace kamping::internal;
+
+    // In contrast to bcast(...), the recv_counts is not a possible parameter.
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root));
+
+    KASSERT(
+        select_parameter_type<ParameterType::send_recv_buf>(args...).size() == 1u,
+        "The send/receive buffer has to be of size 1 on all ranks.", assert::light
+    );
 
     return this->bcast(std::forward<Args>(args)..., recv_counts(1));
 }

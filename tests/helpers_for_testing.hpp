@@ -202,7 +202,7 @@ struct CustomAllocator {
 
 //
 // Makros to test for failed KASSERT() statements.
-// Note that these makros could already be defined if we included the header that turns assertions into exceptions.
+// Note that these macros could already be defined if we included the header that turns assertions into exceptions.
 // In this case, we keep the current definition.
 //
 

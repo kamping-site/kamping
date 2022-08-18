@@ -224,7 +224,7 @@ struct mpi_operation_traits {
 
     /// @brief The identity of this operation applied on this datatype.
     ///
-    /// The identity of a {value, operation} pair is the value for which the following two equaltion hold:
+    /// The identity of a {value, operation} pair is the value for which the following two equation holds:
     /// - `identity operation value = value`
     /// - `value operation identity = value`
     static constexpr T identity;
@@ -521,6 +521,9 @@ public:
 
     ///  @returns the \c MPI_Op associated with this operation
     MPI_Op op();
+
+    /// @returns the identity element for this operation and data type.
+    T identity();
 };
 
 #else
@@ -562,6 +565,10 @@ public:
     MPI_Op op() {
         return mpi_operation_traits<Op, T>::op();
     }
+
+    T identity() {
+        return mpi_operation_traits<Op, T>::identity;
+    }
 };
 
 template <typename T, typename Op, typename Commutative>
@@ -592,6 +599,10 @@ public:
 
     MPI_Op op() {
         return _operation.get_mpi_op();
+    }
+
+    T identity() {
+        return _operation.identity();
     }
 
 private:
