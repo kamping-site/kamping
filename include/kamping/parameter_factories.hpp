@@ -240,19 +240,6 @@ auto recv_counts(std::initializer_list<T> counts) {
     );
 }
 
-/// @brief Generates a wrapper for a recv count output parameter allocated by KaMPIng.
-///
-/// This is primarily used by KaMPIng internally because not passing this to a function will have the same effect as
-/// passing it.
-///
-/// @return Wrapper around a new recv_count ouptput integer.
-inline auto recv_counts_out(NewContainer<int>&&) {
-    // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
-    return internal::make_data_buffer<
-        internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer>(NewContainer<int>{});
-}
-
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
 /// must contain the send displacements to each relevant PE.
 ///
@@ -350,12 +337,23 @@ auto send_displs_out(Container&& container) {
         internal::BufferType::out_buffer>(std::forward<Container>(container));
 }
 
-/// @brief Generates a wrapper for a recv counts output parameter without any user input.
-/// @return Wrapper for the recv counts that can be retrieved as structured binding.
-inline auto recv_counts_out() {
+/// @brief Generates a wrapper for a recv count output parameter allocated by KaMPIng.
+///
+/// This is primarily used by KaMPIng internally because not passing this to a function will have the same effect as
+/// passing it.
+///
+/// @return Wrapper around a new recv_count ouptput integer.
+inline auto recv_counts_out(NewContainer<int>&&) {
+    // We need this function explicitly, because the user allocated version only takes `int`, not `NewContainer<int>`
     return internal::make_data_buffer<
         internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer>(NewContainer<int>{});
+}
+
+/// @brief Generates a wrapper for a recv counts output parameter without any user input.
+/// @return Wrapper for the recv counts that can be retrieved as structured binding.
+inline auto recv_counts_out() {
+    return recv_counts_out(NewContainer<int>{});
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
