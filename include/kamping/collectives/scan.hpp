@@ -127,12 +127,15 @@ auto kamping::Communicator::scan_single(Args... args) const {
     // The send and recv buffers are always of the same size in scan, thus, there is no additional exchange of
     // recv_counts.
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf, op),
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
     );
 
     KASSERT(
         select_parameter_type<ParameterType::send_buf>(args...).size() == 1u,
-        "The send buffer has to be of size 1 on all ranks.", assert::light
+        "The send buffer has to be of size 1 on all ranks.",
+        assert::light
     );
 
     if constexpr (has_parameter_type<ParameterType::recv_buf, Args...>()) {

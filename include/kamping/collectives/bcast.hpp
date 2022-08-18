@@ -178,7 +178,8 @@ auto kamping::Communicator::bcast_single(Args... args) const {
 
     KASSERT(
         select_parameter_type<ParameterType::send_recv_buf>(args...).size() == 1u,
-        "The send/receive buffer has to be of size 1 on all ranks.", assert::light
+        "The send/receive buffer has to be of size 1 on all ranks.",
+        assert::light
     );
 
     return this->bcast(std::forward<Args>(args)..., recv_counts(1));

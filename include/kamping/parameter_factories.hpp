@@ -384,9 +384,8 @@ internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = in
 template <typename Container>
 inline auto values_on_rank_0(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(
-        std::forward<Container>(container)
-    );
+        internal::ParameterType::values_on_rank_0,
+        internal::BufferModifiability::constant>(std::forward<Container>(container));
 }
 
 /// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
@@ -397,7 +396,8 @@ inline auto values_on_rank_0(Container&& container) {
 template <typename T>
 inline auto values_on_rank_0(std::initializer_list<T> values) {
     return internal::make_data_buffer<
-        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant>(std::move(values));
+        internal::ParameterType::values_on_rank_0,
+        internal::BufferModifiability::constant>(std::move(values));
 }
 /// @}
 } // namespace kamping
