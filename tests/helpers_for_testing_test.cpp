@@ -61,7 +61,7 @@ TYPED_TEST(OwnContainerTest, create_empty) {
     EXPECT_EQ(container.copy_count(), 0);
 }
 
-TYPED_TEST(OwnContainerTest, create_default_intialized) {
+TYPED_TEST(OwnContainerTest, create_default_initialized) {
     testing::OwnContainer<typename TestFixture::value_type> container(10);
 
     auto default_value = TestFixture::get_default_value();
@@ -78,7 +78,7 @@ TYPED_TEST(OwnContainerTest, create_default_intialized) {
     EXPECT_EQ(container.copy_count(), 0);
 }
 
-TYPED_TEST(OwnContainerTest, create_non_default_intialized) {
+TYPED_TEST(OwnContainerTest, create_non_default_initialized) {
     auto value = TestFixture::get_non_default_value();
 
     testing::OwnContainer<typename TestFixture::value_type> container(10, value);

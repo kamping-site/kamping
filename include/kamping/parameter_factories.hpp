@@ -240,6 +240,20 @@ auto recv_counts(std::initializer_list<T> counts) {
     );
 }
 
+/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
+/// will contained the receive counts when the \c MPI call has been completed.
+/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
+/// contained \c value_type
+/// @tparam Container Container type which contains the receive counts.
+/// @param container Container which will contain the receive counts.
+/// @return Object referring to the storage containing the receive counts.
+template <typename Container>
+auto recv_counts_out(Container&& container) {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(std::forward<Container>(container));
+}
+
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
 /// must contain the send displacements to each relevant PE.
 ///
@@ -356,20 +370,6 @@ inline auto recv_counts_out() {
     return recv_counts_out(NewContainer<int>{});
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
-/// will contain the receive counts when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the receive counts.
-/// @param container Container which will contain the receive counts.
-/// @return Object referring to the storage containing the receive counts.
-template <typename Container>
-auto recv_counts_out(Container&& container) {
-    return internal::make_data_buffer<
-        internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer>(std::forward<Container>(container));
-}
-
 /// @brief Generates a wrapper for a recv displs output parameter without any user input.
 /// @return Wrapper for the recv displs that can be retrieved as structured binding.
 inline auto recv_displs_out() {
@@ -424,5 +424,27 @@ internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = in
     return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);
 }
 
+/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+///
+/// @param container Value(s) to return on the first rank.
+/// @returns OnRank0 Object containing the information which value to return on the first rank.
+template <typename Container>
+inline auto values_on_rank_0(Container&& container) {
+    return internal::make_data_buffer<
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::forward<Container>(container));
+}
+
+/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+///
+/// @param values Value(s) to return on the first rank.
+/// @returns OnRank0 Object containing the information which value to return on the first rank.
+// TODO zero-overhead
+template <typename T>
+inline auto values_on_rank_0(std::initializer_list<T> values) {
+    return internal::make_data_buffer<
+        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::move(values));
+}
 /// @}
 } // namespace kamping
