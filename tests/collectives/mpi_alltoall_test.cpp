@@ -19,8 +19,8 @@
 #include "../helpers_for_testing.hpp"
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/communicator.hpp"
-#include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
+#include "kamping/data_buffer.hpp"
+#include "kamping/named_parameters.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;

@@ -20,7 +20,7 @@
 #include <type_traits>
 
 #include "kamping/named_parameter_selection.hpp"
-#include "kamping/parameter_type_definitions.hpp"
+#include "kamping/named_parameter_types.hpp"
 
 // The following macros look strange since they use a GNU extension that becomes obsolete with C++-20.
 // The extension is supported by all major compilers.

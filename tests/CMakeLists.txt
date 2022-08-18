@@ -13,10 +13,10 @@ endif ()
 kamping_register_test(test_checking_casts FILES checking_casts_test.cpp)
 kamping_register_test(test_mpi_function_wrapper_helpers FILES mpi_function_wrapper_helpers_test.cpp)
 kamping_register_test(test_mpi_operations FILES mpi_operations_test.cpp)
-kamping_register_test(test_parameter_check FILES parameter_check_test.cpp)
+kamping_register_test(test_named_parameter_check FILES named_parameter_check_test.cpp)
 kamping_register_test(test_named_parameter_selection FILES named_parameter_selection_test.cpp)
-kamping_register_test(test_parameter_factories FILES parameter_factories_test.cpp)
-kamping_register_test(test_parameter_objects FILES parameter_objects_test.cpp)
+kamping_register_test(test_named_parameters FILES named_parameters_test.cpp)
+kamping_register_test(test_data_buffer FILES data_buffer_test.cpp)
 kamping_register_test(test_span FILES span_test.cpp)
 kamping_register_test(test_helpers_for_testing FILES helpers_for_testing_test.cpp)
 
@@ -85,8 +85,8 @@ kamping_register_mpi_test(
     CORES 1
 )
 kamping_register_mpi_test(
-    test_parameter_factories_mpi
-    FILES parameter_factories_mpi_test.cpp
+    test_named_parameters_mpi
+    FILES named_parameters_mpi_test.cpp
     CORES 1
 )
 kamping_register_mpi_test(
@@ -153,16 +153,16 @@ kamping_register_compilation_failure_test(
 )
 
 kamping_register_compilation_failure_test(
-    test_parameter_check_compilation_failure
-    FILES parameter_check_compilation_failures_test.cpp
+    test_named_parameter_check_compilation_failure
+    FILES named_parameter_check_compilation_failures_test.cpp
     SECTIONS "MISSING_REQUIRED_PARAMETER" "UNSUPPORTED_PARAMETER_NO_PARAMETERS"
              "UNSUPPORTED_PARAMETER_ONLY_OPTIONAL_PARAMETERS" "DUPLICATE_PARAMETERS"
     LIBRARIES kamping_base
 )
 
 kamping_register_compilation_failure_test(
-    test_parameter_objects_compilation_failure
-    FILES parameter_objects_compilation_failures_test.cpp
+    test_data_buffer_compilation_failure
+    FILES data_buffer_compilation_failures_test.cpp
     SECTIONS "COPY_CONSTRUCT_CONTAINER_CONST_BUFFER"
              "COPY_ASSIGN_CONTAINER_CONST_BUFFER"
              "COPY_CONSTRUCT_SINGLE_ELMENT_CONST_BUFFER"
@@ -190,8 +190,8 @@ kamping_register_compilation_failure_test(
 )
 
 kamping_register_compilation_failure_test(
-    test_parameter_factories_compilation_failure
-    FILES parameter_factories_compilation_failure_test.cpp
+    test_named_parameters_compilation_failure
+    FILES named_parameters_compilation_failure_test.cpp
     SECTIONS "VECTOR_BOOL_LVALUE" "VECTOR_BOOL_RVALUE" "VECTOR_BOOL_CUSTOM_ALLOCATOR" "VECTOR_BOOL_NEW_CONTAINER"
     LIBRARIES kamping_base
 )

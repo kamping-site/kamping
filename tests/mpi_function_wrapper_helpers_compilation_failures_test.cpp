@@ -12,7 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 #include "kamping/mpi_function_wrapper_helpers.hpp"
-#include "kamping/parameter_factories.hpp"
+#include "kamping/named_parameters.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;

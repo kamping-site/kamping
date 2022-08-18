@@ -21,9 +21,9 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/data_buffer.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
+#include "kamping/named_parameters.hpp"
 
 int main() {
     using namespace kamping;

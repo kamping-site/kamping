@@ -10,7 +10,7 @@
 #include "kamping/environment.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
-#include "kamping/parameter_factories.hpp"
+#include "kamping/named_parameters.hpp"
 
 template <size_t K, typename ValueType>
 class TopK {

@@ -19,10 +19,10 @@
 #include <type_traits>
 #include <utility>
 
+#include "kamping/data_buffer.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
-#include "kamping/parameter_objects.hpp"
-#include "kamping/parameter_type_definitions.hpp"
+#include "kamping/named_parameter_types.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility

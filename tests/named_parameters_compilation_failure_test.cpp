@@ -14,8 +14,8 @@
 #include <vector>
 
 #include "helpers_for_testing.hpp"
-#include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
+#include "kamping/data_buffer.hpp"
+#include "kamping/named_parameters.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
     using namespace kamping;

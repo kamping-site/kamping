@@ -17,7 +17,7 @@
 
 #include "helpers_for_testing.hpp"
 #include "kamping/named_parameter_selection.hpp"
-#include "kamping/parameter_factories.hpp"
+#include "kamping/named_parameters.hpp"
 
 using namespace ::kamping::internal;
 
