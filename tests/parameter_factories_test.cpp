@@ -30,7 +30,7 @@ using namespace ::kamping::internal;
 namespace testing {
 template <typename ExpectedValueType, typename GeneratedBuffer, typename T>
 void test_const_buffer(
-    const GeneratedBuffer&           generated_buffer,
+    GeneratedBuffer const&           generated_buffer,
     kamping::internal::ParameterType expected_parameter_type,
     Span<T>&                         expected_span
 ) {
@@ -57,7 +57,7 @@ void test_const_buffer(
 
 template <typename ExpectedValueType, typename GeneratedBuffer, typename ExpectedValueContainer>
 void test_owning_buffer(
-    const GeneratedBuffer&           generated_buffer,
+    GeneratedBuffer const&           generated_buffer,
     kamping::internal::ParameterType expected_parameter_type,
     ExpectedValueContainer&&         expected_value_container
 ) {
@@ -179,7 +179,7 @@ TEST(ParameterFactoriesTest, send_buf_basics_int_vector) {
 TEST(ParameterFactoriesTest, send_buf_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = send_buf(const_int_vec);
-    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::send_buf, expected_span);
 }
@@ -305,7 +305,7 @@ TEST(ParameterFactoriesTest, send_counts_basics_int_vector) {
 TEST(ParameterFactoriesTest, send_counts_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = send_counts(const_int_vec);
-    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::send_counts, expected_span);
 }
@@ -337,7 +337,7 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_int_vector) {
 TEST(ParameterFactoriesTest, recv_counts_in_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = recv_counts(const_int_vec);
-    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::recv_counts, expected_span);
 }
@@ -368,7 +368,7 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_int_vector) {
 TEST(ParameterFactoriesTest, send_displs_in_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = send_displs(const_int_vec);
-    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::send_displs, expected_span);
 }
@@ -399,7 +399,7 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_int_vector) {
 TEST(ParameterFactoriesTest, recv_displs_in_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = recv_displs(const_int_vec);
-    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::recv_displs, expected_span);
 }
@@ -520,7 +520,7 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_int_vector) {
 TEST(ParameterFactoriesTest, send_recv_buf_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto                   gen_via_const_int_vec = send_recv_buf(const_int_vec);
-    Span<const int>        expected_span{const_int_vec.data(), const_int_vec.size()};
+    Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(gen_via_const_int_vec, ParameterType::send_recv_buf, expected_span);
 }

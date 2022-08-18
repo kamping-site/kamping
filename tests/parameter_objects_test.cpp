@@ -112,15 +112,15 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_int_vector.size(), int_vec.size());
     EXPECT_EQ(buffer_based_on_int_vector.get().size(), int_vec.size());
     EXPECT_EQ(buffer_based_on_int_vector.get().data(), int_vec.data());
-    static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.get().data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.get().data()), int const*>);
     EXPECT_EQ(buffer_based_on_int_vector.data(), int_vec.data());
-    static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.data()), int const*>);
 
     EXPECT_EQ(buffer_based_on_const_int_vector.get().size(), int_vec_const.size());
     EXPECT_EQ(buffer_based_on_const_int_vector.get().data(), int_vec_const.data());
-    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.get().data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.get().data()), int const*>);
     EXPECT_EQ(buffer_based_on_const_int_vector.data(), int_vec_const.data());
-    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.data()), int const*>);
 }
 
 TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
@@ -170,7 +170,7 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[0], 1);
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[1], 2);
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[2], 3);
-    static_assert(std::is_same_v<decltype(buffer_based_on_rvalue_vector.get().data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_rvalue_vector.get().data()), int const*>);
     EXPECT_EQ(buffer_based_on_rvalue_vector.data()[0], 1);
     EXPECT_EQ(buffer_based_on_rvalue_vector.data()[1], 2);
     EXPECT_EQ(buffer_based_on_rvalue_vector.data()[2], 3);
@@ -285,7 +285,7 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_containers_other_tha
 TEST(UserAllocatedContainerBasedBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType ptype = ParameterType::send_counts;
     std::vector<int>        container{1, 2, 3};
-    const auto              const_container = container; // ensure that container is not altered
+    auto const              const_container = container; // ensure that container is not altered
     UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer1(container);
     UserAllocatedContainerBasedBuffer<std::vector<int>, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(buffer2.get().size(), const_container.size());
@@ -312,10 +312,10 @@ TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
 
     // The buffer will be in an invalid state after extraction; that's why we have to access these attributes
     // beforehand.
-    const auto       size_of_buffer        = buffer_based_on_int_vector.size();
-    const auto       data_of_buffer        = buffer_based_on_int_vector.data();
-    const auto       size_of_get_of_buffer = buffer_based_on_int_vector.get().size();
-    const auto       data_of_get_of_buffer = buffer_based_on_int_vector.get().data();
+    auto const       size_of_buffer        = buffer_based_on_int_vector.size();
+    auto const       data_of_buffer        = buffer_based_on_int_vector.data();
+    auto const       size_of_get_of_buffer = buffer_based_on_int_vector.get().size();
+    auto const       data_of_get_of_buffer = buffer_based_on_int_vector.get().data();
     std::vector<int> underlying_container  = buffer_based_on_int_vector.extract();
     EXPECT_EQ(underlying_container.size(), size_of_buffer);
     EXPECT_EQ(underlying_container.size(), size_of_get_of_buffer);
@@ -382,7 +382,7 @@ TEST(SingleElementConstBufferTest, get_basics) {
 
 TEST(SingleElementConstBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType              ptype = ParameterType::send_counts;
-    const int                            elem  = 42;
+    int const                            elem  = 42;
     SingleElementConstBuffer<int, ptype> buffer1(elem);
     SingleElementConstBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), elem);
@@ -420,7 +420,7 @@ TEST(SingleElementOwningBufferTest, move_constructor_is_enabled) {
 TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType                   ptype      = ParameterType::send_counts;
     int                                       elem       = 42;
-    const int                                 const_elem = elem;
+    int const                                 const_elem = elem;
     SingleElementModifiableBuffer<int, ptype> buffer1(elem);
     SingleElementModifiableBuffer<int, ptype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), const_elem);
@@ -463,7 +463,7 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
 TEST(LibAllocatedSingleElementBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType                     ptype      = ParameterType::send_counts;
     int                                         elem       = 42;
-    const int                                   const_elem = elem;
+    int const                                   const_elem = elem;
     LibAllocatedSingleElementBuffer<int, ptype> buffer1{};
     *buffer1.get().data() = elem;
     LibAllocatedSingleElementBuffer<int, ptype> buffer2(std::move(buffer1));
@@ -510,7 +510,7 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
 
 TEST(RootTest, move_constructor_assignment_operator_is_enabled) {
     int       rank       = 2;
-    const int const_rank = rank;
+    int const const_rank = rank;
     Root      root1(rank);
     Root      root2 = std::move(root1);
     Root      root3(rank + 1);

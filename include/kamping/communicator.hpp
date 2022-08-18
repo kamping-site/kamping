@@ -107,7 +107,7 @@ public:
     /// @brief Check if this rank is the root rank.
     /// @return Return \c true if this rank is the root rank.
     /// @param root The custom root's rank.
-    [[nodiscard]] bool is_root(const int root) const {
+    [[nodiscard]] bool is_root(int const root) const {
         return rank() == asserting_cast<size_t>(root);
     }
 

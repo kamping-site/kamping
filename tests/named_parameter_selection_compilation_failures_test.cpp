@@ -26,7 +26,7 @@ int main(int /*argc*/, char** /*argv*/) {
     };
     // if the requested ParameterType is not given, parameter selection should fail to compile.
 #if defined(REQUESTED_PARAMETER_NOT_GIVEN)
-    const auto& selected_arg = select_parameter_type<ParameterType::send_counts>(arg0, arg1);
+    auto const& selected_arg = select_parameter_type<ParameterType::send_counts>(arg0, arg1);
 #elif defined(DEFAULT_ARGUMENTS_DO_NOT_MATCH)
     // if the default argument cannot be constructed from the given parameters this should fail to compile
     auto&& selected_args = select_parameter_type_or_default<ParameterType::send_counts, DefaultArgument>(

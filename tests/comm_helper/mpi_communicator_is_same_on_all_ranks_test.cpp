@@ -42,12 +42,12 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     // Try different data types.
     int           value_int           = 0;
     unsigned long value_ulint         = 10;
-    const short   value_const_short   = 0;
-    volatile long value_volatile_long = 0;
-    bool          value_bool          = false;
-    float         value_float         = 0.0;
-    double        value_double        = 0.0;
-    char          value_char          = 'a';
+    short const   value_const_short   = 0;
+    long volatile value_volatile_long = 0;
+    bool   value_bool                 = false;
+    float  value_float                = 0.0;
+    double value_double               = 0.0;
+    char   value_char                 = 'a';
 
     enum ValueEnum { a, b, c };
     enum class ValueEnumClass { a, b, c };
@@ -56,7 +56,7 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
         int a;
         int b;
 
-        bool operator==(const ValueStruct& that) const {
+        bool operator==(ValueStruct const& that) const {
             return this->a == that.a && this->b == that.b;
         }
     };
@@ -108,7 +108,7 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     if (comm.size() > 1) {
         // Compare non-equal const-values.
         if (comm.is_root()) {
-            const short value_const_short_2 = 42;
+            short const value_const_short_2 = 42;
             EXPECT_FALSE(comm.is_same_on_all_ranks(value_const_short_2));
         } else {
             EXPECT_FALSE(comm.is_same_on_all_ranks(value_const_short));

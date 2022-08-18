@@ -46,19 +46,19 @@ int main() {
 
     {
         // first argument within parameter list with ParameterType send_buf is selected
-        const auto& selected_arg =
+        auto const& selected_arg =
             internal::select_parameter_type<internal::ParameterType::send_buf>(arg_id_1, arg_id_3, arg_id_4);
         std::cout << "Id of selected Argument: " << selected_arg.id << std::endl;
     }
     {
         // first argument within parameter list with ParameterType send_counts is selected
-        const auto& selected_arg =
+        auto const& selected_arg =
             internal::select_parameter_type<internal::ParameterType::send_counts>(arg_id_1, arg_id_3, arg_id_4);
         std::cout << "Id of selected Argument: " << selected_arg.id << std::endl;
     }
     {
         // first argument within parameter list with ParameterType send_buf is selected
-        const auto& selected_arg =
+        auto const& selected_arg =
             internal::select_parameter_type<internal::ParameterType::send_buf>(arg_id_2, arg_id_1, arg_id_3, arg_id_4);
         std::cout << "Id of selected Argument: " << selected_arg.id << std::endl;
     }

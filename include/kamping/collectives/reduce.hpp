@@ -61,7 +61,7 @@ auto kamping::Communicator::reduce(Args... args) const {
         args...
     );
 
-    const auto& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
 

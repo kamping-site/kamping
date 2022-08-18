@@ -50,7 +50,7 @@ bool Communicator::is_same_on_all_ranks(Value const& value) const {
         bool  equal; // Have we seen only equal values in the reduction so far?
     };
     ValueEqual value_equal = {value, true};
-    const auto datatype    = mpi_datatype<ValueEqual>();
+    auto const datatype    = mpi_datatype<ValueEqual>();
 
     // Build the operation for the reduction.
     auto operation_param = kamping::op(
