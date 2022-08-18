@@ -46,8 +46,7 @@ struct ignore_t {};
 /// @param data Universal reference to a container or single element holding the data for the buffer.
 ///
 /// @return A user allocated DataBuffer with the given template parameters and matching ownership.
-template <
-    ParameterType parameter_type, BufferModifiability modifiability, internal::BufferType buffer_type, typename Data>
+template <ParameterType parameter_type, BufferModifiability modifiability, BufferType buffer_type, typename Data>
 auto make_data_buffer(Data&& data) {
     constexpr BufferOwnership ownership =
         std::is_rvalue_reference_v<Data&&> ? BufferOwnership::owning : BufferOwnership::referencing;
@@ -74,8 +73,7 @@ auto make_data_buffer(Data&& data) {
 /// @tparam Data Container or data type on which this buffer is based.
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
-template <
-    ParameterType parameter_type, BufferModifiability modifiability, internal::BufferType buffer_type, typename Data>
+template <ParameterType parameter_type, BufferModifiability modifiability, BufferType buffer_type, typename Data>
 auto make_data_buffer(NewContainer<Data>&&) {
     return DataBuffer<
         Data, parameter_type, modifiability, BufferOwnership::owning, buffer_type, BufferAllocation::lib_allocated>();
@@ -95,8 +93,7 @@ auto make_data_buffer(NewContainer<Data>&&) {
 /// @param data std::initializer_list holding the data for the buffer.
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
-template <
-    ParameterType parameter_type, BufferModifiability modifiability, internal::BufferType buffer_type, typename Data>
+template <ParameterType parameter_type, BufferModifiability modifiability, BufferType buffer_type, typename Data>
 auto make_data_buffer(std::initializer_list<Data> data) {
     auto data_vec = [&]() {
         if constexpr (std::is_same_v<Data, bool>) {
