@@ -20,22 +20,25 @@ int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
     using namespace ::kamping::internal;
     using ContainerType                = std::vector<int>;
-    const ParameterType parameter_type = ParameterType::recv_buf;
+    ParameterType const parameter_type = ParameterType::recv_buf;
+    BufferType const    buffer_type    = BufferType::out_buffer;
 
-    const ContainerType                                      const_container;
-    ContainerBasedConstBuffer<ContainerType, parameter_type> container_based_const_buffer(const_container);
+    ContainerType const                                                   const_container;
+    ContainerBasedConstBuffer<ContainerType, parameter_type, buffer_type> container_based_const_buffer(const_container);
 
-    SingleElementConstBuffer<int, parameter_type> single_elem_const_buffer(42);
+    SingleElementConstBuffer<int, parameter_type, buffer_type> single_elem_const_buffer(42);
 
-    int                                                elem = 42;
-    SingleElementModifiableBuffer<int, parameter_type> single_elem_modifiable_buffer(elem);
+    int                                                             elem = 42;
+    SingleElementModifiableBuffer<int, parameter_type, buffer_type> single_elem_modifiable_buffer(elem);
 
-    LibAllocatedSingleElementBuffer<int, parameter_type> lib_alloc_single_element_buffer;
+    LibAllocatedSingleElementBuffer<int, parameter_type, buffer_type> lib_alloc_single_element_buffer;
 
-    ContainerType                                                    container;
-    UserAllocatedContainerBasedBuffer<ContainerType, parameter_type> user_alloc_container_based_buffer(container);
+    ContainerType                                                                 container;
+    UserAllocatedContainerBasedBuffer<ContainerType, parameter_type, buffer_type> user_alloc_container_based_buffer(
+        container
+    );
 
-    LibAllocatedContainerBasedBuffer<ContainerType, parameter_type> lib_alloc_container_based_buffer;
+    LibAllocatedContainerBasedBuffer<ContainerType, parameter_type, buffer_type> lib_alloc_container_based_buffer;
 
     Root root(42);
 
