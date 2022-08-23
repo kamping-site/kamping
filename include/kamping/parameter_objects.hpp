@@ -136,6 +136,9 @@ enum class BufferModifiability { modifiable, constant };
 enum class BufferOwnership { owning, referencing };
 /// @brief Enum to specify whether a buffer is allocated by the library or the user
 enum class BufferAllocation { lib_allocated, user_allocated };
+/// @brief Enum to specify whether a buffer is an in buffer of an out
+/// buffer. Out buffer will be used to directly write the result to.
+enum class BufferType { in_buffer, out_buffer, in_out_buffer };
 
 /// @brief Wrapper to get the value type of a non-container type (aka the type itself).
 /// @tparam has_value_type_member Whether `T` has a value_type member
@@ -177,20 +180,34 @@ bool constexpr inline is_int_type(ParameterType parameter_type) {
 /// DataBuffer wraps all buffer storages provided by an std-like container like std::vector or single values. A
 /// Container type must provide \c data(), \c size() and expose the type definition \c value_type.
 /// @tparam MemberType Container or data type on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
+/// @tparam parameter_type_param Parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
 /// @tparam ownership `owning` if the buffer should hold the actual container.
 /// `referencing` if only a reference to an existing container should be held.
+/// @tparam buffer_type_param Type of buffer, i.e., \c in_buffer, \c out_buffer, or \c in_out_buffer.
 /// @tparam allocation `lib_allocated` if the buffer was allocated by the library,
 /// `user_allocated` if it was allocated by the user.
 template <
-    typename MemberType, ParameterType type, BufferModifiability modifiability, BufferOwnership ownership,
+    typename MemberType, ParameterType parameter_type_param, BufferModifiability modifiability,
+    BufferOwnership ownership, BufferType buffer_type_param,
     BufferAllocation allocation = BufferAllocation::user_allocated>
 class DataBuffer {
 public:
-    static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable =
+    static constexpr ParameterType parameter_type =
+        parameter_type_param; ///< The type of parameter this buffer represents.
+
+    static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
+
+    /// @brief \c true if the buffer is an out or in/out buffer that results will be written to and \c false
+    /// otherwise.
+    static constexpr bool is_out_buffer =
+        (buffer_type_param == BufferType::out_buffer || buffer_type_param == BufferType::in_out_buffer);
+
+    /// @brief Indicates whether the buffer is allocated by KaMPIng.
+    static constexpr bool is_lib_allocated = allocation == BufferAllocation::lib_allocated;
+
+    static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
     static constexpr bool is_single_element =
         !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
@@ -215,7 +232,9 @@ public:
     using value_type =
         typename ValueTypeWrapper<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
     // Logical implication: is_int_type(type) => std::is_same_v<value_type, int>
-    static_assert(!is_int_type(type) || std::is_same_v<value_type, int>, "The given data must be of type int");
+    static_assert(
+        !is_int_type(parameter_type_param) || std::is_same_v<value_type, int>, "The given data must be of type int"
+    );
     using value_type_with_const =
         std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending
                                                                          ///< on modifiability

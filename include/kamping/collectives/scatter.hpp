@@ -117,7 +117,6 @@ auto kamping::Communicator::scatter(Args... args) const {
 
     // Optional parameter: recv_count()
     // Default: compute value based on send_buf.size on root
-
     using default_recv_count_type = decltype(kamping::recv_counts_out(NewContainer<int>{}));
     auto&& recv_count_param =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
