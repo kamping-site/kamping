@@ -329,12 +329,22 @@ auto recv_buf(Container&& container) {
     );
 }
 
-/// @brief Generates a wrapper for a send displs output parameter without any user input.
-/// @return Wrapper for the send displs that can be retrieved as structured binding.
-inline auto send_displs_out() {
+/// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying
+/// storage will contained the receive displacements when the \c MPI call has been completed. The underlying
+/// container must provide a \c data(), \c resize() and \c size() member function and expose the contained \c
+/// value_type
+/// @param container Container which will contain the receive displacements.
+/// @return Object referring to the storage containing the receive displacements.
+inline auto send_displs_out(NewContainer<int>&&) {
     return internal::make_data_buffer<
         internal::ParameterType::send_displs, internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer>(NewContainer<int>{});
+}
+
+/// @brief Generates a wrapper for a send displs output parameter without any user input.
+/// @return Wrapper for the send displs that can be retrieved as structured binding.
+inline auto send_displs_out() {
+    return send_displs_out(NewContainer<int>{});
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
@@ -370,12 +380,23 @@ inline auto recv_counts_out() {
     return recv_counts_out(NewContainer<int>{});
 }
 
-/// @brief Generates a wrapper for a recv displs output parameter without any user input.
-/// @return Wrapper for the recv displs that can be retrieved as structured binding.
-inline auto recv_displs_out() {
+/// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
+/// storage will contained the receive displacements when the \c MPI call has been completed. The underlying
+/// container must provide a \c data(), \c resize() and \c size() member function and expose the contained \c
+/// value_type
+/// @tparam Container Container type which contains the receive displacements.
+/// @param container Container which will contain the receive displacements.
+/// @return Object referring to the storage containing the receive displacements.
+inline auto recv_displs_out(NewContainer<int>&&) {
     return internal::make_data_buffer<
         internal::ParameterType::recv_displs, internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer>(NewContainer<int>{});
+}
+
+/// @brief Generates a wrapper for a recv displs output parameter without any user input.
+/// @return Wrapper for the recv displs that can be retrieved as structured binding.
+inline auto recv_displs_out() {
+    return recv_displs_out(NewContainer<int>{});
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
