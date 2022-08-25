@@ -129,9 +129,6 @@ public:
 }; // class Environment
 
 /// @brief A global environment object to use when you don't want to create a new Environment object.
-///
-/// Because everything in Environment is const, it doesn't matter that every compilation unit will have its own copy of
-/// this.
-static const Environment<InitMPIMode::NoInitFinalize> mpi_env;
+inline const Environment<InitMPIMode::NoInitFinalize> mpi_env;
 
 } // namespace kamping
