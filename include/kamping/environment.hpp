@@ -129,6 +129,9 @@ public:
 }; // class Environment
 
 /// @brief A global environment object to use when you don't want to create a new Environment object.
+///
+/// Note that \c inline \c const results in external linkage since C++17 (see
+/// https://en.cppreference.com/w/cpp/language/inline).
 inline const Environment<InitMPIMode::NoInitFinalize> mpi_env;
 
 } // namespace kamping
