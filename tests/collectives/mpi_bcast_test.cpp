@@ -126,7 +126,8 @@ TEST(BcastTest, vector_recv_count) {
             std::vector<int> values(num_values);
             if (comm.is_root()) {
                 EXPECT_KASSERT_FAILS(
-                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(num_values))), ""
+                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(num_values))),
+                    ""
                 );
             } else {
                 EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values)), "");
@@ -140,11 +141,13 @@ TEST(BcastTest, vector_recv_count) {
             std::vector<int> values(num_values);
             if (comm.is_root()) {
                 EXPECT_KASSERT_FAILS(
-                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(num_values))), ""
+                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(num_values))),
+                    ""
                 );
             } else {
                 EXPECT_KASSERT_FAILS(
-                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(alternative_num_values))), ""
+                    comm.bcast(send_recv_buf(values), recv_counts(asserting_cast<int>(alternative_num_values))),
+                    ""
                 );
             }
         }
@@ -365,6 +368,7 @@ TEST(BcastTest, bcast_single_invalid_parameters) {
     std::vector<int> input = {42, 1};
 
     EXPECT_KASSERT_FAILS(
-        (comm.bcast_single(send_recv_buf(input))), "The send/receive buffer has to be of size 1 on all ranks."
+        (comm.bcast_single(send_recv_buf(input))),
+        "The send/receive buffer has to be of size 1 on all ranks."
     );
 }

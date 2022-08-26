@@ -53,11 +53,12 @@ auto kamping::Communicator::scan(Args... args) const {
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
     // Get the send buffer and deduce the send and recv value types.
-    const auto& send_buf          = select_parameter_type<ParameterType::send_buf>(args...).get();
+    auto const& send_buf          = select_parameter_type<ParameterType::send_buf>(args...).get();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
     KASSERT(
-        is_same_on_all_ranks(send_buf.size()), "The send buffer has to be the same size on all ranks.",
+        is_same_on_all_ranks(send_buf.size()),
+        "The send buffer has to be the same size on all ranks.",
         assert::light_communication
     );
 
@@ -126,12 +127,15 @@ auto kamping::Communicator::scan_single(Args... args) const {
     // The send and recv buffers are always of the same size in scan, thus, there is no additional exchange of
     // recv_counts.
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf, op),
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
     );
 
     KASSERT(
         select_parameter_type<ParameterType::send_buf>(args...).size() == 1u,
-        "The send buffer has to be of size 1 on all ranks.", assert::light
+        "The send buffer has to be of size 1 on all ranks.",
+        assert::light
     );
 
     if constexpr (has_parameter_type<ParameterType::recv_buf, Args...>()) {

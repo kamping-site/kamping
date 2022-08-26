@@ -172,7 +172,8 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
     EXPECT_THAT(possible_mpi_datatypes<std::complex<double>>(), Contains(mpi_datatype<std::complex<double>>()));
     EXPECT_THAT(possible_mpi_datatypes<std::complex<float>>(), Contains(mpi_datatype<std::complex<float>>()));
     EXPECT_THAT(
-        possible_mpi_datatypes<std::complex<long double>>(), Contains(mpi_datatype<std::complex<long double>>())
+        possible_mpi_datatypes<std::complex<long double>>(),
+        Contains(mpi_datatype<std::complex<long double>>())
     );
 }
 

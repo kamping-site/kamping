@@ -68,7 +68,11 @@ using UserAllocatedContainerBasedBuffer =
 /// @tparam buffer_type Type of the buffer, i.e., in, out, or in_out.
 template <typename Container, ParameterType parameter_type, BufferType buffer_type>
 using LibAllocatedContainerBasedBuffer = DataBuffer<
-    Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::owning, buffer_type,
+    Container,
+    parameter_type,
+    BufferModifiability::modifiable,
+    BufferOwnership::owning,
+    buffer_type,
     BufferAllocation::lib_allocated>;
 
 /// @brief Constant buffer for a single type, i.e., not a container.
@@ -100,7 +104,11 @@ using SingleElementOwningBuffer =
 /// @tparam buffer_type Type of the buffer, i.e., in, out, or in_out.
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
 using LibAllocatedSingleElementBuffer = DataBuffer<
-    DataType, parameter_type, BufferModifiability::modifiable, BufferOwnership::owning, buffer_type,
+    DataType,
+    parameter_type,
+    BufferModifiability::modifiable,
+    BufferOwnership::owning,
+    buffer_type,
     BufferAllocation::lib_allocated>;
 
 /// @brief Buffer based on a single element type that has been allocated by the user.

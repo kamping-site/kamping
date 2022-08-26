@@ -57,11 +57,11 @@ TEST(AlltoallTest, single_element_with_receive_buffer) {
 TEST(AlltoallTest, multiple_elements) {
     Communicator comm;
 
-    const int num_elements_per_processor_pair = 4;
+    int const num_elements_per_processor_pair = 4;
 
     std::vector<int> input(comm.size() * num_elements_per_processor_pair);
     std::iota(input.begin(), input.end(), 0);
-    std::transform(input.begin(), input.end(), input.begin(), [](const int element) -> int {
+    std::transform(input.begin(), input.end(), input.begin(), [](int const element) -> int {
         return element / num_elements_per_processor_pair;
     });
 
@@ -81,7 +81,7 @@ TEST(AlltoallTest, custom_type_custom_container) {
         size_t sendingRank;
         size_t receivingRank;
 
-        bool operator==(const CustomType& other) const {
+        bool operator==(CustomType const& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -213,7 +213,7 @@ TEST(AlltoallvTest, custom_type_custom_container) {
         size_t sendingRank;
         size_t receivingRank;
 
-        bool operator==(const CustomType& other) const {
+        bool operator==(CustomType const& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -228,11 +228,12 @@ TEST(AlltoallvTest, custom_type_custom_container) {
     std::vector<int> send_counts(comm.size(), 1);
 
     // Do the alltoallv - receive into a library allocated OwnContainer
-    auto result =
-        comm.alltoallv(
-                send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}), kamping::send_counts(send_counts)
-        )
-            .extract_recv_buffer();
+    auto result = comm.alltoallv(
+                          send_buf(input),
+                          recv_buf(NewContainer<OwnContainer<CustomType>>{}),
+                          kamping::send_counts(send_counts)
+    )
+                      .extract_recv_buffer();
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), comm.size());
 
@@ -254,7 +255,7 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
         size_t sendingRank;
         size_t receivingRank;
 
-        bool operator==(const CustomType& other) const {
+        bool operator==(CustomType const& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -278,8 +279,11 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
 
     // Do the alltoallv - put all outputs into a custom container
     auto mpi_result = comm.alltoallv(
-        send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}), kamping::send_counts(send_counts),
-        send_displs_out(NewContainer<OwnContainer<int>>{}), recv_counts_out(NewContainer<OwnContainer<int>>{}),
+        send_buf(input),
+        recv_buf(NewContainer<OwnContainer<CustomType>>{}),
+        kamping::send_counts(send_counts),
+        send_displs_out(NewContainer<OwnContainer<int>>{}),
+        recv_counts_out(NewContainer<OwnContainer<int>>{}),
         recv_displs_out(NewContainer<OwnContainer<int>>{})
     );
 
@@ -328,7 +332,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
         size_t sendingRank;
         size_t receivingRank;
 
-        bool operator==(const CustomType& other) const {
+        bool operator==(CustomType const& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -355,8 +359,12 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
     OwnContainer<int>        recv_counts;
     OwnContainer<int>        recv_displs;
     comm.alltoallv(
-        send_buf(input), recv_buf(result), kamping::send_counts(send_counts), send_displs_out(send_displs),
-        recv_counts_out(recv_counts), recv_displs_out(recv_displs)
+        send_buf(input),
+        recv_buf(result),
+        kamping::send_counts(send_counts),
+        send_displs_out(send_displs),
+        recv_counts_out(recv_counts),
+        recv_displs_out(recv_displs)
     );
 
     // Check recv buffer
@@ -403,7 +411,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
         size_t sendingRank;
         size_t receivingRank;
 
-        bool operator==(const CustomType& other) const {
+        bool operator==(CustomType const& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -433,8 +441,12 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
     OwnContainer<int>        send_displs;
     OwnContainer<int>        recv_displs;
     comm.alltoallv(
-        send_buf(input), recv_buf(result), kamping::send_counts(send_counts), send_displs_out(send_displs),
-        kamping::recv_counts(recv_counts), recv_displs_out(recv_displs)
+        send_buf(input),
+        recv_buf(result),
+        kamping::send_counts(send_counts),
+        send_displs_out(send_displs),
+        kamping::recv_counts(recv_counts),
+        recv_displs_out(recv_displs)
     );
 
     // Check recv buffer
@@ -476,7 +488,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
         size_t sendingRank;
         size_t receivingRank;
 
-        bool operator==(const CustomType& other) const {
+        bool operator==(CustomType const& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -508,8 +520,12 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
 
     // Do the alltoallv - all counts and displacements are already pre-calculated
     comm.alltoallv(
-        send_buf(input), recv_buf(result), kamping::send_counts(send_counts), kamping::send_displs(send_displs),
-        kamping::recv_counts(recv_counts), kamping::recv_displs(recv_displs)
+        send_buf(input),
+        recv_buf(result),
+        kamping::send_counts(send_counts),
+        kamping::send_displs(send_displs),
+        kamping::recv_counts(recv_counts),
+        kamping::recv_displs(recv_displs)
     );
 
     // Check recv buffer
@@ -541,7 +557,7 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
         size_t sendingRank;
         size_t receivingRank;
 
-        bool operator==(const CustomType& other) const {
+        bool operator==(CustomType const& other) const {
             return sendingRank == other.sendingRank && receivingRank == other.receivingRank;
         }
     };
@@ -573,8 +589,12 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
 
     // Do the alltoallv - all counts and displacements are already pre-calculated
     auto mpi_result = comm.alltoallv(
-        send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{}), kamping::send_counts(send_counts),
-        kamping::send_displs(send_displs), kamping::recv_counts(recv_counts), kamping::recv_displs(recv_displs)
+        send_buf(input),
+        recv_buf(NewContainer<OwnContainer<CustomType>>{}),
+        kamping::send_counts(send_counts),
+        kamping::send_displs(send_displs),
+        kamping::recv_counts(recv_counts),
+        kamping::recv_displs(recv_displs)
     );
 
     // Check recv buffer

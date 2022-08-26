@@ -109,7 +109,8 @@ TEST(ScanTest, scan_no_receive_buffer) {
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {
-        ((comm.rank_signed() + 1) * comm.rank_signed()) / 2, (comm.rank_signed() + 1) * 42};
+        ((comm.rank_signed() + 1) * comm.rank_signed()) / 2,
+        (comm.rank_signed() + 1) * 42};
     EXPECT_EQ(result, expected_result);
 }
 
@@ -123,7 +124,8 @@ TEST(ScanTest, scan_with_receive_buffer) {
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {
-        ((comm.rank_signed() + 1) * comm.rank_signed()) / 2, (comm.rank_signed() + 1) * 42};
+        ((comm.rank_signed() + 1) * comm.rank_signed()) / 2,
+        (comm.rank_signed() + 1) * 42};
     EXPECT_EQ(result, expected_result);
 }
 
@@ -146,7 +148,8 @@ TEST(ScanTest, scan_builtin_op_on_non_builtin_type) {
     auto result = comm.scan(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative)).extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {
-        ((comm.rank_signed() + 1) * comm.rank_signed()) / 2, (comm.rank_signed() + 1) * 42};
+        ((comm.rank_signed() + 1) * comm.rank_signed()) / 2,
+        (comm.rank_signed() + 1) * 42};
     EXPECT_EQ(result, expected_result);
 }
 

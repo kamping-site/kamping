@@ -112,17 +112,17 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_int_vector.size(), int_vec.size());
     EXPECT_EQ(buffer_based_on_int_vector.get().size(), int_vec.size());
     EXPECT_EQ(buffer_based_on_int_vector.get().data(), int_vec.data());
-    static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.get().data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.get().data()), int const*>);
     EXPECT_EQ(buffer_based_on_int_vector.data(), int_vec.data());
-    static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_int_vector.data()), int const*>);
     EXPECT_FALSE(decltype(buffer_based_on_int_vector)::is_out_buffer);
     EXPECT_FALSE(decltype(buffer_based_on_int_vector)::is_lib_allocated);
 
     EXPECT_EQ(buffer_based_on_const_int_vector.get().size(), int_vec_const.size());
     EXPECT_EQ(buffer_based_on_const_int_vector.get().data(), int_vec_const.data());
-    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.get().data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.get().data()), int const*>);
     EXPECT_EQ(buffer_based_on_const_int_vector.data(), int_vec_const.data());
-    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_const_int_vector.data()), int const*>);
     EXPECT_FALSE(decltype(buffer_based_on_const_int_vector)::is_out_buffer);
     EXPECT_FALSE(decltype(buffer_based_on_const_int_vector)::is_lib_allocated);
 }
@@ -179,7 +179,7 @@ TEST(ContainerBasedOwningBufferTest, get_basics) {
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[0], 1);
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[1], 2);
     EXPECT_EQ(buffer_based_on_rvalue_vector.get().data()[2], 3);
-    static_assert(std::is_same_v<decltype(buffer_based_on_rvalue_vector.get().data()), const int*>);
+    static_assert(std::is_same_v<decltype(buffer_based_on_rvalue_vector.get().data()), int const*>);
     EXPECT_EQ(buffer_based_on_rvalue_vector.data()[0], 1);
     EXPECT_EQ(buffer_based_on_rvalue_vector.data()[1], 2);
     EXPECT_EQ(buffer_based_on_rvalue_vector.data()[2], 3);
@@ -306,7 +306,7 @@ TEST(UserAllocatedContainerBasedBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType ptype = ParameterType::send_counts;
     constexpr BufferType    btype = BufferType::in_buffer;
     std::vector<int>        container{1, 2, 3};
-    const auto              const_container = container; // ensure that container is not altered
+    auto const              const_container = container; // ensure that container is not altered
     UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer1(container);
     UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(buffer2.get().size(), const_container.size());
@@ -336,10 +336,10 @@ TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
 
     // The buffer will be in an invalid state after extraction; that's why we have to access these attributes
     // beforehand.
-    const auto       size_of_buffer        = buffer_based_on_int_vector.size();
-    const auto       data_of_buffer        = buffer_based_on_int_vector.data();
-    const auto       size_of_get_of_buffer = buffer_based_on_int_vector.get().size();
-    const auto       data_of_get_of_buffer = buffer_based_on_int_vector.get().data();
+    auto const       size_of_buffer        = buffer_based_on_int_vector.size();
+    auto const       data_of_buffer        = buffer_based_on_int_vector.data();
+    auto const       size_of_get_of_buffer = buffer_based_on_int_vector.get().size();
+    auto const       data_of_get_of_buffer = buffer_based_on_int_vector.get().data();
     std::vector<int> underlying_container  = buffer_based_on_int_vector.extract();
     EXPECT_EQ(underlying_container.size(), size_of_buffer);
     EXPECT_EQ(underlying_container.size(), size_of_get_of_buffer);
@@ -416,7 +416,7 @@ TEST(SingleElementConstBufferTest, get_basics) {
 TEST(SingleElementConstBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType                     ptype = ParameterType::send_counts;
     constexpr BufferType                        btype = BufferType::in_buffer;
-    const int                                   elem  = 42;
+    int const                                   elem  = 42;
     SingleElementConstBuffer<int, ptype, btype> buffer1(elem);
     SingleElementConstBuffer<int, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(*buffer2.get().data(), elem);
@@ -460,7 +460,7 @@ TEST(SingleElementModifiableBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType                          ptype      = ParameterType::send_counts;
     constexpr BufferType                             btype      = BufferType::in_buffer;
     int                                              elem       = 42;
-    const int                                        const_elem = elem;
+    int const                                        const_elem = elem;
     SingleElementModifiableBuffer<int, ptype, btype> buffer1(elem);
     SingleElementModifiableBuffer<int, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_FALSE(decltype(buffer1)::is_out_buffer);
@@ -483,12 +483,14 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
     EXPECT_DEATH(
-        int_buffer.resize(0), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element."
+        int_buffer.resize(0),
+        "Cannot resize a single element buffer to hold zero or more than one element. Single "
+        "element buffers always hold exactly one element."
     );
     EXPECT_DEATH(
-        int_buffer.resize(2), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element."
+        int_buffer.resize(2),
+        "Cannot resize a single element buffer to hold zero or more than one element. Single "
+        "element buffers always hold exactly one element."
     );
 #endif
 
@@ -508,7 +510,7 @@ TEST(LibAllocatedSingleElementBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType                            ptype      = ParameterType::send_counts;
     constexpr BufferType                               btype      = BufferType::in_buffer;
     int                                                elem       = 42;
-    const int                                          const_elem = elem;
+    int const                                          const_elem = elem;
     LibAllocatedSingleElementBuffer<int, ptype, btype> buffer1{};
     *buffer1.get().data() = elem;
     LibAllocatedSingleElementBuffer<int, ptype, btype> buffer2(std::move(buffer1));
@@ -534,12 +536,14 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
     EXPECT_DEATH(
-        int_buffer.resize(0), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element."
+        int_buffer.resize(0),
+        "Cannot resize a single element buffer to hold zero or more than one element. Single "
+        "element buffers always hold exactly one element."
     );
     EXPECT_DEATH(
-        int_buffer.resize(2), "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                              "element buffers always hold exactly one element."
+        int_buffer.resize(2),
+        "Cannot resize a single element buffer to hold zero or more than one element. Single "
+        "element buffers always hold exactly one element."
     );
 #endif
     EXPECT_EQ(int_buffer.get().size(), 1);
@@ -559,7 +563,7 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
 
 TEST(RootTest, move_constructor_assignment_operator_is_enabled) {
     int            rank       = 2;
-    const int      const_rank = rank;
+    int const      const_rank = rank;
     RootDataBuffer root1(rank);
     RootDataBuffer root2 = std::move(root1);
     RootDataBuffer root3(rank + 1);
@@ -591,14 +595,22 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
 TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
-            int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferType::in_buffer, BufferAllocation::lib_allocated>>,
+            int,
+            ParameterType::send_buf,
+            BufferModifiability::modifiable,
+            BufferOwnership::owning,
+            BufferType::in_buffer,
+            BufferAllocation::lib_allocated>>,
         "Library allocated DataBuffers must have an extract() member function"
     );
     static_assert(
         !has_extract_v<DataBuffer<
-            int, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::owning,
-            BufferType::in_buffer, BufferAllocation::user_allocated>>,
+            int,
+            ParameterType::send_buf,
+            BufferModifiability::modifiable,
+            BufferOwnership::owning,
+            BufferType::in_buffer,
+            BufferAllocation::user_allocated>>,
         "User allocated DataBuffers must not have an extract() member function"
     );
 }

@@ -216,7 +216,8 @@ TEST(ReduceTest, reduce_with_receive_buffer_on_root) {
         comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
         EXPECT_EQ(result.size(), 2);
         std::vector<int> expected_result = {
-            (comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+            (comm.size_signed() * (comm.size_signed() - 1)) / 2,
+            comm.size_signed() * 42};
         EXPECT_EQ(result, expected_result);
     } else {
         auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
@@ -243,7 +244,8 @@ TEST(ReduceTest, reduce_builtin_op_on_non_builtin_type) {
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 2);
         std::vector<MyInt> expected_result = {
-            (comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+            (comm.size_signed() * (comm.size_signed() - 1)) / 2,
+            comm.size_signed() * 42};
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);

@@ -130,7 +130,7 @@ public:
         return *_copy_count;
     }
 
-    bool operator==(const OwnContainer<T>& other) const {
+    bool operator==(OwnContainer<T> const& other) const {
         if (other.size() != this->size()) {
             return false;
         }
@@ -142,7 +142,7 @@ public:
         return true;
     }
 
-    bool operator!=(const OwnContainer<T>& other) const {
+    bool operator!=(OwnContainer<T> const& other) const {
         return !(*this == other);
     }
 

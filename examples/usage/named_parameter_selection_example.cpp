@@ -46,19 +46,19 @@ int main() {
 
     {
         // first argument within parameter list with ParameterType send_buf is selected
-        const auto& selected_arg =
+        auto const& selected_arg =
             internal::select_parameter_type<internal::ParameterType::send_buf>(arg_id_1, arg_id_3, arg_id_4);
         std::cout << "Id of selected Argument: " << selected_arg.id << std::endl;
     }
     {
         // first argument within parameter list with ParameterType send_counts is selected
-        const auto& selected_arg =
+        auto const& selected_arg =
             internal::select_parameter_type<internal::ParameterType::send_counts>(arg_id_1, arg_id_3, arg_id_4);
         std::cout << "Id of selected Argument: " << selected_arg.id << std::endl;
     }
     {
         // first argument within parameter list with ParameterType send_buf is selected
-        const auto& selected_arg =
+        auto const& selected_arg =
             internal::select_parameter_type<internal::ParameterType::send_buf>(arg_id_2, arg_id_1, arg_id_3, arg_id_4);
         std::cout << "Id of selected Argument: " << selected_arg.id << std::endl;
     }
@@ -67,7 +67,11 @@ int main() {
         // arguments to the default parameter are passed as a tuple
         auto&& selected_arg =
             internal::select_parameter_type_or_default<internal::ParameterType::root, DefaultArgument>(
-                std::tuple(42, "KaMPIng"), arg_id_2, arg_id_1, arg_id_3, arg_id_4
+                std::tuple(42, "KaMPIng"),
+                arg_id_2,
+                arg_id_1,
+                arg_id_3,
+                arg_id_4
             );
         std::cout << "parameters of default argument: " << selected_arg._value << " " << selected_arg._message
                   << std::endl;

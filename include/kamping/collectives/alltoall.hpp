@@ -58,7 +58,8 @@ auto kamping::Communicator::alltoall(Args... args) const {
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
-            std::tuple(), args...
+            std::tuple(),
+            args...
         );
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
@@ -90,7 +91,13 @@ auto kamping::Communicator::alltoall(Args... args) const {
     KASSERT(recv_buf.data() != nullptr, assert::light);
 
     [[maybe_unused]] int err = MPI_Alltoall(
-        send_buf.data(), send_count, mpi_send_type, recv_buf.data(), recv_count, mpi_recv_type, mpi_communicator()
+        send_buf.data(),
+        send_count,
+        mpi_send_type,
+        recv_buf.data(),
+        recv_count,
+        mpi_recv_type,
+        mpi_communicator()
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Alltoall);
@@ -131,7 +138,8 @@ template <typename... Args>
 auto kamping::Communicator::alltoallv(Args... args) const {
     // Get all parameter objects
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
         KAMPING_OPTIONAL_PARAMETERS(recv_counts, recv_buf, send_displs, recv_displs)
     );
 
@@ -151,7 +159,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     using default_recv_counts_type = decltype(kamping::recv_counts_out(NewContainer<std::vector<int>>{}));
     auto&& recv_counts =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
-            std::tuple(), args...
+            std::tuple(),
+            args...
         );
     using recv_counts_type = typename std::remove_reference_t<decltype(recv_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
@@ -160,7 +169,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
-            std::tuple(), args...
+            std::tuple(),
+            args...
         );
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
@@ -169,7 +179,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     using default_send_displs_type = decltype(kamping::send_displs_out(NewContainer<std::vector<int>>{}));
     auto&& send_displs =
         internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
-            std::tuple(), args...
+            std::tuple(),
+            args...
         );
     using send_displs_type = typename std::remove_reference_t<decltype(send_displs)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<send_displs_type>, int>, "Send displs must be of type int");
@@ -178,7 +189,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     using default_recv_displs_type = decltype(kamping::recv_displs_out(NewContainer<std::vector<int>>{}));
     auto&& recv_displs =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
-            std::tuple(), args...
+            std::tuple(),
+            args...
         );
     using recv_displs_type = typename std::remove_reference_t<decltype(recv_displs)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_displs_type>, int>, "Recv displs must be of type int");
@@ -195,7 +207,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     constexpr bool do_calculate_recv_counts = internal::has_to_be_computed<decltype(recv_counts)>;
     KASSERT(
         is_same_on_all_ranks(do_calculate_recv_counts),
-        "Receive counts are given on some ranks and have to be computed on others", assert::light_communication
+        "Receive counts are given on some ranks and have to be computed on others",
+        assert::light_communication
     );
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
@@ -208,7 +221,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     constexpr bool do_calculate_send_displs = internal::has_to_be_computed<decltype(send_displs)>;
     KASSERT(
         is_same_on_all_ranks(do_calculate_send_displs),
-        "Send displacements are given on some ranks and have to be computed on others", assert::light_communication
+        "Send displacements are given on some ranks and have to be computed on others",
+        assert::light_communication
     );
     if constexpr (do_calculate_send_displs) {
         send_displs.resize(this->size());
@@ -227,7 +241,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     constexpr bool do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
     KASSERT(
         is_same_on_all_ranks(do_calculate_recv_displs),
-        "Receive displacements are given on some ranks and have to be computed on others", assert::light_communication
+        "Receive displacements are given on some ranks and have to be computed on others",
+        assert::light_communication
     );
     if constexpr (do_calculate_recv_displs) {
         recv_displs.resize(this->size());

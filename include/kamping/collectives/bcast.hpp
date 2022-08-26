@@ -56,12 +56,15 @@ template <typename... Args>
 auto kamping::Communicator::bcast(Args... args) const {
     using namespace ::kamping::internal;
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_recv_buf), KAMPING_OPTIONAL_PARAMETERS(root, recv_counts)
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_recv_buf),
+        KAMPING_OPTIONAL_PARAMETERS(root, recv_counts)
     );
 
     // Get the root PE
     auto&& root = select_parameter_type_or_default<ParameterType::root, internal::RootDataBuffer>(
-        std::tuple(this->root()), args...
+        std::tuple(this->root()),
+        args...
     );
     KASSERT(this->is_valid_rank(root.rank()), "Invalid rank as root.", assert::light);
 
@@ -80,13 +83,15 @@ auto kamping::Communicator::bcast(Args... args) const {
     using default_recv_count_type = decltype(kamping::recv_counts_out(NewContainer<int>{}));
     auto&& recv_count_param =
         internal::select_parameter_type_or_default<ParameterType::recv_counts, default_recv_count_type>(
-            std::tuple(), args...
+            std::tuple(),
+            args...
         );
 
     constexpr bool recv_count_is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;
     KASSERT(
         is_same_on_all_ranks(recv_count_is_output_parameter),
-        "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.", assert::light_communication
+        "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.",
+        assert::light_communication
     );
 
     // If it is not user provided, broadcast the size of send_recv_buf from the root to all ranks.
@@ -118,7 +123,8 @@ auto kamping::Communicator::bcast(Args... args) const {
         );
     }
     KASSERT(
-        this->is_same_on_all_ranks(recv_count), "The recv_count must be equal on all ranks.",
+        this->is_same_on_all_ranks(recv_count),
+        "The recv_count must be equal on all ranks.",
         assert::light_communication
     );
 
@@ -137,7 +143,10 @@ auto kamping::Communicator::bcast(Args... args) const {
     THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
     return MPIResult(
-        std::move(send_recv_buf), std::move(recv_count_param), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}
+        std::move(send_recv_buf),
+        std::move(recv_count_param),
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{}
     );
 } // namespace kamping::internal
 
@@ -172,7 +181,8 @@ auto kamping::Communicator::bcast_single(Args... args) const {
 
     KASSERT(
         select_parameter_type<ParameterType::send_recv_buf>(args...).size() == 1u,
-        "The send/receive buffer has to be of size 1 on all ranks.", assert::light
+        "The send/receive buffer has to be of size 1 on all ranks.",
+        assert::light
     );
 
     return this->bcast(std::forward<Args>(args)..., recv_counts(1));

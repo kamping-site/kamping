@@ -59,7 +59,11 @@ auto make_data_buffer(Data&& data) {
     // Implication: is_const_data_type => is_const_buffer.
     static_assert(!is_const_data_type || is_const_buffer);
     return DataBuffer<
-        std::remove_const_t<std::remove_reference_t<Data>>, parameter_type, modifiability, ownership, buffer_type,
+        std::remove_const_t<std::remove_reference_t<Data>>,
+        parameter_type,
+        modifiability,
+        ownership,
+        buffer_type,
         BufferAllocation::user_allocated>(std::forward<Data>(data));
 }
 
@@ -77,7 +81,12 @@ auto make_data_buffer(Data&& data) {
 template <ParameterType parameter_type, BufferModifiability modifiability, BufferType buffer_type, typename Data>
 auto make_data_buffer(NewContainer<Data>&&) {
     return DataBuffer<
-        Data, parameter_type, modifiability, BufferOwnership::owning, buffer_type, BufferAllocation::lib_allocated>();
+        Data,
+        parameter_type,
+        modifiability,
+        BufferOwnership::owning,
+        buffer_type,
+        BufferAllocation::lib_allocated>();
 }
 
 /// @brief Creates an owning DataBuffer containing the supplied data in a std::vector.
@@ -108,7 +117,11 @@ auto make_data_buffer(std::initializer_list<Data> data) {
         }
     }();
     return DataBuffer<
-        decltype(data_vec), parameter_type, modifiability, BufferOwnership::owning, buffer_type,
+        decltype(data_vec),
+        parameter_type,
+        modifiability,
+        BufferOwnership::owning,
+        buffer_type,
         BufferAllocation::user_allocated>(std::move(data_vec));
 }
 
@@ -144,9 +157,9 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
 template <typename Data>
 auto send_buf(Data&& data) {
     return internal::make_data_buffer<
-        internal::ParameterType::send_buf, internal::BufferModifiability::constant, internal::BufferType::in_buffer>(
-        std::forward<Data>(data)
-    );
+        internal::ParameterType::send_buf,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::forward<Data>(data));
 }
 
 /// @brief Generates a buffer taking ownership of the data pass to the send buffer as an initializer list.
@@ -157,9 +170,9 @@ auto send_buf(Data&& data) {
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
     return internal::make_data_buffer<
-        internal::ParameterType::send_buf, internal::BufferModifiability::constant, internal::BufferType::in_buffer>(
-        std::move(data)
-    );
+        internal::ParameterType::send_buf,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::move(data));
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
@@ -175,10 +188,10 @@ auto send_recv_buf(Data&& data) {
     constexpr internal::BufferModifiability modifiability = std::is_const_v<std::remove_reference_t<Data>>
                                                                 ? internal::BufferModifiability::constant
                                                                 : internal::BufferModifiability::modifiable;
-    return internal::make_data_buffer<
-        internal::ParameterType::send_recv_buf, modifiability, internal::BufferType::in_out_buffer>(
-        std::forward<Data>(data)
-    );
+    return internal::
+        make_data_buffer<internal::ParameterType::send_recv_buf, modifiability, internal::BufferType::in_out_buffer>(
+            std::forward<Data>(data)
+        );
 }
 
 /// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must
@@ -192,9 +205,9 @@ auto send_recv_buf(Data&& data) {
 template <typename Container>
 auto send_counts(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::send_counts, internal::BufferModifiability::constant, internal::BufferType::in_buffer>(
-        std::forward<Container>(container)
-    );
+        internal::ParameterType::send_counts,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::forward<Container>(container));
 }
 
 /// @brief Generates a buffer wrapper for the send counts based on an initializer list, i.e. the
@@ -206,9 +219,9 @@ auto send_counts(Container&& container) {
 template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
     return internal::make_data_buffer<
-        internal::ParameterType::send_counts, internal::BufferModifiability::constant, internal::BufferType::in_buffer>(
-        std::move(counts)
-    );
+        internal::ParameterType::send_counts,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::move(counts));
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must
@@ -222,9 +235,9 @@ auto send_counts(std::initializer_list<T> counts) {
 template <typename Container>
 auto recv_counts(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::recv_counts, internal::BufferModifiability::constant, internal::BufferType::in_buffer>(
-        std::forward<Container>(container)
-    );
+        internal::ParameterType::recv_counts,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::forward<Container>(container));
 }
 
 /// @brief Generates a buffer wrapper for the recv counts based on an initializer list, i.e. the
@@ -236,9 +249,9 @@ auto recv_counts(Container&& container) {
 template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
     return internal::make_data_buffer<
-        internal::ParameterType::recv_counts, internal::BufferModifiability::constant, internal::BufferType::in_buffer>(
-        std::move(counts)
-    );
+        internal::ParameterType::recv_counts,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::move(counts));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
@@ -251,7 +264,8 @@ auto recv_counts(std::initializer_list<T> counts) {
 template <typename Container>
 auto recv_counts_out(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::recv_counts, internal::BufferModifiability::modifiable,
+        internal::ParameterType::recv_counts,
+        internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer>(std::forward<Container>(container));
 }
 
@@ -272,9 +286,9 @@ inline auto recv_counts_out() {
 template <typename Container>
 auto send_displs(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::send_displs, internal::BufferModifiability::constant, internal::BufferType::in_buffer>(
-        std::forward<Container>(container)
-    );
+        internal::ParameterType::send_displs,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::forward<Container>(container));
 }
 
 /// @brief Generates a buffer wrapper for the send displacements based on an initializer list, i.e. the
@@ -286,9 +300,9 @@ auto send_displs(Container&& container) {
 template <typename T>
 auto send_displs(std::initializer_list<T> displs) {
     return internal::make_data_buffer<
-        internal::ParameterType::send_displs, internal::BufferModifiability::constant, internal::BufferType::in_buffer>(
-        std::move(displs)
-    );
+        internal::ParameterType::send_displs,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::move(displs));
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
@@ -301,7 +315,8 @@ auto send_displs(std::initializer_list<T> displs) {
 template <typename Container>
 auto send_displs_out(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::send_displs, internal::BufferModifiability::modifiable,
+        internal::ParameterType::send_displs,
+        internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer>(std::forward<Container>(container));
 }
 
@@ -322,9 +337,9 @@ inline auto send_displs_out() {
 template <typename Container>
 auto recv_displs(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::recv_displs, internal::BufferModifiability::constant, internal::BufferType::in_buffer>(
-        std::forward<Container>(container)
-    );
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::forward<Container>(container));
 }
 
 /// @brief Generates a buffer wrapper for the receive displacements based on an initializer list, i.e. the
@@ -336,9 +351,9 @@ auto recv_displs(Container&& container) {
 template <typename T>
 auto recv_displs(std::initializer_list<T> displs) {
     return internal::make_data_buffer<
-        internal::ParameterType::recv_displs, internal::BufferModifiability::constant, internal::BufferType::in_buffer>(
-        std::move(displs)
-    );
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::move(displs));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
@@ -351,9 +366,9 @@ auto recv_displs(std::initializer_list<T> displs) {
 template <typename Container>
 auto recv_buf(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::recv_buf, internal::BufferModifiability::modifiable, internal::BufferType::out_buffer>(
-        std::forward<Container>(container)
-    );
+        internal::ParameterType::recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(std::forward<Container>(container));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
@@ -366,7 +381,8 @@ auto recv_buf(Container&& container) {
 template <typename Container>
 auto recv_displs_out(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::recv_displs, internal::BufferModifiability::modifiable,
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer>(std::forward<Container>(container));
 }
 
@@ -415,7 +431,8 @@ internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = in
 template <typename Container>
 inline auto values_on_rank_0(Container&& container) {
     return internal::make_data_buffer<
-        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant,
+        internal::ParameterType::values_on_rank_0,
+        internal::BufferModifiability::constant,
         internal::BufferType::in_buffer>(std::forward<Container>(container));
 }
 
@@ -427,7 +444,8 @@ inline auto values_on_rank_0(Container&& container) {
 template <typename T>
 inline auto values_on_rank_0(std::initializer_list<T> values) {
     return internal::make_data_buffer<
-        internal::ParameterType::values_on_rank_0, internal::BufferModifiability::constant,
+        internal::ParameterType::values_on_rank_0,
+        internal::BufferModifiability::constant,
         internal::BufferType::in_buffer>(std::move(values));
 }
 /// @}

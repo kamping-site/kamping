@@ -58,14 +58,17 @@ template <typename... Args>
 auto kamping::Communicator::exscan(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf, op),
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
     );
 
     // Get the send buffer and deduce the send and recv value types.
-    const auto& send_buf  = select_parameter_type<ParameterType::send_buf>(args...).get();
+    auto const& send_buf  = select_parameter_type<ParameterType::send_buf>(args...).get();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     KASSERT(
-        is_same_on_all_ranks(send_buf.size()), "The send buffer has to be the same size on all ranks.",
+        is_same_on_all_ranks(send_buf.size()),
+        "The send buffer has to be the same size on all ranks.",
         assert::light_communication
     );
 
@@ -112,10 +115,11 @@ auto kamping::Communicator::exscan(Args... args) const {
         // auto-deduce the identity, as this would introduce a parameter which is required in some situtations in
         // KaMPIng, but never in MPI.
         if constexpr (has_values_on_rank_0_param) {
-            const auto& values_on_rank_0_param = select_parameter_type<ParameterType::values_on_rank_0>(args...);
+            auto const& values_on_rank_0_param = select_parameter_type<ParameterType::values_on_rank_0>(args...);
             KASSERT(
                 (values_on_rank_0_param.size() == 1 || values_on_rank_0_param.size() == recv_buf.size()),
-                "on_rank_0 has to either be of size 1 or of the same size as the recv_buf.", assert::light
+                "on_rank_0 has to either be of size 1 or of the same size as the recv_buf.",
+                assert::light
             );
             if (values_on_rank_0_param.size() == 1) {
                 std::fill_n(recv_buf.data(), recv_buf.size(), *values_on_rank_0_param.data());
@@ -165,12 +169,15 @@ auto kamping::Communicator::exscan_single(Args... args) const {
     // The send and recv buffers are always of the same size in exscan, thus, there is no additional exchange of
     // recv_counts.
     KAMPING_CHECK_PARAMETERS(
-        Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf, op),
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
     );
 
     KASSERT(
         select_parameter_type<ParameterType::send_buf>(args...).size() == 1u,
-        "The send buffer has to be of size 1 on all ranks.", assert::light
+        "The send buffer has to be of size 1 on all ranks.",
+        assert::light
     );
 
     if constexpr (has_parameter_type<ParameterType::recv_buf, Args...>()) {
