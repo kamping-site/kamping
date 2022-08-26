@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPIng Authors
+// Copyright 2021-2022 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -11,7 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "gtest/gtest.h"
 #include <array>
 #include <deque>
 #include <type_traits>
@@ -21,7 +20,7 @@
 
 #include "helpers_for_testing.hpp"
 #include "kamping/assertion_levels.hpp"
-#include "kamping/parameter_objects.hpp"
+#include "kamping/data_buffer.hpp"
 #include "legacy_parameter_objects.hpp"
 
 using namespace ::kamping;
@@ -91,8 +90,8 @@ TEST(IsVectorBoolTest, is_vector_bool_basics) {
 
 // Tests the basic functionality of EmptyBuffer
 TEST(EmptyBufferTest, get_basics) {
-    constexpr ParameterType              ptype = ParameterType::send_counts;
-    EmptyBuffer<std::vector<int>, ptype> empty_buffer{};
+    constexpr ParameterType                  ptype = ParameterType::send_counts;
+    EmptyDataBuffer<std::vector<int>, ptype> empty_buffer{};
 
     EXPECT_EQ(empty_buffer.size(), 0);
     EXPECT_EQ(empty_buffer.get().size(), 0);
@@ -559,21 +558,13 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
 }
 
 TEST(RootTest, move_constructor_assignment_operator_is_enabled) {
-    int       rank       = 2;
-    const int const_rank = rank;
-    Root      root1(rank);
-    Root      root2 = std::move(root1);
-    Root      root3(rank + 1);
+    int            rank       = 2;
+    const int      const_rank = rank;
+    RootDataBuffer root1(rank);
+    RootDataBuffer root2 = std::move(root1);
+    RootDataBuffer root3(rank + 1);
     root3 = std::move(root2);
     EXPECT_EQ(root3.rank(), const_rank);
-}
-
-TEST(OperationBuilderTest, move_constructor_assignment_operator_is_enabled) {
-    // simply test that move ctor and assignment operator can be called.
-    OperationBuilder op_builder1(ops::plus<>(), commutative);
-    OperationBuilder op_builder2(std::move(op_builder1));
-    OperationBuilder op_builder3(ops::plus<>(), commutative);
-    op_builder3 = std::move(op_builder2);
 }
 
 TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {

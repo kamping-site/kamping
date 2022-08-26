@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPIng Authors
+// Copyright 2021-2022 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -11,23 +11,18 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "kamping/mpi_function_wrapper_helpers.hpp"
-#include "kamping/named_parameters.hpp"
+#include "kamping/operation_builder.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
     using namespace ::kamping::internal;
-    // none of the extract function should work if the underlying buffer does not provide a member extract().
-    kamping::MPIResult mpi_result{
-        BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{}};
-#if defined(RECV_BUFFER_NOT_EXTRACTABLE)
-    std::ignore = mpi_result.extract_recv_buffer();
-#elif defined(RECV_COUNTS_NOT_EXTRACTABLE)
-    std::ignore = mpi_result.extract_recv_counts();
-#elif defined(RECV_DISPLACEMENTS_NOT_EXTRACTABLE)
-    std::ignore = mpi_result.extract_recv_displs();
-#elif defined(SEND_DISPLACEMENTS_NOT_EXTRACTABLE)
-    std::ignore = mpi_result.extract_send_displs();
+    OperationBuilder op_builder(ops::plus<>(), commutative);
+#if defined(COPY_CONSTRUCT_OP_BUILDER_BUFFER)
+    // should not be possible to copy construct a buffer (for performance reasons)
+    auto tmp = op_builder;
+#elif defined(COPY_ASSIGN_OP_BUILDER_BUFFER)
+    // should not be possible to copy assign a buffer (for performance reasons)
+    op_builder = op_builder;
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif

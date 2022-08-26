@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "kamping/parameter_objects.hpp"
-#include "kamping/parameter_type_definitions.hpp"
+#include "kamping/data_buffer.hpp"
+#include "kamping/named_parameter_types.hpp"
 
 namespace kamping::internal {
 

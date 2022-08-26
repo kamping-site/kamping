@@ -20,7 +20,7 @@
 #include <limits>
 #include <tuple>
 
-#include "kamping/parameter_type_definitions.hpp"
+#include "kamping/named_parameter_types.hpp"
 
 namespace kamping::internal {
 /// @addtogroup kamping_utility

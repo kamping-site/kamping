@@ -20,7 +20,7 @@
 #include "kamping/collectives/bcast.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/parameter_factories.hpp"
+#include "kamping/named_parameters.hpp"
 
 using namespace ::kamping;
 

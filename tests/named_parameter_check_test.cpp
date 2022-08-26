@@ -16,10 +16,10 @@
 #include <gtest/gtest.h>
 
 #include "helpers_for_testing.hpp"
-#include "kamping/parameter_check.hpp"
-#include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
-#include "parameter_check_common.hpp"
+#include "kamping/data_buffer.hpp"
+#include "kamping/named_parameter_check.hpp"
+#include "kamping/named_parameters.hpp"
+#include "named_parameter_check_common.hpp"
 
 TEST(ParameterCheckTest, check_empty) {
     testing::test_empty_arguments();
