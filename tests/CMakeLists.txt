@@ -229,7 +229,6 @@ kamping_register_compilation_failure_test(
 kamping_register_compilation_failure_test(
     test_operation_builder_compilation_failure
     FILES operation_builder_compilation_failures_test.cpp
-    SECTIONS "COPY_CONSTRUCT_OP_BUILDER_BUFFER"
-             "COPY_ASSIGN_OP_BUILDER_BUFFER"
+    SECTIONS "COPY_CONSTRUCT_OP_BUILDER_BUFFER" "COPY_ASSIGN_OP_BUILDER_BUFFER"
     LIBRARIES kamping_base
 )
