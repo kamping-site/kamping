@@ -78,7 +78,7 @@ auto kamping::Communicator::gather(Args... args) const {
         );
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
-    auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
+    auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::RootDataBuffer>(
         std::tuple(this->root()), args...
     );
     KASSERT(this->is_valid_rank(root.rank()), "Invalid rank as root.");

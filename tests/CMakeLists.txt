@@ -19,6 +19,7 @@ kamping_register_test(test_named_parameters FILES named_parameters_test.cpp)
 kamping_register_test(test_data_buffer FILES data_buffer_test.cpp)
 kamping_register_test(test_span FILES span_test.cpp)
 kamping_register_test(test_helpers_for_testing FILES helpers_for_testing_test.cpp)
+kamping_register_test(test_operation_builder FILES operation_builder_test.cpp)
 
 # Registering tests with MPI:
 
@@ -177,8 +178,6 @@ kamping_register_compilation_failure_test(
              "COPY_ASSIGN_LIB_ALLOC_SINGLE_ELEMENT_BUFFER"
              "COPY_CONSTRUCT_ROOT_BUFFER"
              "COPY_ASSIGN_ROOT_BUFFER"
-             "COPY_CONSTRUCT_OP_BUILDER_BUFFER"
-             "COPY_ASSIGN_OP_BUILDER_BUFFER"
              "VALUE_CONSTRUCTOR_REFERENCING_DATA_BUFFER"
              "DEFAULT_CONSTRUCT_USER_ALLOCATED_DATA_BUFFER"
              "EXTRACT_USER_ALLOCATED_DATA_BUFFER"
@@ -225,5 +224,12 @@ kamping_register_compilation_failure_test(
     test_mpi_bcast_compilation_failure
     FILES collectives/mpi_bcast_compilation_failure_test.cpp
     SECTIONS "RECV_COUNT_GIVEN"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_operation_builder_compilation_failure
+    FILES operation_builder_compilation_failures_test.cpp
+    SECTIONS "COPY_CONSTRUCT_OP_BUILDER_BUFFER"
+             "COPY_ASSIGN_OP_BUILDER_BUFFER"
     LIBRARIES kamping_base
 )

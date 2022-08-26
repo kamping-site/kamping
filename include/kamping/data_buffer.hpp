@@ -419,7 +419,7 @@ private:
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
 template <typename Data, ParameterType type>
-class EmptyBuffer {
+class EmptyDataBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
@@ -446,91 +446,50 @@ public:
 };
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
-class Root {
+///
+/// This is a specialized \c DataBuffer. Its main functionality is to provide ease-of-use functionality in the form of
+/// the methods \c rank() and \c rank_signed(), which return the rank of the root and are easier to read in the code
+/// where the root is required.
+class RootDataBuffer final : public DataBuffer<
+                                 size_t, ParameterType::root, BufferModifiability::modifiable, BufferOwnership::owning,
+                                 BufferType::in_buffer, BufferAllocation::user_allocated> {
 public:
     static constexpr ParameterType parameter_type =
         ParameterType::root; ///< The type of parameter this object encapsulates.
 
     /// @ Constructor for Root.
     /// @param rank Rank of the root PE.
-    Root(size_t rank) : _rank{rank} {}
+    RootDataBuffer(size_t rank) : DataBuffer(rank) {}
 
     /// @ Constructor for Root.
     /// @param rank Rank of the root PE.
-    Root(int rank) : _rank{asserting_cast<size_t>(rank)} {}
+    RootDataBuffer(int rank) : DataBuffer(asserting_cast<size_t>(rank)) {}
 
     /// @brief Move constructor for Root.
-    Root(Root&&) = default;
+    RootDataBuffer(RootDataBuffer&&) = default;
 
     /// @brief Move assignment operator for Root.
-    Root& operator=(Root&&) = default;
+    RootDataBuffer& operator=(RootDataBuffer&&) = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    Root(Root const&) = delete;
+    RootDataBuffer(RootDataBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    Root& operator=(Root const&) = delete;
+    RootDataBuffer& operator=(RootDataBuffer const&) = delete;
     // redundant as defaulted move constructor implies the deletion
 
     /// @brief Returns the rank of the root as `size_t`.
     /// @returns Rank of the root as `size_t`.
     size_t rank() const {
-        return _rank;
+        return underlying();
     }
 
     /// @brief Returns the rank of the root as `int`.
     /// @returns Rank of the root as `int`.
     int rank_signed() const {
-        return asserting_cast<int>(_rank);
+        return asserting_cast<int>(rank());
     }
-
-private:
-    size_t _rank; ///< Rank of the root PE.
-};
-
-/// @brief Parameter wrapping an operation passed to reduce-like MPI collectives.
-/// This wraps an MPI operation without the argument of the operation specified. This enables the user to construct
-/// such wrapper using the parameter factory \c kamping::op without passing the type of the operation. The library
-/// developer may then construct the actual operation wrapper with a given type later.
-///
-/// @tparam Op type of the operation (may be a function object or a lambda)
-/// @tparam Commutative tag specifying if the operation is commutative
-template <typename Op, typename Commutative>
-class OperationBuilder {
-public:
-    static constexpr ParameterType parameter_type =
-        ParameterType::op; ///< The type of parameter this object encapsulates.
-
-    /// @brief constructs an Operation builder
-    /// @param op the operation
-    /// @param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
-    OperationBuilder(Op&& op, Commutative commutative_tag [[maybe_unused]]) : _op(op) {}
-
-    /// @brief Move constructor for OperationsBuilder.
-    OperationBuilder(OperationBuilder&&) = default;
-
-    /// @brief Move assignment operator for OperationsBuilder.
-    OperationBuilder& operator=(OperationBuilder&&) = default;
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    OperationBuilder(OperationBuilder const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    OperationBuilder& operator=(OperationBuilder const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief constructs an operation for the given type T
-    /// @tparam T argument type of the reduction operation
-    template <typename T>
-    [[nodiscard]] auto build_operation() {
-        static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
-        return ReduceOperation<T, Op, Commutative>(std::forward<Op>(_op), Commutative{});
-    }
-
-private:
-    Op _op; ///< the operation which is encapsulated
 };
 
 } // namespace internal

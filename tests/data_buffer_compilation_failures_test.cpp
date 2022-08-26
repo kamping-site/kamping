@@ -40,9 +40,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
     LibAllocatedContainerBasedBuffer<ContainerType, parameter_type, buffer_type> lib_alloc_container_based_buffer;
 
-    Root root(42);
-
-    OperationBuilder op_builder(ops::plus<>(), commutative);
+    RootDataBuffer root(42);
 
 #if defined(COPY_CONSTRUCT_CONTAINER_CONST_BUFFER)
     // should not be possible to copy construct a buffer (for performance reasons)
@@ -86,12 +84,6 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif defined(COPY_ASSIGN_ROOT_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     root = root;
-#elif defined(COPY_CONSTRUCT_OP_BUILDER_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
-    auto tmp = op_builder;
-#elif defined(COPY_ASSIGN_OP_BUILDER_BUFFER)
-    // should not be possible to copy assign a buffer (for performance reasons)
-    op_builder = op_builder;
 #elif defined(VALUE_CONSTRUCTOR_REFERENCING_DATA_BUFFER)
     // should not be possible to value (or rvalue) construct a referencing DataBuffer
     DataBuffer<std::vector<int>, ParameterType::send_buf, BufferModifiability::modifiable, BufferOwnership::referencing>

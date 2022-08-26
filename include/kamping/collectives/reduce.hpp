@@ -54,7 +54,7 @@ auto kamping::Communicator::reduce(Args... args) const {
     );
 
     // Get all parameters
-    auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
+    auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::RootDataBuffer>(
         std::tuple(this->root()), args...
     );
 

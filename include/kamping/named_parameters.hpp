@@ -23,6 +23,7 @@
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameter_types.hpp"
+#include "kamping/operation_builder.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -127,7 +128,7 @@ constexpr internal::ignore_t<T> ignore{};
 /// @return Object wrapping a \c nullptr as a send buffer.
 template <typename Data>
 auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
-    return internal::EmptyBuffer<Data, internal::ParameterType::send_buf>();
+    return internal::EmptyDataBuffer<Data, internal::ParameterType::send_buf>();
 }
 
 /// @brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
@@ -381,7 +382,7 @@ inline auto recv_displs_out() {
 /// @param rank Rank of the root PE.
 /// @returns Root Object containing the rank information of the root PE.
 inline auto root(int rank) {
-    return internal::Root(rank);
+    return internal::RootDataBuffer(rank);
 }
 
 /// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
@@ -390,7 +391,7 @@ inline auto root(int rank) {
 /// @param rank Rank of the root PE.
 /// @returns Root Object containing the rank information of the root PE.
 inline auto root(size_t rank) {
-    return internal::Root(rank);
+    return internal::RootDataBuffer(rank);
 }
 
 /// @brief generates a parameter object for a reduce operation.
