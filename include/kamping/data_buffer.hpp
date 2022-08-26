@@ -465,20 +465,6 @@ public:
     /// @param rank Rank of the root PE.
     RootDataBuffer(int rank) : DataBuffer(asserting_cast<size_t>(rank)) {}
 
-    /// @brief Move constructor for Root.
-    RootDataBuffer(RootDataBuffer&&) = default;
-
-    /// @brief Move assignment operator for Root.
-    RootDataBuffer& operator=(RootDataBuffer&&) = default;
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    RootDataBuffer(RootDataBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    RootDataBuffer& operator=(RootDataBuffer const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
     /// @brief Returns the rank of the root as `size_t`.
     /// @returns Rank of the root as `size_t`.
     size_t rank() const {
