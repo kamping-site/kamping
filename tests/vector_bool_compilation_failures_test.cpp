@@ -16,7 +16,7 @@
 #include "helpers_for_testing.hpp"
 #include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
-#include "kamping/parameter_factories.hpp"
+#include "kamping/named_parameters.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
     using namespace kamping;

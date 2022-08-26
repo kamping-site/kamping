@@ -13,8 +13,8 @@
 
 #include <vector>
 
-#include "kamping/parameter_factories.hpp"
-#include "parameter_check_common.hpp"
+#include "kamping/named_parameters.hpp"
+#include "named_parameter_check_common.hpp"
 
 int main(int /* argc */, char** /* argv */) {
 #if defined(MISSING_REQUIRED_PARAMETER)

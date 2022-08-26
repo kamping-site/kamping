@@ -20,7 +20,7 @@
 #include <type_traits>
 
 #include "kamping/named_parameter_selection.hpp"
-#include "kamping/parameter_type_definitions.hpp"
+#include "kamping/named_parameter_types.hpp"
 
 // The following macros look strange since they use a GNU extension that becomes obsolete with C++-20.
 // The extension is supported by all major compilers.
@@ -363,8 +363,10 @@ struct parameters_to_integral_constant {
     ));
 };
 
-/// @brief Checks if the buffer has to be computed by kamping, i.e. if it is an output parameter
+/// @brief Checks if the buffer has to be computed by kamping, i.e. if it is an output parameter or the buffer has been
+/// allocated by KaMPIng.
 /// @tparam BufferType The buffer type to be checked
 template <typename BufferType>
-static constexpr bool has_to_be_computed = std::remove_reference_t<BufferType>::is_modifiable;
+static constexpr bool has_to_be_computed =
+    std::remove_reference_t<BufferType>::is_out_buffer || std::remove_reference_t<BufferType>::is_lib_allocated;
 } // namespace kamping::internal

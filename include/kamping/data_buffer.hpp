@@ -37,7 +37,7 @@
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/mpi_ops.hpp"
-#include "kamping/parameter_type_definitions.hpp"
+#include "kamping/named_parameter_types.hpp"
 #include "kamping/span.hpp"
 #include "kassert/kassert.hpp"
 
@@ -137,6 +137,9 @@ enum class BufferModifiability { modifiable, constant };
 enum class BufferOwnership { owning, referencing };
 /// @brief Enum to specify whether a buffer is allocated by the library or the user
 enum class BufferAllocation { lib_allocated, user_allocated };
+/// @brief Enum to specify whether a buffer is an in buffer of an out
+/// buffer. Out buffer will be used to directly write the result to.
+enum class BufferType { in_buffer, out_buffer, in_out_buffer };
 
 /// @brief Wrapper to get the value type of a non-container type (aka the type itself).
 /// @tparam has_value_type_member Whether `T` has a value_type member
@@ -178,23 +181,37 @@ inline constexpr bool is_int_type(ParameterType parameter_type) {
 /// DataBuffer wraps all buffer storages provided by an std-like container like std::vector or single values. A
 /// Container type must provide \c data(), \c size() and expose the type definition \c value_type.
 /// @tparam MemberType Container or data type on which this buffer is based.
-/// @tparam ParameterType parameter type represented by this buffer.
+/// @tparam parameter_type_param Parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
 /// @tparam ownership `owning` if the buffer should hold the actual container.
 /// `referencing` if only a reference to an existing container should be held.
+/// @tparam buffer_type_param Type of buffer, i.e., \c in_buffer, \c out_buffer, or \c in_out_buffer.
 /// @tparam allocation `lib_allocated` if the buffer was allocated by the library,
 /// `user_allocated` if it was allocated by the user.
 template <
     typename MemberType,
-    ParameterType       type,
+    ParameterType       parameter_type_param,
     BufferModifiability modifiability,
     BufferOwnership     ownership,
+    BufferType          buffer_type_param,
     BufferAllocation    allocation = BufferAllocation::user_allocated>
 class DataBuffer {
 public:
-    static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
-    static constexpr bool          is_modifiable =
+    static constexpr ParameterType parameter_type =
+        parameter_type_param; ///< The type of parameter this buffer represents.
+
+    static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
+
+    /// @brief \c true if the buffer is an out or in/out buffer that results will be written to and \c false
+    /// otherwise.
+    static constexpr bool is_out_buffer =
+        (buffer_type_param == BufferType::out_buffer || buffer_type_param == BufferType::in_out_buffer);
+
+    /// @brief Indicates whether the buffer is allocated by KaMPIng.
+    static constexpr bool is_lib_allocated = allocation == BufferAllocation::lib_allocated;
+
+    static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
     static constexpr bool is_single_element =
         !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
@@ -220,7 +237,9 @@ public:
     using value_type =
         typename ValueTypeWrapper<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
     // Logical implication: is_int_type(type) => std::is_same_v<value_type, int>
-    static_assert(!is_int_type(type) || std::is_same_v<value_type, int>, "The given data must be of type int");
+    static_assert(
+        !is_int_type(parameter_type_param) || std::is_same_v<value_type, int>, "The given data must be of type int"
+    );
     using value_type_with_const =
         std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending
                                                                          ///< on modifiability
@@ -407,7 +426,7 @@ private:
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
 template <typename Data, ParameterType type>
-class EmptyBuffer {
+class EmptyDataBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
@@ -434,91 +453,40 @@ public:
 };
 
 /// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
-class Root {
+///
+/// This is a specialized \c DataBuffer. Its main functionality is to provide ease-of-use functionality in the form of
+/// the methods \c rank() and \c rank_signed(), which return the rank of the root and are easier to read in the code
+/// where the root is required.
+class RootDataBuffer final : public DataBuffer<
+                                 size_t,
+                                 ParameterType::root,
+                                 BufferModifiability::modifiable,
+                                 BufferOwnership::owning,
+                                 BufferType::in_buffer,
+                                 BufferAllocation::user_allocated> {
 public:
     static constexpr ParameterType parameter_type =
         ParameterType::root; ///< The type of parameter this object encapsulates.
 
     /// @ Constructor for Root.
     /// @param rank Rank of the root PE.
-    Root(size_t rank) : _rank{rank} {}
+    RootDataBuffer(size_t rank) : DataBuffer(rank) {}
 
     /// @ Constructor for Root.
     /// @param rank Rank of the root PE.
-    Root(int rank) : _rank{asserting_cast<size_t>(rank)} {}
-
-    /// @brief Move constructor for Root.
-    Root(Root&&) = default;
-
-    /// @brief Move assignment operator for Root.
-    Root& operator=(Root&&) = default;
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    Root(Root const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    Root& operator=(Root const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
+    RootDataBuffer(int rank) : DataBuffer(asserting_cast<size_t>(rank)) {}
 
     /// @brief Returns the rank of the root as `size_t`.
     /// @returns Rank of the root as `size_t`.
     size_t rank() const {
-        return _rank;
+        return underlying();
     }
 
     /// @brief Returns the rank of the root as `int`.
     /// @returns Rank of the root as `int`.
     int rank_signed() const {
-        return asserting_cast<int>(_rank);
+        return asserting_cast<int>(rank());
     }
-
-private:
-    size_t _rank; ///< Rank of the root PE.
-};
-
-/// @brief Parameter wrapping an operation passed to reduce-like MPI collectives.
-/// This wraps an MPI operation without the argument of the operation specified. This enables the user to construct
-/// such wrapper using the parameter factory \c kamping::op without passing the type of the operation. The library
-/// developer may then construct the actual operation wrapper with a given type later.
-///
-/// @tparam Op type of the operation (may be a function object or a lambda)
-/// @tparam Commutative tag specifying if the operation is commutative
-template <typename Op, typename Commutative>
-class OperationBuilder {
-public:
-    static constexpr ParameterType parameter_type =
-        ParameterType::op; ///< The type of parameter this object encapsulates.
-
-    /// @brief constructs an Operation builder
-    /// @param op the operation
-    /// @param commutative_tag tag indicating if the operation is commutative (see \c kamping::op for details)
-    OperationBuilder(Op&& op, Commutative commutative_tag [[maybe_unused]]) : _op(op) {}
-
-    /// @brief Move constructor for OperationsBuilder.
-    OperationBuilder(OperationBuilder&&) = default;
-
-    /// @brief Move assignment operator for OperationsBuilder.
-    OperationBuilder& operator=(OperationBuilder&&) = default;
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    OperationBuilder(OperationBuilder const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    OperationBuilder& operator=(OperationBuilder const&) = delete;
-    // redundant as defaulted move constructor implies the deletion
-
-    /// @brief constructs an operation for the given type T
-    /// @tparam T argument type of the reduction operation
-    template <typename T>
-    [[nodiscard]] auto build_operation() {
-        static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
-        return ReduceOperation<T, Op, Commutative>(std::forward<Op>(_op), Commutative{});
-    }
-
-private:
-    Op _op; ///< the operation which is encapsulated
 };
 
 } // namespace internal

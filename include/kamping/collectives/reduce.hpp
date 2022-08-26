@@ -23,14 +23,14 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/data_buffer.hpp"
 #include "kamping/error_handling.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
+#include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
-#include "kamping/parameter_check.hpp"
-#include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
-#include "kamping/parameter_type_definitions.hpp"
+#include "kamping/named_parameter_types.hpp"
+#include "kamping/named_parameters.hpp"
 
 /// @brief Wrapper for \c MPI_Reduce.
 ///
@@ -56,7 +56,7 @@ auto kamping::Communicator::reduce(Args... args) const {
     );
 
     // Get all parameters
-    auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::Root>(
+    auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::RootDataBuffer>(
         std::tuple(this->root()),
         args...
     );

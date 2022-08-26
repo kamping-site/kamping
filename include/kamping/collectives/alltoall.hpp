@@ -26,9 +26,9 @@
 #include "kamping/communicator.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
+#include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
-#include "kamping/parameter_check.hpp"
-#include "kamping/parameter_factories.hpp"
+#include "kamping/named_parameters.hpp"
 
 /// @brief Wrapper for \c MPI_Alltoall.
 ///

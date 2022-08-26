@@ -11,31 +11,17 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <numeric>
-#include <vector>
+#include <gtest/gtest.h>
 
-#include <mpi.h>
+#include "kamping/operation_builder.hpp"
 
-#include "helpers_for_examples.hpp"
-#include "kamping/checking_casts.hpp"
-#include "kamping/collectives/gather.hpp"
-#include "kamping/communicator.hpp"
-#include "kamping/data_buffer.hpp"
-#include "kamping/environment.hpp"
-#include "kamping/named_parameters.hpp"
+using namespace ::kamping;
+using namespace ::kamping::internal;
 
-int main() {
-    using namespace kamping;
-    kamping::Environment  e;
-    kamping::Communicator comm;
-    std::vector<int>      input(comm.size());
-    std::iota(input.begin(), input.end(), 0);
-    std::vector<int> output;
-
-    comm.gather(send_buf(input), recv_buf(output), root(0));
-
-    print_result_on_root(output, comm);
-
-    return 0;
+TEST(OperationBuilderTest, move_constructor_assignment_operator_is_enabled) {
+    // simply test that move ctor and assignment operator can be called.
+    OperationBuilder op_builder1(ops::plus<>(), commutative);
+    OperationBuilder op_builder2(std::move(op_builder1));
+    OperationBuilder op_builder3(ops::plus<>(), commutative);
+    op_builder3 = std::move(op_builder2);
 }

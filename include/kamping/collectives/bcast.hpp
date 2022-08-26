@@ -20,13 +20,13 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/data_buffer.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
+#include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
-#include "kamping/parameter_check.hpp"
-#include "kamping/parameter_factories.hpp"
-#include "kamping/parameter_objects.hpp"
-#include "kamping/parameter_type_definitions.hpp"
+#include "kamping/named_parameter_types.hpp"
+#include "kamping/named_parameters.hpp"
 
 /// @brief Wrapper for \c MPI_Bcast
 ///
@@ -62,7 +62,10 @@ auto kamping::Communicator::bcast(Args... args) const {
     );
 
     // Get the root PE
-    auto&& root = select_parameter_type_or_default<ParameterType::root, Root>(std::tuple(this->root()), args...);
+    auto&& root = select_parameter_type_or_default<ParameterType::root, internal::RootDataBuffer>(
+        std::tuple(this->root()),
+        args...
+    );
     KASSERT(this->is_valid_rank(root.rank()), "Invalid rank as root.", assert::light);
 
     // Get the send_recv_buf; for now, the user *has* to provide a send-receive buffer.

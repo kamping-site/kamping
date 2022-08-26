@@ -13,7 +13,7 @@
 
 #include <vector>
 
-#include "kamping/parameter_factories.hpp"
+#include "kamping/named_parameters.hpp"
 
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
