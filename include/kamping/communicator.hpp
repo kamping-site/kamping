@@ -226,6 +226,9 @@ public:
     auto gather(Args... args) const;
 
     template <typename... Args>
+    auto allgather(Args... args) const;
+
+    template <typename... Args>
     auto bcast(Args... args) const;
 
     template <typename... Args>
