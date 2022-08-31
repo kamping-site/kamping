@@ -74,9 +74,9 @@ auto kamping::Communicator::allgather(Args... args) const {
 
     size_t recv_size     = send_buf.size();
     size_t recv_buf_size = this->size() * recv_size;
-
-    // error code can be unused if KTHROW is removed at compile time
     recv_buf.resize(recv_buf_size);
+    
+    // error code can be unused if KTHROW is removed at compile time
     [[maybe_unused]] int err = MPI_Allgather(
         send_buf.data(),
         asserting_cast<int>(send_buf.size()),
