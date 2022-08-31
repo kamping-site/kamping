@@ -35,7 +35,9 @@
 ///
 /// The following arguments are required:
 /// - \ref kamping::send_buf() containing the data that is sent to the root. This buffer has to be the same size at
-/// each rank. See TODO gather_v if the amounts differ. The following buffers are optional:
+/// each rank. See TODO gather_v if the amounts differ. 
+///
+/// The following buffers are optional:
 /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
 /// all data from all send buffers.
 ///
