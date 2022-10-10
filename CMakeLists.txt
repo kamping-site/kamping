@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+# Project setup
 project(
     kamping
     DESCRIPTION "An MPI wrapper which makes using MPI feel like C++"
@@ -43,6 +47,9 @@ if (EXISTS "${LOC_PATH}")
             "subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles."
     )
 endif ()
+
+# Enable compilation with ccache if available.
+include(ccache)
 
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
