@@ -270,7 +270,7 @@ auto kamping::Communicator::alltoallv(Args... args) const {
 
     THROW_IF_MPI_ERROR(err, MPI_Alltoallv);
 
-    return MPIResult(
+    return make_MPIResult(
         std::move(recv_buf),    // recv_buf
         std::move(recv_counts), // recv_counts
         std::move(recv_displs), // recv_displs
