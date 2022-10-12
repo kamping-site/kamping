@@ -46,7 +46,11 @@ template <typename T>
 inline constexpr bool has_extract_v = has_extract<T>::value;
 
 /// @brief Use this type if one of the template parameters of MPIResult is not used for a specific wrapped \c MPI call.
-struct BufferCategoryNotUsed {};
+template <ParameterType parameter_type_param = ParameterType::buffer_category_not_used>
+struct BufferCategoryNotUsed {
+    static constexpr ParameterType parameter_type = parameter_type_param;
+};
+
 } // namespace internal
 
 /// @brief MPIResult contains the result of a \c MPI call wrapped by KaMPIng.
@@ -139,6 +143,16 @@ private:
                              ///< displacements have been written into storage owned by the caller of KaMPIng.
 };
 
+namespace internal {
+
+template <ParameterType parameter_type, typename... Args>
+decltype(auto) select_parameter_or_buffer_category_not_used(Args&... args) {
+    using default_type = decltype(internal::BufferCategoryNotUsed<parameter_type>{});
+    return select_parameter_type_or_default<parameter_type, default_type>(std::tuple(), args...);
+}
+
+} // namespace internal
+
 /// @brief Factory creating the MPIResult.
 ///
 /// Makes an MPIResult from all arguments passed and inserts internal::BufferCategoryNotUsed when no fitting parameter
@@ -149,24 +163,14 @@ private:
 /// @return MPIResult encapsulating all passed parameters.
 template <typename... Args>
 auto make_MPIResult(Args... args) {
-    using default_type = decltype(internal::BufferCategoryNotUsed{});
-
-    auto&& recv_buf = internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(
-        std::tuple(),
-        args...
-    );
-    auto&& recv_counts = internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_type>(
-        std::tuple(),
-        args...
-    );
-    auto&& recv_displs = internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_type>(
-        std::tuple(),
-        args...
-    );
-    auto&& send_displs = internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_type>(
-        std::tuple(),
-        args...
-    );
+    auto&& recv_buf =
+        kamping::internal::select_parameter_or_buffer_category_not_used<internal::ParameterType::recv_buf>(args...);
+    auto&& recv_counts =
+        kamping::internal::select_parameter_or_buffer_category_not_used<internal::ParameterType::recv_counts>(args...);
+    auto&& recv_displs =
+        kamping::internal::select_parameter_or_buffer_category_not_used<internal::ParameterType::recv_displs>(args...);
+    auto&& send_displs =
+        kamping::internal::select_parameter_or_buffer_category_not_used<internal::ParameterType::send_displs>(args...);
 
     return MPIResult(std::move(recv_buf), std::move(recv_counts), std::move(recv_displs), std::move(send_displs));
 }
@@ -175,13 +179,16 @@ auto make_MPIResult(Args... args) {
 
 namespace std {
 
-template <typename... Args>
-    struct tuple_size < kamping::MPIResult<Args...> {
-    static constexpr size_t value = sizeof...(Args);
-}
+// template <class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls>
+//     struct tuple_size<kamping::MPIResult<RecvBuf, RecvCounts, RecvDispls, SendDispls> {
+//   // TODO filter buffer category not used elements
+//     static constexpr size_t value = sizeof...(Args);
+// };
 
-template <size_t Index, typename... Args>
-struct tuple_element<Index, kamping::MPIResult<Args...>> : tuple_element<Index, typle<Args...>> {
-};
+// template <size_t Index, class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls>
+// // TOOD Filter buffer category not used elements
+// struct tuple_element<Index, kamping::MPIResult<RecvBuf, RecvCounts, RecvDispls, SendDispls>> : tuple_element<Index,
+// tuple<RecvBuf, RecvCounts, RecvDispls, SendDispls>> {
+// };
 
 } // namespace std
