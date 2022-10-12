@@ -185,3 +185,35 @@ TEST(MpiResultTest, extract_send_displs_basics) {
 TEST(MpiResultTest, extract_send_displs_basics_own_container) {
     testing::test_send_displs_in_MPIResult<testing::OwnContainer<int>>();
 }
+
+TEST(MakeMpiResultTest, pass_rankdom_order_buffer) {
+    {
+        constexpr BufferType btype = BufferType::in_buffer;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts;
+        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs;
+
+        auto result = make_MPIResult(std::move(recv_counts), std::move(recv_buf), std::move(recv_displs));
+
+        auto result_recv_buf    = result.extract_recv_buffer();
+        auto result_recv_counts = result.extract_recv_counts();
+        auto result_recv_displs = result.extract_recv_displs();
+
+        static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, char>);
+        static_assert(std::is_same_v<decltype(result_recv_counts)::value_type, int>);
+        static_assert(std::is_same_v<decltype(result_recv_displs)::value_type, int>);
+    }
+    {
+        constexpr BufferType btype = BufferType::in_buffer;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts;
+        LibAllocatedContainerBasedBuffer<std::vector<double>, ParameterType::recv_buf, btype> recv_buf;
+
+        auto result = make_MPIResult(std::move(recv_counts), std::move(recv_buf));
+
+        auto result_recv_buf    = result.extract_recv_buffer();
+        auto result_recv_counts = result.extract_recv_counts();
+
+        static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, double>);
+        static_assert(std::is_same_v<decltype(result_recv_counts)::value_type, int>);
+    }
+}
