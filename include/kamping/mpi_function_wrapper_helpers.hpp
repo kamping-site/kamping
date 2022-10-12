@@ -138,3 +138,16 @@ private:
 };
 
 } // namespace kamping
+
+namespace std {
+
+template <typename... Args>
+    struct tuple_size < kamping::MPIResult<Args...> {
+    static constexpr size_t value = sizeof...(Args);
+}
+
+template <size_t Index, typename... Args>
+struct tuple_element<Index, kamping::MPIResult<Args...>> : tuple_element<Index, typle<Args...>> {
+};
+
+} // namespace std
