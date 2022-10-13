@@ -48,15 +48,16 @@ if (EXISTS "${LOC_PATH}")
     )
 endif ()
 
-# Enable compilation with ccache if this is the main project or explicitly specified
-if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    option(KAMPING_USE_CCACHE "Globally enable ccache." ON)
-endif ()
-
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
-option(KAMPING_USE_CCACHE "Globally enable ccache." OFF)
+
+# Enable compilation with ccache if this is the main project or explicitly specified
+if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    option(KAMPING_USE_CCACHE "Globally enable ccache." ON)
+else()
+    option(KAMPING_USE_CCACHE "Globally enable ccache." OFF)
+endif ()
 
 if (KAMPING_USE_CCACHE)
     include(CCache)
