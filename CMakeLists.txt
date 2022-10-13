@@ -50,20 +50,17 @@ endif ()
 
 # Enable compilation with ccache if this is the main project or explicitly specified
 if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    set(KAMPING_USE_CCACHE
-        ON
-        CACHE BOOL "Globally enable ccache."
-    )
-endif ()
-option(KAMPING_USE_CCACHE OFF "Globally enable ccache.")
-
-if (KAMPING_USE_CCACHE)
-    include(CCache)
+    option(KAMPING_USE_CCACHE "Globally enable ccache." ON)
 endif ()
 
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
+option(KAMPING_USE_CCACHE "Globally enable ccache." OFF)
+
+if (KAMPING_USE_CCACHE)
+    include(CCache)
+endif ()
 
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
 find_package(MPI REQUIRED)
