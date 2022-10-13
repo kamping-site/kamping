@@ -37,7 +37,7 @@ int main(int /*argc*/, char** /*argv*/) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs;
     auto result = make_mpi_result(std::move(recv_counts), std::move(recv_displs), std::move(send_displs));
-    std::ignore = result.extract_recv_buf();
+    std::ignore = result.extract_recv_buffer();
 #elif defined(MAKE_MPI_RESULT_RECV_COUNTS_NOT_EXTRACTABLE)
     constexpr BufferType                                                                  btype = BufferType::in_buffer;
     LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf;
