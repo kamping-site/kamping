@@ -131,7 +131,7 @@ auto kamping::Communicator::exscan(Args... args) const {
         }
     }
 
-    return make_MPIResult(std::move(recv_buf));
+    return make_mpi_result(std::move(recv_buf));
 }
 
 /// @brief Wrapper for \c MPI_exscan for single elements.

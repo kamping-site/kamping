@@ -148,7 +148,7 @@ private:
 /// @param args All parameter that should be included in the MPIResult.
 /// @return MPIResult encapsulating all passed parameters.
 template <typename... Args>
-auto make_MPIResult(Args... args) {
+auto make_mpi_result(Args... args) {
     using default_type = decltype(internal::BufferCategoryNotUsed{});
 
     auto&& recv_buf = internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(

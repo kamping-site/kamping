@@ -107,5 +107,5 @@ auto kamping::Communicator::reduce(Args... args) const {
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return make_MPIResult(std::move(recv_buf));
+    return make_mpi_result(std::move(recv_buf));
 }

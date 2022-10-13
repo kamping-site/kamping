@@ -98,5 +98,5 @@ auto kamping::Communicator::gather(Args... args) const {
         this->mpi_communicator()
     );
     THROW_IF_MPI_ERROR(err, MPI_Gather);
-    return make_MPIResult(std::move(recv_buf));
+    return make_mpi_result(std::move(recv_buf));
 }
