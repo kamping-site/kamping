@@ -49,7 +49,7 @@ if (EXISTS "${LOC_PATH}")
 endif ()
 
 # Enable compilation with ccache if available.
-include(ccache)
+include(CCache)
 
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
