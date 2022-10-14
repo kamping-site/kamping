@@ -95,7 +95,7 @@ auto kamping::Communicator::scan(Args... args) const {
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return MPIResult(std::move(recv_buf), BufferCategoryNotUsed{}, BufferCategoryNotUsed{}, BufferCategoryNotUsed{});
+    return make_mpi_result(std::move(recv_buf));
 }
 
 /// @brief Wrapper for \c MPI_Scan for single elements.

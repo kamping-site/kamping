@@ -142,12 +142,7 @@ auto kamping::Communicator::bcast(Args... args) const {
     );
     THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
-    return MPIResult(
-        std::move(send_recv_buf),
-        std::move(recv_count_param),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}
-    );
+    return make_mpi_result(std::move(send_recv_buf), std::move(recv_count_param));
 } // namespace kamping::internal
 
 /// @brief Wrapper for \c MPI_Bcast

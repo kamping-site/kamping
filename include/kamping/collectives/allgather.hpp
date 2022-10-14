@@ -87,10 +87,5 @@ auto kamping::Communicator::allgather(Args... args) const {
         this->mpi_communicator()
     );
     THROW_IF_MPI_ERROR(err, MPI_Allgather);
-    return MPIResult(
-        std::move(recv_buf),
-        internal::BufferCategoryNotUsed{},
-        internal::BufferCategoryNotUsed{},
-        internal::BufferCategoryNotUsed{}
-    );
+    return make_mpi_result(std::move(recv_buf));
 }

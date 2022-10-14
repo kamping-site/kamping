@@ -18,6 +18,8 @@
 
 #include <utility>
 
+#include "kamping/named_parameter_selection.hpp"
+
 namespace kamping {
 namespace internal {
 // https://stackoverflow.com/a/9154394 TODO license?
@@ -136,5 +138,37 @@ private:
     SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if the send
                              ///< displacements have been written into storage owned by the caller of KaMPIng.
 };
+
+/// @brief Factory creating the MPIResult.
+///
+/// Makes an MPIResult from all arguments passed and inserts internal::BufferCategoryNotUsed when no fitting parameter
+/// type is passed as argument.
+///
+/// @tparam Args Automaticcaly deducted template parameters.
+/// @param args All parameter that should be included in the MPIResult.
+/// @return MPIResult encapsulating all passed parameters.
+template <typename... Args>
+auto make_mpi_result(Args... args) {
+    using default_type = decltype(internal::BufferCategoryNotUsed{});
+
+    auto&& recv_buf = internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(
+        std::tuple(),
+        args...
+    );
+    auto&& recv_counts = internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_type>(
+        std::tuple(),
+        args...
+    );
+    auto&& recv_displs = internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_type>(
+        std::tuple(),
+        args...
+    );
+    auto&& send_displs = internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_type>(
+        std::tuple(),
+        args...
+    );
+
+    return MPIResult(std::move(recv_buf), std::move(recv_counts), std::move(recv_displs), std::move(send_displs));
+}
 
 } // namespace kamping
