@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+# Project setup
 project(
     kamping
     DESCRIPTION "An MPI wrapper which makes using MPI feel like C++"
@@ -47,6 +51,17 @@ endif ()
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
+
+# Enable compilation with ccache. Defaults to ON if this is the main project.
+if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    option(KAMPING_USE_CCACHE "Globally enable ccache." ON)
+else ()
+    option(KAMPING_USE_CCACHE "Globally enable ccache." OFF)
+endif ()
+
+if (KAMPING_USE_CCACHE)
+    include(CCache)
+endif ()
 
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
 find_package(MPI REQUIRED)
