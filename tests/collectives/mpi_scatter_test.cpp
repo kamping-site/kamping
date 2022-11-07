@@ -132,7 +132,7 @@ TEST(ScatterTest, scatter_with_root_arg) {
     int const    root = comm.size_signed() - 1; // use last PE as root
 
     auto const input  = create_input_vector_on_root(comm, 1, root);
-    auto const result = comm.scatter(send_buf(input), kamping::root(root)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input), kamping::root(static_cast<size_t>(root))).extract_recv_buffer();
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());

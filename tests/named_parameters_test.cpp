@@ -669,6 +669,46 @@ TEST(ParameterFactoriesTest, root_basics) {
     EXPECT_EQ(root_obj.rank(), 22);
 }
 
+TEST(ParameterFactoriesTest, receiver_basics) {
+    auto receiver_obj = receiver(22);
+    EXPECT_EQ(receiver_obj.rank(), 22);
+}
+
+TEST(ParameterFactoriesTest, tag_basics) {
+    auto tag_obj = tag(22);
+    EXPECT_EQ(tag_obj.get_single_element(), 22);
+}
+
+TEST(ParameterFactoriesTest, tag_enum) {
+    enum Tags : int {
+        type_a = 27,
+        type_b = 3,
+    };
+    {
+        auto tag_obj = tag(Tags::type_a);
+        EXPECT_EQ(tag_obj.get_single_element(), 27);
+    }
+    {
+        auto tag_obj = tag(Tags::type_b);
+        EXPECT_EQ(tag_obj.get_single_element(), 3);
+    }
+}
+
+TEST(ParameterFactoriesTest, tag_enum_class) {
+    enum class Tags {
+        type_a = 27,
+        type_b = 3,
+    };
+    {
+        auto tag_obj = tag(Tags::type_a);
+        EXPECT_EQ(tag_obj.get_single_element(), 27);
+    }
+    {
+        auto tag_obj = tag(Tags::type_b);
+        EXPECT_EQ(tag_obj.get_single_element(), 3);
+    }
+}
+
 TEST(ParameterFactoriesTest, send_recv_buf_basics_int_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto             gen_via_int_vec = send_recv_buf(int_vec);
