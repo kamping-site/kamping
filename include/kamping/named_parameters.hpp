@@ -407,7 +407,49 @@ inline auto root(int rank) {
 /// @param rank Rank of the root PE.
 /// @returns Root Object containing the rank information of the root PE.
 inline auto root(size_t rank) {
-    return internal::RootDataBuffer(rank);
+    return root(asserting_cast<int>(rank));
+}
+
+/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
+/// \c MPI_Gather.
+///
+/// @param rank Rank of the root PE.
+/// @returns Root Object containing the rank information of the root PE.
+inline auto receiver(int rank) {
+    return internal::RankDataBuffer<internal::ParameterType::receiver>(rank);
+}
+
+/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
+/// \c MPI_Gather.
+///
+/// @param rank Rank of the root PE.
+/// @returns Root Object containing the rank information of the root PE.
+inline auto receiver(size_t rank) {
+    return receiver(asserting_cast<int>(rank));
+}
+
+/// @brief Generates a parameter object encapsulating a tag.
+/// @param value the tag value.
+/// @returns The tag wrapper.
+inline auto tag(int value) {
+    return internal::make_data_buffer<
+        internal::ParameterType::tag,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::move(value));
+}
+
+/// @brief Generates a parameter object encapsulating a tag from an enum type.
+/// The underlying type of the enum must be convertible to \c int.
+/// @tparam EnumType type of the tag enum.
+/// @param value the tag value.
+/// @returns The tag wrapper.
+template <typename EnumType, typename = std::enable_if_t<std::is_enum_v<EnumType>>>
+inline auto tag(EnumType value) {
+    static_assert(
+        std::is_convertible_v<std::underlying_type_t<EnumType>, int>,
+        "The underlying enum type must be implicitly convertible to int."
+    );
+    return tag(static_cast<int>(value));
 }
 
 /// @brief generates a parameter object for a reduce operation.

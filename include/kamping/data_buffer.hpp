@@ -452,12 +452,13 @@ public:
     }
 };
 
-/// @brief Encapsulates rank of the root PE. This is needed for \c MPI collectives like \c MPI_Gather.
+/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton and rooted \c MPI collectives like \c
+/// MPI_Gather.
 ///
 /// This is a specialized \c DataBuffer. Its main functionality is to provide ease-of-use functionality in the form of
-/// the methods \c rank() and \c rank_signed(), which return the rank of the root and are easier to read in the code
-/// where the root is required.
-class RootDataBuffer final : public DataBuffer<
+/// the methods \c rank() and \c rank_signed(), which return the ecapsulated rank and are easier to read in the code.
+template <ParameterType type>
+class RankDataBuffer final : public DataBuffer<
                                  size_t,
                                  ParameterType::root,
                                  BufferModifiability::modifiable,
@@ -465,29 +466,30 @@ class RootDataBuffer final : public DataBuffer<
                                  BufferType::in_buffer,
                                  BufferAllocation::user_allocated> {
 public:
-    static constexpr ParameterType parameter_type =
-        ParameterType::root; ///< The type of parameter this object encapsulates.
+    static constexpr ParameterType parameter_type = type; ///< The type of parameter this object encapsulates.
 
-    /// @ Constructor for Root.
-    /// @param rank Rank of the root PE.
-    RootDataBuffer(size_t rank) : DataBuffer(rank) {}
+    /// @ Constructor for Rank.
+    /// @param rank Rank of the PE.
+    RankDataBuffer(size_t rank) : DataBuffer(rank) {}
 
-    /// @ Constructor for Root.
-    /// @param rank Rank of the root PE.
-    RootDataBuffer(int rank) : DataBuffer(asserting_cast<size_t>(rank)) {}
+    /// @ Constructor for Rank.
+    /// @param rank Rank of the PE.
+    RankDataBuffer(int rank) : DataBuffer(asserting_cast<size_t>(rank)) {}
 
-    /// @brief Returns the rank of the root as `size_t`.
-    /// @returns Rank of the root as `size_t`.
+    /// @brief Returns the rank as `size_t`.
+    /// @returns Rank of the PE as `size_t`.
     size_t rank() const {
         return underlying();
     }
 
-    /// @brief Returns the rank of the root as `int`.
-    /// @returns Rank of the root as `int`.
+    /// @brief Returns the rank as `int`.
+    /// @returns Rank as `int`.
     int rank_signed() const {
         return asserting_cast<int>(rank());
     }
 };
+
+using RootDataBuffer = RankDataBuffer<ParameterType::root>; ///< Helper for roots;
 
 } // namespace internal
 

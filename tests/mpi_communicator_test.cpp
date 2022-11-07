@@ -24,10 +24,16 @@ struct CommunicatorTest : Test {
     void SetUp() override {
         MPI_Comm_size(MPI_COMM_WORLD, &size);
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        int  flag;
+        int* value;
+        MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &value, &flag);
+        EXPECT_TRUE(flag);
+        mpi_tag_ub = *value;
     }
 
     int rank;
     int size;
+    int mpi_tag_ub;
 };
 
 TEST_F(CommunicatorTest, empty_constructor) {
@@ -111,6 +117,41 @@ TEST_F(CommunicatorTest, set_root_bound_check) {
             }
         }
     }
+}
+
+TEST_F(CommunicatorTest, test_tag_upper_bound) {
+    Communicator comm;
+    ASSERT_EQ(comm.tag_upper_bound(), mpi_tag_ub);
+    ASSERT_GE(comm.tag_upper_bound(), 32767); // the standard requires that MPI_TAG_UB has at least this size
+}
+
+TEST_F(CommunicatorTest, is_valid_tag) {
+    Communicator comm;
+    ASSERT_TRUE(comm.is_valid_tag(0));
+    ASSERT_TRUE(comm.is_valid_tag(42));
+    ASSERT_TRUE(comm.is_valid_tag(mpi_tag_ub));
+    ASSERT_FALSE(comm.is_valid_tag(mpi_tag_ub + 1));
+    if (mpi_tag_ub == std::numeric_limits<int>::max()) {
+        ASSERT_TRUE(comm.is_valid_tag(std::numeric_limits<int>::max()));
+    } else {
+        ASSERT_FALSE(comm.is_valid_tag(std::numeric_limits<int>::max()));
+    }
+    ASSERT_FALSE(comm.is_valid_tag(-1));
+    ASSERT_FALSE(comm.is_valid_tag(-42));
+    ASSERT_FALSE(comm.is_valid_tag(std::numeric_limits<int>::min()));
+}
+
+TEST_F(CommunicatorTest, set_default_tag) {
+    Communicator comm;
+    ASSERT_EQ(comm.default_tag(), 0);
+    comm.default_tag(1);
+    ASSERT_EQ(comm.default_tag(), 1);
+    comm.default_tag(23);
+    ASSERT_EQ(comm.default_tag(), 23);
+    comm.default_tag(mpi_tag_ub);
+    ASSERT_EQ(comm.default_tag(), mpi_tag_ub);
+    EXPECT_THROW(comm.default_tag(mpi_tag_ub + 1), kassert::KassertException);
+    EXPECT_THROW(comm.default_tag(-1), kassert::KassertException);
 }
 
 TEST_F(CommunicatorTest, rank_shifted_checked) {
