@@ -1,7 +1,7 @@
 # Adapted by the KaMPIng authors from GoogleTest.cmake included in CMake.
 #
-# Original license information: Distributed under the OSI-approved BSD 3-Clause License.  See accompanying file
-# Copyright.txt or https://cmake.org/licensing for details.
+# Original license information : Distributed under the OSI - approved BSD 3 - Clause License.See accompanying file
+# Copyright.txt or https: // cmake.org/licensing for details.
 
 function (katestrophe_discover_tests TARGET)
     cmake_parse_arguments(
@@ -14,7 +14,7 @@ function (katestrophe_discover_tests TARGET)
         set(_WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
     endif ()
     if (NOT _TEST_LIST)
-        set(_TEST_LIST ${TARGET}_TESTS)
+        set(_TEST_LIST "${TARGET}_TESTS")
     endif ()
     if (NOT _DISCOVERY_TIMEOUT)
         set(_DISCOVERY_TIMEOUT 5)
@@ -45,6 +45,7 @@ function (katestrophe_discover_tests TARGET)
     set(ctest_file_base "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}[${counter}]")
     set(ctest_include_file "${ctest_file_base}_include.cmake")
     set(ctest_tests_file "${ctest_file_base}_tests.cmake")
+    message(STATUS ${ctest_tests_file})
     get_property(
         crosscompiling_emulator
         TARGET ${TARGET}
@@ -69,13 +70,11 @@ function (katestrophe_discover_tests TARGET)
 
     file(
         WRITE "${ctest_include_file}"
-        [[
-        if(EXISTS \"${ctest_tests_file}\")
-            include(\"${ctest_tests_file}\")
-        else()
-            add_test(${TARGET}_NOT_BUILT ${TARGET}_NOT_BUILT)
-        endif()
-        ]]
+        "if(EXISTS \"${ctest_tests_file}\")\n" #
+        "  include(\"${ctest_tests_file}\")\n" #
+        "else()\n"
+        "  add_test(${TARGET}_NOT_BUILT ${TARGET}_NOT_BUILT)\n" #
+        "endif()\n" #
     )
 
     # Add discovered tests to directory TEST_INCLUDE_FILES
@@ -89,4 +88,4 @@ endfunction ()
 
 # -------------------------------------------
 
-set(_KATESTROPHE_DISCOVER_TESTS_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/MPIGoogleTestAddTests.cmake)
+set(_KATESTROPHE_DISCOVER_TESTS_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/MPIGoogleTestAddTests.cmake")
