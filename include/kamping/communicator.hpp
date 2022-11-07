@@ -38,7 +38,11 @@ public:
     /// @brief Constructor where an MPI communicator and the default root have to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
     /// @param root Default root that is used by MPI operations requiring a root.
-    explicit Communicator(MPI_Comm comm, int root) : _rank(get_mpi_rank(comm)), _size(get_mpi_size(comm)), _comm(comm) {
+    explicit Communicator(MPI_Comm comm, int root)
+        : _rank(get_mpi_rank(comm)),
+          _size(get_mpi_size(comm)),
+          _comm(comm),
+          _default_tag(0) {
         this->root(root);
     }
 
@@ -70,6 +74,20 @@ public:
     /// @return MPI communicator corresponding to this communicator.
     [[nodiscard]] MPI_Comm mpi_communicator() const {
         return _comm;
+    }
+
+    /// @brief Set a new default tag used in point to point communication. The initial value is 0.
+    void default_tag(int const default_tag) {
+        THROWING_KASSERT(
+            is_valid_tag(default_tag),
+            "invalid tag " << default_tag << ", maximum allowed tag is " << tag_upper_bound()
+        );
+        _default_tag = default_tag;
+    }
+
+    /// @brief Default tag used in point to point communication. The initial value is 0.
+    [[nodiscard]] int default_tag() const {
+        return _default_tag;
     }
 
     /// @brief Set a new root for MPI operations that require a root.
@@ -195,6 +213,23 @@ public:
         return rank < size();
     }
 
+    /// @brief The upper bound on message tags defined by the MPI implementation.
+    [[nodiscard]] int tag_upper_bound() const {
+        int* tag_ub;
+        int  flag;
+        MPI_Comm_get_attr(this->mpi_communicator(), MPI_TAG_UB, &tag_ub, &flag);
+        KASSERT(flag, "Could not retrieve MPI_TAG_UB");
+        return *tag_ub;
+    }
+
+    /// @brief Checks if the given tag is a valid message tag.
+    [[nodiscard]] bool is_valid_tag(int tag) const {
+        return tag >= 0 && tag <= tag_upper_bound();
+    }
+
+    template <typename... Args>
+    void send(Args... args) const;
+
     template <typename... Args>
     auto alltoall(Args... args) const;
 
@@ -265,7 +300,8 @@ private:
     size_t   _size; ///< Number of MPI processes in this communicator.
     MPI_Comm _comm; ///< Corresponding MPI communicator.
 
-    size_t _root; ///< Default root for MPI operations that require a root.
-};                // class communicator
+    size_t _root;        ///< Default root for MPI operations that require a root.
+    int    _default_tag; ///< Default tag value used in point to point communication.
+};                       // class communicator
 
 } // namespace kamping
