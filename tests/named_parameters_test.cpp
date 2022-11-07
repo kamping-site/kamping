@@ -183,6 +183,15 @@ void test_single_element_buffer(
 
 } // namespace testing
 
+TEST(ParamterFactoriesTest, test_type_list) {
+    using my_type_list = internal::type_list<int, double, std::string>;
+    ASSERT_TRUE(my_type_list::contains<int>);
+    ASSERT_TRUE(my_type_list::contains<double>);
+    ASSERT_TRUE(my_type_list::contains<std::string>);
+    ASSERT_FALSE(my_type_list::contains<char>);
+    ASSERT_FALSE(my_type_list::contains<float>);
+}
+
 TEST(ParameterFactoriesTest, send_buf_basics_int_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto             gen_via_int_vec = send_buf(int_vec);
@@ -707,6 +716,13 @@ TEST(ParameterFactoriesTest, tag_enum_class) {
         auto tag_obj = tag(Tags::type_b);
         EXPECT_EQ(tag_obj.get_single_element(), 3);
     }
+}
+
+TEST(ParameterFactoriesTest, test_send_mode) {
+    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::standard))::send_mode, internal::standard_tag>));
+    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::buffered))::send_mode, internal::buffered_tag>));
+    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::synchronous))::send_mode, internal::synchronous_tag>));
+    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::ready))::send_mode, internal::ready_tag>));
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_basics_int_vector) {

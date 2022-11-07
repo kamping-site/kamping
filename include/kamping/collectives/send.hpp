@@ -37,12 +37,17 @@
 /// The following parameters are optional:
 /// - \ref kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref
 /// Communicator::default_tag()) if not present.
+/// - \ref kamping::send_mode() the send mode to use. Defaults to standard MPI_Send.
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 template <typename... Args>
 void kamping::Communicator::send(Args... args) const {
     using namespace kamping::internal;
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, receiver), KAMPING_OPTIONAL_PARAMETERS(tag));
+    KAMPING_CHECK_PARAMETERS(
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf, receiver),
+        KAMPING_OPTIONAL_PARAMETERS(tag, send_mode)
+    );
 
     auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
     auto  send_buf        = send_buf_param.get();
@@ -59,16 +64,75 @@ void kamping::Communicator::send(Args... args) const {
                   .get_single_element();
     KASSERT(is_valid_tag(tag), "invalid tag " << tag << ", maximum allowed tag is " << tag_upper_bound());
 
+    using send_mode = typename std::remove_reference_t<
+        decltype(internal::select_parameter_type_or_default<
+                 internal::ParameterType::send_mode,
+                 internal::SendModeParameter<internal::standard_tag>>(std::tuple(), args...))>::send_mode;
+
     auto mpi_send_type = mpi_datatype<send_value_type>();
 
     KASSERT(this->is_valid_rank(receiver.rank()), "Invalid receiver rank.");
-    [[maybe_unused]] int err = MPI_Send(
-        send_buf.data(),                      // send_buf
-        asserting_cast<int>(send_buf.size()), // send_count
-        mpi_send_type,                        // send_type
-        receiver.rank_signed(),               // receiver
-        tag,                                  // tag
-        this->mpi_communicator()
-    );
-    THROW_IF_MPI_ERROR(err, MPI_Send);
+
+    if constexpr (std::is_same_v<send_mode, internal::standard_tag>) {
+        [[maybe_unused]] int err = MPI_Send(
+            send_buf.data(),                      // send_buf
+            asserting_cast<int>(send_buf.size()), // send_count
+            mpi_send_type,                        // send_type
+            receiver.rank_signed(),               // receiver
+            tag,                                  // tag
+            this->mpi_communicator()
+        );
+        THROW_IF_MPI_ERROR(err, MPI_Send);
+    } else if constexpr (std::is_same_v<send_mode, internal::buffered_tag>) {
+        [[maybe_unused]] int err = MPI_Bsend(
+            send_buf.data(),                      // send_buf
+            asserting_cast<int>(send_buf.size()), // send_count
+            mpi_send_type,                        // send_type
+            receiver.rank_signed(),               // receiver
+            tag,                                  // tag
+            this->mpi_communicator()
+        );
+        THROW_IF_MPI_ERROR(err, MPI_Bsend);
+    } else if constexpr (std::is_same_v<send_mode, internal::synchronous_tag>) {
+        [[maybe_unused]] int err = MPI_Ssend(
+            send_buf.data(),                      // send_buf
+            asserting_cast<int>(send_buf.size()), // send_count
+            mpi_send_type,                        // send_type
+            receiver.rank_signed(),               // receiver
+            tag,                                  // tag
+            this->mpi_communicator()
+        );
+        THROW_IF_MPI_ERROR(err, MPI_Ssend);
+    } else if constexpr (std::is_same_v<send_mode, internal::ready_tag>) {
+        [[maybe_unused]] int err = MPI_Rsend(
+            send_buf.data(),                      // send_buf
+            asserting_cast<int>(send_buf.size()), // send_count
+            mpi_send_type,                        // send_type
+            receiver.rank_signed(),               // receiver
+            tag,                                  // tag
+            this->mpi_communicator()
+        );
+        THROW_IF_MPI_ERROR(err, MPI_Rsend);
+    }
+}
+
+/// @brief Convenience wrapper for MPI_Bsend. Calls \ref kamping::Communicator::send() with the appropriate send mode
+/// set.
+template <typename... Args>
+void kamping::Communicator::bsend(Args... args) const {
+    this->send(std::forward<Args>(args)..., send_mode(send_modes::buffered));
+}
+
+/// @brief Convenience wrapper for MPI_Ssend. Calls \ref kamping::Communicator::send() with the appropriate send mode
+/// set.
+template <typename... Args>
+void kamping::Communicator::ssend(Args... args) const {
+    this->send(std::forward<Args>(args)..., send_mode(send_modes::synchronous));
+}
+
+/// @brief Convenience wrapper for MPI_Rsend. Calls \ref kamping::Communicator::send() with the appropriate send mode
+/// set.
+template <typename... Args>
+void kamping::Communicator::rsend(Args... args) const {
+    this->send(std::forward<Args>(args)..., send_mode(send_modes::ready));
 }

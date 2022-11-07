@@ -20,6 +20,8 @@
 
 using namespace ::kamping;
 
+// Note: These invariants tested here only hold when the tests are executed using more than one MPI rank!
+
 TEST(SendTest, send_vector) {
     Communicator comm;
     auto         other_rank = (comm.root() + 1) % comm.size();
@@ -108,5 +110,173 @@ TEST(SendTest, send_vector_with_enum_tag_recv_out_of_order) {
         ASSERT_EQ(msg, (std::vector<int>{42, 3, 8, 7}));
         ASSERT_EQ(status.MPI_SOURCE, comm.root());
         ASSERT_EQ(status.MPI_TAG, static_cast<int>(Tag::data_message));
+    }
+}
+
+TEST(SendTest, send_vector_standard) {
+    Communicator comm;
+    auto         other_rank = (comm.root() + 1) % comm.size();
+    if (comm.is_root()) {
+        std::vector<int> values{42, 3, 8, 7};
+        comm.send(send_buf(values), receiver(other_rank), send_mode(send_modes::standard));
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(4);
+        MPI_Status       status;
+        MPI_Recv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &status
+        );
+        ASSERT_EQ(msg, (std::vector<int>{42, 3, 8, 7}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
+}
+
+TEST(SendTest, send_vector_buffered) {
+    Communicator comm;
+    auto         other_rank = (comm.root() + 1) % comm.size();
+    if (comm.is_root()) {
+        std::vector<int> values{42, 3, 8, 7};
+        comm.send(send_buf(values), receiver(other_rank), send_mode(send_modes::buffered));
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(4);
+        MPI_Status       status;
+        MPI_Recv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &status
+        );
+        ASSERT_EQ(msg, (std::vector<int>{42, 3, 8, 7}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
+}
+
+TEST(SendTest, send_vector_synchronous) {
+    Communicator comm;
+    auto         other_rank = (comm.root() + 1) % comm.size();
+    if (comm.is_root()) {
+        std::vector<int> values{42, 3, 8, 7};
+        comm.send(send_buf(values), receiver(other_rank), send_mode(send_modes::synchronous));
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(4);
+        MPI_Status       status;
+        MPI_Recv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &status
+        );
+        ASSERT_EQ(msg, (std::vector<int>{42, 3, 8, 7}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
+}
+
+TEST(SendTest, send_vector_ready) {
+    Communicator comm;
+    auto         other_rank = (comm.root() + 1) % comm.size();
+    if (comm.is_root()) {
+        std::vector<int> values{42, 3, 8, 7};
+        comm.send(send_buf(values), receiver(other_rank), send_mode(send_modes::ready));
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(4);
+        MPI_Status       status;
+        MPI_Recv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &status
+        );
+        ASSERT_EQ(msg, (std::vector<int>{42, 3, 8, 7}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
+}
+
+TEST(SendTest, send_vector_bsend) {
+    Communicator comm;
+    auto         other_rank = (comm.root() + 1) % comm.size();
+    if (comm.is_root()) {
+        std::vector<int> values{42, 3, 8, 7};
+        comm.bsend(send_buf(values), receiver(other_rank));
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(4);
+        MPI_Status       status;
+        MPI_Recv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &status
+        );
+        ASSERT_EQ(msg, (std::vector<int>{42, 3, 8, 7}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
+}
+
+TEST(SendTest, send_vector_ssend) {
+    Communicator comm;
+    auto         other_rank = (comm.root() + 1) % comm.size();
+    if (comm.is_root()) {
+        std::vector<int> values{42, 3, 8, 7};
+        comm.ssend(send_buf(values), receiver(other_rank));
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(4);
+        MPI_Status       status;
+        MPI_Recv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &status
+        );
+        ASSERT_EQ(msg, (std::vector<int>{42, 3, 8, 7}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
+}
+
+TEST(SendTest, send_vector_rsend) {
+    Communicator comm;
+    auto         other_rank = (comm.root() + 1) % comm.size();
+    if (comm.is_root()) {
+        std::vector<int> values{42, 3, 8, 7};
+        comm.rsend(send_buf(values), receiver(other_rank));
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(4);
+        MPI_Status       status;
+        MPI_Recv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &status
+        );
+        ASSERT_EQ(msg, (std::vector<int>{42, 3, 8, 7}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
     }
 }
