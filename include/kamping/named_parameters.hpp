@@ -397,7 +397,7 @@ inline auto recv_displs_out() {
 ///
 /// @param rank Rank of the root PE.
 /// @returns Root Object containing the rank information of the root PE.
-inline auto root(size_t rank) {
+inline auto root(int rank) {
     return internal::RootDataBuffer(rank);
 }
 
@@ -406,8 +406,26 @@ inline auto root(size_t rank) {
 ///
 /// @param rank Rank of the root PE.
 /// @returns Root Object containing the rank information of the root PE.
-inline auto receiver(size_t rank) {
+inline auto root(size_t rank) {
+    return root(asserting_cast<int>(rank));
+}
+
+/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
+/// \c MPI_Gather.
+///
+/// @param rank Rank of the root PE.
+/// @returns Root Object containing the rank information of the root PE.
+inline auto receiver(int rank) {
     return internal::RankDataBuffer<internal::ParameterType::receiver>(rank);
+}
+
+/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
+/// \c MPI_Gather.
+///
+/// @param rank Rank of the root PE.
+/// @returns Root Object containing the rank information of the root PE.
+inline auto receiver(size_t rank) {
+    return receiver(asserting_cast<int>(rank));
 }
 
 /// @brief Generates a parameter object encapsulating a tag.
