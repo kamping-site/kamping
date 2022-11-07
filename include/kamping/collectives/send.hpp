@@ -50,14 +50,14 @@ void kamping::Communicator::send(Args... args) const {
 
     auto const& receiver = internal::select_parameter_type<internal::ParameterType::receiver>(args...);
 
-    using tag_buf_type = decltype(kamping::tag(0));
+    using default_tag_buf_type = decltype(kamping::tag(0));
 
-    int tag = internal::select_parameter_type_or_default<internal::ParameterType::tag, tag_buf_type>(
+    int tag = internal::select_parameter_type_or_default<internal::ParameterType::tag, default_tag_buf_type>(
                   std::tuple(this->default_tag()),
                   args...
     )
                   .get_single_element();
-    THROWING_KASSERT(is_valid_tag(tag), "invalid tag " << tag << ", maximum allowed tag is " << tag_upper_bound());
+    KASSERT(is_valid_tag(tag), "invalid tag " << tag << ", maximum allowed tag is " << tag_upper_bound());
 
     auto mpi_send_type = mpi_datatype<send_value_type>();
 

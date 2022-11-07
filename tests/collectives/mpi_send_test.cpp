@@ -93,7 +93,7 @@ TEST(SendTest, send_vector_with_enum_tag_recv_out_of_order) {
             &status
         );
         ASSERT_EQ(msg.size(), 0);
-        ASSERT_EQ(status.MPI_TAG, 13);
+        ASSERT_EQ(status.MPI_TAG, static_cast<int>(Tag::control_message));
 
         msg.resize(4);
         MPI_Recv(
@@ -107,6 +107,6 @@ TEST(SendTest, send_vector_with_enum_tag_recv_out_of_order) {
         );
         ASSERT_EQ(msg, (std::vector<int>{42, 3, 8, 7}));
         ASSERT_EQ(status.MPI_SOURCE, comm.root());
-        ASSERT_EQ(status.MPI_TAG, 27);
+        ASSERT_EQ(status.MPI_TAG, static_cast<int>(Tag::data_message));
     }
 }
