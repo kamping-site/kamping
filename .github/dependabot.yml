@@ -1,14 +1,8 @@
 version: 2
 updates:
   - package-ecosystem: "gitsubmodule"
-    directory: "extern/googletest"
+    directory: "/"
     schedule:
       interval: "monthly"
-    labels:
-      - "review"
-  - package-ecosystem: "gitsubmodule"
-    directory: "extern/kassert"
-    schedule:
-      interval: "daily"
     labels:
       - "review"
