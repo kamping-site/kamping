@@ -36,7 +36,7 @@ namespace internal {
 template <typename... Args>
 struct type_list {
     /// @brief Member attribute to check if a type is contained in the list
-    /// @tparam T The to check for if it is contained in the list.
+    /// @tparam T The type to check for if it is contained in the list.
     template <typename T>
     static constexpr bool contains = std::disjunction<std::is_same<T, Args>...>::value;
 };
@@ -464,12 +464,12 @@ inline auto tag(EnumType value) {
 }
 
 namespace internal {
-struct standard_tag {};    ///< tag for standard send mode
-struct buffered_tag {};    ///< tag for buffered send mode
-struct synchronous_tag {}; ///< tag for synchronous send mode
-struct ready_tag {};       ///< tag for ready send mode
+struct standard_mode_t {};    ///< tag for standard send mode
+struct buffered_mode_t {};    ///< tag for buffered send mode
+struct synchronous_mode_t {}; ///< tag for synchronous send mode
+struct ready_mode_t {};       ///< tag for ready send mode
 using send_mode_list =
-    type_list<standard_tag, buffered_tag, synchronous_tag, ready_tag>; ///< list of all available send modes
+    type_list<standard_mode_t, buffered_mode_t, synchronous_mode_t, ready_mode_t>; ///< list of all available send modes
 
 /// @brief Parameter object for send_mode encapsulating the send mode compile-time tag.
 /// @tparam SendModeTag The send mode.
@@ -482,10 +482,10 @@ struct SendModeParameter {
 } // namespace internal
 
 namespace send_modes {
-static constexpr internal::standard_tag    standard{};    ///< global constant for standard send mode
-static constexpr internal::buffered_tag    buffered{};    ///< global constant for buffered send mode
-static constexpr internal::synchronous_tag synchronous{}; ///< global constant for synchronous send mode
-static constexpr internal::ready_tag       ready{};       ///< global constant for ready send mode
+static constexpr internal::standard_mode_t    standard{};    ///< global constant for standard send mode
+static constexpr internal::buffered_mode_t    buffered{};    ///< global constant for buffered send mode
+static constexpr internal::synchronous_mode_t synchronous{}; ///< global constant for synchronous send mode
+static constexpr internal::ready_mode_t       ready{};       ///< global constant for ready send mode
 } // namespace send_modes
 
 /// @brief Send mode parameter for point to point communication.

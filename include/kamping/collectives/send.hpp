@@ -64,16 +64,16 @@ void kamping::Communicator::send(Args... args) const {
                   .get_single_element();
     KASSERT(is_valid_tag(tag), "invalid tag " << tag << ", maximum allowed tag is " << tag_upper_bound());
 
-    using send_mode = typename std::remove_reference_t<
-        decltype(internal::select_parameter_type_or_default<
-                 internal::ParameterType::send_mode,
-                 internal::SendModeParameter<internal::standard_tag>>(std::tuple(), args...))>::send_mode;
+    using send_mode_obj_type = decltype(internal::select_parameter_type_or_default<
+                                        internal::ParameterType::send_mode,
+                                        internal::SendModeParameter<internal::standard_mode_t>>(std::tuple(), args...));
+    using send_mode          = typename std::remove_reference_t<send_mode_obj_type>::send_mode;
 
     auto mpi_send_type = mpi_datatype<send_value_type>();
 
     KASSERT(this->is_valid_rank(receiver.rank()), "Invalid receiver rank.");
 
-    if constexpr (std::is_same_v<send_mode, internal::standard_tag>) {
+    if constexpr (std::is_same_v<send_mode, internal::standard_mode_t>) {
         [[maybe_unused]] int err = MPI_Send(
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
@@ -83,7 +83,7 @@ void kamping::Communicator::send(Args... args) const {
             this->mpi_communicator()
         );
         THROW_IF_MPI_ERROR(err, MPI_Send);
-    } else if constexpr (std::is_same_v<send_mode, internal::buffered_tag>) {
+    } else if constexpr (std::is_same_v<send_mode, internal::buffered_mode_t>) {
         [[maybe_unused]] int err = MPI_Bsend(
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
@@ -93,7 +93,7 @@ void kamping::Communicator::send(Args... args) const {
             this->mpi_communicator()
         );
         THROW_IF_MPI_ERROR(err, MPI_Bsend);
-    } else if constexpr (std::is_same_v<send_mode, internal::synchronous_tag>) {
+    } else if constexpr (std::is_same_v<send_mode, internal::synchronous_mode_t>) {
         [[maybe_unused]] int err = MPI_Ssend(
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
@@ -103,7 +103,7 @@ void kamping::Communicator::send(Args... args) const {
             this->mpi_communicator()
         );
         THROW_IF_MPI_ERROR(err, MPI_Ssend);
-    } else if constexpr (std::is_same_v<send_mode, internal::ready_tag>) {
+    } else if constexpr (std::is_same_v<send_mode, internal::ready_mode_t>) {
         [[maybe_unused]] int err = MPI_Rsend(
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count

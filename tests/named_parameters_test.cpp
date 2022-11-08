@@ -719,10 +719,11 @@ TEST(ParameterFactoriesTest, tag_enum_class) {
 }
 
 TEST(ParameterFactoriesTest, test_send_mode) {
-    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::standard))::send_mode, internal::standard_tag>));
-    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::buffered))::send_mode, internal::buffered_tag>));
-    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::synchronous))::send_mode, internal::synchronous_tag>));
-    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::ready))::send_mode, internal::ready_tag>));
+    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::standard))::send_mode, internal::standard_mode_t>));
+    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::buffered))::send_mode, internal::buffered_mode_t>));
+    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::synchronous))::send_mode, internal::synchronous_mode_t>)
+    );
+    ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::ready))::send_mode, internal::ready_mode_t>));
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_basics_int_vector) {
