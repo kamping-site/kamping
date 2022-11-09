@@ -676,16 +676,25 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
 TEST(ParameterFactoriesTest, root_basics) {
     auto root_obj = root(22);
     EXPECT_EQ(root_obj.rank(), 22);
+    EXPECT_EQ(decltype(root_obj)::parameter_type, ParameterType::root);
 }
 
-TEST(ParameterFactoriesTest, receiver_basics) {
-    auto receiver_obj = receiver(22);
-    EXPECT_EQ(receiver_obj.rank(), 22);
+TEST(ParameterFactoriesTest, destination_basics) {
+    auto destination_obj = destination(22);
+    EXPECT_EQ(destination_obj.rank(), 22);
+    EXPECT_EQ(decltype(destination_obj)::parameter_type, ParameterType::destination);
+}
+
+TEST(ParameterFactoriesTest, source_basics) {
+    auto source_obj = source(22);
+    EXPECT_EQ(source_obj.rank(), 22);
+    EXPECT_EQ(decltype(source_obj)::parameter_type, ParameterType::source);
 }
 
 TEST(ParameterFactoriesTest, tag_basics) {
     auto tag_obj = tag(22);
     EXPECT_EQ(tag_obj.get_single_element(), 22);
+    EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::tag);
 }
 
 TEST(ParameterFactoriesTest, tag_enum) {
@@ -696,10 +705,12 @@ TEST(ParameterFactoriesTest, tag_enum) {
     {
         auto tag_obj = tag(Tags::type_a);
         EXPECT_EQ(tag_obj.get_single_element(), 27);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::tag);
     }
     {
         auto tag_obj = tag(Tags::type_b);
         EXPECT_EQ(tag_obj.get_single_element(), 3);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::tag);
     }
 }
 
@@ -715,6 +726,7 @@ TEST(ParameterFactoriesTest, tag_enum_class) {
     {
         auto tag_obj = tag(Tags::type_b);
         EXPECT_EQ(tag_obj.get_single_element(), 3);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::tag);
     }
 }
 

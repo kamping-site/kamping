@@ -421,22 +421,39 @@ inline auto root(size_t rank) {
     return root(asserting_cast<int>(rank));
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
-/// \c MPI_Gather.
+/// @brief Generates an object encapsulating the rank of the destination PE in point
+/// to point communication.
 ///
-/// @param rank Rank of the root PE.
-/// @returns Root Object containing the rank information of the root PE.
-inline auto receiver(int rank) {
-    return internal::RankDataBuffer<internal::ParameterType::receiver>(rank);
+/// @param rank The rank.
+/// @returns The destination parameter.
+inline auto destination(int rank) {
+    return internal::RankDataBuffer<internal::ParameterType::destination>(rank);
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
-/// \c MPI_Gather.
+/// @brief Generates an object encapsulating the rank of the destination PE in point to point communication.
 ///
-/// @param rank Rank of the root PE.
-/// @returns Root Object containing the rank information of the root PE.
-inline auto receiver(size_t rank) {
-    return receiver(asserting_cast<int>(rank));
+/// @param rank The rank.
+/// @returns The destination parameter.
+inline auto destination(size_t rank) {
+    return destination(asserting_cast<int>(rank));
+}
+
+/// @brief Generates an object encapsulating the rank of the source PE in
+/// point to point communication.
+///
+/// @param rank The rank.
+/// @returns The source parameter.
+inline auto source(int rank) {
+    return internal::RankDataBuffer<internal::ParameterType::source>(rank);
+}
+
+/// @brief Generates an object encapsulating the rank of the source PE in
+/// point to point communication.
+///
+/// @param rank The rank.
+/// @returns The source parameter.
+inline auto source(size_t rank) {
+    return source(asserting_cast<int>(rank));
 }
 
 /// @brief Generates a parameter object encapsulating a tag.

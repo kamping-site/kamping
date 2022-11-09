@@ -45,7 +45,7 @@ void kamping::Communicator::send(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args,
-        KAMPING_REQUIRED_PARAMETERS(send_buf, receiver),
+        KAMPING_REQUIRED_PARAMETERS(send_buf, destination),
         KAMPING_OPTIONAL_PARAMETERS(tag, send_mode)
     );
 
@@ -53,7 +53,7 @@ void kamping::Communicator::send(Args... args) const {
     auto  send_buf        = send_buf_param.get();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
 
-    auto const& receiver = internal::select_parameter_type<internal::ParameterType::receiver>(args...);
+    auto const& destination = internal::select_parameter_type<internal::ParameterType::destination>(args...);
 
     using default_tag_buf_type = decltype(kamping::tag(0));
 
@@ -71,14 +71,14 @@ void kamping::Communicator::send(Args... args) const {
 
     auto mpi_send_type = mpi_datatype<send_value_type>();
 
-    KASSERT(this->is_valid_rank(receiver.rank()), "Invalid receiver rank.");
+    KASSERT(this->is_valid_rank(destination.rank()), "Invalid destination rank.");
 
     if constexpr (std::is_same_v<send_mode, internal::standard_mode_t>) {
         [[maybe_unused]] int err = MPI_Send(
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
             mpi_send_type,                        // send_type
-            receiver.rank_signed(),               // receiver
+            destination.rank_signed(),            // destination
             tag,                                  // tag
             this->mpi_communicator()
         );
@@ -88,7 +88,7 @@ void kamping::Communicator::send(Args... args) const {
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
             mpi_send_type,                        // send_type
-            receiver.rank_signed(),               // receiver
+            destination.rank_signed(),            // destination
             tag,                                  // tag
             this->mpi_communicator()
         );
@@ -98,7 +98,7 @@ void kamping::Communicator::send(Args... args) const {
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
             mpi_send_type,                        // send_type
-            receiver.rank_signed(),               // receiver
+            destination.rank_signed(),            // destination
             tag,                                  // tag
             this->mpi_communicator()
         );
@@ -108,7 +108,7 @@ void kamping::Communicator::send(Args... args) const {
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
             mpi_send_type,                        // send_type
-            receiver.rank_signed(),               // receiver
+            destination.rank_signed(),            // destination
             tag,                                  // tag
             this->mpi_communicator()
         );
