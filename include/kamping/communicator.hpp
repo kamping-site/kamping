@@ -231,6 +231,15 @@ public:
     void send(Args... args) const;
 
     template <typename... Args>
+    void bsend(Args... args) const;
+
+    template <typename... Args>
+    void ssend(Args... args) const;
+
+    template <typename... Args>
+    void rsend(Args... args) const;
+
+    template <typename... Args>
     auto alltoall(Args... args) const;
 
     template <typename... Args>

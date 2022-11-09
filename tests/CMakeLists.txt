@@ -58,7 +58,7 @@ kamping_register_mpi_test(
 kamping_register_mpi_test(
     test_mpi_send
     FILES collectives/mpi_send_test.cpp
-    CORES 1 4
+    CORES 2 4
 )
 kamping_register_mpi_test(
     test_mpi_allgather

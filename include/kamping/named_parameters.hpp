@@ -30,6 +30,17 @@ namespace kamping {
 /// @{
 
 namespace internal {
+
+/// @brief Helper type for representing a type list
+/// @tparam Args the types.
+template <typename... Args>
+struct type_list {
+    /// @brief Member attribute to check if a type is contained in the list
+    /// @tparam T The type to check for if it is contained in the list.
+    template <typename T>
+    static constexpr bool contains = std::disjunction<std::is_same<T, Args>...>::value;
+};
+
 /// @brief Tag type for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
 template <typename T>
 struct ignore_t {};
@@ -450,6 +461,38 @@ inline auto tag(EnumType value) {
         "The underlying enum type must be implicitly convertible to int."
     );
     return tag(static_cast<int>(value));
+}
+
+namespace internal {
+struct standard_mode_t {};    ///< tag for standard send mode
+struct buffered_mode_t {};    ///< tag for buffered send mode
+struct synchronous_mode_t {}; ///< tag for synchronous send mode
+struct ready_mode_t {};       ///< tag for ready send mode
+using send_mode_list =
+    type_list<standard_mode_t, buffered_mode_t, synchronous_mode_t, ready_mode_t>; ///< list of all available send modes
+
+/// @brief Parameter object for send_mode encapsulating the send mode compile-time tag.
+/// @tparam SendModeTag The send mode.
+template <typename SendModeTag>
+struct SendModeParameter {
+    static_assert(send_mode_list::contains<SendModeTag>, "Unsupported send mode.");
+    static constexpr ParameterType parameter_type = ParameterType::send_mode; ///< The parameter type.
+    using send_mode                               = SendModeTag;              ///< The send mode.
+};
+} // namespace internal
+
+namespace send_modes {
+static constexpr internal::standard_mode_t    standard{};    ///< global constant for standard send mode
+static constexpr internal::buffered_mode_t    buffered{};    ///< global constant for buffered send mode
+static constexpr internal::synchronous_mode_t synchronous{}; ///< global constant for synchronous send mode
+static constexpr internal::ready_mode_t       ready{};       ///< global constant for ready send mode
+} // namespace send_modes
+
+/// @brief Send mode parameter for point to point communication.
+/// Pass any of the tags from the \c kamping::send_modes namespace.
+template <typename SendModeTag>
+inline auto send_mode(SendModeTag) {
+    return internal::SendModeParameter<SendModeTag>{};
 }
 
 /// @brief generates a parameter object for a reduce operation.
