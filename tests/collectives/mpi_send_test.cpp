@@ -23,10 +23,10 @@ using namespace ::kamping;
 // Note: These invariants tested here only hold when the tests are executed using more than one MPI rank!
 
 static size_t call_hierarchy_level = 0;
-static size_t send_counter          = 0;
-static size_t bsend_counter         = 0;
-static size_t ssend_counter         = 0;
-static size_t rsend_counter         = 0;
+static size_t send_counter         = 0;
+static size_t bsend_counter        = 0;
+static size_t ssend_counter        = 0;
+static size_t rsend_counter        = 0;
 
 class SendTest : public ::testing::Test {
     void SetUp() override {
@@ -34,17 +34,17 @@ class SendTest : public ::testing::Test {
         ASSERT_GT(comm.size(), 1)
             << "The invariants tested here only hold when the tests are executed using more than one MPI rank!";
         call_hierarchy_level = 0;
-        send_counter          = 0;
-        bsend_counter         = 0;
-        ssend_counter         = 0;
-        rsend_counter         = 0;
+        send_counter         = 0;
+        bsend_counter        = 0;
+        ssend_counter        = 0;
+        rsend_counter        = 0;
     }
     void TearDown() override {
         call_hierarchy_level = 0;
-        send_counter          = 0;
-        bsend_counter         = 0;
-        ssend_counter         = 0;
-        rsend_counter         = 0;
+        send_counter         = 0;
+        bsend_counter        = 0;
+        ssend_counter        = 0;
+        rsend_counter        = 0;
     }
 };
 
