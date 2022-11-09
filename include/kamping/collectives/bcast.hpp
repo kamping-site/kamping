@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <type_traits>
+
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
@@ -95,6 +97,10 @@ auto kamping::Communicator::bcast(Args... args) const {
     );
 
     // If it is not user provided, broadcast the size of send_recv_buf from the root to all ranks.
+    static_assert(
+        std::remove_reference_t<decltype(recv_count_param)>::is_single_element,
+        "recv_counts() parameter must be a single value."
+    );
     int recv_count = recv_count_param.get_single_element();
     if constexpr (recv_count_is_output_parameter) {
         if (this->is_root(root.rank())) {

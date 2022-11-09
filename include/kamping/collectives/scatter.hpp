@@ -138,11 +138,15 @@ auto kamping::Communicator::scatter(Args... args) const {
     );
 
     // If it is an output parameter, broadcast send_count to get recv_count
+    static_assert(
+        std::remove_reference_t<decltype(recv_count_param)>::is_single_element,
+        "recv_counts() parameter must be a single value."
+    );
     if constexpr (is_output_parameter) {
-        *recv_count_param.get().data() = bcast_value(*this, send_count, int_root);
+        recv_count_param.underlying() = bcast_value(*this, send_count, int_root);
     }
 
-    int recv_count = *recv_count_param.get().data();
+    int recv_count = recv_count_param.get_single_element();
 
     // Validate against send_count
     KASSERT(
