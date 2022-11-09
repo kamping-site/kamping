@@ -22,7 +22,7 @@ using namespace ::kamping;
 
 // Note: These invariants tested here only hold when the tests are executed using more than one MPI rank!
 
-static size_t call_hierarchie_level = 0;
+static size_t call_hierarchy_level = 0;
 static size_t send_counter          = 0;
 static size_t bsend_counter         = 0;
 static size_t ssend_counter         = 0;
@@ -33,14 +33,14 @@ class SendTest : public ::testing::Test {
         Communicator comm;
         ASSERT_GT(comm.size(), 1)
             << "The invariants tested here only hold when the tests are executed using more than one MPI rank!";
-        call_hierarchie_level = 0;
+        call_hierarchy_level = 0;
         send_counter          = 0;
         bsend_counter         = 0;
         ssend_counter         = 0;
         rsend_counter         = 0;
     }
     void TearDown() override {
-        call_hierarchie_level = 0;
+        call_hierarchy_level = 0;
         send_counter          = 0;
         bsend_counter         = 0;
         ssend_counter         = 0;
@@ -49,43 +49,44 @@ class SendTest : public ::testing::Test {
 };
 
 int MPI_Send(void const* buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm) {
-    call_hierarchie_level++;
+    call_hierarchy_level++;
     auto errcode = PMPI_Send(buf, count, datatype, dest, tag, comm);
     // a send call may call another operation in its implementation
     // this ensure that we only count the top level send operation
-    if (call_hierarchie_level == 1) {
+    if (call_hierarchy_level == 1) {
         send_counter++;
     }
-    call_hierarchie_level--;
+    call_hierarchy_level--;
     return errcode;
 }
+
 int MPI_Bsend(void const* buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm) {
-    call_hierarchie_level++;
+    call_hierarchy_level++;
     auto errcode = PMPI_Bsend(buf, count, datatype, dest, tag, comm);
-    if (call_hierarchie_level == 1) {
+    if (call_hierarchy_level == 1) {
         bsend_counter++;
     }
-    call_hierarchie_level--;
+    call_hierarchy_level--;
     return errcode;
 }
 
 int MPI_Ssend(void const* buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm) {
-    call_hierarchie_level++;
+    call_hierarchy_level++;
     auto errcode = PMPI_Ssend(buf, count, datatype, dest, tag, comm);
-    if (call_hierarchie_level == 1) {
+    if (call_hierarchy_level == 1) {
         ssend_counter++;
     }
-    call_hierarchie_level--;
+    call_hierarchy_level--;
     return errcode;
 }
 
 int MPI_Rsend(void const* buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm) {
-    call_hierarchie_level++;
+    call_hierarchy_level++;
     auto errcode = PMPI_Rsend(buf, count, datatype, dest, tag, comm);
-    if (call_hierarchie_level == 1) {
+    if (call_hierarchy_level == 1) {
         rsend_counter++;
     }
-    call_hierarchie_level--;
+    call_hierarchy_level--;
     return errcode;
 }
 
