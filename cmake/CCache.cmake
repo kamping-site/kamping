@@ -2,7 +2,7 @@ find_program(CCACHE_PROGRAM ccache)
 if (CCACHE_PROGRAM)
     message(STATUS "Using ccache to speed up compilation.")
 
-    set(SUPPORTED_GENERATORS "Unix Makefiles" "Ninja")
+    set(SUPPORTED_GENERATORS "Unix Makefiles" "Ninja" "Ninja Multi-Config")
     if (CMAKE_GENERATOR IN_LIST SUPPORTED_GENERATORS)
         set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
         set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
