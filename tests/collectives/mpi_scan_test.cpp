@@ -145,7 +145,8 @@ TEST(ScanTest, scan_builtin_op_on_non_builtin_type) {
     };
     std::vector<MyInt> input = {comm.rank_signed(), 42};
 
-    auto result = comm.scan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
+    auto result =
+        comm.scan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {
         ((comm.rank_signed() + 1) * comm.rank_signed()) / 2,
@@ -167,7 +168,8 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     { // use function ptr
-        auto result = comm.scan(send_buf(input), op(add_plus_42_function, kamping::ops::commutative)).extract_recv_buffer();
+        auto result =
+            comm.scan(send_buf(input), op(add_plus_42_function, kamping::ops::commutative)).extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -178,7 +180,8 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     }
 
     { // use lambda
-        auto result = comm.scan(send_buf(input), op(add_plus_42_lambda, kamping::ops::commutative)).extract_recv_buffer();
+        auto result =
+            comm.scan(send_buf(input), op(add_plus_42_lambda, kamping::ops::commutative)).extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -189,11 +192,12 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     }
 
     { // use lambda inline
-        auto result = comm.scan(
-                              send_buf(input),
-                              op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
-        )
-                          .extract_recv_buffer();
+        auto result =
+            comm.scan(
+                    send_buf(input),
+                    op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
+            )
+                .extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {

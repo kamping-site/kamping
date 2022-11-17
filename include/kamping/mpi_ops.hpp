@@ -533,7 +533,8 @@ class ReduceOperation {
     static_assert(
         std::is_same_v<
             Commutative,
-            kamping::ops::internal::commutative_tag> || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
+            kamping::ops::internal::
+                commutative_tag> || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
         "For custom operations you have to specify whether they are commutative."
     );
 
@@ -576,7 +577,8 @@ class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_defau
     static_assert(
         std::is_same_v<
             Commutative,
-            kamping::ops::internal::commutative_tag> || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
+            kamping::ops::internal::
+                commutative_tag> || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
         "For custom operations you have to specify whether they are commutative."
     );
 

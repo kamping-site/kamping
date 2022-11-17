@@ -240,7 +240,8 @@ TEST(ReduceTest, reduce_builtin_op_on_non_builtin_type) {
         }
     };
     std::vector<MyInt> input = {comm.rank_signed(), 42};
-    auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
+    auto               result =
+        comm.reduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 2);
         std::vector<MyInt> expected_result = {
@@ -266,7 +267,8 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     // use function ptr
-    auto result = comm.reduce(send_buf(input), op(add_plus_42_function, kamping::ops::commutative)).extract_recv_buffer();
+    auto result =
+        comm.reduce(send_buf(input), op(add_plus_42_function, kamping::ops::commutative)).extract_recv_buffer();
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);

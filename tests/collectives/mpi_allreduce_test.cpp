@@ -107,11 +107,12 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
     }
 
     { // use lambda inline
-        auto result = comm.allreduce(
-                              send_buf(input),
-                              op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
-        )
-                          .extract_recv_buffer();
+        auto result =
+            comm.allreduce(
+                    send_buf(input),
+                    op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
+            )
+                .extract_recv_buffer();
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
