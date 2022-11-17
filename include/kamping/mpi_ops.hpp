@@ -180,8 +180,6 @@ using logical_xor = kamping::internal::logical_xor_impl<T>;
 template <typename T = void>
 using bit_xor = std::bit_xor<T>;
 
-} // namespace ops
-
 namespace internal {
 /// @brief tag for a commutative reduce operation
 struct commutative_tag {};
@@ -194,6 +192,8 @@ struct undefined_commutative_tag {};
 
 [[maybe_unused]] constexpr internal::commutative_tag     commutative{};     ///< global tag for commutativity
 [[maybe_unused]] constexpr internal::non_commutative_tag non_commutative{}; ///< global tag for non-commutativity
+
+} // namespace ops
 
 namespace internal {
 
@@ -533,14 +533,14 @@ class ReduceOperation {
     static_assert(
         std::is_same_v<
             Commutative,
-            kamping::internal::commutative_tag> || std::is_same_v<Commutative, kamping::internal::non_commutative_tag>,
+            kamping::ops::internal::commutative_tag> || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
         "For custom operations you have to specify whether they are commutative."
     );
 
 public:
     ReduceOperation(Op&& op, Commutative) : _operation(std::move(op)) {}
     static constexpr bool is_builtin  = false;
-    static constexpr bool commutative = std::is_same_v<Commutative, kamping::internal::commutative_tag>;
+    static constexpr bool commutative = std::is_same_v<Commutative, kamping::ops::internal::commutative_tag>;
 
     MPI_Op op() {
         return _operation.get_mpi_op();
@@ -553,7 +553,7 @@ private:
 template <typename T, typename Op, typename Commutative>
 class ReduceOperation<T, Op, Commutative, typename std::enable_if<mpi_operation_traits<Op, T>::is_builtin>::type> {
     static_assert(
-        std::is_same_v<Commutative, kamping::internal::undefined_commutative_tag>,
+        std::is_same_v<Commutative, kamping::ops::internal::undefined_commutative_tag>,
         "For builtin operations you don't need to specify whether they are commutative."
     );
 
@@ -576,7 +576,7 @@ class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_defau
     static_assert(
         std::is_same_v<
             Commutative,
-            kamping::internal::commutative_tag> || std::is_same_v<Commutative, kamping::internal::non_commutative_tag>,
+            kamping::ops::internal::commutative_tag> || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
         "For custom operations you have to specify whether they are commutative."
     );
 
@@ -595,7 +595,7 @@ public:
         _operation = {ptr};
     }
     static constexpr bool is_builtin  = false;
-    static constexpr bool commutative = std::is_same_v<Commutative, kamping::internal::commutative_tag>;
+    static constexpr bool commutative = std::is_same_v<Commutative, kamping::ops::internal::commutative_tag>;
 
     MPI_Op op() {
         return _operation.get_mpi_op();

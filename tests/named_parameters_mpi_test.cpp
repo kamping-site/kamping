@@ -32,13 +32,13 @@ TEST(ParameterFactoriesTest, op_commutativity_tags_work) {
         EXPECT_TRUE(decltype(op)::commutative);
     }
     {
-        auto op_object = op(MySum{}, kamping::commutative);
+        auto op_object = op(MySum{}, kamping::ops::commutative);
         auto op        = op_object.build_operation<int>();
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_TRUE(decltype(op)::commutative);
     }
     {
-        auto op_object = op(MySum{}, kamping::non_commutative);
+        auto op_object = op(MySum{}, kamping::ops::non_commutative);
         auto op        = op_object.build_operation<int>();
         EXPECT_NE(op.op(), MPI_SUM);
         EXPECT_FALSE(decltype(op)::commutative);
