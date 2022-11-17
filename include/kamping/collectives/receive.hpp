@@ -32,7 +32,7 @@
 /// @brief Wrapper for \c MPI_Recv.
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
-template <typename recv_value_type_tparam, typename... Args>
+template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam*/, typename... Args>
 auto kamping::Communicator::recv(Args... args) const {
     using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<recv_value_type_tparam>>{}));
     auto&& recv_buf =
