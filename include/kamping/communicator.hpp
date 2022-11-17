@@ -24,6 +24,11 @@
 
 namespace kamping {
 
+namespace internal {
+/// @brief An unused template parameter
+struct unused_tparam {};
+} // namespace internal
+
 /// @brief Wrapper for MPI communicator providing access to \ref rank() and \ref size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
 class Communicator {
@@ -226,6 +231,9 @@ public:
     [[nodiscard]] bool is_valid_tag(int tag) const {
         return tag >= 0 && tag <= tag_upper_bound();
     }
+
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
+    auto recv(Args... args) const;
 
     template <typename... Args>
     void send(Args... args) const;

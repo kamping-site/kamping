@@ -61,6 +61,11 @@ kamping_register_mpi_test(
     CORES 2 4
 )
 kamping_register_mpi_test(
+  test_mpi_recv
+  FILES collectives/mpi_recv_test.cpp
+  CORES 2 4
+  )
+kamping_register_mpi_test(
     test_mpi_allgather
     FILES collectives/mpi_allgather_test.cpp
     CORES 1 4
