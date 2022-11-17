@@ -41,6 +41,9 @@ auto kamping::Communicator::recv(Args... args) const {
             args...
         );
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
-    static_assert(!std::is_same_v<recv_value_type, internal::unused_tparam>);
+    static_assert(
+        !std::is_same_v<recv_value_type, internal::unused_tparam>,
+        "No recv_buf parameter provided and no receive value given as template parameter. One of these is required."
+    );
     return make_mpi_result(std::move(recv_buf));
 }
