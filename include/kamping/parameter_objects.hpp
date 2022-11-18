@@ -1,0 +1,237 @@
+// This file is part of KaMPIng.
+//
+// Copyright 2021-2022 The KaMPIng Authors
+//
+// KaMPIng is free software : you can redistribute it and/or modify it under the
+// terms of the GNU Lesser General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option) any
+// later version. KaMPIng is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
+/// @file
+/// @brief Parameter objects return by named parameter factory functions
+
+#pragma once
+
+#include <cstddef>
+
+#include <mpi.h>
+
+#include "kamping/checking_casts.hpp"
+#include "kamping/data_buffer.hpp"
+#include "kamping/named_parameter_types.hpp"
+#include "kamping/status.hpp"
+
+namespace kamping::internal {
+
+/// @brief Helper type for representing a type list
+/// @tparam Args the types.
+template <typename... Args>
+struct type_list {
+    /// @brief Member attribute to check if a type is contained in the list
+    /// @tparam T The type to check for if it is contained in the list.
+    template <typename T>
+    static constexpr bool contains = std::disjunction<std::is_same<T, Args>...>::value;
+};
+
+/// @brief Tag type for parameters that can be omitted on some PEs (e.g., root
+/// PE, or non-root PEs).
+template <typename T>
+struct ignore_t {};
+
+/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton and rooted \c MPI collectives like \c
+/// MPI_Gather.
+///
+/// This is a specialized \c DataBuffer. Its main functionality is to provide ease-of-use functionality in the form of
+/// the methods \c rank() and \c rank_signed(), which return the ecapsulated rank and are easier to read in the code.
+enum class RankType { value, any, null };
+template <RankType rank_type, ParameterType parameter_type>
+class RankDataBuffer {};
+
+template <ParameterType type>
+class RankDataBuffer<RankType::value, type> final : private DataBuffer<
+                                                        size_t,
+                                                        type,
+                                                        BufferModifiability::modifiable,
+                                                        BufferOwnership::owning,
+                                                        BufferType::in_buffer,
+                                                        BufferAllocation::user_allocated> {
+private:
+    using BaseClass = DataBuffer<
+        size_t,
+        type,
+        BufferModifiability::modifiable,
+        BufferOwnership::owning,
+        BufferType::in_buffer,
+        BufferAllocation::user_allocated>;
+
+public:
+    static constexpr ParameterType parameter_type = type; ///< The type of parameter this object encapsulates.
+    static constexpr RankType      rank_type      = RankType::value;
+
+    /// @ Constructor for Rank.
+    /// @param rank Rank of the PE.
+    RankDataBuffer(size_t rank) : BaseClass(rank) {}
+
+    /// @ Constructor for Rank.
+    /// @param rank Rank of the PE.
+    RankDataBuffer(int rank) : BaseClass(asserting_cast<size_t>(rank)) {}
+
+    /// @brief Returns the rank as `size_t`.
+    /// @returns Rank of the PE as `size_t`.
+    size_t rank() const {
+        return BaseClass::underlying();
+    }
+
+    /// @brief Returns the rank as `int`.
+    /// @returns Rank as `int`.
+    int rank_signed() const {
+        return asserting_cast<int>(rank());
+    }
+};
+template <ParameterType type>
+class RankDataBuffer<RankType::any, type> : private ParameterObjectBase {
+public:
+    static constexpr ParameterType parameter_type = type; ///< The type of parameter this object encapsulates.
+    static constexpr RankType      rank_type      = RankType::any;
+    /// @brief Returns the rank as `int`.
+    /// @returns Rank as `int`.
+    int rank_signed() const {
+        return MPI_ANY_SOURCE;
+    }
+};
+template <ParameterType type>
+class RankDataBuffer<RankType::null, type> : private ParameterObjectBase {
+public:
+    static constexpr ParameterType parameter_type = type; ///< The type of parameter this object encapsulates.
+    static constexpr RankType      rank_type      = RankType::null;
+    /// @brief Returns the rank as `int`.
+    /// @returns Rank as `int`.
+    int rank_signed() const {
+        return MPI_PROC_NULL;
+    }
+};
+
+using RootDataBuffer = RankDataBuffer<RankType::value, ParameterType::root>; ///< Helper for roots;
+
+struct rank_any_t {};
+struct rank_null_t {};
+struct standard_mode_t {};    ///< tag for standard send mode
+struct buffered_mode_t {};    ///< tag for buffered send mode
+struct synchronous_mode_t {}; ///< tag for synchronous send mode
+struct ready_mode_t {};       ///< tag for ready send mode
+using send_mode_list =
+    type_list<standard_mode_t, buffered_mode_t, synchronous_mode_t, ready_mode_t>; ///< list of all available send modes
+
+/// @brief Parameter object for send_mode encapsulating the send mode compile-time tag.
+/// @tparam SendModeTag The send mode.
+template <typename SendModeTag>
+struct SendModeParameter : private ParameterObjectBase {
+    static_assert(send_mode_list::contains<SendModeTag>, "Unsupported send mode.");
+    static constexpr ParameterType parameter_type = ParameterType::send_mode; ///< The parameter type.
+    using send_mode                               = SendModeTag;              ///< The send mode.
+};
+
+enum class StatusParamType { ref, owning, native_ref, ignore };
+template <StatusParamType param_type>
+struct StatusParam {};
+
+template <>
+struct StatusParam<StatusParamType::ref> : private ParameterObjectBase {
+    StatusParam(Status& status) : _status(status) {}
+    static constexpr ParameterType   parameter_type = ParameterType::status;
+    static constexpr StatusParamType type           = StatusParamType::ref;
+    Status&                          _status;
+    inline MPI_Status*               native_ptr() {
+        return &_status.native();
+    }
+};
+
+template <>
+struct StatusParam<StatusParamType::owning> : private ParameterObjectBase {
+    StatusParam(Status status) : _status(std::move(status)) {}
+    StatusParam() : _status() {}
+
+    static constexpr ParameterType   parameter_type = ParameterType::status;
+    static constexpr StatusParamType type           = StatusParamType::owning;
+    Status                           _status;
+    inline MPI_Status*               native_ptr() {
+        return &_status.native();
+    }
+    inline Status extract() {
+        return std::move(_status);
+    }
+};
+
+template <>
+struct StatusParam<StatusParamType::native_ref> : private ParameterObjectBase {
+    StatusParam(MPI_Status& mpi_status) : _mpi_status(mpi_status) {}
+
+    static constexpr ParameterType   parameter_type = ParameterType::status;
+    static constexpr StatusParamType type           = StatusParamType::native_ref;
+    MPI_Status&                      _mpi_status;
+    inline MPI_Status*               native_ptr() {
+        return &_mpi_status;
+    }
+};
+
+template <>
+struct StatusParam<StatusParamType::ignore> : private ParameterObjectBase {
+    StatusParam() {}
+
+    static constexpr ParameterType   parameter_type = ParameterType::status;
+    static constexpr StatusParamType type           = StatusParamType::ignore;
+    inline MPI_Status*               native_ptr() {
+        return MPI_STATUS_IGNORE;
+    }
+};
+
+struct any_tag_t {};
+enum class TagType { value, any };
+template <TagType tag_type>
+class TagParam {};
+
+template <>
+class TagParam<TagType::value> : private ParameterObjectBase {
+public:
+    TagParam(int tag) : _tag_value(tag) {}
+    static constexpr ParameterType parameter_type = ParameterType::tag;
+    static constexpr TagType       tag_type       = TagType::value;
+    [[nodiscard]] int              tag() const {
+        return _tag_value;
+    }
+
+private:
+    int _tag_value;
+};
+
+template <>
+class TagParam<TagType::any> : private ParameterObjectBase {
+public:
+    static constexpr ParameterType parameter_type = ParameterType::tag;
+    static constexpr TagType       tag_type       = TagType::any;
+    [[nodiscard]] int              tag() const {
+        return MPI_ANY_TAG;
+    }
+};
+} // namespace kamping::internal
+
+namespace kamping {
+namespace send_modes {
+static constexpr internal::standard_mode_t    standard{};    ///< global constant for standard send mode
+static constexpr internal::buffered_mode_t    buffered{};    ///< global constant for buffered send mode
+static constexpr internal::synchronous_mode_t synchronous{}; ///< global constant for synchronous send mode
+static constexpr internal::ready_mode_t       ready{};       ///< global constant for ready send mode
+} // namespace send_modes
+namespace tags {
+static constexpr internal::any_tag_t any{};
+}
+namespace rank {
+static constexpr internal::rank_any_t  any{};
+static constexpr internal::rank_null_t null{};
+} // namespace rank
+} // namespace kamping

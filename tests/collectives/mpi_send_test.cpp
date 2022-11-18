@@ -17,6 +17,7 @@
 #include "kamping/collectives/send.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/parameter_objects.hpp"
 
 using namespace ::kamping;
 
@@ -116,6 +117,16 @@ TEST_F(SendTest, send_vector) {
         ASSERT_EQ(status.MPI_SOURCE, comm.root());
         ASSERT_EQ(status.MPI_TAG, 0);
     }
+}
+
+TEST_F(SendTest, send_vector_null) {
+    Communicator     comm;
+    std::vector<int> values{42, 3, 8, 7};
+    comm.send(send_buf(values), destination(rank::null));
+    ASSERT_EQ(send_counter, 1);
+    ASSERT_EQ(bsend_counter, 0);
+    ASSERT_EQ(ssend_counter, 0);
+    ASSERT_EQ(rsend_counter, 0);
 }
 
 TEST_F(SendTest, send_vector_with_tag) {
