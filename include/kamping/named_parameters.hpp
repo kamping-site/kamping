@@ -504,8 +504,9 @@ inline auto send_mode(SendModeTag) {
 ///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
 ///     supported for builtin operations. This is used to streamline the interface so that the use does not have
 ///     to provide commutativity info when the operation is builtin.
-template <typename Op, typename Commutative = internal::undefined_commutative_tag>
-internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = internal::undefined_commutative_tag{}) {
+template <typename Op, typename Commutative = ops::internal::undefined_commutative_tag>
+internal::OperationBuilder<Op, Commutative>
+op(Op&& op, Commutative commute = ops::internal::undefined_commutative_tag{}) {
     return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);
 }
 

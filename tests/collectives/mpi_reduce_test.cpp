@@ -93,7 +93,7 @@ TEST(ReduceTest, reduce_no_receive_buffer_kabool_custom_operation) {
     auto my_or = [&](bool lhs, bool rhs) {
         return lhs || rhs;
     };
-    auto result = comm.reduce(send_buf(input), op(my_or, commutative)).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(my_or, ops::commutative)).extract_recv_buffer();
 
     if (comm.is_root()) {
         std::vector<kabool> expected_result = {false, true};
@@ -240,7 +240,8 @@ TEST(ReduceTest, reduce_builtin_op_on_non_builtin_type) {
         }
     };
     std::vector<MyInt> input = {comm.rank_signed(), 42};
-    auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::commutative)).extract_recv_buffer();
+    auto               result =
+        comm.reduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 2);
         std::vector<MyInt> expected_result = {
@@ -266,7 +267,8 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     // use function ptr
-    auto result = comm.reduce(send_buf(input), op(add_plus_42_function, kamping::commutative)).extract_recv_buffer();
+    auto result =
+        comm.reduce(send_buf(input), op(add_plus_42_function, kamping::ops::commutative)).extract_recv_buffer();
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -280,7 +282,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     }
 
     // use lambda
-    result = comm.reduce(send_buf(input), op(add_plus_42_lambda, kamping::commutative)).extract_recv_buffer();
+    result = comm.reduce(send_buf(input), op(add_plus_42_lambda, kamping::ops::commutative)).extract_recv_buffer();
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -296,7 +298,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     // use lambda inline
     result = comm.reduce(
                      send_buf(input),
-                     op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::commutative)
+                     op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
     )
                  .extract_recv_buffer();
 
@@ -317,7 +319,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
             return lhs + rhs + 42;
         }
     };
-    result = comm.reduce(send_buf(input), op(MySum42{}, kamping::commutative)).extract_recv_buffer();
+    result = comm.reduce(send_buf(input), op(MySum42{}, kamping::ops::commutative)).extract_recv_buffer();
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -340,7 +342,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type_non_commutative) {
 
     std::vector<int> input = {comm.rank_signed() + 17};
 
-    auto result = comm.reduce(send_buf(input), op(get_right, kamping::non_commutative)).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(get_right, kamping::ops::non_commutative)).extract_recv_buffer();
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
@@ -384,7 +386,7 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_type) {
     Aggregate              agg2_expected   = {42, comm.size_signed() - 1 + 42, false, comm.size_signed()};
     std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
 
-    auto result = comm.reduce(send_buf(input), op(my_op, kamping::commutative)).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(my_op, kamping::ops::commutative)).extract_recv_buffer();
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 2);

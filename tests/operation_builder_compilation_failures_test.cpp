@@ -16,7 +16,7 @@
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
     using namespace ::kamping::internal;
-    OperationBuilder op_builder(ops::plus<>(), commutative);
+    OperationBuilder op_builder(ops::plus<>(), ops::commutative);
 #if defined(COPY_CONSTRUCT_OP_BUILDER_BUFFER)
     // should not be possible to copy construct a buffer (for performance reasons)
     auto tmp = op_builder;
