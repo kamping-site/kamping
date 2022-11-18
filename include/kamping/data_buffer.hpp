@@ -36,6 +36,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/span.hpp"
 #include "kassert/kassert.hpp"

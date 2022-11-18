@@ -14,9 +14,9 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include "kamping/collectives/send.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/p2p/send.hpp"
 #include "kamping/parameter_objects.hpp"
 
 using namespace ::kamping;

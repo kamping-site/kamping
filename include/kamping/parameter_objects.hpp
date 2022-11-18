@@ -24,7 +24,6 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_types.hpp"
-#include "kamping/status.hpp"
 
 namespace kamping::internal {
 
@@ -136,60 +135,6 @@ struct SendModeParameter : private ParameterObjectBase {
     using send_mode                               = SendModeTag;              ///< The send mode.
 };
 
-enum class StatusParamType { ref, owning, native_ref, ignore };
-template <StatusParamType param_type>
-struct StatusParam {};
-
-template <>
-struct StatusParam<StatusParamType::ref> : private ParameterObjectBase {
-    StatusParam(Status& status) : _status(status) {}
-    static constexpr ParameterType   parameter_type = ParameterType::status;
-    static constexpr StatusParamType type           = StatusParamType::ref;
-    Status&                          _status;
-    inline MPI_Status*               native_ptr() {
-        return &_status.native();
-    }
-};
-
-template <>
-struct StatusParam<StatusParamType::owning> : private ParameterObjectBase {
-    StatusParam(Status status) : _status(std::move(status)) {}
-    StatusParam() : _status() {}
-
-    static constexpr ParameterType   parameter_type = ParameterType::status;
-    static constexpr StatusParamType type           = StatusParamType::owning;
-    Status                           _status;
-    inline MPI_Status*               native_ptr() {
-        return &_status.native();
-    }
-    inline Status extract() {
-        return std::move(_status);
-    }
-};
-
-template <>
-struct StatusParam<StatusParamType::native_ref> : private ParameterObjectBase {
-    StatusParam(MPI_Status& mpi_status) : _mpi_status(mpi_status) {}
-
-    static constexpr ParameterType   parameter_type = ParameterType::status;
-    static constexpr StatusParamType type           = StatusParamType::native_ref;
-    MPI_Status&                      _mpi_status;
-    inline MPI_Status*               native_ptr() {
-        return &_mpi_status;
-    }
-};
-
-template <>
-struct StatusParam<StatusParamType::ignore> : private ParameterObjectBase {
-    StatusParam() {}
-
-    static constexpr ParameterType   parameter_type = ParameterType::status;
-    static constexpr StatusParamType type           = StatusParamType::ignore;
-    inline MPI_Status*               native_ptr() {
-        return MPI_STATUS_IGNORE;
-    }
-};
-
 struct any_tag_t {};
 enum class TagType { value, any };
 template <TagType tag_type>
@@ -202,7 +147,7 @@ public:
     static constexpr ParameterType parameter_type = ParameterType::tag;
     static constexpr TagType       tag_type       = TagType::value;
     [[nodiscard]] int              tag() const {
-        return _tag_value;
+                     return _tag_value;
     }
 
 private:
@@ -215,7 +160,7 @@ public:
     static constexpr ParameterType parameter_type = ParameterType::tag;
     static constexpr TagType       tag_type       = TagType::any;
     [[nodiscard]] int              tag() const {
-        return MPI_ANY_TAG;
+                     return MPI_ANY_TAG;
     }
 };
 } // namespace kamping::internal

@@ -27,7 +27,6 @@
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/operation_builder.hpp"
 #include "kamping/parameter_objects.hpp"
-#include "kamping/status.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -482,8 +481,6 @@ inline auto tag(EnumType value) {
     );
     return tag(static_cast<int>(value));
 }
-
-
 
 /// @brief Send mode parameter for point to point communication.
 /// Pass any of the tags from the \c kamping::send_modes namespace.
