@@ -35,7 +35,7 @@
 /// kamping::send_buf() to the specified receiver rank using standard send mode.
 /// The following parameters are required:
 /// - \ref kamping::send_buf() containing the data that is sent.
-/// - \ref kamping::receiver() the receiving rank.
+/// - \ref kamping::destination() the receiving rank.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref

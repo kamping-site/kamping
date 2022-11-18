@@ -427,6 +427,10 @@ inline auto destination(size_t rank) {
     return destination(asserting_cast<int>(rank));
 }
 
+/// @brief Generates an object encapsulating the dummy rank \c MPI_PROC_NULL for the destination PE in point to point
+/// communication.
+///
+/// @returns The destination parameter.
 inline auto destination(internal::rank_null_t) {
     return internal::RankDataBuffer<internal::RankType::null, internal::ParameterType::destination>{};
 }
@@ -449,14 +453,17 @@ inline auto source(size_t rank) {
     return source(asserting_cast<int>(rank));
 }
 
+/// @brief Use an arbitrary rank as source in a point to point communication.
 inline auto source(internal::rank_any_t) {
     return internal::RankDataBuffer<internal::RankType::any, internal::ParameterType::source>{};
 }
 
+/// @brief Use the dummy rank \c MPI_PROC_NULL as source in a point to point communication.
 inline auto source(internal::rank_null_t) {
     return internal::RankDataBuffer<internal::RankType::null, internal::ParameterType::source>{};
 }
 
+/// @brief Use an arbitrary message tag for \c kamping::Communicator::probe() or \c kamping::Communicator::recv().
 inline auto tag(internal::any_tag_t) {
     return internal::TagParam<internal::TagType::any>{};
 }

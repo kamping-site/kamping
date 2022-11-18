@@ -46,15 +46,21 @@ namespace kamping {
 /// @{
 
 namespace internal {
+
+/// @brief Base object for parameter objects which deletes copy constructor and assignment operator and enables move.
 class ParameterObjectBase {
 protected:
     constexpr ParameterObjectBase() = default;
     ~ParameterObjectBase()          = default;
 
-    ParameterObjectBase(ParameterObjectBase const&)            = delete;
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    ParameterObjectBase(ParameterObjectBase const&) = delete;
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
     ParameterObjectBase& operator=(ParameterObjectBase const&) = delete;
-    ParameterObjectBase(ParameterObjectBase&&)                 = default;
-    ParameterObjectBase& operator=(ParameterObjectBase&&)      = default;
+    /// @brief Move constructor.
+    ParameterObjectBase(ParameterObjectBase&&) = default;
+    /// @brief Move assignment operator.
+    ParameterObjectBase& operator=(ParameterObjectBase&&) = default;
 };
 
 /// @brief Boolean value helping to decide if type has a \c value_type member type.
@@ -271,20 +277,7 @@ public:
         static_assert(is_modifiable, "Lib allocated buffers must be modifiable");
     }
 
-    // /// @brief Move constructor.
-    // DataBuffer(DataBuffer&&) = default;
-
-    // /// @brief Move assignment operator.
-    // DataBuffer& operator=(DataBuffer&&) = default;
-
-    // /// @brief Copy constructor is deleted as buffers should only be moved.
-    // DataBuffer(DataBuffer const&) = delete;
-
-    // /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    // DataBuffer& operator=(DataBuffer const&) = delete;
-
-    /// @brief Get the number of elements in the underlying storage.
-    /// @return Number of elements in the underlying storage.
+    /// @brief The size of the underlying container.
     size_t size() const {
         kassert_not_extracted("Cannot get the size of a buffer that has already been extracted.");
         if constexpr (is_single_element) {
