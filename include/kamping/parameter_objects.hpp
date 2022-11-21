@@ -91,11 +91,11 @@ public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this object encapsulates.
     static constexpr RankType      rank_type      = RankType::value; ///< The rank type.
 
-    /// @ Constructor for Rank.
+    /// @brief Constructor for Rank.
     /// @param rank Rank of the PE.
     RankDataBuffer(size_t rank) : BaseClass(rank) {}
 
-    /// @ Constructor for Rank.
+    /// @brief Constructor for Rank.
     /// @param rank Rank of the PE.
     RankDataBuffer(int rank) : BaseClass(asserting_cast<size_t>(rank)) {}
 
