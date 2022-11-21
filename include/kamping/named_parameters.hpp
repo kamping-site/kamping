@@ -19,8 +19,6 @@
 #include <type_traits>
 #include <utility>
 
-#include <mpi.h>
-
 #include "kamping/data_buffer.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
