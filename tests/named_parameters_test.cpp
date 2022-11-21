@@ -686,7 +686,6 @@ TEST(ParameterFactoriesTest, destination_basics) {
         auto destination_obj = destination(22);
         EXPECT_EQ(destination_obj.rank(), 22);
         EXPECT_EQ(decltype(destination_obj)::parameter_type, ParameterType::destination);
-        EXPECT_EQ(decltype(destination_obj)::parameter_type, ParameterType::destination);
         EXPECT_EQ(decltype(destination_obj)::rank_type, RankType::value);
     }
     {
