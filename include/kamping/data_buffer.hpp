@@ -48,6 +48,12 @@ namespace kamping {
 namespace internal {
 
 /// @brief Base object for parameter objects which deletes copy constructor and assignment operator and enables move.
+///
+/// You can inherit from this class privately.
+/// While  constructors are never inherited, the derived class still has no copy constructor (assignment), because it
+/// can not be default constructed, due to the missing implementation in the base class. Because we provide a (default)
+/// implementation for the move constructor (assignment) in the base class, the derived class can construct default
+/// implementations.
 class ParameterObjectBase {
 protected:
     constexpr ParameterObjectBase() = default;
