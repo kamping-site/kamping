@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <type_traits>
+
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
@@ -25,6 +27,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/parameter_objects.hpp"
 
 /// @brief Wrapper for \c MPI_Send.
 ///
@@ -32,7 +35,7 @@
 /// kamping::send_buf() to the specified receiver rank using standard send mode.
 /// The following parameters are required:
 /// - \ref kamping::send_buf() containing the data that is sent.
-/// - \ref kamping::receiver() the receiving rank.
+/// - \ref kamping::destination() the receiving rank.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref
@@ -45,7 +48,7 @@ void kamping::Communicator::send(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args,
-        KAMPING_REQUIRED_PARAMETERS(send_buf, receiver),
+        KAMPING_REQUIRED_PARAMETERS(send_buf, destination),
         KAMPING_OPTIONAL_PARAMETERS(tag, send_mode)
     );
 
@@ -53,15 +56,26 @@ void kamping::Communicator::send(Args... args) const {
     auto  send_buf        = send_buf_param.get();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
 
-    auto const& receiver = internal::select_parameter_type<internal::ParameterType::receiver>(args...);
+    auto const&    destination = internal::select_parameter_type<internal::ParameterType::destination>(args...);
+    constexpr auto rank_type   = std::remove_reference_t<decltype(destination)>::rank_type;
+    static_assert(
+        rank_type == RankType::value || rank_type == RankType::null,
+        "Please provide an explicit destination or destination(ranks::null)."
+    );
 
     using default_tag_buf_type = decltype(kamping::tag(0));
 
-    int tag = internal::select_parameter_type_or_default<internal::ParameterType::tag, default_tag_buf_type>(
-                  std::tuple(this->default_tag()),
-                  args...
-    )
-                  .get_single_element();
+    auto&& tag_param = internal::select_parameter_type_or_default<internal::ParameterType::tag, default_tag_buf_type>(
+        std::tuple(this->default_tag()),
+        args...
+    );
+
+    // this ensures that the user does not try to pass MPI_ANY_TAG, which is not allowed for sends
+    static_assert(
+        std::remove_reference_t<decltype(tag_param)>::tag_type == TagType::value,
+        "Please provide a tag for the message."
+    );
+    int tag = tag_param.tag();
     KASSERT(is_valid_tag(tag), "invalid tag " << tag << ", maximum allowed tag is " << tag_upper_bound());
 
     using send_mode_obj_type = decltype(internal::select_parameter_type_or_default<
@@ -71,14 +85,16 @@ void kamping::Communicator::send(Args... args) const {
 
     auto mpi_send_type = mpi_datatype<send_value_type>();
 
-    KASSERT(this->is_valid_rank(receiver.rank()), "Invalid receiver rank.");
+    if constexpr (rank_type == RankType::value) {
+        KASSERT(this->is_valid_rank(destination.rank_signed()), "Invalid destination rank.");
+    }
 
     if constexpr (std::is_same_v<send_mode, internal::standard_mode_t>) {
         [[maybe_unused]] int err = MPI_Send(
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
             mpi_send_type,                        // send_type
-            receiver.rank_signed(),               // receiver
+            destination.rank_signed(),            // destination
             tag,                                  // tag
             this->mpi_communicator()
         );
@@ -88,7 +104,7 @@ void kamping::Communicator::send(Args... args) const {
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
             mpi_send_type,                        // send_type
-            receiver.rank_signed(),               // receiver
+            destination.rank_signed(),            // destination
             tag,                                  // tag
             this->mpi_communicator()
         );
@@ -98,7 +114,7 @@ void kamping::Communicator::send(Args... args) const {
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
             mpi_send_type,                        // send_type
-            receiver.rank_signed(),               // receiver
+            destination.rank_signed(),            // destination
             tag,                                  // tag
             this->mpi_communicator()
         );
@@ -108,7 +124,7 @@ void kamping::Communicator::send(Args... args) const {
             send_buf.data(),                      // send_buf
             asserting_cast<int>(send_buf.size()), // send_count
             mpi_send_type,                        // send_type
-            receiver.rank_signed(),               // receiver
+            destination.rank_signed(),            // destination
             tag,                                  // tag
             this->mpi_communicator()
         );

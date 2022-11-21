@@ -24,7 +24,7 @@
 
 namespace kamping {
 
-/// @brief Wrapper for MPI communicator providing access to \ref rank() and \ref size() of the communicator. The \ref
+/// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
 class Communicator {
 public:

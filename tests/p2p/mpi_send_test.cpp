@@ -14,9 +14,10 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include "kamping/collectives/send.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/p2p/send.hpp"
+#include "kamping/parameter_objects.hpp"
 
 using namespace ::kamping;
 
@@ -95,7 +96,7 @@ TEST_F(SendTest, send_vector) {
     auto         other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
         std::vector<int> values{42, 3, 8, 7};
-        comm.send(send_buf(values), receiver(other_rank));
+        comm.send(send_buf(values), destination(other_rank));
         ASSERT_EQ(send_counter, 1);
         ASSERT_EQ(bsend_counter, 0);
         ASSERT_EQ(ssend_counter, 0);
@@ -118,12 +119,22 @@ TEST_F(SendTest, send_vector) {
     }
 }
 
+TEST_F(SendTest, send_vector_null) {
+    Communicator     comm;
+    std::vector<int> values{42, 3, 8, 7};
+    comm.send(send_buf(values), destination(rank::null));
+    ASSERT_EQ(send_counter, 1);
+    ASSERT_EQ(bsend_counter, 0);
+    ASSERT_EQ(ssend_counter, 0);
+    ASSERT_EQ(rsend_counter, 0);
+}
+
 TEST_F(SendTest, send_vector_with_tag) {
     Communicator comm;
     auto         other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
         std::vector<int> values{42, 3, 8, 7};
-        comm.send(send_buf(values), receiver(other_rank), tag(42));
+        comm.send(send_buf(values), destination(other_rank), tag(42));
         ASSERT_EQ(send_counter, 1);
         ASSERT_EQ(bsend_counter, 0);
         ASSERT_EQ(ssend_counter, 0);
@@ -154,14 +165,14 @@ TEST_F(SendTest, send_vector_with_enum_tag_recv_out_of_order) {
     Communicator comm;
     auto         other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
-        comm.send(send_buf(std::vector<int>{}), receiver(other_rank), tag(Tag::control_message));
+        comm.send(send_buf(std::vector<int>{}), destination(other_rank), tag(Tag::control_message));
         ASSERT_EQ(send_counter, 1);
         ASSERT_EQ(bsend_counter, 0);
         ASSERT_EQ(ssend_counter, 0);
         ASSERT_EQ(rsend_counter, 0);
 
         std::vector<int> values{42, 3, 8, 7};
-        comm.send(send_buf(values), receiver(other_rank), tag(Tag::data_message));
+        comm.send(send_buf(values), destination(other_rank), tag(Tag::data_message));
         ASSERT_EQ(send_counter, 2);
         ASSERT_EQ(bsend_counter, 0);
         ASSERT_EQ(ssend_counter, 0);
@@ -202,7 +213,7 @@ TEST_F(SendTest, send_vector_standard) {
     auto         other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
         std::vector<int> values{42, 3, 8, 7};
-        comm.send(send_buf(values), receiver(other_rank), send_mode(send_modes::standard));
+        comm.send(send_buf(values), destination(other_rank), send_mode(send_modes::standard));
         ASSERT_EQ(send_counter, 1);
         ASSERT_EQ(bsend_counter, 0);
         ASSERT_EQ(ssend_counter, 0);
@@ -237,7 +248,7 @@ TEST_F(SendTest, send_vector_buffered) {
     auto other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
         std::vector<int> values{42, 3, 8, 7};
-        comm.send(send_buf(values), receiver(other_rank), send_mode(send_modes::buffered));
+        comm.send(send_buf(values), destination(other_rank), send_mode(send_modes::buffered));
         ASSERT_EQ(send_counter, 0);
         ASSERT_EQ(bsend_counter, 1);
         ASSERT_EQ(ssend_counter, 0);
@@ -270,7 +281,7 @@ TEST_F(SendTest, send_vector_synchronous) {
     auto         other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
         std::vector<int> values{42, 3, 8, 7};
-        comm.send(send_buf(values), receiver(other_rank), send_mode(send_modes::synchronous));
+        comm.send(send_buf(values), destination(other_rank), send_mode(send_modes::synchronous));
         ASSERT_EQ(send_counter, 0);
         ASSERT_EQ(bsend_counter, 0);
         ASSERT_EQ(ssend_counter, 1);
@@ -300,7 +311,7 @@ TEST_F(SendTest, send_vector_ready) {
         // ensure that the receive is posted before the send is started
         MPI_Barrier(comm.mpi_communicator());
         std::vector<int> values{42, 3, 8, 7};
-        comm.send(send_buf(values), receiver(other_rank), send_mode(send_modes::ready));
+        comm.send(send_buf(values), destination(other_rank), send_mode(send_modes::ready));
         ASSERT_EQ(send_counter, 0);
         ASSERT_EQ(bsend_counter, 0);
         ASSERT_EQ(ssend_counter, 0);
@@ -342,7 +353,7 @@ TEST_F(SendTest, send_vector_bsend) {
     auto other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
         std::vector<int> values{42, 3, 8, 7};
-        comm.bsend(send_buf(values), receiver(other_rank));
+        comm.bsend(send_buf(values), destination(other_rank));
         ASSERT_EQ(send_counter, 0);
         ASSERT_EQ(bsend_counter, 1);
         ASSERT_EQ(ssend_counter, 0);
@@ -375,7 +386,7 @@ TEST_F(SendTest, send_vector_ssend) {
     auto         other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
         std::vector<int> values{42, 3, 8, 7};
-        comm.ssend(send_buf(values), receiver(other_rank));
+        comm.ssend(send_buf(values), destination(other_rank));
         ASSERT_EQ(send_counter, 0);
         ASSERT_EQ(bsend_counter, 0);
         ASSERT_EQ(ssend_counter, 1);
@@ -405,7 +416,7 @@ TEST_F(SendTest, send_vector_rsend) {
         // ensure that the receive is posted before the send is started
         MPI_Barrier(comm.mpi_communicator());
         std::vector<int> values{42, 3, 8, 7};
-        comm.rsend(send_buf(values), receiver(other_rank));
+        comm.rsend(send_buf(values), destination(other_rank));
         ASSERT_EQ(send_counter, 0);
         ASSERT_EQ(bsend_counter, 0);
         ASSERT_EQ(ssend_counter, 0);

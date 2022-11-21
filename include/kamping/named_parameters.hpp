@@ -24,26 +24,13 @@
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/operation_builder.hpp"
+#include "kamping/parameter_objects.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
 
 namespace internal {
-
-/// @brief Helper type for representing a type list
-/// @tparam Args the types.
-template <typename... Args>
-struct type_list {
-    /// @brief Member attribute to check if a type is contained in the list
-    /// @tparam T The type to check for if it is contained in the list.
-    template <typename T>
-    static constexpr bool contains = std::disjunction<std::is_same<T, Args>...>::value;
-};
-
-/// @brief Tag type for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
-template <typename T>
-struct ignore_t {};
 
 /// @brief Creates a user allocated DataBuffer containing the supplied data (a container or a single element)
 ///
@@ -139,7 +126,7 @@ auto make_data_buffer(std::initializer_list<Data> data) {
 } // namespace internal
 
 /// @brief Tag for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
-template <typename T>
+template <typename T = void>
 constexpr internal::ignore_t<T> ignore{};
 
 /// @brief Generates a dummy send buf that wraps a \c nullptr.
@@ -421,32 +408,69 @@ inline auto root(size_t rank) {
     return root(asserting_cast<int>(rank));
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
-/// \c MPI_Gather.
+/// @brief Generates an object encapsulating the rank of the destination PE in point
+/// to point communication.
 ///
-/// @param rank Rank of the root PE.
-/// @returns Root Object containing the rank information of the root PE.
-inline auto receiver(int rank) {
-    return internal::RankDataBuffer<internal::ParameterType::receiver>(rank);
+/// @param rank The rank.
+/// @returns The destination parameter.
+inline auto destination(int rank) {
+    return internal::RankDataBuffer<internal::RankType::value, internal::ParameterType::destination>(rank);
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
-/// \c MPI_Gather.
+/// @brief Generates an object encapsulating the rank of the destination PE in point to point communication.
 ///
-/// @param rank Rank of the root PE.
-/// @returns Root Object containing the rank information of the root PE.
-inline auto receiver(size_t rank) {
-    return receiver(asserting_cast<int>(rank));
+/// @param rank The rank.
+/// @returns The destination parameter.
+inline auto destination(size_t rank) {
+    return destination(asserting_cast<int>(rank));
+}
+
+/// @brief Generates an object encapsulating the dummy rank \c MPI_PROC_NULL for the destination PE in point to point
+/// communication.
+///
+/// @returns The destination parameter.
+inline auto destination(internal::rank_null_t) {
+    return internal::RankDataBuffer<internal::RankType::null, internal::ParameterType::destination>{};
+}
+
+/// @brief Generates an object encapsulating the rank of the source PE in
+/// point to point communication.
+///
+/// @param rank The rank.
+/// @returns The source parameter.
+inline auto source(int rank) {
+    return internal::RankDataBuffer<internal::RankType::value, internal::ParameterType::source>(rank);
+}
+
+/// @brief Generates an object encapsulating the rank of the source PE in
+/// point to point communication.
+///
+/// @param rank The rank.
+/// @returns The source parameter.
+inline auto source(size_t rank) {
+    return source(asserting_cast<int>(rank));
+}
+
+/// @brief Use an arbitrary rank as source in a point to point communication.
+inline auto source(internal::rank_any_t) {
+    return internal::RankDataBuffer<internal::RankType::any, internal::ParameterType::source>{};
+}
+
+/// @brief Use the dummy rank \c MPI_PROC_NULL as source in a point to point communication.
+inline auto source(internal::rank_null_t) {
+    return internal::RankDataBuffer<internal::RankType::null, internal::ParameterType::source>{};
+}
+
+/// @brief Use an arbitrary message tag for \c kamping::Communicator::probe() or \c kamping::Communicator::recv().
+inline auto tag(internal::any_tag_t) {
+    return internal::TagParam<internal::TagType::any>{};
 }
 
 /// @brief Generates a parameter object encapsulating a tag.
 /// @param value the tag value.
 /// @returns The tag wrapper.
 inline auto tag(int value) {
-    return internal::make_data_buffer<
-        internal::ParameterType::tag,
-        internal::BufferModifiability::constant,
-        internal::BufferType::in_buffer>(std::move(value));
+    return internal::TagParam<internal::TagType::value>{value};
 }
 
 /// @brief Generates a parameter object encapsulating a tag from an enum type.
@@ -462,31 +486,6 @@ inline auto tag(EnumType value) {
     );
     return tag(static_cast<int>(value));
 }
-
-namespace internal {
-struct standard_mode_t {};    ///< tag for standard send mode
-struct buffered_mode_t {};    ///< tag for buffered send mode
-struct synchronous_mode_t {}; ///< tag for synchronous send mode
-struct ready_mode_t {};       ///< tag for ready send mode
-using send_mode_list =
-    type_list<standard_mode_t, buffered_mode_t, synchronous_mode_t, ready_mode_t>; ///< list of all available send modes
-
-/// @brief Parameter object for send_mode encapsulating the send mode compile-time tag.
-/// @tparam SendModeTag The send mode.
-template <typename SendModeTag>
-struct SendModeParameter {
-    static_assert(send_mode_list::contains<SendModeTag>, "Unsupported send mode.");
-    static constexpr ParameterType parameter_type = ParameterType::send_mode; ///< The parameter type.
-    using send_mode                               = SendModeTag;              ///< The send mode.
-};
-} // namespace internal
-
-namespace send_modes {
-static constexpr internal::standard_mode_t    standard{};    ///< global constant for standard send mode
-static constexpr internal::buffered_mode_t    buffered{};    ///< global constant for buffered send mode
-static constexpr internal::synchronous_mode_t synchronous{}; ///< global constant for synchronous send mode
-static constexpr internal::ready_mode_t       ready{};       ///< global constant for ready send mode
-} // namespace send_modes
 
 /// @brief Send mode parameter for point to point communication.
 /// Pass any of the tags from the \c kamping::send_modes namespace.

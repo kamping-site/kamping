@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include "helpers_for_testing.hpp"
 #include "kamping/data_buffer.hpp"
@@ -22,6 +23,7 @@
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/parameter_objects.hpp"
 #include "legacy_parameter_objects.hpp"
 
 using namespace ::kamping;
@@ -676,16 +678,57 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
 TEST(ParameterFactoriesTest, root_basics) {
     auto root_obj = root(22);
     EXPECT_EQ(root_obj.rank(), 22);
+    EXPECT_EQ(decltype(root_obj)::parameter_type, ParameterType::root);
 }
 
-TEST(ParameterFactoriesTest, receiver_basics) {
-    auto receiver_obj = receiver(22);
-    EXPECT_EQ(receiver_obj.rank(), 22);
+TEST(ParameterFactoriesTest, destination_basics) {
+    {
+        auto destination_obj = destination(22);
+        EXPECT_EQ(destination_obj.rank(), 22);
+        EXPECT_EQ(decltype(destination_obj)::parameter_type, ParameterType::destination);
+        EXPECT_EQ(decltype(destination_obj)::rank_type, RankType::value);
+    }
+    {
+        auto destination_obj = destination(rank::null);
+        EXPECT_EQ(destination_obj.rank_signed(), MPI_PROC_NULL);
+        EXPECT_EQ(decltype(destination_obj)::parameter_type, ParameterType::destination);
+        EXPECT_EQ(decltype(destination_obj)::rank_type, RankType::null);
+    }
+}
+
+TEST(ParameterFactoriesTest, source_basics) {
+    {
+        auto source_obj = source(22);
+        EXPECT_EQ(source_obj.rank(), 22);
+        EXPECT_EQ(decltype(source_obj)::parameter_type, ParameterType::source);
+        EXPECT_EQ(decltype(source_obj)::rank_type, RankType::value);
+    }
+    {
+        auto source_obj = source(rank::null);
+        EXPECT_EQ(source_obj.rank_signed(), MPI_PROC_NULL);
+        EXPECT_EQ(decltype(source_obj)::parameter_type, ParameterType::source);
+        EXPECT_EQ(decltype(source_obj)::rank_type, RankType::null);
+    }
+    {
+        auto source_obj = source(rank::any);
+        EXPECT_EQ(source_obj.rank_signed(), MPI_ANY_TAG);
+        EXPECT_EQ(decltype(source_obj)::parameter_type, ParameterType::source);
+        EXPECT_EQ(decltype(source_obj)::rank_type, RankType::any);
+    }
 }
 
 TEST(ParameterFactoriesTest, tag_basics) {
-    auto tag_obj = tag(22);
-    EXPECT_EQ(tag_obj.get_single_element(), 22);
+    {
+        auto tag_obj = tag(22);
+        EXPECT_EQ(tag_obj.tag(), 22);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+    {
+        auto tag_obj = tag(tags::any);
+        EXPECT_EQ(tag_obj.tag(), MPI_ANY_TAG);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::any);
+    }
 }
 
 TEST(ParameterFactoriesTest, tag_enum) {
@@ -695,11 +738,15 @@ TEST(ParameterFactoriesTest, tag_enum) {
     };
     {
         auto tag_obj = tag(Tags::type_a);
-        EXPECT_EQ(tag_obj.get_single_element(), 27);
+        EXPECT_EQ(tag_obj.tag(), 27);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
     }
     {
         auto tag_obj = tag(Tags::type_b);
-        EXPECT_EQ(tag_obj.get_single_element(), 3);
+        EXPECT_EQ(tag_obj.tag(), 3);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
     }
 }
 
@@ -710,11 +757,14 @@ TEST(ParameterFactoriesTest, tag_enum_class) {
     };
     {
         auto tag_obj = tag(Tags::type_a);
-        EXPECT_EQ(tag_obj.get_single_element(), 27);
+        EXPECT_EQ(tag_obj.tag(), 27);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
     }
     {
         auto tag_obj = tag(Tags::type_b);
-        EXPECT_EQ(tag_obj.get_single_element(), 3);
+        EXPECT_EQ(tag_obj.tag(), 3);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
     }
 }
 

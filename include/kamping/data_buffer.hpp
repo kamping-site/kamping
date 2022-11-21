@@ -36,7 +36,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
-#include "kamping/mpi_ops.hpp"
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/span.hpp"
 #include "kassert/kassert.hpp"
@@ -46,6 +46,28 @@ namespace kamping {
 /// @{
 
 namespace internal {
+
+/// @brief Base object for parameter objects which deletes copy constructor and assignment operator and enables move.
+///
+/// You can inherit from this class privately.
+/// While  constructors are never inherited, the derived class still has no copy constructor (assignment), because it
+/// can not be default constructed, due to the missing implementation in the base class. Because we provide a (default)
+/// implementation for the move constructor (assignment) in the base class, the derived class can construct default
+/// implementations.
+class ParameterObjectBase {
+protected:
+    constexpr ParameterObjectBase() = default;
+    ~ParameterObjectBase()          = default;
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    ParameterObjectBase(ParameterObjectBase const&) = delete;
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    ParameterObjectBase& operator=(ParameterObjectBase const&) = delete;
+    /// @brief Move constructor.
+    ParameterObjectBase(ParameterObjectBase&&) = default;
+    /// @brief Move assignment operator.
+    ParameterObjectBase& operator=(ParameterObjectBase&&) = default;
+};
 
 /// @brief Boolean value helping to decide if type has a \c value_type member type.
 /// @return \c true if class has \c value_type method and \c false otherwise.
@@ -196,7 +218,7 @@ template <
     BufferOwnership     ownership,
     BufferType          buffer_type_param,
     BufferAllocation    allocation = BufferAllocation::user_allocated>
-class DataBuffer {
+class DataBuffer : private ParameterObjectBase {
 public:
     static constexpr ParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
@@ -261,20 +283,7 @@ public:
         static_assert(is_modifiable, "Lib allocated buffers must be modifiable");
     }
 
-    /// @brief Move constructor.
-    DataBuffer(DataBuffer&&) = default;
-
-    /// @brief Move assignment operator.
-    DataBuffer& operator=(DataBuffer&&) = default;
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    DataBuffer(DataBuffer const&) = delete;
-
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    DataBuffer& operator=(DataBuffer const&) = delete;
-
-    /// @brief Get the number of elements in the underlying storage.
-    /// @return Number of elements in the underlying storage.
+    /// @brief The size of the underlying container.
     size_t size() const {
         kassert_not_extracted("Cannot get the size of a buffer that has already been extracted.");
         if constexpr (is_single_element) {
@@ -451,45 +460,6 @@ public:
         return {nullptr, 0};
     }
 };
-
-/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton and rooted \c MPI collectives like \c
-/// MPI_Gather.
-///
-/// This is a specialized \c DataBuffer. Its main functionality is to provide ease-of-use functionality in the form of
-/// the methods \c rank() and \c rank_signed(), which return the ecapsulated rank and are easier to read in the code.
-template <ParameterType type>
-class RankDataBuffer final : public DataBuffer<
-                                 size_t,
-                                 ParameterType::root,
-                                 BufferModifiability::modifiable,
-                                 BufferOwnership::owning,
-                                 BufferType::in_buffer,
-                                 BufferAllocation::user_allocated> {
-public:
-    static constexpr ParameterType parameter_type = type; ///< The type of parameter this object encapsulates.
-
-    /// @ Constructor for Rank.
-    /// @param rank Rank of the PE.
-    RankDataBuffer(size_t rank) : DataBuffer(rank) {}
-
-    /// @ Constructor for Rank.
-    /// @param rank Rank of the PE.
-    RankDataBuffer(int rank) : DataBuffer(asserting_cast<size_t>(rank)) {}
-
-    /// @brief Returns the rank as `size_t`.
-    /// @returns Rank of the PE as `size_t`.
-    size_t rank() const {
-        return underlying();
-    }
-
-    /// @brief Returns the rank as `int`.
-    /// @returns Rank as `int`.
-    int rank_signed() const {
-        return asserting_cast<int>(rank());
-    }
-};
-
-using RootDataBuffer = RankDataBuffer<ParameterType::root>; ///< Helper for roots;
 
 } // namespace internal
 
