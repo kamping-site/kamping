@@ -570,7 +570,7 @@ TEST(RootTest, move_constructor_assignment_operator_is_enabled) {
     RootDataBuffer root2 = std::move(root1);
     RootDataBuffer root3(rank + 1);
     root3 = std::move(root2);
-    EXPECT_EQ(root3.rank(), const_rank);
+    EXPECT_EQ(root3.rank_signed(), const_rank);
 }
 
 TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {

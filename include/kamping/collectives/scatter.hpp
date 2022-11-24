@@ -83,17 +83,20 @@ auto kamping::Communicator::scatter(Args... args) const {
         std::tuple(root()),
         args...
     );
-    size_t const root     = root_param.rank();
-    int const    int_root = root_param.rank_signed();
-    KASSERT(is_valid_rank(root), "Invalid root rank " << root << " in communicator of size " << size(), assert::light);
-    KASSERT(this->is_same_on_all_ranks(root), "Root has to be the same on all ranks.", assert::light_communication);
+    int const int_root = root_param.rank_signed();
+    KASSERT(
+        is_valid_rank(int_root),
+        "Invalid root rank " << int_root << " in communicator of size " << size(),
+        assert::light
+    );
+    KASSERT(this->is_same_on_all_ranks(int_root), "Root has to be the same on all ranks.", assert::light_communication);
 
     // Mandatory parameter send_buf()
     auto send_buf              = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
     using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
     auto const*  send_buf_ptr  = send_buf.data();
-    KASSERT((!is_root(root) || send_buf_ptr != nullptr), "Send buffer must be specified on root.", assert::light);
+    KASSERT((!is_root(int_root) || send_buf_ptr != nullptr), "Send buffer must be specified on root.", assert::light);
 
     // Compute sendcount based on the size of the sendbuf
     KASSERT(
