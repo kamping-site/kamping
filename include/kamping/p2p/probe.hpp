@@ -27,6 +27,22 @@
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
 
+/// @brief Wrapper for \c MPI_Probe.
+///
+/// This wraps \c MPI_Probe. This operation probes for a message and returns a
+/// status object with info about the probe message. The following parameters
+/// are optional:
+/// - \ref kamping::tag() probe for messages with this tag. Defaults to probing
+/// for an arbitrary tag, i.e. \c tag(tags::any).
+/// - \ref kamping::source() probe for messages sent from this source rank.
+/// Defaults to probing for an arbitrary source, i.e. \c source(rank::any).
+/// - \ref kamping::status() or \ref kamping::status_out(). Returns info about the probed message by setting the
+/// appropriate fields in the status object passed by the user. If \ref kamping::status_out() is passed, constructs a
+/// status object which may be retrieved by the user. Defaults to ignoring the status without allocating anything.
+///
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described
+/// above.
 template <typename... Args>
 auto kamping::Communicator::probe(Args... args) const {
     using namespace kamping::internal;
