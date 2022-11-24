@@ -45,7 +45,6 @@
 /// above.
 template <typename... Args>
 auto kamping::Communicator::probe(Args... args) const {
-    using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(tag, source, status));
 
     using default_source_buf_type = decltype(kamping::source(rank::any));
@@ -63,7 +62,7 @@ auto kamping::Communicator::probe(Args... args) const {
     int tag = tag_param.tag();
 
     constexpr auto tag_type = std::remove_reference_t<decltype(tag_param)>::tag_type;
-    if constexpr (tag_type == TagType::value) {
+    if constexpr (tag_type == internal::TagType::value) {
         KASSERT(is_valid_tag(tag), "invalid tag " << tag << ", maximum allowed tag is " << tag_upper_bound());
     }
 
@@ -76,8 +75,9 @@ auto kamping::Communicator::probe(Args... args) const {
         );
 
     constexpr auto rank_type = std::remove_reference_t<decltype(source)>::rank_type;
-    if constexpr (rank_type == RankType::value) {
-        KASSERT(this->is_valid_rank(source.rank_signed()), "Invalid receiver rank.");
+    if constexpr (rank_type == internal::RankType::value) {
+      KASSERT(this->is_valid_rank(source.rank_signed()),
+              "Invalid receiver rank.");
     }
 
     [[maybe_unused]] int err = MPI_Probe(source.rank_signed(), tag, this->mpi_communicator(), status.native_ptr());
