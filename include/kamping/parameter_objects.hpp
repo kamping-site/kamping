@@ -180,7 +180,10 @@ enum class StatusParamType {
 /// This is the base template which is never initialized, see the specializations for details.
 /// @tparam param_type The type of status object this wraps.
 template <StatusParamType param_type>
-class StatusParam {};
+class StatusParam {
+private:
+    StatusParam(){};
+};
 
 /// @brief Parameter object for encapsulating an \c MPI_Status.
 /// Template specialization for a parameter holding a reference to \ref kamping::Status.
