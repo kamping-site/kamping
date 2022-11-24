@@ -768,7 +768,37 @@ TEST(ParameterFactoriesTest, tag_enum_class) {
     }
 }
 
-TEST(ParameterFactoriesTest, status_basics) {}
+TEST(ParameterFactoriesTest, status_basics) {
+    {
+        auto status_obj = status(kamping::ignore<>);
+        EXPECT_EQ(status_obj.native_ptr(), MPI_STATUS_IGNORE);
+        EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
+        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::ignore);
+    }
+    {
+        MPI_Status native_status;
+        auto       status_obj = status(native_status);
+        EXPECT_EQ(status_obj.native_ptr(), &native_status);
+        EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
+        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::native_ref);
+    }
+    {
+        kamping::Status stat;
+        auto            status_obj = status(stat);
+        EXPECT_EQ(status_obj.native_ptr(), &stat.native());
+        EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
+        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::ref);
+    }
+    {
+        auto status_obj = status_out();
+        EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
+        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::owning);
+        // directly modify the owned status object
+        status_obj.native_ptr()->MPI_TAG = 42;
+        auto stat                        = status_obj.extract();
+        EXPECT_EQ(stat.tag(), 42);
+    }
+}
 
 TEST(ParameterFactoriesTest, test_send_mode) {
     ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::standard))::send_mode, internal::standard_mode_t>));
