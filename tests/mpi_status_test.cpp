@@ -62,7 +62,7 @@ TEST(StatusTest, basic) {
         ASSERT_EQ(actual.count<std::byte>(), sizeof(int) * 5);
 
         // now lets wrap the native status and check if that also works
-        kamping::Status native_wrapped(actual);
+        kamping::Status native_wrapped(expected);
         ASSERT_EQ(native_wrapped.source(), expected.MPI_SOURCE);
         ASSERT_EQ(native_wrapped.source_signed(), expected.MPI_SOURCE);
         ASSERT_EQ(native_wrapped.tag(), expected.MPI_TAG);
