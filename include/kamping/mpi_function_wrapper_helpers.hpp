@@ -86,6 +86,13 @@ public:
           _recv_displs(std::forward<RecvDispls>(recv_displs)),
           _send_displs(std::forward<SendDispls>(send_displs)) {}
 
+    /// @brief Extracts the \c kamping::Status from the MPIResult object.
+    ///
+    /// This function is only available if the underlying status is owned by the
+    /// MPIResult object.
+    /// @tparam StatusType_ Template parameter helper only needed to remove this
+    /// function if StatusType does not possess a member function \c extract().
+    /// @return Returns the underlying status object.
     template <
         typename StatusType_                                                  = StatusType,
         std::enable_if_t<kamping::internal::has_extract_v<StatusType_>, bool> = true>
