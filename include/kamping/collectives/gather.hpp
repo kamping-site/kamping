@@ -71,9 +71,9 @@ auto kamping::Communicator::gather(Args... args) const {
         std::tuple(this->root()),
         args...
     );
-    KASSERT(this->is_valid_rank(root.rank()), "Invalid rank as root.");
+    KASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.");
     KASSERT(
-        this->is_same_on_all_ranks(root.rank()),
+        this->is_same_on_all_ranks(root.rank_signed()),
         "Root has to be the same on all ranks.",
         assert::light_communication
     );
@@ -82,7 +82,7 @@ auto kamping::Communicator::gather(Args... args) const {
     auto mpi_recv_type = mpi_datatype<recv_value_type>();
     KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
-    size_t recv_size     = (this->rank() == root.rank()) ? send_buf.size() : 0;
+    size_t recv_size     = (this->rank_signed() == root.rank_signed()) ? send_buf.size() : 0;
     size_t recv_buf_size = this->size() * recv_size;
 
     // error code can be unused if KTHROW is removed at compile time

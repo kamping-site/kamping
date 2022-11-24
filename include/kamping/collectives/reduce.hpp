@@ -84,15 +84,15 @@ auto kamping::Communicator::reduce(Args... args) const {
     );
     MPI_Datatype type = mpi_datatype<send_value_type>();
 
-    KASSERT(is_valid_rank(root.rank()), "The provided root rank is invalid.", assert::light);
+    KASSERT(is_valid_rank(root.rank_signed()), "The provided root rank is invalid.", assert::light);
     KASSERT(
-        this->is_same_on_all_ranks(root.rank()),
+        this->is_same_on_all_ranks(root.rank_signed()),
         "Root has to be the same on all ranks.",
         assert::light_communication
     );
 
     send_value_type* recv_buf_ptr = nullptr;
-    if (rank() == root.rank()) {
+    if (rank_signed() == root.rank_signed()) {
         recv_buf.resize(send_buf.size());
         recv_buf_ptr = recv_buf.data();
     }

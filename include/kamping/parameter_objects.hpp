@@ -18,6 +18,7 @@
 #pragma once
 
 #include <cstddef>
+#include <variant>
 
 #include <mpi.h>
 
@@ -48,6 +49,11 @@ enum class RankType {
     any,   ///< holds MPI_ANY_SOURCE
     null   ///< hold MPI_PROC_NULL
 };
+
+struct rank_any_t {};  ///< tag struct for MPI_ANY_SOURCE
+struct rank_null_t {}; ///< tag struct for MPI_PROC_NULL
+
+using RankValue = std::variant<size_t, rank_any_t, rank_null_t>; ///< Compound type for the possible rank values
 
 /// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton
 /// and rooted \c MPI collectives like \c MPI_Gather.
@@ -99,16 +105,16 @@ public:
     /// @param rank Rank of the PE.
     RankDataBuffer(int rank) : BaseClass(asserting_cast<size_t>(rank)) {}
 
-    /// @brief Returns the rank as `size_t`.
-    /// @returns Rank of the PE as `size_t`.
-    size_t rank() const {
+    /// @return Returns the rank value as `size_t` or the special rank parameter.
+    RankValue rank() const {
         return BaseClass::underlying();
     }
 
     /// @brief Returns the rank as `int`.
     /// @returns Rank as `int`.
     int rank_signed() const {
-        return asserting_cast<int>(rank());
+        KASSERT(std::holds_alternative<size_t>(rank()));
+        return asserting_cast<int>(std::get<size_t>(rank()));
     }
 };
 
@@ -122,6 +128,13 @@ class RankDataBuffer<RankType::any, type> : private ParameterObjectBase {
 public:
     static constexpr ParameterType parameter_type = type;          ///< The type of parameter this object encapsulates.
     static constexpr RankType      rank_type      = RankType::any; ///< The rank type.
+
+    /// @return Returns the rank value as `size_t` or the special rank
+    /// parameter.
+    RankValue rank() const {
+        return rank_any_t{};
+    }
+
     /// @brief Returns the rank as `int`.
     /// @returns Rank as `int`.
     int rank_signed() const {
@@ -139,6 +152,13 @@ class RankDataBuffer<RankType::null, type> : private ParameterObjectBase {
 public:
     static constexpr ParameterType parameter_type = type;           ///< The type of parameter this object encapsulates.
     static constexpr RankType      rank_type      = RankType::null; ///< The rank type.
+
+    /// @return Returns the rank value as `size_t` or the special rank
+    /// parameter.
+    RankValue rank() const {
+        return rank_null_t{};
+    }
+
     /// @brief Returns the rank as `int`.
     /// @returns Rank as `int`.
     int rank_signed() const {
@@ -147,9 +167,6 @@ public:
 };
 
 using RootDataBuffer = RankDataBuffer<RankType::value, ParameterType::root>; ///< Helper for roots;
-
-struct rank_any_t {};  ///< tag struct for MPI_ANY_SOURCE
-struct rank_null_t {}; ///< tag struct for MPI_PROC_NULL
 
 struct standard_mode_t {};    ///< tag for standard send mode
 struct buffered_mode_t {};    ///< tag for buffered send mode

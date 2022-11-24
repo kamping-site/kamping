@@ -68,7 +68,7 @@ auto kamping::Communicator::bcast(Args... args) const {
         std::tuple(this->root()),
         args...
     );
-    KASSERT(this->is_valid_rank(root.rank()), "Invalid rank as root.", assert::light);
+    KASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.", assert::light);
 
     // Get the send_recv_buf; for now, the user *has* to provide a send-receive buffer.
     auto&& send_recv_buf = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
@@ -103,7 +103,7 @@ auto kamping::Communicator::bcast(Args... args) const {
     );
     int recv_count = recv_count_param.get_single_element();
     if constexpr (recv_count_is_output_parameter) {
-        if (this->is_root(root.rank())) {
+        if (this->is_root(root.rank_signed())) {
             recv_count = asserting_cast<int>(send_recv_buf.size());
         }
         // Transfer the recv_count
@@ -121,7 +121,7 @@ auto kamping::Communicator::bcast(Args... args) const {
         // Output the recv count via the output_parameter
         *recv_count_param.data() = recv_count;
     }
-    if (this->is_root(root.rank())) {
+    if (this->is_root(root.rank_signed())) {
         KASSERT(
             asserting_cast<size_t>(recv_count) == send_recv_buf.size(),
             "If a recv_count() is provided on the root rank, it has to be equal to the number of elements in the "
