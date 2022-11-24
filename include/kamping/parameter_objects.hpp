@@ -24,6 +24,7 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_types.hpp"
+#include "kamping/status.hpp"
 
 namespace kamping::internal {
 
@@ -165,6 +166,59 @@ struct SendModeParameter : private ParameterObjectBase {
     static_assert(send_mode_list::contains<SendModeTag>, "Unsupported send mode.");
     static constexpr ParameterType parameter_type = ParameterType::send_mode; ///< The parameter type.
     using send_mode                               = SendModeTag;              ///< The send mode.
+};
+
+enum class StatusParamType { ref, owning, native_ref, ignore };
+template <StatusParamType param_type>
+struct StatusParam {};
+template <>
+struct StatusParam<StatusParamType::ref> : private ParameterObjectBase {
+    StatusParam(Status& status) : _status(status) {}
+    static constexpr ParameterType   parameter_type = ParameterType::status;
+    static constexpr StatusParamType type           = StatusParamType::ref;
+    Status&                          _status;
+    inline MPI_Status*               native_ptr() {
+                      return &_status.native();
+    }
+};
+
+template <>
+struct StatusParam<StatusParamType::owning> : private ParameterObjectBase {
+    StatusParam(Status status) : _status(std::move(status)) {}
+    StatusParam() : _status() {}
+
+    static constexpr ParameterType   parameter_type = ParameterType::status;
+    static constexpr StatusParamType type           = StatusParamType::owning;
+    Status                           _status;
+    inline MPI_Status*               native_ptr() {
+                      return &_status.native();
+    }
+    inline Status extract() {
+        return std::move(_status);
+    }
+};
+
+template <>
+struct StatusParam<StatusParamType::native_ref> : private ParameterObjectBase {
+    StatusParam(MPI_Status& mpi_status) : _mpi_status(mpi_status) {}
+
+    static constexpr ParameterType   parameter_type = ParameterType::status;
+    static constexpr StatusParamType type           = StatusParamType::native_ref;
+    MPI_Status&                      _mpi_status;
+    inline MPI_Status*               native_ptr() {
+                      return &_mpi_status;
+    }
+};
+
+template <>
+struct StatusParam<StatusParamType::ignore> : private ParameterObjectBase {
+    StatusParam() {}
+
+    static constexpr ParameterType   parameter_type = ParameterType::status;
+    static constexpr StatusParamType type           = StatusParamType::ignore;
+    inline MPI_Status*               native_ptr() {
+                      return MPI_STATUS_IGNORE;
+    }
 };
 
 struct any_tag_t {}; ///< tag struct for message tag

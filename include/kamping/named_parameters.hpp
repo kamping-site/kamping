@@ -487,6 +487,22 @@ inline auto tag(EnumType value) {
     return tag(static_cast<int>(value));
 }
 
+inline auto status(MPI_Status& mpi_status) {
+    return internal::StatusParam<internal::StatusParamType::native_ref>{mpi_status};
+}
+
+inline auto status(Status& mpi_status) {
+    return internal::StatusParam<internal::StatusParamType::ref>(mpi_status);
+}
+
+inline auto status_out() {
+    return internal::StatusParam<internal::StatusParamType::owning>{};
+}
+
+inline auto status(internal::ignore_t<void>) {
+    return internal::StatusParam<internal::StatusParamType::ignore>{};
+}
+
 /// @brief Send mode parameter for point to point communication.
 /// Pass any of the tags from the \c kamping::send_modes namespace.
 template <typename SendModeTag>

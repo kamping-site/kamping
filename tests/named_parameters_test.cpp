@@ -768,6 +768,8 @@ TEST(ParameterFactoriesTest, tag_enum_class) {
     }
 }
 
+TEST(ParameterFactoriesTest, status_basics) {}
+
 TEST(ParameterFactoriesTest, test_send_mode) {
     ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::standard))::send_mode, internal::standard_mode_t>));
     ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::buffered))::send_mode, internal::buffered_mode_t>));

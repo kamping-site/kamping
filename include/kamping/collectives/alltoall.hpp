@@ -101,12 +101,7 @@ auto kamping::Communicator::alltoall(Args... args) const {
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Alltoall);
-    return MPIResult(
-        std::move(recv_buf),               // recv_buf
-        internal::BufferCategoryNotUsed{}, // recv_counts
-        internal::BufferCategoryNotUsed{}, // recv_displs
-        internal::BufferCategoryNotUsed{}  // send_displs
-    );
+    return make_mpi_result(std::move(recv_buf));
 }
 
 /// @brief Wrapper for \c MPI_Alltoallv.

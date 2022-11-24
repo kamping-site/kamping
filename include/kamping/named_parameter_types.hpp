@@ -31,26 +31,27 @@ namespace internal {
 /// needs to identify the purpose of each (unordered) argument.
 /// Note that not all enum entries are necessary in each wrapped \c MPI call.
 enum class ParameterType {
-    send_buf,        ///< Tag used to represent a send buffer, i.e. a buffer containing
-                     ///< the data elements to be sent via \c MPI.
-    recv_buf,        ///< Tag used to represent a receive buffer, i.e. a buffer
-                     ///< containing the data elements to be received via \c MPI.
-    send_recv_buf,   ///< Tag used to represent a send and receive buffer, i.e. a
-                     ///< buffer containing the data elements to be sent or received
-                     ///< (depending on the process' rank) via \c MPI.
-    recv_counts,     ///< Tag used to represent a receive counts buffer, i.e. a buffer
-                     ///< containing the receive counts from the involved PEs.
-    recv_displs,     ///< Tag used to represent a receive displacements buffer, i.e. a
-                     ///< buffer containing the receive displacements from the
-                     ///< involved PEs.
-    send_counts,     ///< Tag used to represent a send counts buffer, i.e. a buffer
-                     ///< containing the send counts from the involved PEs.
-    send_displs,     ///< Tag used to represent a send displacements buffer, i.e. a
-                     ///< buffer containing the send displacements from the involved
-                     ///< PEs.
-    op,              ///< Tag used to represent a reduce operation in a \c MPI call.
-    source,          ///< Tag used to represent the sending PE in a \c MPI call.
-    destination,     ///< Tag used to represent the receiving PE in a \c MPI call.
+    send_buf,      ///< Tag used to represent a send buffer, i.e. a buffer containing
+                   ///< the data elements to be sent via \c MPI.
+    recv_buf,      ///< Tag used to represent a receive buffer, i.e. a buffer
+                   ///< containing the data elements to be received via \c MPI.
+    send_recv_buf, ///< Tag used to represent a send and receive buffer, i.e. a
+                   ///< buffer containing the data elements to be sent or received
+                   ///< (depending on the process' rank) via \c MPI.
+    recv_counts,   ///< Tag used to represent a receive counts buffer, i.e. a buffer
+                   ///< containing the receive counts from the involved PEs.
+    recv_displs,   ///< Tag used to represent a receive displacements buffer, i.e. a
+                   ///< buffer containing the receive displacements from the
+                   ///< involved PEs.
+    send_counts,   ///< Tag used to represent a send counts buffer, i.e. a buffer
+                   ///< containing the send counts from the involved PEs.
+    send_displs,   ///< Tag used to represent a send displacements buffer, i.e. a
+                   ///< buffer containing the send displacements from the involved
+                   ///< PEs.
+    op,            ///< Tag used to represent a reduce operation in a \c MPI call.
+    source,        ///< Tag used to represent the sending PE in a \c MPI call.
+    destination,   ///< Tag used to represent the receiving PE in a \c MPI call.
+    status,
     root,            ///< Tag used to represent the root PE in a \c MPI collectives call.
     tag,             ///< Tag used to represent the message tag in a \c MPI call.
     send_mode,       ///< Tag used to represent the send mode used by a send operation.
