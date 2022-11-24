@@ -182,7 +182,7 @@ enum class StatusParamType {
 template <StatusParamType param_type>
 class StatusParam {
 private:
-    StatusParam(){};
+    StatusParam() {}
 };
 
 /// @brief Parameter object for encapsulating an \c MPI_Status.
