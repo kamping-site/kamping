@@ -57,15 +57,18 @@ struct BufferCategoryNotUsed {};
 /// results have been written to by the library call has been allocated
 /// by/transferred to KaMPIng, the content of the buffers can be extracted using
 /// extract_<result>.
-/// Note that not all below-listed buffer categories needs to be used by every wrapped \c MPI call.
-/// If a specific call does not use a buffer category, you have to provide BufferCategoryNotUsed instead.
+/// Note that not all below-listed buffer categories needs to be used by every
+/// wrapped \c MPI call. If a specific call does not use a buffer category, you
+/// have to provide BufferCategoryNotUsed instead.
 ///
+/// @tparam StatusObject Buffer type containing the \c MPI status object(s).
 /// @tparam RecvBuf Buffer type containing the received elements.
 /// @tparam RecvCounts Buffer type containing the numbers of received elements.
-/// @tparam RecvDispls Buffer type containing the displacements of the received elements.
-/// @tparam SendDispls Buffer type containing the displacements of the sent elements.
-/// @tparam MPIStatusObject Buffer type containing the \c MPI status object(s).
-template <class StatusType, class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls>
+/// @tparam RecvDispls Buffer type containing the displacements of the received
+/// elements.
+/// @tparam SendDispls Buffer type containing the displacements of the sent
+/// elements.
+template <class StatusObject, class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls>
 class MPIResult {
 public:
     /// @brief Constructor of MPIResult.
@@ -74,13 +77,13 @@ public:
     /// owns) the memory for the associated results, the empty placeholder type BufferCategoryNotUsed must be passed to
     /// the constructor instead of an actual buffer object.
     MPIResult(
-        StatusType&& status,
-        RecvBuf&&    recv_buf,
-        RecvCounts&& recv_counts,
-        RecvDispls&& recv_displs,
-        SendDispls&& send_displs
+        StatusObject&& status,
+        RecvBuf&&      recv_buf,
+        RecvCounts&&   recv_counts,
+        RecvDispls&&   recv_displs,
+        SendDispls&&   send_displs
     )
-        : _status(std::forward<StatusType>(status)),
+        : _status(std::forward<StatusObject>(status)),
           _recv_buffer(std::forward<RecvBuf>(recv_buf)),
           _recv_counts(std::forward<RecvCounts>(recv_counts)),
           _recv_displs(std::forward<RecvDispls>(recv_displs)),
@@ -94,8 +97,8 @@ public:
     /// function if StatusType does not possess a member function \c extract().
     /// @return Returns the underlying status object.
     template <
-        typename StatusType_                                                  = StatusType,
-        std::enable_if_t<kamping::internal::has_extract_v<StatusType_>, bool> = true>
+        typename StatusObject_                                                  = StatusObject,
+        std::enable_if_t<kamping::internal::has_extract_v<StatusObject_>, bool> = true>
     decltype(auto) status() {
         return _status.extract();
     }
@@ -152,8 +155,8 @@ public:
     }
 
 private:
-    StatusType _status;
-    RecvBuf    _recv_buffer; ///< Buffer object containing the received elements. May be empty if the received elements
+    StatusObject _status;
+    RecvBuf _recv_buffer;    ///< Buffer object containing the received elements. May be empty if the received elements
                              ///< have been written into storage owned by the caller of KaMPIng.
     RecvCounts _recv_counts; ///< Buffer object containing the receive counts. May be empty if the receive counts have
                              ///< been written into storage owned by the caller of KaMPIng.
