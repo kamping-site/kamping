@@ -53,8 +53,6 @@ enum class RankType {
 struct rank_any_t {};  ///< tag struct for MPI_ANY_SOURCE
 struct rank_null_t {}; ///< tag struct for MPI_PROC_NULL
 
-using RankValue = std::variant<size_t, rank_any_t, rank_null_t>; ///< Compound type for the possible rank values
-
 /// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton
 /// and rooted \c MPI collectives like \c MPI_Gather.
 ///
@@ -105,16 +103,10 @@ public:
     /// @param rank Rank of the PE.
     RankDataBuffer(int rank) : BaseClass(asserting_cast<size_t>(rank)) {}
 
-    /// @return Returns the rank value as `size_t` or the special rank parameter.
-    RankValue rank() const {
-        return BaseClass::underlying();
-    }
-
     /// @brief Returns the rank as `int`.
     /// @returns Rank as `int`.
     int rank_signed() const {
-        KASSERT(std::holds_alternative<size_t>(rank()));
-        return asserting_cast<int>(std::get<size_t>(rank()));
+        return asserting_cast<int>(BaseClass::underlying());
     }
 };
 
@@ -128,12 +120,6 @@ class RankDataBuffer<RankType::any, type> : private ParameterObjectBase {
 public:
     static constexpr ParameterType parameter_type = type;          ///< The type of parameter this object encapsulates.
     static constexpr RankType      rank_type      = RankType::any; ///< The rank type.
-
-    /// @return Returns the rank value as `size_t` or the special rank
-    /// parameter.
-    RankValue rank() const {
-        return rank_any_t{};
-    }
 
     /// @brief Returns the rank as `int`.
     /// @returns Rank as `int`.
@@ -152,12 +138,6 @@ class RankDataBuffer<RankType::null, type> : private ParameterObjectBase {
 public:
     static constexpr ParameterType parameter_type = type;           ///< The type of parameter this object encapsulates.
     static constexpr RankType      rank_type      = RankType::null; ///< The rank type.
-
-    /// @return Returns the rank value as `size_t` or the special rank
-    /// parameter.
-    RankValue rank() const {
-        return rank_null_t{};
-    }
 
     /// @brief Returns the rank as `int`.
     /// @returns Rank as `int`.

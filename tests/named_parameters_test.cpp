@@ -679,7 +679,6 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
 TEST(ParameterFactoriesTest, root_basics) {
     auto root_obj = root(22);
     EXPECT_EQ(root_obj.rank_signed(), 22);
-    EXPECT_EQ(std::get<size_t>(root_obj.rank()), 22);
     EXPECT_EQ(decltype(root_obj)::parameter_type, ParameterType::root);
 }
 
@@ -687,14 +686,12 @@ TEST(ParameterFactoriesTest, destination_basics) {
     {
         auto destination_obj = destination(22);
         EXPECT_EQ(destination_obj.rank_signed(), 22);
-        EXPECT_EQ(std::get<size_t>(destination_obj.rank()), 22);
         EXPECT_EQ(decltype(destination_obj)::parameter_type, ParameterType::destination);
         EXPECT_EQ(decltype(destination_obj)::rank_type, RankType::value);
     }
     {
         auto destination_obj = destination(rank::null);
         EXPECT_EQ(destination_obj.rank_signed(), MPI_PROC_NULL);
-        EXPECT_TRUE(std::holds_alternative<internal::rank_null_t>(destination_obj.rank()));
         EXPECT_EQ(decltype(destination_obj)::parameter_type, ParameterType::destination);
         EXPECT_EQ(decltype(destination_obj)::rank_type, RankType::null);
     }
@@ -704,21 +701,18 @@ TEST(ParameterFactoriesTest, source_basics) {
     {
         auto source_obj = source(22);
         EXPECT_EQ(source_obj.rank_signed(), 22);
-        EXPECT_EQ(std::get<size_t>(source_obj.rank()), 22);
         EXPECT_EQ(decltype(source_obj)::parameter_type, ParameterType::source);
         EXPECT_EQ(decltype(source_obj)::rank_type, RankType::value);
     }
     {
         auto source_obj = source(rank::null);
         EXPECT_EQ(source_obj.rank_signed(), MPI_PROC_NULL);
-        EXPECT_TRUE(std::holds_alternative<internal::rank_null_t>(source_obj.rank()));
         EXPECT_EQ(decltype(source_obj)::parameter_type, ParameterType::source);
         EXPECT_EQ(decltype(source_obj)::rank_type, RankType::null);
     }
     {
         auto source_obj = source(rank::any);
         EXPECT_EQ(source_obj.rank_signed(), MPI_ANY_TAG);
-        EXPECT_TRUE(std::holds_alternative<internal::rank_any_t>(source_obj.rank()));
         EXPECT_EQ(decltype(source_obj)::parameter_type, ParameterType::source);
         EXPECT_EQ(decltype(source_obj)::rank_type, RankType::any);
     }
