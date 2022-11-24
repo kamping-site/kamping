@@ -20,8 +20,8 @@ using namespace ::kamping::internal;
 
 TEST(OperationBuilderTest, move_constructor_assignment_operator_is_enabled) {
     // simply test that move ctor and assignment operator can be called.
-    OperationBuilder op_builder1(ops::plus<>(), commutative);
+    OperationBuilder op_builder1(ops::plus<>(), ops::commutative);
     OperationBuilder op_builder2(std::move(op_builder1));
-    OperationBuilder op_builder3(ops::plus<>(), commutative);
+    OperationBuilder op_builder3(ops::plus<>(), ops::commutative);
     op_builder3 = std::move(op_builder2);
 }

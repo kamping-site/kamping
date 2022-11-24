@@ -61,7 +61,7 @@ bool Communicator::is_same_on_all_ranks(Value const& value) const {
                 return ValueEqual{a.value, false};
             }
         },
-        kamping::commutative
+        kamping::ops::commutative
     );
     auto operation = operation_param.template build_operation<ValueEqual>();
 

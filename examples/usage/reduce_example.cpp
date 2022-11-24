@@ -43,13 +43,13 @@ int main() {
     print_result_on_root(result0, comm);
     auto result1 = comm.reduce(send_buf(input), op(ops::plus<double>())).extract_recv_buffer();
     print_result_on_root(result1, comm);
-    auto result2 = comm.reduce(send_buf(input), op(my_plus{}, commutative)).extract_recv_buffer();
+    auto result2 = comm.reduce(send_buf(input), op(my_plus{}, ops::commutative)).extract_recv_buffer();
     print_result_on_root(result2, comm);
 
     auto result3 [[maybe_unused]] = comm.reduce(
         send_buf({1.0, 2.0, 3.0}),
         recv_buf(output),
-        op([](auto a, auto b) { return a + b; }, non_commutative)
+        op([](auto a, auto b) { return a + b; }, ops::non_commutative)
     );
     print_result_on_root(output, comm);
 
@@ -62,7 +62,7 @@ int main() {
                                    // dummy
                                    return std::pair(a.first + b.first, a.second + b.second);
                                },
-                               commutative
+                               ops::commutative
                            )
     )
                        .extract_recv_buffer();
@@ -89,7 +89,7 @@ int main() {
         input3[1].y = 0.75;
     }
 
-    auto result5 = comm.reduce(send_buf(input3), op(ops::max<>(), commutative)).extract_recv_buffer();
+    auto result5 = comm.reduce(send_buf(input3), op(ops::max<>(), ops::commutative)).extract_recv_buffer();
     if (comm.rank() == 0) {
         for (auto& elem: result5) {
             std::cout << elem.x << " " << elem.y << " " << elem.z << std::endl;

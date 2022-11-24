@@ -19,15 +19,12 @@
 #include <type_traits>
 #include <utility>
 
-#include <mpi.h>
-
 #include "kamping/data_buffer.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/operation_builder.hpp"
 #include "kamping/parameter_objects.hpp"
-#include "kamping/status.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -428,6 +425,10 @@ inline auto destination(size_t rank) {
     return destination(asserting_cast<int>(rank));
 }
 
+/// @brief Generates an object encapsulating the dummy rank \c MPI_PROC_NULL for the destination PE in point to point
+/// communication.
+///
+/// @returns The destination parameter.
 inline auto destination(internal::rank_null_t) {
     return internal::RankDataBuffer<internal::RankType::null, internal::ParameterType::destination>{};
 }
@@ -450,14 +451,17 @@ inline auto source(size_t rank) {
     return source(asserting_cast<int>(rank));
 }
 
+/// @brief Use an arbitrary rank as source in a point to point communication.
 inline auto source(internal::rank_any_t) {
     return internal::RankDataBuffer<internal::RankType::any, internal::ParameterType::source>{};
 }
 
+/// @brief Use the dummy rank \c MPI_PROC_NULL as source in a point to point communication.
 inline auto source(internal::rank_null_t) {
     return internal::RankDataBuffer<internal::RankType::null, internal::ParameterType::source>{};
 }
 
+/// @brief Use an arbitrary message tag for \c kamping::Communicator::probe() or \c kamping::Communicator::recv().
 inline auto tag(internal::any_tag_t) {
     return internal::TagParam<internal::TagType::any>{};
 }
@@ -483,8 +487,6 @@ inline auto tag(EnumType value) {
     return tag(static_cast<int>(value));
 }
 
-
-
 /// @brief Send mode parameter for point to point communication.
 /// Pass any of the tags from the \c kamping::send_modes namespace.
 template <typename SendModeTag>
@@ -501,8 +503,9 @@ inline auto send_mode(SendModeTag) {
 ///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
 ///     supported for builtin operations. This is used to streamline the interface so that the use does not have
 ///     to provide commutativity info when the operation is builtin.
-template <typename Op, typename Commutative = internal::undefined_commutative_tag>
-internal::OperationBuilder<Op, Commutative> op(Op&& op, Commutative commute = internal::undefined_commutative_tag{}) {
+template <typename Op, typename Commutative = ops::internal::undefined_commutative_tag>
+internal::OperationBuilder<Op, Commutative>
+op(Op&& op, Commutative commute = ops::internal::undefined_commutative_tag{}) {
     return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);
 }
 

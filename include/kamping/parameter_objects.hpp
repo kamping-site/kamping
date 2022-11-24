@@ -24,7 +24,6 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_types.hpp"
-#include "kamping/status.hpp"
 
 namespace kamping::internal {
 
@@ -43,15 +42,34 @@ struct type_list {
 template <typename T>
 struct ignore_t {};
 
-/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton and rooted \c MPI collectives like \c
-/// MPI_Gather.
+/// @brief Indicator if a rank parameter holds and actual value or MPI_ANY_SOURCE or MPI_PROC_NULL.
+enum class RankType {
+    value, ///< holds a value
+    any,   ///< holds MPI_ANY_SOURCE
+    null   ///< hold MPI_PROC_NULL
+};
+
+/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton
+/// and rooted \c MPI collectives like \c MPI_Gather.
 ///
-/// This is a specialized \c DataBuffer. Its main functionality is to provide ease-of-use functionality in the form of
-/// the methods \c rank() and \c rank_signed(), which return the ecapsulated rank and are easier to read in the code.
-enum class RankType { value, any, null };
+/// This is a specialized \c DataBuffer. Its main functionality is to provide
+/// ease-of-use functionality in the form of the methods \c rank() and \c
+/// rank_signed(), which return the ecapsulated rank and are easier to read in
+/// the code.
+// @tparam rank_type The \ref RankType encapsulated.
+// @tparam parameter_type The parameter type.
 template <RankType rank_type, ParameterType parameter_type>
 class RankDataBuffer {};
 
+/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton
+/// and rooted \c MPI collectives like \c MPI_Gather.
+///
+/// This is a specialized \c DataBuffer. Its main functionality is to provide
+/// ease-of-use functionality in the form of the methods \c rank() and \c
+/// rank_signed(), which return the ecapsulated rank and are easier to read in
+/// the code.
+// @tparam rank_type The \ref RankType encapsulated.
+// @tparam parameter_type The parameter type.
 template <ParameterType type>
 class RankDataBuffer<RankType::value, type> final : private DataBuffer<
                                                         size_t,
@@ -71,13 +89,13 @@ private:
 
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this object encapsulates.
-    static constexpr RankType      rank_type      = RankType::value;
+    static constexpr RankType      rank_type      = RankType::value; ///< The rank type.
 
-    /// @ Constructor for Rank.
+    /// @brief Constructor for Rank.
     /// @param rank Rank of the PE.
     RankDataBuffer(size_t rank) : BaseClass(rank) {}
 
-    /// @ Constructor for Rank.
+    /// @brief Constructor for Rank.
     /// @param rank Rank of the PE.
     RankDataBuffer(int rank) : BaseClass(asserting_cast<size_t>(rank)) {}
 
@@ -93,22 +111,34 @@ public:
         return asserting_cast<int>(rank());
     }
 };
+
+/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton
+/// and rooted \c MPI collectives like \c MPI_Gather.
+///
+/// This is a specialization for MPI_ANY_SOURCE which only implements
+/// \ref rank_signed(), without allocating any additional memory.
 template <ParameterType type>
 class RankDataBuffer<RankType::any, type> : private ParameterObjectBase {
 public:
-    static constexpr ParameterType parameter_type = type; ///< The type of parameter this object encapsulates.
-    static constexpr RankType      rank_type      = RankType::any;
+    static constexpr ParameterType parameter_type = type;          ///< The type of parameter this object encapsulates.
+    static constexpr RankType      rank_type      = RankType::any; ///< The rank type.
     /// @brief Returns the rank as `int`.
     /// @returns Rank as `int`.
     int rank_signed() const {
         return MPI_ANY_SOURCE;
     }
 };
+
+/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton
+/// and rooted \c MPI collectives like \c MPI_Gather.
+///
+/// This is a specialization for MPI_PROC_NULL which only implements
+/// \ref rank_signed(), without allocating any additional memory.
 template <ParameterType type>
 class RankDataBuffer<RankType::null, type> : private ParameterObjectBase {
 public:
-    static constexpr ParameterType parameter_type = type; ///< The type of parameter this object encapsulates.
-    static constexpr RankType      rank_type      = RankType::null;
+    static constexpr ParameterType parameter_type = type;           ///< The type of parameter this object encapsulates.
+    static constexpr RankType      rank_type      = RankType::null; ///< The rank type.
     /// @brief Returns the rank as `int`.
     /// @returns Rank as `int`.
     int rank_signed() const {
@@ -118,8 +148,9 @@ public:
 
 using RootDataBuffer = RankDataBuffer<RankType::value, ParameterType::root>; ///< Helper for roots;
 
-struct rank_any_t {};
-struct rank_null_t {};
+struct rank_any_t {};  ///< tag struct for MPI_ANY_SOURCE
+struct rank_null_t {}; ///< tag struct for MPI_PROC_NULL
+
 struct standard_mode_t {};    ///< tag for standard send mode
 struct buffered_mode_t {};    ///< tag for buffered send mode
 struct synchronous_mode_t {}; ///< tag for synchronous send mode
@@ -136,102 +167,65 @@ struct SendModeParameter : private ParameterObjectBase {
     using send_mode                               = SendModeTag;              ///< The send mode.
 };
 
-enum class StatusParamType { ref, owning, native_ref, ignore };
-template <StatusParamType param_type>
-struct StatusParam {};
+struct any_tag_t {}; ///< tag struct for message tag
 
-template <>
-struct StatusParam<StatusParamType::ref> : private ParameterObjectBase {
-    StatusParam(Status& status) : _status(status) {}
-    static constexpr ParameterType   parameter_type = ParameterType::status;
-    static constexpr StatusParamType type           = StatusParamType::ref;
-    Status&                          _status;
-    inline MPI_Status*               native_ptr() {
-        return &_status.native();
-    }
+/// @brief Possible types of tag
+enum class TagType {
+    value, ///< holds an actual value
+    any    ///< special value MPI_ANY_TAG}
 };
 
-template <>
-struct StatusParam<StatusParamType::owning> : private ParameterObjectBase {
-    StatusParam(Status status) : _status(std::move(status)) {}
-    StatusParam() : _status() {}
-
-    static constexpr ParameterType   parameter_type = ParameterType::status;
-    static constexpr StatusParamType type           = StatusParamType::owning;
-    Status                           _status;
-    inline MPI_Status*               native_ptr() {
-        return &_status.native();
-    }
-    inline Status extract() {
-        return std::move(_status);
-    }
-};
-
-template <>
-struct StatusParam<StatusParamType::native_ref> : private ParameterObjectBase {
-    StatusParam(MPI_Status& mpi_status) : _mpi_status(mpi_status) {}
-
-    static constexpr ParameterType   parameter_type = ParameterType::status;
-    static constexpr StatusParamType type           = StatusParamType::native_ref;
-    MPI_Status&                      _mpi_status;
-    inline MPI_Status*               native_ptr() {
-        return &_mpi_status;
-    }
-};
-
-template <>
-struct StatusParam<StatusParamType::ignore> : private ParameterObjectBase {
-    StatusParam() {}
-
-    static constexpr ParameterType   parameter_type = ParameterType::status;
-    static constexpr StatusParamType type           = StatusParamType::ignore;
-    inline MPI_Status*               native_ptr() {
-        return MPI_STATUS_IGNORE;
-    }
-};
-
-struct any_tag_t {};
-enum class TagType { value, any };
+/// @brief Encapsulates a message tag.
+/// @tparam The type of the tag.
 template <TagType tag_type>
 class TagParam {};
 
+/// @brief Encapsulates a message tag. Specialization if an explicit tag value is provided.
 template <>
 class TagParam<TagType::value> : private ParameterObjectBase {
 public:
+    /// @param tag The tag.
     TagParam(int tag) : _tag_value(tag) {}
-    static constexpr ParameterType parameter_type = ParameterType::tag;
-    static constexpr TagType       tag_type       = TagType::value;
-    [[nodiscard]] int              tag() const {
+    static constexpr ParameterType parameter_type = ParameterType::tag; ///< The parameter type.
+    static constexpr TagType       tag_type       = TagType::value;     ///< The tag type.
+    /// @return The tag.
+    [[nodiscard]] int tag() const {
         return _tag_value;
     }
 
 private:
-    int _tag_value;
+    int _tag_value; ///< the encapsulated tag value
 };
 
+/// @brief Encapsulates a message tag. Specialization if the value is MPI_ANY_TAG.
 template <>
 class TagParam<TagType::any> : private ParameterObjectBase {
 public:
-    static constexpr ParameterType parameter_type = ParameterType::tag;
-    static constexpr TagType       tag_type       = TagType::any;
-    [[nodiscard]] int              tag() const {
+    static constexpr ParameterType parameter_type = ParameterType::tag; ///< The parameter type.
+    static constexpr TagType       tag_type       = TagType::any;       ///< The tag type.
+    /// @return The tag.
+    [[nodiscard]] int tag() const {
         return MPI_ANY_TAG;
     }
 };
 } // namespace kamping::internal
 
 namespace kamping {
+
 namespace send_modes {
 static constexpr internal::standard_mode_t    standard{};    ///< global constant for standard send mode
 static constexpr internal::buffered_mode_t    buffered{};    ///< global constant for buffered send mode
 static constexpr internal::synchronous_mode_t synchronous{}; ///< global constant for synchronous send mode
 static constexpr internal::ready_mode_t       ready{};       ///< global constant for ready send mode
 } // namespace send_modes
+
 namespace tags {
-static constexpr internal::any_tag_t any{};
+static constexpr internal::any_tag_t any{}; ///< global constant for any tag
 }
+
 namespace rank {
-static constexpr internal::rank_any_t  any{};
-static constexpr internal::rank_null_t null{};
+static constexpr internal::rank_any_t  any{};  ///< global constant for any rank
+static constexpr internal::rank_null_t null{}; ///< global constant for rank NULL
 } // namespace rank
+
 } // namespace kamping
