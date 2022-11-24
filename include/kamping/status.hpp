@@ -78,6 +78,6 @@ public:
     }
 
 private:
-    MPI_Status _status;
+    MPI_Status _status; ///< The wrapped status.
 };
 } // namespace kamping

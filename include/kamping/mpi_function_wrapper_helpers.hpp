@@ -155,7 +155,7 @@ public:
     }
 
 private:
-    StatusObject _status;
+    StatusObject _status;    ///< The status object. May be empty if the status is owned by the caller of KaMPIng.
     RecvBuf _recv_buffer;    ///< Buffer object containing the received elements. May be empty if the received elements
                              ///< have been written into storage owned by the caller of KaMPIng.
     RecvCounts _recv_counts; ///< Buffer object containing the receive counts. May be empty if the receive counts have
