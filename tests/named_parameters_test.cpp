@@ -12,6 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <type_traits>
+#include <variant>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -677,14 +678,14 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
 
 TEST(ParameterFactoriesTest, root_basics) {
     auto root_obj = root(22);
-    EXPECT_EQ(root_obj.rank(), 22);
+    EXPECT_EQ(root_obj.rank_signed(), 22);
     EXPECT_EQ(decltype(root_obj)::parameter_type, ParameterType::root);
 }
 
 TEST(ParameterFactoriesTest, destination_basics) {
     {
         auto destination_obj = destination(22);
-        EXPECT_EQ(destination_obj.rank(), 22);
+        EXPECT_EQ(destination_obj.rank_signed(), 22);
         EXPECT_EQ(decltype(destination_obj)::parameter_type, ParameterType::destination);
         EXPECT_EQ(decltype(destination_obj)::rank_type, RankType::value);
     }
@@ -699,7 +700,7 @@ TEST(ParameterFactoriesTest, destination_basics) {
 TEST(ParameterFactoriesTest, source_basics) {
     {
         auto source_obj = source(22);
-        EXPECT_EQ(source_obj.rank(), 22);
+        EXPECT_EQ(source_obj.rank_signed(), 22);
         EXPECT_EQ(decltype(source_obj)::parameter_type, ParameterType::source);
         EXPECT_EQ(decltype(source_obj)::rank_type, RankType::value);
     }
