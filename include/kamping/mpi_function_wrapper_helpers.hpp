@@ -19,6 +19,7 @@
 #include <utility>
 
 #include "kamping/named_parameter_selection.hpp"
+#include "kamping/named_parameters.hpp"
 
 namespace kamping {
 namespace internal {
@@ -56,15 +57,18 @@ struct BufferCategoryNotUsed {};
 /// results have been written to by the library call has been allocated
 /// by/transferred to KaMPIng, the content of the buffers can be extracted using
 /// extract_<result>.
-/// Note that not all below-listed buffer categories needs to be used by every wrapped \c MPI call.
-/// If a specific call does not use a buffer category, you have to provide BufferCategoryNotUsed instead.
+/// Note that not all below-listed buffer categories needs to be used by every
+/// wrapped \c MPI call. If a specific call does not use a buffer category, you
+/// have to provide BufferCategoryNotUsed instead.
 ///
+/// @tparam StatusObject Buffer type containing the \c MPI status object(s).
 /// @tparam RecvBuf Buffer type containing the received elements.
 /// @tparam RecvCounts Buffer type containing the numbers of received elements.
-/// @tparam RecvDispls Buffer type containing the displacements of the received elements.
-/// @tparam SendDispls Buffer type containing the displacements of the sent elements.
-/// @tparam MPIStatusObject Buffer type containing the \c MPI status object(s).
-template <class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls>
+/// @tparam RecvDispls Buffer type containing the displacements of the received
+/// elements.
+/// @tparam SendDispls Buffer type containing the displacements of the sent
+/// elements.
+template <class StatusObject, class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls>
 class MPIResult {
 public:
     /// @brief Constructor of MPIResult.
@@ -72,17 +76,39 @@ public:
     /// If any of the buffer categories are not used by the wrapped \c MPI call or if the caller has provided (and still
     /// owns) the memory for the associated results, the empty placeholder type BufferCategoryNotUsed must be passed to
     /// the constructor instead of an actual buffer object.
-    MPIResult(RecvBuf&& recv_buf, RecvCounts&& recv_counts, RecvDispls&& recv_displs, SendDispls&& send_displs)
-        : _recv_buffer(std::forward<RecvBuf>(recv_buf)),
+    MPIResult(
+        StatusObject&& status,
+        RecvBuf&&      recv_buf,
+        RecvCounts&&   recv_counts,
+        RecvDispls&&   recv_displs,
+        SendDispls&&   send_displs
+    )
+        : _status(std::forward<StatusObject>(status)),
+          _recv_buffer(std::forward<RecvBuf>(recv_buf)),
           _recv_counts(std::forward<RecvCounts>(recv_counts)),
           _recv_displs(std::forward<RecvDispls>(recv_displs)),
           _send_displs(std::forward<SendDispls>(send_displs)) {}
 
+    /// @brief Extracts the \c kamping::Status from the MPIResult object.
+    ///
+    /// This function is only available if the underlying status is owned by the
+    /// MPIResult object.
+    /// @tparam StatusType_ Template parameter helper only needed to remove this
+    /// function if StatusType does not possess a member function \c extract().
+    /// @return Returns the underlying status object.
+    template <
+        typename StatusObject_                                                  = StatusObject,
+        std::enable_if_t<kamping::internal::has_extract_v<StatusObject_>, bool> = true>
+    decltype(auto) status() {
+        return _status.extract();
+    }
+
     /// @brief Extracts the \c recv_buffer from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam RecvBuf_ Template parameter helper only needed to remove this function if RecvBuf does not possess a
-    /// member function \c extract().
+    /// This function is only available if the underlying memory is owned by the
+    /// MPIResult object.
+    /// @tparam RecvBuf_ Template parameter helper only needed to remove this
+    /// function if RecvBuf does not possess a member function \c extract().
     /// @return Returns the underlying storage containing the received elements.
     template <typename RecvBuf_ = RecvBuf, std::enable_if_t<kamping::internal::has_extract_v<RecvBuf_>, bool> = true>
     decltype(auto) extract_recv_buffer() {
@@ -129,6 +155,7 @@ public:
     }
 
 private:
+    StatusObject _status;    ///< The status object. May be empty if the status is owned by the caller of KaMPIng.
     RecvBuf _recv_buffer;    ///< Buffer object containing the received elements. May be empty if the received elements
                              ///< have been written into storage owned by the caller of KaMPIng.
     RecvCounts _recv_counts; ///< Buffer object containing the receive counts. May be empty if the receive counts have
@@ -168,7 +195,20 @@ auto make_mpi_result(Args... args) {
         args...
     );
 
-    return MPIResult(std::move(recv_buf), std::move(recv_counts), std::move(recv_displs), std::move(send_displs));
+    using default_status_type = decltype(kamping::status(kamping::ignore<>));
+
+    auto&& status = internal::select_parameter_type_or_default<internal::ParameterType::status, default_status_type>(
+        std::tuple(),
+        args...
+    );
+
+    return MPIResult(
+        std::move(status),
+        std::move(recv_buf),
+        std::move(recv_counts),
+        std::move(recv_displs),
+        std::move(send_displs)
+    );
 }
 
 } // namespace kamping

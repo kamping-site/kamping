@@ -20,6 +20,7 @@
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/parameter_objects.hpp"
 #include "legacy_parameter_objects.hpp"
 
 using namespace ::kamping;
@@ -46,6 +47,7 @@ void test_recv_buffer_in_MPIResult() {
     int* ptr = recv_buffer.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
+        StatusParam<StatusParamType::ignore>{},
         std::move(recv_buffer),
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
@@ -68,6 +70,7 @@ void test_recv_counts_in_MPIResult() {
     int* ptr = recv_counts.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
+        StatusParam<StatusParamType::ignore>{},
         BufferCategoryNotUsed{},
         std::move(recv_counts),
         BufferCategoryNotUsed{},
@@ -86,6 +89,7 @@ void test_recv_count_in_MPIResult() {
     LibAllocatedSingleElementBuffer<int, ParameterType::recv_counts, BufferType::in_buffer> recv_count_wrapper{};
     *recv_count_wrapper.get().data() = 42;
     MPIResult mpi_result{
+        StatusParam<StatusParamType::ignore>{},
         BufferCategoryNotUsed{},
         std::move(recv_count_wrapper),
         BufferCategoryNotUsed{},
@@ -106,6 +110,7 @@ void test_recv_displs_in_MPIResult() {
     int* ptr = recv_displs.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
+        StatusParam<StatusParamType::ignore>{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         std::move(recv_displs),
@@ -128,6 +133,7 @@ void test_send_displs_in_MPIResult() {
     int* ptr = send_displs.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
+        StatusParam<StatusParamType::ignore>{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
@@ -137,6 +143,7 @@ void test_send_displs_in_MPIResult() {
         EXPECT_EQ(underlying_container[i], i);
     }
 }
+
 } // namespace testing
 
 TEST(MpiResultTest, has_extract_v_basics) {
@@ -186,22 +193,43 @@ TEST(MpiResultTest, extract_send_displs_basics_own_container) {
     testing::test_send_displs_in_MPIResult<testing::OwnContainer<int>>();
 }
 
+TEST(MpiResultTest, extract_status_basics) {
+    using namespace kamping;
+    using namespace kamping::internal;
+    auto status = status_out();
+
+    status.native_ptr()->MPI_TAG = 42;
+    MPIResult mpi_result{
+        std::move(status),
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{}};
+    auto underlying_status = mpi_result.status();
+    EXPECT_EQ(underlying_status.tag(), 42);
+}
+
 TEST(MakeMpiResultTest, pass_random_order_buffer) {
     {
         constexpr BufferType btype = BufferType::in_buffer;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts;
         LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs;
+        StatusParam<StatusParamType::owning>                                                  status;
+        status.native_ptr()->MPI_TAG = 42;
 
-        auto result = make_mpi_result(std::move(recv_counts), std::move(recv_buf), std::move(recv_displs));
+        auto result =
+            make_mpi_result(std::move(recv_counts), std::move(status), std::move(recv_buf), std::move(recv_displs));
 
         auto result_recv_buf    = result.extract_recv_buffer();
         auto result_recv_counts = result.extract_recv_counts();
         auto result_recv_displs = result.extract_recv_displs();
+        auto result_status      = result.status();
 
         static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, char>);
         static_assert(std::is_same_v<decltype(result_recv_counts)::value_type, int>);
         static_assert(std::is_same_v<decltype(result_recv_displs)::value_type, int>);
+        ASSERT_EQ(result_status.tag(), 42);
     }
     {
         constexpr BufferType btype = BufferType::in_buffer;

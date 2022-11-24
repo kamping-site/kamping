@@ -61,6 +61,12 @@ kamping_register_mpi_test(
     CORES 2 4
 )
 kamping_register_mpi_test(
+    test_mpi_status
+    FILES mpi_status_test.cpp
+    CORES 2 4
+)
+
+kamping_register_mpi_test(
     test_mpi_allgather
     FILES collectives/mpi_allgather_test.cpp
     CORES 1 4
@@ -148,6 +154,7 @@ kamping_register_compilation_failure_test(
              "RECV_COUNTS_NOT_EXTRACTABLE"
              "RECV_DISPLACEMENTS_NOT_EXTRACTABLE"
              "SEND_DISPLACEMENTS_NOT_EXTRACTABLE"
+             "STATUS_NOT_EXTRACTABLE"
              "MAKE_MPI_RESULT_RECV_BUF_NOT_EXTRACTABLE"
              "MAKE_MPI_RESULT_RECV_COUNTS_NOT_EXTRACTABLE"
              "MAKE_MPI_RESULT_RECV_DISPLS_NOT_EXTRACTABLE"

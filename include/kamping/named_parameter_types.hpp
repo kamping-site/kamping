@@ -51,6 +51,7 @@ enum class ParameterType {
     op,              ///< Tag used to represent a reduce operation in a \c MPI call.
     source,          ///< Tag used to represent the sending PE in a \c MPI call.
     destination,     ///< Tag used to represent the receiving PE in a \c MPI call.
+    status,          ///< Tag used to represent the status in a \c MPI call.
     root,            ///< Tag used to represent the root PE in a \c MPI collectives call.
     tag,             ///< Tag used to represent the message tag in a \c MPI call.
     send_mode,       ///< Tag used to represent the send mode used by a send operation.
