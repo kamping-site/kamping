@@ -38,7 +38,7 @@
 /// Defaults to probing for an arbitrary source, i.e. \c source(rank::any).
 /// - \ref kamping::status() or \ref kamping::status_out(). Returns info about the probed message by setting the
 /// appropriate fields in the status object passed by the user. If \ref kamping::status_out() is passed, constructs a
-/// status object which may be retrieved by the user. Defaults to ignoring the status without allocating anything.
+/// status object which may be retrieved by the user. This is also the default.
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described
@@ -66,18 +66,17 @@ auto kamping::Communicator::probe(Args... args) const {
         KASSERT(is_valid_tag(tag), "invalid tag " << tag << ", maximum allowed tag is " << tag_upper_bound());
     }
 
-    using ignore_status_param_type = decltype(kamping::status(kamping::ignore<>));
+    using default_status_param_type = decltype(kamping::status_out());
 
     auto&& status =
-        internal::select_parameter_type_or_default<internal::ParameterType::status, ignore_status_param_type>(
+        internal::select_parameter_type_or_default<internal::ParameterType::status, default_status_param_type>(
             {},
             args...
         );
 
     constexpr auto rank_type = std::remove_reference_t<decltype(source)>::rank_type;
     if constexpr (rank_type == internal::RankType::value) {
-      KASSERT(this->is_valid_rank(source.rank_signed()),
-              "Invalid receiver rank.");
+        KASSERT(this->is_valid_rank(source.rank_signed()), "Invalid receiver rank.");
     }
 
     [[maybe_unused]] int err = MPI_Probe(source.rank_signed(), tag, this->mpi_communicator(), status.native_ptr());
