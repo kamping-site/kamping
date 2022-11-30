@@ -249,6 +249,9 @@ public:
     auto scatter(Args... args) const;
 
     template <typename... Args>
+    auto scatterv(Args... args) const;
+
+    template <typename... Args>
     auto reduce(Args... args) const;
 
     template <typename... Args>

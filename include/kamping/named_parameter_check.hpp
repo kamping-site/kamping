@@ -369,4 +369,16 @@ struct parameters_to_integral_constant {
 template <typename BufferType>
 static constexpr bool has_to_be_computed =
     std::remove_reference_t<BufferType>::is_out_buffer || std::remove_reference_t<BufferType>::is_lib_allocated;
+
+/// @brief Checks if all buffers have to be computed by kamping, i.e., if all buffers are output parameters of the
+/// buffers have been allocated by kamping.
+/// @tparam BufferTypes Any number of buffers types to be checked.
+template <typename... BufferTypes>
+static constexpr bool all_have_to_be_computed = (has_to_be_computed<BufferTypes> && ...);
+
+/// @brief Checks if any of the buffers have to be computed by kamping, i.e., if at least one buffer is an output
+/// parameter or has been allocated by kamping.
+/// @tparam BufferTypes Any number of buffers to be checked.
+template <typename... BufferTypes>
+static constexpr bool any_has_to_be_computed = (has_to_be_computed<BufferTypes> || ...);
 } // namespace kamping::internal
