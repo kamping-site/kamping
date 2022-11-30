@@ -237,6 +237,12 @@ auto send_counts_out(Container&& container) {
         internal::BufferType::out_buffer>(std::forward<Container>(container));
 }
 
+/// @brief Generates a wrapper for a send counts output parameter without any user input.
+/// @return Wrapper for the send counts that can be retrieved as structured binding.
+inline auto send_counts_out() {
+    return send_counts_out(NewContainer<int>{});
+}
+
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must
 /// contain the recv counts from each relevant PE.
 ///

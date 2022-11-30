@@ -606,6 +606,29 @@ TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc) {
     );
 }
 
+TEST(ParameterFactoriesTest, send_counts_out_basics_user_alloc) {
+    const size_t     size = 10;
+    std::vector<int> int_vec(size);
+    auto             buffer_based_on_user_alloc_vector = send_counts_out(int_vec);
+    using ExpectedValueType                            = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_user_alloc_vector,
+        ParameterType::send_counts,
+        internal::BufferType::out_buffer,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, send_counts_out_basics_library_alloc) {
+    auto buffer_based_on_library_alloc_vector = send_counts_out(NewContainer<std::vector<int>>{});
+    using ExpectedValueType                   = int;
+    testing::test_library_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_library_alloc_vector,
+        ParameterType::send_counts,
+        internal::BufferType::out_buffer
+    );
+}
+
 TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
     const size_t     size = 10;
     std::vector<int> int_vec(size);
@@ -1327,6 +1350,12 @@ TEST(ParameterFactoriesTest, out_parameter_without_passed_parameters) {
     {
         auto data_buf = recv_displs_out();
         EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::recv_displs);
+        EXPECT_EQ(data_buf.is_modifiable, true);
+        EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
+    }
+    {
+        auto data_buf = send_counts_out();
+        EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::send_counts);
         EXPECT_EQ(data_buf.is_modifiable, true);
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
     }
