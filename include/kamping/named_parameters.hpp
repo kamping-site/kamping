@@ -222,6 +222,21 @@ auto send_counts(std::initializer_list<T> counts) {
         internal::BufferType::in_buffer>(std::move(counts));
 }
 
+/// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage
+/// will contained the send counts when the \c MPI call has been completed.
+/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
+/// contained \c value_type
+/// @tparam Container Container type which contains the send counts.
+/// @param container Container which will contain the send counts.
+/// @return Object referring to the storage containing the send counts.
+template <typename Container>
+auto send_counts_out(Container&& container) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_counts,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(std::forward<Container>(container));
+}
+
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must
 /// contain the recv counts from each relevant PE.
 ///

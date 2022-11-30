@@ -369,4 +369,10 @@ struct parameters_to_integral_constant {
 template <typename BufferType>
 static constexpr bool has_to_be_computed =
     std::remove_reference_t<BufferType>::is_out_buffer || std::remove_reference_t<BufferType>::is_lib_allocated;
+
+template <typename... BufferTypes>
+static constexpr bool all_have_to_be_computed = (has_to_be_computed<BufferTypes> && ...);
+
+template <typename... BufferTypes>
+static constexpr bool any_has_to_be_computed = (has_to_be_computed<BufferTypes> || ...);
 } // namespace kamping::internal

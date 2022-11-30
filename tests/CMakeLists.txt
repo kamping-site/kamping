@@ -36,6 +36,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_mpi_scatterv
+    FILES collectives/mpi_scatterv_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_mpi_barrier
     FILES collectives/mpi_barrier_test.cpp
     CORES 1 4
