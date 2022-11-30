@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <type_traits>
 
 #include <kassert/kassert.hpp>
@@ -73,7 +74,7 @@ auto kamping::Communicator::scatter(Args... args) const {
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf),
-        KAMPING_OPTIONAL_PARAMETERS(root, send_counts, recv_buf, recv_counts)
+        KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_counts)
     );
 
     // Optional parameter: root()
@@ -311,12 +312,8 @@ auto kamping::Communicator::scatterv(Args... args) const {
         if (is_root(root_val)) {
             send_displs_param.resize(size());
             auto* send_displs_ptr = send_displs_param.data();
-            send_displs_ptr[0]    = 0;
-
             auto* send_counts_ptr = send_counts_param.data();
-            for (int pe = 1; pe < size_signed(); ++pe) {
-                send_displs_ptr[pe] = send_displs_ptr[pe - 1] + send_counts_ptr[pe - 1];
-            }
+            std::exclusive_scan(send_counts_ptr, send_counts_ptr + size(), send_displs_ptr, 0);
         }
     }
 
