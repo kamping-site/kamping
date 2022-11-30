@@ -267,9 +267,18 @@ auto kamping::Communicator::scatterv(Args... args) const {
     auto&& recv_counts_param =
         select_parameter_type_or_default<ParameterType::recv_counts, default_recv_counts_type>(std::tuple(), args...);
 
-    static_assert(
-        !all_have_to_be_computed<decltype(send_counts_param), decltype(recv_counts_param)>,
-        "At least one parameter out of send_counts and recv_counts must be given as input parameter."
+    // Check that recv_counts() can be used to compute send_counts(); or send_counts() is given on the root PE
+    [[maybe_unused]] constexpr bool recv_counts_given = !has_to_be_computed<decltype(recv_counts_param)>;
+    [[maybe_unused]] constexpr bool send_counts_given = !has_to_be_computed<decltype(send_counts_param)>;
+    KASSERT(
+        this->is_same_on_all_ranks(recv_counts_given),
+        "recv_counts() must be given on all PEs or on no PEs",
+        assert::light_communication
+    );
+    KASSERT(
+        this->is_same_on_all_ranks(recv_counts_given) || !is_root(root_val) || send_counts_given,
+        "send_counts() must be given on the root PE; or recv_counts() must be given on all PEs",
+        assert::light_communication
     );
 
     // Check the size of input parameters
@@ -318,7 +327,6 @@ auto kamping::Communicator::scatterv(Args... args) const {
     }
 
     recv_buf.resize(static_cast<std::size_t>(recv_counts_param.underlying()));
-
     [[maybe_unused]] int const err = MPI_Scatterv(
         send_buf_ptr,                   // send buffer
         send_counts_param.data(),       // send counts
