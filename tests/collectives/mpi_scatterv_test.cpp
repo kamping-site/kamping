@@ -205,7 +205,8 @@ TEST(ScattervTest, scatterv_nonzero_root) {
     auto const input  = create_equiv_sized_input_vector_on_root(comm, 1, root_val);
     auto const counts = create_equiv_counts_on_root(comm, 1, root_val);
 
-    auto const result = comm.scatterv(send_buf(input), root(root_val), send_counts(counts), recv_counts(1)).extract_recv_buffer();
+    auto const result =
+        comm.scatterv(send_buf(input), root(root_val), send_counts(counts), recv_counts(1)).extract_recv_buffer();
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank_signed());
