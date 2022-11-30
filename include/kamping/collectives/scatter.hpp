@@ -276,7 +276,7 @@ auto kamping::Communicator::scatterv(Args... args) const {
         assert::light_communication
     );
     KASSERT(
-        this->is_same_on_all_ranks(recv_counts_given) || !is_root(root_val) || send_counts_given,
+        recv_counts_given || !is_root(root_val) || send_counts_given,
         "send_counts() must be given on the root PE; or recv_counts() must be given on all PEs",
         assert::light_communication
     );
