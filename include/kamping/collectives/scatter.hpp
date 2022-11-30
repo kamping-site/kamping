@@ -181,24 +181,27 @@ auto kamping::Communicator::scatter(Args... args) const {
 /// This wrapper for \c MPI_Scatterv distributes data on the root PE across all PEs in the current communicator.
 ///
 /// The following parameters are mandatory:
-/// - \ref kamping::send_buf() containing the data to be distributed across all PEs. Non-root PEs can omit a send
-/// buffer by passing `kamping::ignore` to \ref kamping::send_buf().
+/// - \ref kamping::send_buf() [on all PEs] containing the data to be distributed across all PEs. Non-root PEs can omit
+/// a send buffer by passing `kamping::ignore` to \ref kamping::send_buf().
 ///
 /// Of the following parameters, one can be omitted at the cost of communication overhead (1x MPI_Scatter or 1x
 /// MPI_Gather). Provide both parameters to avoid overheads.
-/// - \ref kamping::send_counts() specifying the number of elements sent to each PE. If this parameter is omitted,
-/// the number of elements sent to each PE is computed based on the provided \ref kamping::recv_counts() on other PEs.
-/// - \ref kamping::recv_counts() specifying the number of elements sent to each PE. If this parameter is omitted,
-/// the number of elements sent to each PE is computed based on \ref kamping::send_counts() provided on the root PE.
+/// - \ref kamping::send_counts() [on root PE] specifying the number of elements sent to each PE. If this parameter is
+/// omitted, the number of elements sent to each PE is computed based on the provided \ref kamping::recv_counts() on
+/// other PEs.
+/// - \ref kamping::recv_counts() [on all PEs] specifying the number of elements sent to each PE. If this parameter is
+/// omitted, the number of elements sent to each PE is computed based on \ref kamping::send_counts() provided on the
+/// root PE.
 ///
 /// The following parameter can be omitted at the cost of computational overhead:
-/// - \ref kamping::send_displs() specifying the data displacements in the send buffer. If omitted, a new buffer is
-/// allocated and displacements are computed based on the \ref kamping::send_counts().
+/// - \ref kamping::send_displs() [on root PE] specifying the data displacements in the send buffer. If omitted, a new
+/// buffer is allocated and displacements are computed based on the \ref kamping::send_counts().
 ///
 /// The following parameters are optional:
-/// - \ref kamping::root() specifying the rank of the root PE. If omitted, the default root PE of the communicator
-/// is used instead.
-/// - \ref kamping::recv_buf() containing the received data. If omitted, a new buffer is allocated and returned.
+/// - \ref kamping::root() [on all PEs] specifying the rank of the root PE. If omitted, the default root PE of the
+/// communicator is used instead.
+/// - \ref kamping::recv_buf() [on all PEs] containing the received data. If omitted, a new buffer is allocated and
+/// returned.
 ///
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
