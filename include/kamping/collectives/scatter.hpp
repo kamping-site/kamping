@@ -186,13 +186,13 @@ auto kamping::Communicator::scatter(Args... args) const {
 ///
 /// Of the following parameters, one can be omitted at the cost of communication overhead (1x MPI_Scatter or 1x
 /// MPI_Gather). Provide both parameters to avoid overheads.
-/// - \ref kamping::send_counts() specifying the number of elements sent to each PE. If this parameter is omitted, 
+/// - \ref kamping::send_counts() specifying the number of elements sent to each PE. If this parameter is omitted,
 /// the number of elements sent to each PE is computed based on the provided \ref kamping::recv_counts() on other PEs.
 /// - \ref kamping::recv_counts() specifying the number of elements sent to each PE. If this parameter is omitted,
 /// the number of elements sent to each PE is computed based on \ref kamping::send_counts() provided on the root PE.
-/// 
+///
 /// The following parameter can be omitted at the cost of computational overhead:
-/// - \ref kamping::send_displs() specifying the data displacements in the send buffer. If omitted, a new buffer is 
+/// - \ref kamping::send_displs() specifying the data displacements in the send buffer. If omitted, a new buffer is
 /// allocated and displacements are computed based on the \ref kamping::send_counts().
 ///
 /// The following parameters are optional:
@@ -323,15 +323,15 @@ auto kamping::Communicator::scatterv(Args... args) const {
     recv_buf.resize(static_cast<std::size_t>(recv_counts_param.underlying()));
 
     [[maybe_unused]] int const err = MPI_Scatterv(
-        send_buf_ptr,
-        send_counts_param.data(),
-        send_displs_param.data(),
-        mpi_send_type,
-        recv_buf.data(),
-        recv_counts_param.underlying(),
-        mpi_recv_type,
-        root_val,
-        mpi_communicator()
+        send_buf_ptr,                   // send buffer
+        send_counts_param.data(),       // send counts
+        send_displs_param.data(),       // send displs
+        mpi_send_type,                  // send type
+        recv_buf.data(),                // recv buffer
+        recv_counts_param.underlying(), // recv count
+        mpi_recv_type,                  // recv type
+        root_val,                       // root
+        mpi_communicator()              // communicator
     );
     THROW_IF_MPI_ERROR(err, MPI_Scatterv);
 
