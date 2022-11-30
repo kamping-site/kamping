@@ -292,13 +292,10 @@ auto kamping::Communicator::scatterv(Args... args) const {
 
     // Compute missing counts / displs parameters
     if constexpr (has_to_be_computed<decltype(send_counts_param)>) {
-        if (is_root(root_val)) {
-            send_counts_param.resize(size());
-        }
         gather(
             kamping::send_buf(recv_counts_param.underlying()),
             kamping::root(root_val),
-            kamping::recv_buf(Span{send_counts_param.data(), size()})
+            kamping::recv_buf(send_counts_param.underlying())
         );
     }
 
