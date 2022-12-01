@@ -20,7 +20,8 @@ int main(int /*argc*/, char** /*argv*/) {
 
     [[maybe_unused]] Communicator comm;
     using NotAPod = std::vector<int>;
-    static_assert(!std::is_pod_v<NotAPod>);
+    // std::is_pod_v is deprecated in C++20
+    // static_assert(!std::is_pod_v<NotAPod>);
     [[maybe_unused]] int value = 0;
 
 #if defined(VALUE_IS_A_POINTER)
