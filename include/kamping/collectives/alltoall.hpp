@@ -46,7 +46,7 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType>::alltoall(Args... args) const {
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
@@ -131,7 +131,7 @@ auto kamping::Communicator<DefaultContainerType>::alltoall(Args... args) const {
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer, counts and displacements if not specified as input parameter.
-template <template <typename> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType>::alltoallv(Args... args) const {
     // Get all parameter objects

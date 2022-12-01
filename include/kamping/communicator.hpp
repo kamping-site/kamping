@@ -26,7 +26,7 @@ namespace kamping {
 
 /// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
-template <template <typename> typename DefaultContainerType = std::vector>
+template <template <typename...> typename DefaultContainerType = std::vector>
 class Communicator {
 public:
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.

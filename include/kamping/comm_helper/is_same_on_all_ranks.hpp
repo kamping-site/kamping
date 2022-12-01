@@ -31,7 +31,7 @@ namespace kamping {
 /// @tparam Value Type of the value to check. Must be comparable with `operator==`.
 /// @param value The value of this rank. This value is compared with the ones provided by all other ranks.
 /// @return `true` if all ranks have provided the same value, `false` otherwise.
-template <template <typename> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType>
 template <typename Value>
 bool Communicator<DefaultContainerType>::is_same_on_all_ranks(Value const& value) const {
     // TODO Assert that two values are comparable.

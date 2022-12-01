@@ -33,7 +33,7 @@
 
 namespace {
 // Broadcasts a value from one PE to all PEs.
-template <typename T, template <typename> typename DefaultContainerType>
+template <typename T, template <typename...> typename DefaultContainerType>
 int bcast_value(kamping::Communicator<DefaultContainerType> const& comm, T const bcast_value, int const root) {
     using namespace kamping::internal;
     using namespace kamping;
@@ -67,7 +67,7 @@ int bcast_value(kamping::Communicator<DefaultContainerType> const& comm, T const
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
-template <template <typename> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType>::scatter(Args... args) const {
     using namespace kamping::internal;
