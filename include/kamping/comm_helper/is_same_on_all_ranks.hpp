@@ -31,8 +31,9 @@ namespace kamping {
 /// @tparam Value Type of the value to check. Must be comparable with `operator==`.
 /// @param value The value of this rank. This value is compared with the ones provided by all other ranks.
 /// @return `true` if all ranks have provided the same value, `false` otherwise.
+template <template <typename> typename DefaultContainerType>
 template <typename Value>
-bool Communicator::is_same_on_all_ranks(Value const& value) const {
+bool Communicator<DefaultContainerType>::is_same_on_all_ranks(Value const& value) const {
     // TODO Assert that two values are comparable.
     // std::pair<> is not trivially_copyable and we don't want to forbid comparing std::pair<>s for equality.
     /// @todo How to handle more complex data types, e.g. std::pair<>, user defined classes, std::vector (here and

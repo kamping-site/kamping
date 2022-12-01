@@ -28,7 +28,7 @@ using namespace ::kamping;
 using namespace ::testing;
 
 namespace {
-std::vector<int> create_input_vector_on_root(Communicator const& comm, int const elements_per_rank, int root = -1) {
+std::vector<int> create_input_vector_on_root(Communicator<> const& comm, int const elements_per_rank, int root = -1) {
     if (root < 0) {
         root = comm.root_signed();
     }

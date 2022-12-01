@@ -25,8 +25,9 @@
 ///
 /// The parameter pack prohibits the compiler form compiling this
 /// function even when it's not used.
+template <template <typename> typename DefaultContainerType>
 template <typename... Args>
-void kamping::Communicator::barrier(Args... args) const {
+void kamping::Communicator<DefaultContainerType>::barrier(Args... args) const {
     using namespace kamping::internal;
     static_assert(sizeof...(args) == 0, "You may not pass any arguments to barrier().");
 

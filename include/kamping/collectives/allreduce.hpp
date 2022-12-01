@@ -45,8 +45,9 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
+template <template <typename> typename DefaultContainerType>
 template <typename... Args>
-auto kamping::Communicator::allreduce(Args... args) const {
+auto kamping::Communicator<DefaultContainerType>::allreduce(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
@@ -61,7 +62,8 @@ auto kamping::Communicator::allreduce(Args... args) const {
     );
 
     // Deduce the recv buffer type and get (if provided) the recv buffer or allocate one (if not provided).
-    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
+    using default_recv_buf_type =
+        decltype(kamping::recv_buf(NewContainer<DefaultContainerType<default_recv_value_type>>{}));
     auto&& recv_buf =
         select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;

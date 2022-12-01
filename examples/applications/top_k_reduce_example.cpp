@@ -58,7 +58,7 @@ std::ostream& operator<<(std::ostream& os, TopK<K, ValueType> const& top_k) {
 }
 
 template <size_t K, typename ValueType>
-auto kamping_top_k(TopK<K, ValueType> const& local_top_k, kamping::Communicator& comm) {
+auto kamping_top_k(TopK<K, ValueType> const& local_top_k, kamping::Communicator<>& comm) {
     using namespace kamping;
     auto result = comm.reduce(send_buf(local_top_k), op(merge<K, size_t>, ops::commutative)).extract_recv_buffer();
     if (comm.is_root()) {

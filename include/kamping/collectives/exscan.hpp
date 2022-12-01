@@ -54,8 +54,9 @@
 ///  @tparam Args Automatically deducted template parameters.
 ///  @param args All required and any number of the optional buffers described above.
 ///  @return Result type wrapping the output buffer if not specified as input parameter.
+template <template <typename> typename DefaultContainerType>
 template <typename... Args>
-auto kamping::Communicator::exscan(Args... args) const {
+auto kamping::Communicator<DefaultContainerType>::exscan(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args,
@@ -74,7 +75,8 @@ auto kamping::Communicator::exscan(Args... args) const {
 
     // Deduce the recv buffer type and get (if provided) the recv buffer or allocate one (if not provided).
     using default_recv_value_type = std::remove_const_t<send_value_type>;
-    using default_recv_buf_type   = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
+    using default_recv_buf_type =
+        decltype(kamping::recv_buf(NewContainer<DefaultContainerType<default_recv_value_type>>{}));
     auto&& recv_buf =
         select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
@@ -159,8 +161,9 @@ auto kamping::Communicator::exscan(Args... args) const {
 ///  @param args All required and any number of the optional buffers described above.
 ///  @return The single element result of the exclusive scan. A single element is returned even if \c recv_buf was a
 ///  vector.
+template <template <typename> typename DefaultContainerType>
 template <typename... Args>
-auto kamping::Communicator::exscan_single(Args... args) const {
+auto kamping::Communicator<DefaultContainerType>::exscan_single(Args... args) const {
     //! If you expand this function to not being only a simple wrapper around exscan, you have to write more unit
     //! tests!
 
