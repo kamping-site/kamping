@@ -326,5 +326,14 @@ TEST(ExscanTest, custom_operation_on_builtin_type_non_commutative) {
     }
 }
 
+TEST(ExscanTest, default_container_type) {
+    Communicator<OwnContainer> comm;
+
+    std::vector<int> input = {comm.rank_signed(), 42};
+
+    // This just has to compile
+    OwnContainer<int> result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+}
+
 /// @todo Once our helper macros support checking for KASSERTs which are thrown on some ranks only, write a test for
 /// and values_on_rank_0 size which is not 1 and not equal to the length of recv_buf.
