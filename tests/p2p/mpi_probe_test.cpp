@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "mpi.h"
+
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -27,7 +29,16 @@ TEST(ProbeTest, direct_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
-    MPI_Isend(v.data(), asserting_cast<int>(v.size()), MPI_INT, 0, comm.rank_signed(), comm.mpi_communicator(), &req);
+    // Each rank sends a message with its rank as tag to rank 0.
+    MPI_Isend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
@@ -62,15 +73,35 @@ TEST(ProbeTest, direct_probe) {
                 comm.probe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>));
                 ASSERT_TRUE(true);
             }
+            std::vector<int> recv_buf;
+            MPI_Recv(
+                recv_buf.data(),            // recv_buf
+                2,                          // recv_size
+                MPI_INT,                    // recv_type
+                asserting_cast<int>(other), // source
+                asserting_cast<int>(other), // tag
+                MPI_COMM_WORLD,             // comm
+                MPI_STATUS_IGNORE           // status
+            );
         }
     }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
 TEST(ProbeTest, any_source_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
-    MPI_Isend(v.data(), asserting_cast<int>(v.size()), MPI_INT, 0, comm.rank_signed(), comm.mpi_communicator(), &req);
+    // Each rank sends a message with its rank as tag to rank 0.
+    MPI_Isend(v.data(),                      // send_buf
+              asserting_cast<int>(v.size()), // send_count
+              MPI_INT,                       // send_type
+              0,                             // destination
+              comm.rank_signed(),            // tag
+              comm.mpi_communicator(),       // comm
+              &req                           // request
+    );
     MPI_Barrier(comm.mpi_communicator());
     if (comm.rank() == 0) {
         for (auto other = comm.size_signed() - 1; other >= 0; other--) {
@@ -94,7 +125,14 @@ TEST(ProbeTest, any_tag_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
-    MPI_Isend(v.data(), asserting_cast<int>(v.size()), MPI_INT, 0, comm.rank_signed(), comm.mpi_communicator(), &req);
+    MPI_Isend(v.data(),                      // send_buf
+              asserting_cast<int>(v.size()), // send_count
+              MPI_INT,                       // send_type
+              0,                             // destination
+              comm.rank_signed(),            // tag
+              comm.mpi_communicator(),       // comm
+              &req                           // request
+    );
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
