@@ -28,8 +28,10 @@ using namespace ::kamping;
 using namespace ::testing;
 
 namespace {
-std::vector<int>
-create_equiv_sized_input_vector_on_root(Communicator const& comm, int const elements_per_rank, int root = -1) {
+template <template <typename...> typename DefaultContainerType>
+std::vector<int> create_equiv_sized_input_vector_on_root(
+    Communicator<DefaultContainerType> const& comm, int const elements_per_rank, int root = -1
+) {
     if (root < 0) {
         root = comm.root_signed();
     }
@@ -46,7 +48,10 @@ create_equiv_sized_input_vector_on_root(Communicator const& comm, int const elem
     return input;
 }
 
-std::vector<int> create_equiv_counts_on_root(Communicator const& comm, int const elements_per_rank, int root = -1) {
+template <template <typename...> typename DefaultContainerType>
+std::vector<int> create_equiv_counts_on_root(
+    Communicator<DefaultContainerType> const& comm, int const elements_per_rank, int root = -1
+) {
     if (root < 0) {
         root = comm.root_signed();
     }
@@ -210,4 +215,16 @@ TEST(ScattervTest, scatterv_nonzero_root) {
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank_signed());
+}
+
+TEST(ScattervTest, scatterv_default_container_type) {
+    Communicator<OwnContainer> comm;
+
+    std::vector<int> const input  = create_equiv_sized_input_vector_on_root(comm, 1);
+    std::vector<int> const counts = create_equiv_counts_on_root(comm, 1);
+    auto                   result = comm.scatterv(send_buf(input), send_counts(counts), recv_counts(1));
+
+    // This just has to compile
+    OwnContainer<int> recv_buf         = result.extract_recv_buffer();
+    OwnContainer<int> recv_send_displs = result.extract_send_displs();
 }
