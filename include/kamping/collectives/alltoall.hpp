@@ -151,6 +151,10 @@ auto kamping::Communicator<DefaultContainerType>::alltoallv(Args... args) const 
     auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
     using send_counts_type  = typename std::remove_reference_t<decltype(send_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<send_counts_type>, int>, "Send counts must be of type int");
+    static_assert(
+        !internal::has_to_be_computed<decltype(send_counts)>,
+        "Send counts must be given as an input parameter"
+    );
     KASSERT(send_counts.size() == this->size(), assert::light);
 
     // Get recv_counts
