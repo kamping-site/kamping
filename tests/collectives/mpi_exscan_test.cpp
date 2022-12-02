@@ -148,13 +148,13 @@ TEST(ExscanTest, builtin_op_on_non_builtin_type) {
     Communicator comm;
 
     struct MyInt {
-        MyInt() : _value(0) {}
-        MyInt(int value) : _value(value) {}
+        MyInt() noexcept : _value(0) {}
+        MyInt(int value) noexcept : _value(value) {}
         int _value;
         int operator+(MyInt const& rhs) const noexcept {
             return this->_value + rhs._value;
         }
-        bool operator==(MyInt const& rhs) const {
+        bool operator==(MyInt const& rhs) const noexcept {
             return this->_value == rhs._value;
         }
     };
@@ -172,13 +172,13 @@ TEST(ExscanTest, identity_not_auto_deducible_and_no_values_on_rank_0_provided) {
     Communicator comm;
 
     struct MyInt {
-        MyInt() : _value(0) {}
-        MyInt(int value) : _value(value) {}
+        MyInt() noexcept : _value(0) {}
+        MyInt(int value) noexcept : _value(value) {}
         int _value;
         int operator+(MyInt const& rhs) const noexcept {
             return this->_value + rhs._value;
         }
-        bool operator==(MyInt const& rhs) const {
+        bool operator==(MyInt const& rhs) const noexcept {
             return this->_value == rhs._value;
         }
     };
