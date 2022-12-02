@@ -647,6 +647,7 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::in_buffer> recv_counts;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::in_buffer> recv_count;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, BufferType::in_buffer> recv_displs;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, BufferType::in_buffer> send_counts;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, BufferType::in_buffer> send_displs;
 
     MPIResult result(
@@ -654,6 +655,7 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
         std::move(recv_buffer),
         std::move(recv_counts),
         std::move(recv_displs),
+        std::move(send_counts),
         std::move(send_displs)
     );
 
@@ -665,6 +667,9 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
 
     std::ignore = result.extract_recv_displs();
     EXPECT_KASSERT_FAILS(result.extract_recv_displs(), "Cannot extract a buffer that has already been extracted.");
+
+    std::ignore = result.extract_send_counts();
+    EXPECT_KASSERT_FAILS(result.extract_send_counts(), "Cannot extract a buffer that has already been extracted.");
 
     std::ignore = result.extract_send_displs();
     EXPECT_KASSERT_FAILS(result.extract_send_displs(), "Cannot extract a buffer that has already been extracted.");

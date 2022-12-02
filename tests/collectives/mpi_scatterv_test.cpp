@@ -134,6 +134,21 @@ TEST(ScattervTest, scatterv_equiv_single_element_out_send_counts) {
     EXPECT_EQ(result, comm.rank_signed());
 }
 
+TEST(ScattervTest, scatterv_equiv_single_element_return_send_counts) {
+    Communicator comm;
+
+    auto const input      = create_equiv_sized_input_vector_on_root(comm, 1);
+    int const  recv_count = 1;
+    int        result;
+    auto send_counts = comm.scatterv(send_buf(input), recv_counts(recv_count), recv_buf(result)).extract_send_counts();
+
+    if (comm.is_root()) {
+        EXPECT_EQ(send_counts.size(), comm.size());
+        EXPECT_THAT(send_counts, Each(Eq(1)));
+    }
+    EXPECT_EQ(result, comm.rank_signed());
+}
+
 TEST(ScattervTest, scatterv_equiv_single_element_out_send_displs) {
     Communicator comm;
 

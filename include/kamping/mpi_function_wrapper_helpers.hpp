@@ -68,7 +68,7 @@ struct BufferCategoryNotUsed {};
 /// elements.
 /// @tparam SendDispls Buffer type containing the displacements of the sent
 /// elements.
-template <class StatusObject, class RecvBuf, class RecvCounts, class RecvDispls, class SendDispls>
+template <class StatusObject, class RecvBuf, class RecvCounts, class RecvDispls, class SendCounts, class SendDispls>
 class MPIResult {
 public:
     /// @brief Constructor of MPIResult.
@@ -81,12 +81,14 @@ public:
         RecvBuf&&      recv_buf,
         RecvCounts&&   recv_counts,
         RecvDispls&&   recv_displs,
+        SendCounts&&   send_counts,
         SendDispls&&   send_displs
     )
         : _status(std::forward<StatusObject>(status)),
           _recv_buffer(std::forward<RecvBuf>(recv_buf)),
           _recv_counts(std::forward<RecvCounts>(recv_counts)),
           _recv_displs(std::forward<RecvDispls>(recv_displs)),
+          _send_counts(std::forward<SendCounts>(send_counts)),
           _send_displs(std::forward<SendDispls>(send_displs)) {}
 
     /// @brief Extracts the \c kamping::Status from the MPIResult object.
@@ -141,6 +143,19 @@ public:
         return _recv_displs.extract();
     }
 
+    /// @brief Extracts the \c send_counts from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam SendCounts_ Template parameter helper only needed to remove this function if SendCounts does not possess
+    /// a member function \c extract().
+    /// @return Returns the underlying storage containing the send counts.
+    template <
+        typename SendCounts_                                                  = SendCounts,
+        std::enable_if_t<kamping::internal::has_extract_v<SendCounts_>, bool> = true>
+    decltype(auto) extract_send_counts() {
+        return _send_counts.extract();
+    }
+
     /// @brief Extracts the \c send_displs from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
@@ -162,6 +177,8 @@ private:
                              ///< been written into storage owned by the caller of KaMPIng.
     RecvDispls _recv_displs; ///< Buffer object containing the receive displacements. May be empty if the receive
                              ///< displacements have been written into storage owned by the caller of KaMPIng.
+    SendCounts _send_counts; ///< Buffer object containing the send counts. May be empty if the send counts have been
+                             ///< written into storage owned by the caller of KaMPIng.
     SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if the send
                              ///< displacements have been written into storage owned by the caller of KaMPIng.
 };
@@ -190,6 +207,10 @@ auto make_mpi_result(Args... args) {
         std::tuple(),
         args...
     );
+    auto&& send_counts = internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_type>(
+        std::tuple(),
+        args...
+    );
     auto&& send_displs = internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_type>(
         std::tuple(),
         args...
@@ -207,6 +228,7 @@ auto make_mpi_result(Args... args) {
         std::move(recv_buf),
         std::move(recv_counts),
         std::move(recv_displs),
+        std::move(send_counts),
         std::move(send_displs)
     );
 }
