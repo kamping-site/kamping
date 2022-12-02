@@ -253,10 +253,10 @@ TEST(ScattervTest, scatterv_default_container_type) {
     Communicator<OwnContainer> comm;
 
     std::vector<int> const input  = create_equiv_sized_input_vector_on_root(comm, 1);
-    std::vector<int> const counts = create_equiv_counts_on_root(comm, 1);
-    auto                   result = comm.scatterv(send_buf(input), send_counts(counts), recv_counts(1));
+    auto                   result = comm.scatterv(send_buf(input), recv_counts(1));
 
     // This just has to compile
-    OwnContainer<int> recv_buf         = result.extract_recv_buffer();
-    OwnContainer<int> recv_send_displs = result.extract_send_displs();
+    OwnContainer<int> recv_buf    = result.extract_recv_buffer();
+    OwnContainer<int> send_displs = result.extract_send_displs();
+    OwnContainer<int> send_counts = result.extract_send_counts();
 }
