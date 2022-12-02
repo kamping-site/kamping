@@ -214,6 +214,14 @@ TEST(MpiResultTest, extract_recv_displs_basics_own_container) {
     testing::test_recv_displs_in_MPIResult<testing::OwnContainer<int>>();
 }
 
+TEST(MpiResultTest, extract_send_counts_basics) {
+    testing::test_send_counts_in_MPIResult<std::vector<int>>();
+}
+
+TEST(MpiResultTest, extract_send_counts_basics_own_container) {
+    testing::test_send_counts_in_MPIResult<testing::OwnContainer<int>>();
+}
+
 TEST(MpiResultTest, extract_send_displs_basics) {
     testing::test_send_displs_in_MPIResult<std::vector<int>>();
 }
