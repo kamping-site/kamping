@@ -17,6 +17,7 @@
 
 namespace kamping {
 
+// std::span is only available in C++ 20 and upwards.
 template <typename T>
 using Span = std::span<T>;
 
