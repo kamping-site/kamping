@@ -51,6 +51,7 @@ void test_recv_buffer_in_MPIResult() {
         std::move(recv_buffer),
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
         BufferCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_buffer();
     for (size_t i = 0; i < 10; ++i) {
@@ -74,6 +75,7 @@ void test_recv_counts_in_MPIResult() {
         BufferCategoryNotUsed{},
         std::move(recv_counts),
         BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
         BufferCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_counts();
     for (size_t i = 0; i < 10; ++i) {
@@ -92,6 +94,7 @@ void test_recv_count_in_MPIResult() {
         StatusParam<StatusParamType::ignore>{},
         BufferCategoryNotUsed{},
         std::move(recv_count_wrapper),
+        BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{}};
     int recv_count_value = mpi_result.extract_recv_counts();
@@ -114,8 +117,33 @@ void test_recv_displs_in_MPIResult() {
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         std::move(recv_displs),
+        BufferCategoryNotUsed{},
         BufferCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_displs();
+    for (size_t i = 0; i < 10; ++i) {
+        EXPECT_EQ(underlying_container[i], i);
+    }
+}
+
+// Test that send counts can be moved into and extracted from a MPIResult object.
+template <typename UnderlyingContainer>
+void test_send_counts_in_MPIResult() {
+    using namespace kamping;
+    using namespace kamping::internal;
+    auto send_counts = send_counts_out(NewContainer<UnderlyingContainer>{});
+    static_assert(std::is_integral_v<typename decltype(send_counts)::value_type>, "Use integral Types in this test.");
+
+    send_counts.resize(10);
+    int* ptr = send_counts.data();
+    std::iota(ptr, ptr + 10, 0);
+    MPIResult mpi_result{
+        StatusParam<StatusParamType::ignore>{},
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
+        std::move(send_counts),
+        BufferCategoryNotUsed{}};
+    UnderlyingContainer underlying_container = mpi_result.extract_send_counts();
     for (size_t i = 0; i < 10; ++i) {
         EXPECT_EQ(underlying_container[i], i);
     }
@@ -134,6 +162,7 @@ void test_send_displs_in_MPIResult() {
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
         StatusParam<StatusParamType::ignore>{},
+        BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
@@ -185,6 +214,14 @@ TEST(MpiResultTest, extract_recv_displs_basics_own_container) {
     testing::test_recv_displs_in_MPIResult<testing::OwnContainer<int>>();
 }
 
+TEST(MpiResultTest, extract_send_counts_basics) {
+    testing::test_send_counts_in_MPIResult<std::vector<int>>();
+}
+
+TEST(MpiResultTest, extract_send_counts_basics_own_container) {
+    testing::test_send_counts_in_MPIResult<testing::OwnContainer<int>>();
+}
+
 TEST(MpiResultTest, extract_send_displs_basics) {
     testing::test_send_displs_in_MPIResult<std::vector<int>>();
 }
@@ -201,6 +238,7 @@ TEST(MpiResultTest, extract_status_basics) {
     status.native_ptr()->MPI_TAG = 42;
     MPIResult mpi_result{
         std::move(status),
+        BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},

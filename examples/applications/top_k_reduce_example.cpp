@@ -15,7 +15,7 @@
 template <size_t K, typename ValueType>
 class TopK {
 public:
-    explicit TopK() {}
+    explicit TopK() noexcept {}
     ValueType& operator[](size_t i) {
         return elements[i];
     }
