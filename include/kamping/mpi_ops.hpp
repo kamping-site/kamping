@@ -459,9 +459,9 @@ public:
         return *this;
     }
 
-    UserOperationPtrWrapper<is_commutative>(UserOperationPtrWrapper<is_commutative> const&) = delete;
+    UserOperationPtrWrapper(UserOperationPtrWrapper<is_commutative> const&) = delete;
     /// @brief move constructor
-    UserOperationPtrWrapper<is_commutative>(UserOperationPtrWrapper<is_commutative>&& other_op) {
+    UserOperationPtrWrapper(UserOperationPtrWrapper<is_commutative>&& other_op) {
         this->_mpi_op   = other_op._mpi_op;
         this->_no_op    = other_op._no_op;
         other_op._no_op = true;
