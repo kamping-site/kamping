@@ -127,6 +127,18 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 
+# Tests using C++ 20
+kamping_register_mpi_test(
+  test_std_span_alltoallv_cpp20
+  FILES cpp20/std_span_alltoallv_test.cpp
+  CORES 1 4
+  )
+target_compile_features(test_std_span_alltoallv_cpp20 PRIVATE cxx_std_20)
+
+# This should ensure that our Span implementation is consistent with C++ 20s std::span
+kamping_register_test(test_span_cpp20 FILES span_test.cpp)
+target_compile_features(test_span_cpp20 PRIVATE cxx_std_20)
+
 # The environment test does not use our wrapper functions because it can't use our google test setup. First variant does
 # only the minimum amount of interaction with kamping::Environment.
 add_executable(test_environment_init_finalize_basic environment_init_finalize_test.cpp)
