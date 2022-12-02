@@ -129,10 +129,10 @@ kamping_register_mpi_test(
 
 # Tests using C++ 20
 kamping_register_mpi_test(
-  test_std_span_alltoallv_cpp20
-  FILES cpp20/std_span_alltoallv_test.cpp
-  CORES 1 4
-  )
+    test_std_span_alltoallv_cpp20
+    FILES cpp20/std_span_alltoallv_test.cpp
+    CORES 1 4
+)
 target_compile_features(test_std_span_alltoallv_cpp20 PRIVATE cxx_std_20)
 
 # This should ensure that our Span implementation is consistent with C++ 20s std::span
