@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include <algorithm>
+#include <numeric>
 #include <type_traits>
 
 #include <kassert/kassert.hpp>
@@ -71,6 +71,7 @@ int bcast_value(kamping::Communicator const& comm, T const bcast_value, int cons
 template <typename... Args>
 auto kamping::Communicator::scatter(Args... args) const {
     using namespace kamping::internal;
+
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf),
@@ -80,10 +81,8 @@ auto kamping::Communicator::scatter(Args... args) const {
     // Optional parameter: root()
     // Default: communicator root
     using root_param_type = decltype(kamping::root(0));
-    auto&& root_param     = internal::select_parameter_type_or_default<internal::ParameterType::root, root_param_type>(
-        std::tuple(root()),
-        args...
-    );
+    auto&& root_param =
+        select_parameter_type_or_default<ParameterType::root, root_param_type>(std::tuple(root()), args...);
     int const int_root = root_param.rank_signed();
     KASSERT(
         is_valid_rank(int_root),
@@ -93,11 +92,11 @@ auto kamping::Communicator::scatter(Args... args) const {
     KASSERT(this->is_same_on_all_ranks(int_root), "Root has to be the same on all ranks.", assert::light_communication);
 
     // Mandatory parameter send_buf()
-    auto send_buf              = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+    auto send_buf              = select_parameter_type<ParameterType::send_buf>(args...).get();
     using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
     auto const*  send_buf_ptr  = send_buf.data();
-    KASSERT((!is_root(int_root) || send_buf_ptr != nullptr), "Send buffer must be specified on root.", assert::light);
+    KASSERT(!is_root(int_root) || send_buf_ptr != nullptr, "Send buffer must be specified on root.", assert::light);
 
     // Compute sendcount based on the size of the sendbuf
     KASSERT(
@@ -132,7 +131,6 @@ auto kamping::Communicator::scatter(Args... args) const {
             std::tuple(),
             args...
         );
-
     constexpr bool is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;
 
     KASSERT(
@@ -340,5 +338,10 @@ auto kamping::Communicator::scatterv(Args... args) const {
     );
     THROW_IF_MPI_ERROR(err, MPI_Scatterv);
 
-    return make_mpi_result(std::move(recv_buf), std::move(recv_counts_param), std::move(send_displs_param));
+    return make_mpi_result(
+        std::move(recv_buf),
+        std::move(recv_counts_param),
+        std::move(send_counts_param),
+        std::move(send_displs_param)
+    );
 }
