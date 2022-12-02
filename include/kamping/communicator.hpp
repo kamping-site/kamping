@@ -319,4 +319,7 @@ private:
     int    _default_tag; ///< Default tag value used in point to point communication.
 };                       // class communicator
 
+/// @brief A basic KaMPIng Communicator that uses std::vector when creating new buffers.
+using BasicCommunicator = Communicator<>;
+
 } // namespace kamping
