@@ -11,12 +11,30 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) // C++ 20
+
+    #include <span>
+
+namespace kamping {
+
+// std::span is only available in C++ 20 and upwards.
+template <typename T>
+using Span = std::span<T>;
+
+} // namespace kamping
+
+#else // C++ 17
+
+    #include <cstddef>
+    #include <tuple>
+    #include <type_traits>
+
 namespace kamping {
 
 /// @brief A span modeled after C++20's \c std::span.
 ///
-/// Since KaMPIng needs to be C++17 compatible and \c std::span is part of C++20, we need our own implementation of the
-/// above-described functionality.
+/// Since KaMPIng needs to be C++17 compatible and \c std::span is part of C++20, we need our own implementation of
+/// the above-described functionality.
 /// @tparam T type for which the span is defined.
 template <typename T>
 class Span {
@@ -35,13 +53,6 @@ public:
     /// @param ptr Pointer to the first element in the span.
     /// @param size The number of elements in the span.
     constexpr Span(pointer ptr, size_type size) : _ptr(ptr), _size(size) {}
-
-    /// @brief Constructor for a span from a std::tuple<pointer, size>.
-    ///
-    /// @param initializer_tuple <Pointer to first element, number of elements>
-    constexpr Span(std::tuple<pointer, size_type> initializer_tuple)
-        : _ptr(std::get<0>(initializer_tuple)),
-          _size(std::get<1>(initializer_tuple)) {}
 
     /// @brief Get access to the underlying memory.
     ///
@@ -77,3 +88,5 @@ protected:
 };
 
 } // namespace kamping
+
+#endif // C++ 17

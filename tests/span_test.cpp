@@ -29,13 +29,6 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_FALSE(int_span.empty());
     EXPECT_EQ(values.data(), int_span.data());
 
-    Span<int> tuple_constructed_span(std::tuple<int*, size_t>{values.data(), values.size()});
-    EXPECT_EQ(values.size(), tuple_constructed_span.size());
-    EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), tuple_constructed_span.size_bytes());
-    EXPECT_FALSE(tuple_constructed_span.empty());
-    EXPECT_EQ(values.data(), tuple_constructed_span.data());
-    EXPECT_EQ(tuple_constructed_span.data(), int_span.data());
-
     Span<int const> const_int_span = {values.data(), values.size()};
     EXPECT_EQ(values.size(), const_int_span.size());
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), const_int_span.size_bytes());
@@ -49,7 +42,7 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_EQ(0, empty_span.size_bytes());
     EXPECT_EQ(values.data(), empty_span.data());
 
-    Span<int> nullptr_span = {nullptr, 0};
+    Span<int> nullptr_span = {static_cast<int*>(nullptr), 0};
     EXPECT_TRUE(nullptr_span.empty());
     EXPECT_EQ(0, nullptr_span.size());
     EXPECT_EQ(0, nullptr_span.size_bytes());
