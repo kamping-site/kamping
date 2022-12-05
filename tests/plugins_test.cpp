@@ -93,9 +93,24 @@ TEST(PluginsTest, replace_implementation) {
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
+    // Uses the alternative allreduce implementation
     comm.allreduce(kamping::send_buf(input), kamping::op(kamping::ops::plus<>{}), kamping::recv_buf(result));
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
     EXPECT_EQ(result, expected_result);
+
+    // You can also add multiple plugins. MyComm has both AlternativeAllreducePlugin and Send42Plugin so we can use both
+    auto other_rank = (comm.root() + 1) % comm.size();
+    if (comm.is_root()) {
+        // Use the send42 function from the plugin.
+        comm.send42(other_rank);
+    } else if (comm.rank() == other_rank) {
+        int        msg;
+        MPI_Status status;
+        MPI_Recv(&msg, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &status);
+        ASSERT_EQ(msg, 42);
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
 }
