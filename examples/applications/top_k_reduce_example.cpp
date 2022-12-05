@@ -104,8 +104,8 @@ std::optional<TopK<K, ValueType>> mpi_top_k(TopK<K, ValueType> const& local_top_
 
 int main(int argc, char* argv[]) {
     namespace kmp = kamping;
-    kmp::Environment  env(argc, argv);
-    kmp::Communicator comm;
+    kmp::Environment       env(argc, argv);
+    kmp::BasicCommunicator comm;
 
     constexpr size_t K = 3;
     TopK<K, size_t>  input;
