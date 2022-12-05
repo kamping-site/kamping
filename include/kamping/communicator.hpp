@@ -26,6 +26,9 @@ namespace kamping {
 
 /// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
+/// @tparam DefaultContainerType The default container type to use for containers created by KaMPIng. Defaults to
+/// std::vector.
+template <template <typename...> typename DefaultContainerType = std::vector>
 class Communicator {
 public:
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
@@ -315,5 +318,8 @@ private:
     size_t _root;        ///< Default root for MPI operations that require a root.
     int    _default_tag; ///< Default tag value used in point to point communication.
 };                       // class communicator
+
+/// @brief A basic KaMPIng Communicator that uses std::vector when creating new buffers.
+using BasicCommunicator = Communicator<>;
 
 } // namespace kamping

@@ -276,3 +276,11 @@ TEST(ScanTest, scan_custom_operation_on_custom_type) {
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(result, expected_result);
 }
+
+TEST(ScanTest, scan_default_container_type) {
+    Communicator<OwnContainer> comm;
+    std::vector<int>           input = {comm.rank_signed(), 42};
+
+    // This just has to compile
+    OwnContainer<int> result = comm.scan(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+}

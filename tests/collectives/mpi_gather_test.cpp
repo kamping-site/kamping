@@ -429,6 +429,14 @@ TEST(GatherTest, gather_multiple_elements_kabool_with_receive_buffer) {
     }
 }
 
+TEST(GatherTest, gather_default_container_type) {
+    Communicator<OwnContainer> comm;
+    size_t                     value = comm.rank();
+
+    // This just has to compile
+    OwnContainer<size_t> result = comm.gather(send_buf(value)).extract_recv_buffer();
+}
+
 // Death test do not work with MPI.
 /// @todo Implement proper tests for input validation via KASSERT()s.
 // TEST(GatherTest, gather_different_roots_on_different_processes) {

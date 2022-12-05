@@ -103,6 +103,16 @@ TEST(AlltoallTest, custom_type_custom_container) {
     EXPECT_EQ(result, expected_result);
 }
 
+TEST(AlltoallTest, default_container_type) {
+    Communicator<OwnContainer> comm;
+
+    std::vector<int> input(comm.size());
+    std::iota(input.begin(), input.end(), 0);
+
+    // This just has to compile
+    OwnContainer<int> result = comm.alltoall(send_buf(input)).extract_recv_buffer();
+}
+
 // ------------------------------------------------------------
 // Alltoallv tests
 
@@ -613,4 +623,25 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
         ASSERT_EQ(i, expected_result.size());
     }
     EXPECT_EQ(result, expected_result);
+}
+
+TEST(AlltoallvTest, default_container_type) {
+    // Sends a single element from each rank to each other rank with only the mandatory parameters
+    Communicator<OwnContainer> comm;
+
+    // Prepare send buffer (all zeros)
+    std::vector<int> input(comm.size());
+    std::iota(input.begin(), input.end(), 0);
+
+    // Prepare send counts (all ones)
+    std::vector<int> send_counts(comm.size(), 1);
+
+    // Do the alltoallv
+    auto mpi_result = comm.alltoallv(send_buf(input), kamping::send_counts(send_counts));
+
+    // These just have to compile
+    OwnContainer<int> result      = mpi_result.extract_recv_buffer();
+    OwnContainer<int> recv_counts = mpi_result.extract_recv_counts();
+    OwnContainer<int> send_displs = mpi_result.extract_send_displs();
+    OwnContainer<int> recv_displs = mpi_result.extract_recv_displs();
 }

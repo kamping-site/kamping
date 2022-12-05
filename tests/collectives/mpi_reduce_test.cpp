@@ -396,6 +396,14 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_type) {
     }
 }
 
+TEST(ReduceTest, reduce_default_container_type) {
+    Communicator<OwnContainer> comm;
+
+    std::vector<int> input = {comm.rank_signed(), 42};
+
+    OwnContainer<int> result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+}
+
 // Death test do not work with MPI.
 // TEST(ReduceTest, reduce_different_roots_on_different_processes) {
 //     Communicator comm;

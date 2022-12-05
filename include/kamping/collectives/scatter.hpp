@@ -34,8 +34,8 @@
 
 namespace {
 // Broadcasts a value from one PE to all PEs.
-template <typename T>
-int bcast_value(kamping::Communicator const& comm, T const bcast_value, int const root) {
+template <typename T, template <typename...> typename DefaultContainerType>
+int bcast_value(kamping::Communicator<DefaultContainerType> const& comm, T const bcast_value, int const root) {
     using namespace kamping::internal;
     using namespace kamping;
     T                          bcast_result = bcast_value;
@@ -68,8 +68,9 @@ int bcast_value(kamping::Communicator const& comm, T const bcast_value, int cons
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
+template <template <typename...> typename DefaultContainerType>
 template <typename... Args>
-auto kamping::Communicator::scatter(Args... args) const {
+auto kamping::Communicator<DefaultContainerType>::scatter(Args... args) const {
     using namespace kamping::internal;
 
     KAMPING_CHECK_PARAMETERS(
@@ -108,7 +109,7 @@ auto kamping::Communicator::scatter(Args... args) const {
 
     // Optional parameter: recv_buf()
     // Default: allocate new container
-    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
+    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<DefaultContainerType<send_value_type>>{}));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
@@ -205,8 +206,9 @@ auto kamping::Communicator::scatter(Args... args) const {
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
+template <template <typename...> typename DefaultContainerType>
 template <typename... Args>
-auto kamping::Communicator::scatterv(Args... args) const {
+auto kamping::Communicator<DefaultContainerType>::scatterv(Args... args) const {
     using namespace kamping::internal;
 
     KAMPING_CHECK_PARAMETERS(
@@ -237,7 +239,7 @@ auto kamping::Communicator::scatterv(Args... args) const {
 
     // Optional parameter: recv_buf()
     // Default: allocate new container
-    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<send_value_type>>{}));
+    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<DefaultContainerType<send_value_type>>{}));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
@@ -253,11 +255,11 @@ auto kamping::Communicator::scatterv(Args... args) const {
     );
 
     // Optional parameters: send_counts, send_displs, recv_counts
-    using default_send_counts_type = decltype(send_counts_out(NewContainer<std::vector<int>>{}));
+    using default_send_counts_type = decltype(send_counts_out(NewContainer<DefaultContainerType<int>>{}));
     auto&& send_counts_param =
         select_parameter_type_or_default<ParameterType::send_counts, default_send_counts_type>(std::tuple(), args...);
 
-    using default_send_displs_type = decltype(send_displs_out(NewContainer<std::vector<int>>{}));
+    using default_send_displs_type = decltype(send_displs_out(NewContainer<DefaultContainerType<int>>{}));
     auto&& send_displs_param =
         select_parameter_type_or_default<ParameterType::send_displs, default_send_displs_type>(std::tuple(), args...);
 
