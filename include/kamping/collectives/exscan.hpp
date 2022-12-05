@@ -54,9 +54,9 @@
 ///  @tparam Args Automatically deducted template parameters.
 ///  @param args All required and any number of the optional buffers described above.
 ///  @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType, template <typename> typename... plugins>
 template <typename... Args>
-auto kamping::Communicator<DefaultContainerType>::exscan(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, plugins...>::exscan(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args,
@@ -161,9 +161,9 @@ auto kamping::Communicator<DefaultContainerType>::exscan(Args... args) const {
 ///  @param args All required and any number of the optional buffers described above.
 ///  @return The single element result of the exclusive scan. A single element is returned even if \c recv_buf was a
 ///  vector.
-template <template <typename...> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType, template <typename> typename... plugins>
 template <typename... Args>
-auto kamping::Communicator<DefaultContainerType>::exscan_single(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, plugins...>::exscan_single(Args... args) const {
     //! If you expand this function to not being only a simple wrapper around exscan, you have to write more unit
     //! tests!
 

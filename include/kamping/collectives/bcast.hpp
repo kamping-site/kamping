@@ -54,9 +54,9 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType, template <typename> typename... plugins>
 template <typename... Args>
-auto kamping::Communicator<DefaultContainerType>::bcast(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, plugins...>::bcast(Args... args) const {
     using namespace ::kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args,
@@ -172,9 +172,9 @@ auto kamping::Communicator<DefaultContainerType>::bcast(Args... args) const {
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType, template <typename> typename... plugins>
 template <typename... Args>
-auto kamping::Communicator<DefaultContainerType>::bcast_single(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, plugins...>::bcast_single(Args... args) const {
     //! If you expand this function to not being only a simple wrapper around bcast, you have to write more unit tests!
 
     using namespace kamping::internal;
