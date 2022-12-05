@@ -27,12 +27,12 @@
 template <typename Comm>
 class Send42Plugin {
 public:
-    /// @brief Sends the single integer `42` to targetRank.
-    /// @param targetRank The rank to send 42 to.
-    void send42(size_t targetRank) {
+    /// @brief Sends the single integer `42` to target_rank.
+    /// @param target_rank The rank to send 42 to.
+    void send42(size_t target_rank) {
         int const send_buf = 42;
         // Use the built-in send function.
-        static_cast<Comm&>(*this).send(kamping::send_buf(send_buf), kamping::destination(targetRank));
+        static_cast<Comm&>(*this).send(kamping::send_buf(send_buf), kamping::destination(target_rank));
     }
 };
 
