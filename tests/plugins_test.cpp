@@ -60,7 +60,7 @@ template <typename Comm>
 class AlternativeAllreducePlugin {
 public:
     /// @brief Has the same functionality as `kamping::Communicator::allreduce` with the exception that a `recv_buf`
-    /// must be passed and there is no return value.
+    /// must be passed and there is no return value. Also leaves the recv_buf on rank 0 untouched.
     template <typename... Args>
     void allreduce(Args... args) {
         KAMPING_CHECK_PARAMETERS(
@@ -68,8 +68,8 @@ public:
             KAMPING_REQUIRED_PARAMETERS(send_buf, op, recv_buf),
             KAMPING_OPTIONAL_PARAMETERS()
         );
-        // Use the built-in reduce function with every rank as root.
-        for (int i = 0; i < static_cast<Comm&>(*this).size_signed(); ++i) {
+        // Use the built-in reduce function with every rank as root but skip rank 0.
+        for (int i = 1; i < static_cast<Comm&>(*this).size_signed(); ++i) {
             static_cast<Comm&>(*this).reduce(kamping::root(i), std::move(args)...);
         }
     }
@@ -83,9 +83,27 @@ public:
 };
 
 TEST(PluginsTest, replace_implementation) {
-    // This communicator will still use the original allreduce implementation. If we want to use the alternative
-    // implementation, we have to make that explicit as in MyComm.
-    kamping::Communicator<std::vector, AlternativeAllreducePlugin> faultyComm;
+    // First, a quick example of how NOT to overwrite an existing function
+    {
+        // This communicator will still use the original allreduce implementation. If we want to use the alternative
+        // implementation, we have to make that explicit as in MyComm.
+        kamping::Communicator<std::vector, AlternativeAllreducePlugin> faultyComm;
+
+        std::vector<int> input = {faultyComm.rank_signed(), 42};
+        std::vector<int> result;
+
+        // Uses the original allreduce implementation
+        faultyComm.allreduce(kamping::send_buf(input), kamping::op(kamping::ops::plus<>{}), kamping::recv_buf(result));
+
+        // On all ranks, the result of the reduce operation is available. Even on rank 0 where the alternative allreduce
+        // implementation would leave result unchanged.
+        EXPECT_EQ(result.size(), 2);
+
+        std::vector<int> expected_result = {
+            (faultyComm.size_signed() * (faultyComm.size_signed() - 1)) / 2,
+            faultyComm.size_signed() * 42};
+        EXPECT_EQ(result, expected_result);
+    }
 
     // This communicator uses the alternative allreduce implementation and also has the send42 function from before.
     MyComm comm;
@@ -95,10 +113,20 @@ TEST(PluginsTest, replace_implementation) {
 
     // Uses the alternative allreduce implementation
     comm.allreduce(kamping::send_buf(input), kamping::op(kamping::ops::plus<>{}), kamping::recv_buf(result));
-    EXPECT_EQ(result.size(), 2);
 
-    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
-    EXPECT_EQ(result, expected_result);
+    // Check result of the alternative allreduce implementation.
+    if (comm.rank() == 0) {
+        // On rank 0 result should be unchanged.
+        EXPECT_EQ(result.size(), 0);
+    } else {
+        // On all other ranks, the result of the reduce operation should be available.
+        EXPECT_EQ(result.size(), 2);
+
+        std::vector<int> expected_result = {
+            (comm.size_signed() * (comm.size_signed() - 1)) / 2,
+            comm.size_signed() * 42};
+        EXPECT_EQ(result, expected_result);
+    }
 
     // You can also add multiple plugins. MyComm has both AlternativeAllreducePlugin and Send42Plugin so we can use both
     auto other_rank = (comm.root() + 1) % comm.size();
