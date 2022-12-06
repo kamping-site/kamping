@@ -88,7 +88,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
     auto mpi_send_type = mpi_datatype<send_value_type>();
 
     // RankType::null is valid, RankType::any is not.
-    KASSERT(is_valid_rank_in_comm(destination, *this, true, false));
+    KASSERT(is_valid_rank_in_comm(destination, *this, true, false), "Invalid destination rank.");
 
     if constexpr (std::is_same_v<send_mode, internal::standard_mode_t>) {
         [[maybe_unused]] int err = MPI_Send(
