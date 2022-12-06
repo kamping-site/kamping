@@ -183,8 +183,8 @@ TEST(PluginsTest, additional_function_with_double_template) {
         double     msg = 3.14;
         MPI_Status status;
         MPI_Recv(&msg, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &status);
-        double defaultConstructedBool{};
-        ASSERT_EQ(msg, defaultConstructedBool);
+        double default_constructed_double{};
+        ASSERT_EQ(msg, default_constructed_double);
         ASSERT_EQ(status.MPI_SOURCE, comm.root());
         ASSERT_EQ(status.MPI_TAG, 0);
     }
