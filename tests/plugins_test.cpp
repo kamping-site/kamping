@@ -106,6 +106,37 @@ TEST(PluginsTest, replace_implementation) {
             (faultyComm.size_signed() * (faultyComm.size_signed() - 1)) / 2,
             faultyComm.size_signed() * 42};
         EXPECT_EQ(result, expected_result);
+
+        // If you really want to, you can still access the alternative allreduce implementation like this:
+    }
+
+    // If you really want to, you can still access the alternative allreduce implementation like this:
+    {
+        kamping::Communicator<std::vector, AlternativeAllreducePlugin> faultyComm;
+
+        std::vector<int> input = {faultyComm.rank_signed(), 42};
+        std::vector<int> result;
+
+        // We can call the alternative allreduce implementation by explicitly selecting it.
+        faultyComm.template AlternativeAllreducePlugin<decltype(faultyComm)>::allreduce(
+            kamping::send_buf(input),
+            kamping::op(kamping::ops::plus<>{}),
+            kamping::recv_buf(result)
+        );
+
+        // Check result of the alternative allreduce implementation.
+        if (faultyComm.rank() == 0) {
+            // On rank 0 result should be unchanged.
+            EXPECT_EQ(result.size(), 0);
+        } else {
+            // On all other ranks, the result of the reduce operation should be available.
+            EXPECT_EQ(result.size(), 2);
+
+            std::vector<int> expected_result = {
+                (faultyComm.size_signed() * (faultyComm.size_signed() - 1)) / 2,
+                faultyComm.size_signed() * 42};
+            EXPECT_EQ(result, expected_result);
+        }
     }
 
     // This communicator uses the alternative allreduce implementation and also has the send_42 function from before.
