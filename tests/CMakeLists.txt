@@ -70,7 +70,11 @@ kamping_register_mpi_test(
     FILES mpi_status_test.cpp
     CORES 2 4
 )
-
+kamping_register_mpi_test(
+    test_mpi_probe
+    FILES p2p/mpi_probe_test.cpp
+    CORES 1 2 4
+)
 kamping_register_mpi_test(
     test_mpi_allgather
     FILES collectives/mpi_allgather_test.cpp

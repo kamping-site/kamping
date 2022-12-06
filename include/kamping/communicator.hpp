@@ -246,6 +246,9 @@ public:
     void rsend(Args... args) const;
 
     template <typename... Args>
+    auto probe(Args... args) const;
+
+    template <typename... Args>
     auto alltoall(Args... args) const;
 
     template <typename... Args>
