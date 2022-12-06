@@ -71,8 +71,8 @@ public:
             KAMPING_OPTIONAL_PARAMETERS()
         );
         // Use the built-in reduce function with every rank as root but skip rank 0.
-        for (int i = 1; i < static_cast<Comm&>(*this).size_signed(); ++i) {
-            // Uses the `underlying` function of `CRTPHelper` to cast itself to `Comm`.
+        // Uses the `underlying` function of `CRTPHelper` to cast itself to `Comm`.
+        for (int i = 1; i < this->underlying().size_signed(); ++i) {
             this->underlying().reduce(kamping::root(i), std::move(args)...);
         }
     }
