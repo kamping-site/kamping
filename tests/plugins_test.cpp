@@ -57,7 +57,7 @@ TEST(PluginsTest, additional_function) {
     }
 }
 
-/// @brief A plugin providing an alternative allreduce function
+/// @brief A plugin providing an alternative allreduce function.
 template <typename Comm>
 class AlternativeAllreducePlugin : public kamping::plugins::PluginBase<Comm, AlternativeAllreducePlugin> {
 public:
@@ -78,7 +78,7 @@ public:
     }
 };
 
-/// @brief Create a new Communicator class that uses the alternative allreduce implementation
+/// @brief Create a new Communicator class that uses the alternative allreduce implementation.
 class MyComm : public kamping::Communicator<std::vector, AlternativeAllreducePlugin, Send42Plugin> {
 public:
     // Use allreduce from AlternativeAllreducePlugin
@@ -86,7 +86,7 @@ public:
 };
 
 TEST(PluginsTest, replace_implementation) {
-    // First, a quick example of how NOT to overwrite an existing function
+    // First, a quick example of how NOT to overwrite an existing function:
     {
         // This communicator will still use the original allreduce implementation. If we want to use the alternative
         // implementation, we have to make that explicit as in MyComm.
@@ -95,7 +95,7 @@ TEST(PluginsTest, replace_implementation) {
         std::vector<int> input = {faultyComm.rank_signed(), 42};
         std::vector<int> result;
 
-        // Uses the original allreduce implementation
+        // Calling allreduce on this communicator uses the original allreduce implementation.
         faultyComm.allreduce(kamping::send_buf(input), kamping::op(kamping::ops::plus<>{}), kamping::recv_buf(result));
 
         // On all ranks, the result of the reduce operation is available. Even on rank 0 where the alternative allreduce
@@ -114,7 +114,7 @@ TEST(PluginsTest, replace_implementation) {
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    // Uses the alternative allreduce implementation
+    // Because of the using-declaration in MyComm, this uses the alternative allreduce implementation.
     comm.allreduce(kamping::send_buf(input), kamping::op(kamping::ops::plus<>{}), kamping::recv_buf(result));
 
     // Check result of the alternative allreduce implementation.
@@ -131,7 +131,8 @@ TEST(PluginsTest, replace_implementation) {
         EXPECT_EQ(result, expected_result);
     }
 
-    // You can also add multiple plugins. MyComm has both AlternativeAllreducePlugin and Send42Plugin so we can use both
+    // You can also add multiple plugins. MyComm has both AlternativeAllreducePlugin and Send42Plugin so we can use
+    // both.
     auto other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
         // Use the send42 function from the plugin.
