@@ -33,7 +33,7 @@ public:
     void send42(size_t target_rank) {
         int const send_buf = 42;
         // Use the built-in send function.
-        // Uses the `underlying` function of `CRTPHelper` to cast itself to `Comm`.
+        // Uses the `to_communicator` function of `PluginBase` to cast itself to `Comm`.
         this->to_communicator().send(kamping::send_buf(send_buf), kamping::destination(target_rank));
     }
 };
@@ -71,7 +71,7 @@ public:
             KAMPING_OPTIONAL_PARAMETERS()
         );
         // Use the built-in reduce function with every rank as root but skip rank 0.
-        // Uses the `underlying` function of `CRTPHelper` to cast itself to `Comm`.
+        // Uses the `to_communicator` function of `PluginBase` to cast itself to `Comm`.
         for (int i = 1; i < this->to_communicator().size_signed(); ++i) {
             this->to_communicator().reduce(kamping::root(i), std::move(args)...);
         }
