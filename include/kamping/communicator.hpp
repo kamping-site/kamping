@@ -28,11 +28,11 @@ namespace kamping {
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
 /// @tparam DefaultContainerType The default container type to use for containers created by KaMPIng. Defaults to
 /// std::vector.
-/// @tparam plugins Plugins adding functionality to KaMPIng. Plugins should be classes taking a ``Communicator``
+/// @tparam Plugins Plugins adding functionality to KaMPIng. Plugins should be classes taking a ``Communicator``
 /// template parameter, have no data members and can assume that they are castable to `Communicator` from which they can
 /// call any function of `kamping::Communicator`. See `test/plugin_tests.cpp` for examples.
-template <template <typename...> typename DefaultContainerType = std::vector, template <typename> typename... plugins>
-class Communicator : public plugins<Communicator<DefaultContainerType, plugins...>>... {
+template <template <typename...> typename DefaultContainerType = std::vector, template <typename> typename... Plugins>
+class Communicator : public Plugins<Communicator<DefaultContainerType, Plugins...>>... {
 public:
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
     Communicator() : Communicator(MPI_COMM_WORLD) {}
