@@ -25,16 +25,19 @@ namespace kamping::internal {
 /// @tparam RankDataBufferClass The template instantiation of RankDataBuffer.
 /// @tparam Comm The template instantiation of Communicator.
 template <typename RankDataBufferClass, typename Comm>
-bool is_valid_rank_in_comm(
-    RankDataBufferClass const& rank_data_buffer, Comm const& comm, bool allow_null = false, bool allow_any = false
+constexpr bool is_valid_rank_in_comm(
+    RankDataBufferClass const& rank_data_buffer,
+    Comm const&                comm,
+    bool const                 allow_null = false,
+    bool const                 allow_any  = false
 ) {
     constexpr auto rank_type = std::remove_reference_t<decltype(rank_data_buffer)>::rank_type;
     if constexpr (rank_type == RankType::value) {
         return comm.is_valid_rank(rank_data_buffer.rank_signed());
-    } else if (rank_type == RankType::null && allow_null) {
-        return true;
-    } else if (rank_type == RankType::any && allow_any) {
-        return true;
+    } else if constexpr (rank_type == RankType::null) {
+        return allow_null;
+    } else if constexpr (rank_type == RankType::any) {
+        return allow_any;
     }
     return false;
 }
