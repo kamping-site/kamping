@@ -11,15 +11,14 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+namespace kamping {
+
 /// @brief Helper class for using CRTP for mixins.
 ///
 /// Taken from https://www.fluentcpp.com/2017/05/19/crtp-helper/
 /// @tparam BaseClass Type of the class we want to add functionality to
 /// @tparam MixinClass Type of the class template which inherits from \c CRTPHelper and adds functionality to \c
 /// BaseClass.
-
-namespace kamping {
-
 template <typename BaseClass, template <typename> class MixinClass>
 struct CRTPHelper {
     /// @return Reference to the underlying base class.
