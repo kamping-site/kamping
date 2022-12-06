@@ -148,13 +148,13 @@ TEST(ExscanTest, builtin_op_on_non_builtin_type) {
     Communicator comm;
 
     struct MyInt {
-        MyInt() : _value(0) {}
-        MyInt(int value) : _value(value) {}
+        MyInt() noexcept : _value(0) {}
+        MyInt(int value) noexcept : _value(value) {}
         int _value;
         int operator+(MyInt const& rhs) const noexcept {
             return this->_value + rhs._value;
         }
-        bool operator==(MyInt const& rhs) const {
+        bool operator==(MyInt const& rhs) const noexcept {
             return this->_value == rhs._value;
         }
     };
@@ -172,13 +172,13 @@ TEST(ExscanTest, identity_not_auto_deducible_and_no_values_on_rank_0_provided) {
     Communicator comm;
 
     struct MyInt {
-        MyInt() : _value(0) {}
-        MyInt(int value) : _value(value) {}
+        MyInt() noexcept : _value(0) {}
+        MyInt(int value) noexcept : _value(value) {}
         int _value;
         int operator+(MyInt const& rhs) const noexcept {
             return this->_value + rhs._value;
         }
-        bool operator==(MyInt const& rhs) const {
+        bool operator==(MyInt const& rhs) const noexcept {
             return this->_value == rhs._value;
         }
     };
@@ -324,6 +324,15 @@ TEST(ExscanTest, custom_operation_on_builtin_type_non_commutative) {
         std::vector<int> expected_result = {comm.rank_signed() - 1 + 17};
         EXPECT_EQ(result, expected_result);
     }
+}
+
+TEST(ExscanTest, default_container_type) {
+    Communicator<OwnContainer> comm;
+
+    std::vector<int> input = {comm.rank_signed(), 42};
+
+    // This just has to compile
+    OwnContainer<int> result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
 }
 
 /// @todo Once our helper macros support checking for KASSERTs which are thrown on some ranks only, write a test for

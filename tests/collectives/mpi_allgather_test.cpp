@@ -228,3 +228,11 @@ TEST(AllgatherTest, allgather_multiple_elements_kabool_with_receive_buffer) {
         EXPECT_EQ((i % 2 != 0), result[i]);
     }
 }
+
+TEST(AllgatherTest, allgather_default_container_type) {
+    Communicator<OwnContainer> comm;
+    size_t                     value = comm.rank();
+
+    // This just has to compile
+    OwnContainer<size_t> result = comm.allgather(send_buf(value)).extract_recv_buffer();
+}

@@ -11,22 +11,31 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
+#include <algorithm>
+#include <numeric>
+#include <span>
+
+#include <gtest/gtest.h>
+
+#include "../helpers_for_testing.hpp"
+#include "kamping/collectives/alltoall.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/data_buffer.hpp"
+#include "kamping/named_parameters.hpp"
 
-int main(int /*argc*/, char** /*argv*/) {
-    using namespace ::kamping;
-    using namespace ::kamping::internal;
+using namespace ::kamping;
+using namespace ::testing;
 
-    [[maybe_unused]] Communicator comm;
-    using NotAPod = std::vector<int>;
-    // std::is_pod_v is deprecated in C++20
-    // static_assert(!std::is_pod_v<NotAPod>);
-    [[maybe_unused]] int value = 0;
+TEST(CPP20Tests, alltoall_std_span) {
+    Communicator comm;
 
-#if defined(VALUE_IS_A_POINTER)
-    std::ignore = comm.is_same_on_all_ranks(&value);
-#else
-// If none of the above sections is active, this file will compile successfully.
-#endif
+    std::vector<int> input_vec(comm.size());
+    std::iota(input_vec.begin(), input_vec.end(), 0);
+
+    auto result = comm.alltoall(send_buf(std::span<int>(input_vec.begin(), input_vec.size()))).extract_recv_buffer();
+
+    EXPECT_EQ(result.size(), comm.size());
+
+    std::vector<int> expected_result(comm.size(), comm.rank_signed());
+    EXPECT_EQ(result, expected_result);
 }

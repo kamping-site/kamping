@@ -24,6 +24,7 @@ int main(int /*argc*/, char** /*argv*/) {
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
+        BufferCategoryNotUsed{},
         BufferCategoryNotUsed{}};
 
     constexpr BufferType                                                                  btype = BufferType::in_buffer;

@@ -20,8 +20,8 @@ namespace kamping {
 /// @tparam T Type of the elements contained in the container.
 /// @param result The container whose elements are printed.
 /// @param comm KaMPIng communicator to get the rank of the PE.
-template <typename T>
-void print_result(std::vector<T> const& result, Communicator const& comm) {
+template <template <typename...> typename ContainerType, typename T>
+void print_result(ContainerType<T> const& result, Communicator<ContainerType> const& comm) {
     for (auto const& elem: result) {
         std::cout << "[PE " << comm.rank() << "] " << elem << "\n";
     }
@@ -32,8 +32,8 @@ void print_result(std::vector<T> const& result, Communicator const& comm) {
 /// @tparam T Type of the element.
 /// @param result The elements to be printed. Streamed to std::cout.
 /// @param comm KaMPIng communicator to get the rank of the PE.
-template <typename T>
-void print_result(T const& result, Communicator const& comm) {
+template <template <typename...> typename ContainerType, typename T>
+void print_result(T const& result, Communicator<ContainerType> const& comm) {
     std::cout << "[PE " << comm.rank() << "] " << result << std::endl;
 }
 
@@ -41,8 +41,8 @@ void print_result(T const& result, Communicator const& comm) {
 /// @tparam T Type of the elements contained in the container.
 /// @param result The container whose elements are printed on the root PE.
 /// @param comm KaMPIng communicator to determine which PE is the root PE.
-template <typename T>
-void print_result_on_root(std::vector<T> const& result, Communicator const& comm) {
+template <template <typename...> typename ContainerType, typename T>
+void print_result_on_root(ContainerType<T> const& result, Communicator<ContainerType> const& comm) {
     if (comm.is_root()) {
         print_result(result, comm);
     }

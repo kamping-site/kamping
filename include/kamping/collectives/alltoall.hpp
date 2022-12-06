@@ -46,8 +46,9 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
-auto kamping::Communicator::alltoall(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... args) const {
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
     auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
@@ -55,7 +56,8 @@ auto kamping::Communicator::alltoall(Args... args) const {
     using default_recv_value_type = std::remove_const_t<send_value_type>;
     MPI_Datatype mpi_send_type    = mpi_datatype<send_value_type>();
 
-    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
+    using default_recv_buf_type =
+        decltype(kamping::recv_buf(NewContainer<DefaultContainerType<default_recv_value_type>>{}));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
@@ -129,8 +131,9 @@ auto kamping::Communicator::alltoall(Args... args) const {
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer, counts and displacements if not specified as input parameter.
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
-auto kamping::Communicator::alltoallv(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... args) const {
     // Get all parameter objects
     KAMPING_CHECK_PARAMETERS(
         Args,
@@ -148,10 +151,14 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
     using send_counts_type  = typename std::remove_reference_t<decltype(send_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<send_counts_type>, int>, "Send counts must be of type int");
+    static_assert(
+        !internal::has_to_be_computed<decltype(send_counts)>,
+        "Send counts must be given as an input parameter"
+    );
     KASSERT(send_counts.size() == this->size(), assert::light);
 
     // Get recv_counts
-    using default_recv_counts_type = decltype(kamping::recv_counts_out(NewContainer<std::vector<int>>{}));
+    using default_recv_counts_type = decltype(kamping::recv_counts_out(NewContainer<DefaultContainerType<int>>{}));
     auto&& recv_counts =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
             std::tuple(),
@@ -161,7 +168,8 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
 
     // Get recv_buf
-    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<std::vector<default_recv_value_type>>{}));
+    using default_recv_buf_type =
+        decltype(kamping::recv_buf(NewContainer<DefaultContainerType<default_recv_value_type>>{}));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
@@ -171,7 +179,7 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
     // Get send_displs
-    using default_send_displs_type = decltype(kamping::send_displs_out(NewContainer<std::vector<int>>{}));
+    using default_send_displs_type = decltype(kamping::send_displs_out(NewContainer<DefaultContainerType<int>>{}));
     auto&& send_displs =
         internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
             std::tuple(),
@@ -181,7 +189,7 @@ auto kamping::Communicator::alltoallv(Args... args) const {
     static_assert(std::is_same_v<std::remove_const_t<send_displs_type>, int>, "Send displs must be of type int");
 
     // Get recv_displs
-    using default_recv_displs_type = decltype(kamping::recv_displs_out(NewContainer<std::vector<int>>{}));
+    using default_recv_displs_type = decltype(kamping::recv_displs_out(NewContainer<DefaultContainerType<int>>{}));
     auto&& recv_displs =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
             std::tuple(),

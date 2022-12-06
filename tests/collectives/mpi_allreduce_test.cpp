@@ -50,13 +50,13 @@ TEST(AllreduceTest, allreduce_builtin_op_on_non_builtin_type) {
     Communicator comm;
 
     struct MyInt {
-        MyInt() : _value(0) {}
-        MyInt(int value) : _value(value) {}
+        MyInt() noexcept : _value(0) {}
+        MyInt(int value) noexcept : _value(value) {}
         int _value;
         int operator+(MyInt const& rhs) const noexcept {
             return this->_value + rhs._value;
         }
-        bool operator==(MyInt const& rhs) const {
+        bool operator==(MyInt const& rhs) const noexcept {
             return this->_value == rhs._value;
         }
     };
@@ -190,6 +190,14 @@ TEST(AllreduceTest, allreduce_custom_operation_on_custom_type) {
 
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(result, expected_result);
+}
+
+TEST(AllreduceTest, allreduce_default_container_type) {
+    Communicator<OwnContainer> comm;
+    std::vector<int>           input = {comm.rank_signed(), 42};
+
+    // This just has to compile
+    OwnContainer<int> result = comm.allreduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
 }
 
 // Death test + MPI does not work

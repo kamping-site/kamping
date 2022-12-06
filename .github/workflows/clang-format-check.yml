@@ -13,7 +13,7 @@ jobs:
     container:
       image: "localhost:5000/kamping-ci"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Check formatting
       uses: jidicula/clang-format-action@v4.4.0
       with:

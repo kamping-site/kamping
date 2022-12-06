@@ -28,7 +28,10 @@ using namespace ::kamping;
 using namespace ::testing;
 
 namespace {
-std::vector<int> create_input_vector_on_root(Communicator const& comm, int const elements_per_rank, int root = -1) {
+template <template <typename...> typename DefaultContainerType>
+std::vector<int> create_input_vector_on_root(
+    Communicator<DefaultContainerType> const& comm, int const elements_per_rank, int root = -1
+) {
     if (root < 0) {
         root = comm.root_signed();
     }
@@ -199,4 +202,12 @@ TEST(ScatterTest, scatter_different_roots_on_different_processes) {
     if (comm.size() > 1) {
         EXPECT_KASSERT_FAILS(comm.scatter(send_buf(input), root(comm.rank())), "");
     }
+}
+
+TEST(ScatterTest, scatter_default_container_type) {
+    Communicator<OwnContainer> comm;
+    std::vector<int> const     input = create_input_vector_on_root(comm, 1);
+
+    // This just has to compile
+    OwnContainer<int> const result = comm.scatter(send_buf(input)).extract_recv_buffer();
 }

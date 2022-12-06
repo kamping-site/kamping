@@ -53,7 +53,7 @@ enum class RankType {
 struct rank_any_t {};  ///< tag struct for MPI_ANY_SOURCE
 struct rank_null_t {}; ///< tag struct for MPI_PROC_NULL
 
-/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton
+/// @brief Encapsulates the rank of a PE. This is needed for p2p communication
 /// and rooted \c MPI collectives like \c MPI_Gather.
 ///
 /// This is a specialized \c DataBuffer. Its main functionality is to provide
@@ -65,7 +65,7 @@ struct rank_null_t {}; ///< tag struct for MPI_PROC_NULL
 template <RankType rank_type, ParameterType parameter_type>
 class RankDataBuffer {};
 
-/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton
+/// @brief Encapsulates the rank of a PE. This is needed for p2p communication
 /// and rooted \c MPI collectives like \c MPI_Gather.
 ///
 /// This is a specialized \c DataBuffer. Its main functionality is to provide
@@ -110,7 +110,7 @@ public:
     }
 };
 
-/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton
+/// @brief Encapsulates the rank of a PE. This is needed for p2p communication
 /// and rooted \c MPI collectives like \c MPI_Gather.
 ///
 /// This is a specialization for MPI_ANY_SOURCE which only implements
@@ -128,7 +128,7 @@ public:
     }
 };
 
-/// @brief Encapsulates the rank of a PE. This is needed for p2p communicaiton
+/// @brief Encapsulates the rank of a PE. This is needed for p2p communication
 /// and rooted \c MPI collectives like \c MPI_Gather.
 ///
 /// This is a specialization for MPI_PROC_NULL which only implements
