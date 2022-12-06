@@ -30,7 +30,7 @@ class Send42Plugin : public kamping::plugins::PluginBase<Comm, Send42Plugin> {
 public:
     /// @brief Sends the single integer `42` to target_rank.
     /// @param target_rank The rank to send 42 to.
-    void send42(size_t target_rank) {
+    void send_42(size_t target_rank) {
         int const send_buf = 42;
         // Use the built-in send function.
         // Uses the `to_communicator` function of `PluginBase` to cast itself to `Comm`.
@@ -45,8 +45,8 @@ TEST(PluginsTest, additional_function) {
 
     auto other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
-        // Use the send42 function from the plugin.
-        comm.send42(other_rank);
+        // Use the send_42 function from the plugin.
+        comm.send_42(other_rank);
     } else if (comm.rank() == other_rank) {
         int        msg;
         MPI_Status status;
@@ -108,7 +108,7 @@ TEST(PluginsTest, replace_implementation) {
         EXPECT_EQ(result, expected_result);
     }
 
-    // This communicator uses the alternative allreduce implementation and also has the send42 function from before.
+    // This communicator uses the alternative allreduce implementation and also has the send_42 function from before.
     MyComm comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
@@ -135,8 +135,8 @@ TEST(PluginsTest, replace_implementation) {
     // both.
     auto other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
-        // Use the send42 function from the plugin.
-        comm.send42(other_rank);
+        // Use the send_42 function from the plugin.
+        comm.send_42(other_rank);
     } else if (comm.rank() == other_rank) {
         int        msg;
         MPI_Status status;
