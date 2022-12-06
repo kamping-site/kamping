@@ -43,8 +43,9 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described
 /// above.
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
-auto kamping::Communicator::probe(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args) const {
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(tag, source, status));
 
     using default_source_buf_type = decltype(kamping::source(rank::any));
