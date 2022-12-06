@@ -14,7 +14,7 @@ jobs:
     container:
       image: "localhost:5000/kamping-ci"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
       - name: version
