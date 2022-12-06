@@ -146,3 +146,46 @@ TEST(PluginsTest, replace_implementation) {
         ASSERT_EQ(status.MPI_TAG, 0);
     }
 }
+
+/// @brief A plugin providing a function to send a default constructed `T` to a target rank. Use the inner class
+/// SendDefaultConstructedPlugin as the actual plugin.
+template <typename T>
+class SendDefaultConstructedPluginOuterClass {
+public:
+    /// @brief A plugin providing a function to send a default constructed `T` to a target rank.
+    template <typename Comm>
+    class SendDefaultConstructedPlugin : public kamping::plugins::PluginBase<Comm, SendDefaultConstructedPlugin> {
+    public:
+        /// @brief Sends a default constructed `T` to target_rank.
+        /// @param target_rank The rank to send to.
+        void send_default_constructed(size_t target_rank) {
+            T const send_buf{};
+            // Use the built-in send function.
+            // Uses the `to_communicator` function of `PluginBase` to cast itself to `Comm`.
+            this->to_communicator().send(kamping::send_buf(send_buf), kamping::destination(target_rank));
+        }
+    };
+};
+
+TEST(PluginsTest, additional_function_with_double_template) {
+    // Create a new communicator. The first template argument is the default container type (has to be provided when
+    // using plugins). The following template arguments are plugin classes. Here, we use the inner class
+    // `SendDefaultConstructedPlugin` of the outer class `SendDefaultConstructedPluginOuterClass<double>` to send a
+    // default constructed `double`.
+    kamping::Communicator<std::vector, SendDefaultConstructedPluginOuterClass<double>::SendDefaultConstructedPlugin>
+        comm;
+
+    auto other_rank = (comm.root() + 1) % comm.size();
+    if (comm.is_root()) {
+        // Use the send_default_constructed function from the plugin.
+        comm.send_default_constructed(other_rank);
+    } else if (comm.rank() == other_rank) {
+        double     msg = 3.14;
+        MPI_Status status;
+        MPI_Recv(&msg, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &status);
+        double defaultConstructedBool{};
+        ASSERT_EQ(msg, defaultConstructedBool);
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
+}
