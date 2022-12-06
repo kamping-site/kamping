@@ -14,7 +14,7 @@ jobs:
       image: "localhost:5000/kamping-ci"
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Delete extern directory
       # Very hacky but the action doesn't allow excluding directories
       # and for some reason the checkout action checks out submodules even though it shouldn't
