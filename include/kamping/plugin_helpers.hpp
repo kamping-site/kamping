@@ -11,28 +11,29 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-namespace kamping {
+namespace kamping::plugins {
 
-/// @brief Helper class for using CRTP for mixins.
+/// @brief Helper class for using CRTP for mixins. Which are used to implement kamping plugins.
 ///
 /// Taken from https://www.fluentcpp.com/2017/05/19/crtp-helper/
-/// @tparam BaseClass Type of the class we want to add functionality to
-/// @tparam MixinClass Type of the class template which inherits from \c CRTPHelper and adds functionality to \c
-/// BaseClass.
-template <typename BaseClass, template <typename> class MixinClass>
-struct CRTPHelper {
-    /// @return Reference to the underlying base class.
-    BaseClass& underlying() {
-        return static_cast<BaseClass&>(*this);
+/// @tparam CommunicatorClass Type of the class we want to add functionality to, i.e. `kamping::Communicator`.
+/// @tparam PluginClass Type of the plugin class template which inherits from \c PluginBase and adds functionality to \c
+/// CommunicatorClass.
+template <typename CommunicatorClass, template <typename> class PluginClass>
+struct PluginBase {
+    /// @return Reference to the underlying Communicator class.
+    CommunicatorClass& to_communicator() {
+        return static_cast<CommunicatorClass&>(*this);
     }
-    /// @return const-reference to the underlying base class.
-    BaseClass const& underlying() const {
-        return static_cast<BaseClass const&>(*this);
+    /// @return const-reference to the underlying Communicator class.
+    CommunicatorClass const& to_communicator() const {
+        return static_cast<CommunicatorClass const&>(*this);
     }
 
 private:
-    CRTPHelper() {}               ///< private constructor
-    friend MixinClass<BaseClass>; // this allows only the class inheriting from \c CRTPHelper to access the constructor.
+    PluginBase() {}                        ///< private constructor
+    friend PluginClass<CommunicatorClass>; // this allows only the class inheriting from \c PluginBase to access the
+                                           // constructor.
 };
 
-} // namespace kamping
+} // namespace kamping::plugins

@@ -26,7 +26,7 @@
 
 /// @brief A plugin providing a function to send the integer 42 to a target rank.
 template <typename Comm>
-class Send42Plugin : public kamping::CRTPHelper<Comm, Send42Plugin> {
+class Send42Plugin : public kamping::plugins::PluginBase<Comm, Send42Plugin> {
 public:
     /// @brief Sends the single integer `42` to target_rank.
     /// @param target_rank The rank to send 42 to.
@@ -34,7 +34,7 @@ public:
         int const send_buf = 42;
         // Use the built-in send function.
         // Uses the `underlying` function of `CRTPHelper` to cast itself to `Comm`.
-        this->underlying().send(kamping::send_buf(send_buf), kamping::destination(target_rank));
+        this->to_communicator().send(kamping::send_buf(send_buf), kamping::destination(target_rank));
     }
 };
 
@@ -59,7 +59,7 @@ TEST(PluginsTest, additional_function) {
 
 /// @brief A plugin providing an alternative allreduce function
 template <typename Comm>
-class AlternativeAllreducePlugin : public kamping::CRTPHelper<Comm, AlternativeAllreducePlugin> {
+class AlternativeAllreducePlugin : public kamping::plugins::PluginBase<Comm, AlternativeAllreducePlugin> {
 public:
     /// @brief Has the same functionality as `kamping::Communicator::allreduce` with the exception that a `recv_buf`
     /// must be passed and there is no return value. Also leaves the recv_buf on rank 0 untouched.
@@ -72,8 +72,8 @@ public:
         );
         // Use the built-in reduce function with every rank as root but skip rank 0.
         // Uses the `underlying` function of `CRTPHelper` to cast itself to `Comm`.
-        for (int i = 1; i < this->underlying().size_signed(); ++i) {
-            this->underlying().reduce(kamping::root(i), std::move(args)...);
+        for (int i = 1; i < this->to_communicator().size_signed(); ++i) {
+            this->to_communicator().reduce(kamping::root(i), std::move(args)...);
         }
     }
 };
