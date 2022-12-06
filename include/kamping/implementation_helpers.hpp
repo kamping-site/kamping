@@ -11,9 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-/// @file
-/// @brief Template magic to check named parameters passed to wrappers at compile time.
-
 #include "kamping/parameter_objects.hpp"
 
 namespace kamping::internal {
