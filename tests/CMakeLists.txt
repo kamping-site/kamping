@@ -126,6 +126,11 @@ kamping_register_mpi_test(
     FILES comm_helper/mpi_communicator_is_same_on_all_ranks_test.cpp
     CORES 1 4
 )
+kamping_register_mpi_test(
+    test_plugins
+    FILES plugins_test.cpp
+    CORES 1 4
+)
 
 # Tests using C++ 20
 kamping_register_mpi_test(

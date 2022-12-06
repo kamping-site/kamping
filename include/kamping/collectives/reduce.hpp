@@ -46,9 +46,9 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
-auto kamping::Communicator<DefaultContainerType>::reduce(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args,

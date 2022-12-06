@@ -68,9 +68,9 @@ int bcast_value(kamping::Communicator<DefaultContainerType> const& comm, T const
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
-template <template <typename...> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
-auto kamping::Communicator<DefaultContainerType>::scatter(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... args) const {
     using namespace kamping::internal;
 
     KAMPING_CHECK_PARAMETERS(
@@ -206,9 +206,9 @@ auto kamping::Communicator<DefaultContainerType>::scatter(Args... args) const {
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
-template <template <typename...> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
-auto kamping::Communicator<DefaultContainerType>::scatterv(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... args) const {
     using namespace kamping::internal;
 
     KAMPING_CHECK_PARAMETERS(

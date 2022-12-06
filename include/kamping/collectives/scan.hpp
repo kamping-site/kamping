@@ -47,9 +47,9 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
-auto kamping::Communicator<DefaultContainerType>::scan(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args) const {
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
 
@@ -119,9 +119,9 @@ auto kamping::Communicator<DefaultContainerType>::scan(Args... args) const {
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType>
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
-auto kamping::Communicator<DefaultContainerType>::scan_single(Args... args) const {
+auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_single(Args... args) const {
     //! If you expand this function to not being only a simple wrapper around scan, you have to write more unit
     //! tests!
 
