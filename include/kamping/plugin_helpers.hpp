@@ -21,6 +21,7 @@ namespace kamping::plugins {
 /// CommunicatorClass.
 template <typename CommunicatorClass, template <typename> class PluginClass>
 struct PluginBase {
+private:
     /// @return Reference to the underlying Communicator class.
     CommunicatorClass& to_communicator() {
         return static_cast<CommunicatorClass&>(*this);
@@ -31,10 +32,9 @@ struct PluginBase {
         return static_cast<CommunicatorClass const&>(*this);
     }
 
-private:
     PluginBase() {}                        ///< private constructor
     friend PluginClass<CommunicatorClass>; // this allows only the class inheriting from \c PluginBase to access the
-                                           // constructor.
+                                           // functions of this class.
 };
 
 } // namespace kamping::plugins
