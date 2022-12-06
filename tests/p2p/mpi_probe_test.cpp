@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "mpi.h"
+#include <algorithm>
 
 #include <gtest/gtest.h>
 #include <mpi.h>
@@ -30,7 +30,8 @@ TEST(ProbeTest, direct_probe) {
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
     // Each rank sends a message with its rank as tag to rank 0.
-    MPI_Isend(
+    // The message has comm.rank() elements.
+    MPI_Issend(
         v.data(),                      // send_buf
         asserting_cast<int>(v.size()), // send_count
         MPI_INT,                       // send_type
@@ -73,10 +74,10 @@ TEST(ProbeTest, direct_probe) {
                 comm.probe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>));
                 ASSERT_TRUE(true);
             }
-            std::vector<int> recv_buf;
+            std::vector<int> recv_buf(other);
             MPI_Recv(
                 recv_buf.data(),            // recv_buf
-                2,                          // recv_size
+                asserting_cast<int>(other), // recv_size
                 MPI_INT,                    // recv_type
                 asserting_cast<int>(other), // source
                 asserting_cast<int>(other), // tag
@@ -94,84 +95,184 @@ TEST(ProbeTest, any_source_probe) {
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
     // Each rank sends a message with its rank as tag to rank 0.
-    MPI_Isend(v.data(),                      // send_buf
-              asserting_cast<int>(v.size()), // send_count
-              MPI_INT,                       // send_type
-              0,                             // destination
-              comm.rank_signed(),            // tag
-              comm.mpi_communicator(),       // comm
-              &req                           // request
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
     );
     MPI_Barrier(comm.mpi_communicator());
     if (comm.rank() == 0) {
-        for (auto other = comm.size_signed() - 1; other >= 0; other--) {
+        for (size_t other = 0; other < comm.size(); other++) {
             {
+                // explicit any source probe
                 auto status = comm.probe(source(rank::any), tag(asserting_cast<int>(other)), status_out()).status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
                 ASSERT_EQ(status.count<int>(), other);
             }
             {
+                // implicit any source probe
                 auto status = comm.probe(tag(asserting_cast<int>(other)), status_out()).status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
                 ASSERT_EQ(status.count<int>(), other);
             }
+            std::vector<int> recv_buf(other);
+            MPI_Recv(
+                recv_buf.data(),            // recv_buf
+                asserting_cast<int>(other), // recv_size
+                MPI_INT,                    // recv_type
+                asserting_cast<int>(other), // source
+                asserting_cast<int>(other), // tag
+                MPI_COMM_WORLD,             // comm
+                MPI_STATUS_IGNORE           // status
+            );
         }
     }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
 TEST(ProbeTest, any_tag_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
-    MPI_Isend(v.data(),                      // send_buf
-              asserting_cast<int>(v.size()), // send_count
-              MPI_INT,                       // send_type
-              0,                             // destination
-              comm.rank_signed(),            // tag
-              comm.mpi_communicator(),       // comm
-              &req                           // request
+
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
     );
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
+                // explicit any tag probe
                 auto status = comm.probe(source(other), tag(tags::any), status_out()).status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
                 ASSERT_EQ(status.count<int>(), other);
             }
             {
+                // implicit any tag probe
                 auto status = comm.probe(source(other), status_out()).status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
                 ASSERT_EQ(status.count<int>(), other);
             }
+            std::vector<int> recv_buf(other);
+            MPI_Recv(
+                recv_buf.data(),            // recv_buf
+                asserting_cast<int>(other), // recv_size
+                MPI_INT,                    // recv_type
+                asserting_cast<int>(other), // source
+                asserting_cast<int>(other), // tag
+                MPI_COMM_WORLD,             // comm
+                MPI_STATUS_IGNORE           // status
+            );
         }
     }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
 TEST(ProbeTest, arbitrary_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
-    MPI_Isend(v.data(), asserting_cast<int>(v.size()), MPI_INT, 0, comm.rank_signed(), comm.mpi_communicator(), &req);
+
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
     if (comm.rank() == 0) {
+        // because we may receive arbitrary message, we keep track of them
+        std::vector<bool> received_message_from(comm.size());
+
         for (size_t other = 0; other < comm.size(); other++) {
-            {
-                auto status = comm.probe(source(rank::any), tag(tags::any), status_out()).status();
-                auto source = status.source_signed();
-                ASSERT_EQ(status.tag(), source);
-                ASSERT_EQ(status.count_signed<int>(), source);
-            }
-            {
-                auto status = comm.probe(status_out()).status();
-                auto source = status.source_signed();
-                ASSERT_EQ(status.tag(), source);
-                ASSERT_EQ(status.count_signed<int>(), source);
-            }
+            auto status = comm.probe(source(rank::any), tag(tags::any), status_out()).status();
+            auto source = status.source();
+            ASSERT_FALSE(received_message_from[source]);
+            ASSERT_EQ(status.tag(), status.source_signed());
+            ASSERT_EQ(status.count_signed<int>(), source);
+
+            std::vector<int> recv_buf(source);
+            MPI_Recv(
+                recv_buf.data(),             // recv_buf
+                asserting_cast<int>(source), // recv_size
+                MPI_INT,                     // recv_type
+                asserting_cast<int>(source), // source
+                asserting_cast<int>(source), // tag
+                MPI_COMM_WORLD,              // comm
+                MPI_STATUS_IGNORE            // status
+            );
+            received_message_from[source] = true;
         }
+        // check that we probed all messages
+        ASSERT_TRUE(std::all_of(received_message_from.begin(), received_message_from.end(), [](bool const& received) {
+            return received;
+        }));
     }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+
+    // again with implicit any probe
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        // because we may receive arbitrary message, we keep track of them
+        std::vector<bool> received_message_from(comm.size());
+
+        for (size_t other = 0; other < comm.size(); other++) {
+            auto status = comm.probe(status_out()).status();
+            auto source = status.source();
+            ASSERT_FALSE(received_message_from[source]);
+            ASSERT_EQ(status.tag(), status.source_signed());
+            ASSERT_EQ(status.count_signed<int>(), source);
+
+            std::vector<int> recv_buf(source);
+            MPI_Recv(
+                recv_buf.data(),             // recv_buf
+                asserting_cast<int>(source), // recv_size
+                MPI_INT,                     // recv_type
+                asserting_cast<int>(source), // source
+                asserting_cast<int>(source), // tag
+                MPI_COMM_WORLD,              // comm
+                MPI_STATUS_IGNORE            // status
+            );
+            received_message_from[source] = true;
+        }
+        // check that we probed all messages
+        ASSERT_TRUE(std::all_of(received_message_from.begin(), received_message_from.end(), [](bool const& received) {
+            return received;
+        }));
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
 TEST(ProbeTest, probe_null) {
