@@ -26,7 +26,6 @@ private:
     CommunicatorClass& to_communicator() {
         return static_cast<CommunicatorClass&>(*this);
     }
-
     /// @return const-reference to the underlying Communicator class.
     CommunicatorClass const& to_communicator() const {
         return static_cast<CommunicatorClass const&>(*this);
