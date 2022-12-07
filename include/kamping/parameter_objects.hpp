@@ -214,13 +214,18 @@ public:
 
     /// @return A pointer to the native \c MPI_Status object.
     inline MPI_Status* native_ptr() {
+        kassert_not_extracted("Cannot get a status that has already been extracted.");
         return &_status.native();
     }
 
     /// @brief Moves the wrapped status object out of the parameter.
     /// @return The wrapped status object.
     inline Status extract() {
-        return std::move(_status);
+        kassert_not_extracted("Cannot extract a status that has already been extracted.");
+        auto extracted = std::move(_status);
+        // we set is_extracted here because otherwise the call to underlying() would fail
+        set_extracted();
+        return extracted;
     }
 
 private:
