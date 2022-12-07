@@ -249,6 +249,9 @@ public:
     auto probe(Args... args) const;
 
     template <typename... Args>
+    auto recv(Args... args) const;
+
+    template <typename... Args>
     auto alltoall(Args... args) const;
 
     template <typename... Args>
