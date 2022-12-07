@@ -47,12 +47,12 @@ void test_recv_buffer_in_MPIResult() {
     int* ptr = recv_buffer.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(recv_buffer),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_buffer();
     for (size_t i = 0; i < 10; ++i) {
         EXPECT_EQ(underlying_container[i], i);
@@ -71,12 +71,12 @@ void test_recv_counts_in_MPIResult() {
     int* ptr = recv_counts.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(recv_counts),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_counts();
     for (size_t i = 0; i < 10; ++i) {
         EXPECT_EQ(underlying_container[i], i);
@@ -91,12 +91,12 @@ void test_recv_count_in_MPIResult() {
     LibAllocatedSingleElementBuffer<int, ParameterType::recv_counts, BufferType::in_buffer> recv_count_wrapper{};
     *recv_count_wrapper.get().data() = 42;
     MPIResult mpi_result{
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(recv_count_wrapper),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
     int recv_count_value = mpi_result.extract_recv_counts();
     EXPECT_EQ(recv_count_value, 42);
 }
@@ -113,12 +113,12 @@ void test_recv_displs_in_MPIResult() {
     int* ptr = recv_displs.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(recv_displs),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_displs();
     for (size_t i = 0; i < 10; ++i) {
         EXPECT_EQ(underlying_container[i], i);
@@ -137,12 +137,12 @@ void test_send_counts_in_MPIResult() {
     int* ptr = send_counts.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(send_counts),
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_send_counts();
     for (size_t i = 0; i < 10; ++i) {
         EXPECT_EQ(underlying_container[i], i);
@@ -161,11 +161,11 @@ void test_send_displs_in_MPIResult() {
     int* ptr = send_displs.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(send_displs)};
     UnderlyingContainer underlying_container = mpi_result.extract_send_displs();
     for (size_t i = 0; i < 10; ++i) {
@@ -238,11 +238,11 @@ TEST(MpiResultTest, extract_status_basics) {
     status.native_ptr()->MPI_TAG = 42;
     MPIResult mpi_result{
         std::move(status),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
     auto underlying_status = mpi_result.extract_status();
     EXPECT_EQ(underlying_status.tag(), 42);
 }

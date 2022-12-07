@@ -20,12 +20,12 @@ int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping::internal;
     // none of the extract function should work if the underlying buffer does not provide a member extract().
     kamping::MPIResult mpi_result{
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
 
     constexpr BufferType                                                                  btype = BufferType::in_buffer;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_recv_buf;
