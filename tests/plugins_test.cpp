@@ -241,17 +241,41 @@ private:
     int _send_buf; ///< The next number to be sent.
 };
 
-TEST(PluginsTest, plugin_with_data_member) {
+/// @brief A plugin providing a function to send decremental integers to a target PE. The integers start at 42.
+template <typename Comm>
+class DecrementalSendPlugin : public kamping::plugins::PluginBase<Comm, DecrementalSendPlugin> {
+public:
+    /// @brief Default constructor initializing the integer sent to 42.
+    DecrementalSendPlugin() : _send_buf(42) {}
+
+    /// @brief Sends a single integer to target_rank and then increments that integer.
+    /// @param target_rank The rank to send to.
+    void send_decremental(size_t target_rank) {
+        // Use the built-in send function.
+        // Uses the `to_communicator` function of `PluginBase` to cast itself to `Comm`.
+        this->to_communicator().send(kamping::send_buf(_send_buf), kamping::destination(target_rank));
+        --_send_buf;
+    }
+
+private:
+    int _send_buf; ///< The next number to be sent.
+};
+
+TEST(PluginsTest, plugins_with_data_member) {
     // Create a new communicator. The first template argument is the default container type (has to be provided when
     // using plugins). The following template arguments are plugin classes.
-    kamping::Communicator<std::vector, IncrementalSendPlugin> comm;
+    kamping::Communicator<std::vector, IncrementalSendPlugin, DecrementalSendPlugin> comm;
 
     auto other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
         // Use the send_incremental function from the plugin. Sends 42 on the first call.
         comm.send_incremental(other_rank);
+        // Use the send_decremental function from the plugin. Sends 42 on the first call.
+        comm.send_decremental(other_rank);
         // Use the send_incremental function from the plugin. Sends 43 on the second call.
         comm.send_incremental(other_rank);
+        // Use the send_decremental function from the plugin. Sends 41 on the second call.
+        comm.send_decremental(other_rank);
     } else if (comm.rank() == other_rank) {
         int        msg;
         MPI_Status status;
@@ -261,9 +285,21 @@ TEST(PluginsTest, plugin_with_data_member) {
         ASSERT_EQ(status.MPI_SOURCE, comm.root());
         ASSERT_EQ(status.MPI_TAG, 0);
 
+        // Receive 42 in the second message.
+        MPI_Recv(&msg, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &status);
+        ASSERT_EQ(msg, 42);
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+
         // Receive 43 in the second message.
         MPI_Recv(&msg, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &status);
         ASSERT_EQ(msg, 43);
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+
+        // Receive 41 in the second message.
+        MPI_Recv(&msg, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &status);
+        ASSERT_EQ(msg, 41);
         ASSERT_EQ(status.MPI_SOURCE, comm.root());
         ASSERT_EQ(status.MPI_TAG, 0);
     }
