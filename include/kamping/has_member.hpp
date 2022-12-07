@@ -55,7 +55,7 @@
     };                                                                      \
                                                                             \
     template <typename Type>                                                \
-    static constexpr bool has_member_##Member##_v = has_member_##Member<Type>::value;
+    [[maybe_unused]] static constexpr bool has_member_##Member##_v = has_member_##Member<Type>::value;
 
 /// @brief Macro for generating has_member_xxx and has_member_xxx_v templates
 /// for templated members. They return true if the type given as template
@@ -86,4 +86,4 @@
     };                                                                                            \
                                                                                                   \
     template <typename Type, typename... Args>                                                    \
-    static constexpr bool has_member_##Member##_v = has_member_##Member<Type, Args...>::value;
+    [[maybe_unused]] static constexpr bool has_member_##Member##_v = has_member_##Member<Type, Args...>::value;
