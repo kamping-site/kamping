@@ -20,12 +20,12 @@ int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping::internal;
     // none of the extract function should work if the underlying buffer does not provide a member extract().
     kamping::MPIResult mpi_result{
-        StatusParam<StatusParamType::ignore>{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
 
     constexpr BufferType                                                                  btype = BufferType::in_buffer;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_recv_buf;
@@ -73,7 +73,7 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif defined(SEND_DISPLACEMENTS_NOT_EXTRACTABLE)
     std::ignore = mpi_result.extract_send_displs();
 #elif defined(STATUS_NOT_EXTRACTABLE)
-    std::ignore = mpi_result.status();
+    std::ignore = mpi_result.extract_status();
 #elif defined(MAKE_MPI_RESULT_RECV_BUF_NOT_EXTRACTABLE)
     std::ignore = result_recv_buf.extract_recv_buffer();
 #elif defined(MAKE_MPI_RESULT_RECV_COUNTS_NOT_EXTRACTABLE)

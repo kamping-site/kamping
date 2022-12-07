@@ -44,7 +44,7 @@ TEST(ProbeTest, direct_probe) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
                 // return status
-                auto status = comm.probe(source(other), tag(asserting_cast<int>(other)), status_out()).status();
+                auto status = comm.probe(source(other), tag(asserting_cast<int>(other)), status_out()).extract_status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
                 ASSERT_EQ(status.count<int>(), other);
@@ -110,14 +110,15 @@ TEST(ProbeTest, any_source_probe) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
                 // explicit any source probe
-                auto status = comm.probe(source(rank::any), tag(asserting_cast<int>(other)), status_out()).status();
+                auto status =
+                    comm.probe(source(rank::any), tag(asserting_cast<int>(other)), status_out()).extract_status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
                 ASSERT_EQ(status.count<int>(), other);
             }
             {
                 // implicit any source probe
-                auto status = comm.probe(tag(asserting_cast<int>(other)), status_out()).status();
+                auto status = comm.probe(tag(asserting_cast<int>(other)), status_out()).extract_status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
                 ASSERT_EQ(status.count<int>(), other);
@@ -158,14 +159,14 @@ TEST(ProbeTest, any_tag_probe) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
                 // explicit any tag probe
-                auto status = comm.probe(source(other), tag(tags::any), status_out()).status();
+                auto status = comm.probe(source(other), tag(tags::any), status_out()).extract_status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
                 ASSERT_EQ(status.count<int>(), other);
             }
             {
                 // implicit any tag probe
-                auto status = comm.probe(source(other), status_out()).status();
+                auto status = comm.probe(source(other), status_out()).extract_status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
                 ASSERT_EQ(status.count<int>(), other);
@@ -207,7 +208,7 @@ TEST(ProbeTest, arbitrary_probe) {
         std::vector<bool> received_message_from(comm.size());
 
         for (size_t other = 0; other < comm.size(); other++) {
-            auto status = comm.probe(source(rank::any), tag(tags::any), status_out()).status();
+            auto status = comm.probe(source(rank::any), tag(tags::any), status_out()).extract_status();
             auto source = status.source();
             ASSERT_FALSE(received_message_from[source]);
             ASSERT_EQ(status.tag(), status.source_signed());
@@ -248,7 +249,7 @@ TEST(ProbeTest, arbitrary_probe) {
         std::vector<bool> received_message_from(comm.size());
 
         for (size_t other = 0; other < comm.size(); other++) {
-            auto status = comm.probe(status_out()).status();
+            auto status = comm.probe(status_out()).extract_status();
             auto source = status.source();
             ASSERT_FALSE(received_message_from[source]);
             ASSERT_EQ(status.tag(), status.source_signed());
@@ -277,7 +278,7 @@ TEST(ProbeTest, arbitrary_probe) {
 
 TEST(ProbeTest, probe_null) {
     Communicator comm;
-    auto         status = comm.probe(source(rank::null), status_out()).status();
+    auto         status = comm.probe(source(rank::null), status_out()).extract_status();
     ASSERT_EQ(status.source_signed(), MPI_PROC_NULL);
     ASSERT_EQ(status.tag(), MPI_ANY_TAG);
     ASSERT_EQ(status.count<int>(), 0);
