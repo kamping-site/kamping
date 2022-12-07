@@ -68,7 +68,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
         KASSERT(is_valid_tag(tag), "invalid tag " << tag << ", maximum allowed tag is " << tag_upper_bound());
     }
 
-    using default_status_param_type = decltype(kamping::status_out());
+    using default_status_param_type = decltype(kamping::status(kamping::ignore<>));
 
     auto&& status =
         internal::select_parameter_type_or_default<internal::ParameterType::status, default_status_param_type>(
@@ -78,7 +78,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
 
     KASSERT(internal::is_valid_rank_in_comm(source, *this, true, true), "Invalid source rank.");
 
-    [[maybe_unused]] int err = MPI_Probe(source.rank_signed(), tag, this->mpi_communicator(), status.native_ptr());
+    [[maybe_unused]] int err = MPI_Probe(
+        source.rank_signed(),     // source
+        tag,                      // tag
+        this->mpi_communicator(), // comm
+        status.native_ptr()       // status
+    );
     THROW_IF_MPI_ERROR(err, MPI_Probe);
 
     return make_mpi_result(std::move(status));
