@@ -660,8 +660,8 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
         std::move(send_displs)
     );
 
-    std::ignore = result.status();
-    EXPECT_KASSERT_FAILS(result.status(), "Cannot extract a status that has already been extracted.");
+    std::ignore = result.extract_status();
+    EXPECT_KASSERT_FAILS(result.extract_status(), "Cannot extract a status that has already been extracted.");
 
     std::ignore = result.extract_recv_buffer();
     EXPECT_KASSERT_FAILS(result.extract_recv_buffer(), "Cannot extract a buffer that has already been extracted.");

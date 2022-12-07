@@ -101,7 +101,7 @@ public:
     template <
         typename StatusObject_                                                  = StatusObject,
         std::enable_if_t<kamping::internal::has_extract_v<StatusObject_>, bool> = true>
-    decltype(auto) status() {
+    decltype(auto) extract_status() {
         return _status.extract();
     }
 

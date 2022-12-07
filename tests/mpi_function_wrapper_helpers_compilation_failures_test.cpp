@@ -73,7 +73,7 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif defined(SEND_DISPLACEMENTS_NOT_EXTRACTABLE)
     std::ignore = mpi_result.extract_send_displs();
 #elif defined(STATUS_NOT_EXTRACTABLE)
-    std::ignore = mpi_result.status();
+    std::ignore = mpi_result.extract_status();
 #elif defined(MAKE_MPI_RESULT_RECV_BUF_NOT_EXTRACTABLE)
     std::ignore = result_recv_buf.extract_recv_buffer();
 #elif defined(MAKE_MPI_RESULT_RECV_COUNTS_NOT_EXTRACTABLE)

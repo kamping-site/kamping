@@ -243,7 +243,7 @@ TEST(MpiResultTest, extract_status_basics) {
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{},
         BufferCategoryNotUsed{}};
-    auto underlying_status = mpi_result.status();
+    auto underlying_status = mpi_result.extract_status();
     EXPECT_EQ(underlying_status.tag(), 42);
 }
 
@@ -262,7 +262,7 @@ TEST(MakeMpiResultTest, pass_random_order_buffer) {
         auto result_recv_buf    = result.extract_recv_buffer();
         auto result_recv_counts = result.extract_recv_counts();
         auto result_recv_displs = result.extract_recv_displs();
-        auto result_status      = result.status();
+        auto result_status      = result.extract_status();
 
         static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, char>);
         static_assert(std::is_same_v<decltype(result_recv_counts)::value_type, int>);
