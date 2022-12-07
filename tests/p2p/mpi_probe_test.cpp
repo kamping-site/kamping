@@ -29,12 +29,12 @@ using namespace ::kamping;
 template <typename Type>
 class has_member_status {
     template <typename C>
-    static char test(decltype(&C::status));
+    static char test(decltype(&C::template status<>));
     template <typename C>
     static int test(...);
 
 public:
-    static bool const value = (sizeof(test<Type>(0)) == sizeof(char));
+    static bool const value = (sizeof(test<Type>(nullptr)) == sizeof(char));
 };
 
 template <typename T>
@@ -59,7 +59,9 @@ TEST(ProbeTest, direct_probe) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
                 // return status
-                auto status = comm.probe(source(other), tag(asserting_cast<int>(other)), status_out()).status();
+                auto result = comm.probe(source(other), tag(asserting_cast<int>(other)), status_out());
+                ASSERT_TRUE(has_member_status_v<decltype(result)>);
+                auto status = result.status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
                 ASSERT_EQ(status.count<int>(), other);
