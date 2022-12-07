@@ -25,6 +25,21 @@
 
 using namespace ::kamping;
 
+// Taken from https://stackoverflow.com/a/257382
+template <typename Type>
+class has_member_status {
+    template <typename C>
+    static char test(decltype(&C::status));
+    template <typename C>
+    static int test(...);
+
+public:
+    static bool const value = (sizeof(test<Type>(0)) == sizeof(char));
+};
+
+template <typename T>
+static constexpr bool has_member_status_v = has_member_status<T>::value;
+
 TEST(ProbeTest, direct_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
@@ -69,10 +84,16 @@ TEST(ProbeTest, direct_probe) {
             }
             {
                 // ignore status
-                comm.probe(source(other), tag(asserting_cast<int>(other)));
-                ASSERT_TRUE(true);
-                comm.probe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>));
-                ASSERT_TRUE(true);
+                {
+                    auto result = comm.probe(source(other), tag(asserting_cast<int>(other)));
+                    ASSERT_FALSE(has_member_status_v<decltype(result)>);
+                    ASSERT_TRUE(true);
+                }
+                {
+                    auto result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>));
+                    ASSERT_FALSE(has_member_status_v<decltype(result)>);
+                    ASSERT_TRUE(true);
+                }
             }
             std::vector<int> recv_buf(other);
             MPI_Recv(
