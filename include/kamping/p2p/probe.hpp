@@ -21,6 +21,7 @@
 
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
+#include "kamping/implementation_helpers.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -75,10 +76,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
             args...
         );
 
-    constexpr auto rank_type = std::remove_reference_t<decltype(source)>::rank_type;
-    if constexpr (rank_type == internal::RankType::value) {
-        KASSERT(this->is_valid_rank(source.rank_signed()), "Invalid receiver rank.");
-    }
+    KASSERT(internal::is_valid_rank_in_comm(source, *this, true, true), "Invalid source rank.");
 
     [[maybe_unused]] int err = MPI_Probe(source.rank_signed(), tag, this->mpi_communicator(), status.native_ptr());
     THROW_IF_MPI_ERROR(err, MPI_Probe);

@@ -22,6 +22,7 @@
 
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
+#include "kamping/implementation_helpers.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -86,9 +87,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
 
     auto mpi_send_type = mpi_datatype<send_value_type>();
 
-    if constexpr (rank_type == RankType::value) {
-        KASSERT(this->is_valid_rank(destination.rank_signed()), "Invalid destination rank.");
-    }
+    // RankType::null is valid, RankType::any is not.
+    KASSERT(is_valid_rank_in_comm(destination, *this, true, false), "Invalid destination rank.");
 
     if constexpr (std::is_same_v<send_mode, internal::standard_mode_t>) {
         [[maybe_unused]] int err = MPI_Send(
