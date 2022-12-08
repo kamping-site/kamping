@@ -21,27 +21,44 @@
 #include <type_traits>
 
 /// @brief Macro for generating has_member_xxx and has_member_xxx_v templates.
-/// They return true if the type given as template parameter has a member function or class member with the provided
-/// name.
+/// They return true if the type given as template parameter has a member
+/// function or class member with the provided name.
 ///
 /// Example:
 /// \code
+/// KAMPING_MAKE_HAS_MEMBER(bar);
 /// KAMPING_MAKE_HAS_MEMBER(baz);
+/// KAMPING_MAKE_HAS_MEMBER(fizz);
 /// struct Foo {
+///   int bar();
 ///   int baz(char);
+///   template<typename T>
+///   int fizz(T);
 /// };
-/// static_assert(has_member_baz_v<Foo>)
+/// static_assert(has_member_bar_v<Foo>)
+/// static_assert(!has_member_bar_v<Foo, bar>)
+/// static_assert(has_member_baz_v<Foo, char>)
+/// static_assert(!has_member_baz_v<Foo>)
+/// static_assert(has_member_fizz_v<Foo, int>)
+/// static_assert(has_member_fizz<Foo, int>::value_with_template_params<int>)
+/// static_assert(!has_member_fizz<Foo>::value_with_template_params<int, double>)
 /// \endcode
 ///
 /// Explanation:
-/// - to obtain \c value, the static member function \c test is instantiated using the given type \c Type.
-/// - therefore, we try to obtain the the type of the address of the member of that class
-/// - if that member does not exist, we can not obtain the decltype, and cannot instantiate \c std::void_t<>, which
-/// fails to initialize the whole function \c test(int)
-/// - then, the next best instantiation is \c test(long), which returns \c std::false_type.
+/// - to obtain \c value, the static member function \c test is instantiated
+/// using the given type \c Type.
+/// - Using declval, we get an instance of \c Type and try to call the expected
+/// member function with instances of the passed \c MemberArgs
+///     - optionally, \c test_with_template_params also instantiates the
+///     functions template parameters with the passed types
+/// - if that member does not exist, we can not obtain the decltype, and cannot
+/// instantiate \c std::void_t<>, which fails to initialize the whole function
+/// \c test(int)
+/// - then, the next best instantiation is \c test(long), which returns \c
+/// std::false_type.
 /// - if we find the requested member, we get \c std::true_type
-/// - \c test has \c int and \c long overloads to resolve ambiguity. Passing 0 to \c test ensure that we first try to
-/// instantiate the \c true variant.
+/// - \c test has \c int and \c long overloads to resolve ambiguity. Passing 0
+/// to \c test ensure that we first try to instantiate the \c true variant.
 #define KAMPING_MAKE_HAS_MEMBER(Member)                                                                         \
     template <typename Type, typename... MemberArgs>                                                            \
     class has_member_##Member {                                                                                 \
