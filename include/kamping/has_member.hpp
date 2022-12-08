@@ -26,9 +26,9 @@
 ///
 /// Example:
 /// \code
-/// KAMPING_MAKE_HAS_MEMBER(bar);
-/// KAMPING_MAKE_HAS_MEMBER(baz);
-/// KAMPING_MAKE_HAS_MEMBER(fizz);
+/// KAMPING_MAKE_HAS_MEMBER(bar)
+/// KAMPING_MAKE_HAS_MEMBER(baz)
+/// KAMPING_MAKE_HAS_MEMBER(fizz)
 /// struct Foo {
 ///   int bar();
 ///   int baz(char);

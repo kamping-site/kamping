@@ -18,7 +18,7 @@
 #include "kamping/has_member.hpp"
 
 namespace kamping::type_traits {
-KAMPING_MAKE_HAS_MEMBER(foo);
+KAMPING_MAKE_HAS_MEMBER(foo)
 } // namespace kamping::type_traits
 
 class ClassWithFoo {
