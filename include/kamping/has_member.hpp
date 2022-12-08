@@ -24,10 +24,12 @@
 /// They return true if the type given as template parameter has a member
 /// (template) function provided name.
 ///
-/// If the function has no template parameters or they can be auto-deduced, use \c has_member_xxx::value or \c
-/// has_member_xxx_v, if not use \c has_member_xxx::value_with_template_params<...>.
+/// If the function has no template parameters or they can be auto-deduced, use
+/// \c has_member_xxx::value or \c has_member_xxx_v, if not use \c
+/// has_member_xxx::value_with_template_params<...>.
 ///
-/// If the member function takes arguments, pass their types as additional template parameters to \c has_member_xxx.
+/// If the member function takes arguments, pass their types as additional
+/// template parameters to \c has_member_xxx.
 ///
 /// See the examples for details.
 ///
@@ -42,13 +44,21 @@
 ///   template<typename T>
 ///   int fizz(T);
 /// };
+/// // check if Foo.bar() is callable
 /// static_assert(has_member_bar_v<Foo>)
-/// static_assert(!has_member_bar_v<Foo, bar>)
+/// // check if Foo.bar(char) is callable
+/// static_assert(!has_member_bar_v<Foo, char>)
+/// // check if Foo.baz(char) is callable
 /// static_assert(has_member_baz_v<Foo, char>)
+/// // check if Foo.baz() is callable
 /// static_assert(!has_member_baz_v<Foo>)
+/// // check if Foo.fizz(int) is callable
 /// static_assert(has_member_fizz_v<Foo, int>)
+/// // check if Foo.fizz<int>(int) is callable
 /// static_assert(has_member_fizz<Foo, int>::value_with_template_params<int>)
-/// static_assert(!has_member_fizz<Foo>::value_with_template_params<int, double>)
+/// // check if Foo.fizz<int, double>(int) is callable
+/// static_assert(!has_member_fizz<Foo>::value_with_template_params<int,
+/// double>)
 /// \endcode
 ///
 /// Explanation:
