@@ -18,33 +18,19 @@
 
 #include <utility>
 
+#include "kamping/has_member.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameters.hpp"
 
 namespace kamping {
 namespace internal {
-// https://stackoverflow.com/a/9154394 TODO license?
-/// @brief Helper to implement has_extract_v
-template <typename>
-struct true_type : std::true_type {};
 
-/// @brief Helper to implement has_extract_v
-template <typename T>
-auto test_extract(int) -> true_type<decltype(std::declval<T>().extract())>;
-
-/// @brief Helper to implement has_extract_v
-template <typename T>
-auto test_extract(...) -> std::false_type;
-
-/// @brief Helper to implement has_extract_v
-template <typename T>
-struct has_extract : decltype(internal::test_extract<T>(0)) {};
-
+KAMPING_MAKE_HAS_MEMBER(extract)
 /// @brief has_extract_v is \c true iff type T has a member function \c extract().
 ///
 /// @tparam T Type which is tested for the existence of a member function.
 template <typename T>
-inline constexpr bool has_extract_v = has_extract<T>::value;
+inline constexpr bool has_extract_v = has_member_extract_v<T>;
 
 /// @brief Use this type if one of the template parameters of MPIResult is not used for a specific wrapped \c MPI call.
 struct BufferCategoryNotUsed {};
