@@ -46,19 +46,24 @@
 /// };
 /// // check if Foo.bar() is callable
 /// static_assert(has_member_bar_v<Foo>)
+///
 /// // check if Foo.bar(char) is callable
 /// static_assert(!has_member_bar_v<Foo, char>)
+///
 /// // check if Foo.baz(char) is callable
 /// static_assert(has_member_baz_v<Foo, char>)
+///
 /// // check if Foo.baz() is callable
 /// static_assert(!has_member_baz_v<Foo>)
+///
 /// // check if Foo.fizz(int) is callable
 /// static_assert(has_member_fizz_v<Foo, int>)
+///
 /// // check if Foo.fizz<int>(int) is callable
 /// static_assert(has_member_fizz<Foo, int>::value_with_template_params<int>)
+///
 /// // check if Foo.fizz<int, double>(int) is callable
-/// static_assert(!has_member_fizz<Foo>::value_with_template_params<int,
-/// double>)
+/// static_assert(!has_member_fizz<Foo>::value_with_template_params<int, double>)
 /// \endcode
 ///
 /// Explanation:
