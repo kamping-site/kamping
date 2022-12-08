@@ -104,7 +104,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 ///
 /// This is functionally equivalent to \c scan() but provided for uniformity with other operations (e.g. \c
 /// bcast_single()). \c scan_single() wraps \c MPI_Scan, which is used to perform an inclusive prefix reduction on data
-/// distributed across the calling processes. \c scan() returns in \c recv_buf of the process with rank \f$i\f$, the
+/// distributed across the calling processes. \c scan() returns on the process with rank \f$i\f$, the
 /// reduction (calculated according to the function op) of the values in the sendbufs of processes with ranks \f$0, ...,
 /// i\f$ (inclusive).
 ///
@@ -118,7 +118,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @return The single element result of the exclusive scan.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_single(Args... args) const {
@@ -129,11 +129,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_single(Args..
 
     // The send and recv buffers are always of the same size in scan, thus, there is no additional exchange of
     // recv_counts.
-    KAMPING_CHECK_PARAMETERS(
-        Args,
-        KAMPING_REQUIRED_PARAMETERS(send_buf, op),
-        KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
-    );
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS());
 
     KASSERT(
         select_parameter_type<ParameterType::send_buf>(args...).size() == 1u,
@@ -141,9 +137,5 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_single(Args..
         assert::light
     );
 
-    if constexpr (has_parameter_type<ParameterType::recv_buf, Args...>()) {
-        return this->scan(std::forward<Args>(args)...);
-    } else {
-        return this->scan(std::forward<Args>(args)...).extract_recv_buffer()[0];
-    }
+    return this->scan(std::forward<Args>(args)...).extract_recv_buffer()[0];
 }
