@@ -1,3 +1,4 @@
+// // This file is part of KaMPIng.
 // This file is part of KaMPIng.
 //
 // Copyright 2022 The KaMPIng Authors
@@ -27,9 +28,9 @@ using namespace ::kamping;
 
 // Taken from https://stackoverflow.com/a/257382
 template <typename Type>
-class has_member_status {
+class has_member_extract_status {
     template <typename C>
-    static char test(decltype(&C::template status<>));
+    static char test(decltype(&C::template extract_status<>));
     template <typename C>
     static int test(...);
 
@@ -38,7 +39,7 @@ public:
 };
 
 template <typename T>
-static constexpr bool has_member_status_v = has_member_status<T>::value;
+static constexpr bool has_member_extract_status_v = has_member_extract_status<T>::value;
 
 TEST(ProbeTest, direct_probe) {
     Communicator     comm;
@@ -60,7 +61,7 @@ TEST(ProbeTest, direct_probe) {
             {
                 // return status
                 auto result = comm.probe(source(other), tag(asserting_cast<int>(other)), status_out());
-                ASSERT_TRUE(has_member_status_v<decltype(result)>);
+                ASSERT_TRUE(has_member_extract_status_v<decltype(result)>);
                 auto status = result.extract_status();
                 ASSERT_EQ(status.source(), other);
                 ASSERT_EQ(status.tag(), other);
@@ -69,7 +70,8 @@ TEST(ProbeTest, direct_probe) {
             {
                 // wrapped status
                 Status kmp_status;
-                comm.probe(source(other), tag(asserting_cast<int>(other)), status(kmp_status));
+                auto   result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(kmp_status));
+                ASSERT_FALSE(has_member_extract_status_v<decltype(result)>);
                 ASSERT_EQ(kmp_status.source(), other);
                 ASSERT_EQ(kmp_status.tag(), other);
                 ASSERT_EQ(kmp_status.count<int>(), other);
@@ -77,7 +79,8 @@ TEST(ProbeTest, direct_probe) {
             {
                 // native status
                 MPI_Status mpi_status;
-                comm.probe(source(other), tag(asserting_cast<int>(other)), status(mpi_status));
+                auto       result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(mpi_status));
+                ASSERT_FALSE(has_member_extract_status_v<decltype(result)>);
                 ASSERT_EQ(mpi_status.MPI_SOURCE, other);
                 ASSERT_EQ(mpi_status.MPI_TAG, other);
                 int count;
@@ -88,12 +91,12 @@ TEST(ProbeTest, direct_probe) {
                 // ignore status
                 {
                     auto result = comm.probe(source(other), tag(asserting_cast<int>(other)));
-                    ASSERT_FALSE(has_member_status_v<decltype(result)>);
+                    ASSERT_FALSE(has_member_extract_status_v<decltype(result)>);
                     ASSERT_TRUE(true);
                 }
                 {
                     auto result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>));
-                    ASSERT_FALSE(has_member_status_v<decltype(result)>);
+                    ASSERT_FALSE(has_member_extract_status_v<decltype(result)>);
                     ASSERT_TRUE(true);
                 }
             }
