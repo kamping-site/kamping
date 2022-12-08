@@ -180,21 +180,6 @@ kamping_register_compilation_failure_test(
 )
 
 kamping_register_compilation_failure_test(
-    test_mpi_function_wrapper_compilation_failure
-    FILES mpi_function_wrapper_helpers_compilation_failures_test.cpp
-    SECTIONS "RECV_BUFFER_NOT_EXTRACTABLE"
-             "RECV_COUNTS_NOT_EXTRACTABLE"
-             "RECV_DISPLACEMENTS_NOT_EXTRACTABLE"
-             "SEND_DISPLACEMENTS_NOT_EXTRACTABLE"
-             "STATUS_NOT_EXTRACTABLE"
-             "MAKE_MPI_RESULT_RECV_BUF_NOT_EXTRACTABLE"
-             "MAKE_MPI_RESULT_RECV_COUNTS_NOT_EXTRACTABLE"
-             "MAKE_MPI_RESULT_RECV_DISPLS_NOT_EXTRACTABLE"
-             "MAKE_MPI_RESULT_SEND_COUNTS_NOT_EXTRACTABLE"
-    LIBRARIES kamping_base
-)
-
-kamping_register_compilation_failure_test(
     test_mpi_communicator_is_same_on_all_ranks_compilation_failure
     FILES comm_helper/mpi_communicator_is_same_on_all_ranks_compilation_failure_test.cpp
     SECTIONS "VALUE_IS_A_POINTER"
