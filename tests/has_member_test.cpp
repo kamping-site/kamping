@@ -19,7 +19,6 @@
 
 namespace kamping::type_traits {
 KAMPING_MAKE_HAS_MEMBER(foo);
-KAMPING_MAKE_HAS_MEMBER_TEMPLATE(baz);
 } // namespace kamping::type_traits
 
 class ClassWithFoo {
@@ -31,21 +30,17 @@ class ClassWithFooAndArguments {
 public:
     int foo(double, char);
 };
+
 class ClassWithFooTemplate {
 public:
     template <typename T, typename K>
     int foo();
 };
 
-class ClassWithBaz {
+class ClassWithFooTemplateDeducable {
 public:
-    void baz();
-};
-
-class ClassWithBazTemplate {
-public:
-    template <typename T = double, typename K = char>
-    void baz();
+    template <typename T, typename K>
+    int foo(T, K);
 };
 
 class EmptyClass {};
@@ -54,32 +49,38 @@ TEST(HasMemberTest, make_has_member_works) {
     EXPECT_TRUE(kamping::type_traits::has_member_foo<ClassWithFoo>::value);
     EXPECT_TRUE(kamping::type_traits::has_member_foo_v<ClassWithFoo>);
 
-    EXPECT_TRUE(kamping::type_traits::has_member_foo<ClassWithFooAndArguments>::value);
-    EXPECT_TRUE(kamping::type_traits::has_member_foo_v<ClassWithFooAndArguments>);
+    EXPECT_FALSE(kamping::type_traits::has_member_foo<ClassWithFooAndArguments>::value);
+    EXPECT_FALSE(kamping::type_traits::has_member_foo_v<ClassWithFooAndArguments>);
+
+    EXPECT_TRUE((kamping::type_traits::has_member_foo<ClassWithFooAndArguments, double, char>::value));
+    EXPECT_TRUE((kamping::type_traits::has_member_foo_v<ClassWithFooAndArguments, double, char>));
 
     EXPECT_FALSE(kamping::type_traits::has_member_foo<ClassWithFooTemplate>::value);
     EXPECT_FALSE(kamping::type_traits::has_member_foo_v<ClassWithFooTemplate>);
 
-    EXPECT_FALSE(kamping::type_traits::has_member_foo<ClassWithBaz>::value);
-    EXPECT_FALSE(kamping::type_traits::has_member_foo_v<ClassWithBaz>);
+    // instantiate the temple parameters
+    EXPECT_TRUE((kamping::type_traits::has_member_foo<ClassWithFooTemplate>::value_with_template_params<double, char>));
+    EXPECT_TRUE((kamping::type_traits::has_member_foo<ClassWithFooTemplate>::value_with_template_params<double, char>));
+    // providing only one is not enough
+    EXPECT_FALSE((kamping::type_traits::has_member_foo<ClassWithFooTemplate>::value_with_template_params<double>));
 
-    EXPECT_FALSE(kamping::type_traits::has_member_foo<ClassWithBazTemplate>::value);
-    EXPECT_FALSE(kamping::type_traits::has_member_foo_v<ClassWithBazTemplate>);
+    // the template parameters can be deduced, but we can still specify them explicitly
+    EXPECT_TRUE((kamping::type_traits::has_member_foo<ClassWithFooTemplateDeducable, double, char>::
+                     value_with_template_params<double, char>));
+    // the template parameters are specified explicitly and to not match the arguments
+    EXPECT_FALSE((kamping::type_traits::has_member_foo<ClassWithFooTemplateDeducable, std::string, char>::
+                      value_with_template_params<double, char>));
+    // deduced from the arguments
+    EXPECT_TRUE((kamping::type_traits::has_member_foo<ClassWithFooTemplateDeducable, double, char>::
+                     value_with_template_params<>));
+
+    // deduced from the arguments, but we do not explicitly add template instantiations
+    EXPECT_TRUE((kamping::type_traits::has_member_foo_v<ClassWithFooTemplateDeducable, int, double>));
+
+    // Pass only one parameter instead of two
+    EXPECT_FALSE((kamping::type_traits::has_member_foo<ClassWithFooTemplate, int>::value));
+    EXPECT_FALSE((kamping::type_traits::has_member_foo_v<ClassWithFooTemplate, int>));
 
     EXPECT_FALSE(kamping::type_traits::has_member_foo<EmptyClass>::value);
     EXPECT_FALSE(kamping::type_traits::has_member_foo_v<EmptyClass>);
-}
-
-TEST(HasMemberTest, make_has_member_template) {
-    EXPECT_FALSE(kamping::type_traits::has_member_baz<ClassWithBaz>::value);
-    EXPECT_FALSE(kamping::type_traits::has_member_baz_v<ClassWithBaz>);
-
-    EXPECT_TRUE(kamping::type_traits::has_member_baz<ClassWithBazTemplate>::value);
-    EXPECT_TRUE(kamping::type_traits::has_member_baz_v<ClassWithBazTemplate>);
-
-    EXPECT_TRUE((kamping::type_traits::has_member_baz<ClassWithBazTemplate, int, char>::value));
-    EXPECT_TRUE((kamping::type_traits::has_member_baz_v<ClassWithBazTemplate, int, char>));
-
-    EXPECT_FALSE(kamping::type_traits::has_member_baz<EmptyClass>::value);
-    EXPECT_FALSE(kamping::type_traits::has_member_baz_v<EmptyClass>);
 }

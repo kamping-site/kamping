@@ -42,48 +42,31 @@
 /// - if we find the requested member, we get \c std::true_type
 /// - \c test has \c int and \c long overloads to resolve ambiguity. Passing 0 to \c test ensure that we first try to
 /// instantiate the \c true variant.
-#define KAMPING_MAKE_HAS_MEMBER(Member)                                     \
-    template <typename Type>                                                \
-    class has_member_##Member {                                             \
-        template <typename C, typename = std::void_t<decltype(&C::Member)>> \
-        static auto test(int) -> std::true_type;                            \
-        template <typename C>                                               \
-        static auto test(long) -> std::false_type;                          \
-                                                                            \
-    public:                                                                 \
-        static constexpr bool value = decltype(test<Type>(0))::value;       \
-    };                                                                      \
-                                                                            \
-    template <typename Type>                                                \
-    [[maybe_unused]] static constexpr bool has_member_##Member##_v = has_member_##Member<Type>::value;
-
-/// @brief Macro for generating has_member_xxx and has_member_xxx_v templates
-/// for templated members. They return true if the type given as template
-/// parameter has a member function template or class member template with the provided name that
-/// can be instantiated with the remaining types passed as template parameters.
-///
-/// Example:
-/// \code
-/// KAMPING_MAKE_HAS_MEMBER_TEMPLATE(baz);
-/// struct Foo {
-///   template<typename T, typename V>
-///   int baz(char);
-/// };
-/// static_assert(has_member_baz_v<Foo, double, char>)
-/// \endcode
-#define KAMPING_MAKE_HAS_MEMBER_TEMPLATE(Member)                                                  \
-    template <typename Type, typename... Args>                                                    \
-    class has_member_##Member {                                                                   \
-        /* The template initialization here is the only difference to KAMPING_MAKE_HAS_MEMBER. */ \
-        /* See the comments there for details. */                                                 \
-        template <typename C, typename = std::void_t<decltype(&C::template Member<Args...>)>>     \
-        static auto test(int) -> std::true_type;                                                  \
-        template <typename C>                                                                     \
-        static auto test(long) -> std::false_type;                                                \
-                                                                                                  \
-    public:                                                                                       \
-        static constexpr bool value = decltype(test<Type>(0))::value;                             \
-    };                                                                                            \
-                                                                                                  \
-    template <typename Type, typename... Args>                                                    \
-    [[maybe_unused]] static constexpr bool has_member_##Member##_v = has_member_##Member<Type, Args...>::value;
+#define KAMPING_MAKE_HAS_MEMBER(Member)                                                                         \
+    template <typename Type, typename... MemberArgs>                                                            \
+    class has_member_##Member {                                                                                 \
+        template <                                                                                              \
+            typename C,                                                                                         \
+            typename = std::void_t<decltype(std::declval<C>().Member(std::declval<MemberArgs>()...))>>          \
+        static auto test(int) -> std::true_type;                                                                \
+        template <typename C>                                                                                   \
+        static auto test(long) -> std::false_type;                                                              \
+        template <                                                                                              \
+            typename C,                                                                                         \
+            typename... TemplateParams,                                                                         \
+            typename = std::void_t<                                                                             \
+                decltype(std::declval<C>().template Member<TemplateParams...>(std::declval<MemberArgs>()...))>> \
+        static auto test_with_template_params(int) -> std::true_type;                                           \
+        template <typename C, typename... TemplateParams>                                                       \
+        static auto test_with_template_params(long) -> std::false_type;                                         \
+                                                                                                                \
+    public:                                                                                                     \
+        static constexpr bool value = decltype(test<Type>(0))::value;                                           \
+                                                                                                                \
+        template <typename... TemplateParams>                                                                   \
+        static constexpr bool value_with_template_params =                                                      \
+            decltype(test_with_template_params<Type, TemplateParams...>(0))::value;                             \
+    };                                                                                                          \
+                                                                                                                \
+    template <typename Type, typename... MemberArgs>                                                            \
+    [[maybe_unused]] static constexpr bool has_member_##Member##_v = has_member_##Member<Type, MemberArgs...>::value;
