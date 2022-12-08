@@ -35,8 +35,13 @@
 ///
 /// Example:
 /// \code
+/// Add templates \c has_member_bar and \c has_member_bar_v
 /// KAMPING_MAKE_HAS_MEMBER(bar)
+///
+/// Add templates \c has_member_baz and \c has_member_baz_v
 /// KAMPING_MAKE_HAS_MEMBER(baz)
+///
+/// Add templates \c has_member_fizz and \c has_member_fizz_v
 /// KAMPING_MAKE_HAS_MEMBER(fizz)
 /// struct Foo {
 ///   int bar();
