@@ -20,10 +20,13 @@
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/has_member.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/probe.hpp"
 
 using namespace ::kamping;
+
+KAMPING_MAKE_HAS_MEMBER(extract_status)
 
 TEST(ProbeTest, direct_probe) {
     Communicator     comm;
@@ -44,35 +47,43 @@ TEST(ProbeTest, direct_probe) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
                 // return status
-                auto status = comm.probe(source(other), tag(asserting_cast<int>(other)), status_out()).extract_status();
-                ASSERT_EQ(status.source(), other);
-                ASSERT_EQ(status.tag(), other);
-                ASSERT_EQ(status.count<int>(), other);
+                auto result = comm.probe(source(other), tag(asserting_cast<int>(other)), status_out());
+                EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
+                auto status = result.extract_status();
+                EXPECT_EQ(status.source(), other);
+                EXPECT_EQ(status.tag(), other);
+                EXPECT_EQ(status.count<int>(), other);
             }
             {
                 // wrapped status
                 Status kmp_status;
-                comm.probe(source(other), tag(asserting_cast<int>(other)), status(kmp_status));
-                ASSERT_EQ(kmp_status.source(), other);
-                ASSERT_EQ(kmp_status.tag(), other);
-                ASSERT_EQ(kmp_status.count<int>(), other);
+                auto   result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(kmp_status));
+                EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
+                EXPECT_EQ(kmp_status.source(), other);
+                EXPECT_EQ(kmp_status.tag(), other);
+                EXPECT_EQ(kmp_status.count<int>(), other);
             }
             {
                 // native status
                 MPI_Status mpi_status;
-                comm.probe(source(other), tag(asserting_cast<int>(other)), status(mpi_status));
-                ASSERT_EQ(mpi_status.MPI_SOURCE, other);
-                ASSERT_EQ(mpi_status.MPI_TAG, other);
+                auto       result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(mpi_status));
+                EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
+                EXPECT_EQ(mpi_status.MPI_SOURCE, other);
+                EXPECT_EQ(mpi_status.MPI_TAG, other);
                 int count;
                 MPI_Get_count(&mpi_status, MPI_INT, &count);
-                ASSERT_EQ(count, other);
+                EXPECT_EQ(count, other);
             }
             {
                 // ignore status
-                comm.probe(source(other), tag(asserting_cast<int>(other)));
-                ASSERT_TRUE(true);
-                comm.probe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>));
-                ASSERT_TRUE(true);
+                {
+                    auto result = comm.probe(source(other), tag(asserting_cast<int>(other)));
+                    EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
+                }
+                {
+                    auto result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>));
+                    EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
+                }
             }
             std::vector<int> recv_buf(other);
             MPI_Recv(
@@ -112,16 +123,16 @@ TEST(ProbeTest, any_source_probe) {
                 // explicit any source probe
                 auto status =
                     comm.probe(source(rank::any), tag(asserting_cast<int>(other)), status_out()).extract_status();
-                ASSERT_EQ(status.source(), other);
-                ASSERT_EQ(status.tag(), other);
-                ASSERT_EQ(status.count<int>(), other);
+                EXPECT_EQ(status.source(), other);
+                EXPECT_EQ(status.tag(), other);
+                EXPECT_EQ(status.count<int>(), other);
             }
             {
                 // implicit any source probe
                 auto status = comm.probe(tag(asserting_cast<int>(other)), status_out()).extract_status();
-                ASSERT_EQ(status.source(), other);
-                ASSERT_EQ(status.tag(), other);
-                ASSERT_EQ(status.count<int>(), other);
+                EXPECT_EQ(status.source(), other);
+                EXPECT_EQ(status.tag(), other);
+                EXPECT_EQ(status.count<int>(), other);
             }
             std::vector<int> recv_buf(other);
             MPI_Recv(
@@ -160,16 +171,16 @@ TEST(ProbeTest, any_tag_probe) {
             {
                 // explicit any tag probe
                 auto status = comm.probe(source(other), tag(tags::any), status_out()).extract_status();
-                ASSERT_EQ(status.source(), other);
-                ASSERT_EQ(status.tag(), other);
-                ASSERT_EQ(status.count<int>(), other);
+                EXPECT_EQ(status.source(), other);
+                EXPECT_EQ(status.tag(), other);
+                EXPECT_EQ(status.count<int>(), other);
             }
             {
                 // implicit any tag probe
                 auto status = comm.probe(source(other), status_out()).extract_status();
-                ASSERT_EQ(status.source(), other);
-                ASSERT_EQ(status.tag(), other);
-                ASSERT_EQ(status.count<int>(), other);
+                EXPECT_EQ(status.source(), other);
+                EXPECT_EQ(status.tag(), other);
+                EXPECT_EQ(status.count<int>(), other);
             }
             std::vector<int> recv_buf(other);
             MPI_Recv(
@@ -210,9 +221,9 @@ TEST(ProbeTest, arbitrary_probe) {
         for (size_t other = 0; other < comm.size(); other++) {
             auto status = comm.probe(source(rank::any), tag(tags::any), status_out()).extract_status();
             auto source = status.source();
-            ASSERT_FALSE(received_message_from[source]);
-            ASSERT_EQ(status.tag(), status.source_signed());
-            ASSERT_EQ(status.count_signed<int>(), source);
+            EXPECT_FALSE(received_message_from[source]);
+            EXPECT_EQ(status.tag(), status.source_signed());
+            EXPECT_EQ(status.count_signed<int>(), source);
 
             std::vector<int> recv_buf(source);
             MPI_Recv(
@@ -227,7 +238,7 @@ TEST(ProbeTest, arbitrary_probe) {
             received_message_from[source] = true;
         }
         // check that we probed all messages
-        ASSERT_TRUE(std::all_of(received_message_from.begin(), received_message_from.end(), [](bool const& received) {
+        EXPECT_TRUE(std::all_of(received_message_from.begin(), received_message_from.end(), [](bool const& received) {
             return received;
         }));
     }
@@ -251,9 +262,9 @@ TEST(ProbeTest, arbitrary_probe) {
         for (size_t other = 0; other < comm.size(); other++) {
             auto status = comm.probe(status_out()).extract_status();
             auto source = status.source();
-            ASSERT_FALSE(received_message_from[source]);
-            ASSERT_EQ(status.tag(), status.source_signed());
-            ASSERT_EQ(status.count_signed<int>(), source);
+            EXPECT_FALSE(received_message_from[source]);
+            EXPECT_EQ(status.tag(), status.source_signed());
+            EXPECT_EQ(status.count_signed<int>(), source);
 
             std::vector<int> recv_buf(source);
             MPI_Recv(
@@ -268,7 +279,7 @@ TEST(ProbeTest, arbitrary_probe) {
             received_message_from[source] = true;
         }
         // check that we probed all messages
-        ASSERT_TRUE(std::all_of(received_message_from.begin(), received_message_from.end(), [](bool const& received) {
+        EXPECT_TRUE(std::all_of(received_message_from.begin(), received_message_from.end(), [](bool const& received) {
             return received;
         }));
     }
@@ -279,7 +290,7 @@ TEST(ProbeTest, arbitrary_probe) {
 TEST(ProbeTest, probe_null) {
     Communicator comm;
     auto         status = comm.probe(source(rank::null), status_out()).extract_status();
-    ASSERT_EQ(status.source_signed(), MPI_PROC_NULL);
-    ASSERT_EQ(status.tag(), MPI_ANY_TAG);
-    ASSERT_EQ(status.count<int>(), 0);
+    EXPECT_EQ(status.source_signed(), MPI_PROC_NULL);
+    EXPECT_EQ(status.tag(), MPI_ANY_TAG);
+    EXPECT_EQ(status.count<int>(), 0);
 }
