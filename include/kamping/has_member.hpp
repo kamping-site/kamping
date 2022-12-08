@@ -74,18 +74,18 @@
 /// \endcode
 ///
 /// Explanation:
-/// - to obtain \c value, the static member function \c test is instantiated
+/// - To obtain \c value, the static member function \c test is instantiated
 /// using the given type \c Type.
 /// - Using declval, we get an instance of \c Type and try to call the expected
-/// member function with instances of the passed \c MemberArgs
-///     - optionally, \c test_with_template_params also instantiates the
-///     functions template parameters with the passed types
-/// - if that member does not exist, we can not obtain the decltype, and cannot
-/// instantiate \c std::void_t<>, which fails to initialize the whole function
-/// \c test(int)
-/// - then, the next best instantiation is \c test(long), which returns \c
+/// member function with instances of the passed \c MemberArgs.
+///     - Optionally, \c test_with_template_params also instantiates the
+///     functions template parameters with the passed types.
+/// - If that member does not exist, we can not obtain the \c decltype, and cannot
+/// instantiate \c std::void_t<...>, which fails to initialize the whole function
+/// \c test(int).
+/// - Then, the next best instantiation is \c test(long), which returns \c
 /// std::false_type.
-/// - if we find the requested member, we get \c std::true_type
+/// - If we find the requested member, we get \c std::true_type.
 /// - \c test has \c int and \c long overloads to resolve ambiguity. Passing 0
 /// to \c test ensure that we first try to instantiate the \c true variant.
 #define KAMPING_MAKE_HAS_MEMBER(Member)                                                                         \
