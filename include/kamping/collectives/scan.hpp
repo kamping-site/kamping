@@ -113,9 +113,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 /// size 1 on each rank.
 /// - \ref kamping::op() wrapping the operation to apply to the input.
 ///
-/// The following parameters are optional:
-/// - \ref kamping::recv_buf() containing a buffer for the output.
-///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return The single element result of the scan.
