@@ -118,7 +118,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
-/// @return The single element result of the exclusive scan.
+/// @return The single element result of the scan.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_single(Args... args) const {
