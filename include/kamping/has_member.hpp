@@ -22,7 +22,14 @@
 
 /// @brief Macro for generating has_member_xxx and has_member_xxx_v templates.
 /// They return true if the type given as template parameter has a member
-/// function or class member with the provided name.
+/// (template) function provided name.
+///
+/// If the function has no template parameters or they can be auto-deduced, use \c has_member_xxx::value or \c
+/// has_member_xxx_v, if not use \c has_member_xxx::value_with_template_params<...>.
+///
+/// If the member function takes arguments, pass their types as additional template parameters to \c has_member_xxx.
+///
+/// See the examples for details.
 ///
 /// Example:
 /// \code
