@@ -21,25 +21,13 @@
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/has_member.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/probe.hpp"
 
 using namespace ::kamping;
 
-// Taken from https://stackoverflow.com/a/257382
-template <typename Type>
-class has_member_extract_status {
-    template <typename C>
-    static char test(decltype(&C::template extract_status<>));
-    template <typename C>
-    static int test(...);
-
-public:
-    static bool const value = (sizeof(test<Type>(nullptr)) == sizeof(char));
-};
-
-template <typename T>
-static constexpr bool has_member_extract_status_v = has_member_extract_status<T>::value;
+KAMPING_MAKE_HAS_MEMBER(extract_status)
 
 TEST(ProbeTest, direct_probe) {
     Communicator     comm;
