@@ -67,7 +67,7 @@
 /// // check if Foo.fizz<int>(int) is callable
 /// static_assert(has_member_fizz<Foo, int>::value_with_template_params<int>)
 ///
-/// // check if Foo.fizz<int, double>(int) is callable
+/// // check if Foo.fizz<int, double>() is callable
 /// static_assert(!has_member_fizz<Foo>::value_with_template_params<int, double>)
 /// \endcode
 ///
