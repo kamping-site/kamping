@@ -266,15 +266,13 @@ TEST(MPIResultTest, removed_extract_functions) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_sanity_check;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_sanity_check;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs_sanity_check;
-
-    kamping::MPIResult mpi_result_sanity_check{
+    kamping::MPIResult                                                                    mpi_result_sanity_check{
         std::move(status_sanity_check),
         std::move(recv_buf_sanity_check),
         std::move(recv_counts_sanity_check),
         std::move(recv_displs_sanity_check),
         std::move(send_counts_sanity_check),
         std::move(send_displs_sanity_check)};
-
     EXPECT_TRUE(has_member_extract_status_v<decltype(mpi_result_sanity_check)>);
     EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(mpi_result_sanity_check)>);
     EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(mpi_result_sanity_check)>);
@@ -290,6 +288,12 @@ TEST(MPIResultTest, removed_extract_functions) {
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{}};
+    EXPECT_FALSE(has_member_extract_status_v<decltype(mpi_result)>);
+    EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(mpi_result)>);
+    EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(mpi_result)>);
+    EXPECT_FALSE(has_member_extract_recv_displs_v<decltype(mpi_result)>);
+    EXPECT_FALSE(has_member_extract_send_counts_v<decltype(mpi_result)>);
+    EXPECT_FALSE(has_member_extract_send_displs_v<decltype(mpi_result)>);
 
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_recv_buf;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_recv_buf;
@@ -299,6 +303,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         std::move(recv_displs_recv_buf),
         std::move(send_displs_recv_buf)
     );
+    EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result_recv_buf)>);
 
     LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_recv_counts;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_recv_counts;
@@ -308,6 +313,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         std::move(recv_displs_recv_counts),
         std::move(send_displs_recv_counts)
     );
+    EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(result_recv_counts)>);
 
     LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_recv_displs;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_recv_displs;
@@ -317,6 +323,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         std::move(recv_counts_recv_displs),
         std::move(send_displs_recv_displs)
     );
+    EXPECT_FALSE(has_member_extract_recv_displs_v<decltype(result_recv_displs)>);
 
     LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_send_displs;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_send_displs;
@@ -326,16 +333,6 @@ TEST(MPIResultTest, removed_extract_functions) {
         std::move(recv_counts_send_displs),
         std::move(recv_displs_send_displs)
     );
-
-    EXPECT_FALSE(has_member_extract_status_v<decltype(mpi_result)>);
-    EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(mpi_result)>);
-    EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(mpi_result)>);
-    EXPECT_FALSE(has_member_extract_recv_displs_v<decltype(mpi_result)>);
-    EXPECT_FALSE(has_member_extract_send_counts_v<decltype(mpi_result)>);
-    EXPECT_FALSE(has_member_extract_send_displs_v<decltype(mpi_result)>);
-    EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result_recv_buf)>);
-    EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(result_recv_counts)>);
-    EXPECT_FALSE(has_member_extract_recv_displs_v<decltype(result_recv_displs)>);
     EXPECT_FALSE(has_member_extract_send_displs_v<decltype(result_send_displs)>);
 }
 
