@@ -20,6 +20,7 @@ kamping_register_test(test_data_buffer FILES data_buffer_test.cpp)
 kamping_register_test(test_span FILES span_test.cpp)
 kamping_register_test(test_helpers_for_testing FILES helpers_for_testing_test.cpp)
 kamping_register_test(test_operation_builder FILES operation_builder_test.cpp)
+kamping_register_test(test_has_member FILES has_member_test.cpp)
 
 # Registering tests with MPI:
 
@@ -131,6 +132,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_implementation_helpers
+    FILES implementation_helpers_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_plugins
     FILES plugins_test.cpp
     CORES 1 4
@@ -171,21 +177,6 @@ kamping_register_compilation_failure_test(
     test_mpi_datatype_unsupported_types
     FILES mpi_datatype_unsupported_types_test.cpp
     SECTIONS "POINTER" "FUNCTION" "UNION" "VOID"
-)
-
-kamping_register_compilation_failure_test(
-    test_mpi_function_wrapper_compilation_failure
-    FILES mpi_function_wrapper_helpers_compilation_failures_test.cpp
-    SECTIONS "RECV_BUFFER_NOT_EXTRACTABLE"
-             "RECV_COUNTS_NOT_EXTRACTABLE"
-             "RECV_DISPLACEMENTS_NOT_EXTRACTABLE"
-             "SEND_DISPLACEMENTS_NOT_EXTRACTABLE"
-             "STATUS_NOT_EXTRACTABLE"
-             "MAKE_MPI_RESULT_RECV_BUF_NOT_EXTRACTABLE"
-             "MAKE_MPI_RESULT_RECV_COUNTS_NOT_EXTRACTABLE"
-             "MAKE_MPI_RESULT_RECV_DISPLS_NOT_EXTRACTABLE"
-             "MAKE_MPI_RESULT_SEND_COUNTS_NOT_EXTRACTABLE"
-    LIBRARIES kamping_base
 )
 
 kamping_register_compilation_failure_test(

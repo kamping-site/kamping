@@ -17,6 +17,7 @@
 
 #include "helpers_for_testing.hpp"
 #include "kamping/data_buffer.hpp"
+#include "kamping/has_member.hpp"
 #include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
@@ -47,12 +48,12 @@ void test_recv_buffer_in_MPIResult() {
     int* ptr = recv_buffer.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
-        StatusParam<StatusParamType::ignore>{},
+        ResultCategoryNotUsed{},
         std::move(recv_buffer),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_buffer();
     for (size_t i = 0; i < 10; ++i) {
         EXPECT_EQ(underlying_container[i], i);
@@ -71,12 +72,12 @@ void test_recv_counts_in_MPIResult() {
     int* ptr = recv_counts.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
-        StatusParam<StatusParamType::ignore>{},
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(recv_counts),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_counts();
     for (size_t i = 0; i < 10; ++i) {
         EXPECT_EQ(underlying_container[i], i);
@@ -91,12 +92,12 @@ void test_recv_count_in_MPIResult() {
     LibAllocatedSingleElementBuffer<int, ParameterType::recv_counts, BufferType::in_buffer> recv_count_wrapper{};
     *recv_count_wrapper.get().data() = 42;
     MPIResult mpi_result{
-        StatusParam<StatusParamType::ignore>{},
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(recv_count_wrapper),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
     int recv_count_value = mpi_result.extract_recv_counts();
     EXPECT_EQ(recv_count_value, 42);
 }
@@ -113,12 +114,12 @@ void test_recv_displs_in_MPIResult() {
     int* ptr = recv_displs.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
-        StatusParam<StatusParamType::ignore>{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(recv_displs),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_displs();
     for (size_t i = 0; i < 10; ++i) {
         EXPECT_EQ(underlying_container[i], i);
@@ -137,12 +138,12 @@ void test_send_counts_in_MPIResult() {
     int* ptr = send_counts.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
-        StatusParam<StatusParamType::ignore>{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(send_counts),
-        BufferCategoryNotUsed{}};
+        ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_send_counts();
     for (size_t i = 0; i < 10; ++i) {
         EXPECT_EQ(underlying_container[i], i);
@@ -161,11 +162,11 @@ void test_send_displs_in_MPIResult() {
     int* ptr = send_displs.data();
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
-        StatusParam<StatusParamType::ignore>{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         std::move(send_displs)};
     UnderlyingContainer underlying_container = mpi_result.extract_send_displs();
     for (size_t i = 0; i < 10; ++i) {
@@ -238,13 +239,191 @@ TEST(MpiResultTest, extract_status_basics) {
     status.native_ptr()->MPI_TAG = 42;
     MPIResult mpi_result{
         std::move(status),
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{},
-        BufferCategoryNotUsed{}};
-    auto underlying_status = mpi_result.status();
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{}};
+    auto underlying_status = mpi_result.extract_status();
     EXPECT_EQ(underlying_status.tag(), 42);
+}
+
+KAMPING_MAKE_HAS_MEMBER(extract_status)
+KAMPING_MAKE_HAS_MEMBER(extract_recv_buffer)
+KAMPING_MAKE_HAS_MEMBER(extract_recv_counts)
+KAMPING_MAKE_HAS_MEMBER(extract_recv_displs)
+KAMPING_MAKE_HAS_MEMBER(extract_send_counts)
+KAMPING_MAKE_HAS_MEMBER(extract_send_displs)
+
+TEST(MPIResultTest, removed_extract_functions) {
+    using namespace ::kamping;
+    using namespace ::kamping::internal;
+    constexpr BufferType btype = BufferType::in_buffer;
+    {
+        // All of these should be extractable (used to make sure that the above macros work correctly)
+        StatusParam<StatusParamType::owning>                                                  status_sanity_check;
+        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_sanity_check;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_sanity_check;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_sanity_check;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_sanity_check;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs_sanity_check;
+        kamping::MPIResult                                                                    mpi_result_sanity_check{
+            std::move(status_sanity_check),
+            std::move(recv_buf_sanity_check),
+            std::move(recv_counts_sanity_check),
+            std::move(recv_displs_sanity_check),
+            std::move(send_counts_sanity_check),
+            std::move(send_displs_sanity_check)};
+        EXPECT_TRUE(has_member_extract_status_v<decltype(mpi_result_sanity_check)>);
+        EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(mpi_result_sanity_check)>);
+        EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(mpi_result_sanity_check)>);
+        EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(mpi_result_sanity_check)>);
+        EXPECT_TRUE(has_member_extract_send_counts_v<decltype(mpi_result_sanity_check)>);
+        EXPECT_TRUE(has_member_extract_send_displs_v<decltype(mpi_result_sanity_check)>);
+    }
+
+    {
+        // none of the extract function should work if the underlying buffer does not provide a member extract().
+        kamping::MPIResult mpi_result{
+            ResultCategoryNotUsed{},
+            ResultCategoryNotUsed{},
+            ResultCategoryNotUsed{},
+            ResultCategoryNotUsed{},
+            ResultCategoryNotUsed{},
+            ResultCategoryNotUsed{}};
+        EXPECT_FALSE(has_member_extract_status_v<decltype(mpi_result)>);
+        EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(mpi_result)>);
+        EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(mpi_result)>);
+        EXPECT_FALSE(has_member_extract_recv_displs_v<decltype(mpi_result)>);
+        EXPECT_FALSE(has_member_extract_send_counts_v<decltype(mpi_result)>);
+        EXPECT_FALSE(has_member_extract_send_displs_v<decltype(mpi_result)>);
+    }
+
+    {
+        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_status;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_status;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_status;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_status;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs_status;
+        auto result_status = make_mpi_result(
+            std::move(recv_counts_status),
+            std::move(recv_displs_status),
+            std::move(send_counts_status),
+            std::move(send_displs_status),
+            std::move(recv_buf_status)
+        );
+        EXPECT_FALSE(has_member_extract_status_v<decltype(result_status)>);
+        EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result_status)>);
+        EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result_status)>);
+        EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_status)>);
+        EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_status)>);
+        EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_status)>);
+    }
+
+    {
+        StatusParam<StatusParamType::owning>                                                  status_recv_buf;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_recv_buf;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_recv_buf;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_recv_buf;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs_recv_buf;
+        auto result_recv_buf = make_mpi_result(
+            std::move(status_recv_buf),
+            std::move(recv_counts_recv_buf),
+            std::move(recv_displs_recv_buf),
+            std::move(send_displs_recv_buf),
+            std::move(send_counts_recv_buf)
+        );
+        EXPECT_TRUE(has_member_extract_status_v<decltype(result_recv_buf)>);
+        EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result_recv_buf)>);
+        EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result_recv_buf)>);
+        EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_recv_buf)>);
+        EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_recv_buf)>);
+        EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_recv_buf)>);
+    }
+
+    {
+        StatusParam<StatusParamType::owning>                                                  status_recv_counts;
+        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_recv_counts;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_recv_counts;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_recv_counts;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs_recv_counts;
+        auto result_recv_counts = make_mpi_result(
+            std::move(status_recv_counts),
+            std::move(recv_buf_recv_counts),
+            std::move(recv_displs_recv_counts),
+            std::move(send_counts_recv_counts),
+            std::move(send_displs_recv_counts)
+        );
+        EXPECT_TRUE(has_member_extract_status_v<decltype(result_recv_counts)>);
+        EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result_recv_counts)>);
+        EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(result_recv_counts)>);
+        EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_recv_counts)>);
+        EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_recv_counts)>);
+        EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_recv_counts)>);
+    }
+
+    {
+        StatusParam<StatusParamType::owning>                                                  status_recv_displs;
+        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_recv_displs;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_recv_displs;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_recv_displs;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs_recv_displs;
+        auto result_recv_displs = make_mpi_result(
+            std::move(status_recv_displs),
+            std::move(recv_buf_recv_displs),
+            std::move(recv_counts_recv_displs),
+            std::move(send_counts_recv_displs),
+            std::move(send_displs_recv_displs)
+        );
+        EXPECT_TRUE(has_member_extract_status_v<decltype(result_recv_displs)>);
+        EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result_recv_displs)>);
+        EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result_recv_displs)>);
+        EXPECT_FALSE(has_member_extract_recv_displs_v<decltype(result_recv_displs)>);
+        EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_recv_displs)>);
+        EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_recv_displs)>);
+    }
+
+    {
+        StatusParam<StatusParamType::owning>                                                  status_send_counts;
+        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_send_counts;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_send_counts;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_send_counts;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs_send_counts;
+        auto result_send_counts = make_mpi_result(
+            std::move(status_send_counts),
+            std::move(recv_buf_send_counts),
+            std::move(recv_counts_send_counts),
+            std::move(recv_displs_send_counts),
+            std::move(send_displs_send_counts)
+        );
+        EXPECT_TRUE(has_member_extract_status_v<decltype(result_send_counts)>);
+        EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result_send_counts)>);
+        EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result_send_counts)>);
+        EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_send_counts)>);
+        EXPECT_FALSE(has_member_extract_send_counts_v<decltype(result_send_counts)>);
+        EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_send_counts)>);
+    }
+
+    {
+        StatusParam<StatusParamType::owning>                                                  status_send_displs;
+        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_send_displs;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_send_displs;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_send_displs;
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_send_displs;
+        auto result_send_displs = make_mpi_result(
+            std::move(status_send_displs),
+            std::move(recv_buf_send_displs),
+            std::move(recv_counts_send_displs),
+            std::move(recv_displs_send_displs),
+            std::move(send_counts_send_displs)
+        );
+        EXPECT_TRUE(has_member_extract_status_v<decltype(result_send_displs)>);
+        EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result_send_displs)>);
+        EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result_send_displs)>);
+        EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_send_displs)>);
+        EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_send_displs)>);
+        EXPECT_FALSE(has_member_extract_send_displs_v<decltype(result_send_displs)>);
+    }
 }
 
 TEST(MakeMpiResultTest, pass_random_order_buffer) {
@@ -262,7 +441,7 @@ TEST(MakeMpiResultTest, pass_random_order_buffer) {
         auto result_recv_buf    = result.extract_recv_buffer();
         auto result_recv_counts = result.extract_recv_counts();
         auto result_recv_displs = result.extract_recv_displs();
-        auto result_status      = result.status();
+        auto result_status      = result.extract_status();
 
         static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, char>);
         static_assert(std::is_same_v<decltype(result_recv_counts)::value_type, int>);

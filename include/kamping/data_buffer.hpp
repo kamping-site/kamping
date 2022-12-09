@@ -67,6 +67,26 @@ protected:
     ParameterObjectBase(ParameterObjectBase&&) = default;
     /// @brief Move assignment operator.
     ParameterObjectBase& operator=(ParameterObjectBase&&) = default;
+
+    /// @brief Set the extracted flag to indicate that the status stored in this buffer has been moved out.
+    void set_extracted() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        is_extracted = true;
+#endif
+    }
+
+    /// @brief Throws an assertion if the extracted flag is set, i.e. the underlying status has been moved out.
+    ///
+    /// @param message The message for the assertion.
+    void kassert_not_extracted(std::string const message [[maybe_unused]]) const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, message, assert::normal);
+#endif
+    }
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    bool is_extracted = false; ///< Has the status been extracted and is therefore in an invalid state?
+#endif
 };
 
 /// @brief Boolean value helping to decide if type has a \c value_type member type.
@@ -410,26 +430,7 @@ public:
     }
 
 private:
-    /// @brief Set the extracted flag to indicate that the data stored in this buffer has been moved out.
-    void set_extracted() {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        is_extracted = true;
-#endif
-    }
-
-    /// @brief Throws an assertion if the extracted flag is set, i.e. the underlying data has been moved out.
-    ///
-    /// @param message The message for the assertion.
-    void kassert_not_extracted(std::string const message [[maybe_unused]]) const {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, message, assert::normal);
-#endif
-    }
-
     MemberTypeWithConstAndRef _data; ///< Container which holds the actual data.
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    bool is_extracted = false; ///< Has the container been extracted and is therefore in an invalid state?
-#endif
 };
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
