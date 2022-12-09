@@ -21,7 +21,7 @@
 using namespace ::kamping;
 using namespace ::testing;
 
-TEST(ScanTest, scan_single_without_recv_buf) {
+TEST(ScanTest, scan_single) {
     Communicator comm;
 
     int input = 42;
@@ -32,29 +32,7 @@ TEST(ScanTest, scan_single_without_recv_buf) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(ScanTest, scan_single_with_recv_buf) {
-    Communicator comm;
-
-    int input = 42;
-    int result;
-
-    comm.scan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}));
-    int expected_result = (comm.rank_signed() + 1) * 42;
-    EXPECT_EQ(result, expected_result);
-}
-
-TEST(ScanTest, scan_single_vector_of_size_1_with_recv_buf) {
-    Communicator comm;
-
-    std::vector<int> input = {42};
-    int              result;
-
-    comm.scan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}));
-    int expected_result = (comm.rank_signed() + 1) * 42;
-    EXPECT_EQ(result, expected_result);
-}
-
-TEST(ScanTest, scan_single_vector_of_size_1_without_recv_buf) {
+TEST(ScanTest, scan_single_vector_of_size_1) {
     Communicator comm;
 
     std::vector<int> input = {42};
@@ -65,31 +43,7 @@ TEST(ScanTest, scan_single_vector_of_size_1_without_recv_buf) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(ScanTest, scan_single_vector_of_size_2_with_recv_buf) {
-    Communicator comm;
-
-    {
-        std::vector<int>     input = {42, 1};
-        [[maybe_unused]] int result;
-
-        EXPECT_KASSERT_FAILS(
-            (comm.scan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}))),
-            "The send buffer has to be of size 1 on all ranks."
-        );
-    }
-
-    {
-        std::vector<int>                  input = {42, 1};
-        [[maybe_unused]] std::vector<int> result;
-
-        EXPECT_KASSERT_FAILS(
-            (comm.scan_single(send_buf(input), recv_buf(result), op(kamping::ops::plus<>{}))),
-            "The send buffer has to be of size 1 on all ranks."
-        );
-    }
-}
-
-TEST(ScanTest, scan_single_vector_of_size_2_without_recv_buf) {
+TEST(ScanTest, scan_single_vector_of_size_2) {
     Communicator comm;
 
     std::vector<int> input = {42, 1};
