@@ -18,10 +18,13 @@
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/has_member.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/recv.hpp"
 
 using namespace kamping;
+
+KAMPING_MAKE_HAS_MEMBER(extract_recv_counts);
 
 static size_t call_hierarchy_level = 0;
 static size_t probe_counter        = 0;
@@ -68,11 +71,14 @@ TEST_F(RecvTest, recv_vector_from_arbitrary_source) {
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
-            auto             status = comm.recv(recv_buf(message), status_out()).extract_status();
-            auto             source = status.source();
+            auto             result = comm.recv(recv_buf(message), status_out());
+            ASSERT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+            auto status = result.extract_status();
+            auto source = status.source();
             EXPECT_EQ(status.tag(), source);
             EXPECT_EQ(status.count<int>(), source);
             EXPECT_EQ(message.size(), source);
+            EXPECT_EQ(result.extract_recv_counts(), source);
             EXPECT_EQ(message, std::vector(source, 42));
         }
     }
@@ -98,12 +104,15 @@ TEST_F(RecvTest, recv_vector_from_explicit_source) {
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
-            auto             status = comm.recv(source(other), recv_buf(message), status_out()).extract_status();
-            auto             source = status.source();
+            auto             result = comm.recv(source(other), recv_buf(message), status_out());
+            ASSERT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+            auto status = result.extract_status();
+            auto source = status.source();
             EXPECT_EQ(source, other);
             EXPECT_EQ(status.tag(), source);
             EXPECT_EQ(status.count<int>(), source);
             EXPECT_EQ(message.size(), source);
+            EXPECT_EQ(result.extract_recv_counts(), source);
             EXPECT_EQ(message, std::vector(source, 42));
         }
     }
@@ -129,13 +138,15 @@ TEST_F(RecvTest, recv_vector_from_explicit_source_and_explicit_tag) {
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
-            auto status = comm.recv(source(other), tag(asserting_cast<int>(other)), recv_buf(message), status_out())
-                              .extract_status();
+            auto result = comm.recv(source(other), tag(asserting_cast<int>(other)), recv_buf(message), status_out());
+            ASSERT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+            auto status = result.extract_status();
             auto source = status.source();
             EXPECT_EQ(source, other);
             EXPECT_EQ(status.tag(), source);
             EXPECT_EQ(status.count<int>(), source);
             EXPECT_EQ(message.size(), source);
+            EXPECT_EQ(result.extract_recv_counts(), source);
             EXPECT_EQ(message, std::vector(source, 42));
         }
     }
@@ -162,10 +173,11 @@ TEST_F(RecvTest, recv_vector_with_explicit_size) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message;
         ASSERT_EQ(probe_counter, 0);
-        auto status = comm.recv(recv_buf(message), recv_counts(5), status_out()).extract_status();
+        auto result = comm.recv(recv_buf(message), recv_counts(5), status_out());
+        ASSERT_FALSE(has_member_extract_recv_counts_v<decltype(result)>);
+        auto status = result.extract_status();
         // we should not probe for the message size inside of KaMPIng if we specify the recv count explicitly
         ASSERT_EQ(probe_counter, 0);
-
         ASSERT_EQ(status.source(), comm.root());
         ASSERT_EQ(status.tag(), 0);
         ASSERT_EQ(status.count<int>(), 5);
@@ -177,9 +189,10 @@ TEST_F(RecvTest, recv_vector_with_explicit_size) {
 TEST_F(RecvTest, recv_from_proc_null) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
-    auto         result     = comm.recv(source(rank::null), recv_buf(v), status_out());
-    auto         status     = result.extract_status();
-    size_t       recv_count = static_cast<size_t>(result.extract_recv_counts());
+    auto         result = comm.recv(source(rank::null), recv_buf(v), status_out());
+    ASSERT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+    auto   status     = result.extract_status();
+    size_t recv_count = static_cast<size_t>(result.extract_recv_counts());
     // recv did not touch the buffer
     EXPECT_EQ(v.size(), 5);
     EXPECT_EQ(v, std::vector({1, 2, 3, 4, 5}));
