@@ -50,10 +50,10 @@ int bcast_value(kamping::Communicator<DefaultContainerType> const& comm, T const
 /// This wrapper for \c MPI_Scatter distributes data on the root PE evenly across all PEs in the current
 /// communicator.
 ///
-/// The following parameters are mandatory:
+/// The following parameters are mandatory on the root rank:
 /// - \ref kamping::send_buf() containing the data to be evenly distributed across all PEs. The size of
 /// this buffer must be divisible by the number of PEs in the current communicator. Non-root PEs can omit a send
-/// buffer by passing `kamping::ignore` to \ref kamping::send_buf().
+/// buffer by passing `kamping::ignore<T>` as a parameter of `T` as a template parameter to \ref kamping::send_buf().
 ///
 /// The following parameters are optional but incur communication overhead if omitted:
 /// - \ref kamping::recv_counts() specifying the number of elements sent to each PE. If this parameter is omitted,
@@ -188,9 +188,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 ///
 /// This wrapper for \c MPI_Scatterv distributes data on the root PE across all PEs in the current communicator.
 ///
-/// The following parameters are mandatory:
+/// The following parameters are mandatory on the root rank:
 /// - \ref kamping::send_buf() [on all PEs] containing the data to be distributed across all PEs. Non-root PEs can omit
-/// a send buffer by passing `kamping::ignore` to \ref kamping::send_buf().
+/// a send buffer by passing `kamping::ignore<T>` as a parameter of `T` as a template parameter to \ref
+/// kamping::send_buf().
 ///
 /// Of the following parameters, one can be omitted at the cost of communication overhead (1x MPI_Scatter or 1x
 /// MPI_Gather). Provide both parameters to avoid overheads.
