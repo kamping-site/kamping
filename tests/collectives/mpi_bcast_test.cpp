@@ -340,6 +340,19 @@ TEST(BcastTest, message_of_size_0) {
     // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(0)), "");
 }
 
+TEST(BcastTest, parameter_only_on_root) {
+    Communicator<OwnContainer> comm;
+
+    OwnContainer<int> message;
+    if (comm.is_root()) {
+        message = {42, 1337};
+        comm.bcast(send_recv_buf(message));
+    } else {
+        message = comm.bcast<int>().extract_recv_buffer();
+    }
+    EXPECT_THAT(message, ElementsAre(42, 1337));
+}
+
 TEST(BcastTest, bcast_single) {
     // bcast_single is a wrapper around bcast, providing the recv_count(1).
     // There is not much we can test here, that's not already tested by the tests for bcast.
@@ -360,6 +373,20 @@ TEST(BcastTest, bcast_single) {
     //
     // value_vector.resize(0);
     // EXPECT_KASSERT_FAILS(comm.bcast_single(send_recv_buf(value_vector)), "");
+}
+
+TEST(BcastTest, bcast_single_parameter_only_on_root) {
+    Communicator comm;
+
+    int value = 1;
+    if (comm.is_root()) {
+        value = comm.rank_signed();
+        comm.bcast_single(send_recv_buf(value));
+    } else {
+        value = comm.bcast_single<int>();
+    }
+
+    EXPECT_EQ(value, 0);
 }
 
 TEST(BcastTest, bcast_single_invalid_parameters) {
