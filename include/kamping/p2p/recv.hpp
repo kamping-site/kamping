@@ -40,12 +40,11 @@
 /// If the \ref kamping::send_counts() parameter is not specified, this first performs a probe, followed by a receive of
 /// the probed message with the probed message size.
 ///
-/// The following parameter is required:
+/// The following parameters are optional:
 /// - \ref kamping::recv_buf() the buffer to receive the message into. If possible, this buffer will be resized to
 /// accommodate the number of elements to receive. Use \c kamping::Span with enough space if you do not want the buffer
-/// to be resized.
-///
-/// The following parameters are optional:
+/// to be resized. If no \ref kamping::recv_buf() is provided, the type that should be received has to be passed as a
+/// template parameter to \c recv().
 /// - \ref kamping::tag() recv message with this tag. Defaults to receiving
 /// for an arbitrary tag, i.e. \c tag(tags::any).
 /// - \ref kamping::source() receive a message sent from this source rank.
@@ -63,16 +62,25 @@
 /// @param args All required and any number of the optional buffers described
 /// above.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
-template <typename... Args>
+template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args) const {
     KAMPING_CHECK_PARAMETERS(
         Args,
-        KAMPING_REQUIRED_PARAMETERS(recv_buf),
-        KAMPING_OPTIONAL_PARAMETERS(tag, source, recv_counts, status)
+        KAMPING_REQUIRED_PARAMETERS(),
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, tag, source, recv_counts, status)
     );
-
-    auto& recv_buf        = internal::select_parameter_type<internal::ParameterType::recv_buf>(args...);
+    using default_recv_buf_type =
+        decltype(kamping::recv_buf(NewContainer<DefaultContainerType<recv_value_type_tparam>>{}));
+    auto&& recv_buf =
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
+            std::tuple(),
+            args...
+        );
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
+    static_assert(
+        !std::is_same_v<recv_value_type, internal::unused_tparam>,
+        "No recv_buf parameter provided and no receive value given as template parameter. One of these is required."
+    );
 
     using default_source_buf_type = decltype(kamping::source(rank::any));
 
