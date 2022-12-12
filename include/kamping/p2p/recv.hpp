@@ -54,7 +54,7 @@
 /// the received message by setting the appropriate fields in the status object
 /// passed by the user. If \ref kamping::status_out() is passed, constructs a
 /// status object which may be retrieved by the user. The status can be ignored by
-/// passing \ref kamping::status(kamping::ignore<>). This is the default.
+/// passing \c kamping::status(kamping::ignore<>). This is the default.
 /// - \ref kamping::send_counts() the number of elements to receive. Will be probed before receiving if not given.
 ///
 /// @tparam Args Automatically deducted template parameters.
