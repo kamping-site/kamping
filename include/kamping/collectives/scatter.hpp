@@ -258,7 +258,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
 
     // Make sure that send and recv buffers use the same type
     static_assert(
-        std::is_same_v<send_value_type, recv_value_type>,
+        std::is_same_v<send_value_type, recv_value_type> || std::is_same_v<send_value_type, internal::unused_tparam>,
         "Mismatching send_buf() and recv_buf() value types."
     );
 

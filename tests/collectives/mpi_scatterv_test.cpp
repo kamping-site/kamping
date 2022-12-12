@@ -255,7 +255,7 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements_send_buf_only_on_root_with_r
             comm.scatterv(send_buf(input), send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count))
                 .extract_recv_buffer();
     } else {
-        comm.scatterv<int>(recv_buf(result), send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count));
+        comm.scatterv(recv_buf(result), send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count));
     }
 
     if (comm.is_root()) {
