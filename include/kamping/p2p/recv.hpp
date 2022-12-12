@@ -56,7 +56,7 @@
 /// status object which may be retrieved by the user. The status can be ignored by
 /// passing \c kamping::status(kamping::ignore<>). This is the default.
 ///
-/// The following parameter is optional, but loads to an additional call to \c MPI_Probe if not present:
+/// The following parameter is optional, but leads to an additional call to \c MPI_Probe if not present:
 /// - \ref kamping::send_counts() the number of elements to receive. Will be probed before receiving if not given.
 ///
 /// @tparam Args Automatically deducted template parameters.
