@@ -91,8 +91,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
             return default_send_recv_buf_type();
         }
     }();
+
     using value_type = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
     static_assert(!std::is_const_v<decltype(send_recv_buf)>, "Const send_recv_buffers are not allowed.");
+    static_assert(
+        !std::is_same_v<value_type, internal::unused_tparam>,
+        "No send_recv_buf parameter provided and no receive value given as template parameter. One of these is "
+        "required."
+    );
+
     auto mpi_value_type = mpi_datatype<value_type>();
 
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
