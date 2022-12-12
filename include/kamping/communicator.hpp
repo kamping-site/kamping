@@ -262,7 +262,7 @@ public:
     template <typename... Args>
     auto alltoallv(Args... args) const;
 
-    template <typename... Args>
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto scatter(Args... args) const;
 
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
