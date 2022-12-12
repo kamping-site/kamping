@@ -38,7 +38,7 @@
 ///
 /// This wraps \c MPI_Recv. This operation performs a standard blocking receive.
 /// If the \ref kamping::send_counts() parameter is not specified, this first performs a probe, followed by a receive of
-/// probed message with the probed message size.
+/// the probed message with the probed message size.
 ///
 /// The following parameters are required:
 /// - \ref kamping::recv_buf() the buffer to receive the message into. If possible, this buffer will be resized to
@@ -54,7 +54,7 @@
 /// the received message by setting the appropriate fields in the status object
 /// passed by the user. If \ref kamping::status_out() is passed, constructs a
 /// status object which may be retrieved by the user. The status can be ignored by
-/// passing \ref kamping::status(kamping::ignore<>).
+/// passing \ref kamping::status(kamping::ignore<>). This is the default.
 /// - \ref kamping::send_counts() the number of elements to receive. Will be probed before receiving if not given.
 ///
 /// @tparam Args Automatically deducted template parameters.

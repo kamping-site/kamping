@@ -41,7 +41,7 @@
 /// the probed message by setting the appropriate fields in the status object
 /// passed by the user. If \ref kamping::status_out() is passed, constructs a
 /// status object which may be retrieved by the user.
-/// The status can be ignored by passing \ref kamping::status(kamping::ignore<>).
+/// The status can be ignored by passing \ref kamping::status(kamping::ignore<>). This is the default.
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described
