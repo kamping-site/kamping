@@ -24,7 +24,7 @@
 
 using namespace kamping;
 
-KAMPING_MAKE_HAS_MEMBER(extract_recv_counts);
+KAMPING_MAKE_HAS_MEMBER(extract_recv_counts)
 
 static size_t call_hierarchy_level = 0;
 static size_t probe_counter        = 0;
