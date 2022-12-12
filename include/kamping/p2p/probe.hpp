@@ -37,9 +37,11 @@
 /// for an arbitrary tag, i.e. \c tag(tags::any).
 /// - \ref kamping::source() probe for messages sent from this source rank.
 /// Defaults to probing for an arbitrary source, i.e. \c source(rank::any).
-/// - \ref kamping::status() or \ref kamping::status_out(). Returns info about the probed message by setting the
-/// appropriate fields in the status object passed by the user. If \ref kamping::status_out() is passed, constructs a
-/// status object which may be retrieved by the user. This is also the default.
+/// - \ref kamping::status() or \ref kamping::status_out(). Returns info about
+/// the probed message by setting the appropriate fields in the status object
+/// passed by the user. If \ref kamping::status_out() is passed, constructs a
+/// status object which may be retrieved by the user.
+/// The status can be ignored by passing \ref kamping::status(kamping::ignore<>).
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described

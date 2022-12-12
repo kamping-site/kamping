@@ -34,6 +34,32 @@
 #include "kamping/parameter_objects.hpp"
 #include "kamping/status.hpp"
 
+/// @brief Wrapper for \c MPI_Recv.
+///
+/// This wraps \c MPI_Recv. This operation performs a standard blocking receive.
+/// If the \ref kamping::send_counts() parameter is not specified, this first performs a probe, followed by a receive of
+/// probed message with the probed message size.
+///
+/// The following parameters are required:
+/// - \ref kamping::recv_buf() the buffer to receive the message into. If possible, this buffer will be resized to
+/// accommodate the number of elements to receive. Use \c kamping::Span with enough space if you do not want the buffer
+/// to be resized.
+///
+/// The following parameters are optional:
+/// - \ref kamping::tag() recv message with this tag. Defaults to receiving
+/// for an arbitrary tag, i.e. \c tag(tags::any).
+/// - \ref kamping::source() receive a message sent from this source rank.
+/// Defaults to probing for an arbitrary source, i.e. \c source(rank::any).
+/// - \ref kamping::status() or \ref kamping::status_out(). Returns info about
+/// the received message by setting the appropriate fields in the status object
+/// passed by the user. If \ref kamping::status_out() is passed, constructs a
+/// status object which may be retrieved by the user. The status can be ignored by
+/// passing \ref kamping::status(kamping::ignore<>).
+/// - \ref kamping::send_counts() the number of elements to receive. Will be probed before receiving if not given.
+///
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described
+/// above.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args) const {
@@ -88,8 +114,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         *recv_count_param.data() = asserting_cast<int>(probe_status.template count<recv_value_type>());
     }
 
-    // Ensure that we do not touch the recv buffer if MPI_PROC_NULL is passed, because this is what the standard
-    // guarantees.
+    // Ensure that we do not touch the recv buffer if MPI_PROC_NULL is passed,
+    // because this is what the standard guarantees.
     if constexpr (std::remove_reference_t<decltype(source_param)>::rank_type != internal::RankType::null) {
         recv_buf.resize(asserting_cast<size_t>(recv_count_param.get_single_element()));
     }
