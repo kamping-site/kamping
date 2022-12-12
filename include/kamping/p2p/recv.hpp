@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <type_traits>
 #include <utility>
 
 #include <kassert/kassert.hpp>
@@ -23,11 +24,15 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/implementation_helpers.hpp"
 #include "kamping/mpi_datatype.hpp"
+#include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/parameter_objects.hpp"
+#include "kamping/status.hpp"
 
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
@@ -38,13 +43,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         KAMPING_OPTIONAL_PARAMETERS(tag, source, recv_counts, status)
     );
 
-    auto& recv_buf_param  = internal::select_parameter_type<internal::ParameterType::recv_buf>(args...);
-    auto  recv_buf        = recv_buf_param.get();
-    using recv_value_type = typename std::remove_reference_t<decltype(recv_buf_param)>::value_type;
+    auto& recv_buf        = internal::select_parameter_type<internal::ParameterType::recv_buf>(args...);
+    using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     using default_source_buf_type = decltype(kamping::source(rank::any));
 
-    auto&& source =
+    auto&& source_param =
         internal::select_parameter_type_or_default<internal::ParameterType::source, default_source_buf_type>(
             {},
             args...
@@ -54,12 +58,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
 
     auto&& tag_param =
         internal::select_parameter_type_or_default<internal::ParameterType::tag, default_tag_buf_type>({}, args...);
-    int tag = tag_param.tag();
-
-    constexpr auto tag_type = std::remove_reference_t<decltype(tag_param)>::tag_type;
-    if constexpr (tag_type == internal::TagType::value) {
-        KASSERT(is_valid_tag(tag), "invalid tag " << tag << ", maximum allowed tag is " << tag_upper_bound());
-    }
 
     using default_status_param_type = decltype(kamping::status(kamping::ignore<>));
 
@@ -78,30 +76,36 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
             args...
         );
 
+    KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
+    int            source                         = source_param.rank_signed();
+    int            tag                            = tag_param.tag();
     constexpr bool recv_count_is_output_parameter = internal::has_to_be_computed<decltype(recv_count_param)>;
     if constexpr (recv_count_is_output_parameter) {
-        auto probe_status        = this->probe(source, tag_param, status_out()).status();
-        *recv_count_param.data() = probe_status.template count<recv_value_type>();
+        Status probe_status;
+        MPI_Probe(source, tag, this->mpi_communicator(), &probe_status.native());
+        source                   = probe_status.source_signed();
+        tag                      = probe_status.tag();
+        *recv_count_param.data() = asserting_cast<int>(probe_status.template count<recv_value_type>());
     }
 
-    constexpr auto rank_type = std::remove_reference_t<decltype(source)>::rank_type;
-    if constexpr (rank_type == internal::RankType::value) {
-        KASSERT(this->is_valid_rank(source.rank_signed()), "Invalid receiver rank.");
+    // Ensure that we do not touch the recv buffer if MPI_PROC_NULL is passed, because this is what the standard
+    // guarantees.
+    if constexpr (std::remove_reference_t<decltype(source_param)>::rank_type != internal::RankType::null) {
+        recv_buf.resize(asserting_cast<size_t>(recv_count_param.get_single_element()));
     }
-    recv_buf.resize(recv_count_param.get_single_element());
 
     [[maybe_unused]] int err = MPI_Recv(
         recv_buf.data(),                                            // buf
         asserting_cast<int>(recv_count_param.get_single_element()), // count
         mpi_datatype<recv_value_type>(),                            // dataype
-        source.rank_signed(),                                       // source
+        source,                                                     // source
         tag,                                                        // tag
         this->mpi_communicator(),                                   // comm
         status.native_ptr()                                         // status
     );
     THROW_IF_MPI_ERROR(err, MPI_Recv);
 
-    return make_mpi_result(std::move(recv_buf), std::move(status));
+    return make_mpi_result(std::move(recv_buf), std::move(recv_count_param), std::move(status));
 }
 
 // template <typename T, typename... Args>
