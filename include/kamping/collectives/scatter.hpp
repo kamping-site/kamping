@@ -207,14 +207,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
-template <typename... Args>
+template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... args) const {
     using namespace kamping::internal;
 
     KAMPING_CHECK_PARAMETERS(
         Args,
-        KAMPING_REQUIRED_PARAMETERS(send_buf),
-        KAMPING_OPTIONAL_PARAMETERS(root, send_counts, send_displs, recv_buf, recv_counts)
+        KAMPING_REQUIRED_PARAMETERS(),
+        KAMPING_OPTIONAL_PARAMETERS(send_buf, root, send_counts, send_displs, recv_buf, recv_counts)
     );
 
     // Optional parameter: root()
@@ -231,7 +231,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     KASSERT(is_same_on_all_ranks(root_val), "Root has to be the same on all ranks.", assert::light_communication);
 
     // Mandatory parameter send_buf()
-    auto send_buf              = select_parameter_type<ParameterType::send_buf>(args...).get();
+    using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
+    auto send_buf =
+        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...).get();
     using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
     auto const*  send_buf_ptr  = send_buf.data();
@@ -247,6 +249,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         );
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
+
+    static_assert(
+        !std::is_same_v<recv_value_type, internal::unused_tparam>,
+        "No send_buf or recv_buf parameter provided and no receive value given as template parameter. One of these is "
+        "required."
+    );
 
     // Make sure that send and recv buffers use the same type
     static_assert(
