@@ -72,7 +72,7 @@ TEST_F(RecvTest, recv_vector_from_arbitrary_source) {
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
             auto             result = comm.recv(recv_buf(message), status_out());
-            ASSERT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+            EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
             auto status = result.extract_status();
             auto source = status.source();
             EXPECT_EQ(status.tag(), source);
@@ -105,7 +105,7 @@ TEST_F(RecvTest, recv_vector_from_explicit_source) {
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
             auto             result = comm.recv(source(other), recv_buf(message), status_out());
-            ASSERT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+            EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
             auto status = result.extract_status();
             auto source = status.source();
             EXPECT_EQ(source, other);
@@ -139,7 +139,7 @@ TEST_F(RecvTest, recv_vector_from_explicit_source_and_explicit_tag) {
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
             auto result = comm.recv(source(other), tag(asserting_cast<int>(other)), recv_buf(message), status_out());
-            ASSERT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+            EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
             auto status = result.extract_status();
             auto source = status.source();
             EXPECT_EQ(source, other);
@@ -172,16 +172,16 @@ TEST_F(RecvTest, recv_vector_with_explicit_size) {
     }
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message;
-        ASSERT_EQ(probe_counter, 0);
+        EXPECT_EQ(probe_counter, 0);
         auto result = comm.recv(recv_buf(message), recv_counts(5), status_out());
-        ASSERT_FALSE(has_member_extract_recv_counts_v<decltype(result)>);
+        EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(result)>);
         auto status = result.extract_status();
         // we should not probe for the message size inside of KaMPIng if we specify the recv count explicitly
-        ASSERT_EQ(probe_counter, 0);
-        ASSERT_EQ(status.source(), comm.root());
-        ASSERT_EQ(status.tag(), 0);
-        ASSERT_EQ(status.count<int>(), 5);
-        ASSERT_EQ(message, std::vector<int>({1, 2, 3, 4, 5}));
+        EXPECT_EQ(probe_counter, 0);
+        EXPECT_EQ(status.source(), comm.root());
+        EXPECT_EQ(status.tag(), 0);
+        EXPECT_EQ(status.count<int>(), 5);
+        EXPECT_EQ(message, std::vector<int>({1, 2, 3, 4, 5}));
     }
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
@@ -190,7 +190,7 @@ TEST_F(RecvTest, recv_from_proc_null) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     auto         result = comm.recv(source(rank::null), recv_buf(v), status_out());
-    ASSERT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+    EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
     auto   status     = result.extract_status();
     size_t recv_count = static_cast<size_t>(result.extract_recv_counts());
     // recv did not touch the buffer
