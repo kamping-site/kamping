@@ -58,6 +58,7 @@
 /// The following parameter is optional, but leads to an additional call to \c MPI_Probe if not present:
 /// - \ref kamping::send_counts() the number of elements to receive. Will be probed before receiving if not given.
 ///
+/// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::recv_buf() is given.
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described
 /// above.

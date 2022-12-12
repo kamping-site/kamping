@@ -65,6 +65,8 @@ int bcast_value(kamping::Communicator<DefaultContainerType> const& comm, T const
 /// is used instead.
 /// - \ref kamping::recv_buf() containing the received data. If omitted, a new buffer is allocated and returned.
 ///
+/// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::send_buf() and no \ref
+/// kamping::recv_buf() is given.
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
@@ -212,6 +214,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 /// - \ref kamping::recv_buf() [on all PEs] containing the received data. If omitted, a new buffer is allocated and
 /// returned.
 ///
+/// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::send_buf() and no \ref
+/// kamping::recv_buf() is given.
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.

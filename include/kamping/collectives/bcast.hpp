@@ -52,6 +52,8 @@
 /// @todo Add support for `bcast<int>(..)` style deduction of send_recv_buf's type on non-root ranks.
 /// @todo Add support for unnamed first parameter send_recv_buf.
 ///
+/// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::send_recv_buf() is
+/// given.
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
@@ -189,6 +191,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
 ///
 /// @todo Add support for unnamed first parameter send_recv_buf.
 ///
+/// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::send_recv_buf() is
+/// given.
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return The single broadcasted value.
