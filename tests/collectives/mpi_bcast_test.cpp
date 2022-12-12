@@ -19,9 +19,11 @@
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
+#include "kamping/assertion_levels.hpp"
 #include "kamping/collectives/bcast.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kassert/kassert.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -340,7 +342,7 @@ TEST(BcastTest, message_of_size_0) {
     // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(0)), "");
 }
 
-TEST(BcastTest, parameter_only_on_root) {
+TEST(BcastTest, send_recv_buf_parameter_only_on_root) {
     Communicator<OwnContainer> comm;
 
     OwnContainer<int> message;
@@ -351,6 +353,17 @@ TEST(BcastTest, parameter_only_on_root) {
         message = comm.bcast<int>().extract_recv_buffer();
     }
     EXPECT_THAT(message, ElementsAre(42, 1337));
+}
+
+TEST(BcastTest, send_recv_buf_parameter_required_on_root) {
+    Communicator comm;
+
+    OwnContainer<int> message;
+    if (comm.is_root()) {
+        if (KASSERT_ENABLED(kamping::assert::light)) {
+            EXPECT_KASSERT_FAILS(comm.bcast(), "" send_recv_buf_must be provided on the root rank.",");
+        }
+    }
 }
 
 TEST(BcastTest, bcast_single) {
@@ -375,7 +388,7 @@ TEST(BcastTest, bcast_single) {
     // EXPECT_KASSERT_FAILS(comm.bcast_single(send_recv_buf(value_vector)), "");
 }
 
-TEST(BcastTest, bcast_single_parameter_only_on_root) {
+TEST(BcastTest, bcast_single_send_recv_buf_parameter_only_on_root) {
     Communicator comm;
 
     int value = 1;
@@ -387,6 +400,17 @@ TEST(BcastTest, bcast_single_parameter_only_on_root) {
     }
 
     EXPECT_EQ(value, 0);
+}
+
+TEST(BcastTest, bcast_single_send_recv_buf_parameter_required_on_root) {
+    Communicator comm;
+
+    OwnContainer<int> message;
+    if (comm.is_root()) {
+        if (KASSERT_ENABLED(kamping::assert::light)) {
+            EXPECT_KASSERT_FAILS(comm.bcast_single(), "" send_recv_buf_must be provided on the root rank.",");
+        }
+    }
 }
 
 TEST(BcastTest, bcast_single_invalid_parameters) {
