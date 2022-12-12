@@ -133,6 +133,3 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
 
     return make_mpi_result(std::move(recv_buf), std::move(recv_count_param), std::move(status));
 }
-
-// template <typename T, typename... Args>
-// auto recv_single(Args... args) const {}
