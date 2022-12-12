@@ -75,7 +75,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     if (this->is_root(root.rank_signed())) {
         KASSERT(
             has_parameter_type<internal::ParameterType::send_recv_buf>(args...),
-            "send_recv_buf_must be provided on the root rank.",
+            "send_recv_buf must be provided on the root rank.",
             assert::light
         );
     }
@@ -205,7 +205,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
     if (this->is_root(root.rank_signed())) {
         KASSERT(
             has_parameter_type<internal::ParameterType::send_recv_buf>(args...),
-            "send_recv_buf_must be provided on the root rank.",
+            "send_recv_buf must be provided on the root rank.",
             assert::light
         );
     }
