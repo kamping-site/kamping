@@ -56,11 +56,11 @@ TEST(BcastTest, single_element) {
     // Broadcast a single POD to all processes, manually specify the recv_count.
     value = comm.rank();
     /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
-    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(0)), "");
+    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_counts(0)), "");
     comm.bcast(send_recv_buf(value), recv_counts(1));
     EXPECT_EQ(value, root);
     /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
-    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_count(2)), "");
+    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_counts(2)), "");
 }
 
 TEST(BcastTest, single_element_bool) {
@@ -163,7 +163,7 @@ TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
     //     const int    num_transferred_values = num_values - 1;
 
     //     std::vector<int> values(num_values);
-    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)), "");
+    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_counts(num_transferred_values)), "");
     // }
 
     /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
@@ -172,7 +172,7 @@ TEST(BcastTest, vector_recv_count_not_equal_to_vector_size) {
     //     const int    num_transferred_values = num_values + 1;
 
     //     std::vector<int> values(num_values);
-    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(num_transferred_values)), "");
+    //     EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_counts(num_transferred_values)), "");
     // }
 }
 
@@ -337,11 +337,11 @@ TEST(BcastTest, message_of_size_0) {
 
     values.resize(1);
     /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
-    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_count(0)), "");
+    // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values), recv_counts(0)), "");
 }
 
 TEST(BcastTest, bcast_single) {
-    // bcast_single is a wrapper around bcast, providing the recv_count(1).
+    // bcast_single is a wrapper around bcast, providing the recv_counts(1).
     // There is not much we can test here, that's not already tested by the tests for bcast.
 
     Communicator comm;
