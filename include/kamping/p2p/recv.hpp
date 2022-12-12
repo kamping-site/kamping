@@ -106,6 +106,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     int            source                         = source_param.rank_signed();
     int            tag                            = tag_param.tag();
     constexpr bool recv_count_is_output_parameter = internal::has_to_be_computed<decltype(recv_count_param)>;
+    static_assert(
+        std::remove_reference_t<decltype(recv_count_param)>::is_single_element,
+        "recv_counts() parameter must be a single value."
+    );
     if constexpr (recv_count_is_output_parameter) {
         Status probe_status;
         MPI_Probe(source, tag, this->mpi_communicator(), &probe_status.native());
