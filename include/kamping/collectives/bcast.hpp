@@ -49,7 +49,6 @@
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c
 /// Communicator is used, see root().
 ///
-/// @todo Add support for `bcast<int>(..)` style deduction of send_recv_buf's type on non-root ranks.
 /// @todo Add support for unnamed first parameter send_recv_buf.
 ///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::send_recv_buf() is
