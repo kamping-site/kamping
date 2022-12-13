@@ -28,7 +28,18 @@ using namespace ::kamping;
 
 KAMPING_MAKE_HAS_MEMBER(extract_status)
 
-TEST(ProbeTest, direct_probe) {
+class ProbeTest : public ::testing::Test {
+    void SetUp() override {
+        // this makes sure that messages don't spill from other tests
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+    void TearDown() override {
+        // this makes sure that messages don't spill to other tests
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+};
+
+TEST_F(ProbeTest, direct_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -101,7 +112,7 @@ TEST(ProbeTest, direct_probe) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-TEST(ProbeTest, any_source_probe) {
+TEST_F(ProbeTest, any_source_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -150,7 +161,7 @@ TEST(ProbeTest, any_source_probe) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-TEST(ProbeTest, any_tag_probe) {
+TEST_F(ProbeTest, any_tag_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -198,7 +209,7 @@ TEST(ProbeTest, any_tag_probe) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-TEST(ProbeTest, arbitrary_probe) {
+TEST_F(ProbeTest, arbitrary_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -287,7 +298,7 @@ TEST(ProbeTest, arbitrary_probe) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-TEST(ProbeTest, probe_null) {
+TEST_F(ProbeTest, probe_null) {
     Communicator comm;
     auto         status = comm.probe(source(rank::null), status_out()).extract_status();
     EXPECT_EQ(status.source_signed(), MPI_PROC_NULL);
