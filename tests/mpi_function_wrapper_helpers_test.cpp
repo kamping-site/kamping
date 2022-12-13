@@ -463,6 +463,14 @@ TEST(MakeMpiResultTest, pass_random_order_buffer) {
     }
 }
 
+TEST(MakeMpiResultTest, pass_send_recv_buf) {
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_recv_buf, BufferType::in_out_buffer>
+         send_recv_buf;
+    auto result          = make_mpi_result(std::move(send_recv_buf));
+    auto result_recv_buf = result.extract_recv_buffer();
+    static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, int>);
+}
+
 TEST(MakeMpiResultTest, check_content) {
     constexpr BufferType btype = BufferType::in_buffer;
 

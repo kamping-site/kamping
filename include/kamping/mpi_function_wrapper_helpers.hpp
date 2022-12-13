@@ -20,6 +20,7 @@
 
 #include "kamping/has_member.hpp"
 #include "kamping/named_parameter_selection.hpp"
+#include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
 
 namespace kamping {
@@ -181,10 +182,20 @@ template <typename... Args>
 auto make_mpi_result(Args... args) {
     using default_type = decltype(internal::ResultCategoryNotUsed{});
 
-    auto&& recv_buf = internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(
-        std::tuple(),
-        args...
-    );
+    auto&& recv_buf = [&]() {
+        // I'm not sure why return value optimization doesn't apply here, but the moves seem to be necessary.
+        if constexpr (internal::has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
+            return std::move(internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...));
+        } else {
+            return std::move(
+                internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(
+                    std::tuple(),
+                    args...
+                )
+            );
+        }
+    }();
+
     auto&& recv_counts = internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_type>(
         std::tuple(),
         args...

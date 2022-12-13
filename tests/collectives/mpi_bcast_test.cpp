@@ -21,6 +21,7 @@
 #include "../helpers_for_testing.hpp"
 #include "kamping/collectives/bcast.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/data_buffer.hpp"
 #include "kamping/named_parameters.hpp"
 
 using namespace ::kamping;
@@ -61,6 +62,21 @@ TEST(BcastTest, single_element) {
     EXPECT_EQ(value, root);
     /// @todo Uncomment, once EXPECT_KASSERT_FAILS supports KASSERTs which fail only on some ranks.
     // EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(value), recv_counts(2)), "");
+}
+
+TEST(BcastTest, extract_receive_buffer) {
+    Communicator comm;
+
+    // Basic use case, broadcast a single POD.
+    std::vector<size_t> values;
+    if (comm.is_root()) {
+        values = {42, 1337};
+        comm.bcast(send_recv_buf(values));
+    } else {
+        values = comm.bcast(send_recv_buf(NewContainer<std::vector<size_t>>{})).extract_recv_buffer();
+    }
+
+    EXPECT_THAT(values, ElementsAre(42, 1337));
 }
 
 TEST(BcastTest, single_element_bool) {
