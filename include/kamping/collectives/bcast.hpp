@@ -82,18 +82,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         );
     }
 
-    // Get the send_recv_buf. If it is not provided by the user, it is always only received into, so the default type is
-    // a recv_buf.
     using default_send_recv_buf_type =
-        decltype(kamping::recv_buf(NewContainer<DefaultContainerType<recv_value_type_tparam>>{}));
-    auto&& send_recv_buf = [&]() {
-        if constexpr (has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
-            // I'm not sure why return value optimization doesn't apply here, but the move seems to be necessary.
-            return std::move(internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...));
-        } else {
-            return default_send_recv_buf_type();
-        }
-    }();
+        decltype(kamping::send_recv_buf(NewContainer<DefaultContainerType<recv_value_type_tparam>>{}));
+    auto&& send_recv_buf =
+        internal::select_parameter_type_or_default<internal::ParameterType::send_recv_buf, default_send_recv_buf_type>(
+            std::tuple(),
+            args...
+        );
 
     using value_type = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
     static_assert(!std::is_const_v<decltype(send_recv_buf)>, "Const send_recv_buffers are not allowed.");
