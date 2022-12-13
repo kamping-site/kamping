@@ -88,6 +88,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         decltype(kamping::recv_buf(NewContainer<DefaultContainerType<recv_value_type_tparam>>{}));
     auto&& send_recv_buf = [&]() {
         if constexpr (has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
+            // I'm not sure why return value optimization doesn't apply here, but the move seems to be necessary.
             return std::move(internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...));
         } else {
             return default_send_recv_buf_type();
