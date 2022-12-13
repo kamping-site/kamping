@@ -104,7 +104,7 @@ TEST(ScatterTest, scatter_multiple_elements) {
     EXPECT_THAT(result, Each(comm.rank()));
 }
 
-TEST(ScatterTest, scatter_with_send_buf_only_on_root_with_recv_buf) {
+TEST(ScatterTest, scatter_with_send_buf_ignore_with_recv_buf) {
     Communicator comm;
 
     auto const       input = create_input_vector_on_root(comm, 1);
@@ -119,12 +119,38 @@ TEST(ScatterTest, scatter_with_send_buf_only_on_root_with_recv_buf) {
     EXPECT_EQ(result.front(), comm.rank());
 }
 
-TEST(ScatterTest, scatter_with_send_buf_only_on_root) {
+TEST(ScatterTest, scatter_with_send_buf_ignore) {
     Communicator comm;
 
     auto const input  = create_input_vector_on_root(comm, 1);
     auto const result = (comm.is_root()) ? comm.scatter(send_buf(input)).extract_recv_buffer()
                                          : comm.scatter(send_buf(ignore<int>)).extract_recv_buffer();
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+}
+
+TEST(ScatterTest, scatter_with_send_buf_only_on_root_with_recv_buf) {
+    Communicator comm;
+
+    auto const       input = create_input_vector_on_root(comm, 1);
+    std::vector<int> result;
+    if (comm.is_root()) {
+        comm.scatter(send_buf(input), recv_buf(result));
+    } else {
+        comm.scatter(recv_buf(result));
+    }
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+}
+
+TEST(ScatterTest, scatter_with_send_buf_only_on_root) {
+    Communicator comm;
+
+    auto const input  = create_input_vector_on_root(comm, 1);
+    auto const result = (comm.is_root()) ? comm.scatter(send_buf(input)).extract_recv_buffer()
+                                         : comm.scatter<int>().extract_recv_buffer();
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());

@@ -213,6 +213,63 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements) {
     EXPECT_THAT(result, Each(Eq(comm.rank_signed())));
 }
 
+TEST(ScattervTest, scatterv_equiv_multiple_elements_send_buf_only_on_root_no_receive_buf) {
+    Communicator comm;
+
+    auto const       input  = create_equiv_sized_input_vector_on_root(comm, comm.size_signed());
+    auto const       counts = create_equiv_counts_on_root(comm, comm.size_signed());
+    std::vector<int> displs;
+    int              recv_count;
+    std::vector<int> result;
+    if (comm.is_root()) {
+        result =
+            comm.scatterv(send_buf(input), send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count))
+                .extract_recv_buffer();
+    } else {
+        result = comm.scatterv<int>(send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count))
+                     .extract_recv_buffer();
+    }
+
+    if (comm.is_root()) {
+        ASSERT_EQ(displs.size(), comm.size());
+        for (int pe = 0; pe < comm.size_signed(); ++pe) {
+            EXPECT_EQ(displs[static_cast<std::size_t>(pe)], pe * comm.size_signed());
+        }
+    }
+
+    EXPECT_EQ(recv_count, comm.size_signed());
+    EXPECT_EQ(result.size(), comm.size());
+    EXPECT_THAT(result, Each(Eq(comm.rank_signed())));
+}
+
+TEST(ScattervTest, scatterv_equiv_multiple_elements_send_buf_only_on_root_with_receive_buf) {
+    Communicator comm;
+
+    auto const       input  = create_equiv_sized_input_vector_on_root(comm, comm.size_signed());
+    auto const       counts = create_equiv_counts_on_root(comm, comm.size_signed());
+    std::vector<int> displs;
+    int              recv_count;
+    std::vector<int> result;
+    if (comm.is_root()) {
+        result =
+            comm.scatterv(send_buf(input), send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count))
+                .extract_recv_buffer();
+    } else {
+        comm.scatterv(recv_buf(result), send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count));
+    }
+
+    if (comm.is_root()) {
+        ASSERT_EQ(displs.size(), comm.size());
+        for (int pe = 0; pe < comm.size_signed(); ++pe) {
+            EXPECT_EQ(displs[static_cast<std::size_t>(pe)], pe * comm.size_signed());
+        }
+    }
+
+    EXPECT_EQ(recv_count, comm.size_signed());
+    EXPECT_EQ(result.size(), comm.size());
+    EXPECT_THAT(result, Each(Eq(comm.rank_signed())));
+}
+
 TEST(ScattervTest, scatterv_nonequiv) {
     Communicator comm;
 

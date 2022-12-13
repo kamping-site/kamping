@@ -24,6 +24,11 @@
 
 namespace kamping {
 
+namespace internal {
+/// @brief An unused template parameter
+struct unused_tparam {};
+} // namespace internal
+
 /// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
 /// @tparam DefaultContainerType The default container type to use for containers created by KaMPIng. Defaults to
@@ -248,7 +253,7 @@ public:
     template <typename... Args>
     auto probe(Args... args) const;
 
-    template <typename... Args>
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto recv(Args... args) const;
 
     template <typename... Args>
@@ -257,10 +262,10 @@ public:
     template <typename... Args>
     auto alltoallv(Args... args) const;
 
-    template <typename... Args>
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto scatter(Args... args) const;
 
-    template <typename... Args>
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto scatterv(Args... args) const;
 
     template <typename... Args>
@@ -287,10 +292,10 @@ public:
     template <typename... Args>
     auto allgather(Args... args) const;
 
-    template <typename... Args>
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto bcast(Args... args) const;
 
-    template <typename... Args>
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto bcast_single(Args... args) const;
 
     template <typename... Args>

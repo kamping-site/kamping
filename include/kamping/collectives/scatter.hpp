@@ -50,10 +50,10 @@ int bcast_value(kamping::Communicator<DefaultContainerType> const& comm, T const
 /// This wrapper for \c MPI_Scatter distributes data on the root PE evenly across all PEs in the current
 /// communicator.
 ///
-/// The following parameters are mandatory:
+/// The following parameters are mandatory on the root rank:
 /// - \ref kamping::send_buf() containing the data to be evenly distributed across all PEs. The size of
 /// this buffer must be divisible by the number of PEs in the current communicator. Non-root PEs can omit a send
-/// buffer by passing `kamping::ignore` to \ref kamping::send_buf().
+/// buffer by passing `kamping::ignore<T>` as a parameter, or `T` as a template parameter to \ref kamping::send_buf().
 ///
 /// The following parameters are optional but incur communication overhead if omitted:
 /// - \ref kamping::recv_counts() specifying the number of elements sent to each PE. If this parameter is omitted,
@@ -65,18 +65,20 @@ int bcast_value(kamping::Communicator<DefaultContainerType> const& comm, T const
 /// is used instead.
 /// - \ref kamping::recv_buf() containing the received data. If omitted, a new buffer is allocated and returned.
 ///
+/// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::send_buf() and no \ref
+/// kamping::recv_buf() is given.
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
-template <typename... Args>
+template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... args) const {
     using namespace kamping::internal;
 
     KAMPING_CHECK_PARAMETERS(
         Args,
-        KAMPING_REQUIRED_PARAMETERS(send_buf),
-        KAMPING_OPTIONAL_PARAMETERS(root, recv_buf, recv_counts)
+        KAMPING_REQUIRED_PARAMETERS(),
+        KAMPING_OPTIONAL_PARAMETERS(send_buf, root, recv_buf, recv_counts)
     );
 
     // Optional parameter: root()
@@ -92,8 +94,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     );
     KASSERT(this->is_same_on_all_ranks(int_root), "Root has to be the same on all ranks.", assert::light_communication);
 
-    // Mandatory parameter send_buf()
-    auto send_buf              = select_parameter_type<ParameterType::send_buf>(args...).get();
+    // Parameter send_buf()
+    using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
+    auto send_buf =
+        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...).get();
     using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
     auto const*  send_buf_ptr  = send_buf.data();
@@ -118,9 +122,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
+    static_assert(
+        !std::is_same_v<recv_value_type, internal::unused_tparam>,
+        "No send_buf or recv_buf parameter provided and no receive value given as template parameter. One of these is "
+        "required."
+    );
+
     // Make sure that send and recv buffers use the same type
     static_assert(
-        std::is_same_v<send_value_type, recv_value_type>,
+        std::is_same_v<send_value_type, recv_value_type> || std::is_same_v<send_value_type, internal::unused_tparam>,
         "Mismatching send_buf() and recv_buf() value types."
     );
 
@@ -180,9 +190,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 ///
 /// This wrapper for \c MPI_Scatterv distributes data on the root PE across all PEs in the current communicator.
 ///
-/// The following parameters are mandatory:
+/// The following parameters are mandatory on the root rank:
 /// - \ref kamping::send_buf() [on all PEs] containing the data to be distributed across all PEs. Non-root PEs can omit
-/// a send buffer by passing `kamping::ignore` to \ref kamping::send_buf().
+/// a send buffer by passing `kamping::ignore<T>` as a parameter, or `T` as a template parameter to \ref
+/// kamping::send_buf().
 ///
 /// Of the following parameters, one can be omitted at the cost of communication overhead (1x MPI_Scatter or 1x
 /// MPI_Gather). Provide both parameters to avoid overheads.
@@ -203,18 +214,20 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 /// - \ref kamping::recv_buf() [on all PEs] containing the received data. If omitted, a new buffer is allocated and
 /// returned.
 ///
+/// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::send_buf() and no \ref
+/// kamping::recv_buf() is given.
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
-template <typename... Args>
+template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... args) const {
     using namespace kamping::internal;
 
     KAMPING_CHECK_PARAMETERS(
         Args,
-        KAMPING_REQUIRED_PARAMETERS(send_buf),
-        KAMPING_OPTIONAL_PARAMETERS(root, send_counts, send_displs, recv_buf, recv_counts)
+        KAMPING_REQUIRED_PARAMETERS(),
+        KAMPING_OPTIONAL_PARAMETERS(send_buf, root, send_counts, send_displs, recv_buf, recv_counts)
     );
 
     // Optional parameter: root()
@@ -230,8 +243,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     );
     KASSERT(is_same_on_all_ranks(root_val), "Root has to be the same on all ranks.", assert::light_communication);
 
-    // Mandatory parameter send_buf()
-    auto send_buf              = select_parameter_type<ParameterType::send_buf>(args...).get();
+    // Parameter send_buf()
+    using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
+    auto send_buf =
+        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...).get();
     using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
     auto const*  send_buf_ptr  = send_buf.data();
@@ -248,9 +263,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
+    static_assert(
+        !std::is_same_v<recv_value_type, internal::unused_tparam>,
+        "No send_buf or recv_buf parameter provided and no receive value given as template parameter. One of these is "
+        "required."
+    );
+
     // Make sure that send and recv buffers use the same type
     static_assert(
-        std::is_same_v<send_value_type, recv_value_type>,
+        std::is_same_v<send_value_type, recv_value_type> || std::is_same_v<send_value_type, internal::unused_tparam>,
         "Mismatching send_buf() and recv_buf() value types."
     );
 
