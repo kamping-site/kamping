@@ -49,8 +49,12 @@ class RecvTest : public ::testing::Test {
     void SetUp() override {
         call_hierarchy_level = 0;
         probe_counter        = 0;
+        // this makes sure that messages don't spill from other tests
+        MPI_Barrier(MPI_COMM_WORLD);
     }
     void TearDown() override {
+        // this makes sure that messages don't spill to other tests
+        MPI_Barrier(MPI_COMM_WORLD);
         call_hierarchy_level = 0;
         probe_counter        = 0;
     }
