@@ -24,7 +24,7 @@ int main(int /*argc*/, char** /*argv*/) {
     int          value = comm.rank_signed();
 
 #if defined(RECV_COUNT_GIVEN)
-    comm.bcast_single(send_recv_buf(value), recv_count(1));
+    comm.bcast_single(send_recv_buf(value), recv_counts(1));
 #else
     // If none of the above sections is active, this file will compile successfully.
     comm.bcast_single(send_recv_buf(value));
