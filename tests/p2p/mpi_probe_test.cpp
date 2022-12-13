@@ -19,6 +19,7 @@
 #include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/has_member.hpp"
 #include "kamping/named_parameters.hpp"
@@ -255,6 +256,8 @@ TEST_F(ProbeTest, arbitrary_probe) {
     }
     // ensure that we have received all inflight messages
     MPI_Wait(&req, MPI_STATUS_IGNORE);
+
+    comm.barrier();
 
     // again with implicit any probe
     MPI_Issend(
