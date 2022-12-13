@@ -182,6 +182,11 @@ template <typename... Args>
 auto make_mpi_result(Args... args) {
     using default_type = decltype(internal::ResultCategoryNotUsed{});
 
+    static_assert(
+        !(internal::has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()
+          && internal::has_parameter_type<internal::ParameterType::recv_buf, Args...>()),
+        "Cannot have recv_buf and send_recv_buf at the same time."
+    );
     auto&& recv_buf = [&]() {
         // I'm not sure why return value optimization doesn't apply here, but the moves seem to be necessary.
         if constexpr (internal::has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
