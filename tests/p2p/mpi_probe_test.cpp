@@ -19,7 +19,6 @@
 #include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
-#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/has_member.hpp"
 #include "kamping/named_parameters.hpp"
@@ -128,7 +127,6 @@ TEST_F(ProbeTest, any_source_probe) {
         comm.mpi_communicator(),       // comm
         &req                           // request
     );
-    MPI_Barrier(comm.mpi_communicator());
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
@@ -210,7 +208,7 @@ TEST_F(ProbeTest, any_tag_probe) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-TEST_F(ProbeTest, arbitrary_probe) {
+TEST_F(ProbeTest, arbitrary_probe_explicit) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -256,10 +254,15 @@ TEST_F(ProbeTest, arbitrary_probe) {
     }
     // ensure that we have received all inflight messages
     MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
 
-    comm.barrier();
+TEST_F(ProbeTest, arbitrary_probe_implicit) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+    MPI_Request      req;
 
-    // again with implicit any probe
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
     MPI_Issend(
         v.data(),                      // send_buf
         asserting_cast<int>(v.size()), // send_count
