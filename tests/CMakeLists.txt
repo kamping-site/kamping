@@ -3,10 +3,18 @@ include(KaTestrophe)
 include(KampingTestHelper)
 include(GoogleTest)
 
+set(KAMPING_TEST_TIMEOUT
+    "10"
+    CACHE STRING "Test timeout in seconds"
+)
+message(STATUS "Test timeout set to ${KAMPING_TEST_TIMEOUT} seconds.")
+
 include(ProcessorCount)
 ProcessorCount(N)
 if (NOT N EQUAL 0)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -j ${N})
+    add_custom_target(
+        check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --timeout ${KAMPING_TEST_TIMEOUT} -j ${N}
+    )
 endif ()
 
 # Registering tests without MPI:
