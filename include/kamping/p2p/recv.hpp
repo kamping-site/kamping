@@ -31,6 +31,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/p2p/probe.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/status.hpp"
 
@@ -122,8 +123,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         "recv_counts() parameter must be a single value."
     );
     if constexpr (recv_count_is_output_parameter) {
-        Status probe_status;
-        MPI_Probe(source, tag, this->mpi_communicator(), &probe_status.native());
+        Status probe_status      = this->probe(source_param.clone(), tag_param.clone(), status_out()).extract_status();
         source                   = probe_status.source_signed();
         tag                      = probe_status.tag();
         *recv_count_param.data() = asserting_cast<int>(probe_status.template count<recv_value_type>());

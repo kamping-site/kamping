@@ -17,6 +17,7 @@ kamping_register_test(test_named_parameter_check FILES named_parameter_check_tes
 kamping_register_test(test_named_parameter_selection FILES named_parameter_selection_test.cpp)
 kamping_register_test(test_named_parameters FILES named_parameters_test.cpp)
 kamping_register_test(test_data_buffer FILES data_buffer_test.cpp)
+kamping_register_test(test_parameter_objects FILES parameter_objects_test.cpp)
 kamping_register_test(test_span FILES span_test.cpp)
 kamping_register_test(test_helpers_for_testing FILES helpers_for_testing_test.cpp)
 kamping_register_test(test_operation_builder FILES operation_builder_test.cpp)

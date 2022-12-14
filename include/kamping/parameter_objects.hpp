@@ -108,6 +108,13 @@ public:
     int rank_signed() const {
         return asserting_cast<int>(BaseClass::underlying());
     }
+
+    /// @brief Get a copy of this RankDataBuffer.
+    ///
+    /// @return A copy of this RankDataBuffer.
+    RankDataBuffer<rank_type, parameter_type> clone() {
+        return {BaseClass::underlying()};
+    }
 };
 
 /// @brief Encapsulates the rank of a PE. This is needed for p2p communication
@@ -126,6 +133,13 @@ public:
     int rank_signed() const {
         return MPI_ANY_SOURCE;
     }
+
+    /// @brief Get a copy of this RankDataBuffer.
+    ///
+    /// @return A copy of this RankDataBuffer.
+    RankDataBuffer<rank_type, parameter_type> clone() {
+        return {};
+    }
 };
 
 /// @brief Encapsulates the rank of a PE. This is needed for p2p communication
@@ -143,6 +157,13 @@ public:
     /// @returns Rank as `int`.
     int rank_signed() const {
         return MPI_PROC_NULL;
+    }
+
+    /// @brief Get a copy of this RankDataBuffer.
+    ///
+    /// @return A copy of this RankDataBuffer.
+    RankDataBuffer<rank_type, parameter_type> clone() {
+        return {};
     }
 };
 
@@ -294,6 +315,13 @@ public:
         return _tag_value;
     }
 
+    /// @brief Get a copy of this TagParam.
+    ///
+    /// @return A copy of this TagParam.
+    TagParam<tag_type> clone() {
+        return {_tag_value};
+    }
+
 private:
     int _tag_value; ///< the encapsulated tag value
 };
@@ -307,6 +335,13 @@ public:
     /// @return The tag.
     [[nodiscard]] int tag() const {
         return MPI_ANY_TAG;
+    }
+
+    /// @brief Get a copy of this TagParam.
+    ///
+    /// @return A copy of this TagParam.
+    TagParam<tag_type> clone() {
+        return {};
     }
 };
 } // namespace kamping::internal
