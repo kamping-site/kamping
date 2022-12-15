@@ -11,6 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <limits>
+
 #include <gtest/gtest.h>
 #include <kassert/kassert.hpp>
 #include <mpi.h>
@@ -130,7 +132,11 @@ TEST_F(CommunicatorTest, is_valid_tag) {
     ASSERT_TRUE(comm.is_valid_tag(0));
     ASSERT_TRUE(comm.is_valid_tag(42));
     ASSERT_TRUE(comm.is_valid_tag(mpi_tag_ub));
-    ASSERT_FALSE(comm.is_valid_tag(mpi_tag_ub + 1));
+    // Avoid signed integer overflow
+    if (mpi_tag_ub < std::numeric_limits<decltype(mpi_tag_ub)>::max()) {
+        ASSERT_FALSE(comm.is_valid_tag(mpi_tag_ub + 1));
+    }
+
     if (mpi_tag_ub == std::numeric_limits<int>::max()) {
         ASSERT_TRUE(comm.is_valid_tag(std::numeric_limits<int>::max()));
     } else {
@@ -150,7 +156,10 @@ TEST_F(CommunicatorTest, set_default_tag) {
     ASSERT_EQ(comm.default_tag(), 23);
     comm.default_tag(mpi_tag_ub);
     ASSERT_EQ(comm.default_tag(), mpi_tag_ub);
-    EXPECT_THROW(comm.default_tag(mpi_tag_ub + 1), kassert::KassertException);
+    // Avoid signed integer overflow
+    if (mpi_tag_ub < std::numeric_limits<decltype(mpi_tag_ub)>::max()) {
+        EXPECT_THROW(comm.default_tag(mpi_tag_ub + 1), kassert::KassertException);
+    }
     EXPECT_THROW(comm.default_tag(-1), kassert::KassertException);
 }
 
