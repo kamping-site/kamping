@@ -17,7 +17,6 @@
 #include <vector>
 
 #include <gtest/gtest.h>
-#include <limits.h>
 
 #include "helpers_for_testing.hpp"
 #include "kamping/assertion_levels.hpp"
@@ -510,10 +509,9 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
 }
 
 TEST(LibAllocatedSingleElementBufferTest, move_constructor_is_enabled) {
-    constexpr ParameterType ptype = ParameterType::send_counts;
-    constexpr BufferType    btype = BufferType::in_buffer;
-    int                     elem  = INT_MAX;
-    elem += 1;
+    constexpr ParameterType                            ptype      = ParameterType::send_counts;
+    constexpr BufferType                               btype      = BufferType::in_buffer;
+    int                                                elem       = 42;
     int const                                          const_elem = elem;
     LibAllocatedSingleElementBuffer<int, ptype, btype> buffer1{};
     *buffer1.get().data() = elem;
