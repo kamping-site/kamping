@@ -28,6 +28,15 @@ function (kamping_register_test KAMPING_TARGET_NAME)
     kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN})
     target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG)
     target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
+
+    if (KAMPING_TEST_ENABLE_SANITIZERS)
+        target_compile_options(${KAMPING_TARGET_NAME} PRIVATE -fsanitize=address)
+        target_link_options(${KAMPING_TARGET_NAME} PRIVATE -fsanitize=address)
+        target_compile_options(${KAMPING_TARGET_NAME} PRIVATE -fsanitize=undefined)
+        target_link_options(${KAMPING_TARGET_NAME} PRIVATE -fsanitize=undefined)
+        target_compile_options(${KAMPING_TARGET_NAME} PRIVATE -fno-sanitize-recover=all)
+        target_link_options(${KAMPING_TARGET_NAME} PRIVATE -fno-sanitize-recover=all)
+    endif ()
 endfunction ()
 
 # Convenience wrapper for adding tests for KaMPIng which rely on MPI this creates the target, links googletest, kamping
@@ -52,6 +61,13 @@ function (kamping_register_mpi_test KAMPING_TARGET_NAME)
     kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN})
     target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG)
     target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
+    if (KAMPING_TEST_ENABLE_SANITIZERS)
+        # No asan in MPI tests
+        target_compile_options(${KAMPING_TARGET_NAME} PRIVATE -fsanitize=undefined)
+        target_link_options(${KAMPING_TARGET_NAME} PRIVATE -fsanitize=undefined)
+        target_compile_options(${KAMPING_TARGET_NAME} PRIVATE -fno-sanitize-recover=all)
+        target_link_options(${KAMPING_TARGET_NAME} PRIVATE -fno-sanitize-recover=all)
+    endif ()
 endfunction ()
 
 # Convenience wrapper for registering a set of tests that should fail to compile and require KaMPIng to be linked.

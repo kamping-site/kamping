@@ -17,6 +17,8 @@ if (NOT N EQUAL 0)
     )
 endif ()
 
+option(KAMPING_TEST_ENABLE_SANITIZERS ON)
+
 # Registering tests without MPI:
 kamping_register_test(test_checking_casts FILES checking_casts_test.cpp)
 kamping_register_test(test_mpi_function_wrapper_helpers FILES mpi_function_wrapper_helpers_test.cpp)
