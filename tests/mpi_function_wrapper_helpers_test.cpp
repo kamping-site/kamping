@@ -160,7 +160,6 @@ void test_send_displs_in_MPIResult() {
 
     send_displs.resize(10);
     int* ptr = send_displs.data();
-    free(ptr);
     std::iota(ptr, ptr + 10, 0);
     MPIResult mpi_result{
         ResultCategoryNotUsed{},
