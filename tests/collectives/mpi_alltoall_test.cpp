@@ -60,8 +60,6 @@ TEST(AlltoallTest, multiple_elements) {
     int const num_elements_per_processor_pair = 4;
 
     std::vector<int> input(comm.size() * num_elements_per_processor_pair);
-    int*             ptr = input.data();
-    free(ptr);
     std::iota(input.begin(), input.end(), 0);
     std::transform(input.begin(), input.end(), input.begin(), [](int const element) -> int {
         return element / num_elements_per_processor_pair;
