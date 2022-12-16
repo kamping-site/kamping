@@ -87,6 +87,9 @@ if (NOT DEFINED KATESTROPHE_INCLUDED)
                     ${MPI}
                     MPI_EXEC_COMMAND
                     "${MPI_EXEC_COMMAND}"
+                    PROPERTIES
+                    ENVIRONMENT
+                    "ASAN_OPTIONS=detect_leaks=0" # Prevent memory leaks in OpenMPI from making the test fail.
                 )
             else ()
                 add_test(
@@ -94,6 +97,8 @@ if (NOT DEFINED KATESTROPHE_INCLUDED)
                     COMMAND ${MPI_EXEC_COMMAND} $<TARGET_FILE:${KATESTROPHE_TEST_TARGET}>
                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                 )
+                # Prevent memory leaks in OpenMPI from making the test fail.
+                set_property(TEST ${TEST_NAME} PROPERTY ENVIRONMENT "ASAN_OPTIONS=detect_leaks=0")
             endif ()
             # TODO: Do not rely on the return value of mpiexec to check if a test succeeded, as this does not work for
             # ULFM.
