@@ -17,7 +17,9 @@ if (NOT N EQUAL 0)
     )
 endif ()
 
-option(KAMPING_TEST_ENABLE_SANITIZERS ON)
+option(KAMPING_TEST_ENABLE_SANITIZERS
+       "Enable undefined behavior sanitizer in all tests and address sanitizer in non-MPI tests" ON
+)
 
 # Registering tests without MPI:
 kamping_register_test(test_checking_casts FILES checking_casts_test.cpp)
