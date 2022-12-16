@@ -62,7 +62,7 @@ function (kamping_register_mpi_test KAMPING_TARGET_NAME)
     target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG)
     target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
     if (KAMPING_TEST_ENABLE_SANITIZERS)
-        # No asan in MPI tests
+        # No asan in MPI tests because it triggers a lot in MPI functions.
         target_compile_options(${KAMPING_TARGET_NAME} PRIVATE -fsanitize=undefined)
         target_link_options(${KAMPING_TARGET_NAME} PRIVATE -fsanitize=undefined)
         target_compile_options(${KAMPING_TARGET_NAME} PRIVATE -fno-sanitize-recover=all)
