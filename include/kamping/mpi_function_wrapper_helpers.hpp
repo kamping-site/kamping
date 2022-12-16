@@ -218,9 +218,7 @@ auto make_mpi_result(Args... args) {
         args...
     );
 
-    using default_status_type = decltype(kamping::status(kamping::ignore<>));
-
-    auto&& status = internal::select_parameter_type_or_default<internal::ParameterType::status, default_status_type>(
+    auto&& status = internal::select_parameter_type_or_default<internal::ParameterType::status, default_type>(
         std::tuple(),
         args...
     );
