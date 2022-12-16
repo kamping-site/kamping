@@ -70,7 +70,7 @@ function (gtest_discover_tests_impl)
     if (NOT EXISTS "${_TEST_EXECUTABLE}")
         message(FATAL_ERROR "Specified test executable does not exist.\n" "  Path: '${_TEST_EXECUTABLE}'")
     endif ()
-    # Prevent OpenMPI memeory leaks from making the next command fail.
+    # Prevent OpenMPI memory leaks from making the next command fail.
     set(ENV{ASAN_OPTIONS} detect_leaks=0)
     execute_process(
         COMMAND ${_TEST_EXECUTOR} "${_TEST_EXECUTABLE}" --gtest_list_tests ${filter}
