@@ -4,7 +4,7 @@ include(KampingTestHelper)
 include(GoogleTest)
 
 set(KAMPING_TEST_TIMEOUT
-    "10"
+    "20"
     CACHE STRING "Test timeout in seconds"
 )
 message(STATUS "Test timeout set to ${KAMPING_TEST_TIMEOUT} seconds.")
