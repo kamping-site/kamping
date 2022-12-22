@@ -269,6 +269,14 @@ TEST_F(CommunicatorTest, assignment) {
     comm = comm2;
 }
 
+TEST_F(CommunicatorTest, comm_world) {
+    // These are what comm_world are intended for.
+    EXPECT_EQ(comm_world().rank(), rank);
+    EXPECT_EQ(comm_world().size(), size);
+    EXPECT_EQ(comm_world().rank_signed(), rank);
+    EXPECT_EQ(comm_world().size_signed(), size);
+}
+
 TEST_F(CommunicatorTest, comm_world_convenience_functions) {
     EXPECT_EQ(world_rank(), rank);
     EXPECT_EQ(world_size(), size);
