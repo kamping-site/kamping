@@ -336,4 +336,32 @@ private:
 /// @brief A basic KaMPIng Communicator that uses std::vector when creating new buffers.
 using BasicCommunicator = Communicator<>;
 
+/// @brief Gets the rank in \c MPI_COMM_WORLD as size_t.
+///
+/// @return The rank in \c MPI_COMM_WORLD.
+inline size_t world_rank() {
+    return BasicCommunicator().rank();
+}
+
+/// @brief Gets the rank in \c MPI_COMM_WORLD as int.
+///
+/// @return The rank in \c MPI_COMM_WORLD.
+inline int world_rank_signed() {
+    return BasicCommunicator().rank_signed();
+}
+
+/// @brief Gets the size of \c MPI_COMM_WORLD as size_t.
+///
+/// @return The size of \c MPI_COMM_WORLD.
+inline size_t world_size() {
+    return BasicCommunicator().size();
+}
+
+/// @brief Gets the size of \c MPI_COMM_WORLD as int.
+///
+/// @return The size of \c MPI_COMM_WORLD.
+inline int world_size_signed() {
+    return BasicCommunicator().size_signed();
+}
+
 } // namespace kamping
