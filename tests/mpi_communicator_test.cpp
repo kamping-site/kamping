@@ -270,10 +270,8 @@ TEST_F(CommunicatorTest, assignment) {
 }
 
 TEST_F(CommunicatorTest, comm_world_convenience_functions) {
-    BasicCommunicator comm(MPI_COMM_WORLD);
-
-    EXPECT_EQ(world_rank(), comm.rank());
-    EXPECT_EQ(world_size(), comm.size());
-    EXPECT_EQ(world_rank_signed(), comm.rank_signed());
-    EXPECT_EQ(world_size_signed(), comm.size_signed());
+    EXPECT_EQ(world_rank(), rank);
+    EXPECT_EQ(world_size(), size);
+    EXPECT_EQ(world_rank_signed(), rank);
+    EXPECT_EQ(world_size_signed(), size);
 }
