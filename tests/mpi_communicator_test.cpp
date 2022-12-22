@@ -270,7 +270,7 @@ TEST_F(CommunicatorTest, assignment) {
 }
 
 TEST_F(CommunicatorTest, comm_world) {
-    // These are what comm_world are intended for.
+    // These are what comm_world is intended for.
     EXPECT_EQ(comm_world().rank(), rank);
     EXPECT_EQ(comm_world().size(), size);
     EXPECT_EQ(comm_world().rank_signed(), rank);
