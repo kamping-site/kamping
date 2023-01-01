@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include "helpers_for_testing.hpp"
 #include "kamping/environment.hpp"
 
 using namespace ::kamping;
@@ -43,4 +44,17 @@ TEST(EnvironmentTest, wtick) {
 
     kamping_wtick = Environment<>::wtick();
     EXPECT_DOUBLE_EQ(kamping_wtick, MPI_Wtick());
+}
+
+TEST(EnvironmentTest, init) {
+    Environment<kamping::NoInitFinalize> env;
+    EXPECT_TRUE(env.initialized());
+    // This should succeed because init checks whether MPI_Init has already been called.
+    env.init();
+}
+
+TEST(EnvironmentTest, init_unchecked) {
+    Environment<kamping::NoInitFinalize> env;
+    EXPECT_TRUE(env.initialized());
+    EXPECT_KASSERT_FAILS(env.init_unchecked(), "Trying to call MPI_Init twice");
 }
