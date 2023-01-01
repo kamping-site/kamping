@@ -343,7 +343,7 @@ using BasicCommunicator = Communicator<>;
 ///
 /// @return A \c const reference to a \ref BasicCommunicator for \c MPI_COMM_WORLD.
 inline BasicCommunicator const& comm_world() {
-    // By using a static variable in a function here, this get constructed on first use.
+    // By using a static variable in a function here, this gets constructed on first use.
     static const BasicCommunicator comm_world;
     return comm_world;
 }
