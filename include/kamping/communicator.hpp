@@ -336,4 +336,44 @@ private:
 /// @brief A basic KaMPIng Communicator that uses std::vector when creating new buffers.
 using BasicCommunicator = Communicator<>;
 
+/// @brief Gets a \c const reference to a \ref BasicCommunicator for \c MPI_COMM_WORLD.
+///
+/// Useful if you want access to KaMPIng's base functionality without keeping an instance of \ref Communicator or
+/// constructing a new one on the fly.
+///
+/// @return A \c const reference to a \ref BasicCommunicator for \c MPI_COMM_WORLD.
+inline BasicCommunicator const& comm_world() {
+    // By using a static variable in a function here, this gets constructed on first use.
+    static const BasicCommunicator comm_world;
+    return comm_world;
+}
+
+/// @brief Gets the rank in \c MPI_COMM_WORLD as size_t.
+///
+/// @return The rank in \c MPI_COMM_WORLD.
+inline size_t world_rank() {
+    return comm_world().rank();
+}
+
+/// @brief Gets the rank in \c MPI_COMM_WORLD as int.
+///
+/// @return The rank in \c MPI_COMM_WORLD.
+inline int world_rank_signed() {
+    return comm_world().rank_signed();
+}
+
+/// @brief Gets the size of \c MPI_COMM_WORLD as size_t.
+///
+/// @return The size of \c MPI_COMM_WORLD.
+inline size_t world_size() {
+    return comm_world().size();
+}
+
+/// @brief Gets the size of \c MPI_COMM_WORLD as int.
+///
+/// @return The size of \c MPI_COMM_WORLD.
+inline int world_size_signed() {
+    return comm_world().size_signed();
+}
+
 } // namespace kamping
