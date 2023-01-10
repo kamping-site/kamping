@@ -26,8 +26,8 @@ TEST(EnvironmentTest, wtime) {
     const std::chrono::milliseconds::rep milliseconds_to_sleep = 10;
     double const                         seconds_to_sleep      = static_cast<double>(milliseconds_to_sleep) / 1000.0;
     // Get the first time from an object
-    Environment<kamping::NoInitFinalize> env;
-    double                               start_time = env.wtime();
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    double                                            start_time = env.wtime();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds_to_sleep));
 
@@ -38,8 +38,8 @@ TEST(EnvironmentTest, wtime) {
 }
 
 TEST(EnvironmentTest, wtick) {
-    Environment<kamping::NoInitFinalize> env;
-    double                               kamping_wtick = env.wtick();
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    double                                            kamping_wtick = env.wtick();
     EXPECT_DOUBLE_EQ(kamping_wtick, MPI_Wtick());
 
     kamping_wtick = Environment<>::wtick();
@@ -47,14 +47,14 @@ TEST(EnvironmentTest, wtick) {
 }
 
 TEST(EnvironmentTest, init) {
-    Environment<kamping::NoInitFinalize> env;
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
     EXPECT_TRUE(env.initialized());
     // This should succeed because init checks whether MPI_Init has already been called.
     env.init();
 }
 
 TEST(EnvironmentTest, init_unchecked) {
-    Environment<kamping::NoInitFinalize> env;
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
     EXPECT_TRUE(env.initialized());
     EXPECT_KASSERT_FAILS(env.init_unchecked(), "Trying to call MPI_Init twice");
 }

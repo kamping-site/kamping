@@ -56,7 +56,7 @@ TODO \@Demian \@Matthias: Rules for API
 * Add Doxygen documentation for each (!) function and member variable, even private ones. Describe what this function does, which parameters it takes and what the return value is. Also describe all assumptions you make. This rule applies to all functions, even trivial ones.
 * Start comments describing TODOs with `// TODO ...`. This allows grepping for TODOs.
 * Use almost always `auto`.
-* Use scoped `enum`s instead of unscoped `enum`s.
+* Use scoped `enum`s (`enum class`) instead of unscoped `enum`s (`enum`).
 * Prefer smart pointers over raw pointers.
 * Avoid `std::bind`, use lambda functions instead as they result in better readability and allow the compiler to inline better.
 * Use the subset of `C++` which compiles in `gcc10`, `clang10` and `icc19`.
