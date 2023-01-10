@@ -11,6 +11,9 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+/// @file
+/// @brief Wrapper for MPI functions that don't require a communicator.
+
 #pragma once
 
 #include <kassert/kassert.hpp>
@@ -20,14 +23,19 @@
 
 namespace kamping {
 
-enum InitMPIMode { InitFinalize, NoInitFinalize };
+/// @brief Configuration for the behavior of the constructors and destructor of \ref kamping::Environment.
+enum class InitMPIMode {
+    InitFinalize,  ///< Call \c MPI_Init in the constructor of \ref Environment.
+    NoInitFinalize ///< Do not call \c MPI_Init in the constructor of \ref Environment.
+};
 
-/// @brief Wrapper for MPI functions that don't require a communicator. If the template parameter `init_finalize` is set
-/// to true (default), MPI_Init is called in the constructor, and MPI_Finalize is called in the destructor.
+/// @brief Wrapper for MPI functions that don't require a communicator. If the template parameter `init_finalize_mode`
+/// is set to \ref InitMPIMode::InitFinalize (default), \c MPI_Init is called in the constructor, and
+/// \c MPI_Finalize is called in the destructor.
 ///
-/// Note that MPI_Init and MPI_Finalize are global, meaning that if they are called on an Environment object they must
-/// not be called again in any Environment object (or directly vie the MPI_* calls).
-template <InitMPIMode init_finalize_mode = InitFinalize>
+/// Note that \c MPI_Init and \c MPI_Finalize are global, meaning that if they are called on an Environment object they
+/// must not be called again in any Environment object (or directly vie the \c MPI_* calls).
+template <InitMPIMode init_finalize_mode = InitMPIMode::InitFinalize>
 class Environment {
 public:
     /// @brief Calls MPI_Init with arguments.

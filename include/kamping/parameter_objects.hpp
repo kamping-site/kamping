@@ -43,15 +43,15 @@ struct type_list {
 template <typename T>
 struct ignore_t {};
 
-/// @brief Indicator if a rank parameter holds and actual value or MPI_ANY_SOURCE or MPI_PROC_NULL.
+/// @brief Indicator if a rank parameter holds and actual value or \c MPI_ANY_SOURCE or \c MPI_PROC_NULL.
 enum class RankType {
     value, ///< holds a value
-    any,   ///< holds MPI_ANY_SOURCE
-    null   ///< hold MPI_PROC_NULL
+    any,   ///< holds \c MPI_ANY_SOURCE
+    null   ///< holds \c MPI_PROC_NULL
 };
 
-struct rank_any_t {};  ///< tag struct for MPI_ANY_SOURCE
-struct rank_null_t {}; ///< tag struct for MPI_PROC_NULL
+struct rank_any_t {};  ///< tag struct for \c MPI_ANY_SOURCE
+struct rank_null_t {}; ///< tag struct for \c MPI_PROC_NULL
 
 /// @brief Encapsulates the rank of a PE. This is needed for p2p communication
 /// and rooted \c MPI collectives like \c MPI_Gather.
