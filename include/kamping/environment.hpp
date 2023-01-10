@@ -55,19 +55,40 @@ public:
         }
     }
 
-    /// @brief Calls MPI_Init without arguments.
-    void init() const {
+    /// @brief Calls MPI_Init without arguments and doesn't check whether MPI_Init has already been called.
+    void init_unchecked() const {
         KASSERT(!initialized(), "Trying to call MPI_Init twice");
         [[maybe_unused]] int err = MPI_Init(NULL, NULL);
         THROW_IF_MPI_ERROR(err, MPI_Init);
     }
 
-    /// @brief Calls MPI_Init with arguments.
+    /// @brief Calls MPI_Init with arguments and doesn't check whether MPI_Init has already been called.
+    ///
+    /// @param argc Number of arguments.
+    /// @param argv The arguments.
+    void init_unchecked(int& argc, char**& argv) const {
+        KASSERT(!initialized(), "Trying to call MPI_Init twice");
+        [[maybe_unused]] int err = MPI_Init(&argc, &argv);
+        THROW_IF_MPI_ERROR(err, MPI_Init);
+    }
+
+    /// @brief Calls MPI_Init without arguments. Checks whether MPI_Init has already been called first.
+    void init() const {
+        if (initialized()) {
+            return;
+        }
+        [[maybe_unused]] int err = MPI_Init(NULL, NULL);
+        THROW_IF_MPI_ERROR(err, MPI_Init);
+    }
+
+    /// @brief Calls MPI_Init with arguments. Checks whether MPI_Init has already been called first.
     ///
     /// @param argc Number of arguments.
     /// @param argv The arguments.
     void init(int& argc, char**& argv) const {
-        KASSERT(!initialized(), "Trying to call MPI_Init twice");
+        if (initialized()) {
+            return;
+        }
         [[maybe_unused]] int err = MPI_Init(&argc, &argv);
         THROW_IF_MPI_ERROR(err, MPI_Init);
     }
