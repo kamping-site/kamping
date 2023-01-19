@@ -127,6 +127,19 @@ TEST_F(CommunicatorTest, test_tag_upper_bound) {
     ASSERT_GE(comm.tag_upper_bound(), 32767); // the standard requires that MPI_TAG_UB has at least this size
 }
 
+TEST_F(CommunicatorTest, tag_upper_bound_non_world_comm) {
+    // Create a new communicator that is not MPI_COMM_WORLD.
+    // Using split here because other versions tested didn't produce the bug that this is a regression test for.
+    int const color = 0;
+    MPI_Comm  mpi_comm_world_copy;
+    MPI_Comm_split(MPI_COMM_WORLD, color, rank, &mpi_comm_world_copy);
+    BasicCommunicator comm(mpi_comm_world_copy);
+
+    // Query the tag upper bound from the new communicator
+    int tag_ub = comm.tag_upper_bound();
+    EXPECT_EQ(tag_ub, mpi_tag_ub);
+}
+
 TEST_F(CommunicatorTest, is_valid_tag) {
     Communicator comm;
     ASSERT_TRUE(comm.is_valid_tag(0));

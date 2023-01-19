@@ -228,7 +228,7 @@ public:
     [[nodiscard]] int tag_upper_bound() const {
         int* tag_ub;
         int  flag;
-        MPI_Comm_get_attr(this->mpi_communicator(), MPI_TAG_UB, &tag_ub, &flag);
+        MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &tag_ub, &flag);
         KASSERT(flag, "Could not retrieve MPI_TAG_UB");
         return *tag_ub;
     }
