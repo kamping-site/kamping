@@ -283,3 +283,36 @@ TEST_F(CommunicatorTest, comm_world_convenience_functions) {
     EXPECT_EQ(world_rank_signed(), rank);
     EXPECT_EQ(world_size_signed(), size);
 }
+
+TEST_F(CommunicatorTest, swap) {
+    BasicCommunicator comm1;
+    MPI_Comm          mpi_comm1  = comm1.mpi_communicator();
+    auto              root_comm1 = 1 % size;
+    comm1.root(root_comm1);
+    comm1.default_tag(1);
+
+    int const color      = rank % 2;
+    auto      comm2      = comm1.split(color);
+    MPI_Comm  mpi_comm2  = comm2.mpi_communicator();
+    auto      size_comm2 = comm2.size();
+    auto      rank_comm2 = comm2.rank();
+    auto      root_comm2 = 2 % size_comm2;
+    comm2.root(root_comm2);
+    comm2.default_tag(2);
+
+    EXPECT_NE(mpi_comm1, mpi_comm2);
+
+    comm1.swap(comm2);
+
+    EXPECT_EQ(comm1.mpi_communicator(), mpi_comm2);
+    EXPECT_EQ(comm1.size(), size_comm2);
+    EXPECT_EQ(comm1.rank(), rank_comm2);
+    EXPECT_EQ(comm1.root(), root_comm2);
+    EXPECT_EQ(comm1.default_tag(), 2);
+
+    EXPECT_EQ(comm2.mpi_communicator(), mpi_comm1);
+    EXPECT_EQ(comm2.size(), size);
+    EXPECT_EQ(comm2.rank(), rank);
+    EXPECT_EQ(comm2.root(), root_comm1);
+    EXPECT_EQ(comm2.default_tag(), 1);
+}
