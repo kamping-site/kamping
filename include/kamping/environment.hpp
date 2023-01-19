@@ -138,6 +138,22 @@ public:
         return MPI_Wtick();
     }
 
+    /// @brief The upper bound on message tags defined by the MPI implementation.
+    /// @return The upper bound for tags.
+    [[nodiscard]] static int tag_upper_bound() {
+        int* tag_ub;
+        int  flag;
+        MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &tag_ub, &flag);
+        KASSERT(flag, "Could not retrieve MPI_TAG_UB");
+        return *tag_ub;
+    }
+
+    /// @brief Checks if the given tag is a valid message tag.
+    /// @return Whether the tag is valid.
+    [[nodiscard]] static bool is_valid_tag(int tag) {
+        return tag >= 0 && tag <= tag_upper_bound();
+    }
+
     /// @brief Calls MPI_Finalize if finalize() has not been called before.
     ~Environment() {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {

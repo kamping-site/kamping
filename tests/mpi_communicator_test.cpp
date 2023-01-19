@@ -121,32 +121,6 @@ TEST_F(CommunicatorTest, set_root_bound_check) {
     }
 }
 
-TEST_F(CommunicatorTest, test_tag_upper_bound) {
-    Communicator comm;
-    ASSERT_EQ(comm.tag_upper_bound(), mpi_tag_ub);
-    ASSERT_GE(comm.tag_upper_bound(), 32767); // the standard requires that MPI_TAG_UB has at least this size
-}
-
-TEST_F(CommunicatorTest, is_valid_tag) {
-    Communicator comm;
-    ASSERT_TRUE(comm.is_valid_tag(0));
-    ASSERT_TRUE(comm.is_valid_tag(42));
-    ASSERT_TRUE(comm.is_valid_tag(mpi_tag_ub));
-    // Avoid signed integer overflow
-    if (mpi_tag_ub < std::numeric_limits<decltype(mpi_tag_ub)>::max()) {
-        ASSERT_FALSE(comm.is_valid_tag(mpi_tag_ub + 1));
-    }
-
-    if (mpi_tag_ub == std::numeric_limits<int>::max()) {
-        ASSERT_TRUE(comm.is_valid_tag(std::numeric_limits<int>::max()));
-    } else {
-        ASSERT_FALSE(comm.is_valid_tag(std::numeric_limits<int>::max()));
-    }
-    ASSERT_FALSE(comm.is_valid_tag(-1));
-    ASSERT_FALSE(comm.is_valid_tag(-42));
-    ASSERT_FALSE(comm.is_valid_tag(std::numeric_limits<int>::min()));
-}
-
 TEST_F(CommunicatorTest, set_default_tag) {
     Communicator comm;
     ASSERT_EQ(comm.default_tag(), 0);
