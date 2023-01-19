@@ -78,7 +78,10 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
         "Please provide a tag for the message."
     );
     int tag = tag_param.tag();
-    KASSERT(is_valid_tag(tag), "invalid tag " << tag << ", maximum allowed tag is " << tag_upper_bound());
+    KASSERT(
+        mpi_env.is_valid_tag(tag),
+        "invalid tag " << tag << ", maximum allowed tag is " << mpi_env.tag_upper_bound()
+    );
 
     using send_mode_obj_type = decltype(internal::select_parameter_type_or_default<
                                         internal::ParameterType::send_mode,

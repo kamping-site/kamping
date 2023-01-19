@@ -21,6 +21,7 @@
 
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/environment.hpp"
 
 namespace kamping {
 
@@ -90,8 +91,8 @@ public:
     /// @brief Set a new default tag used in point to point communication. The initial value is 0.
     void default_tag(int const default_tag) {
         THROWING_KASSERT(
-            is_valid_tag(default_tag),
-            "invalid tag " << default_tag << ", maximum allowed tag is " << tag_upper_bound()
+            mpi_env.is_valid_tag(default_tag),
+            "invalid tag " << default_tag << ", maximum allowed tag is " << mpi_env.tag_upper_bound()
         );
         _default_tag = default_tag;
     }
@@ -222,20 +223,6 @@ public:
     /// @return \c true if rank in [0,size) and \c false otherwise.
     [[nodiscard]] bool is_valid_rank(size_t const rank) const {
         return rank < size();
-    }
-
-    /// @brief The upper bound on message tags defined by the MPI implementation.
-    [[nodiscard]] int tag_upper_bound() const {
-        int* tag_ub;
-        int  flag;
-        MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &tag_ub, &flag);
-        KASSERT(flag, "Could not retrieve MPI_TAG_UB");
-        return *tag_ub;
-    }
-
-    /// @brief Checks if the given tag is a valid message tag.
-    [[nodiscard]] bool is_valid_tag(int tag) const {
-        return tag >= 0 && tag <= tag_upper_bound();
     }
 
     template <typename... Args>
