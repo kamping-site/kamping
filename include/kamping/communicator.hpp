@@ -66,8 +66,8 @@ public:
     Communicator(Communicator const& other)
         : _rank(other._rank),
           _size(other._size),
-          _default_tag(other._default_tag),
           _root(other._root),
+          _default_tag(other._default_tag),
           _owns_mpi_comm(true) {
         MPI_Comm_dup(other._comm, &_comm);
     }
@@ -78,9 +78,9 @@ public:
         : _rank(other._rank),
           _size(other._size),
           _comm(other._comm),
-          _default_tag(other._default_tag),
           _root(other._root),
-          _owns_mpi_comm(true) {}
+          _default_tag(other._default_tag),
+          _owns_mpi_comm(other._owns_mpi_comm) {}
 
     /// @brief Destructor that frees the contained \c MPI_Comm if it is owned by the Communicator.
     ~Communicator() {
@@ -98,8 +98,9 @@ public:
 
     /// @brief Copy assignment operator. Behaves according to the copy constructor.
     /// @param other The Communicator to copy.
-    Communicator& operator=(Communicator& other) {
-        swap(other);
+    Communicator& operator=(Communicator const& other) {
+        Communicator tmp(other);
+        swap(tmp);
         return *this;
     }
 
