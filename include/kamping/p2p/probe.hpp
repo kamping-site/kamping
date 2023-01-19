@@ -68,8 +68,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
     constexpr auto tag_type = std::remove_reference_t<decltype(tag_param)>::tag_type;
     if constexpr (tag_type == internal::TagType::value) {
         KASSERT(
-            mpi_env.is_valid_tag(tag),
-            "invalid tag " << tag << ", maximum allowed tag is " << mpi_env.tag_upper_bound()
+            Environment<>::is_valid_tag(tag),
+            "invalid tag " << tag << ", maximum allowed tag is " << Environment<>::tag_upper_bound()
         );
     }
 
