@@ -145,6 +145,13 @@ public:
         return _comm;
     }
 
+    /// @brief Disowns the wrapped MPI_Comm, i.e. it will not be freed in the destructor.
+    /// @return MPI communicator corresponding to this communicator.
+    MPI_Comm disown_mpi_communicator() {
+        _owns_mpi_comm = false;
+        return mpi_communicator();
+    }
+
     /// @brief Set a new default tag used in point to point communication. The initial value is 0.
     void default_tag(int const default_tag) {
         THROWING_KASSERT(

@@ -301,15 +301,18 @@ int                                 MPI_Comm_free(MPI_Comm* comm) {
 TEST_F(CommunicatorTest, communicator_management) {
     MPI_Comm user_owned_mpi_comm;
     MPI_Comm_dup(MPI_COMM_WORLD, &user_owned_mpi_comm);
-    MPI_Comm lib_owned_mpi_comm;
+    MPI_Comm lib_owned_mpi_comm = MPI_COMM_NULL;
 
     // Reset list of freed communicators
     freed_communicators.clear();
     EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
     EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
 
+    // Base functionality with ownership set in constructor.
     {
-        BasicCommunicator non_owning_comm(user_owned_mpi_comm, false);
+        BasicCommunicator non_owning_comm1(user_owned_mpi_comm, false);
+        // Default should be non-owning.
+        BasicCommunicator non_owning_comm2(user_owned_mpi_comm);
         MPI_Comm_dup(MPI_COMM_WORLD, &lib_owned_mpi_comm);
         BasicCommunicator owning_comm(lib_owned_mpi_comm, true);
     }
@@ -321,6 +324,7 @@ TEST_F(CommunicatorTest, communicator_management) {
     EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
     EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
 
+    // Split.
     {
         BasicCommunicator non_owning_comm(user_owned_mpi_comm, false);
         int const         color = 0;
@@ -336,6 +340,7 @@ TEST_F(CommunicatorTest, communicator_management) {
     EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
     EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
 
+    // Copy assignment.
     {
         BasicCommunicator non_owning_comm(user_owned_mpi_comm, false);
         // Copy assignment should create an owned MPI_Comm.
@@ -351,6 +356,7 @@ TEST_F(CommunicatorTest, communicator_management) {
     EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
     EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
 
+    // Copy constructor.
     {
         BasicCommunicator non_owning_comm(user_owned_mpi_comm, false);
         // Copy construction should create an owned MPI_Comm.
@@ -366,6 +372,7 @@ TEST_F(CommunicatorTest, communicator_management) {
     EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
     EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
 
+    // Move constructor.
     {
         BasicCommunicator non_owning_comm1(user_owned_mpi_comm, false);
         // Move construction should not change ownership of MPI_Comms.
@@ -374,6 +381,12 @@ TEST_F(CommunicatorTest, communicator_management) {
     EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
     EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
 
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
+    EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
+
+    // Move assignment.
     {
         BasicCommunicator non_owning_comm(user_owned_mpi_comm, false);
         MPI_Comm_dup(MPI_COMM_WORLD, &lib_owned_mpi_comm);
@@ -382,5 +395,24 @@ TEST_F(CommunicatorTest, communicator_management) {
         comm2 = std::move(non_owning_comm);
     }
     EXPECT_TRUE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
+    EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
+    EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
+
+    // Disowning.
+    {
+        BasicCommunicator owning_comm(user_owned_mpi_comm, true);
+        MPI_Comm          contained_comm = owning_comm.disown_mpi_communicator();
+        EXPECT_EQ(user_owned_mpi_comm, contained_comm);
+    }
+    EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
+    EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
     EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
 }
