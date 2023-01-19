@@ -415,4 +415,12 @@ TEST_F(CommunicatorTest, communicator_management) {
     freed_communicators.clear();
     EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
     EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
+
+    // Cleanly free the communicator.
+    MPI_Comm_free(&user_owned_mpi_comm);
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(freed_communicators.find(lib_owned_mpi_comm) != freed_communicators.end());
+    EXPECT_FALSE(freed_communicators.find(user_owned_mpi_comm) != freed_communicators.end());
 }
