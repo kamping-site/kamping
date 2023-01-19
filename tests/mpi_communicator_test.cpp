@@ -293,9 +293,10 @@ TEST_F(CommunicatorTest, swap) {
 }
 
 static std::unordered_set<MPI_Comm> freed_communicators;
-int                                 MPI_Comm_free(MPI_Comm* comm) {
-                                    freed_communicators.insert(*comm);
-                                    return PMPI_Comm_free(comm);
+
+int MPI_Comm_free(MPI_Comm* comm) {
+    freed_communicators.insert(*comm);
+    return PMPI_Comm_free(comm);
 }
 
 TEST_F(CommunicatorTest, communicator_management) {
