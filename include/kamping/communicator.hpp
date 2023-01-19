@@ -148,8 +148,8 @@ public:
     /// @brief Set a new default tag used in point to point communication. The initial value is 0.
     void default_tag(int const default_tag) {
         THROWING_KASSERT(
-            mpi_env.is_valid_tag(default_tag),
-            "invalid tag " << default_tag << ", maximum allowed tag is " << mpi_env.tag_upper_bound()
+            Environment<>::is_valid_tag(default_tag),
+            "invalid tag " << default_tag << ", maximum allowed tag is " << Environment<>::tag_upper_bound()
         );
         _default_tag = default_tag;
     }
