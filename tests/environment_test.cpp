@@ -72,25 +72,25 @@ TEST_F(EnvironmentTest, init_unchecked) {
 }
 
 TEST_F(EnvironmentTest, tag_upper_bound) {
-    ASSERT_EQ(mpi_env.tag_upper_bound(), mpi_tag_ub);
-    ASSERT_GE(mpi_env.tag_upper_bound(), 32767); // the standard requires that MPI_TAG_UB has at least this size
+    EXPECT_EQ(mpi_env.tag_upper_bound(), mpi_tag_ub);
+    EXPECT_GE(mpi_env.tag_upper_bound(), 32767); // the standard requires that MPI_TAG_UB has at least this size
 }
 
 TEST_F(EnvironmentTest, is_valid_tag) {
-    ASSERT_TRUE(mpi_env.is_valid_tag(0));
-    ASSERT_TRUE(mpi_env.is_valid_tag(42));
-    ASSERT_TRUE(mpi_env.is_valid_tag(mpi_tag_ub));
+    EXPECT_TRUE(mpi_env.is_valid_tag(0));
+    EXPECT_TRUE(mpi_env.is_valid_tag(42));
+    EXPECT_TRUE(mpi_env.is_valid_tag(mpi_tag_ub));
     // Avoid signed integer overflow
     if (mpi_tag_ub < std::numeric_limits<decltype(mpi_tag_ub)>::max()) {
-        ASSERT_FALSE(mpi_env.is_valid_tag(mpi_tag_ub + 1));
+        EXPECT_FALSE(mpi_env.is_valid_tag(mpi_tag_ub + 1));
     }
 
     if (mpi_tag_ub == std::numeric_limits<int>::max()) {
-        ASSERT_TRUE(mpi_env.is_valid_tag(std::numeric_limits<int>::max()));
+        EXPECT_TRUE(mpi_env.is_valid_tag(std::numeric_limits<int>::max()));
     } else {
-        ASSERT_FALSE(mpi_env.is_valid_tag(std::numeric_limits<int>::max()));
+        EXPECT_FALSE(mpi_env.is_valid_tag(std::numeric_limits<int>::max()));
     }
-    ASSERT_FALSE(mpi_env.is_valid_tag(-1));
-    ASSERT_FALSE(mpi_env.is_valid_tag(-42));
-    ASSERT_FALSE(mpi_env.is_valid_tag(std::numeric_limits<int>::min()));
+    EXPECT_FALSE(mpi_env.is_valid_tag(-1));
+    EXPECT_FALSE(mpi_env.is_valid_tag(-42));
+    EXPECT_FALSE(mpi_env.is_valid_tag(std::numeric_limits<int>::min()));
 }
