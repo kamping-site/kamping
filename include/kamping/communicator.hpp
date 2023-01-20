@@ -58,6 +58,9 @@ public:
           _comm(comm),
           _default_tag(0),
           _owns_mpi_comm(take_ownership) {
+        if (take_ownership) {
+        	KASSERT(comm != MPI_COMM_WORLD) << "Taking ownership of MPI_COMM_WORLD is not allowed.";
+        }
         this->root(root);
     }
 
