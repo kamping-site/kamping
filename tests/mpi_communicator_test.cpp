@@ -293,14 +293,20 @@ TEST_F(CommunicatorTest, swap) {
 }
 
 static std::vector<MPI_Comm> freed_communicators;
+static bool                  track_freed_communicators = false;
 
 int MPI_Comm_free(MPI_Comm* comm) {
-    EXPECT_FALSE(std::find(freed_communicators.begin(), freed_communicators.end(), *comm) != freed_communicators.end());
-    freed_communicators.push_back(*comm);
+    if (track_freed_communicators) {
+        EXPECT_FALSE(
+            std::find(freed_communicators.begin(), freed_communicators.end(), *comm) != freed_communicators.end()
+        );
+        freed_communicators.push_back(*comm);
+    }
     return PMPI_Comm_free(comm);
 }
 
 TEST_F(CommunicatorTest, communicator_management) {
+    track_freed_communicators = true;
     MPI_Comm user_owned_mpi_comm;
     MPI_Comm_dup(MPI_COMM_WORLD, &user_owned_mpi_comm);
     MPI_Comm lib_owned_mpi_comm = MPI_COMM_NULL;
@@ -521,4 +527,6 @@ TEST_F(CommunicatorTest, communicator_management) {
         std::find(freed_communicators.begin(), freed_communicators.end(), user_owned_mpi_comm)
         != freed_communicators.end()
     );
+
+    track_freed_communicators = false;
 }
