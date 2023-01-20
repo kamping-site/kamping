@@ -735,7 +735,7 @@ TEST(ParameterFactoriesTest, source_basics) {
     }
     {
         auto source_obj = source(rank::any);
-        EXPECT_EQ(source_obj.rank_signed(), MPI_ANY_TAG);
+        EXPECT_EQ(source_obj.rank_signed(), MPI_ANY_SOURCE);
         EXPECT_EQ(decltype(source_obj)::parameter_type, ParameterType::source);
         EXPECT_EQ(decltype(source_obj)::rank_type, RankType::any);
     }
