@@ -335,6 +335,21 @@ TEST_F(CommunicatorTest, communicator_management) {
     EXPECT_FALSE(vector_contains(freed_communicators, lib_owned_mpi_comm));
     EXPECT_FALSE(vector_contains(freed_communicators, user_owned_mpi_comm));
 
+    // Default constructed communicator should not be free..
+    MPI_Comm comm_world;
+    {
+        BasicCommunicator owning_comm;
+        comm_world = owning_comm.mpi_communicator();
+    }
+    EXPECT_FALSE(vector_contains(freed_communicators, comm_world));
+    EXPECT_FALSE(vector_contains(freed_communicators, lib_owned_mpi_comm));
+    EXPECT_FALSE(vector_contains(freed_communicators, user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(vector_contains(freed_communicators, lib_owned_mpi_comm));
+    EXPECT_FALSE(vector_contains(freed_communicators, user_owned_mpi_comm));
+
     // Split.
     {
         BasicCommunicator non_owning_comm(user_owned_mpi_comm, false);
