@@ -427,6 +427,22 @@ TEST_F(CommunicatorTest, communicator_management) {
     EXPECT_FALSE(vector_contains(freed_communicators, lib_owned_mpi_comm));
     EXPECT_FALSE(vector_contains(freed_communicators, user_owned_mpi_comm));
 
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(vector_contains(freed_communicators, lib_owned_mpi_comm));
+    EXPECT_FALSE(vector_contains(freed_communicators, user_owned_mpi_comm));
+
+    // Swapping.
+    {
+        BasicCommunicator comm1(user_owned_mpi_comm, false);
+        MPI_Comm_dup(MPI_COMM_WORLD, &lib_owned_mpi_comm);
+        BasicCommunicator comm2(lib_owned_mpi_comm, true);
+        // Swapping should not change ownership of MPI_Comms.
+        comm1.swap(comm2);
+    }
+    EXPECT_TRUE(vector_contains(freed_communicators, lib_owned_mpi_comm));
+    EXPECT_FALSE(vector_contains(freed_communicators, user_owned_mpi_comm));
+
     // Cleanly free the communicator.
     MPI_Comm_free(&user_owned_mpi_comm);
 
