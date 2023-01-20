@@ -427,11 +427,6 @@ TEST_F(CommunicatorTest, communicator_management) {
     EXPECT_FALSE(vector_contains(freed_communicators, lib_owned_mpi_comm));
     EXPECT_FALSE(vector_contains(freed_communicators, user_owned_mpi_comm));
 
-    // Reset list of freed communicators
-    freed_communicators.clear();
-    EXPECT_FALSE(vector_contains(freed_communicators, lib_owned_mpi_comm));
-    EXPECT_FALSE(vector_contains(freed_communicators, user_owned_mpi_comm));
-
     // Swapping.
     {
         BasicCommunicator comm1(user_owned_mpi_comm, false);
