@@ -81,6 +81,8 @@ if (NOT DEFINED KATESTROPHE_INCLUDED)
                 string(REPLACE ";" " " MPI_EXEC_COMMAND "${MPI_EXEC_COMMAND}")
                 katestrophe_discover_tests(
                     ${KATESTROPHE_TEST_TARGET}
+                    DISCOVERY_TIMEOUT
+                    30
                     TEST_SUFFIX
                     ".${p}cores"
                     WORKING_DIRECTORY
