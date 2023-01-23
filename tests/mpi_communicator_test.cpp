@@ -12,6 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <limits>
+#include <vector>
 
 #include <gtest/gtest.h>
 #include <kassert/kassert.hpp>
@@ -256,4 +257,213 @@ TEST_F(CommunicatorTest, comm_world_convenience_functions) {
     EXPECT_EQ(world_size(), size);
     EXPECT_EQ(world_rank_signed(), rank);
     EXPECT_EQ(world_size_signed(), size);
+}
+
+TEST_F(CommunicatorTest, swap) {
+    BasicCommunicator comm1;
+    MPI_Comm          mpi_comm1  = comm1.mpi_communicator();
+    auto              root_comm1 = 1 % size;
+    comm1.root(root_comm1);
+    comm1.default_tag(1);
+
+    int const color      = rank % 2;
+    auto      comm2      = comm1.split(color);
+    MPI_Comm  mpi_comm2  = comm2.mpi_communicator();
+    auto      size_comm2 = comm2.size();
+    auto      rank_comm2 = comm2.rank();
+    auto      root_comm2 = 2 % size_comm2;
+    comm2.root(root_comm2);
+    comm2.default_tag(2);
+
+    EXPECT_NE(mpi_comm1, mpi_comm2);
+
+    comm1.swap(comm2);
+
+    EXPECT_EQ(comm1.mpi_communicator(), mpi_comm2);
+    EXPECT_EQ(comm1.size(), size_comm2);
+    EXPECT_EQ(comm1.rank(), rank_comm2);
+    EXPECT_EQ(comm1.root(), root_comm2);
+    EXPECT_EQ(comm1.default_tag(), 2);
+
+    EXPECT_EQ(comm2.mpi_communicator(), mpi_comm1);
+    EXPECT_EQ(comm2.size(), size);
+    EXPECT_EQ(comm2.rank(), rank);
+    EXPECT_EQ(comm2.root(), root_comm1);
+    EXPECT_EQ(comm2.default_tag(), 1);
+}
+
+static std::vector<MPI_Comm> freed_communicators;
+static bool                  track_freed_communicators = false;
+
+template <typename T>
+bool vector_contains(std::vector<T> const& vec, T const& elem) {
+    return std::find(vec.begin(), vec.end(), elem) != vec.end();
+}
+
+bool was_freed(MPI_Comm const& comm) {
+    return vector_contains(freed_communicators, comm);
+}
+
+int MPI_Comm_free(MPI_Comm* comm) {
+    if (track_freed_communicators) {
+        EXPECT_FALSE(vector_contains(freed_communicators, *comm));
+        freed_communicators.push_back(*comm);
+    }
+    return PMPI_Comm_free(comm);
+}
+
+TEST_F(CommunicatorTest, communicator_management) {
+    track_freed_communicators = true;
+    MPI_Comm user_owned_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &user_owned_mpi_comm);
+    MPI_Comm lib_owned_mpi_comm = MPI_COMM_NULL;
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Base functionality with ownership set in constructor.
+    {
+        BasicCommunicator non_owning_comm1(user_owned_mpi_comm, false);
+        // Default should be non-owning.
+        BasicCommunicator non_owning_comm2(user_owned_mpi_comm);
+        MPI_Comm_dup(MPI_COMM_WORLD, &lib_owned_mpi_comm);
+        BasicCommunicator owning_comm(lib_owned_mpi_comm, true);
+    }
+    EXPECT_TRUE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Default constructed communicator should not be free..
+    MPI_Comm comm_world;
+    {
+        BasicCommunicator owning_comm;
+        comm_world = owning_comm.mpi_communicator();
+    }
+    EXPECT_FALSE(was_freed(comm_world));
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Split.
+    {
+        BasicCommunicator non_owning_comm(user_owned_mpi_comm, false);
+        int const         color = 0;
+        // Splitting should create an owned MPI_Comm.
+        BasicCommunicator owning_comm = non_owning_comm.split(color);
+        lib_owned_mpi_comm            = owning_comm.mpi_communicator();
+    }
+    EXPECT_TRUE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Copy assignment.
+    {
+        BasicCommunicator non_owning_comm(user_owned_mpi_comm, false);
+        // Copy assignment should create an owned MPI_Comm.
+        BasicCommunicator owning_comm = non_owning_comm;
+        EXPECT_NE(owning_comm.mpi_communicator(), non_owning_comm.mpi_communicator());
+        lib_owned_mpi_comm = owning_comm.mpi_communicator();
+    }
+    EXPECT_TRUE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Copy constructor.
+    {
+        BasicCommunicator non_owning_comm(user_owned_mpi_comm, false);
+        // Copy construction should create an owned MPI_Comm.
+        BasicCommunicator owning_comm(non_owning_comm);
+        EXPECT_NE(owning_comm.mpi_communicator(), non_owning_comm.mpi_communicator());
+        lib_owned_mpi_comm = owning_comm.mpi_communicator();
+    }
+    EXPECT_TRUE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Move constructor.
+    {
+        BasicCommunicator non_owning_comm1(user_owned_mpi_comm, false);
+        // Move construction should not change ownership of MPI_Comms.
+        BasicCommunicator non_owning_comm2(std::move(non_owning_comm1));
+    }
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Move assignment.
+    {
+        BasicCommunicator non_owning_comm(user_owned_mpi_comm, false);
+        MPI_Comm_dup(MPI_COMM_WORLD, &lib_owned_mpi_comm);
+        BasicCommunicator comm2(lib_owned_mpi_comm, true);
+        // Move assignment should not change ownership of MPI_Comms.
+        comm2 = std::move(non_owning_comm);
+    }
+    EXPECT_TRUE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Disowning.
+    {
+        BasicCommunicator owning_comm(user_owned_mpi_comm, true);
+        MPI_Comm          contained_comm = owning_comm.disown_mpi_communicator();
+        EXPECT_EQ(user_owned_mpi_comm, contained_comm);
+    }
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Swapping.
+    {
+        BasicCommunicator comm1(user_owned_mpi_comm, false);
+        MPI_Comm_dup(MPI_COMM_WORLD, &lib_owned_mpi_comm);
+        BasicCommunicator comm2(lib_owned_mpi_comm, true);
+        // Swapping should not change ownership of MPI_Comms.
+        comm1.swap(comm2);
+    }
+    EXPECT_TRUE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Cleanly free the communicator.
+    MPI_Comm_free(&user_owned_mpi_comm);
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    track_freed_communicators = false;
 }

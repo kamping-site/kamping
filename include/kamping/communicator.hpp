@@ -45,17 +45,77 @@ public:
 
     /// @brief Constructor where an MPI communicator has to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
-    explicit Communicator(MPI_Comm comm) : Communicator(comm, 0) {}
+    /// @param take_ownership Whether the Communicator should take ownership of comm, i.e. free it in the destructor.
+    explicit Communicator(MPI_Comm comm, bool take_ownership = false) : Communicator(comm, 0, take_ownership) {}
 
     /// @brief Constructor where an MPI communicator and the default root have to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
     /// @param root Default root that is used by MPI operations requiring a root.
-    explicit Communicator(MPI_Comm comm, int root)
+    /// @param take_ownership Whether the Communicator should take ownership of comm, i.e. free it in the destructor.
+    explicit Communicator(MPI_Comm comm, int root, bool take_ownership = false)
         : _rank(get_mpi_rank(comm)),
           _size(get_mpi_size(comm)),
           _comm(comm),
-          _default_tag(0) {
+          _default_tag(0),
+          _owns_mpi_comm(take_ownership) {
+        if (take_ownership) {
+            KASSERT(comm != MPI_COMM_WORLD, "Taking ownership of MPI_COMM_WORLD is not allowed.");
+        }
         this->root(root);
+    }
+
+    /// @brief Copy constructor that duplicates the MPI_Comm and takes ownership of the newly created one in the copy.
+    /// @param other The Communicator to copy.
+    Communicator(Communicator const& other)
+        : _rank(other._rank),
+          _size(other._size),
+          _root(other._root),
+          _default_tag(other._default_tag),
+          _owns_mpi_comm(true) {
+        MPI_Comm_dup(other._comm, &_comm);
+    }
+
+    /// @brief Move constructor
+    /// @param other The Communicator to move.
+    Communicator(Communicator&& other)
+        : _rank(other._rank),
+          _size(other._size),
+          _comm(other._comm),
+          _root(other._root),
+          _default_tag(other._default_tag),
+          _owns_mpi_comm(other._owns_mpi_comm) {}
+
+    /// @brief Destructor that frees the contained \c MPI_Comm if it is owned by the Communicator.
+    ~Communicator() {
+        if (_owns_mpi_comm) {
+            MPI_Comm_free(&_comm);
+        }
+    }
+
+    /// @brief Move assignment operator.
+    /// @param other The Communicator to move.
+    Communicator& operator=(Communicator&& other) {
+        swap(other);
+        return *this;
+    }
+
+    /// @brief Copy assignment operator. Behaves according to the copy constructor.
+    /// @param other The Communicator to copy.
+    Communicator& operator=(Communicator const& other) {
+        Communicator tmp(other);
+        swap(tmp);
+        return *this;
+    }
+
+    /// @brief Swaps the Communicator with another Communicator.
+    /// @param other The Communicator to swap with.
+    void swap(Communicator& other) {
+        std::swap(_rank, other._rank);
+        std::swap(_size, other._size);
+        std::swap(_comm, other._comm);
+        std::swap(_default_tag, other._default_tag);
+        std::swap(_root, other._root);
+        std::swap(_owns_mpi_comm, other._owns_mpi_comm);
     }
 
     /// @brief Rank of the current MPI process in the communicator as `int`.
@@ -86,6 +146,13 @@ public:
     /// @return MPI communicator corresponding to this communicator.
     [[nodiscard]] MPI_Comm mpi_communicator() const {
         return _comm;
+    }
+
+    /// @brief Disowns the wrapped MPI_Comm, i.e. it will not be freed in the destructor.
+    /// @return MPI communicator corresponding to this communicator.
+    MPI_Comm disown_mpi_communicator() {
+        _owns_mpi_comm = false;
+        return mpi_communicator();
     }
 
     /// @brief Set a new default tag used in point to point communication. The initial value is 0.
@@ -162,7 +229,7 @@ public:
     [[nodiscard]] Communicator split(int const color, int const key = 0) const {
         MPI_Comm new_comm;
         MPI_Comm_split(_comm, color, key, &new_comm);
-        return Communicator(new_comm);
+        return Communicator(new_comm, true);
     }
 
     /// @brief Convert a rank from this communicator to the rank in another communicator.
@@ -318,7 +385,11 @@ private:
 
     size_t _root;        ///< Default root for MPI operations that require a root.
     int    _default_tag; ///< Default tag value used in point to point communication.
-};                       // class communicator
+
+    bool _owns_mpi_comm; ///< Whether the Communicator Objects owns the contained MPI_Comm, i.e. whether it is allowed
+                         ///< to free it in the destructor.
+
+}; // class communicator
 
 /// @brief A basic KaMPIng Communicator that uses std::vector when creating new buffers.
 using BasicCommunicator = Communicator<>;
