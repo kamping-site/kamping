@@ -19,10 +19,7 @@ int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping::internal;
 
     [[maybe_unused]] Communicator comm;
-    using NotAPod = std::vector<int>;
-    // std::is_pod_v is deprecated in C++20
-    // static_assert(!std::is_pod_v<NotAPod>);
-    [[maybe_unused]] int value = 0;
+    [[maybe_unused]] int          value = 0;
 
 #if defined(VALUE_IS_A_POINTER)
     std::ignore = comm.is_same_on_all_ranks(&value);
