@@ -92,7 +92,7 @@ enum class TypeCategory { integer, floating, complex, logical, byte, undefined }
 ///
 /// the members specify which group the datatype belongs to according to the type groups specified in Section 5.9.2 of
 /// the MPI 3.1 standard.
-/// @tparam T Type to map to a \c MPI_Datatype.
+/// @tparam T Type to map to an \c MPI_Datatype.
 template <typename T>
 struct mpi_type_traits {
     /// @brief \c true, if the type maps to a builtin \c MPI_Datatype.
@@ -288,7 +288,7 @@ struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
 /// new custom continuous type.
 ///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
 /// To check if type \c T maps to a builtin \c MPI_Datatype at compile-time, use \c mpi_type_traits.
-/// @tparam T The type to translate into a MPI_Datatype.
+/// @tparam T The type to translate into an MPI_Datatype.
 /// @return The tag identifying the corresponding MPI_Datatype or the newly created type.
 /// @see mpi_custom_continuous_type()
 ///
@@ -316,13 +316,13 @@ template <typename T>
     // Check if we got void -> error
     static_assert(!std::is_void_v<T_no_cv>, "There is no MPI datatype corresponding to void.");
 
-    // Check if we got a array type -> create a continuous type.
+    // Check if we got an array type -> create a continuous type.
     if constexpr (std::is_array_v<T_no_cv>) {
         // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
         return mpi_custom_continuous_type<sizeof(T_no_cv)>();
     }
 
-    // Check if we got a enum type -> use underlying type
+    // Check if we got an enum type -> use underlying type
     MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
     if constexpr (std::is_enum_v<T_no_cv>) {
         return mpi_datatype<std::underlying_type_t<T_no_cv>>();
