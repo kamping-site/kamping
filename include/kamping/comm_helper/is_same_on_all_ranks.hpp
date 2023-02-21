@@ -34,6 +34,8 @@ namespace kamping {
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename Value>
 bool Communicator<DefaultContainerType, Plugins...>::is_same_on_all_ranks(Value const& value) const {
+    /// @todo How to handle more complex data types, e.g. std::pair<>, user defined classes, std::vector (here and
+    /// elsewhere)?
     /// @todo Assert that two values are comparable.
     /// @todo Implement this for complex types.
 
