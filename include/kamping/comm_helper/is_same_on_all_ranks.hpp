@@ -39,6 +39,9 @@ bool Communicator<DefaultContainerType, Plugins...>::is_same_on_all_ranks(Value 
     /// @todo Assert that two values are comparable.
     /// @todo Implement this for complex types.
 
+    /// @todo replace this with something more general
+    static_assert(!std::is_pointer_v<Value>, "Comparing pointers from different machines does not make sense.");
+
     struct ValueEqual {
         Value value; // The value to compare, init on each rank with the local value.
         bool  equal; // Have we seen only equal values in the reduction so far?
