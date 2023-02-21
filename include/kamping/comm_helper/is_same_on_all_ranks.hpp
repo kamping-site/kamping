@@ -37,7 +37,6 @@ bool Communicator<DefaultContainerType, Plugins...>::is_same_on_all_ranks(Value 
     /// @todo How to handle more complex data types, e.g. std::pair<>, user defined classes, std::vector (here and
     /// elsewhere)?
     /// @todo Assert that two values are comparable.
-    /// @todo Implement this for complex types.
 
     /// @todo replace this with something more general
     static_assert(!std::is_pointer_v<Value>, "Comparing pointers from different machines does not make sense.");
