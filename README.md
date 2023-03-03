@@ -4,7 +4,7 @@
 
 This is KaMPIng [kampɪŋ], an MPI wrapper which makes using MPI feel like real C++
 
-KaMPIng is developed at the [Algorithm Engineering Group](https://algo2.iti.kit.edu) at Karlsruhe Institute of Technology.
+KaMPIng is developed at the [Algorithm Engineering Group](https://algo2.iti.kit.edu/english/index.php) at Karlsruhe Institute of Technology.
 
 ## Goals
    - ban `man MPI_*` from your command line history
