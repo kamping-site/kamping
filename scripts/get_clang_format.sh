@@ -1,6 +1,6 @@
 #!/bin/bash
 
-clang_format_version=14
+clang_format_version=16
 
 # Use clang-format-<version> if available, else use clang-format
 if command -v clang-format-$clang_format_version &> /dev/null; then

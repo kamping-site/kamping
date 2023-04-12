@@ -269,7 +269,7 @@ TYPED_TEST(TypedOperationsTest, user_defined_operation_is_not_builtin_lambda) {
 TYPED_TEST(TypedOperationsTest, user_defined_operation_is_not_builtin_function_object) {
     using T = typename TestFixture::operation_type;
     struct MyOperation {
-        T const& operator()(const T& a, const T& b [[maybe_unused]]) {
+        T const& operator()(T const& a, T const& b [[maybe_unused]]) {
             return a;
         }
     };

@@ -146,8 +146,8 @@ static constexpr bool is_vector_bool_v<
 template <typename T>
 static constexpr bool
     is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
-        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
-            std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
+        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value
+        && std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
 
 } // namespace internal
 
@@ -241,7 +241,7 @@ template <
 class DataBuffer : private ParameterObjectBase {
 public:
     static constexpr ParameterType parameter_type =
-        parameter_type_param; ///< The type of parameter this buffer represents.
+        parameter_type_param;                                    ///< The type of parameter this buffer represents.
 
     static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
 

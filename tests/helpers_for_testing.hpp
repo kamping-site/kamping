@@ -97,7 +97,7 @@ public:
         return _data;
     }
 
-    const T* data() const noexcept {
+    T const* data() const noexcept {
         return _data;
     }
 
@@ -118,7 +118,7 @@ public:
         _data = new_data;
     }
 
-    const T& operator[](size_t i) const {
+    T const& operator[](size_t i) const {
         return _data[i];
     }
 
@@ -154,11 +154,11 @@ public:
         return _data + _size;
     }
 
-    const T* cbegin() const {
+    T const* cbegin() const {
         return _data;
     }
 
-    const T* cend() const {
+    T const* cend() const {
         return _data + _size;
     }
 

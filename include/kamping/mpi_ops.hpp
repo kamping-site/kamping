@@ -40,7 +40,7 @@ struct max_impl {
     /// @param lhs the first operand
     /// @param rhs the second operand
     /// @return the maximum
-    constexpr T operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(T const& lhs, T const& rhs) const {
         // return std::max<const T&>(lhs, rhs);
         return std::max(lhs, rhs);
     }
@@ -58,7 +58,7 @@ struct max_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(T const& lhs, T const& rhs) const {
         return std::max(lhs, rhs);
     }
 };
@@ -76,7 +76,7 @@ struct min_impl {
     /// @param lhs the first operand
     /// @param rhs the second operand
     /// @return the maximum
-    constexpr T operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(T const& lhs, T const& rhs) const {
         return std::min(lhs, rhs);
     }
 };
@@ -92,7 +92,7 @@ struct min_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T operator()(const T& lhs, const T& rhs) const {
+    constexpr T operator()(T const& lhs, T const& rhs) const {
         return std::min(lhs, rhs);
     }
 };
@@ -108,7 +108,7 @@ struct logical_xor_impl {
     /// @param lhs the first operand
     /// @param rhs the second operand
     /// @return the logical xor
-    constexpr bool operator()(const T& lhs, const T& rhs) const {
+    constexpr bool operator()(T const& lhs, T const& rhs) const {
         return (lhs && !rhs) || (!lhs && rhs);
     }
 };
@@ -125,7 +125,7 @@ struct logical_xor_impl<void> {
     /// @tparam S type of the right operand
     /// @return the logical xor
     template <typename T, typename S>
-    constexpr bool operator()(const T& lhs, const S& rhs) const {
+    constexpr bool operator()(T const& lhs, S const& rhs) const {
         return (lhs && !rhs) || (!lhs && rhs);
     }
 };
@@ -254,7 +254,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = std::numeric_limits<T>::lowest();
     static MPI_Op         op() {
-                return MPI_MAX;
+        return MPI_MAX;
     }
 };
 
@@ -268,7 +268,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = std::numeric_limits<T>::max();
     static MPI_Op         op() {
-                return MPI_MIN;
+        return MPI_MIN;
     }
 };
 
@@ -283,7 +283,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = 0;
     static MPI_Op         op() {
-                return MPI_SUM;
+        return MPI_SUM;
     }
 };
 
@@ -298,7 +298,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = 1;
     static MPI_Op         op() {
-                return MPI_PROD;
+        return MPI_PROD;
     }
 };
 
@@ -312,7 +312,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = true;
     static MPI_Op         op() {
-                return MPI_LAND;
+        return MPI_LAND;
     }
 };
 
@@ -326,7 +326,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = false;
     static MPI_Op         op() {
-                return MPI_LOR;
+        return MPI_LOR;
     }
 };
 
@@ -340,7 +340,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = false;
     static MPI_Op         op() {
-                return MPI_LXOR;
+        return MPI_LXOR;
     }
 };
 
@@ -354,7 +354,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = ~(T{0});
     static MPI_Op         op() {
-                return MPI_BAND;
+        return MPI_BAND;
     }
 };
 
@@ -368,7 +368,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = T{0};
     static MPI_Op         op() {
-                return MPI_BOR;
+        return MPI_BOR;
     }
 };
 
@@ -382,7 +382,7 @@ struct mpi_operation_traits<
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = 0;
     static MPI_Op         op() {
-                return MPI_BXOR;
+        return MPI_BXOR;
     }
 };
 #endif
@@ -531,10 +531,8 @@ public:
 template <typename T, typename Op, typename Commutative, class Enable = void>
 class ReduceOperation {
     static_assert(
-        std::is_same_v<
-            Commutative,
-            kamping::ops::internal::
-                commutative_tag> || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
+        std::is_same_v<Commutative, kamping::ops::internal::commutative_tag>
+            || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
         "For custom operations you have to specify whether they are commutative."
     );
 
@@ -575,10 +573,8 @@ public:
 template <typename T, typename Op, typename Commutative>
 class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_default_constructible_v<Op> >::type> {
     static_assert(
-        std::is_same_v<
-            Commutative,
-            kamping::ops::internal::
-                commutative_tag> || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
+        std::is_same_v<Commutative, kamping::ops::internal::commutative_tag>
+            || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
         "For custom operations you have to specify whether they are commutative."
     );
 
