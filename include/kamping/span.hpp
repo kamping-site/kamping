@@ -11,6 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#pragma once
+
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) // C++ 20
 
     #include <span>
@@ -44,9 +46,9 @@ public:
     using size_type       = size_t;              ///< The type used for the size of the span.
     using difference_type = std::ptrdiff_t;      ///< The type used for the difference between two elements in the span.
     using pointer         = T*;                  ///< The type of a pointer to a single elements in the span.
-    using const_pointer   = const T*;            ///< The type of a const pointer to a single elements in the span.
+    using const_pointer   = T const*;            ///< The type of a const pointer to a single elements in the span.
     using reference       = T&;                  ///< The type of a reference to a single elements in the span.
-    using const_reference = const T&;            ///< The type of a const reference to a single elements in the span.
+    using const_reference = T const&;            ///< The type of a const reference to a single elements in the span.
 
     /// @brief Constructor for a span from a pointer and a size.
     ///
