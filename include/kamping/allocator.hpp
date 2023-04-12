@@ -35,18 +35,21 @@ public:
     //
     // See https://en.cppreference.com/w/cpp/named_req/Allocator for details.
 
+    MPIAllocator() noexcept = default;
+    template <typename U>
+    MPIAllocator(MPIAllocator<U> const&) noexcept {}
+
     /// @brief The value type.
     using value_type = T;
-    /// @brief The pointer type.
-    using pointer_type = T*;
-    ///@brief The size type.
-    using size_type = typename std::make_unsigned<typename std::pointer_traits<pointer_type>::difference_type>::type;
+
+    using propagate_on_container_move_assignment = std::true_type;
+    using is_always_equal                        = std::true_type;
 
     /// @brief Allocates \c n * sizeof(T) bytes using MPI allocation functions.
     /// @param n The number of objects to allocate storage for.
     /// @return Pointer to the allocated memory segment.
-    pointer_type allocate(size_type n) {
-        pointer_type ptr;
+    T* allocate(std::size_t n) {
+        T* ptr;
         if (sizeof(value_type) * n > std::numeric_limits<MPI_Aint>::max()) {
             throw std::runtime_error("Requested allocation exceeds MPI address size.");
         }
@@ -61,7 +64,7 @@ public:
     /// @brief Deallocates the storage referenced by the pointer \c p, which must be a pointer obtained by an earlier
     /// call to \ref allocate().
     /// @param p Pointer obtained from \ref allocate().
-    void deallocate(pointer_type p, size_type) {
+    void deallocate(T* p, std::size_t) {
         // no error handling because the standard disallows throwing exceptions here
         MPI_Free_mem(p);
     }
@@ -71,13 +74,13 @@ public:
 // - true only if the storage allocated by the allocator a1 can be deallocated through a2.
 // - Establishes reflexive, symmetric, and transitive relationship.
 // - Does not throw exceptions.
-template <typename U, typename T>
-bool operator==(MPIAllocator<T> const&, MPIAllocator<U> const&) {
+template <typename T, typename U>
+bool operator==(MPIAllocator<T> const&, MPIAllocator<U> const&) noexcept {
     return true;
 }
 
-template <typename U, typename T>
-bool operator!=(MPIAllocator<T> const&, MPIAllocator<U> const&) {
+template <typename T, typename U>
+bool operator!=(MPIAllocator<T> const&, MPIAllocator<U> const&) noexcept {
     return false;
 }
 } // namespace kamping
