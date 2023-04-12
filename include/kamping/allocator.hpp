@@ -1,0 +1,83 @@
+// This file is part of KaMPIng.
+//
+// Copyright 2023 The KaMPIng Authors
+//
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
+#pragma once
+
+#include <limits>
+#include <memory>
+
+#include <mpi.h>
+
+#include "kamping/error_handling.hpp"
+
+namespace kamping {
+
+/// @brief STL-compatible allocator for requesting memory using the builtin MPI allocator.
+///
+/// Note that this allocator may only be used after initializing MPI.
+///
+/// @tparam T The value to allocate.
+template <typename T>
+class MPIAllocator {
+public:
+    // Note: this implements all required functionality of a custom allocator,
+    // the rest is inferred.
+    //
+    // See https://en.cppreference.com/w/cpp/named_req/Allocator for details.
+
+    /// @brief The value type.
+    using value_type = T;
+    /// @brief The pointer type.
+    using pointer_type = T*;
+    ///@brief The size type.
+    using size_type = typename std::make_unsigned<typename std::pointer_traits<pointer_type>::difference_type>::type;
+
+    /// @brief Allocates \c n * sizeof(T) bytes using MPI allocation functions.
+    /// @param n The number of objects to allocate storage for.
+    /// @return Pointer to the allocated memory segment.
+    pointer_type allocate(size_type n) {
+        pointer_type ptr;
+        if (sizeof(value_type) * n > std::numeric_limits<MPI_Aint>::max()) {
+            throw std::runtime_error("Requested allocation exceeds MPI address size.");
+        }
+        MPI_Aint alloc_size = static_cast<MPI_Aint>(sizeof(value_type) * n);
+        int      err        = MPI_Alloc_mem(alloc_size, MPI_INFO_NULL, &ptr);
+        if (err != MPI_SUCCESS) {
+            throw kamping::MpiErrorException("Allocation failed. ", err);
+        }
+        return ptr;
+    }
+
+    /// @brief Deallocates the storage referenced by the pointer \c p, which must be a pointer obtained by an earlier
+    /// call to \ref allocate().
+    /// @param p Pointer obtained from \ref allocate().
+    void deallocate(pointer_type p, size_type) {
+        // no error handling because the standard disallows throwing exceptions here
+        MPI_Free_mem(p);
+    }
+};
+
+// From https://en.cppreference.com/w/cpp/named_req/Allocator:
+// - true only if the storage allocated by the allocator a1 can be deallocated through a2.
+// - Establishes reflexive, symmetric, and transitive relationship.
+// - Does not throw exceptions.
+template <typename U, typename T>
+bool operator==(MPIAllocator<T> const&, MPIAllocator<U> const&) {
+    return true;
+}
+
+template <typename U, typename T>
+bool operator!=(MPIAllocator<T> const&, MPIAllocator<U> const&) {
+    return false;
+}
+} // namespace kamping
