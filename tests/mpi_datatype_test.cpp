@@ -179,8 +179,8 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
 
 TEST(MpiDataTypeTest, mpi_datatype_const_and_volatile) {
     // Ignore const and volatile qualifiers.
-    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<const int8_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<volatile int8_t>()));
+    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t const>()));
+    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t volatile>()));
     EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<const volatile int8_t>()));
 }
 
