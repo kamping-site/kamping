@@ -110,6 +110,6 @@ TEST_F(AllocatorTest, vector_allocation) {
 // case of exceeding the bounds of MPI's MPI_Aint
 TEST_F(AllocatorTest, size_out_of_bound) {
     kamping::MPIAllocator<std::byte> alloc;
-    ASSERT_THROW(alloc.allocate(static_cast<size_t>(std::numeric_limits<MPI_Aint>::max()) + 1), std::runtime_error);
-    ASSERT_EQ(AllocatorTest::allocated_memory, 0);
+    EXPECT_THROW(alloc.allocate(static_cast<size_t>(std::numeric_limits<MPI_Aint>::max()) + 1), std::runtime_error);
+    EXPECT_EQ(AllocatorTest::allocated_memory, 0);
 }

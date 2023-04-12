@@ -26,7 +26,7 @@ namespace kamping {
 ///
 /// Note that this allocator may only be used after initializing MPI.
 ///
-/// @tparam T The value to allocate.
+/// @tparam T The type to allocate.
 template <typename T>
 class MPIAllocator {
 public:
@@ -41,7 +41,9 @@ public:
 
     MPIAllocator() noexcept = default;
 
-    /// @brief Since the allocator is stateless, we can also copy-assign
+    /// @brief Copy constructor for allocators with different value type.
+    ///
+    /// Since the allocator is stateless, we can also copy-assign
     /// allocators for other types (because this is a noop).
     template <typename U>
     MPIAllocator(MPIAllocator<U> const&) noexcept {}
@@ -59,7 +61,7 @@ public:
     /// by another and vice-versa
     using is_always_equal = std::true_type;
 
-    /// @brief Allocates \c n * sizeof(T) bytes using MPI allocation functions.
+    /// @brief Allocates <tt> n * sizeof(T) </tt> bytes using MPI allocation functions.
     /// @param n The number of objects to allocate storage for.
     /// @return Pointer to the allocated memory segment.
     T* allocate(std::size_t n) {
@@ -69,9 +71,7 @@ public:
         }
         MPI_Aint alloc_size = static_cast<MPI_Aint>(sizeof(value_type) * n);
         int      err        = MPI_Alloc_mem(alloc_size, MPI_INFO_NULL, &ptr);
-        if (err != MPI_SUCCESS) {
-            throw kamping::MpiErrorException("Allocation failed. ", err);
-        }
+        THROW_IF_MPI_ERROR(err, MPI_Alloc_mem);
         return ptr;
     }
 
