@@ -17,5 +17,5 @@ jobs:
     - name: Check formatting
       uses: jidicula/clang-format-action@v4.4.0
       with:
-        clang-format-version: '14'
+        clang-format-version: '16'
         exclude-regex: 'extern/'
