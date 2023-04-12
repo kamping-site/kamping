@@ -33,17 +33,31 @@ public:
     // Note: this implements all required functionality of a custom allocator,
     // the rest is inferred.
     //
+    // This (almost minimal) set of implemented members for the named
+    // requirement `Allocator` matches the ones of Intel's TBB allocator, which
+    // works similar to ours.
+    //
     // See https://en.cppreference.com/w/cpp/named_req/Allocator for details.
 
     MPIAllocator() noexcept = default;
+
+    /// @brief Since the allocator is stateless, we can also copy-assign
+    /// allocators for other types (because this is a noop).
     template <typename U>
     MPIAllocator(MPIAllocator<U> const&) noexcept {}
 
     /// @brief The value type.
     using value_type = T;
 
+    /// @brief the memory "ownership" can be moved when the container is
+    /// move-assigned. If this would not be the case, container would need to
+    /// free memory using the old allocator and reallocated it using the copied
+    /// allocator.
     using propagate_on_container_move_assignment = std::true_type;
-    using is_always_equal                        = std::true_type;
+
+    /// @brief memory allocated by one allocator instance can always be dellocated
+    /// by another and vice-versa
+    using is_always_equal = std::true_type;
 
     /// @brief Allocates \c n * sizeof(T) bytes using MPI allocation functions.
     /// @param n The number of objects to allocate storage for.
