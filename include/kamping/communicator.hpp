@@ -379,9 +379,9 @@ private:
         return asserting_cast<size_t>(size);
     }
 
-    size_t   _rank;      ///< Rank of the MPI process in this communicator.
-    size_t   _size;      ///< Number of MPI processes in this communicator.
-    MPI_Comm _comm;      ///< Corresponding MPI communicator.
+    size_t   _rank; ///< Rank of the MPI process in this communicator.
+    size_t   _size; ///< Number of MPI processes in this communicator.
+    MPI_Comm _comm; ///< Corresponding MPI communicator.
 
     size_t _root;        ///< Default root for MPI operations that require a root.
     int    _default_tag; ///< Default tag value used in point to point communication.
@@ -389,7 +389,7 @@ private:
     bool _owns_mpi_comm; ///< Whether the Communicator Objects owns the contained MPI_Comm, i.e. whether it is allowed
                          ///< to free it in the destructor.
 
-};                       // class communicator
+}; // class communicator
 
 /// @brief A basic KaMPIng Communicator that uses std::vector when creating new buffers.
 using BasicCommunicator = Communicator<>;

@@ -167,12 +167,12 @@ public:
     }
 };
 
-using RootDataBuffer = RankDataBuffer<RankType::value, ParameterType::root>;       ///< Helper for roots;
+using RootDataBuffer = RankDataBuffer<RankType::value, ParameterType::root>; ///< Helper for roots;
 
-struct standard_mode_t {};                                                         ///< tag for standard send mode
-struct buffered_mode_t {};                                                         ///< tag for buffered send mode
-struct synchronous_mode_t {};                                                      ///< tag for synchronous send mode
-struct ready_mode_t {};                                                            ///< tag for ready send mode
+struct standard_mode_t {};    ///< tag for standard send mode
+struct buffered_mode_t {};    ///< tag for buffered send mode
+struct synchronous_mode_t {}; ///< tag for synchronous send mode
+struct ready_mode_t {};       ///< tag for ready send mode
 using send_mode_list =
     type_list<standard_mode_t, buffered_mode_t, synchronous_mode_t, ready_mode_t>; ///< list of all available send modes
 
