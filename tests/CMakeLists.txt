@@ -157,6 +157,11 @@ kamping_register_mpi_test(
     FILES plugins_test.cpp
     CORES 1 4
 )
+kamping_register_mpi_test(
+    test_allocator
+    FILES allocator_test.cpp
+    CORES 1 4
+)
 
 # Tests using C++ 20
 kamping_register_mpi_test(
