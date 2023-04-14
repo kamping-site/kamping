@@ -83,7 +83,10 @@ public:
           _comm(other._comm),
           _root(other._root),
           _default_tag(other._default_tag),
-          _owns_mpi_comm(other._owns_mpi_comm) {}
+          _owns_mpi_comm(other._owns_mpi_comm) {
+        other._comm          = MPI_COMM_NULL;
+        other._owns_mpi_comm = false;
+    }
 
     /// @brief Destructor that frees the contained \c MPI_Comm if it is owned by the Communicator.
     ~Communicator() {

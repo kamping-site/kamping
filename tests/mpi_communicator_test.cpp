@@ -432,6 +432,35 @@ TEST_F(CommunicatorTest, communicator_management) {
     EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
     EXPECT_FALSE(was_freed(user_owned_mpi_comm));
 
+    // Move constructing should not cause a communicator to be freed twice.
+    {
+        MPI_Comm_dup(MPI_COMM_WORLD, &lib_owned_mpi_comm);
+        BasicCommunicator owning_comm1(lib_owned_mpi_comm, true);
+        BasicCommunicator owning_comm2(std::move(owning_comm1));
+    }
+    EXPECT_TRUE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Move assignment should not cause a communicator to be freed twice.
+    {
+        MPI_Comm_dup(MPI_COMM_WORLD, &lib_owned_mpi_comm);
+        BasicCommunicator owning_comm1(lib_owned_mpi_comm, true);
+        BasicCommunicator owning_comm2(user_owned_mpi_comm, false);
+        owning_comm2 = std::move(owning_comm1);
+    }
+    EXPECT_TRUE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
+    // Reset list of freed communicators
+    freed_communicators.clear();
+    EXPECT_FALSE(was_freed(lib_owned_mpi_comm));
+    EXPECT_FALSE(was_freed(user_owned_mpi_comm));
+
     // Disowning.
     {
         BasicCommunicator owning_comm(user_owned_mpi_comm, true);
