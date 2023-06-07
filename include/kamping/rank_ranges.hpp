@@ -49,7 +49,10 @@ public:
         : _is_lib_allocated{true},
           _rank_range_array{new int[ranges.size()][3]},
           _size{ranges.size()} {
-        static_assert(std::is_same_v<typename RangeContainer::value_type, RankRange>, "Container's value_type must be RankRange!");
+        static_assert(
+            std::is_same_v<typename RangeContainer::value_type, RankRange>,
+            "Container's value_type must be RankRange!"
+        );
 
         for (std::size_t i = 0; i < ranges.size(); ++i) {
             auto const& range       = ranges[i];
@@ -78,6 +81,6 @@ public:
 private:
     bool const _is_lib_allocated; ///< Flag indicating whether the array needs to be freed upon object construction.
     int (*_rank_range_array)[3];  ///< Underlying c-style array of type int (*)[3].
-    std::size_t _size;     ///< Number of ranges stored in this object.
+    std::size_t _size;            ///< Number of ranges stored in this object.
 };
 } // namespace kamping
