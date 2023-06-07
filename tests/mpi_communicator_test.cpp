@@ -260,6 +260,26 @@ TEST_F(CommunicatorTest, split_with_provided_ranks) {
     }
 }
 
+TEST_F(CommunicatorTest, split_with_provided_ranks_and_sparse_representation_basic) {
+    Communicator comm;
+
+    {
+        std::vector<RankRange> rank_ranges{RankRange{0, size - 1, 1}};
+        auto                   split_comm        = comm.split(RankRanges{rank_ranges});
+        int                    comparison_result = MPI_UNDEFINED;
+        MPI_Comm_compare(comm.mpi_communicator(), split_comm.mpi_communicator(), &comparison_result);
+        EXPECT_EQ(MPI_CONGRUENT, comparison_result);
+    }
+
+    {
+        int  rank_ranges[][3]  = {0, size - 1, 1};
+        auto split_comm        = comm.split(RankRanges(rank_ranges, 1));
+        int  comparison_result = MPI_UNDEFINED;
+        MPI_Comm_compare(comm.mpi_communicator(), split_comm.mpi_communicator(), &comparison_result);
+        EXPECT_EQ(MPI_CONGRUENT, comparison_result);
+    }
+}
+
 TEST_F(CommunicatorTest, assignment) {
     // move assignment
     Communicator comm;

@@ -22,6 +22,7 @@
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/rank_ranges.hpp"
 
 namespace kamping {
 
@@ -248,7 +249,7 @@ public:
     /// @return \ref Communicator wrapping the newly split MPI communicator.
     template <typename Ranks>
     [[nodiscard]] Communicator split(Ranks const& ranks_in_own_group) const {
-        static_assert(std::is_same_v<typename Ranks::value_type, int>, "Send counts must be of type int");
+        static_assert(std::is_same_v<typename Ranks::value_type, int>, "Ranks must be of type int");
         MPI_Group comm_group;
         MPI_Comm_group(_comm, &comm_group);
         MPI_Group new_comm_group;
@@ -258,6 +259,26 @@ public:
             ranks_in_own_group.data(),
             &new_comm_group
         );
+        MPI_Comm new_comm;
+        MPI_Comm_create(_comm, new_comm_group, &new_comm);
+        return Communicator(new_comm, true);
+    }
+
+    /// @brief Split the communicator in different (sub-)communicators using a sparse rank description.
+    ///
+    /// This split method requires globally available information on the ranks in the split communicators.
+    /// A rank \c r must know all other ranks which will be part of the subcommunicator to which \c r will belong.
+    /// This information can be used by the MPI Implementation to execute a communicator split more efficiently.
+    ///
+    /// @param ranks_in_own_group Contains the ranks that will be part of this rank's new (sub-)communicator.
+    /// If \c rank_ranges contains ranks than the \c rank_ranges argument on these ranks must be
+    /// identical.
+    /// @return \ref Communicator wrapping the newly split MPI communicator.
+    [[nodiscard]] Communicator split(RankRanges const& rank_ranges) const {
+        MPI_Group comm_group;
+        MPI_Comm_group(_comm, &comm_group);
+        MPI_Group new_comm_group;
+        MPI_Group_range_incl(comm_group, asserting_cast<int>(rank_ranges.size()), rank_ranges.get(), &new_comm_group);
         MPI_Comm new_comm;
         MPI_Comm_create(_comm, new_comm_group, &new_comm);
         return Communicator(new_comm, true);
