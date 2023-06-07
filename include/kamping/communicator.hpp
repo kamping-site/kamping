@@ -235,6 +235,33 @@ public:
         MPI_Comm_split(_comm, color, key, &new_comm);
         return Communicator(new_comm, true);
     }
+    /// @brief Split the communicator in different (sub-)communicators.
+    ///
+    /// This split method requires globally available information on the ranks in the split communicators.
+    /// A rank \c r must know all other ranks which will be part of the subcommunicator to which \c r will belong.
+    /// This information can be used by the MPI Implementation to execute a communicator split more efficiently.
+    ///
+    /// @tparam Ranks Contiguous container storing integers.
+    /// @param ranks_in_own_group Contains the ranks that will be part of this rank's new (sub-)communicator.
+    /// If \c ranks_in_own_group contains ranks than the \c ranks_in_own_group argument on these ranks must be
+    /// identical.
+    /// @return \ref Communicator wrapping the newly split MPI communicator.
+    template <typename Ranks>
+    [[nodiscard]] Communicator split(Ranks const& ranks_in_own_group) const {
+        static_assert(std::is_same_v<typename Ranks::value_type, int>, "Send counts must be of type int");
+        MPI_Group comm_group;
+        MPI_Comm_group(_comm, &comm_group);
+        MPI_Group new_comm_group;
+        MPI_Group_incl(
+            comm_group,
+            asserting_cast<int>(ranks_in_own_group.size()),
+            ranks_in_own_group.data(),
+            &new_comm_group
+        );
+        MPI_Comm new_comm;
+        MPI_Comm_create(_comm, new_comm_group, &new_comm);
+        return Communicator(new_comm, true);
+    }
 
     /// @brief Convert a rank from this communicator to the rank in another communicator.
     /// @param rank The rank in this communicator

@@ -12,6 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <limits>
+#include <numeric>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -230,6 +231,31 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
                     splitted_comm.convert_rank_to_communicator(expected_rank_rn_splitted_comm, comm)
                 );
             }
+        }
+    }
+}
+
+TEST_F(CommunicatorTest, split_with_provided_ranks) {
+    Communicator comm;
+
+    // Test split with any number of reasonable groups
+    for (int i = 2; i <= size; ++i) {
+        int const color = rank % i;
+        // enumerate all ranks that are part of rank's new subcommunicator
+        std::vector<int> ranks_in_own_group;
+        for (int cur_rank = 0; cur_rank < size; ++cur_rank) {
+            if (color == cur_rank % i) {
+                ranks_in_own_group.push_back(cur_rank);
+            }
+        }
+        auto       split_comm    = comm.split(ranks_in_own_group);
+        auto const expected_size = ranks_in_own_group.size();
+        EXPECT_EQ(split_comm.size(), expected_size);
+
+        // use rank conversion as sanity check for the split communicators
+        for (int rank_to_test = 0; rank_to_test < size; ++rank_to_test) {
+            int const expected_rank_in_split_comm = rank_to_test % i == color ? rank_to_test / i : MPI_UNDEFINED;
+            EXPECT_EQ(expected_rank_in_split_comm, comm.convert_rank_to_communicator(rank_to_test, split_comm));
         }
     }
 }
