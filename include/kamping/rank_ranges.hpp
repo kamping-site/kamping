@@ -36,7 +36,7 @@ class RankRanges {
 public:
     /// @brief Constructor taking a plain two dimension c-style array.
     /// @param rank_range_array Pointer to int[3] representing contiguously stored plain MPI rank ranges.
-    /// @param rank_count Number of ranges stored in this array.
+    /// @param size Number of ranges stored in this array.
     RankRanges(int (*rank_range_array)[3], std::size_t size)
         : _is_lib_allocated{false},
           _rank_range_array{rank_range_array},
@@ -67,15 +67,31 @@ public:
             delete[] _rank_range_array;
         }
     }
+
     /// @brief Get non-owning access to the underlying c-style array storing the rank ranges.
     /// @return Underlying c-style array of type int (*)[3].
     auto get() const {
         return _rank_range_array;
     }
+
     /// @brief Number of ranges stored in this object.
     /// @return Number of ranges.
     auto size() const {
         return _size;
+    }
+
+    /// @brief Checks whether the rank ranges contain a certain rank.
+    /// @return Whether rank ranges contain a certain rank.
+    bool contains(int rank) const {
+        for (std::size_t i = 0; i < size(); ++i) {
+            RankRange rank_range{_rank_range_array[i][0], _rank_range_array[i][1], _rank_range_array[i][2]};
+            for (int cur_rank = rank_range.first; cur_rank <= rank_range.last; cur_rank += rank_range.stride) {
+                if (cur_rank == rank) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 private:
