@@ -290,13 +290,10 @@ public:
     /// @return \ref Communicator wrapping the newly split MPI communicator.
     [[nodiscard]] Communicator create_subcommunicators(RankRanges const& rank_ranges) const {
         KASSERT(rank_ranges.size() > 0ull, "The set of ranks to include in the new subcommunicator must not be empty.");
-        std::cout << "hallo" << std::endl;
-        std::cout << "contains: " << rank() << " " << rank_ranges.contains(rank_signed()) << std::endl;
         KASSERT(
             rank_ranges.contains(rank_signed()),
             "The ranks to include in the new subcommunicator must contain own rank."
         );
-        std::cout << "hallo2" << std::endl;
         MPI_Group comm_group;
         MPI_Comm_group(_comm, &comm_group);
         MPI_Group new_comm_group;
