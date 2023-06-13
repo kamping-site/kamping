@@ -247,7 +247,7 @@ public:
     ///
     /// @tparam Ranks Contiguous container storing integers.
     /// @param ranks_in_own_group Contains the ranks that will be part of this rank's new (sub-)communicator.
-    /// If \c ranks_in_own_group contains ranks than the \c ranks_in_own_group argument on these ranks must be
+    /// If \c ranks_in_own_group contains ranks, then the \c ranks_in_own_group argument on these ranks must be
     /// identical. Furthermore, this set must not be empty.
     /// @return \ref Communicator wrapping the newly split MPI communicator.
     template <typename Ranks>
