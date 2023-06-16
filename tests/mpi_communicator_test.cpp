@@ -12,12 +12,14 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <limits>
+#include <numeric>
 #include <vector>
 
 #include <gtest/gtest.h>
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
@@ -233,6 +235,132 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
         }
     }
 }
+
+TEST_F(CommunicatorTest, create_communicators_via_provided_ranks) {
+    Communicator comm;
+
+    // Test communicator creation with any number of reasonable groups
+    for (int i = 2; i <= size; ++i) {
+        int const color = rank % i;
+        // enumerate all ranks that are part of rank's new subcommunicator
+        std::vector<int> ranks_in_own_group;
+        for (int cur_rank = 0; cur_rank < size; ++cur_rank) {
+            if (color == cur_rank % i) {
+                ranks_in_own_group.push_back(cur_rank);
+            }
+        }
+        auto subcommunicator          = comm.create_subcommunicators(ranks_in_own_group);
+        auto expected_subcommunicator = comm.split(color);
+        int  comparison_result        = MPI_UNDEFINED;
+        MPI_Comm_compare(
+            subcommunicator.mpi_communicator(),
+            expected_subcommunicator.mpi_communicator(),
+            &comparison_result
+        );
+        EXPECT_EQ(MPI_CONGRUENT, comparison_result);
+    }
+}
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_illegal_arguments) {
+    Communicator comm;
+
+    // set of ranks is empty
+    EXPECT_KASSERT_FAILS(
+        std::ignore = comm.create_subcommunicators(std::vector<int>{}),
+        "The set of ranks to include in the new subcommunicator must not be empty."
+    );
+    // set of ranks must contain own rank
+    EXPECT_KASSERT_FAILS(
+        std::ignore = comm.create_subcommunicators(std::vector<int>{rank + 1}),
+        "The ranks to include in the new subcommunicator must contain own rank."
+    );
+}
+#endif
+
+TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_representation) {
+    Communicator comm;
+    // subcommunicator contains whole original communicator
+    {
+        std::vector<RankRange> rank_ranges{RankRange{0, size - 1, 1}};
+        auto                   subcommunicator   = comm.create_subcommunicators(RankRanges{rank_ranges});
+        int                    comparison_result = MPI_UNDEFINED;
+        MPI_Comm_compare(subcommunicator.mpi_communicator(), comm.mpi_communicator(), &comparison_result);
+        EXPECT_EQ(MPI_CONGRUENT, comparison_result);
+    }
+    // two subcommunicators (odd/even ranks)
+    {
+        if (size > 1) {
+            int        last_odd_rank  = (size - 1) % 2 == 0 ? size - 2 : size - 1;
+            int        last_even_rank = (size - 1) % 2 == 0 ? size - 1 : size - 2;
+            RankRange  even_rank_range{0, last_even_rank, 2};
+            RankRange  odd_rank_range{1, last_odd_rank, 2};
+            bool const is_rank_even = rank % 2 == 0;
+            RankRanges rank_ranges{std::vector<RankRange>{is_rank_even ? even_rank_range : odd_rank_range}};
+            auto       subcommunicator          = comm.create_subcommunicators(rank_ranges);
+            auto       expected_subcommunicator = comm.split(is_rank_even);
+            int        comparison_result        = MPI_UNDEFINED;
+            MPI_Comm_compare(
+                subcommunicator.mpi_communicator(),
+                expected_subcommunicator.mpi_communicator(),
+                &comparison_result
+            );
+            EXPECT_EQ(MPI_CONGRUENT, comparison_result);
+        }
+    }
+    // two ranges spanning whole communicator
+    {
+        if (size > 1) {
+            RankRange  first_half{0, (size / 2) - 1, 1};
+            RankRange  second_half{size / 2, size - 1, 1};
+            RankRanges rank_ranges{std::vector<RankRange>{first_half, second_half}};
+            auto       subcommunicator   = comm.create_subcommunicators(rank_ranges);
+            int        comparison_result = MPI_UNDEFINED;
+            MPI_Comm_compare(subcommunicator.mpi_communicator(), comm.mpi_communicator(), &comparison_result);
+            EXPECT_EQ(MPI_CONGRUENT, comparison_result);
+        }
+        if (size > 1) {
+            int        last_odd_rank  = (size - 1) % 2 == 0 ? size - 2 : size - 1;
+            int        last_even_rank = (size - 1) % 2 == 0 ? size - 1 : size - 2;
+            RankRange  even_rank_range{0, last_even_rank, 2};
+            RankRange  odd_rank_range{1, last_odd_rank, 2};
+            RankRanges rank_ranges{std::vector<RankRange>{even_rank_range, odd_rank_range}};
+            auto       subcommunicator   = comm.create_subcommunicators(rank_ranges);
+            int        comparison_result = MPI_UNDEFINED;
+            MPI_Comm_compare(subcommunicator.mpi_communicator(), comm.mpi_communicator(), &comparison_result);
+            EXPECT_EQ(MPI_SIMILAR, comparison_result); // communicators are not congruent as the rank order differs
+        }
+    }
+}
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_representation_illegal_arguments) {
+    Communicator comm;
+
+    // set of ranks is empty
+    EXPECT_KASSERT_FAILS(
+        std::ignore = comm.create_subcommunicators(RankRanges(nullptr, 0)),
+        "The set of ranks to include in the new subcommunicator must not be empty."
+    );
+    EXPECT_KASSERT_FAILS(
+        std::ignore = comm.create_subcommunicators(RankRanges(std::vector<RankRange>{})),
+        "The set of ranks to include in the new subcommunicator must not be empty."
+    );
+    // set of ranks must contain own rank
+    if (size > 1) {
+        int rank_range_array[1][3] = {{size, size + 1, 1}};
+        EXPECT_KASSERT_FAILS(
+            std::ignore = comm.create_subcommunicators(RankRanges(rank_range_array, 1)),
+            "The ranks to include in the new subcommunicator must contain own rank."
+        );
+        EXPECT_KASSERT_FAILS(
+            std::ignore =
+                comm.create_subcommunicators(RankRanges(std::vector<RankRange>{RankRange{size, size + 1, 1}})),
+            "The ranks to include in the new subcommunicator must contain own rank."
+        );
+    }
+}
+#endif
 
 TEST_F(CommunicatorTest, assignment) {
     // move assignment

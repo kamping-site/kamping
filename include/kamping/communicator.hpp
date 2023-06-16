@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 
@@ -22,6 +23,7 @@
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/rank_ranges.hpp"
 
 namespace kamping {
 
@@ -233,6 +235,70 @@ public:
     [[nodiscard]] Communicator split(int const color, int const key = 0) const {
         MPI_Comm new_comm;
         MPI_Comm_split(_comm, color, key, &new_comm);
+        return Communicator(new_comm, true);
+    }
+    /// @brief Create subcommunicators.
+    ///
+    /// This method requires globally available information on the ranks in the subcommunicators.
+    /// A rank \c r must know all other ranks which will be part of the subcommunicator to which \c r will belong.
+    /// This information can be used by the MPI implementation to execute a communicator split more efficiently.
+    /// The method must be called by all ranks in the communicator.
+    ///
+    /// @tparam Ranks Contiguous container storing integers.
+    /// @param ranks_in_own_group Contains the ranks that will be part of this rank's new (sub-)communicator.
+    /// All ranks specified in \c ranks_in_own_group must have an identical \c ranks_in_own_group argument. Furthermore,
+    /// this set must not be empty.
+    /// @return \ref Communicator wrapping the newly split MPI communicator.
+    template <typename Ranks>
+    [[nodiscard]] Communicator create_subcommunicators(Ranks const& ranks_in_own_group) const {
+        static_assert(std::is_same_v<typename Ranks::value_type, int>, "Ranks must be of type int");
+        KASSERT(
+            ranks_in_own_group.size() > 0ull,
+            "The set of ranks to include in the new subcommunicator must not be empty."
+        );
+        auto ranks_contain_own_rank = [&]() {
+            return std::find(ranks_in_own_group.begin(), ranks_in_own_group.end(), rank()) != ranks_in_own_group.end();
+        };
+        KASSERT(ranks_contain_own_rank(), "The ranks to include in the new subcommunicator must contain own rank.");
+        MPI_Group comm_group;
+        MPI_Comm_group(_comm, &comm_group);
+        MPI_Group new_comm_group;
+        MPI_Group_incl(
+            comm_group,
+            asserting_cast<int>(ranks_in_own_group.size()),
+            ranks_in_own_group.data(),
+            &new_comm_group
+        );
+        MPI_Comm new_comm;
+        MPI_Comm_create(_comm, new_comm_group, &new_comm);
+        return Communicator(new_comm, true);
+    }
+
+    /// @brief Create (sub-)communicators using a sparse representation for the ranks contained in the
+    /// subcommunicators.
+    ///
+    /// This split method requires globally available information on the ranks in the split communicators.
+    /// A rank \c r must know all other ranks which will be part of the subcommunicator to which \c r will belong.
+    /// This information can be used by the MPI implementation to execute a communicator split more efficiently.
+    /// The method must be called by all ranks in the communicator.
+    ///
+    /// @param rank_ranges Contains the ranks that will be part of this rank's new (sub-)communicator in a sparse
+    /// representation via rank ranges each consisting of (first rank, last rank and stride).
+    /// All ranks specified in \c ranks_in_own_group must have
+    /// an identical \c ranks_in_own_group argument. Furthermore, this set must not be empty.
+    /// @return \ref Communicator wrapping the newly split MPI communicator.
+    [[nodiscard]] Communicator create_subcommunicators(RankRanges const& rank_ranges) const {
+        KASSERT(rank_ranges.size() > 0ull, "The set of ranks to include in the new subcommunicator must not be empty.");
+        KASSERT(
+            rank_ranges.contains(rank_signed()),
+            "The ranks to include in the new subcommunicator must contain own rank."
+        );
+        MPI_Group comm_group;
+        MPI_Comm_group(_comm, &comm_group);
+        MPI_Group new_comm_group;
+        MPI_Group_range_incl(comm_group, asserting_cast<int>(rank_ranges.size()), rank_ranges.get(), &new_comm_group);
+        MPI_Comm new_comm;
+        MPI_Comm_create(_comm, new_comm_group, &new_comm);
         return Communicator(new_comm, true);
     }
 
