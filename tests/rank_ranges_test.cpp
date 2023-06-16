@@ -24,6 +24,7 @@ TEST(RankRangesTest, construction_from_empty_c_style_array) {
     EXPECT_FALSE(rank_ranges.contains(0));
     EXPECT_FALSE(rank_ranges.contains(1));
 }
+
 TEST(RankRangesTest, construction_from_c_style_array) {
     int        rank_range_array[1][3] = {{1, 1, 1}};
     RankRanges rank_ranges(rank_range_array, 1);

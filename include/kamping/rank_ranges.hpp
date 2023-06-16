@@ -16,6 +16,7 @@
 ///
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 
 namespace kamping {
@@ -37,7 +38,7 @@ public:
     /// @brief Constructor taking a plain two dimension c-style array.
     /// @param rank_range_array Pointer to int[3] representing contiguously stored plain MPI rank ranges.
     /// @param size Number of ranges stored in this array.
-    RankRanges(int (*rank_range_array)[3], std::size_t size)
+    RankRanges(int (*rank_range_array)[3], size_t size)
         : _is_lib_allocated{false},
           _rank_range_array{rank_range_array},
           _size{size} {}
@@ -54,14 +55,14 @@ public:
             "Container's value_type must be RankRange!"
         );
 
-        for (std::size_t i = 0; i < ranges.size(); ++i) {
+        for (size_t i = 0; i < ranges.size(); ++i) {
             auto const& range       = ranges[i];
             _rank_range_array[i][0] = range.first;
             _rank_range_array[i][1] = range.last;
             _rank_range_array[i][2] = range.stride;
         }
     }
-
+    ///@brief Destroys objects and deallocates any memory allocated during construction.
     ~RankRanges() {
         if (_is_lib_allocated) {
             delete[] _rank_range_array;
@@ -83,20 +84,18 @@ public:
     /// @brief Checks whether the rank ranges contain a certain rank.
     /// @return Whether rank ranges contain a certain rank.
     bool contains(int rank) const {
-        for (std::size_t i = 0; i < size(); ++i) {
-            RankRange rank_range{_rank_range_array[i][0], _rank_range_array[i][1], _rank_range_array[i][2]};
-            for (int cur_rank = rank_range.first; cur_rank <= rank_range.last; cur_rank += rank_range.stride) {
-                if (cur_rank == rank) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return std::any_of(_rank_range_array, _rank_range_array + _size, [&](auto const& plain_rank_range) {
+            RankRange  rank_range{plain_rank_range[0], plain_rank_range[1], plain_rank_range[2]};
+            bool const is_between_bounds     = rank >= rank_range.first && rank <= rank_range.last;
+            int const  diff_to_start         = rank - rank_range.first;
+            bool const is_multiple_of_stride = diff_to_start % rank_range.stride == 0;
+            return is_between_bounds && is_multiple_of_stride;
+        });
     }
 
 private:
     bool const _is_lib_allocated; ///< Flag indicating whether the array needs to be freed upon object construction.
     int (*_rank_range_array)[3];  ///< Underlying c-style array of type int (*)[3].
-    std::size_t _size;            ///< Number of ranges stored in this object.
+    size_t _size;                 ///< Number of ranges stored in this object.
 };
 } // namespace kamping
