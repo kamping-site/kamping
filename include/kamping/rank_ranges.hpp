@@ -62,6 +62,7 @@ public:
             _rank_range_array[i][2] = range.stride;
         }
     }
+
     ///@brief Destroys objects and deallocates any memory allocated during construction.
     ~RankRanges() {
         if (_is_lib_allocated) {
