@@ -28,10 +28,31 @@ using Span = std::span<T>;
 #else // C++ 17
 
     #include <cstddef>
+    #include <memory>
     #include <tuple>
     #include <type_traits>
 
 namespace kamping {
+
+/// @brief Obtain the address represented by \c p. Modelled after C++20's \c std::to_address.
+/// See https://en.cppreference.com/w/cpp/memory/to_address for details.
+/// @param p a raw pointer
+/// @tparam the underlying type
+template <class T>
+constexpr T* to_address(T* p) noexcept {
+    static_assert(!std::is_function_v<T>);
+    return p;
+}
+
+/// @brief Obtain the address represented by \c p. Modelled after C++20's \c std::to_address.
+/// See https://en.cppreference.com/w/cpp/memory/to_address for details.
+/// @param p a smart pointer
+/// @tparam the pointer type
+template <class T>
+constexpr auto to_address(T const& p) noexcept {
+    // specialization to make this work with smart pointers
+    return to_address(p.operator->());
+}
 
 /// @brief A span modeled after C++20's \c std::span.
 ///
@@ -55,6 +76,18 @@ public:
     /// @param ptr Pointer to the first element in the span.
     /// @param size The number of elements in the span.
     constexpr Span(pointer ptr, size_type size) : _ptr(ptr), _size(size) {}
+
+    /// @brief Constructs a span that is a view over the range <code>[first, last)</code>; the resulting span has
+    /// <code>data() == std::to_address(first)</code> and <code>size() == last-first</code>.
+    ///
+    /// If <code>[first, last)</code> is not a valid range, or if \c It does not model a C++20 contiguous iterator, the
+    /// behavior is undefined. This is analagous to the behavior of \c std::span.
+    /// @param first begin iterator of the range
+    /// @param last end iterator of the range
+    /// @tparam It the iterator type.
+    template <typename It>
+    constexpr Span(It first, It last) : _ptr(to_address(first)),
+                                        _size(static_cast<size_type>(last - first)) {}
 
     /// @brief Get access to the underlying memory.
     ///
