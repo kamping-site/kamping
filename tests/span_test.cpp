@@ -19,6 +19,20 @@
 
 using namespace ::kamping;
 
+TEST(SpanTest, test_to_address_plain_pointer) {
+    int  x     = 42;
+    int* x_ptr = &x;
+    EXPECT_EQ(kamping::to_address(x_ptr), x_ptr);
+
+    int a[3] = {42, 34, 27};
+    EXPECT_EQ(kamping::to_address(a), a);
+}
+
+TEST(SpanTest, test_to_address_smart_pointer) {
+    auto x = std::unique_ptr<int>(new int(42));
+    EXPECT_EQ(kamping::to_address(x), x.get());
+}
+
 // Test our minimal span implementation
 TEST(SpanTest, basic_functionality) {
     std::vector<int> values = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -35,6 +49,12 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_FALSE(const_int_span.empty());
     EXPECT_EQ(values.data(), const_int_span.data());
     EXPECT_EQ(const_int_span.data(), int_span.data());
+
+    Span<int> int_iterator_span(values.begin(), values.end());
+    EXPECT_EQ(values.size(), int_iterator_span.size());
+    EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_iterator_span.size_bytes());
+    EXPECT_FALSE(int_iterator_span.empty());
+    EXPECT_EQ(values.data(), int_iterator_span.data());
 
     Span<int> empty_span = {values.data(), 0};
     EXPECT_TRUE(empty_span.empty());
@@ -57,11 +77,19 @@ TEST(SpanTest, basic_functionality) {
         "Member data() of internal::Span<T const *, size_t> does not return a pointer."
     );
     static_assert(
+        std::is_pointer_v<decltype(int_iterator_span.data())>,
+        "Member data() of internal::Span<T*, size_t> does not return a pointer."
+    );
+    static_assert(
         std::is_const_v<std::remove_pointer_t<decltype(const_int_span.data())>>,
         "Member data() of internal::Span<T const *, size_t> does not return a pointer pointing to const memory."
     );
     static_assert(
         !std::is_const_v<std::remove_pointer_t<decltype(int_span.data())>>,
+        "Member data() of internal::Span<T*, size_t> does return a pointer pointing to const memory."
+    );
+    static_assert(
+        !std::is_const_v<std::remove_pointer_t<decltype(int_iterator_span.data())>>,
         "Member data() of internal::Span<T*, size_t> does return a pointer pointing to const memory."
     );
 

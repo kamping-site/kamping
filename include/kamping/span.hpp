@@ -15,9 +15,20 @@
 
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) // C++ 20
 
+    #include <memory>
     #include <span>
 
 namespace kamping {
+
+template <typename T>
+constexpr T* to_address(T* p) noexcept {
+    return std::to_address(p);
+}
+
+template <typename T>
+constexpr auto to_address(T const& p) noexcept {
+    return std::to_address(p);
+}
 
 // std::span is only available in C++ 20 and upwards.
 template <typename T>
@@ -38,7 +49,7 @@ namespace kamping {
 /// See https://en.cppreference.com/w/cpp/memory/to_address for details.
 /// @param p a raw pointer
 /// @tparam the underlying type
-template <class T>
+template <typename T>
 constexpr T* to_address(T* p) noexcept {
     static_assert(!std::is_function_v<T>);
     return p;
@@ -48,7 +59,7 @@ constexpr T* to_address(T* p) noexcept {
 /// See https://en.cppreference.com/w/cpp/memory/to_address for details.
 /// @param p a smart pointer
 /// @tparam the pointer type
-template <class T>
+template <typename T>
 constexpr auto to_address(T const& p) noexcept {
     // specialization to make this work with smart pointers
     return to_address(p.operator->());
