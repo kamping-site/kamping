@@ -22,15 +22,15 @@ using namespace ::kamping;
 TEST(SpanTest, test_to_address_plain_pointer) {
     int  x     = 42;
     int* x_ptr = &x;
-    EXPECT_EQ(kamping::to_address(x_ptr), x_ptr);
+    EXPECT_EQ(kamping::internal::to_address(x_ptr), x_ptr);
 
     int a[3] = {42, 34, 27};
-    EXPECT_EQ(kamping::to_address(a), a);
+    EXPECT_EQ(kamping::internal::to_address(a), a);
 }
 
 TEST(SpanTest, test_to_address_smart_pointer) {
     auto x = std::unique_ptr<int>(new int(42));
-    EXPECT_EQ(kamping::to_address(x), x.get());
+    EXPECT_EQ(kamping::internal::to_address(x), x.get());
 }
 
 // Test our minimal span implementation
