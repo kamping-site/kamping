@@ -23,6 +23,7 @@
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/mpi_constants.hpp"
 #include "kamping/rank_ranges.hpp"
 
 namespace kamping {
@@ -300,6 +301,16 @@ public:
         MPI_Comm new_comm;
         MPI_Comm_create(_comm, new_comm_group, &new_comm);
         return Communicator(new_comm, true);
+    }
+
+    ///@brief Compare this communicator with another given communicator. Uses \c MPI_Comm_compare internally.
+    ///
+    ///@param other_comm Communicator with which this communicator is compared.
+    ///@return Return whether compared communicators are identical, congruent, similar or unequal.
+    [[nodiscard]] CommunicatorComparisonResult compare(Communicator const& other_comm) const {
+        int result = MPI_UNDEFINED;
+        MPI_Comm_compare(_comm, other_comm.mpi_communicator(), &result);
+        return static_cast<CommunicatorComparisonResult>(result);
     }
 
     /// @brief Convert a rank from this communicator to the rank in another communicator.
