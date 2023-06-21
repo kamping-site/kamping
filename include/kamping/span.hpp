@@ -41,7 +41,6 @@ constexpr auto to_address(T const& p) noexcept {
 
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) // C++ 20
 
-    #include <memory>
     #include <span>
 
 namespace kamping {
