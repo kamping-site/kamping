@@ -251,28 +251,29 @@ TEST_F(CommunicatorTest, create_communicators_via_provided_ranks) {
         }
         auto subcommunicator          = comm.create_subcommunicators(ranks_in_own_group);
         auto expected_subcommunicator = comm.split(color);
-        EXPECT_EQ(CommunicatorComparisonResult::CONGRUENT, subcommunicator.compare(expected_subcommunicator));
+        EXPECT_EQ(CommunicatorComparisonResult::congruent, subcommunicator.compare(expected_subcommunicator));
     }
 }
 
 TEST_F(CommunicatorTest, communicator_comparison) {
     Communicator comm;
-    Communicator same_ranks_same_order      = comm;
-    auto         same_ranks_different_order = comm.split(0, size - rank);
-    auto         different_communicator     = comm.split(rank % 2);
+    Communicator same_ranks_same_order = comm;
+    // reverse rank order via key argument in split() method
+    auto same_ranks_different_order = comm.split(0, size - rank);
+    auto different_communicator     = comm.split(rank % 2);
 
-    EXPECT_EQ(CommunicatorComparisonResult::IDENTICAL, comm.compare(comm));
-    EXPECT_EQ(CommunicatorComparisonResult::CONGRUENT, comm.compare(same_ranks_same_order));
+    EXPECT_EQ(CommunicatorComparisonResult::identical, comm.compare(comm));
+    EXPECT_EQ(CommunicatorComparisonResult::congruent, comm.compare(same_ranks_same_order));
     if (size > 1) {
-        EXPECT_EQ(CommunicatorComparisonResult::SIMILAR, comm.compare(same_ranks_different_order));
-        EXPECT_EQ(CommunicatorComparisonResult::UNEQUAL, comm.compare(different_communicator));
+        EXPECT_EQ(CommunicatorComparisonResult::similar, comm.compare(same_ranks_different_order));
+        EXPECT_EQ(CommunicatorComparisonResult::unequal, comm.compare(different_communicator));
     }
 
     // test commutative property of communicator comparison
-    EXPECT_EQ(CommunicatorComparisonResult::CONGRUENT, same_ranks_same_order.compare(comm));
+    EXPECT_EQ(CommunicatorComparisonResult::congruent, same_ranks_same_order.compare(comm));
     if (size > 1) {
-        EXPECT_EQ(CommunicatorComparisonResult::SIMILAR, same_ranks_different_order.compare(comm));
-        EXPECT_EQ(CommunicatorComparisonResult::UNEQUAL, different_communicator.compare(comm));
+        EXPECT_EQ(CommunicatorComparisonResult::similar, same_ranks_different_order.compare(comm));
+        EXPECT_EQ(CommunicatorComparisonResult::unequal, different_communicator.compare(comm));
     }
 }
 
@@ -299,7 +300,7 @@ TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_rep
     {
         std::vector<RankRange> rank_ranges{RankRange{0, size - 1, 1}};
         auto                   subcommunicator = comm.create_subcommunicators(RankRanges{rank_ranges});
-        EXPECT_EQ(CommunicatorComparisonResult::CONGRUENT, subcommunicator.compare(comm));
+        EXPECT_EQ(CommunicatorComparisonResult::congruent, subcommunicator.compare(comm));
     }
     // two subcommunicators (odd/even ranks)
     {
@@ -312,7 +313,7 @@ TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_rep
             RankRanges rank_ranges{std::vector<RankRange>{is_rank_even ? even_rank_range : odd_rank_range}};
             auto       subcommunicator          = comm.create_subcommunicators(rank_ranges);
             auto       expected_subcommunicator = comm.split(is_rank_even);
-            EXPECT_EQ(CommunicatorComparisonResult::CONGRUENT, subcommunicator.compare(expected_subcommunicator));
+            EXPECT_EQ(CommunicatorComparisonResult::congruent, subcommunicator.compare(expected_subcommunicator));
         }
     }
     // two ranges spanning whole communicator
@@ -322,7 +323,7 @@ TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_rep
             RankRange  second_half{size / 2, size - 1, 1};
             RankRanges rank_ranges{std::vector<RankRange>{first_half, second_half}};
             auto       subcommunicator = comm.create_subcommunicators(rank_ranges);
-            EXPECT_EQ(CommunicatorComparisonResult::CONGRUENT, subcommunicator.compare(comm));
+            EXPECT_EQ(CommunicatorComparisonResult::congruent, subcommunicator.compare(comm));
         }
         if (size > 1) {
             int        last_odd_rank  = (size - 1) % 2 == 0 ? size - 2 : size - 1;
@@ -332,7 +333,7 @@ TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_rep
             RankRanges rank_ranges{std::vector<RankRange>{even_rank_range, odd_rank_range}};
             auto       subcommunicator = comm.create_subcommunicators(rank_ranges);
             EXPECT_EQ(
-                CommunicatorComparisonResult::SIMILAR,
+                CommunicatorComparisonResult::similar,
                 subcommunicator.compare(comm)
             ); // communicators are not congruent as the rank order differs
         }

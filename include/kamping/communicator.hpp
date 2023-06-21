@@ -308,7 +308,7 @@ public:
     ///@param other_comm Communicator with which this communicator is compared.
     ///@return Return whether compared communicators are identical, congruent, similar or unequal.
     [[nodiscard]] CommunicatorComparisonResult compare(Communicator const& other_comm) const {
-        int result = MPI_UNDEFINED;
+        int result;
         MPI_Comm_compare(_comm, other_comm.mpi_communicator(), &result);
         return static_cast<CommunicatorComparisonResult>(result);
     }
