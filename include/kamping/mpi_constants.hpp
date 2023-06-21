@@ -23,7 +23,7 @@ enum class CommunicatorComparisonResult : int {
     IDENTICAL = MPI_IDENT,     ///< Result if comm1 and comm2 are handles for same object.
     CONGRUENT = MPI_CONGRUENT, ///< Result if the underlying groups of comm1 and comm2 are identical but the
                                ///< communicators's context is different.
-    SIMILAR = MPI_SIMILAR, ///< Result if the underlying groups contain the same ranks but their order differs.
-    UNEQUAL = MPI_UNEQUAL  ///< Result otherwise };
+    SIMILAR = MPI_SIMILAR,     ///< Result if the underlying groups contain the same ranks but their order differs.
+    UNEQUAL = MPI_UNEQUAL      ///< Result otherwise.
 };
 } // namespace kamping
