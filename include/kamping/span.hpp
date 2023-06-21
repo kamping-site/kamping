@@ -13,6 +13,32 @@
 
 #pragma once
 
+#include <type_traits>
+
+namespace kamping::internal {
+///
+/// @brief Obtain the address represented by \c p. Modelled after C++20's \c std::to_address.
+/// See https://en.cppreference.com/w/cpp/memory/to_address for details.
+/// @param p a raw pointer
+/// @tparam the underlying type
+template <typename T>
+constexpr T* to_address(T* p) noexcept {
+    static_assert(!std::is_function_v<T>);
+    return p;
+}
+
+/// @brief Obtain the address represented by \c p. Modelled after C++20's \c std::to_address.
+/// See https://en.cppreference.com/w/cpp/memory/to_address for details.
+/// @param p a smart pointer
+/// @tparam the pointer type
+template <typename T>
+constexpr auto to_address(T const& p) noexcept {
+    // specialization to make this work with smart pointers
+    // the standard mandates the pointer to be obtained in this way
+    return to_address(p.operator->());
+}
+} // namespace kamping::internal
+
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) // C++ 20
 
     #include <span>
@@ -29,7 +55,6 @@ using Span = std::span<T>;
 
     #include <cstddef>
     #include <tuple>
-    #include <type_traits>
 
 namespace kamping {
 
@@ -55,6 +80,19 @@ public:
     /// @param ptr Pointer to the first element in the span.
     /// @param size The number of elements in the span.
     constexpr Span(pointer ptr, size_type size) : _ptr(ptr), _size(size) {}
+
+    /// @brief Constructs a span that is a view over the range <code>[first, last)</code>; the resulting span has
+    /// <code>data() == kamping::internal::to_address(first)</code> and <code>size() == last-first</code>.
+    ///
+    /// If <code>[first, last)</code> is not a valid range, or if \c It does not model a C++20 contiguous iterator, the
+    /// behavior is undefined. This is analagous to the behavior of \c std::span.
+    /// @param first begin iterator of the range
+    /// @param last end iterator of the range
+    /// @tparam It the iterator type.
+    template <typename It>
+    constexpr Span(It first, It last)
+        : _ptr(internal::to_address(first)),
+          _size(static_cast<size_type>(last - first)) {}
 
     /// @brief Get access to the underlying memory.
     ///
