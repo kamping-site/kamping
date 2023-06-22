@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <cstddef>
+
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 

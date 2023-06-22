@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <numeric>
 #include <type_traits>
 
@@ -168,7 +169,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
         assert::light_communication
     );
 
-    recv_buf.resize(static_cast<std::size_t>(recv_count));
+    recv_buf.resize(static_cast<size_t>(recv_count));
     auto* recv_buf_ptr = recv_buf.data();
 
     [[maybe_unused]] int const err = MPI_Scatter(
@@ -347,7 +348,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         }
     }
 
-    recv_buf.resize(static_cast<std::size_t>(recv_counts_param.underlying()));
+    recv_buf.resize(static_cast<size_t>(recv_counts_param.underlying()));
     [[maybe_unused]] int const err = MPI_Scatterv(
         send_buf_ptr,                   // send buffer
         send_counts_param.data(),       // send counts
