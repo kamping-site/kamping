@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <limits>
 #include <memory>
 
@@ -64,7 +65,7 @@ public:
     /// @brief Allocates <tt> n * sizeof(T) </tt> bytes using MPI allocation functions.
     /// @param n The number of objects to allocate storage for.
     /// @return Pointer to the allocated memory segment.
-    T* allocate(std::size_t n) {
+    T* allocate(size_t n) {
         T* ptr;
         if (sizeof(value_type) * n > std::numeric_limits<MPI_Aint>::max()) {
             throw std::runtime_error("Requested allocation exceeds MPI address size.");

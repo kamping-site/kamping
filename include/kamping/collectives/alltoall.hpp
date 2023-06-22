@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <numeric>
 #include <tuple>
 #include <type_traits>
