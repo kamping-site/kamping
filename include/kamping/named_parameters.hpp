@@ -124,7 +124,7 @@ template <
     typename ValueType = default_value_type_tag,
     template <typename...>
     typename Data>
-auto make_data_buffer(AllocNewWithT<Data>) {
+auto make_data_buffer(AllocNewAutoT<Data>) {
     // this check prevents that this factory function is used, when the value type is not known
     static_assert(
         !std::is_same_v<ValueType, default_value_type_tag>,

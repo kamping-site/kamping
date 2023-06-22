@@ -630,7 +630,7 @@ TEST(ParameterFactoriesTest, send_counts_out_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, send_counts_out_basics_library_alloc_without_explicit_type) {
-    auto buffer_based_on_library_alloc_vector = send_counts_out(alloc_new_with<std::vector>);
+    auto buffer_based_on_library_alloc_vector = send_counts_out(alloc_new_auto<std::vector>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -663,7 +663,7 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc_without_explicit_type) {
-    auto buffer_based_on_library_alloc_vector = send_displs_out(alloc_new_with<std::vector>);
+    auto buffer_based_on_library_alloc_vector = send_displs_out(alloc_new_auto<std::vector>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -696,7 +696,7 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc_without_explicit_type) {
-    auto buffer_based_on_library_alloc_vector = recv_counts_out(alloc_new_with<std::vector>);
+    auto buffer_based_on_library_alloc_vector = recv_counts_out(alloc_new_auto<std::vector>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -729,7 +729,7 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc_without_explicit_type) {
-    auto buffer_based_on_library_alloc_vector = recv_displs_out(alloc_new_with<std::vector>);
+    auto buffer_based_on_library_alloc_vector = recv_displs_out(alloc_new_auto<std::vector>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,

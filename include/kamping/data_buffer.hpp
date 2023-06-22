@@ -170,14 +170,14 @@ static constexpr auto alloc_new = AllocNewT<Container>{};
 /// indicates, that the MPI operation should allocate an appropriately sized buffer of type \c Container<T> internally,
 /// where \c T is automatically determined.
 ///
-/// In case of \c recv_counts(alloc_new_with<std::vector>) this means, that internally, a \c std::vector<int> is
+/// In case of \c recv_counts(alloc_new_auto<std::vector>) this means, that internally, a \c std::vector<int> is
 /// allocated.
 template <template <typename...> typename Container>
-struct AllocNewWithT {};
+struct AllocNewAutoT {};
 
-/// @brief Convencience wrapper for creating library allocated containers. See \ref AllocNewWithT for details.
+/// @brief Convencience wrapper for creating library allocated containers. See \ref AllocNewAutoT for details.
 template <template <typename...> typename Container>
-static constexpr auto alloc_new_with = AllocNewWithT<Container>{};
+static constexpr auto alloc_new_auto = AllocNewAutoT<Container>{};
 
 namespace internal {
 /// @brief Helper to decide if data type has \c .data() method.

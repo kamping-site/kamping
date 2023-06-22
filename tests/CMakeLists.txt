@@ -254,7 +254,7 @@ kamping_register_compilation_failure_test(
     test_named_parameters_compilation_failure
     FILES named_parameters_compilation_failure_test.cpp
     SECTIONS "VECTOR_BOOL_LVALUE" "VECTOR_BOOL_RVALUE" "VECTOR_BOOL_CUSTOM_ALLOCATOR" "VECTOR_BOOL_NEW_CONTAINER"
-             "ALLOC_NEW_NOT_DEDUCTABLE" "FAULTY_VECTOR_ALLOC_NEW_WITH"
+             "ALLOC_NEW_NOT_DEDUCTABLE" "FAULTY_VECTOR_ALLOC_NEW_AUTO"
     LIBRARIES kamping_base
 )
 

@@ -55,10 +55,10 @@ int main(int /*argc*/, char** /*argv*/) {
     buf.size();
 #elif ALLOC_NEW_NOT_DEDUCTABLE
     // for recv_buf, the value type cannot be deduced
-    auto buf = recv_buf(alloc_new_with<std::vector>);
-#elif FAULTY_VECTOR_ALLOC_NEW_WITH
+    auto buf = recv_buf(alloc_new_auto<std::vector>);
+#elif FAULTY_VECTOR_ALLOC_NEW_AUTO
     // the faulty vector has the wrong value type
-    auto buf = send_counts_out(alloc_new_with<FaultyVector>);
+    auto buf = send_counts_out(alloc_new_auto<FaultyVector>);
 // If none of the above sections is active, this file will compile successfully.
 #endif
 }
