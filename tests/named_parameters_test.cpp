@@ -597,7 +597,7 @@ TEST(ParameterFactoriesTest, recv_buf_basics_user_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = recv_buf(NewContainer<std::vector<int>>{});
+    auto buffer_based_on_library_alloc_vector = recv_buf(alloc_new<std::vector<int>>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -620,7 +620,17 @@ TEST(ParameterFactoriesTest, send_counts_out_basics_user_alloc) {
 }
 
 TEST(ParameterFactoriesTest, send_counts_out_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = send_counts_out(NewContainer<std::vector<int>>{});
+    auto buffer_based_on_library_alloc_vector = send_counts_out(alloc_new<std::vector<int>>);
+    using ExpectedValueType                   = int;
+    testing::test_library_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_library_alloc_vector,
+        ParameterType::send_counts,
+        internal::BufferType::out_buffer
+    );
+}
+
+TEST(ParameterFactoriesTest, send_counts_out_basics_library_alloc_without_explicit_type) {
+    auto buffer_based_on_library_alloc_vector = send_counts_out(alloc_new_auto<std::vector>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -643,7 +653,17 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
 }
 
 TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = send_displs_out(NewContainer<std::vector<int>>{});
+    auto buffer_based_on_library_alloc_vector = send_displs_out(alloc_new<std::vector<int>>);
+    using ExpectedValueType                   = int;
+    testing::test_library_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_library_alloc_vector,
+        ParameterType::send_displs,
+        internal::BufferType::out_buffer
+    );
+}
+
+TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc_without_explicit_type) {
+    auto buffer_based_on_library_alloc_vector = send_displs_out(alloc_new_auto<std::vector>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -655,9 +675,8 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc) {
 TEST(ParameterFactoriesTest, recv_counts_out_basics_user_alloc) {
     const size_t     size = 10;
     std::vector<int> int_vec(size);
-    auto             buffer_based_on_user_alloc_buffer    = recv_counts_out(int_vec);
-    auto             buffer_based_on_library_alloc_vector = recv_counts_out(NewContainer<std::vector<int>>{});
-    using ExpectedValueType                               = int;
+    auto             buffer_based_on_user_alloc_buffer = recv_counts_out(int_vec);
+    using ExpectedValueType                            = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_buffer,
         ParameterType::recv_counts,
@@ -667,7 +686,17 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_user_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = recv_counts_out(NewContainer<std::vector<int>>{});
+    auto buffer_based_on_library_alloc_vector = recv_counts_out(alloc_new<std::vector<int>>);
+    using ExpectedValueType                   = int;
+    testing::test_library_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_library_alloc_vector,
+        ParameterType::recv_counts,
+        internal::BufferType::out_buffer
+    );
+}
+
+TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc_without_explicit_type) {
+    auto buffer_based_on_library_alloc_vector = recv_counts_out(alloc_new_auto<std::vector>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -690,7 +719,17 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = recv_displs_out(NewContainer<std::vector<int>>{});
+    auto buffer_based_on_library_alloc_vector = recv_displs_out(alloc_new<std::vector<int>>);
+    using ExpectedValueType                   = int;
+    testing::test_library_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_library_alloc_vector,
+        ParameterType::recv_displs,
+        internal::BufferType::out_buffer
+    );
+}
+
+TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc_without_explicit_type) {
+    auto buffer_based_on_library_alloc_vector = recv_displs_out(alloc_new_auto<std::vector>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -976,7 +1015,7 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_user_alloc) {
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<std::vector<int>>{});
+    auto buffer_based_on_library_alloc_vector = send_recv_buf(alloc_new<std::vector<int>>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -996,7 +1035,7 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_type_library_alloc) {
         }
     }; // struct CustomType
 
-    auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<std::vector<CustomType>>{});
+    auto buffer_based_on_library_alloc_vector = send_recv_buf(alloc_new<std::vector<CustomType>>);
     using ExpectedValueType                   = CustomType;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -1006,7 +1045,7 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_type_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_custom_container_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = send_recv_buf(NewContainer<testing::OwnContainer<int>>{});
+    auto buffer_based_on_library_alloc_vector = send_recv_buf(alloc_new<testing::OwnContainer<int>>);
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -1049,7 +1088,7 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
 }
 
 TEST(ParameterFactoriesTest, recv_counts_out_single_value_lib_allocated_basics) {
-    auto recv_count_out_obj          = recv_counts_out(NewContainer<int>{});
+    auto recv_count_out_obj          = recv_counts_out(alloc_new<int>);
     *recv_count_out_obj.get().data() = 42;
     EXPECT_EQ(*recv_count_out_obj.get().data(), 42);
     EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
@@ -1133,7 +1172,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(NewContainer<std::vector<int>>{});
+            internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(alloc_new<std::vector<int>>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -1148,7 +1187,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         // Modifiable, single element, owning, lib_allocated
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(NewContainer<int>{});
+        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(alloc_new<int>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
@@ -1268,9 +1307,9 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         // modifiable, container, owning, library allocated
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(
-            NewContainer<testing::OwnContainer<bool>>{}
-        );
+        auto                              data_buf =
+            internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(alloc_new<
+                                                                                      testing::OwnContainer<bool>>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -1285,7 +1324,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         // Modifiable, single element, owning, lib_allocated
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(NewContainer<bool>{});
+        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(alloc_new<bool>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);

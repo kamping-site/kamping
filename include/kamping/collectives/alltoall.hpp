@@ -57,8 +57,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
     using default_recv_value_type = std::remove_const_t<send_value_type>;
     MPI_Datatype mpi_send_type    = mpi_datatype<send_value_type>();
 
-    using default_recv_buf_type =
-        decltype(kamping::recv_buf(NewContainer<DefaultContainerType<default_recv_value_type>>{}));
+    using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
@@ -159,7 +158,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     KASSERT(send_counts.size() == this->size(), assert::light);
 
     // Get recv_counts
-    using default_recv_counts_type = decltype(kamping::recv_counts_out(NewContainer<DefaultContainerType<int>>{}));
+    using default_recv_counts_type = decltype(kamping::recv_counts_out(alloc_new<DefaultContainerType<int>>));
     auto&& recv_counts =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
             std::tuple(),
@@ -169,8 +168,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
 
     // Get recv_buf
-    using default_recv_buf_type =
-        decltype(kamping::recv_buf(NewContainer<DefaultContainerType<default_recv_value_type>>{}));
+    using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
@@ -180,7 +178,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
     // Get send_displs
-    using default_send_displs_type = decltype(kamping::send_displs_out(NewContainer<DefaultContainerType<int>>{}));
+    using default_send_displs_type = decltype(kamping::send_displs_out(alloc_new<DefaultContainerType<int>>));
     auto&& send_displs =
         internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
             std::tuple(),
@@ -190,7 +188,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     static_assert(std::is_same_v<std::remove_const_t<send_displs_type>, int>, "Send displs must be of type int");
 
     // Get recv_displs
-    using default_recv_displs_type = decltype(kamping::recv_displs_out(NewContainer<DefaultContainerType<int>>{}));
+    using default_recv_displs_type = decltype(kamping::recv_displs_out(alloc_new<DefaultContainerType<int>>));
     auto&& recv_displs =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
             std::tuple(),

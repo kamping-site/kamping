@@ -17,6 +17,13 @@
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameters.hpp"
 
+// a vector class using another value_type as the one given as first template parameter
+template <typename T>
+class FaultyVector : public std::vector<T> {
+public:
+    using value_type = float;
+};
+
 int main(int /*argc*/, char** /*argv*/) {
     using namespace kamping;
     constexpr internal::ParameterType type = internal::ParameterType::send_buf;
@@ -44,8 +51,14 @@ int main(int /*argc*/, char** /*argv*/) {
     std::vector<bool, testing::CustomAllocator<bool> > v = {true, false};
 
     auto buf =
-        internal::make_data_buffer<type, internal::BufferModifiability::modifiable>(NewContainer<std::vector<bool> >{});
-    buf.size() :
+        internal::make_data_buffer<type, internal::BufferModifiability::modifiable>(alloc_new<std::vector<bool> >{});
+    buf.size();
+#elif ALLOC_NEW_NOT_DEDUCTABLE
+    // for recv_buf, the value type cannot be deduced
+    auto buf = recv_buf(alloc_new_auto<std::vector>);
+#elif FAULTY_VECTOR_ALLOC_NEW_AUTO
+    // the faulty vector has the wrong value type
+    auto buf = send_counts_out(alloc_new_auto<FaultyVector>);
 // If none of the above sections is active, this file will compile successfully.
 #endif
 }

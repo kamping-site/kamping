@@ -71,8 +71,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         KAMPING_REQUIRED_PARAMETERS(),
         KAMPING_OPTIONAL_PARAMETERS(recv_buf, tag, source, recv_counts, status)
     );
-    using default_recv_buf_type =
-        decltype(kamping::recv_buf(NewContainer<DefaultContainerType<recv_value_type_tparam>>{}));
+    using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<recv_value_type_tparam>>));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
@@ -107,7 +106,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
 
     // Get the optional recv_count parameter. If the parameter is not given,
     // allocate a new container.
-    using default_recv_count_type = decltype(kamping::recv_counts_out(NewContainer<int>{}));
+    using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
     auto&& recv_count_param =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
             std::tuple(),
