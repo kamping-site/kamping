@@ -159,7 +159,7 @@ static constexpr bool
 template <typename Container>
 struct AllocNewT {};
 
-// @brief Convencience wrapper for creating library allocated containers. See \ref AllocNewT for details.
+/// @brief Convencience wrapper for creating library allocated containers. See \ref AllocNewT for details.
 template <typename Container>
 static constexpr auto alloc_new = AllocNewT<Container>{};
 
@@ -175,7 +175,7 @@ static constexpr auto alloc_new = AllocNewT<Container>{};
 template <template <typename...> typename Container>
 struct AllocNewWithT {};
 
-// @brief Convencience wrapper for creating library allocated containers. See \ref AllocNewWithT for details.
+/// @brief Convencience wrapper for creating library allocated containers. See \ref AllocNewWithT for details.
 template <template <typename...> typename Container>
 static constexpr auto alloc_new_with = AllocNewWithT<Container>{};
 
