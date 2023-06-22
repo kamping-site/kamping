@@ -70,7 +70,7 @@ TEST(NamedParameterTest, has_to_be_computed) {
     auto             recv_counts_in = kamping::recv_counts(dummy_recv_counts);
     EXPECT_FALSE(has_to_be_computed<decltype(recv_counts_in)>);
 
-    auto recv_counts_out = kamping::recv_counts_out(kamping::NewContainer<std::vector<int>>{});
+    auto recv_counts_out = kamping::recv_counts_out(kamping::alloc_new<std::vector<int>>);
     EXPECT_TRUE(has_to_be_computed<decltype(recv_counts_out)>);
 }
 
@@ -80,8 +80,8 @@ TEST(NamedParameterTets, all_have_any_has_to_be_computed) {
     std::vector<int> dummy;
     auto             recv_counts_given = kamping::recv_counts(dummy);
     auto             send_counts_given = kamping::send_counts(dummy);
-    auto             recv_counts_empty = kamping::recv_counts_out(kamping::NewContainer<std::vector<int>>{});
-    auto             send_counts_empty = kamping::send_counts_out(kamping::NewContainer<std::vector<int>>{});
+    auto             recv_counts_empty = kamping::recv_counts_out(kamping::alloc_new<std::vector<int>>);
+    auto             send_counts_empty = kamping::send_counts_out(kamping::alloc_new<std::vector<int>>);
 
     bool const all_positive = all_have_to_be_computed<decltype(recv_counts_empty), decltype(send_counts_empty)>;
     EXPECT_TRUE(all_positive);

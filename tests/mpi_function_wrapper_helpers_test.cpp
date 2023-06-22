@@ -41,7 +41,7 @@ template <typename UnderlyingContainer>
 void test_recv_buffer_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_buffer = recv_buf(kamping::NewContainer<UnderlyingContainer>{});
+    auto recv_buffer = recv_buf(kamping::alloc_new<UnderlyingContainer>);
     static_assert(std::is_integral_v<typename decltype(recv_buffer)::value_type>, "Use integral Types in this test.");
 
     recv_buffer.resize(10);
@@ -65,7 +65,7 @@ template <typename UnderlyingContainer>
 void test_recv_counts_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_counts = recv_counts_out(NewContainer<UnderlyingContainer>{});
+    auto recv_counts = recv_counts_out(alloc_new<UnderlyingContainer>);
     static_assert(std::is_integral_v<typename decltype(recv_counts)::value_type>, "Use integral Types in this test.");
 
     recv_counts.resize(10);
@@ -107,7 +107,7 @@ template <typename UnderlyingContainer>
 void test_recv_displs_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_displs = recv_displs_out(NewContainer<UnderlyingContainer>{});
+    auto recv_displs = recv_displs_out(alloc_new<UnderlyingContainer>);
     static_assert(std::is_integral_v<typename decltype(recv_displs)::value_type>, "Use integral Types in this test.");
 
     recv_displs.resize(10);
@@ -131,7 +131,7 @@ template <typename UnderlyingContainer>
 void test_send_counts_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_counts = send_counts_out(NewContainer<UnderlyingContainer>{});
+    auto send_counts = send_counts_out(alloc_new<UnderlyingContainer>);
     static_assert(std::is_integral_v<typename decltype(send_counts)::value_type>, "Use integral Types in this test.");
 
     send_counts.resize(10);
@@ -155,7 +155,7 @@ template <typename UnderlyingContainer>
 void test_send_displs_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_displs = send_displs_out(NewContainer<UnderlyingContainer>{});
+    auto send_displs = send_displs_out(alloc_new<UnderlyingContainer>);
     static_assert(std::is_integral_v<typename decltype(send_displs)::value_type>, "Use integral Types in this test.");
 
     send_displs.resize(10);

@@ -59,7 +59,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
         assert::light_communication
     );
 
-    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<DefaultContainerType<send_value_type>>{}));
+    using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
 
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(

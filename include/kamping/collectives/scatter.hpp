@@ -113,7 +113,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 
     // Optional parameter: recv_buf()
     // Default: allocate new container
-    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<DefaultContainerType<send_value_type>>{}));
+    using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
@@ -136,7 +136,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 
     // Optional parameter: recv_count()
     // Default: compute value based on send_buf.size on root
-    using default_recv_count_type = decltype(kamping::recv_counts_out(NewContainer<int>{}));
+    using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
     auto&& recv_count_param =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
             std::tuple(),
@@ -254,7 +254,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
 
     // Optional parameter: recv_buf()
     // Default: allocate new container
-    using default_recv_buf_type = decltype(kamping::recv_buf(NewContainer<DefaultContainerType<send_value_type>>{}));
+    using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
@@ -276,11 +276,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     );
 
     // Optional parameters: send_counts, send_displs, recv_counts
-    using default_send_counts_type = decltype(send_counts_out(NewContainer<DefaultContainerType<int>>{}));
+    using default_send_counts_type = decltype(send_counts_out(alloc_new<DefaultContainerType<int>>));
     auto&& send_counts_param =
         select_parameter_type_or_default<ParameterType::send_counts, default_send_counts_type>(std::tuple(), args...);
 
-    using default_send_displs_type = decltype(send_displs_out(NewContainer<DefaultContainerType<int>>{}));
+    using default_send_displs_type = decltype(send_displs_out(alloc_new<DefaultContainerType<int>>));
     auto&& send_displs_param =
         select_parameter_type_or_default<ParameterType::send_displs, default_send_displs_type>(std::tuple(), args...);
 

@@ -82,7 +82,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     }
 
     using default_send_recv_buf_type =
-        decltype(kamping::send_recv_buf(NewContainer<DefaultContainerType<recv_value_type_tparam>>{}));
+        decltype(kamping::send_recv_buf(alloc_new<DefaultContainerType<recv_value_type_tparam>>));
     auto&& send_recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_buf, default_send_recv_buf_type>(
             std::tuple(),
@@ -100,7 +100,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     auto mpi_value_type = mpi_datatype<value_type>();
 
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
-    using default_recv_count_type = decltype(kamping::recv_counts_out(NewContainer<int>{}));
+    using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
     auto&& recv_count_param =
         internal::select_parameter_type_or_default<ParameterType::recv_counts, default_recv_count_type>(
             std::tuple(),

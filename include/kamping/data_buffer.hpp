@@ -151,11 +151,33 @@ static constexpr bool
 
 } // namespace internal
 
-/// @brief Type used for tag dispatching.
+/// @brief Type used for indicating that a buffer should be allocated by KaMPIng.
+/// @tparam Container The container to allocate.
 ///
-/// This types needs to be used to select internal::LibAllocContainerBasedBuffer as buffer type.
+/// Passing this with an appropriate template parameter to a buffer creation function (such as \c recv_buf()) indicates,
+/// that the MPI operation should allocate an appropriately sized buffer of type \c Container internally.
 template <typename Container>
-struct NewContainer {};
+struct AllocNewT {};
+
+// @brief Convencience wrapper for creating library allocated containers. See \ref AllocNewT for details.
+template <typename Container>
+static constexpr auto alloc_new = AllocNewT<Container>{};
+
+/// @brief Type used for indicating that a buffer should be allocated by KaMPIng.
+/// @tparam Container A container template to use for allocation.
+///
+/// Passing this with an appropriate template parameter to a buffer creation function (such as \c recv_counts())
+/// indicates, that the MPI operation should allocate an appropriately sized buffer of type \c Container<T> internally,
+/// where \c T is automatically determined.
+///
+/// In case of \c recv_counts(alloc_new_with<std::vector>) this means, that internally, a \c std::vector<int> is
+/// allocated.
+template <template <typename...> typename Container>
+struct AllocNewWithT {};
+
+// @brief Convencience wrapper for creating library allocated containers. See \ref AllocNewWithT for details.
+template <template <typename...> typename Container>
+static constexpr auto alloc_new_with = AllocNewWithT<Container>{};
 
 namespace internal {
 /// @brief Helper to decide if data type has \c .data() method.
@@ -191,6 +213,9 @@ class ValueTypeWrapper {
 public:
     using value_type = T; ///< The value type of T.
 };
+
+// @brief tag type to indicate that the value_type should be infered from the container
+struct default_value_type_tag {};
 
 /// @brief Wrapper to get the value type of a container type.
 /// @tparam T The type to get the value_type of
@@ -230,14 +255,17 @@ inline constexpr bool is_int_type(ParameterType parameter_type) {
 /// `referencing` if only a reference to an existing container should be held.
 /// @tparam buffer_type_param Type of buffer, i.e., \c in_buffer, \c out_buffer, or \c in_out_buffer.
 /// @tparam allocation `lib_allocated` if the buffer was allocated by the library,
-/// `user_allocated` if it was allocated by the user.
+/// @tparam ValueType requested value_type for the buffer. If it does not match the containers value type, compilation
+/// fails. By default, this is set to \c default_value_type_tag and the value_type is infered from the underlying
+/// container, without any checking `user_allocated` if it was allocated by the user.
 template <
     typename MemberType,
     ParameterType       parameter_type_param,
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param,
-    BufferAllocation    allocation = BufferAllocation::user_allocated>
+    BufferAllocation    allocation = BufferAllocation::user_allocated,
+    typename ValueType             = default_value_type_tag>
 class DataBuffer : private ParameterObjectBase {
 public:
     static constexpr ParameterType parameter_type =
@@ -281,6 +309,10 @@ public:
     // Logical implication: is_int_type(type) => std::is_same_v<value_type, int>
     static_assert(
         !is_int_type(parameter_type_param) || std::is_same_v<value_type, int>, "The given data must be of type int"
+    );
+    static_assert(
+        std::is_same_v<ValueType, default_value_type_tag> || std::is_same_v<ValueType, value_type>,
+        "The requested value type of the buffer does not match the value type of the underlying container"
     );
     using value_type_with_const =
         std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending

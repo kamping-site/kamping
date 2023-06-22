@@ -91,8 +91,7 @@ TEST(AlltoallTest, custom_type_custom_container) {
         input[i] = {comm.rank(), i};
     }
 
-    auto result =
-        comm.alltoall(send_buf(input), recv_buf(NewContainer<OwnContainer<CustomType>>{})).extract_recv_buffer();
+    auto result = comm.alltoall(send_buf(input), recv_buf(alloc_new<OwnContainer<CustomType>>)).extract_recv_buffer();
     ASSERT_NE(result.data(), nullptr);
     EXPECT_EQ(result.size(), comm.size());
 
@@ -240,7 +239,7 @@ TEST(AlltoallvTest, custom_type_custom_container) {
     // Do the alltoallv - receive into a library allocated OwnContainer
     auto result = comm.alltoallv(
                           send_buf(input),
-                          recv_buf(NewContainer<OwnContainer<CustomType>>{}),
+                          recv_buf(alloc_new<OwnContainer<CustomType>>),
                           kamping::send_counts(send_counts)
     )
                       .extract_recv_buffer();
@@ -290,11 +289,11 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
     // Do the alltoallv - put all outputs into a custom container
     auto mpi_result = comm.alltoallv(
         send_buf(input),
-        recv_buf(NewContainer<OwnContainer<CustomType>>{}),
+        recv_buf(alloc_new<OwnContainer<CustomType>>),
         kamping::send_counts(send_counts),
-        send_displs_out(NewContainer<OwnContainer<int>>{}),
-        recv_counts_out(NewContainer<OwnContainer<int>>{}),
-        recv_displs_out(NewContainer<OwnContainer<int>>{})
+        send_displs_out(alloc_new<OwnContainer<int>>),
+        recv_counts_out(alloc_new<OwnContainer<int>>),
+        recv_displs_out(alloc_new<OwnContainer<int>>)
     );
 
     // Check recv buffer
@@ -600,7 +599,7 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
     // Do the alltoallv - all counts and displacements are already pre-calculated
     auto mpi_result = comm.alltoallv(
         send_buf(input),
-        recv_buf(NewContainer<OwnContainer<CustomType>>{}),
+        recv_buf(alloc_new<OwnContainer<CustomType>>),
         kamping::send_counts(send_counts),
         kamping::send_displs(send_displs),
         kamping::recv_counts(recv_counts),

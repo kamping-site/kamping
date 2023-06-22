@@ -75,7 +75,7 @@ TEST(BcastTest, extract_receive_buffer) {
         values = {42, 1337};
         comm.bcast(send_recv_buf(values));
     } else {
-        values = comm.bcast(send_recv_buf(NewContainer<std::vector<size_t>>{})).extract_recv_buffer();
+        values = comm.bcast(send_recv_buf(alloc_new<std::vector<size_t>>)).extract_recv_buffer();
     }
 
     EXPECT_THAT(values, ElementsAre(42, 1337));

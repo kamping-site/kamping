@@ -26,8 +26,8 @@ int main(int /*argc*/, char** /*argv*/) {
     // should not be possible create a recv_count_out buffer with a type different than int
     auto tmp = recv_count_out(single_data);
 #elif defined(RECV_COUNT_OUT_NEW_CONTAINER)
-    // should not be possible create a recv_count_out buffer with a type different than int with NewContainer
-    auto tmp = recv_count_out(NewContainer<DataType>{});
+    // should not be possible create a recv_count_out buffer with a type different than int with alloc_new
+    auto tmp = recv_count_out(alloc_new<DataType>{});
 #elif defined(RECV_COUNTS_PASSED)
     // should not be possible create a recv_counts buffer with a type different than int
     auto tmp = recv_counts(container);
@@ -35,8 +35,8 @@ int main(int /*argc*/, char** /*argv*/) {
     // should not be possible create a recv_counts_out buffer with a type different than int
     auto tmp = recv_counts(container);
 #elif defined(RECV_COUNTS_OUT_NEW_CONTAINER)
-    // should not be possible create a recv_counts_out buffer with a type different than int with NewContainer
-    auto tmp = recv_counts_out(NewContainer<ContainerType>{});
+    // should not be possible create a recv_counts_out buffer with a type different than int with alloc_new
+    auto tmp = recv_counts_out(alloc_new<ContainerType>{});
 #elif defined(SEND_COUNTS_PASSED)
     // should not be possible create a send_counts buffer with a type different than int
     auto tmp = send_counts(container);
@@ -47,8 +47,8 @@ int main(int /*argc*/, char** /*argv*/) {
     // should not be possible create a recv_displs_out buffer with a type different than int
     auto tmp = recv_displs_out(container);
 #elif defined(RECV_DISPLS_OUT_NEW_CONTAINER)
-    // should not be possible create a recv_displs_out buffer with a type different than int with NewContainer
-    auto tmp = recv_displs_out(NewContainer<ContainerType>{});
+    // should not be possible create a recv_displs_out buffer with a type different than int with alloc_new
+    auto tmp = recv_displs_out(alloc_new<ContainerType>{});
 #elif defined(SEND_DISPLS_PASSED)
     // should not be possible create a send_displs buffer with a type different than int
     auto tmp = send_displs(container);
@@ -56,8 +56,8 @@ int main(int /*argc*/, char** /*argv*/) {
     // should not be possible create a send_displs_out buffer with a type different than int
     auto tmp = send_displs_out(container);
 #elif defined(SEND_DISPLS_OUT_NEW_CONTAINER)
-    // should not be possible create a send_displs_out buffer with a type different than int with NewContainer
-    auto tmp = send_displs_out(NewContainer<ContainerType>{});
+    // should not be possible create a send_displs_out buffer with a type different than int with alloc_new
+    auto tmp = send_displs_out(alloc_new<ContainerType>{});
 #else
 // If none of the above sections is active, this file will compile successfully.
 #endif
