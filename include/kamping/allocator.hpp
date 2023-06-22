@@ -79,7 +79,7 @@ public:
     /// @brief Deallocates the storage referenced by the pointer \c p, which must be a pointer obtained by an earlier
     /// call to \ref allocate().
     /// @param p Pointer obtained from \ref allocate().
-    void deallocate(T* p, std::size_t) {
+    void deallocate(T* p, size_t) {
         // no error handling because the standard disallows throwing exceptions here
         MPI_Free_mem(p);
     }

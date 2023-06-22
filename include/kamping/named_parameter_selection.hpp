@@ -29,10 +29,10 @@ namespace kamping::internal {
 /// @brief Base case if there are no parameters: always returns max index indicating that the parameter was not found.
 /// @tparam parameter_type The parameter type which to be searched for.
 /// @tparam Index Index of current argument to evaluate (ignored).
-/// @return \c std::numeric_limits<std::size_t>::max().
+/// @return \c std::numeric_limits<size_t>::max().
 template <ParameterType parameter_type, size_t Index>
 constexpr size_t find_pos() {
-    return std::numeric_limits<std::size_t>::max();
+    return std::numeric_limits<size_t>::max();
 }
 
 /// @brief Returns the Index parameter if the parameter type of Arg matches the requested parameter type. If not, this
@@ -44,13 +44,13 @@ constexpr size_t find_pos() {
 /// @tparam Index Index of current argument to evaluate.
 /// @tparam Arg Argument to evaluate.
 /// @return The index
-/// @return \c std::numeric_limits<std::size_t>::max() if not found
+/// @return \c std::numeric_limits<size_t>::max() if not found
 template <ParameterType parameter_type, size_t Index, typename Arg>
 constexpr size_t find_pos() {
     constexpr bool found_arg = std::remove_reference_t<Arg>::parameter_type == parameter_type;
     // when we do not find the parameter type here, it is not given
     // a we fail to compile with a useful message
-    return found_arg ? Index : std::numeric_limits<std::size_t>::max();
+    return found_arg ? Index : std::numeric_limits<size_t>::max();
 }
 
 /// @brief Returns position of first argument in Args with Trait trait.
@@ -61,7 +61,7 @@ constexpr size_t find_pos() {
 /// @tparam Arg2 The next argument.
 /// @tparam Args All remaining arguments.
 /// @return Position of first argument with matched trait.
-/// @return \c std::numeric_limits<std::size_t>::max() if not found
+/// @return \c std::numeric_limits<size_t>::max() if not found
 template <ParameterType parameter_type, size_t Index, typename Arg, typename Arg2, typename... Args>
 constexpr size_t find_pos() {
     if constexpr (std::remove_reference_t<Arg>::parameter_type == parameter_type) {
