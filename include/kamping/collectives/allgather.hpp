@@ -171,7 +171,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
         recv_counts.resize(this->size());
-        this->allgather(kamping::send_buf({static_cast<int>(send_buf.size())}), kamping::recv_buf(recv_counts.get()));
+        this->allgather(kamping::send_buf(static_cast<int>(send_buf.size())), kamping::recv_buf(recv_counts.get()));
     }
     KASSERT(recv_counts.size() == this->size(), assert::light);
 
