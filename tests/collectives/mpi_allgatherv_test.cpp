@@ -11,7 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "gmock/gmock.h"
 #include <cstddef>
 
 #include <gtest/gtest.h>
@@ -29,6 +28,15 @@ using namespace ::testing;
 
 TEST(AllgathervTest, allgatherv_single_element_no_receive_buffer) {
     Communicator comm;
+    auto         value  = comm.rank();
+    auto         output = comm.allgatherv(send_buf(value)).extract_recv_buffer();
+
+    std::vector<decltype(value)> expected_output(comm.size());
+    std::iota(expected_output.begin(), expected_output.end(), 0u);
+    EXPECT_EQ(output, expected_output);
+}
+TEST(AllgathervTest, allgatherv_and_allgather_have_same_result_for_single_element_no_receive_buffer) {
+    Communicator comm;
     auto         value = comm.rank();
 
     auto output   = comm.allgather(send_buf(value)).extract_recv_buffer();
@@ -37,6 +45,17 @@ TEST(AllgathervTest, allgatherv_single_element_no_receive_buffer) {
 }
 
 TEST(AllgathervTest, allgatherv_single_element_receive_buffer) {
+    Communicator                 comm;
+    auto                         value = comm.rank();
+    std::vector<decltype(value)> output;
+    comm.allgatherv(send_buf(value), recv_buf(output));
+
+    std::vector<decltype(value)> expected_output(comm.size());
+    std::iota(expected_output.begin(), expected_output.end(), 0u);
+    EXPECT_EQ(output, expected_output);
+}
+
+TEST(AllgathervTest, allgatherv_and_allgather_have_same_result_for_single_element_receive_buffer) {
     Communicator comm;
     auto         value = comm.rank();
 
@@ -124,7 +143,6 @@ TEST(AllgathervTest, allgatherv_all_empty_but_rank_in_the_middle) {
     if (comm.rank() == non_empty_rank) {
         input.resize(comm.rank(), comm.rank_signed());
     }
-    std::vector<int> output;
     std::vector<int> expected_output(non_empty_rank, static_cast<int>(non_empty_rank));
     std::vector<int> expected_recv_counts(comm.size(), 0);
     std::vector<int> expected_recv_displs(comm.size());
@@ -134,5 +152,30 @@ TEST(AllgathervTest, allgatherv_all_empty_but_rank_in_the_middle) {
     auto result = comm.allgatherv(send_buf(input));
     EXPECT_EQ(result.extract_recv_buffer(), expected_output);
     EXPECT_EQ(result.extract_recv_counts(), expected_recv_counts);
+    EXPECT_EQ(result.extract_recv_displs(), expected_recv_displs);
+}
+
+TEST(AllgathervTest, allgatherv_all_empty_but_rank_in_the_middle_with_different_container_types) {
+    Communicator     comm;
+    size_t           non_empty_rank = comm.size() / 2;
+    std::vector<int> input;
+    if (comm.rank() == non_empty_rank) {
+        input.resize(comm.rank(), comm.rank_signed());
+    }
+    OwnContainer<int> recv_counts_out;
+    std::vector<int>  expected_output(non_empty_rank, static_cast<int>(non_empty_rank));
+    OwnContainer<int> expected_recv_counts(comm.size(), 0);
+    OwnContainer<int> expected_recv_displs(comm.size());
+
+    expected_recv_counts[non_empty_rank] = static_cast<int>(non_empty_rank);
+    std::exclusive_scan(expected_recv_counts.begin(), expected_recv_counts.end(), expected_recv_displs.begin(), 0);
+
+    auto result = comm.allgatherv(
+        send_buf(input),
+        kamping::recv_counts_out(recv_counts_out),
+        recv_displs_out(alloc_new_auto<OwnContainer>)
+    );
+    EXPECT_EQ(result.extract_recv_buffer(), expected_output);
+    EXPECT_EQ(recv_counts_out, expected_recv_counts);
     EXPECT_EQ(result.extract_recv_displs(), expected_recv_displs);
 }
