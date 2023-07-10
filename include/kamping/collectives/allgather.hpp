@@ -46,9 +46,6 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-///
-template <typename T>
-struct TD;
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... args) const {
@@ -127,7 +124,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         KAMPING_OPTIONAL_PARAMETERS(recv_buf, recv_counts, recv_displs)
     );
 
-    // Get send_counts
+    // Get send_buf
     auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
     auto  send_buf        = send_buf_param.get();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
@@ -169,7 +166,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         assert::light_communication
     );
     if constexpr (do_calculate_recv_counts) {
-        /// @todo make it possible to test whether this additional communication is skipped
         recv_counts.resize(this->size());
         this->allgather(kamping::send_buf(static_cast<int>(send_buf.size())), kamping::recv_buf(recv_counts.get()));
     }
@@ -192,10 +188,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
 
     auto mpi_send_type = mpi_datatype<send_value_type>();
     auto mpi_recv_type = mpi_datatype<recv_value_type>();
-    // TD<send_value_type> td1;
-    // TD<recv_value_type> td2;
-
-    // KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
+    KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
     // Resize recv_buff
     int recv_buf_size = *(recv_counts.data() + recv_counts.size() - 1) + // Last element of recv_counts
@@ -213,6 +206,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         mpi_recv_type,
         this->mpi_communicator()
     );
-    THROW_IF_MPI_ERROR(err, MPI_Allgather);
-    return make_mpi_result(std::move(recv_buf));
+    THROW_IF_MPI_ERROR(err, MPI_Allgatherv);
+
+    return make_mpi_result(std::move(recv_buf), std::move(recv_counts), std::move(recv_displs));
 }
