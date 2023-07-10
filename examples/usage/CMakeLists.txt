@@ -22,6 +22,10 @@ add_executable(example_gather gather_example.cpp)
 target_link_libraries(example_gather kamping)
 target_compile_options(example_gather PRIVATE ${KAMPING_WARNING_FLAGS})
 
+add_executable(example_gatherv gatherv_example.cpp)
+target_link_libraries(example_gatherv kamping)
+target_compile_options(example_gatherv PRIVATE ${KAMPING_WARNING_FLAGS})
+
 add_executable(example_bcast bcast_example.cpp)
 target_link_libraries(example_bcast kamping)
 target_compile_options(example_bcast PRIVATE ${KAMPING_WARNING_FLAGS})

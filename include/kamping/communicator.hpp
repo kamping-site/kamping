@@ -425,6 +425,9 @@ public:
     auto gather(Args... args) const;
 
     template <typename... Args>
+    auto gatherv(Args... args) const;
+
+    template <typename... Args>
     auto allgather(Args... args) const;
 
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
