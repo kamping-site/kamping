@@ -425,6 +425,9 @@ public:
     auto gather(Args... args) const;
 
     template <typename... Args>
+    auto gatherv(Args... args) const;
+
+    template <typename... Args>
     auto allgather(Args... args) const;
 
     template <typename... Args>
