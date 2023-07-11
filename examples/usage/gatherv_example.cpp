@@ -11,19 +11,14 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <numeric>
 #include <vector>
 
 #include <mpi.h>
 
 #include "helpers_for_examples.hpp"
-#include "kamping/checking_casts.hpp"
 #include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
-#include "kamping/data_buffer.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/named_parameters.hpp"
 
 int main() {
     using namespace kamping;

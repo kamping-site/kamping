@@ -21,12 +21,13 @@
 #include "kamping/communicator.hpp"
 
 namespace testing {
-/// @brief Generates the expected receive buffer, receive counts and receive displacmenets buffers for receiving ranks
+/// @brief Generates the expected receive buffer, receive counts and receive displacements buffers for receiving ranks
 /// when each rank sends rank times its rank in a (all) gatherv operation.
 ///
 /// @tparam Container Type of the respective buffer.
 template <template <typename...> typename Container = std::vector>
 struct ExpectedBuffersForRankTimesRankGathering {
+
     /// @brief Generates expected receive buffer on receiving ranks.
     /// @tparam T Datatype to which the ranks will be converted.
     /// @param comm Communicator which will be used in the scenario.
@@ -39,6 +40,7 @@ struct ExpectedBuffersForRankTimesRankGathering {
         }
         return container;
     }
+    
     /// @brief Generates expected receive counts on receiving ranks.
     /// @param comm Communicator which will be used in the scenario.
     /// @return Receive counts.
@@ -47,8 +49,9 @@ struct ExpectedBuffersForRankTimesRankGathering {
         std::iota(recv_counts.begin(), recv_counts.end(), 0);
         return recv_counts;
     }
+    
     /// @brief Generates expected receive displacements on receiving ranks.
-
+    ///
     /// @param comm Communicator which will be used in the scenario.
     /// @return Receive displacements.
     static auto recv_displs_on_receiving_ranks(kamping::Communicator<> const& comm) {

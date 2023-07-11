@@ -113,9 +113,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
 /// - \ref kamping::send_buf() containing the data that is sent to the root.
 ///
 /// The following parameter is optional but results in communication overhead if omitted:
-/// - \ref kamping::recv_counts() containing the number of elements to receive from each rank. On all ranks but the root
-/// rank the content of this buffer is ignored. However, if provided on any rank it
-/// must be provided on all ranks.
+/// - \ref kamping::recv_counts() containing the number of elements to receive from each rank. Only the root rank uses the content of this buffer, all other ranks ignore it. However, if provided on any rank it
+/// must be provided on all ranks (possibly empty on non-root ranks).
 ///
 /// The following buffers are optional:
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator
@@ -146,7 +145,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
 
     // get recv buffer
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
-
     auto&& recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
@@ -205,7 +203,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
 
     // calculate recv_displs if necessary
-    bool const do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
+    constexpr bool do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
     if constexpr (do_calculate_recv_displs) {
         if (this->is_root(root.rank_signed())) {
             recv_displs.resize(this->size());

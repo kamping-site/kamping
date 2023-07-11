@@ -22,8 +22,6 @@
 #include "kamping/collectives/gather.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
-#include "kamping/mpi_datatype.hpp"
-#include "kamping/named_parameters.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -34,17 +32,16 @@ TEST(GathervTest, gather_single_element_on_different_roots) {
 
     auto test_result = [&](auto&& mpi_result, int root) {
         if (comm.rank_signed() == root) {
-            std::vector<decltype(value)> expected_output;
             std::vector<int>             expected_recv_counts(comm.size(), 1);
             std::vector<int>             expected_recv_displs;
-            expected_output.resize(comm.size());
-            std::iota(expected_output.begin(), expected_output.end(), 0);
             std::exclusive_scan(
                 expected_recv_counts.begin(),
                 expected_recv_counts.end(),
                 std::back_inserter(expected_recv_displs),
                 0
             );
+            std::vector<decltype(value)> expected_output(comm.size());
+            std::iota(expected_output.begin(), expected_output.end(), 0);
             EXPECT_EQ(mpi_result.extract_recv_buffer(), expected_output);
             EXPECT_EQ(mpi_result.extract_recv_counts(), expected_recv_counts);
             EXPECT_EQ(mpi_result.extract_recv_displs(), expected_recv_displs);
@@ -172,7 +169,7 @@ TEST(GathervTest, gather_mix_different_container_types) {
                 ExpectedBuffersForRankTimesRankGathering<>::recv_counts_on_receiving_ranks(comm);
             if (!comm.is_root(i)) {
                 // invalid input for non root ranks as these should ignore recv counts/displacement buffers
-                std::fill(recv_counts.begin(), recv_counts.end(), -1);
+                recv_counts.clear();
             }
             auto mpi_result = comm.gatherv(
                 send_buf(input),
