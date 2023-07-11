@@ -25,7 +25,7 @@ namespace testing {
 /// each rank sends rank times its rank in a (all) gatherv operation.
 ///
 /// @tparam Container Type of the respective buffer.
-template <template <typename> typename Container = std::vector>
+template <template <typename...> typename Container = std::vector>
 struct ExpectedBuffersForRankTimesRankGathering {
     /// @brief Generate receive buffer.
     /// @tparam T Datatype to which the ranks will be converted.

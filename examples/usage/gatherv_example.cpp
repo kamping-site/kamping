@@ -29,8 +29,8 @@ int main() {
     using namespace kamping;
     kamping::Environment  e;
     kamping::Communicator comm;
-    std::vector<int> input(comm.rank(), comm.rank_signed());
-    std::vector<int> output;
+    std::vector<int>      input(comm.rank(), comm.rank_signed());
+    std::vector<int>      output;
 
     comm.gatherv(send_buf(input), recv_buf(output), root(0));
     print_result_on_root(output, comm);
