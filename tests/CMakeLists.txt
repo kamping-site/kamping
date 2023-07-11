@@ -74,6 +74,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_mpi_gatherv
+    FILES collectives/mpi_gatherv_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_mpi_send
     FILES p2p/mpi_send_test.cpp
     CORES 2 4

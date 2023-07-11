@@ -17,6 +17,7 @@
 #include <mpi.h>
 
 #include "../helpers_for_testing.hpp"
+#include "gatherv_test_helpers.hpp"
 #include "kamping/collectives/allgather.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
@@ -67,20 +68,12 @@ TEST(AllgathervTest, allgatherv_and_allgather_have_same_result_for_single_elemen
     EXPECT_EQ(output_v, output);
 }
 
-template <typename T>
-auto container_containing_each_rank_rank_times(Communicator<> const& comm) {
-    std::vector<T> container;
-    for (size_t i = 0; i < comm.size(); ++i) {
-        std::fill_n(std::back_inserter(container), i, static_cast<T>(i));
-    }
-    return container;
-}
-
 TEST(AllgathervTest, allgatherv_different_number_elems_to_send) {
     Communicator        comm;
     std::vector<double> input(comm.rank(), static_cast<double>(comm.rank()));
     std::vector<double> output;
-    std::vector<double> expected_output = container_containing_each_rank_rank_times<double>(comm);
+    std::vector<double> expected_output =
+        ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<double>(comm);
 
     comm.allgatherv(send_buf(input), recv_buf(output));
     EXPECT_EQ(output, expected_output);
@@ -90,7 +83,8 @@ TEST(AllgathervTest, allgatherv_different_number_elems_to_send_custom_container)
     Communicator         comm;
     OwnContainer<double> input(comm.rank(), static_cast<double>(comm.rank()));
     std::vector<double>  output;
-    std::vector<double>  expected_output = container_containing_each_rank_rank_times<double>(comm);
+    std::vector<double>  expected_output =
+        ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<double>(comm);
 
     comm.allgatherv(send_buf(input), recv_buf(output));
     EXPECT_EQ(output, expected_output);
@@ -99,16 +93,20 @@ TEST(AllgathervTest, allgatherv_different_number_elems_to_send_custom_container)
 TEST(AllgathervTest, allgatherv_check_recv_counts_and_recv_displs) {
     Communicator     comm;
     std::vector<int> input(comm.rank(), static_cast<int>(comm.rank()));
-    std::vector<int> expected_recv_counts(comm.size());
-    std::vector<int> expected_recv_displs(comm.size());
-    std::iota(expected_recv_counts.begin(), expected_recv_counts.end(), 0);
-    std::exclusive_scan(expected_recv_counts.begin(), expected_recv_counts.end(), expected_recv_displs.begin(), 0);
-    std::vector<int> expected_output = container_containing_each_rank_rank_times<int>(comm);
 
     auto result = comm.allgatherv(send_buf(input));
-    EXPECT_EQ(result.extract_recv_buffer(), expected_output);
-    EXPECT_EQ(result.extract_recv_counts(), expected_recv_counts);
-    EXPECT_EQ(result.extract_recv_displs(), expected_recv_displs);
+    EXPECT_EQ(
+        result.extract_recv_buffer(),
+        ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<int>(comm)
+    );
+    EXPECT_EQ(
+        result.extract_recv_counts(),
+        ExpectedBuffersForRankTimesRankGathering<>::recv_counts_on_receiving_ranks(comm)
+    );
+    EXPECT_EQ(
+        result.extract_recv_displs(),
+        ExpectedBuffersForRankTimesRankGathering<>::recv_displs_on_receiving_ranks(comm)
+    );
 }
 
 TEST(AllgathervTest, allgatherv_provide_recv_counts_and_recv_displs) {
@@ -120,7 +118,8 @@ TEST(AllgathervTest, allgatherv_provide_recv_counts_and_recv_displs) {
     std::exclusive_scan(recv_counts.begin(), recv_counts.end(), recv_displs.begin(), 0);
 
     std::vector<int> output;
-    std::vector<int> expected_output = container_containing_each_rank_rank_times<int>(comm);
+    std::vector<int> expected_output =
+        ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<int>(comm);
 
     // only provide recv_counts
     comm.allgatherv(send_buf(input), kamping::recv_counts(recv_counts), recv_buf(output));

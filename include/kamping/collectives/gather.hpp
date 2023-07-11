@@ -114,7 +114,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
 ///
 /// The following parameter is optional but results in communication overhead if omitted:
 /// - \ref kamping::recv_counts() containing the number of elements to receive from each rank. On all ranks but the root
-/// rank the content of this buffer is ignored and the buffer will be resized to 0. However, if provided on any rank it
+/// rank the content of this buffer is ignored. However, if provided on any rank it
 /// must be provided on all ranks.
 ///
 /// The following buffers are optional:
@@ -124,8 +124,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
 /// all data from all send buffers. At all other ranks, the buffer will have size 0.
 /// - \ref kamping::recv_displs() containing the offsets of the messages in recv_buf. The `recv_counts[i]` elements
 /// starting at `recv_buf[recv_displs[i]]` will be received from rank `i`. If omitted, this is calculated as the
-/// exclusive prefix-sum of `recv_counts`. On all ranks but the root rank the content of this buffer is ignored and the
-/// buffer will be resized to 0.
+/// exclusive prefix-sum of `recv_counts`.
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
@@ -134,7 +133,11 @@ template <template <typename...> typename DefaultContainerType, template <typena
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... args) const {
     using namespace kamping::internal;
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf, root));
+    KAMPING_CHECK_PARAMETERS(
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf),
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, root, recv_counts, recv_displs)
+    );
 
     // get send buffer
     auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
@@ -202,11 +205,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
 
     // calculate recv_displs if necessary
-    bool const do_calculate_recv_displs =
-        internal::has_to_be_computed<decltype(recv_displs)> && (this->rank_signed() == root.rank_signed());
-    if (do_calculate_recv_displs) {
-        recv_displs.resize(this->size());
-        std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), recv_displs.data(), 0);
+    bool const do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
+    if constexpr (do_calculate_recv_displs) {
+        if (this->is_root(root.rank_signed())) {
+            recv_displs.resize(this->size());
+            std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), recv_displs.data(), 0);
+        }
     }
     auto mpi_send_type = mpi_datatype<send_value_type>();
     auto mpi_recv_type = mpi_datatype<recv_value_type>();
@@ -220,8 +224,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         recv_buf.resize(asserting_cast<size_t>(recv_buf_size));
     } else {
         recv_buf.resize(0);
-        recv_counts.resize(0);
-        recv_displs.resize(0);
     }
 
     // error code can be unused if KTHROW is removed at compile time
