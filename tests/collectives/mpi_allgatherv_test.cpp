@@ -73,7 +73,7 @@ TEST(AllgathervTest, allgatherv_different_number_elems_to_send) {
     std::vector<double> input(comm.rank(), static_cast<double>(comm.rank()));
     std::vector<double> output;
     std::vector<double> expected_output =
-        ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<double>(comm);
+        ExpectedBuffersForRankTimesRankGathering::recv_buffer_on_receiving_ranks<double>(comm);
 
     comm.allgatherv(send_buf(input), recv_buf(output));
     EXPECT_EQ(output, expected_output);
@@ -84,7 +84,7 @@ TEST(AllgathervTest, allgatherv_different_number_elems_to_send_custom_container)
     OwnContainer<double> input(comm.rank(), static_cast<double>(comm.rank()));
     std::vector<double>  output;
     std::vector<double>  expected_output =
-        ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<double>(comm);
+        ExpectedBuffersForRankTimesRankGathering::recv_buffer_on_receiving_ranks<double>(comm);
 
     comm.allgatherv(send_buf(input), recv_buf(output));
     EXPECT_EQ(output, expected_output);
@@ -97,15 +97,15 @@ TEST(AllgathervTest, allgatherv_check_recv_counts_and_recv_displs) {
     auto result = comm.allgatherv(send_buf(input));
     EXPECT_EQ(
         result.extract_recv_buffer(),
-        ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<int>(comm)
+        ExpectedBuffersForRankTimesRankGathering::recv_buffer_on_receiving_ranks<int>(comm)
     );
     EXPECT_EQ(
         result.extract_recv_counts(),
-        ExpectedBuffersForRankTimesRankGathering<>::recv_counts_on_receiving_ranks(comm)
+        ExpectedBuffersForRankTimesRankGathering::recv_counts_on_receiving_ranks(comm)
     );
     EXPECT_EQ(
         result.extract_recv_displs(),
-        ExpectedBuffersForRankTimesRankGathering<>::recv_displs_on_receiving_ranks(comm)
+        ExpectedBuffersForRankTimesRankGathering::recv_displs_on_receiving_ranks(comm)
     );
 }
 
@@ -119,7 +119,7 @@ TEST(AllgathervTest, allgatherv_provide_recv_counts_and_recv_displs) {
 
     std::vector<int> output;
     std::vector<int> expected_output =
-        ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<int>(comm);
+        ExpectedBuffersForRankTimesRankGathering::recv_buffer_on_receiving_ranks<int>(comm);
 
     // only provide recv_counts
     comm.allgatherv(send_buf(input), kamping::recv_counts(recv_counts), recv_buf(output));

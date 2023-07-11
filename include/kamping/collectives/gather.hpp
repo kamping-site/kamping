@@ -113,8 +113,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
 /// - \ref kamping::send_buf() containing the data that is sent to the root.
 ///
 /// The following parameter is optional but results in communication overhead if omitted:
-/// - \ref kamping::recv_counts() containing the number of elements to receive from each rank. Only the root rank uses the content of this buffer, all other ranks ignore it. However, if provided on any rank it
-/// must be provided on all ranks (possibly empty on non-root ranks).
+/// - \ref kamping::recv_counts() containing the number of elements to receive from each rank. Only the root rank uses
+/// the content of this buffer, all other ranks ignore it. However, if provided on any rank it must be provided on all
+/// ranks (possibly empty on non-root ranks).
 ///
 /// The following buffers are optional:
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator

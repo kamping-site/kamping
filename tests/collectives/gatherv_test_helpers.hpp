@@ -23,16 +23,14 @@
 namespace testing {
 /// @brief Generates the expected receive buffer, receive counts and receive displacements buffers for receiving ranks
 /// when each rank sends rank times its rank in a (all) gatherv operation.
-///
-/// @tparam Container Type of the respective buffer.
-template <template <typename...> typename Container = std::vector>
 struct ExpectedBuffersForRankTimesRankGathering {
-
     /// @brief Generates expected receive buffer on receiving ranks.
+    ///
     /// @tparam T Datatype to which the ranks will be converted.
+    /// @tparam Container Type of the buffer.
     /// @param comm Communicator which will be used in the scenario.
     /// @return Receive buffer.
-    template <typename T>
+    template <typename T, template <typename...> typename Container = std::vector>
     static auto recv_buffer_on_receiving_ranks(kamping::Communicator<> const& comm) {
         Container<T> container;
         for (size_t i = 0; i < comm.size(); ++i) {
@@ -40,20 +38,25 @@ struct ExpectedBuffersForRankTimesRankGathering {
         }
         return container;
     }
-    
+
     /// @brief Generates expected receive counts on receiving ranks.
+    ///
+    /// @tparam Container Type of the buffer.
     /// @param comm Communicator which will be used in the scenario.
     /// @return Receive counts.
+    template <template <typename...> typename Container = std::vector>
     static auto recv_counts_on_receiving_ranks(kamping::Communicator<> const& comm) {
         Container<int> recv_counts(comm.size());
         std::iota(recv_counts.begin(), recv_counts.end(), 0);
         return recv_counts;
     }
-    
+
     /// @brief Generates expected receive displacements on receiving ranks.
     ///
+    /// @tparam Container Type of the buffer.
     /// @param comm Communicator which will be used in the scenario.
     /// @return Receive displacements.
+    template <template <typename...> typename Container = std::vector>
     static auto recv_displs_on_receiving_ranks(kamping::Communicator<> const& comm) {
         auto           recv_counts = recv_counts_on_receiving_ranks(comm);
         Container<int> recv_displs(comm.size());

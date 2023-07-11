@@ -32,8 +32,8 @@ TEST(GathervTest, gather_single_element_on_different_roots) {
 
     auto test_result = [&](auto&& mpi_result, int root) {
         if (comm.rank_signed() == root) {
-            std::vector<int>             expected_recv_counts(comm.size(), 1);
-            std::vector<int>             expected_recv_displs;
+            std::vector<int> expected_recv_counts(comm.size(), 1);
+            std::vector<int> expected_recv_displs;
             std::exclusive_scan(
                 expected_recv_counts.begin(),
                 expected_recv_counts.end(),
@@ -81,15 +81,15 @@ TEST(GathervTest, gather_varying_number_elements_on_different_roots) {
         if (comm.rank_signed() == root) {
             EXPECT_EQ(
                 mpi_result.extract_recv_buffer(),
-                ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<double>(comm)
+                ExpectedBuffersForRankTimesRankGathering::recv_buffer_on_receiving_ranks<double>(comm)
             );
             EXPECT_EQ(
                 mpi_result.extract_recv_counts(),
-                ExpectedBuffersForRankTimesRankGathering<>::recv_counts_on_receiving_ranks(comm)
+                ExpectedBuffersForRankTimesRankGathering::recv_counts_on_receiving_ranks(comm)
             );
             EXPECT_EQ(
                 mpi_result.extract_recv_displs(),
-                ExpectedBuffersForRankTimesRankGathering<>::recv_displs_on_receiving_ranks(comm)
+                ExpectedBuffersForRankTimesRankGathering::recv_displs_on_receiving_ranks(comm)
             );
         } else {
             // out recv buffers on non-root ranks are expected to be empty
@@ -127,7 +127,7 @@ TEST(GathervTest, gather_varying_number_elements_on_different_roots_with_explici
         if (comm.rank_signed() == root) {
             EXPECT_EQ(
                 mpi_result.extract_recv_buffer(),
-                ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<double>(comm)
+                ExpectedBuffersForRankTimesRankGathering::recv_buffer_on_receiving_ranks<double>(comm)
             );
         } else {
             // out recv buffers on non-root ranks are expected to be empty
@@ -139,9 +139,9 @@ TEST(GathervTest, gather_varying_number_elements_on_different_roots_with_explici
     {
         for (int i = 0; i < comm.size_signed(); ++i) {
             std::vector<int> recv_counts =
-                ExpectedBuffersForRankTimesRankGathering<>::recv_counts_on_receiving_ranks(comm);
+                ExpectedBuffersForRankTimesRankGathering::recv_counts_on_receiving_ranks(comm);
             std::vector<int> recv_displs =
-                ExpectedBuffersForRankTimesRankGathering<>::recv_displs_on_receiving_ranks(comm);
+                ExpectedBuffersForRankTimesRankGathering::recv_displs_on_receiving_ranks(comm);
             if (!comm.is_root(i)) {
                 // invalid input for non root ranks as these should ignore recv counts/displacement buffers
                 std::fill(recv_counts.begin(), recv_counts.end(), -1);
@@ -166,7 +166,7 @@ TEST(GathervTest, gather_mix_different_container_types) {
     {
         for (int i = 0; i < comm.size_signed(); ++i) {
             std::vector<int> recv_counts =
-                ExpectedBuffersForRankTimesRankGathering<>::recv_counts_on_receiving_ranks(comm);
+                ExpectedBuffersForRankTimesRankGathering::recv_counts_on_receiving_ranks(comm);
             if (!comm.is_root(i)) {
                 // invalid input for non root ranks as these should ignore recv counts/displacement buffers
                 recv_counts.clear();
@@ -182,7 +182,11 @@ TEST(GathervTest, gather_mix_different_container_types) {
             if (comm.rank_signed() == i) {
                 EXPECT_EQ(
                     mpi_result.extract_recv_buffer(),
-                    ExpectedBuffersForRankTimesRankGathering<>::recv_buffer_on_receiving_ranks<double>(comm)
+                    ExpectedBuffersForRankTimesRankGathering::recv_buffer_on_receiving_ranks<double>(comm)
+                );
+                EXPECT_EQ(
+                    mpi_result.extract_recv_displs(),
+                    ExpectedBuffersForRankTimesRankGathering::recv_displs_on_receiving_ranks<OwnContainer>(comm)
                 );
             } else {
                 // out recv buffers on non-root ranks are expected to be empty
