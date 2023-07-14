@@ -26,6 +26,7 @@
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/operation_builder.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "kamping/request.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -595,6 +596,20 @@ inline auto status_out() {
 ///@brief pass \c MPI_STATUS_IGNORE to the underlying MPI call.
 inline auto status(internal::ignore_t<void>) {
     return internal::StatusParam<internal::StatusParamType::ignore>{};
+}
+
+inline auto request(Request& request) {
+    return internal::make_data_buffer<
+        internal::ParameterType::request,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(request);
+}
+
+inline auto request() {
+    return internal::make_data_buffer<
+        internal::ParameterType::request,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(alloc_new<Request>);
 }
 
 /// @brief Send mode parameter for point to point communication.

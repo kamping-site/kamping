@@ -163,6 +163,11 @@ kamping_register_mpi_test(
     FILES allocator_test.cpp
     CORES 1 4
 )
+kamping_register_mpi_test(
+    test_request
+    FILES request_test.cpp
+    CORES 1 4
+)
 
 # Tests using C++ 20
 kamping_register_mpi_test(
