@@ -575,29 +575,31 @@ inline auto tag(EnumType value) {
     return tag(static_cast<int>(value));
 }
 
-///@brief Use the provided native \c MPI_Status as status parameter.
-///@param mpi_status The status.
+/// @brief Use the provided native \c MPI_Status as status parameter.
+/// @param mpi_status The status.
 inline auto status(MPI_Status& mpi_status) {
     return internal::StatusParam<internal::StatusParamType::native_ref>{mpi_status};
 }
 
-///@brief Use the  provided \ref kamping::Status as status parameter.
-///@param mpi_status The status.
+/// @brief Use the  provided \ref kamping::Status as status parameter.
+/// @param mpi_status The status.
 inline auto status(Status& mpi_status) {
     return internal::StatusParam<internal::StatusParamType::ref>(mpi_status);
 }
 
-///@brief Construct a status object internally, which may then be retrieved from \c kamping::MPIResult returned by the
+/// @brief Construct a status object internally, which may then be retrieved from \c kamping::MPIResult returned by the
 /// operation.
 inline auto status_out() {
     return internal::StatusParam<internal::StatusParamType::owning>{};
 }
 
-///@brief pass \c MPI_STATUS_IGNORE to the underlying MPI call.
+/// @brief pass \c MPI_STATUS_IGNORE to the underlying MPI call.
 inline auto status(internal::ignore_t<void>) {
     return internal::StatusParam<internal::StatusParamType::ignore>{};
 }
 
+/// @brief Pass a request handle to the underlying MPI call.
+/// @param request The request handle.
 inline auto request(Request& request) {
     return internal::make_data_buffer<
         internal::ParameterType::request,
@@ -605,6 +607,7 @@ inline auto request(Request& request) {
         internal::BufferType::out_buffer>(request);
 }
 
+/// @brief Internally allocate a request object and return it to the user.
 inline auto request() {
     return internal::make_data_buffer<
         internal::ParameterType::request,
