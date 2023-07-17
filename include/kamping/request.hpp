@@ -83,7 +83,7 @@ namespace requests {
 /// @tparam Container The container type.
 template <
     typename Container,
-    typename std::enable_if_t<
+    typename std::enable_if<
         internal::has_data_member_v<Container> && std::is_same_v<typename Container::value_type, MPI_Request>,
         bool>::type = true>
 void wait_all(Container& requests) {
@@ -97,7 +97,7 @@ void wait_all(Container& requests) {
 /// @tparam Container The container type.
 template <
     typename Container,
-    typename std::enable_if_t<
+    typename std::enable_if<
         internal::has_data_member_v<Container> && std::is_same_v<typename Container::value_type, Request>,
         bool>::type = true>
 void wait_all(Container const& requests) {
@@ -105,7 +105,8 @@ void wait_all(Container const& requests) {
     auto        begin = requests.data();
     auto        end   = begin + requests.size();
     std::transform(begin, end, reqs.begin(), [](Request& req) { return req.mpi_request(); });
-    wait_all(kamping::Span(reqs, requests.size()));
+    auto req_span = kamping::Span<MPI_Request>(reqs, requests.size());
+    wait_all(req_span);
 }
 
 /// @brief Wait for completion of all request handles passed.
@@ -115,7 +116,8 @@ template <typename... Requests, typename = std::enable_if_t<std::conjunction_v<s
 void wait_all(Requests /*Request*/&... args) {
     constexpr size_t req_size       = sizeof...(args);
     MPI_Request      reqs[req_size] = {args.mpi_request()...};
-    wait_all(kamping::Span(reqs, req_size));
+    auto             req_span       = kamping::Span<MPI_Request>(reqs, req_size);
+    wait_all(req_span);
 }
 
 // TODO: wait_any, wait_same, test_all, test_any, test_some
