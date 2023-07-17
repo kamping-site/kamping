@@ -45,13 +45,13 @@ class RequestTest : public ::testing::Test {
 TEST_F(RequestTest, construction) {
     {
         kamping::Request req;
-        EXPECT_EQ(req.native(), MPI_REQUEST_NULL);
+        EXPECT_EQ(req.mpi_request(), MPI_REQUEST_NULL);
     }
     {
         // trivial uninitialized request
         MPI_Request      request{};
         kamping::Request req(request);
-        EXPECT_EQ(req.native(), request);
+        EXPECT_EQ(req.mpi_request(), request);
     }
     {
         // actual request
@@ -59,7 +59,7 @@ TEST_F(RequestTest, construction) {
         MPI_Ibarrier(kamping::comm_world().mpi_communicator(), &mpi_req);
         EXPECT_NE(mpi_req, MPI_REQUEST_NULL);
         kamping::Request req{mpi_req};
-        EXPECT_EQ(req.native(), mpi_req);
+        EXPECT_EQ(req.mpi_request(), mpi_req);
         // we are intercepting the calls to MPI_Wait and do nothing useful there, so we have to call the PMPI variant
         // explicitely here
         PMPI_Wait(&mpi_req, MPI_STATUS_IGNORE);

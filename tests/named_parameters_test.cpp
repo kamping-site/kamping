@@ -867,7 +867,7 @@ TEST(ParameterFactoriesTest, request_basics) {
     {
         SCOPED_TRACE("owning request");
         auto req_obj = request();
-        EXPECT_EQ(req_obj.underlying().native(), MPI_REQUEST_NULL);
+        EXPECT_EQ(req_obj.underlying().mpi_request(), MPI_REQUEST_NULL);
         EXPECT_TRUE(decltype(req_obj)::is_lib_allocated);
         testing::test_single_element_buffer(
             req_obj,
@@ -883,7 +883,7 @@ TEST(ParameterFactoriesTest, request_basics) {
         auto    req_obj = request(my_request);
         // check if taken by reference, i.e. this points to the same object
         EXPECT_EQ(&req_obj.underlying(), &my_request);
-        EXPECT_EQ(req_obj.underlying().native(), MPI_REQUEST_NULL);
+        EXPECT_EQ(req_obj.underlying().mpi_request(), MPI_REQUEST_NULL);
         EXPECT_FALSE(decltype(req_obj)::is_lib_allocated);
         testing::test_single_element_buffer(
             req_obj,

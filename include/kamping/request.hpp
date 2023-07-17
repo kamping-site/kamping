@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2023 The KaMPIng Authors
+// Copyright 2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -51,12 +51,12 @@ public:
     }
 
     /// @return A reference to the underlying MPI_Request handle.
-    [[nodiscard]] MPI_Request& native() {
+    [[nodiscard]] MPI_Request& mpi_request() {
         return _request;
     }
 
     /// @return A reference to the underlying MPI_Request handle.
-    [[nodiscard]] MPI_Request const& native() const {
+    [[nodiscard]] MPI_Request const& mpi_request() const {
         return _request;
     }
 
@@ -104,7 +104,7 @@ void wait_all(Container const& requests) {
     MPI_Request reqs[requests.size()];
     auto        begin = requests.data();
     auto        end   = begin + requests.size();
-    std::transform(begin, end, reqs.begin(), [](Request& req) { return req.native(); });
+    std::transform(begin, end, reqs.begin(), [](Request& req) { return req.mpi_request(); });
     wait_all(kamping::Span(reqs, requests.size()));
 }
 
@@ -114,7 +114,7 @@ void wait_all(Container const& requests) {
 template <typename... Requests, typename = std::enable_if_t<std::conjunction_v<std::is_same<Requests, Request>...>>>
 void wait_all(Requests /*Request*/&... args) {
     constexpr size_t req_size       = sizeof...(args);
-    MPI_Request      reqs[req_size] = {args.native()...};
+    MPI_Request      reqs[req_size] = {args.mpi_request()...};
     wait_all(kamping::Span(reqs, req_size));
 }
 
