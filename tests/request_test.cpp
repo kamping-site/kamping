@@ -25,11 +25,15 @@ static MPI_Request           handled_request = MPI_REQUEST_NULL;
 static std::set<MPI_Request> handled_requests;
 
 int MPI_Wait(MPI_Request* request, MPI_Status*) {
+    // This doesn't actually call MPI_Wait on the request, so we can just pass
+    // arbitrary requests object and see if they get passed correctly to the MPI
+    // call.
     handled_request = *request;
     return MPI_SUCCESS;
 }
 
 int MPI_Test(MPI_Request* request, int* flag, MPI_Status*) {
+    // This doesn't actually call MPI_Test on the request, so we can mock a failing test.
     handled_request = *request;
     *flag           = test_succeed;
     return MPI_SUCCESS;
