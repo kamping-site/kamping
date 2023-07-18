@@ -84,40 +84,45 @@ namespace requests {
 template <
     typename Container,
     typename std::enable_if<
-        internal::has_data_member_v<Container> && std::is_same_v<typename Container::value_type, MPI_Request>,
+        internal::has_data_member_v<
+            Container> && std::is_same_v<typename std::remove_reference_t<Container>::value_type, MPI_Request>,
         bool>::type = true>
-void wait_all(Container& requests) {
+void wait_all(Container&& requests) {
     int err = MPI_Waitall(asserting_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
     THROW_IF_MPI_ERROR(err, MPI_Waitall);
 }
 
 /// @brief Waits for completion of all requests handles passed.
-/// This incurs overhead for copying the request handles to an intermediate container.
 /// @param requests A (contiguous) container of \ref kamping::Request.
 /// @tparam Container The container type.
 template <
     typename Container,
     typename std::enable_if<
-        internal::has_data_member_v<Container> && std::is_same_v<typename Container::value_type, Request>,
+        internal::has_data_member_v<
+            Container> && std::is_same_v<typename std::remove_reference_t<Container>::value_type, Request>,
         bool>::type = true>
-void wait_all(Container const& requests) {
-    MPI_Request reqs[requests.size()];
-    auto        begin = requests.data();
-    auto        end   = begin + requests.size();
-    std::transform(begin, end, reqs.begin(), [](Request& req) { return req.mpi_request(); });
-    auto req_span = kamping::Span<MPI_Request>(reqs, requests.size());
-    wait_all(req_span);
+void wait_all(Container&& requests) {
+    static_assert(
+        // "A pointer to a standard-layout class may be converted (with reinterpret_cast) to a pointer to its first
+        // non-static data member and vice versa." https://en.cppreference.com/w/cpp/types/is_standard_layout
+        sizeof(Request) == sizeof(MPI_Request) && std::is_standard_layout_v<Request>,
+        "Request is not layout compatible with MPI_Request."
+    );
+    MPI_Request* begin = reinterpret_cast<MPI_Request*>(requests.data());
+    wait_all(Span{begin, requests.size()});
 }
 
 /// @brief Wait for completion of all request handles passed.
 /// This incurs overhead for copying the request handles to an intermediate container.
 /// @param args A list of \ref kamping::Request object to wait on.
-template <typename... Requests, typename = std::enable_if_t<std::conjunction_v<std::is_same<Requests, Request>...>>>
-void wait_all(Requests /*Request*/&... args) {
+template <
+    typename... RequestType,
+    typename =
+        std::enable_if_t<std::conjunction_v<std::is_convertible<std::remove_reference_t<RequestType>, Request>...>>>
+void wait_all(RequestType&&... args) {
     constexpr size_t req_size       = sizeof...(args);
-    MPI_Request      reqs[req_size] = {args.mpi_request()...};
-    auto             req_span       = kamping::Span<MPI_Request>(reqs, req_size);
-    wait_all(req_span);
+    MPI_Request      reqs[req_size] = {Request{args}.mpi_request()...};
+    wait_all(kamping::Span<MPI_Request>(reqs, req_size));
 }
 
 // TODO: wait_any, wait_same, test_all, test_any, test_some

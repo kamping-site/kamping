@@ -11,14 +11,18 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <unordered_set>
+
+#include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
 #include "kamping/request.hpp"
 
-static bool        test_succeed    = false;
-static MPI_Request handled_request = MPI_REQUEST_NULL;
+static bool                  test_succeed    = false;
+static MPI_Request           handled_request = MPI_REQUEST_NULL;
+static std::set<MPI_Request> handled_requests;
 
 int MPI_Wait(MPI_Request* request, MPI_Status*) {
     handled_request = *request;
@@ -31,14 +35,25 @@ int MPI_Test(MPI_Request* request, int* flag, MPI_Status*) {
     return MPI_SUCCESS;
 }
 
+int MPI_Waitall(int count, MPI_Request* array_of_requests, MPI_Status* array_of_statuses) {
+    auto begin = array_of_requests;
+    auto end   = array_of_requests + count;
+    for (auto current = begin; current != end; current++) {
+        handled_requests.insert(*current);
+    }
+    return PMPI_Waitall(count, array_of_requests, array_of_statuses);
+}
+
 class RequestTest : public ::testing::Test {
     void SetUp() override {
         test_succeed    = false;
         handled_request = MPI_REQUEST_NULL;
+        handled_requests.clear();
     }
     void TearDown() override {
         test_succeed    = false;
         handled_request = MPI_REQUEST_NULL;
+        handled_requests.clear();
     }
 };
 
@@ -130,4 +145,64 @@ TEST_F(RequestTest, test_fail) {
         // explicitely here
         PMPI_Wait(&mpi_req, MPI_STATUS_IGNORE);
     }
+}
+
+TEST_F(RequestTest, wait_all_container) {
+    std::vector<kamping::Request> requests(3);
+    for (auto& request: requests) {
+        MPI_Ibarrier(kamping::comm_world().mpi_communicator(), &request.mpi_request());
+    }
+    std::set<MPI_Request> expected_requests{
+        requests[0].mpi_request(),
+        requests[1].mpi_request(),
+        requests[2].mpi_request()};
+    kamping::requests::wait_all(requests);
+    EXPECT_EQ(handled_requests, expected_requests);
+}
+
+TEST_F(RequestTest, wait_all_container_moved) {
+    std::vector<kamping::Request> requests(3);
+    for (auto& request: requests) {
+        MPI_Ibarrier(kamping::comm_world().mpi_communicator(), &request.mpi_request());
+    }
+    std::set<MPI_Request> expected_requests{
+        requests[0].mpi_request(),
+        requests[1].mpi_request(),
+        requests[2].mpi_request()};
+    kamping::requests::wait_all(std::move(requests));
+    EXPECT_EQ(handled_requests, expected_requests);
+}
+
+TEST_F(RequestTest, wait_all_container_native) {
+    std::vector<MPI_Request> requests(3);
+    for (auto& request: requests) {
+        MPI_Ibarrier(kamping::comm_world().mpi_communicator(), &request);
+    }
+    std::set<MPI_Request> expected_requests{requests.begin(), requests.end()};
+    kamping::requests::wait_all(requests);
+    EXPECT_EQ(handled_requests, expected_requests);
+}
+
+TEST_F(RequestTest, wait_all_container_native_moved) {
+    std::vector<MPI_Request> requests(3);
+    for (auto& request: requests) {
+        MPI_Ibarrier(kamping::comm_world().mpi_communicator(), &request);
+    }
+    std::set<MPI_Request> expected_requests{requests.begin(), requests.end()};
+    kamping::requests::wait_all(std::move(requests));
+    EXPECT_EQ(handled_requests, expected_requests);
+}
+
+TEST_F(RequestTest, wait_all_variadic) {
+    kamping::Request req1;
+    kamping::Request req2;
+    MPI_Request      req3;
+
+    MPI_Ibarrier(kamping::comm_world().mpi_communicator(), &req1.mpi_request());
+    MPI_Ibarrier(kamping::comm_world().mpi_communicator(), &req2.mpi_request());
+    MPI_Ibarrier(kamping::comm_world().mpi_communicator(), &req3);
+
+    std::set<MPI_Request> expected_requests{req1.mpi_request(), req2.mpi_request(), req3};
+    kamping::requests::wait_all(req1, std::move(req2), req3);
+    EXPECT_EQ(handled_requests, expected_requests);
 }
