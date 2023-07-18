@@ -13,8 +13,6 @@
 
 #pragma once
 
-#include <algorithm>
-
 #include <kamping/error_handling.hpp>
 #include <mpi.h>
 
