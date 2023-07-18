@@ -114,7 +114,7 @@ void wait_all(Container&& requests) {
 
 /// @brief Wait for completion of all request handles passed.
 /// This incurs overhead for copying the request handles to an intermediate container.
-/// @param args A list of \ref kamping::Request object to wait on.
+/// @param args A list of request handles to wait on. These may be lvalues or rvalues convertible \ref kamping::Request.
 template <
     typename... RequestType,
     typename =
