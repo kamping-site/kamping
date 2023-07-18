@@ -109,7 +109,7 @@ void wait_all(Container&& requests) {
         "Request is not layout compatible with MPI_Request."
     );
     MPI_Request* begin = reinterpret_cast<MPI_Request*>(requests.data());
-    wait_all(Span{begin, requests.size()});
+    wait_all(Span<MPI_Request>{begin, requests.size()});
 }
 
 /// @brief Wait for completion of all request handles passed.
@@ -122,7 +122,7 @@ template <
 void wait_all(RequestType&&... args) {
     constexpr size_t req_size       = sizeof...(args);
     MPI_Request      reqs[req_size] = {Request{args}.mpi_request()...};
-    wait_all(kamping::Span<MPI_Request>(reqs, req_size));
+    wait_all(Span<MPI_Request>(reqs, req_size));
 }
 
 // TODO: wait_any, wait_same, test_all, test_any, test_some
