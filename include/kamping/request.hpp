@@ -91,6 +91,29 @@ void wait_all(Container&& requests) {
 }
 
 /// @brief Waits for completion of all requests handles passed.
+/// Warning: This relies on undefined behavior!
+/// @param requests A (contiguous) container of \ref kamping::Request.
+/// @tparam Container The container type.
+template <
+    typename Container,
+    typename std::enable_if<
+        internal::has_data_member_v<
+            Container> && std::is_same_v<typename std::remove_reference_t<Container>::value_type, Request>,
+        bool>::type = true>
+void unsafe_wait_all(Container&& requests) {
+    static_assert(
+        // "A pointer to a standard-layout class may be converted (with reinterpret_cast) to a pointer to its first
+        // non-static data member and vice versa." https://en.cppreference.com/w/cpp/types/is_standard_layout
+        sizeof(Request) == sizeof(MPI_Request) && std::is_standard_layout_v<Request>,
+        "Request is not layout compatible with MPI_Request."
+    );
+    // this is still undefined, we could cast a single pointer, but not an array
+    MPI_Request* begin = reinterpret_cast<MPI_Request*>(requests.data());
+    wait_all(Span<MPI_Request>{begin, requests.size()});
+}
+///
+/// @brief Waits for completion of all requests handles passed.
+/// This incurs overhead for copying the request handles to an intermediate container.
 /// @param requests A (contiguous) container of \ref kamping::Request.
 /// @tparam Container The container type.
 template <
@@ -100,14 +123,16 @@ template <
             Container> && std::is_same_v<typename std::remove_reference_t<Container>::value_type, Request>,
         bool>::type = true>
 void wait_all(Container&& requests) {
-    static_assert(
-        // "A pointer to a standard-layout class may be converted (with reinterpret_cast) to a pointer to its first
-        // non-static data member and vice versa." https://en.cppreference.com/w/cpp/types/is_standard_layout
-        sizeof(Request) == sizeof(MPI_Request) && std::is_standard_layout_v<Request>,
-        "Request is not layout compatible with MPI_Request."
-    );
-    MPI_Request* begin = reinterpret_cast<MPI_Request*>(requests.data());
-    wait_all(Span<MPI_Request>{begin, requests.size()});
+    std::vector<MPI_Request> mpi_requests(requests.size());
+    // we can not use the STL here, because we only check for the presence of .data()
+    auto   begin = requests.data();
+    auto   end   = begin + requests.size();
+    size_t idx   = 0;
+    for (auto current = begin; current != end; current++) {
+        mpi_requests[idx] = current->mpi_request();
+        idx++;
+    }
+    wait_all(mpi_requests);
 }
 
 /// @brief Wait for completion of all request handles passed.
