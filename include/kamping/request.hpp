@@ -100,7 +100,7 @@ template <
         internal::has_data_member_v<
             Container> && std::is_same_v<typename std::remove_reference_t<Container>::value_type, Request>,
         bool>::type = true>
-void unsafe_wait_all(Container&& requests) {
+void wait_all_with_undefined_behavior(Container&& requests) {
     static_assert(
         // "A pointer to a standard-layout class may be converted (with reinterpret_cast) to a pointer to its first
         // non-static data member and vice versa." https://en.cppreference.com/w/cpp/types/is_standard_layout

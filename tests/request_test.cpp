@@ -160,7 +160,7 @@ TEST_F(RequestTest, unsafe_wait_all_container) {
         requests[0].mpi_request(),
         requests[1].mpi_request(),
         requests[2].mpi_request()};
-    kamping::requests::unsafe_wait_all(requests);
+    kamping::requests::wait_all_with_undefined_behavior(requests);
     EXPECT_EQ(handled_requests, expected_requests);
 }
 
@@ -173,7 +173,7 @@ TEST_F(RequestTest, unsafe_wait_all_container_moved) {
         requests[0].mpi_request(),
         requests[1].mpi_request(),
         requests[2].mpi_request()};
-    kamping::requests::unsafe_wait_all(std::move(requests));
+    kamping::requests::wait_all_with_undefined_behavior(std::move(requests));
     EXPECT_EQ(handled_requests, expected_requests);
 }
 
