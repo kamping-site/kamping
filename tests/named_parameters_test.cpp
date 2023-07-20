@@ -863,6 +863,38 @@ TEST(ParameterFactoriesTest, status_basics) {
     }
 }
 
+TEST(ParameterFactoriesTest, request_basics) {
+    {
+        SCOPED_TRACE("owning request");
+        auto req_obj = request();
+        EXPECT_EQ(req_obj.underlying().mpi_request(), MPI_REQUEST_NULL);
+        EXPECT_TRUE(decltype(req_obj)::is_lib_allocated);
+        testing::test_single_element_buffer(
+            req_obj,
+            ParameterType::request,
+            BufferType::out_buffer,
+            kamping::Request{},
+            true /*should_be_modifiable*/
+        );
+    }
+    {
+        SCOPED_TRACE("referenced request");
+        Request my_request;
+        auto    req_obj = request(my_request);
+        // check if taken by reference, i.e. this points to the same object
+        EXPECT_EQ(&req_obj.underlying(), &my_request);
+        EXPECT_EQ(req_obj.underlying().mpi_request(), MPI_REQUEST_NULL);
+        EXPECT_FALSE(decltype(req_obj)::is_lib_allocated);
+        testing::test_single_element_buffer(
+            req_obj,
+            ParameterType::request,
+            BufferType::out_buffer,
+            my_request,
+            true /*should_be_modifiable*/
+        );
+    }
+}
+
 TEST(ParameterFactoriesTest, test_send_mode) {
     ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::standard))::send_mode, internal::standard_mode_t>));
     ASSERT_TRUE((std::is_same_v<decltype(send_mode(send_modes::buffered))::send_mode, internal::buffered_mode_t>));
