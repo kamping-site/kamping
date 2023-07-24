@@ -18,10 +18,10 @@
 #include "helpers_for_testing.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/has_member.hpp"
-#include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "kamping/result.hpp"
 #include "legacy_parameter_objects.hpp"
 
 using namespace ::kamping;
