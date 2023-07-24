@@ -15,7 +15,6 @@
 #include <set>
 #include <thread>
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -128,5 +127,6 @@ TEST_F(EnvironmentTest, free_registered_tests) {
     // specialization)
     mpi_env.free_registered_mpi_types();
 
-    EXPECT_THAT(freed_types, testing::ElementsAre(type1, type2));
+    std::set<MPI_Datatype> expected_types({type1, type2});
+    EXPECT_EQ(freed_types, expected_types);
 }
