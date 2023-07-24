@@ -280,6 +280,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(mpi_result_sanity_check)>);
         EXPECT_TRUE(has_member_extract_send_counts_v<decltype(mpi_result_sanity_check)>);
         EXPECT_TRUE(has_member_extract_send_displs_v<decltype(mpi_result_sanity_check)>);
+        EXPECT_FALSE(decltype(mpi_result_sanity_check)::is_empty);
     }
 
     {
@@ -297,6 +298,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         EXPECT_FALSE(has_member_extract_recv_displs_v<decltype(mpi_result)>);
         EXPECT_FALSE(has_member_extract_send_counts_v<decltype(mpi_result)>);
         EXPECT_FALSE(has_member_extract_send_displs_v<decltype(mpi_result)>);
+        EXPECT_TRUE(decltype(mpi_result)::is_empty);
     }
 
     {
@@ -318,6 +320,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_status)>);
         EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_status)>);
         EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_status)>);
+        EXPECT_FALSE(decltype(result_status)::is_empty);
     }
 
     {
@@ -339,6 +342,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_recv_buf)>);
         EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_recv_buf)>);
         EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_recv_buf)>);
+        EXPECT_FALSE(decltype(result_recv_buf)::is_empty);
     }
 
     {
@@ -360,6 +364,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_recv_counts)>);
         EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_recv_counts)>);
         EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_recv_counts)>);
+        EXPECT_FALSE(decltype(result_recv_counts)::is_empty);
     }
 
     {
@@ -381,6 +386,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         EXPECT_FALSE(has_member_extract_recv_displs_v<decltype(result_recv_displs)>);
         EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_recv_displs)>);
         EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_recv_displs)>);
+        EXPECT_FALSE(decltype(result_recv_displs)::is_empty);
     }
 
     {
@@ -402,6 +408,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_send_counts)>);
         EXPECT_FALSE(has_member_extract_send_counts_v<decltype(result_send_counts)>);
         EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_send_counts)>);
+        EXPECT_FALSE(decltype(result_send_counts)::is_empty);
     }
 
     {
@@ -423,6 +430,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_send_displs)>);
         EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_send_displs)>);
         EXPECT_FALSE(has_member_extract_send_displs_v<decltype(result_send_displs)>);
+        EXPECT_FALSE(decltype(result_send_displs)::is_empty);
     }
 }
 
