@@ -129,4 +129,9 @@ TEST_F(EnvironmentTest, free_registered_tests) {
 
     std::set<MPI_Datatype> expected_types({type1, type2});
     EXPECT_EQ(freed_types, expected_types);
+
+    // Test that list of registered types is cleared after freeing them
+    env.free_registered_mpi_types();
+    freed_types.clear();
+    EXPECT_TRUE(freed_types.empty());
 }
