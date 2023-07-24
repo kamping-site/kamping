@@ -271,7 +271,8 @@ public:
     /// result.
     auto extract() {
         if constexpr (owns_request) {
-            return std::make_tuple(_request.extract(), extract_result());
+            auto result = extract_result(); // we try to extract the result first, so that we get a nice error message
+            return std::make_tuple(_request.extract(), std::move(result));
         } else {
             return extract_result();
         }
