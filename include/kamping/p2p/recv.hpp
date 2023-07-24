@@ -26,13 +26,13 @@
 #include "kamping/error_handling.hpp"
 #include "kamping/implementation_helpers.hpp"
 #include "kamping/mpi_datatype.hpp"
-#include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/probe.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "kamping/result.hpp"
 #include "kamping/status.hpp"
 
 /// @brief Wrapper for \c MPI_Recv.

@@ -28,8 +28,8 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/data_buffer.hpp"
-#include "kamping/mpi_function_wrapper_helpers.hpp"
 #include "kamping/named_parameter_types.hpp"
+#include "kamping/result.hpp"
 
 namespace testing {
 /// @brief Simple Container type. Can be used to test library function with containers other than vector.

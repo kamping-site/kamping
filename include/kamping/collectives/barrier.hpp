@@ -17,7 +17,7 @@
 
 #include "kamping/communicator.hpp"
 #include "kamping/error_handling.hpp"
-#include "kamping/mpi_function_wrapper_helpers.hpp"
+#include "kamping/result.hpp"
 
 /// @brief Perform a \c MPI_Barrier on this communicator.
 ///
