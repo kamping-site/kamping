@@ -167,6 +167,9 @@ public:
     }
 
     /// @brief Free all registered MPI data types.
+    ///
+    /// Only call this when you no longer want to use any MPI data types created by KaMPIng as other KaMPIng function
+    /// will assume the created types still exist.
     static void free_registered_mpi_types() {
         for (auto type: internal::registered_mpi_types) {
             if (type != MPI_DATATYPE_NULL) {
