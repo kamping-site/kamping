@@ -289,6 +289,7 @@ public:
         typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
         typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
     [[nodiscard]] std::conditional_t<!MPIResultType::is_empty, MPIResultType, void> wait() {
+        kassert_not_extracted("The result of this request has already been extracted.");
         _request.underlying().wait();
         if constexpr (!MPIResultType::is_empty) {
             return extract_result();
@@ -309,6 +310,7 @@ public:
         typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
         typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
     auto test() {
+        kassert_not_extracted("The result of this request has already been extracted.");
         if constexpr (!MPIResultType::is_empty) {
             if (_request.underlying().test()) {
                 return std::optional{extract_result()};

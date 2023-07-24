@@ -195,3 +195,21 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_extract_works) {
     EXPECT_EQ(result.extract_recv_buffer(), expected_data);
     EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 }
+
+TEST_F(NonBlockingResultTest, wait_on_extracted_request) {
+    auto request_obj         = request();
+    auto result              = kamping::make_nonblocking_result(std::move(request_obj));
+    auto [req, empty_result] = result.extract();
+    (void)req;
+    (void)empty_result;
+    EXPECT_KASSERT_FAILS(result.wait(), "The result of this request has already been extracted.");
+}
+
+TEST_F(NonBlockingResultTest, test_on_extracted_request) {
+    auto request_obj         = request();
+    auto result              = kamping::make_nonblocking_result(std::move(request_obj));
+    auto [req, empty_result] = result.extract();
+    (void)req;
+    (void)empty_result;
+    EXPECT_KASSERT_FAILS(result.test(), "The result of this request has already been extracted.");
+}
