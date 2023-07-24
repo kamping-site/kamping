@@ -302,7 +302,7 @@ public:
     /// Returns a \c bool indicated if the test succeeded in case the result is empty (see \ref MPIResult::is_empty).
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
-    /// manually test  the request that he owns and manually obtain the result via \ref extract().
+    /// manually test the request that he owns and manually obtain the result via \ref extract().
     template <
         typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
         typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
@@ -348,16 +348,16 @@ private:
 #endif
 };
 
-/// @brief Factory for creating a \ref NonBlockingResult.
+/// @brief Factory for creating a \ref kamping::NonBlockingResult.
 ///
-/// Makes an \ref NonBlockingResult from all arguments passed and inserts internal::ResultCategoryNotUsed when no
-/// fitting parameter type is passed as argument.
+/// Makes an \ref kamping::NonBlockingResult from all arguments passed and inserts internal::ResultCategoryNotUsed when
+/// no fitting parameter type is passed as argument.
 ///
-/// Note that an argument of with type \ref internal::ParameterType::request is required.
+/// Note that an argument of with type \ref kamping::internal::ParameterType::request is required.
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All parameter that should be included in the MPIResult.
-/// @return \ref NonBlockingResult encapsulating all passed parameters.
+/// @return \ref kamping::NonBlockingResult encapsulating all passed parameters.
 template <typename... Args>
 auto make_nonblocking_result(Args... args) {
     auto&& request = internal::select_parameter_type<internal::ParameterType::request>(args...);
