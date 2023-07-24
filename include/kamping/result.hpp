@@ -254,6 +254,8 @@ template <typename MPIResultType, typename RequestDataBuffer>
 class NonBlockingResult {
 public:
     /// @brief Constructor for \c NonBlockingResult.
+    /// @param result The underlying \ref kamping::MPIResult.
+    /// @param request A \ref kamping::internal::DataBuffer containing the associated \ref kamping::Request.
     NonBlockingResult(MPIResultType result, RequestDataBuffer request)
         : _mpi_result(std::move(result)),
           _request(std::move(request)) {}
@@ -282,7 +284,7 @@ public:
     /// MPIResult upon completion or nothing if the result is empty (see \ref MPIResult::is_empty).
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
-    /// manually wait on the request that he owns and manually obtain the result via \ref extract().
+    /// manually wait on the request that they own and manually obtain the result via \ref extract().
     template <
         typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
         typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
@@ -302,7 +304,7 @@ public:
     /// Returns a \c bool indicated if the test succeeded in case the result is empty (see \ref MPIResult::is_empty).
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
-    /// manually test the request that he owns and manually obtain the result via \ref extract().
+    /// manually test the request that they own and manually obtain the result via \ref extract().
     template <
         typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
         typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
