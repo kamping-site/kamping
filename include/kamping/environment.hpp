@@ -23,6 +23,11 @@
 
 namespace kamping {
 
+namespace internal {
+/// @brief A global list of MPI data types registered to KaMPIng.
+inline std::vector<MPI_Datatype> registered_mpi_types;
+} // namespace internal
+
 /// @brief Configuration for the behavior of the constructors and destructor of \ref kamping::Environment.
 enum class InitMPIMode {
     InitFinalize,  ///< Call \c MPI_Init in the constructor of \ref Environment.
@@ -93,13 +98,14 @@ public:
         THROW_IF_MPI_ERROR(err, MPI_Init);
     }
 
-    /// @brief Calls MPI_Finalize
+    /// @brief Calls MPI_Finalize and frees all registered MPI data types.
     ///
     /// Even if you chose InitMPIMode::InitFinalize, you might want to call this function: As MPI_Finalize could
     /// potentially return an error, this function can be used if you want to be able to handle that error. Otherwise
     /// the destructor will call MPI_Finalize and not throw on any errors returned.
     void finalize() const {
         KASSERT(!finalized(), "Trying to call MPI_Finalize twice");
+        free_registered_mpi_types();
         [[maybe_unused]] int err = MPI_Finalize();
         THROW_IF_MPI_ERROR(err, MPI_Finalize);
     }
@@ -154,7 +160,23 @@ public:
         return tag >= 0 && tag <= tag_upper_bound();
     }
 
-    /// @brief Calls MPI_Finalize if finalize() has not been called before.
+    /// @brief Register a new MPI data type to KaMPIng that will be freed when using Environment to finalize MPI.
+    /// @param type The MPI data type to register.
+    static void register_mpi_type(MPI_Datatype type) {
+        internal::registered_mpi_types.push_back(type);
+    }
+
+    /// @brief Free all registered MPI data types.
+    static void free_registered_mpi_types() {
+        for (auto type: internal::registered_mpi_types) {
+            if (type != MPI_DATATYPE_NULL) {
+                MPI_Type_free(&type);
+            }
+        }
+        internal::registered_mpi_types.clear();
+    }
+
+    /// @brief Calls MPI_Finalize if finalize() has not been called before. Also frees all registered MPI data types.
     ~Environment() {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
             bool is_already_finalized = false;
@@ -165,12 +187,14 @@ public:
                 KASSERT(false, "MPI_Finalized call failed.");
             }
             if (!is_already_finalized) {
+                free_registered_mpi_types();
                 // Just kassert the error code. We can't throw exceptions in the destructor.
                 [[maybe_unused]] int err = MPI_Finalize();
                 KASSERT(err == MPI_SUCCESS, "MPI_Finalize call failed.");
             }
         }
     }
+
 }; // class Environment
 
 /// @brief A global environment object to use when you don't want to create a new Environment object.
