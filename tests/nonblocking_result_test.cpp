@@ -20,12 +20,16 @@
 
 using namespace kamping;
 
-static bool test_succeed = false;
+static bool   test_succeed   = false;
+static size_t num_wait_calls = 0;
 
 KAMPING_MAKE_HAS_MEMBER(wait)
 KAMPING_MAKE_HAS_MEMBER(test)
 
 int MPI_Wait(MPI_Request*, MPI_Status*) {
+    // we have to do something useful here, because else clang wants us to make this function const, which fails the
+    // build.
+    num_wait_calls++;
     return MPI_SUCCESS;
 }
 
@@ -36,10 +40,12 @@ int MPI_Test(MPI_Request*, int* flag, MPI_Status*) {
 
 class NonBlockingResultTest : public ::testing::Test {
     void SetUp() override {
-        test_succeed = false;
+        test_succeed   = false;
+        num_wait_calls = 0;
     }
     void TearDown() override {
-        test_succeed = false;
+        test_succeed   = false;
+        num_wait_calls = 0;
     }
 };
 
@@ -70,9 +76,11 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works) {
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
-    auto request_obj   = request();
-    auto result        = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
-    auto data          = result.wait().extract_recv_buffer();
+    auto request_obj = request();
+    auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    EXPECT_EQ(num_wait_calls, 0);
+    auto data = result.wait().extract_recv_buffer();
+    EXPECT_EQ(num_wait_calls, 1);
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data, expected_data);
     EXPECT_KASSERT_FAILS(result.extract(), "The result of this request has already been extracted.");
