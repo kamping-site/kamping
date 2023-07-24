@@ -16,6 +16,7 @@
 /// @file
 /// @brief Some functions and types simplifying/enabling the development of wrapped \c MPI calls in KaMPIng.
 
+#include <optional>
 #include <utility>
 
 #include "kamping/has_member.hpp"
@@ -185,7 +186,7 @@ private:
 /// Makes an MPIResult from all arguments passed and inserts internal::ResultCategoryNotUsed when no fitting parameter
 /// type is passed as argument.
 ///
-/// @tparam Args Automaticcaly deducted template parameters.
+/// @tparam Args Automatically deducted template parameters.
 /// @param args All parameter that should be included in the MPIResult.
 /// @return MPIResult encapsulating all passed parameters.
 template <typename... Args>
@@ -241,6 +242,122 @@ auto make_mpi_result(Args... args) {
         std::move(send_counts),
         std::move(send_displs)
     );
+}
+
+/// @brief NonBlockingResult contains the result of a non-blocking \c MPI call wrapped by KaMPIng. It encapsulates a
+/// \ref kamping::MPIResult and a \ref kamping::Request.
+///
+///
+/// @tparam MPIResultType The underlying result type.
+/// @tparam RequestDataBuffer Container encapsulating the underlying request.
+template <typename MPIResultType, typename RequestDataBuffer>
+class NonBlockingResult {
+public:
+    /// @brief Constructor for \c NonBlockingResult.
+    NonBlockingResult(MPIResultType result, RequestDataBuffer request)
+        : _mpi_result(std::move(result)),
+          _request(std::move(request)) {}
+
+    /// @brief \c true if the result object owns the underlying \ref kamping::Request.
+    static constexpr bool owns_request = internal::has_extract_v<RequestDataBuffer>;
+
+    /// @brief Extracts the components of this results, leaving the user responsible.
+    ///
+    /// If this result owns the underlying request, returns a \c std::tuple containing the \ref Request and \ref
+    /// MPIResult. If the request is owned by the user, just return the underlying \ref MPIResult.
+    ///
+    /// Note that the result may be in an undefined state because the associated operations is still underway and it is
+    /// the user's responsibilty to ensure that the corresponding request has been completed before accessing the
+    /// result.
+    auto extract() {
+        if constexpr (owns_request) {
+            return std::make_tuple(_request.extract(), extract_result());
+        } else {
+            return extract_result();
+        }
+    }
+
+    /// @brief Waits for the underlying \ref Request to complete by calling \ref Request::wait() and returns an \ref
+    /// MPIResult upon completion or nothing if the result is empty (see \ref MPIResult::is_empty).
+    ///
+    /// This method is only available if this result owns the underlying request. If this is not the case, the user must
+    /// manually wait on the request that he owns and manually obtain the result via \ref extract().
+    template <typename = std::enable_if_t<owns_request>>
+    [[nodiscard]] std::conditional_t<!MPIResultType::is_empty, MPIResultType, void> wait() {
+        _request.underlying().wait();
+        if constexpr (!MPIResultType::is_empty) {
+            return extract_result();
+        } else {
+            return;
+        }
+    }
+
+    /// @brief Tests the underlying \ref Request for completion by calling \ref Request::test() and returns an optional
+    /// containing the underlying \ref MPIResult on success. If the associated operation has not completed yet, returns
+    /// \c std::nullopt.
+    ///
+    /// Returns a \c bool indicated if the test succeeded in case the result is empty (see \ref MPIResult::is_empty).
+    ///
+    /// This method is only available if this result owns the underlying request. If this is not the case, the user must
+    /// manually test  the request that he owns and manually obtain the result via \ref extract().
+    template <typename = std::enable_if_t<owns_request>>
+    auto test() {
+        if constexpr (!MPIResultType::is_empty) {
+            if (_request.underlying().test()) {
+                return std::optional{extract_result()};
+            } else {
+                return std::optional<MPIResultType>{};
+            }
+        } else {
+            return _request.underlying().test();
+        }
+    }
+
+private:
+    /// @brief Moves the wrapped \ref MPIResult out of this object.
+    MPIResultType extract_result() {
+        kassert_not_extracted("The result of this request has already been extracted.");
+        auto extracted = std::move(_mpi_result);
+        set_extracted();
+        return extracted;
+    }
+
+    void set_extracted() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        is_extracted = true;
+#endif
+    }
+
+    /// @brief Throws an assertion if the extracted flag is set, i.e. the underlying status has been moved out.
+    ///
+    /// @param message The message for the assertion.
+    void kassert_not_extracted(std::string const message [[maybe_unused]]) const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, message, assert::normal);
+#endif
+    }
+    MPIResultType     _mpi_result; ///< The wrapped \ref MPIResult.
+    RequestDataBuffer _request;    ///< DataBuffer containing the wrapped \ref Request.
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    bool is_extracted = false; ///< Has the status been extracted and is therefore in an invalid state?
+#endif
+};
+
+/// @brief Factory for creating a \ref NonBlockingResult.
+///
+/// Makes an \ref NonBlockingResult from all arguments passed and inserts internal::ResultCategoryNotUsed when no
+/// fitting parameter type is passed as argument.
+///
+/// Note that an argument of with type \ref internal::ParameterType::request is required.
+///
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All parameter that should be included in the MPIResult.
+/// @return \ref NonBlockingResult encapsulating all passed parameters.
+template <typename... Args>
+auto make_nonblocking_result(Args... args) {
+    auto&& request = internal::select_parameter_type<internal::ParameterType::request>(args...);
+    auto   result  = make_mpi_result(std::forward<Args...>(args...));
+    return NonBlockingResult(std::move(result), std::move(request));
 }
 
 } // namespace kamping
