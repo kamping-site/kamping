@@ -340,7 +340,7 @@ TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_rep
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
 TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_representation_illegal_arguments) {
     Communicator comm;
 
@@ -355,7 +355,7 @@ TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_rep
     );
     // set of ranks must contain own rank
     if (size > 1) {
-        [[maybe_unused]] int rank_range_array[1][3] = {{size, size + 1, 1}};
+        int rank_range_array[1][3] = {{size, size + 1, 1}};
         EXPECT_KASSERT_FAILS(
             std::ignore = comm.create_subcommunicators(RankRanges(rank_range_array, 1)),
             "The ranks to include in the new subcommunicator must contain own rank."
