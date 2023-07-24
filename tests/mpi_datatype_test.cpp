@@ -19,10 +19,18 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include "kamping/environment.hpp"
 #include "kamping/mpi_datatype.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
+
+std::set<MPI_Datatype> freed_types;
+
+int MPI_Type_free(MPI_Datatype* type) {
+    freed_types.insert(*type);
+    return PMPI_Type_free(type);
+}
 
 // Returns a std::vector containing all MPI_Datatypes equivalent to the given C++ datatype on this machine.
 // Removes the topmost level of const and volatile qualifiers.
@@ -402,4 +410,21 @@ TEST(MpiDataTypeTest, kabool_basics) {
     EXPECT_EQ(kabool{true} && kabool{true}, true);
     EXPECT_EQ(kabool{false} || kabool{false}, false);
     EXPECT_EQ(kabool{true} || kabool{false}, true);
+}
+
+TEST(MpiDataTypeTest, register_types_with_environment) {
+    int          c_array[3];
+    MPI_Datatype array_type = mpi_datatype<decltype(c_array)>();
+
+    struct TestStruct {
+        int a;
+        int b;
+    };
+    MPI_Datatype struct_type = mpi_datatype<TestStruct>();
+
+    freed_types.clear();
+    mpi_env.free_registered_mpi_types();
+    std::set<MPI_Datatype> expected_types({array_type, struct_type});
+    EXPECT_EQ(freed_types, expected_types);
+    freed_types.clear();
 }

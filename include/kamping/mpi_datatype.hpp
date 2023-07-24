@@ -25,6 +25,7 @@
 #include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
+#include "kamping/environment.hpp"
 #include "kamping/error_handling.hpp"
 #include "kamping/noexcept.hpp"
 
@@ -42,6 +43,7 @@ inline MPI_Datatype construct_custom_continuous_type(size_t const num_bytes_unsi
     MPI_Type_contiguous(num_bytes, MPI_CHAR, &type);
     MPI_Type_commit(&type);
     KASSERT(type != MPI_DATATYPE_NULL);
+    mpi_env.register_mpi_type(type);
     return type;
 }
 } // namespace kamping::internal

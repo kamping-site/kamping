@@ -12,6 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <chrono>
+#include <set>
 #include <thread>
 
 #include <gtest/gtest.h>
@@ -22,6 +23,13 @@
 
 using namespace ::kamping;
 
+std::set<MPI_Datatype> freed_types;
+
+int MPI_Type_free(MPI_Datatype* type) {
+    freed_types.insert(*type);
+    return PMPI_Type_free(type);
+}
+
 struct EnvironmentTest : testing::Test {
     void SetUp() override {
         int  flag;
@@ -29,6 +37,11 @@ struct EnvironmentTest : testing::Test {
         MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &value, &flag);
         EXPECT_TRUE(flag);
         mpi_tag_ub = *value;
+        freed_types.clear();
+    }
+
+    void TearDown() override {
+        freed_types.clear();
     }
 
     int mpi_tag_ub;
@@ -93,4 +106,32 @@ TEST_F(EnvironmentTest, is_valid_tag) {
     EXPECT_FALSE(mpi_env.is_valid_tag(-1));
     EXPECT_FALSE(mpi_env.is_valid_tag(-42));
     EXPECT_FALSE(mpi_env.is_valid_tag(std::numeric_limits<int>::min()));
+}
+
+TEST_F(EnvironmentTest, free_registered_tests) {
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    MPI_Datatype                                      type1, type2;
+    MPI_Type_contiguous(1, MPI_CHAR, &type1);
+    MPI_Type_commit(&type1);
+    MPI_Type_contiguous(2, MPI_CHAR, &type2);
+    MPI_Type_commit(&type2);
+
+    MPI_Datatype type_null = MPI_DATATYPE_NULL;
+
+    // Register with env object
+    env.register_mpi_type(type1);
+    env.register_mpi_type(type2);
+    env.register_mpi_type(type_null);
+
+    // Free with mpi_env object to test that the registered types are not bound to one object (or one template
+    // specialization)
+    mpi_env.free_registered_mpi_types();
+
+    std::set<MPI_Datatype> expected_types({type1, type2});
+    EXPECT_EQ(freed_types, expected_types);
+
+    // Test that list of registered types is cleared after freeing them
+    env.free_registered_mpi_types();
+    freed_types.clear();
+    EXPECT_TRUE(freed_types.empty());
 }
