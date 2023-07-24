@@ -386,6 +386,18 @@ public:
     void rsend(Args... args) const;
 
     template <typename... Args>
+    auto isend(Args... args) const;
+
+    template <typename... Args>
+    auto ibsend(Args... args) const;
+
+    template <typename... Args>
+    auto issend(Args... args) const;
+
+    template <typename... Args>
+    auto irsend(Args... args) const;
+
+    template <typename... Args>
     auto probe(Args... args) const;
 
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
