@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPIng Authors
+// Copyright 2021-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -57,7 +57,17 @@ struct ResultCategoryNotUsed {};
 /// elements.
 template <class StatusObject, class RecvBuf, class RecvCounts, class RecvDispls, class SendCounts, class SendDispls>
 class MPIResult {
+private:
+    /// @brief Helper for implementing \ref is_empty. Returns \c true if all template arguments passed are equal to \ref
+    /// internal::ResultCategoryNotUsed.
+    template <typename... Args>
+    static constexpr bool is_empty_impl = std::conjunction_v<std::is_same<Args, internal::ResultCategoryNotUsed>...>;
+
 public:
+    /// @brief \c true, if the result does not encapsulate any data.
+    static constexpr bool is_empty =
+        is_empty_impl<StatusObject, RecvBuf, RecvCounts, RecvDispls, SendCounts, SendDispls>;
+
     /// @brief Constructor of MPIResult.
     ///
     /// If any of the buffer categories are not used by the wrapped \c MPI call or if the caller has provided (and still
