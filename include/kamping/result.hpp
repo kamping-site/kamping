@@ -282,7 +282,9 @@ public:
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
     /// manually wait on the request that he owns and manually obtain the result via \ref extract().
-    template <typename = std::enable_if_t<owns_request>>
+    template <
+        typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
+        typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
     [[nodiscard]] std::conditional_t<!MPIResultType::is_empty, MPIResultType, void> wait() {
         _request.underlying().wait();
         if constexpr (!MPIResultType::is_empty) {
@@ -300,7 +302,9 @@ public:
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
     /// manually test  the request that he owns and manually obtain the result via \ref extract().
-    template <typename = std::enable_if_t<owns_request>>
+    template <
+        typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
+        typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
     auto test() {
         if constexpr (!MPIResultType::is_empty) {
             if (_request.underlying().test()) {
@@ -356,7 +360,7 @@ private:
 template <typename... Args>
 auto make_nonblocking_result(Args... args) {
     auto&& request = internal::select_parameter_type<internal::ParameterType::request>(args...);
-    auto   result  = make_mpi_result(std::forward<Args...>(args...));
+    auto   result  = make_mpi_result(std::forward<Args>(args)...);
     return NonBlockingResult(std::move(result), std::move(request));
 }
 
