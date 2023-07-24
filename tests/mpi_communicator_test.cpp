@@ -340,7 +340,8 @@ TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_rep
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+// Using KAMPING_ASSERTION_LEVEL_HEAVY because EXPECT_KASSERT_FAILS only checks for failing kasserts on that level
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
 TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_representation_illegal_arguments) {
     Communicator comm;
 
