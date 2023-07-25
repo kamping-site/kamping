@@ -38,7 +38,7 @@
 /// @brief Wrapper for \c MPI_Recv.
 ///
 /// This wraps \c MPI_Recv. This operation performs a standard blocking receive.
-/// If the \ref kamping::send_counts() parameter is not specified, this first performs a probe, followed by a receive of
+/// If the \ref kamping::recv_counts() parameter is not specified, this first performs a probe, followed by a receive of
 /// the probed message with the probed message size.
 ///
 /// The following parameters are optional:
@@ -57,7 +57,7 @@
 /// passing \c kamping::status(kamping::ignore<>). This is the default.
 ///
 /// The following parameter is optional, but leads to an additional call to \c MPI_Probe if not present:
-/// - \ref kamping::send_counts() the number of elements to receive. Will be probed before receiving if not given.
+/// - \ref kamping::recv_counts() the number of elements to receive. Will be probed before receiving if not given.
 ///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::recv_buf() is given.
 /// @tparam Args Automatically deducted template parameters.
