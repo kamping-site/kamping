@@ -151,5 +151,4 @@ void wait_all(RequestType&&... args) {
 // TODO: wait_any, wait_same, test_all, test_any, test_some
 
 } // namespace requests
-
 } // namespace kamping
