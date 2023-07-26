@@ -400,6 +400,9 @@ public:
     template <typename... Args>
     auto probe(Args... args) const;
 
+    template <typename... Args>
+    auto iprobe(Args... args) const;
+
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto recv(Args... args) const;
 

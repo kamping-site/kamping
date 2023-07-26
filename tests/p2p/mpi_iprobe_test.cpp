@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -22,7 +22,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/has_member.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/p2p/probe.hpp"
+#include "kamping/p2p/iprobe.hpp"
 
 using namespace ::kamping;
 
@@ -58,9 +58,12 @@ TEST_F(IProbeTest, direct_probe) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
                 // return status
-                auto result = comm.probe(source(other), tag(asserting_cast<int>(other)), status_out());
-                EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
-                auto status = result.extract_status();
+                auto result = comm.iprobe(source(other), tag(asserting_cast<int>(other)), status_out());
+                while (!result.has_value()) {
+                    result = comm.iprobe(source(other), tag(asserting_cast<int>(other)), status_out());
+                }
+                EXPECT_TRUE(has_member_extract_status_v<decltype(result.value())>);
+                auto status = result->extract_status();
                 EXPECT_EQ(status.source(), other);
                 EXPECT_EQ(status.tag(), other);
                 EXPECT_EQ(status.count<int>(), other);
@@ -68,8 +71,8 @@ TEST_F(IProbeTest, direct_probe) {
             {
                 // wrapped status
                 Status kmp_status;
-                auto   result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(kmp_status));
-                EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
+                while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(kmp_status))) {
+                }
                 EXPECT_EQ(kmp_status.source(), other);
                 EXPECT_EQ(kmp_status.tag(), other);
                 EXPECT_EQ(kmp_status.count<int>(), other);
@@ -77,8 +80,8 @@ TEST_F(IProbeTest, direct_probe) {
             {
                 // native status
                 MPI_Status mpi_status;
-                auto       result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(mpi_status));
-                EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
+                while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(mpi_status))) {
+                }
                 EXPECT_EQ(mpi_status.MPI_SOURCE, other);
                 EXPECT_EQ(mpi_status.MPI_TAG, other);
                 int count;
@@ -88,12 +91,12 @@ TEST_F(IProbeTest, direct_probe) {
             {
                 // ignore status
                 {
-                    auto result = comm.probe(source(other), tag(asserting_cast<int>(other)));
-                    EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
+                    while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)))) {
+                    }
                 }
                 {
-                    auto result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>));
-                    EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
+                    while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>))) {
+                    }
                 }
             }
             std::vector<int> recv_buf(other);
@@ -131,15 +134,22 @@ TEST_F(IProbeTest, any_source_probe) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
                 // explicit any source probe
-                auto status =
-                    comm.probe(source(rank::any), tag(asserting_cast<int>(other)), status_out()).extract_status();
+                auto result = comm.iprobe(source(rank::any), tag(asserting_cast<int>(other)), status_out());
+                while (!result.has_value()) {
+                    result = comm.iprobe(source(rank::any), tag(asserting_cast<int>(other)), status_out());
+                }
+                auto status = result->extract_status();
                 EXPECT_EQ(status.source(), other);
                 EXPECT_EQ(status.tag(), other);
                 EXPECT_EQ(status.count<int>(), other);
             }
             {
                 // implicit any source probe
-                auto status = comm.probe(tag(asserting_cast<int>(other)), status_out()).extract_status();
+                auto result = comm.iprobe(tag(asserting_cast<int>(other)), status_out());
+                while (!result.has_value()) {
+                    result = comm.iprobe(tag(asserting_cast<int>(other)), status_out());
+                }
+                auto status = result->extract_status();
                 EXPECT_EQ(status.source(), other);
                 EXPECT_EQ(status.tag(), other);
                 EXPECT_EQ(status.count<int>(), other);
@@ -180,14 +190,22 @@ TEST_F(IProbeTest, any_tag_probe) {
         for (size_t other = 0; other < comm.size(); other++) {
             {
                 // explicit any tag probe
-                auto status = comm.probe(source(other), tag(tags::any), status_out()).extract_status();
+                auto result = comm.iprobe(source(other), tag(tags::any), status_out());
+                while (!result.has_value()) {
+                    result = comm.iprobe(source(other), tag(tags::any), status_out());
+                }
+                auto status = result->extract_status();
                 EXPECT_EQ(status.source(), other);
                 EXPECT_EQ(status.tag(), other);
                 EXPECT_EQ(status.count<int>(), other);
             }
             {
                 // implicit any tag probe
-                auto status = comm.probe(source(other), status_out()).extract_status();
+                auto result = comm.iprobe(source(other), status_out());
+                while (!result.has_value()) {
+                    result = comm.iprobe(source(other), status_out());
+                }
+                auto status = result->extract_status();
                 EXPECT_EQ(status.source(), other);
                 EXPECT_EQ(status.tag(), other);
                 EXPECT_EQ(status.count<int>(), other);
@@ -229,7 +247,11 @@ TEST_F(IProbeTest, arbitrary_probe_explicit) {
         std::vector<bool> received_message_from(comm.size());
 
         for (size_t other = 0; other < comm.size(); other++) {
-            auto status = comm.probe(source(rank::any), tag(tags::any), status_out()).extract_status();
+            auto result = comm.iprobe(source(rank::any), tag(tags::any), status_out());
+            while (!result.has_value()) {
+                result = comm.iprobe(source(rank::any), tag(tags::any), status_out());
+            }
+            auto status = result->extract_status();
             auto source = status.source();
             EXPECT_FALSE(received_message_from[source]);
             EXPECT_EQ(status.tag(), status.source_signed());
@@ -277,7 +299,11 @@ TEST_F(IProbeTest, arbitrary_probe_implicit) {
         std::vector<bool> received_message_from(comm.size());
 
         for (size_t other = 0; other < comm.size(); other++) {
-            auto status = comm.probe(status_out()).extract_status();
+            auto result = comm.iprobe(status_out());
+            while (!result.has_value()) {
+                result = comm.iprobe(status_out());
+            }
+            auto status = result->extract_status();
             auto source = status.source();
             EXPECT_FALSE(received_message_from[source]);
             EXPECT_EQ(status.tag(), status.source_signed());
@@ -306,8 +332,17 @@ TEST_F(IProbeTest, arbitrary_probe_implicit) {
 
 TEST_F(IProbeTest, probe_null) {
     Communicator comm;
-    auto         status = comm.probe(source(rank::null), status_out()).extract_status();
+    auto         result = comm.iprobe(source(rank::null), status_out());
+    while (!result.has_value()) {
+        result = comm.iprobe(source(rank::null), status_out());
+    }
+    auto status = result->extract_status();
     EXPECT_EQ(status.source_signed(), MPI_PROC_NULL);
     EXPECT_EQ(status.tag(), MPI_ANY_TAG);
     EXPECT_EQ(status.count<int>(), 0);
+}
+
+TEST_F(IProbeTest, nothing_to_probe) {
+    Communicator comm;
+    EXPECT_FALSE(comm.iprobe());
 }
