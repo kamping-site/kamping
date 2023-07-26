@@ -60,6 +60,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_mpi_ibarrier
+    FILES collectives/mpi_ibarrier_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_mpi_communicator
     FILES mpi_communicator_test.cpp
     CORES 1 4
