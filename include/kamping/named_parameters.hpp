@@ -196,10 +196,6 @@ auto make_data_buffer(std::initializer_list<Data> data) {
 
 } // namespace internal
 
-/// @brief Tag for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
-template <typename T = void>
-constexpr internal::ignore_t<T> ignore{};
-
 /// @brief Generates a dummy send buf that wraps a \c nullptr.
 ///
 /// This is useful for operations where a send_buf is required on some PEs, such as the root PE,

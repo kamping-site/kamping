@@ -357,6 +357,10 @@ static constexpr internal::synchronous_mode_t synchronous{}; ///< global constan
 static constexpr internal::ready_mode_t       ready{};       ///< global constant for ready send mode
 } // namespace send_modes
 
+/// @brief Tag for parameters that can be omitted on some PEs (e.g., root PE, or non-root PEs).
+template <typename T = void>
+constexpr internal::ignore_t<T> ignore{};
+
 namespace tags {
 static constexpr internal::any_tag_t any{}; ///< global constant for any tag
 }
