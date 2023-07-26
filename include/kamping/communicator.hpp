@@ -457,6 +457,9 @@ public:
     template <typename... Args>
     void barrier(Args... args) const;
 
+    template <typename... Args>
+    auto ibarrier(Args... args) const;
+
     template <typename Value>
     bool is_same_on_all_ranks(Value const& value) const;
 
