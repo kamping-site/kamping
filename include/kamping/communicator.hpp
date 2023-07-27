@@ -166,7 +166,7 @@ public:
     void default_tag(int const default_tag) {
         THROWING_KASSERT(
             Environment<>::is_valid_tag(default_tag),
-            "invalid tag " << default_tag << ", maximum allowed tag is " << Environment<>::tag_upper_bound()
+            "invalid tag " << default_tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
         );
         _default_tag = default_tag;
     }
