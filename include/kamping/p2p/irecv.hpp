@@ -102,6 +102,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::irecv(Args... args
 
     auto&& tag_param =
         internal::select_parameter_type_or_default<internal::ParameterType::tag, default_tag_buf_type>({}, args...);
+    constexpr auto tag_type = std::remove_reference_t<decltype(tag_param)>::tag_type;
+    if constexpr (tag_type == internal::TagType::value) {
+        int tag = tag_param.tag();
+        KASSERT(
+            Environment<>::is_valid_tag(tag),
+            "invalid tag " << tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
+        );
+    }
 
     // Get the optional recv_count parameter. If the parameter is not given,
     // allocate a new container.
