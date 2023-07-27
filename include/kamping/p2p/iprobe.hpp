@@ -32,7 +32,7 @@
 ///
 /// This wraps \c MPI_Iprobe. This operation checks if there is a message matching the (optionally) specified source
 /// and tag that can be received. If this is the case, returns a \c std::optional containing an \ref kamping::MPIResult,
-/// which encapsulated a status object. If the probe does not match any message, returns \c std::nullopt.
+/// which encapsulates a status object. If the probe does not match any message, returns \c std::nullopt.
 /// If no status parameter is passed (i.e. the status is ignored) or the status is output via a user-provided reference,
 /// returns a \c bool indicating if the probe succeeded.
 ///
@@ -73,7 +73,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
     if constexpr (tag_type == internal::TagType::value) {
         KASSERT(
             Environment<>::is_valid_tag(tag),
-            "invalid tag " << tag << ", maximum allowed tag is " << Environment<>::tag_upper_bound()
+            "invalid tag " << tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
         );
     }
 
