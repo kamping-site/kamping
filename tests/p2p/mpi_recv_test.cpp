@@ -280,3 +280,15 @@ TEST_F(RecvTest, recv_from_proc_null) {
     EXPECT_EQ(status.template count<int>(), 0);
     EXPECT_EQ(recv_count, 0);
 }
+
+TEST_F(RecvTest, recv_from_invalid_tag) {
+    Communicator comm;
+    std::vector  v{1, 2, 3, 4, 5};
+    EXPECT_KASSERT_FAILS({ comm.recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
+}
+
+TEST_F(RecvTest, recv_from_invalid_tag_with_explicit_recv_count) {
+    Communicator comm;
+    std::vector  v{1, 2, 3, 4, 5};
+    EXPECT_KASSERT_FAILS({ comm.recv(recv_buf(v), status_out(), tag(-1), recv_counts(1)); }, "invalid tag");
+}
