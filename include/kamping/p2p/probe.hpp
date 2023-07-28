@@ -69,7 +69,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
     if constexpr (tag_type == internal::TagType::value) {
         KASSERT(
             Environment<>::is_valid_tag(tag),
-            "invalid tag " << tag << ", maximum allowed tag is " << Environment<>::tag_upper_bound()
+            "invalid tag " << tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
         );
     }
 

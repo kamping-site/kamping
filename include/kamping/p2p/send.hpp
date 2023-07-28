@@ -80,7 +80,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
     int tag = tag_param.tag();
     KASSERT(
         Environment<>::is_valid_tag(tag),
-        "invalid tag " << tag << ", maximum allowed tag is " << Environment<>::tag_upper_bound()
+        "invalid tag " << tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
     );
 
     using send_mode_obj_type = decltype(internal::select_parameter_type_or_default<

@@ -96,6 +96,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     auto&& tag_param =
         internal::select_parameter_type_or_default<internal::ParameterType::tag, default_tag_buf_type>({}, args...);
 
+    constexpr auto tag_type = std::remove_reference_t<decltype(tag_param)>::tag_type;
+    if constexpr (tag_type == internal::TagType::value) {
+        int tag = tag_param.tag();
+        KASSERT(
+            Environment<>::is_valid_tag(tag),
+            "invalid tag " << tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
+        );
+    }
+
     using default_status_param_type = decltype(kamping::status(kamping::ignore<>));
 
     auto&& status =
