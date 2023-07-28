@@ -39,7 +39,7 @@ class IProbeTest : public ::testing::Test {
     }
 };
 
-TEST_F(IProbeTest, direct_probe) {
+TEST_F(IProbeTest, direct_probe_with_status_out) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -56,48 +56,132 @@ TEST_F(IProbeTest, direct_probe) {
     );
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
-            {
-                // return status
-                auto result = comm.iprobe(source(other), tag(asserting_cast<int>(other)), status_out());
-                while (!result.has_value()) {
-                    result = comm.iprobe(source(other), tag(asserting_cast<int>(other)), status_out());
-                }
-                EXPECT_TRUE(has_member_extract_status_v<decltype(result.value())>);
-                auto status = result->extract_status();
-                EXPECT_EQ(status.source(), other);
-                EXPECT_EQ(status.tag(), other);
-                EXPECT_EQ(status.count<int>(), other);
+            // return status
+            auto result = comm.iprobe(source(other), tag(asserting_cast<int>(other)), status_out());
+            while (!result.has_value()) {
+                result = comm.iprobe(source(other), tag(asserting_cast<int>(other)), status_out());
             }
-            {
-                // wrapped status
-                Status kmp_status;
-                while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(kmp_status))) {
-                }
-                EXPECT_EQ(kmp_status.source(), other);
-                EXPECT_EQ(kmp_status.tag(), other);
-                EXPECT_EQ(kmp_status.count<int>(), other);
+            EXPECT_TRUE(has_member_extract_status_v<decltype(result.value())>);
+            auto status = result->extract_status();
+            EXPECT_EQ(status.source(), other);
+            EXPECT_EQ(status.tag(), other);
+            EXPECT_EQ(status.count<int>(), other);
+            std::vector<int> recv_buf(other);
+            MPI_Recv(
+                recv_buf.data(),            // recv_buf
+                asserting_cast<int>(other), // recv_size
+                MPI_INT,                    // recv_type
+                asserting_cast<int>(other), // source
+                asserting_cast<int>(other), // tag
+                MPI_COMM_WORLD,             // comm
+                MPI_STATUS_IGNORE           // status
+            );
+        }
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(IProbeTest, direct_probe_with_wrapped_status) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+    MPI_Request      req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        for (size_t other = 0; other < comm.size(); other++) {
+            // wrapped status
+            Status kmp_status;
+            while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(kmp_status))) {
             }
-            {
-                // native status
-                MPI_Status mpi_status;
-                while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(mpi_status))) {
-                }
-                EXPECT_EQ(mpi_status.MPI_SOURCE, other);
-                EXPECT_EQ(mpi_status.MPI_TAG, other);
-                int count;
-                MPI_Get_count(&mpi_status, MPI_INT, &count);
-                EXPECT_EQ(count, other);
+            EXPECT_EQ(kmp_status.source(), other);
+            EXPECT_EQ(kmp_status.tag(), other);
+            EXPECT_EQ(kmp_status.count<int>(), other);
+            std::vector<int> recv_buf(other);
+            MPI_Recv(
+                recv_buf.data(),            // recv_buf
+                asserting_cast<int>(other), // recv_size
+                MPI_INT,                    // recv_type
+                asserting_cast<int>(other), // source
+                asserting_cast<int>(other), // tag
+                MPI_COMM_WORLD,             // comm
+                MPI_STATUS_IGNORE           // status
+            );
+        }
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(IProbeTest, direct_probe_with_native_status) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+    MPI_Request      req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        for (size_t other = 0; other < comm.size(); other++) {
+            // native status
+            MPI_Status mpi_status;
+            while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(mpi_status))) {
             }
-            {
-                // ignore status
-                {
-                    while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)))) {
-                    }
-                }
-                {
-                    while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>))) {
-                    }
-                }
+            EXPECT_EQ(mpi_status.MPI_SOURCE, other);
+            EXPECT_EQ(mpi_status.MPI_TAG, other);
+            int count;
+            MPI_Get_count(&mpi_status, MPI_INT, &count);
+            EXPECT_EQ(count, other);
+            std::vector<int> recv_buf(other);
+            MPI_Recv(
+                recv_buf.data(),            // recv_buf
+                asserting_cast<int>(other), // recv_size
+                MPI_INT,                    // recv_type
+                asserting_cast<int>(other), // source
+                asserting_cast<int>(other), // tag
+                MPI_COMM_WORLD,             // comm
+                MPI_STATUS_IGNORE           // status
+            );
+        }
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(IProbeTest, direct_probe_with_implicit_ignore_status) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+    MPI_Request      req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        for (size_t other = 0; other < comm.size(); other++) {
+            while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)))) {
             }
             std::vector<int> recv_buf(other);
             MPI_Recv(
@@ -115,7 +199,7 @@ TEST_F(IProbeTest, direct_probe) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-TEST_F(IProbeTest, any_source_probe) {
+TEST_F(IProbeTest, direct_probe_with_explicit_ignore_status) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -132,27 +216,8 @@ TEST_F(IProbeTest, any_source_probe) {
     );
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
-            {
-                // explicit any source probe
-                auto result = comm.iprobe(source(rank::any), tag(asserting_cast<int>(other)), status_out());
-                while (!result.has_value()) {
-                    result = comm.iprobe(source(rank::any), tag(asserting_cast<int>(other)), status_out());
-                }
-                auto status = result->extract_status();
-                EXPECT_EQ(status.source(), other);
-                EXPECT_EQ(status.tag(), other);
-                EXPECT_EQ(status.count<int>(), other);
-            }
-            {
-                // implicit any source probe
-                auto result = comm.iprobe(tag(asserting_cast<int>(other)), status_out());
-                while (!result.has_value()) {
-                    result = comm.iprobe(tag(asserting_cast<int>(other)), status_out());
-                }
-                auto status = result->extract_status();
-                EXPECT_EQ(status.source(), other);
-                EXPECT_EQ(status.tag(), other);
-                EXPECT_EQ(status.count<int>(), other);
+            // ignore status
+            while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(kamping::ignore<>))) {
             }
             std::vector<int> recv_buf(other);
             MPI_Recv(
@@ -170,7 +235,92 @@ TEST_F(IProbeTest, any_source_probe) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-TEST_F(IProbeTest, any_tag_probe) {
+TEST_F(IProbeTest, explicit_any_source_probe) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+    MPI_Request      req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        for (size_t other = 0; other < comm.size(); other++) {
+            // explicit any source probe
+            auto result = comm.iprobe(source(rank::any), tag(asserting_cast<int>(other)), status_out());
+            while (!result.has_value()) {
+                result = comm.iprobe(source(rank::any), tag(asserting_cast<int>(other)), status_out());
+            }
+            auto status = result->extract_status();
+            EXPECT_EQ(status.source(), other);
+            EXPECT_EQ(status.tag(), other);
+            EXPECT_EQ(status.count<int>(), other);
+            std::vector<int> recv_buf(other);
+            MPI_Recv(
+                recv_buf.data(),            // recv_buf
+                asserting_cast<int>(other), // recv_size
+                MPI_INT,                    // recv_type
+                asserting_cast<int>(other), // source
+                asserting_cast<int>(other), // tag
+                MPI_COMM_WORLD,             // comm
+                MPI_STATUS_IGNORE           // status
+            );
+        }
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(IProbeTest, implicit_any_source_probe) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+    MPI_Request      req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        for (size_t other = 0; other < comm.size(); other++) {
+            // implicit any source probe
+            auto result = comm.iprobe(tag(asserting_cast<int>(other)), status_out());
+            while (!result.has_value()) {
+                result = comm.iprobe(tag(asserting_cast<int>(other)), status_out());
+            }
+            auto status = result->extract_status();
+            EXPECT_EQ(status.source(), other);
+            EXPECT_EQ(status.tag(), other);
+            EXPECT_EQ(status.count<int>(), other);
+
+            std::vector<int> recv_buf(other);
+            MPI_Recv(
+                recv_buf.data(),            // recv_buf
+                asserting_cast<int>(other), // recv_size
+                MPI_INT,                    // recv_type
+                asserting_cast<int>(other), // source
+                asserting_cast<int>(other), // tag
+                MPI_COMM_WORLD,             // comm
+                MPI_STATUS_IGNORE           // status
+            );
+        }
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(IProbeTest, explicit_any_tag_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -188,28 +338,16 @@ TEST_F(IProbeTest, any_tag_probe) {
     );
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
-            {
-                // explicit any tag probe
-                auto result = comm.iprobe(source(other), tag(tags::any), status_out());
-                while (!result.has_value()) {
-                    result = comm.iprobe(source(other), tag(tags::any), status_out());
-                }
-                auto status = result->extract_status();
-                EXPECT_EQ(status.source(), other);
-                EXPECT_EQ(status.tag(), other);
-                EXPECT_EQ(status.count<int>(), other);
+            // explicit any tag probe
+            auto result = comm.iprobe(source(other), tag(tags::any), status_out());
+            while (!result.has_value()) {
+                result = comm.iprobe(source(other), tag(tags::any), status_out());
             }
-            {
-                // implicit any tag probe
-                auto result = comm.iprobe(source(other), status_out());
-                while (!result.has_value()) {
-                    result = comm.iprobe(source(other), status_out());
-                }
-                auto status = result->extract_status();
-                EXPECT_EQ(status.source(), other);
-                EXPECT_EQ(status.tag(), other);
-                EXPECT_EQ(status.count<int>(), other);
-            }
+            auto status = result->extract_status();
+            EXPECT_EQ(status.source(), other);
+            EXPECT_EQ(status.tag(), other);
+            EXPECT_EQ(status.count<int>(), other);
+
             std::vector<int> recv_buf(other);
             MPI_Recv(
                 recv_buf.data(),            // recv_buf
@@ -226,7 +364,51 @@ TEST_F(IProbeTest, any_tag_probe) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-TEST_F(IProbeTest, arbitrary_probe_explicit) {
+TEST_F(IProbeTest, implicit_any_tag_probe) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+    MPI_Request      req;
+
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        for (size_t other = 0; other < comm.size(); other++) {
+            // implicit any tag probe
+            auto result = comm.iprobe(source(other), status_out());
+            while (!result.has_value()) {
+                result = comm.iprobe(source(other), status_out());
+            }
+            auto status = result->extract_status();
+            EXPECT_EQ(status.source(), other);
+            EXPECT_EQ(status.tag(), other);
+            EXPECT_EQ(status.count<int>(), other);
+
+            std::vector<int> recv_buf(other);
+            MPI_Recv(
+                recv_buf.data(),            // recv_buf
+                asserting_cast<int>(other), // recv_size
+                MPI_INT,                    // recv_type
+                asserting_cast<int>(other), // source
+                asserting_cast<int>(other), // tag
+                MPI_COMM_WORLD,             // comm
+                MPI_STATUS_IGNORE           // status
+            );
+        }
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(IProbeTest, explicit_arbitrary_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -278,7 +460,7 @@ TEST_F(IProbeTest, arbitrary_probe_explicit) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-TEST_F(IProbeTest, arbitrary_probe_implicit) {
+TEST_F(IProbeTest, implicit_arbitrary_probe) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
