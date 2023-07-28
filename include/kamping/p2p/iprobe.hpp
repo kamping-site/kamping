@@ -31,10 +31,9 @@
 /// @brief Wrapper for \c MPI_Iprobe.
 ///
 /// This wraps \c MPI_Iprobe. This operation checks if there is a message matching the (optionally) specified source
-/// and tag that can be received. If this is the case, returns a \c std::optional containing an \ref kamping::MPIResult,
+/// and tag that can be received, and returns a \c bool indicating whether a message matched by default.
+/// If the user passes \ref kamping::status_out(), returns a \c std::optional containing an \ref kamping::MPIResult,
 /// which encapsulates a status object. If the probe does not match any message, returns \c std::nullopt.
-/// If no status parameter is passed (i.e. the status is ignored) or the status is output via a user-provided reference,
-/// returns a \c bool indicating if the probe succeeded.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::tag() probe for messages with this tag. Defaults to probing for an arbitrary tag, i.e. \c
@@ -97,6 +96,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
     );
     THROW_IF_MPI_ERROR(err, MPI_Iprobe);
 
+    // if KaMPIng owns the status (i.e. when the user passed status_out()) we
+    // return an optional, containing the status, otherwise just a bool
+    // indicating probe success.
     if constexpr (std::remove_reference_t<decltype(status)>::type == internal::StatusParamType::owning) {
         if (flag) {
             return std::optional{make_mpi_result(std::move(status))};
