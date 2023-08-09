@@ -164,13 +164,13 @@ public:
     /// @brief Number of MPI processes in this communicator as `int`. Alias vor size() .
     /// @return Number of MPI processes in this communicator as `int`.
     [[nodiscard]] int num_ranks_signed() const {
-        return size();
+        return size_signed();
     }
 
     /// @brief Number of compute nodes (hostnames) in this communicator as `int`.
     /// @return Number of compute nodes (hostnames) in this communicator as `int`.
     [[nodiscard]] int num_nodes_signed() const {
-        return _num_nodes;
+        return asserting_cast<int>(_num_nodes);
     }
 
     /// @brief Number of compute nodes (hostnames) in this communicator as `size_t`.
@@ -572,7 +572,7 @@ private:
         size_t num_nodes = node_names.size();
         MPI_Bcast(&num_nodes, 1, mpi_datatype<decltype(num_nodes)>(), 0, comm);
 
-        KASSERT(num_nodes > 0, "Number of nodes must be greater than zero.");
+        KASSERT(num_nodes > 0ul, "Number of nodes must be greater than zero.");
         return num_nodes;
     }
 
