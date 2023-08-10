@@ -27,18 +27,21 @@ inline std::string quote_string(std::string const& str) {
 /// @brief Printer class that prints an evaluated TimerTree in Json format.
 class SimpleJsonPrinter {
 public:
+
     /// @brief Prints an evaluated TimerTree in Json format to stdout.
-    /// @tparam TimePoint Type to represent a point in time.
     /// @tparam Duration Type to represent a duration.
     /// @param node Root node of the TimerTree to print.
     /// @param indentation Indentation to use for the node.
-    template <typename TimePoint, typename Duration>
-    void print(TimerTreeNode<TimePoint, Duration> const& node, std::size_t indentation = 0) {
-        auto [name, evaluation_data] = node.get_print_data();
+    template <typename Duration>
+    void print(EvaluationTreeNode<Duration> const& node, std::size_t indentation = 0) {
+        const std::size_t indentation_per_level = 2;
+        auto              name                  = node.name();
+        auto              evaluation_data       = node.aggregated_data();
         std::cout << std::string(indentation, ' ') << quote_string(name) << ": {" << std::endl;
 
         InternalPrinter<Duration> internal_printer;
-        std::cout << std::string(indentation + 2, ' ') << quote_string("statistics") << ": {" << std::endl;
+        std::cout << std::string(indentation + indentation_per_level, ' ') << quote_string("statistics") << ": {"
+                  << std::endl;
         if (!evaluation_data.empty()) {
             bool is_first_outer = true;
             for (auto const& [op, data]: evaluation_data) {
@@ -46,7 +49,7 @@ public:
                     std::cout << "," << std::endl;
                 }
                 is_first_outer = false;
-                std::cout << std::string(indentation + 4, ' ') << "\"" << op << "\""
+                std::cout << std::string(indentation + 2 * indentation_per_level, ' ') << "\"" << op << "\""
                           << ": [";
                 bool is_first = true;
                 for (auto const& data_item: data) {
@@ -60,7 +63,7 @@ public:
             }
             std::cout << std::endl;
         }
-        std::cout << std::string(indentation + 2, ' ') << "}";
+        std::cout << std::string(indentation + indentation_per_level, ' ') << "}";
         if (!node.children().empty()) {
             std::cout << ",";
         }
@@ -72,7 +75,7 @@ public:
                 std::cout << "," << std::endl;
             }
             is_first = false;
-            print(*children, indentation + 2);
+            print(*children, indentation + indentation_per_level);
         }
         if (!node.children().empty()) {
             std::cout << std::endl;

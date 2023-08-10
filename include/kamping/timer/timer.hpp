@@ -159,26 +159,28 @@ private:
     StorageType _aggregated_data; ///< Storage of the aggregated data.
 };
 
+template <typename T>
+class TD;
+
 /// @brief Class representing a node in the timer tree. Each node represents a time measurement (or multiple with
 /// the
 ///  same key). A node can have multiple children which represent nested time measurements. The measurements
 ///  associated with a node's children are executed while the node's measurement is still active.
 ///
-/// @tparam TimePoint Type of a point in time.
-/// @tparam Duration  Type of a duration.
-template <typename TimePoint, typename Duration>
-class TimerTreeNode {
+template <typename DerivedNode>
+class TreeNode {
 public:
+    /// @brief Construct node without pointer to parent and empty name
+    TreeNode() : _name{}, _parent_ptr{nullptr} {}
+
     /// @brief Construct node without pointer to parent.
     /// @param name Name associated with this node.
-    TimerTreeNode(std::string const& name) : _name{name}, _parent_ptr{nullptr} {}
+    TreeNode(std::string const& name) : _name{name}, _parent_ptr{nullptr} {}
 
     /// @brief Construct node  pointer to parent.
     /// @param name Name associated with this node.
     /// @param parent Pointer to this node's parent pointer.
-    TimerTreeNode(std::string const& name, TimerTreeNode<TimePoint, Duration>* parent)
-        : _name{name},
-          _parent_ptr{parent} {}
+    TreeNode(std::string const& name, DerivedNode* parent) : _name{name}, _parent_ptr{parent} {}
 
     /// @brief Searches the node's children for a node with the given name. If there is no such child a new node is
     /// inserted.
@@ -189,14 +191,52 @@ public:
         if (it != _children_map.end()) {
             return it->second;
         } else {
-            auto new_child        = std::make_unique<TimerTreeNode<TimePoint, Duration>>(name, this);
+            auto new_child        = std::make_unique<DerivedNode>(name, static_cast<DerivedNode*>(this));
             auto ptr_to_new_child = new_child.get();
             _children_map[name]   = ptr_to_new_child;
             _children_storage.push_back(std::move(new_child));
+            // TD<decltype(ptr_to_new_child)> td;
             return ptr_to_new_child;
         }
     }
 
+    /// @brief Access to the parent pointer.
+    /// @return Reference to the parent pointer.
+    auto& parent_ptr() {
+        return _parent_ptr;
+    }
+
+    /// @brief Access to the node's children.
+    /// @return Return a reference to the node's children.
+    auto const& children() const {
+        return _children_storage;
+    }
+
+    /// @brief Access to the node's children.
+    /// @return Return a reference to the node's children.
+    auto const& name() const {
+        return _name;
+    }
+
+private:
+    std::string  _name;       ///< Name of the node.
+    DerivedNode* _parent_ptr; ///< Pointer to the node's parent.
+    std::unordered_map<std::string, DerivedNode*>
+                                              _children_map; ///< Map (used for faster lookup) to the node's children.
+    std::vector<std::unique_ptr<DerivedNode>> _children_storage; ///< Owns the node's children.
+};
+
+/// @brief Class representing a node in the timer tree. Each node represents a time measurement (or multiple with
+/// the
+///  same key). A node can have multiple children which represent nested time measurements. The measurements
+///  associated with a node's children are executed while the node's measurement is still active.
+///
+/// @tparam TimePoint Type of a point in time.
+/// @tparam Duration  Type of a duration.
+template <typename TimePoint, typename Duration>
+class TimerTreeNode : public TreeNode<TimerTreeNode<TimePoint, Duration>> {
+public:
+    using TreeNode<TimerTreeNode<TimePoint, Duration>>::TreeNode;
     /// @brief Access to the point in time at which the currently active measurement has been started.
     /// @return Reference to start point.
     auto& startpoint() {
@@ -210,7 +250,6 @@ public:
     /// be handled. They can either be accumulated (the durations are added together) or appended (the durations are
     /// stored in a list).
     void aggregate_measurements_locally(Duration const& duration, KeyAggregationMode const& mode) {
-        ++num_calls;
         switch (mode) {
             case KeyAggregationMode::accumulate:
                 if (_durations.empty()) {
@@ -224,93 +263,60 @@ public:
         }
     }
 
-    /// @brief Access to the parent pointer.
-    /// @return Reference to the parent pointer.
-    auto& parent_ptr() {
-        return _parent_ptr;
-    }
-
-    /// @brief Aggregate the time measurements represented by the timer tree for which the current node is the root
-    /// node globally. The measured durations are aggregated over all participating PEs and the result is stored at
-    /// the root rank of the given communicator. The used aggregation operations can be specified via
-    /// TimerTreeNode::data_aggregation_operations().
-    /// The durations are aggregated node by node.
-    ///
-    /// @param comm Communicator across which the measured durations stored in the tree are aggregated.
-    void aggregate_measurements_globally(Communicator<> const& comm) {
-        _aggregated_data = std::make_unique<AggregatedMeasurementDataStorage<Duration>>();
-        // TODO some kasserts for same name and number of items
-        for (auto const& item: _durations) {
-            auto recv_buf = comm.gather(send_buf(item)).extract_recv_buffer();
-            if (!comm.is_root()) {
-                continue;
-            }
-
-            for (auto const& aggregation_mode: _duration_aggregation_operations) {
-                aggregate_measurements_globally(aggregation_mode, recv_buf);
-            }
-        }
-        for (auto& child: _children_storage) {
-            child->aggregate_measurements_globally(comm);
-        }
-    }
-
-    /// @brief Access to the node's children.
-    /// @return Return a reference to the node's children.
-    auto const& children() const {
-        return _children_storage;
-    }
-
     /// @brief Access to the data aggregation operations (used during the evaluation).
     /// @return Return a reference to data aggregation operations.
     auto& data_aggregation_operations() {
         return _duration_aggregation_operations;
     }
 
-    /// @brief Convenience function that groups together data which is needed to output/print the evaluated time
-    /// measurements.
-    auto get_print_data() const {
-        typename AggregatedMeasurementDataStorage<Duration>::StorageType aggregated_data;
-        if (_aggregated_data) {
-            aggregated_data = _aggregated_data->aggregated_data();
-        }
-        return std::make_pair(_name, aggregated_data);
-    }
-
-private:
-    std::string                      _name;      ///< Name of the node.
+public:
     TimePoint                        _start;     ///< Point in time at which the current measurement has been started.
     std::vector<Duration>            _durations; ///< Duration(s) of the node
     std::vector<DataAggregationMode> _duration_aggregation_operations{
         DataAggregationMode::max}; ///< Communicator-wide aggregation operation which will be performed on the
                                    ///< durations.
-    TimerTreeNode* _parent_ptr;    ///< Pointer to the node's parent.
-    std::unordered_map<std::string, TimerTreeNode*>
-                                                _children_map; ///< Map (used for faster lookup) to the node's children.
-    std::vector<std::unique_ptr<TimerTreeNode>> _children_storage; ///< Owns the node's children.
-    std::unique_ptr<AggregatedMeasurementDataStorage<Duration>>
-           _aggregated_data; ///< Pointer to the evaluated duration data.
-    size_t num_calls{0};
+};
 
-    void aggregate_measurements_globally(DataAggregationMode mode, std::vector<Duration> const& gathered_data) {
-        switch (mode) {
-            case DataAggregationMode::max: {
-                using Operation = Max;
-                _aggregated_data->add(Operation::operation_name(), Operation::compute(gathered_data));
-                break;
-            }
-            case DataAggregationMode::min: {
-                using Operation = Min;
-                _aggregated_data->add(Operation::operation_name(), Operation::compute(gathered_data));
-                break;
-            }
-            case DataAggregationMode::gather: {
-                using Operation = Gather;
-                _aggregated_data->add(Operation::operation_name(), Operation::compute(gathered_data));
-                break;
-            }
+/// @brief Class representing a node in the timer tree. Each node represents a time measurement (or multiple with
+/// the
+///  same key). A node can have multiple children which represent nested time measurements. The measurements
+///  associated with a node's children are executed while the node's measurement is still active.
+///
+/// @tparam Duration  Type of a duration.
+template <typename Duration>
+class EvaluationTreeNode : public TreeNode<EvaluationTreeNode<Duration>> {
+public:
+    using TreeNode<EvaluationTreeNode<Duration>>::TreeNode;
+
+    ///@brief Type into which the aggregated data is stored together with the applied aggregation operation.
+    using StorageType = std::unordered_map<std::string, std::vector<ScalarOrContainer<Duration>>>;
+
+    /// @brief Access to stored aggregated data.
+    /// @return Reference to aggregated data.
+    auto const& aggregated_data() const {
+        return _aggregated_data;
+    }
+
+    /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied aggregation
+    /// operation.
+    /// @param aggregation_operation Applied aggregation operations.
+    /// @param data Scalar resulted from applying the given aggregation operation.
+    void add(std::string const& aggregation_operation, std::optional<Duration> data) {
+        if (data) {
+            _aggregated_data[aggregation_operation].emplace_back(data.value());
         }
     }
+
+    /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied aggregation
+    /// operation.
+    /// @param aggregation_operation Applied aggregation operations.
+    /// @param data Vector of Scalars resulted from applying the given aggregation operation.
+    void add(const std::string aggregation_operation, std::vector<Duration> const& data) {
+        _aggregated_data[aggregation_operation].emplace_back(data);
+    }
+
+public:
+    StorageType _aggregated_data; ///< Storage of the aggregated data.
 };
 
 /// @brief Tree consisting of objects of type TimerTreeNode. The tree constitutes a hierarchy of time measurements
@@ -421,27 +427,36 @@ public:
         stop_impl(KeyAggregationMode::append, duration_aggregation_modi);
     };
 
-    /// @brief Aggregate the measured durations within the tree over the ranks in the communicator.
-    void aggregate() {
-        _timer_tree.root.aggregate_measurements_globally(_comm);
+    /// @brief Evaluates the time measurements represented by the timer tree for which the current node is the root
+    /// node globally. The measured durations are aggregated over all participating PEs and the result is stored at
+    /// the root rank of the given communicator. The used aggregation operations can be specified via
+    /// TimerTreeNode::data_aggregation_operations().
+    /// The durations are aggregated node by node.
+    ///
+    /// @return Root of the evaluation tree which encapsulated the aggregated data in a tree structure representing the
+    /// measurements.
+    auto evaluate() {
+        EvaluationTreeNode<double> root;
+        evaluate(root, _timer_tree.root);
+        return root;
     }
 
-    /// @brief Outputs the aggregated duration data of the executed measurements. The output is done via the print()
+    /// @brief Aggregates and outputs the the executed measurements. The output is done via the print()
     /// method of a given Printer object.
     ///
-    /// The print() method must accept an object of type TimerTreeNode and receives the root of the timer tree as
-    /// parameter. The print() method is only called on the root rank of the communicator.
-    /// While the print() method can access all public members of TimerTreeNode a reasonable output should be
-    /// possible by only calling TimerTreeNode::get_print_data() which returns the node's aggregated duration data
-    /// and TimerTreeNode::children() to navigate to a node's children.
+    /// The print() method must accept an object of type EvaluationTreeNode and receives the root of the evaluated timer
+    /// tree as parameter. The print() method is only called on the root rank of the communicator. See
+    /// EvaluationTreeNode for the accessible data. The EvaluationTreeNode::children() member function can be used to
+    /// navigate the nested measurement structure.
     ///
     /// @tparam Printer Type of printer which is used to output the aggregated timing data. Printer must possess a
-    /// member print() which accepts a TimerTreeNode as parameter.
+    /// member print() which accepts a EvaluationTreeNode as parameter.
     /// @param printer Printer object used to output the aggregated timing data.
     template <typename Printer>
-    void print(Printer&& printer) {
+    void evaluate_and_print(Printer&& printer) {
+        auto evaluation_tree_root = evaluate();
         if (comm_world().is_root()) {
-            printer.print(_timer_tree.root);
+            printer.print(evaluation_tree_root);
         }
     }
 
@@ -470,5 +485,47 @@ private:
         }
         _timer_tree.current_node = _timer_tree.current_node->parent_ptr();
     };
+
+    void evaluate(EvaluationTreeNode<double>& aggregation_node, TimerTreeNode<double, double>& timer_node) {
+        for (auto& child: timer_node.children()) {
+            auto aggregation_child = aggregation_node.find_or_insert(child->name());
+            // TODO some kasserts for same name and number of items
+            for (auto const& item: child->_durations) {
+                auto recv_buf = _comm.gather(send_buf(item)).extract_recv_buffer();
+                if (!_comm.is_root()) {
+                    continue;
+                }
+
+                for (auto const& aggregation_mode: child->_duration_aggregation_operations) {
+                    aggregate_measurements_globally(aggregation_mode, recv_buf, *aggregation_child);
+                }
+            }
+            evaluate(*aggregation_child, *child.get());
+        }
+    }
+
+    void aggregate_measurements_globally(
+        DataAggregationMode                         mode,
+        std::vector<double> const&                  gathered_data,
+        kamping::timer::EvaluationTreeNode<double>& agg_node
+    ) {
+        switch (mode) {
+            case DataAggregationMode::max: {
+                using Operation = Max;
+                agg_node.add(Operation::operation_name(), Operation::compute(gathered_data));
+                break;
+            }
+            case DataAggregationMode::min: {
+                using Operation = Min;
+                agg_node.add(Operation::operation_name(), Operation::compute(gathered_data));
+                break;
+            }
+            case DataAggregationMode::gather: {
+                using Operation = Gather;
+                agg_node.add(Operation::operation_name(), Operation::compute(gathered_data));
+                break;
+            }
+        }
+    }
 };
 } // namespace kamping::timer

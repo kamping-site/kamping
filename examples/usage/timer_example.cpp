@@ -25,8 +25,8 @@
 #include "kamping/data_buffer.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/timer/timer.hpp"
 #include "kamping/timer/printer.hpp"
+#include "kamping/timer/timer.hpp"
 
 int main() {
     using namespace kamping;
@@ -71,11 +71,14 @@ int main() {
     if (comm.is_root()) {
         std::cout << "evaluate" << std::endl;
     }
-    t.aggregate();
+    auto evaluated_tree = t.evaluate();
     if (comm.is_root()) {
         std::cout << "end evaluate" << std::endl;
     }
-    t.print(kamping::timer::SimpleJsonPrinter{});
+    t.evaluate_and_print(kamping::timer::SimpleJsonPrinter{});
+    //if (comm.is_root()) {
+    //    kamping::timer::SimpleJsonPrinter{}.print(evaluated_tree);
+    //}
 
     return 0;
 }
