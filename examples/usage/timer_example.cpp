@@ -25,7 +25,8 @@
 #include "kamping/data_buffer.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/timer.hpp"
+#include "kamping/timer/timer.hpp"
+#include "kamping/timer/printer.hpp"
 
 int main() {
     using namespace kamping;
@@ -65,10 +66,12 @@ int main() {
     t.stop_and_append(
         {timer::DataAggregationMode::gather, timer::DataAggregationMode::max, timer::DataAggregationMode::min}
     );
+    t.start("blabla");
+
     if (comm.is_root()) {
         std::cout << "evaluate" << std::endl;
     }
-    t.evaluate();
+    t.aggregate();
     if (comm.is_root()) {
         std::cout << "end evaluate" << std::endl;
     }
