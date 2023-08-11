@@ -153,10 +153,10 @@ public:
         return _size;
     }
 
-    /// @brief Number of NUMA nodes (different shared memory regions) in this communicator as `size_t`.
+    /// @brief Number of NUMA nodes (different shared memory regions) in this communicator.
     /// This operation is expensive (communicator splitting and communication). You should cache the result if you need
     /// it multiple times.
-    /// @return Number of compute nodes (hostnames) in this communicator as `size_t`.
+    /// @return Number of compute nodes (hostnames) in this communicator.
     [[nodiscard]] size_t num_numa_nodes() const {
         // Split this communicator into NUMA nodes.
         Communicator numa_comm = split_to_numa_nodes();
