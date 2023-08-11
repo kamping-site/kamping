@@ -20,7 +20,6 @@ Submit a pull request
 ---------------------
 - If you want to work on a feature that has been requested or fix a bug that has been reported on the "issues" page, add a comment to it so that other people know that you are working on it.
 - Fork the repository.
-- Almost all changes of KaMPIng are done on the `develop` branch. If a new version of KaMPIng is released, the `develop` branch is merged into `master`. As a result, the `master` branch probably doesn't contain the latest changes when you are reading this. Please make sure that you are branching from `develop`! Otherwise, there might be a lot of merge-conflicts when merging your changes into `develop` and therefore it might take longer to review your pull-request. Exceptions are urgent issues that need to be fixed in the production version.
 - If your pull request fixes a bug that has been reported or implements a feature that has been requested in another issue, try to mention it in the message, so that it can be closed once your pull request has been merged. If you use special keywords in the [commit comment](https://help.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue) or [pull request text](https://github.blog/2013-05-14-closing-issues-via-pull-requests/), GitHub will close the issue(s) automatically.
 - Always add extensive unit tests for your pull request and make sure that they pass.
 - Please do not upgrade dependencies or build tools unless you have a good reason for it. Doing so can easily introduce bugs that are hard to track down.
@@ -29,12 +28,12 @@ Submit a pull request
 - Please read our [documentation guidelines](https://github.com/kamping-site/kamping/blob/main/docs/documentation_guidelines.md)
 - Please read our [testing guidelines](https://github.com/kamping-site/kamping/blob/main/docs/testing_guidelines.md)
 - Commit only corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `fix-` branches and merge them to the `main` branch using a Pull Request (PR).
+- Use a draft PR while you are still working on your pull request. Once you are ready for review, convert it into a regular PR.
 - Label your Pull Request with one or more of these labels:
-  - `wip` if you are still working on it.
   - `discussion` if you are looking for comments but your PR is not ready for a full review yet.
   - `dependent` if your PR is dependent on another issue/PR/discussion.
-  - `review` if your branch is ready for review.
 - Each Pull Request has to be reviewed by at least one person who is not the author of the code. Everyone involved in a discussion, including the pull request's author, can close a discussion once its matter is resolved. Avoid writing "Done" etc. when resolving a discussion, as this generates a lot of low-entropy mails; simply close the discussion if the matter is resolved completely. If unsure, leave the discussion open and ask the reviewer if the change is sufficient. Resolving a discussion might for example include moving the discussion to a new issue or implementing the requested changes. Once all discussions are closed, all CI checks are successful, and there are no more rejecting reviews, it is the pull request's author's responsibility to merge the changes into the main branch. Use squash and merge to merge a pull request back into the main branch.
+- For pull requests by contributers without the necessary access rights, a reviewer will perform the merge.
 
 Building From Source
 --------------------------

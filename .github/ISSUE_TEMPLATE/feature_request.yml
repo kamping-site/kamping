@@ -10,7 +10,7 @@ body:
           required: true
         - label: I will describe the problem with as much detail as possible.
           required: true
-        - label: This request contains only one single feature, **not** a list of multiple (related) features.
+        - label: This request contains only one single feature, **not** a list of multiple (related) features. Please link related feature requests.
           required: true
   - type: input
     id: kamping-version
