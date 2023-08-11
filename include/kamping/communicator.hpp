@@ -26,6 +26,8 @@
 #include "kamping/environment.hpp"
 #include "kamping/mpi_constants.hpp"
 #include "kamping/mpi_datatype.hpp"
+#include "kamping/mpi_ops.hpp"
+#include "kamping/named_parameters.hpp"
 #include "kamping/rank_ranges.hpp"
 
 namespace kamping {
@@ -60,7 +62,6 @@ public:
     explicit Communicator(MPI_Comm comm, int root, bool take_ownership = false)
         : _rank(get_mpi_rank(comm)),
           _size(get_mpi_size(comm)),
-          _num_nodes(get_mpi_num_nodes(comm)),
           _comm(comm),
           _default_tag(0),
           _owns_mpi_comm(take_ownership) {
@@ -75,7 +76,6 @@ public:
     Communicator(Communicator const& other)
         : _rank(other._rank),
           _size(other._size),
-          _num_nodes(other._num_nodes),
           _root(other._root),
           _default_tag(other._default_tag),
           _owns_mpi_comm(true) {
@@ -87,7 +87,6 @@ public:
     Communicator(Communicator&& other)
         : _rank(other._rank),
           _size(other._size),
-          _num_nodes(other._num_nodes),
           _comm(other._comm),
           _root(other._root),
           _default_tag(other._default_tag),
@@ -124,7 +123,6 @@ public:
     void swap(Communicator& other) {
         std::swap(_rank, other._rank);
         std::swap(_size, other._size);
-        std::swap(_num_nodes, other._num_nodes);
         std::swap(_comm, other._comm);
         std::swap(_default_tag, other._default_tag);
         std::swap(_root, other._root);
@@ -167,16 +165,34 @@ public:
         return size_signed();
     }
 
-    /// @brief Number of compute nodes (hostnames) in this communicator as `int`.
-    /// @return Number of compute nodes (hostnames) in this communicator as `int`.
-    [[nodiscard]] int num_nodes_signed() const {
-        return asserting_cast<int>(_num_nodes);
+    /// @brief Number of NUMA nodes (different shared memory regions) in this communicator as `size_t`.
+    /// This operation is expensive (communicator splitting and communication). You should cache the result if you need
+    /// it multiple times.
+    /// @return Number of compute nodes (hostnames) in this communicator as `size_t`.
+    [[nodiscard]] size_t num_numa_nodes() const {
+        // Split this communicator into NUMA nodes.
+        Communicator numa_comm = split_to_numa_nodes();
+
+        // Determine the lowest rank on each NUMA node.
+        size_t const numa_representative = numa_comm.allreduce_single(send_buf(rank()), op(ops::min<>{}));
+
+        // Determine the number of NUMA nodes by counting the number of distinct lowest ranks.
+        size_t const num_numa_nodes =
+            allreduce_single(send_buf(numa_representative == rank() ? 1 : 0), op(ops::plus<>{}));
+
+        return num_numa_nodes;
     }
 
-    /// @brief Number of compute nodes (hostnames) in this communicator as `size_t`.
-    /// @return Number of compute nodes (hostnames) in this communicator as `size_t`.
-    [[nodiscard]] size_t num_nodes() const {
-        return _num_nodes;
+    /// @brief Get this 'processor's' name using \c MPI_Get_processor_name.
+    /// @return This 'processor's' name. Nowadays, this oftentimes is the hostname.
+    std::string processor_name() const {
+        // Get the name of this node.
+        int  my_len;
+        char my_name[MPI_MAX_PROCESSOR_NAME];
+
+        int ret = MPI_Get_processor_name(my_name, &my_len);
+        THROWING_KASSERT(ret == MPI_SUCCESS, "MPI_Get_processor_name failed with error code " << ret);
+        return std::string(my_name, asserting_cast<size_t>(my_len));
     }
 
     /// @brief MPI communicator corresponding to this communicator.
@@ -268,6 +284,27 @@ public:
         MPI_Comm_split(_comm, color, key, &new_comm);
         return Communicator(new_comm, true);
     }
+
+    /// @brief Split the communicator into NUMA nodes.
+    /// @return \ref Communicator wrapping the newly split MPI communicator. Each rank will be in the communicator
+    /// corresponding to its NUMA node.
+    [[nodiscard]] Communicator split_to_numa_nodes() const {
+        MPI_Comm new_comm;
+
+        // MPI_COMM_TYPE_HW_GUIDED is only available starting with MPI-4.0
+        // MPI_Info  info;
+        // MPI_Info_create(&info);
+        // MPI_Info_set(info, "mpi_hw_resource_type", "NUMANode");
+        // auto ret = MPI_Comm_split_type(_comm, MPI_COMM_TYPE_HW_GUIDED, rank_signed(), info, &newcomm);
+        // KASSERT(ret == MPI_SUCCESS, "MPI_Comm_split_type failed with error code " << ret);
+
+        // MPI_COMM_TYPE_SHARED is available starting with MPI-3.0
+        auto ret = MPI_Comm_split_type(_comm, MPI_COMM_TYPE_SHARED, rank_signed(), MPI_INFO_NULL, &new_comm);
+        KASSERT(ret == MPI_SUCCESS, "MPI_Comm_split_type failed with error code " << ret);
+
+        return Communicator(new_comm, true);
+    }
+
     /// @brief Create subcommunicators.
     ///
     /// This method requires globally available information on the ranks in the subcommunicators.
@@ -517,69 +554,9 @@ private:
         return asserting_cast<size_t>(size);
     }
 
-    /// @brief Compute the number of compute nodes in this communicator using \c MPI_Get_processor_name.
-    /// @return Number of compute nodes in this communicator.
-    size_t get_mpi_num_nodes(MPI_Comm comm) const {
-        // Get the name of this node.
-        int  my_len;
-        char my_name[MPI_MAX_PROCESSOR_NAME + 1];
-
-        int ret = MPI_Get_processor_name(my_name, &my_len);
-        THROWING_KASSERT(ret == MPI_SUCCESS, "MPI_Get_processor_name failed with error code " << ret);
-
-        // Make the name a valid string ending with '\0'.
-        my_name[my_len] = '\0';
-        my_len++;
-
-        // We're called during initialization of this class, so don't rely on any attribute being set yet.
-        int my_rank;
-        int num_ranks;
-        ret = MPI_Comm_rank(comm, &my_rank);
-        THROWING_KASSERT(ret == MPI_SUCCESS, "MPI_Comm_rank failed with error code " << ret);
-        ret = MPI_Comm_size(comm, &num_ranks);
-        THROWING_KASSERT(ret == MPI_SUCCESS, "MPI_Comm_size failed with error code " << ret);
-        constexpr int tag = 0;
-
-        // Gather all the hostnames on the main rank.
-        std::unordered_set<std::string> node_names;
-        if (my_rank == 0) {
-            std::vector<std::byte> recv_buf;
-            node_names.insert(my_name);
-
-            for (int rank = 1; rank < num_ranks; rank++) {
-                int        recv_size = 0;
-                MPI_Status status;
-
-                ret = MPI_Probe(rank, tag, comm, &status);
-                THROWING_KASSERT(ret == MPI_SUCCESS, "MPI_Probe failed with error code " << ret);
-
-                ret = MPI_Get_count(&status, MPI_BYTE, &recv_size);
-                THROWING_KASSERT(ret == MPI_SUCCESS, "MPI_Get_count failed with error code " << ret);
-
-                recv_buf.reserve(asserting_cast<size_t>(recv_size));
-
-                ret = MPI_Recv((void*)recv_buf.data(), recv_size, MPI_BYTE, rank, tag, comm, MPI_STATUS_IGNORE);
-                THROWING_KASSERT(ret == MPI_SUCCESS, "MPI_Recv failed with error code " << ret);
-
-                char const* name = reinterpret_cast<char const*>(recv_buf.data());
-                node_names.insert(name);
-            }
-        } else {
-            MPI_Send(my_name, my_len, MPI_BYTE, 0, tag, comm);
-        }
-
-        // Broadcast the number of nodes.
-        size_t num_nodes = node_names.size();
-        MPI_Bcast(&num_nodes, 1, mpi_datatype<decltype(num_nodes)>(), 0, comm);
-
-        KASSERT(num_nodes > 0ul, "Number of nodes must be greater than zero.");
-        return num_nodes;
-    }
-
-    size_t   _rank;      ///< Rank of the MPI process in this communicator.
-    size_t   _size;      ///< Number of MPI processes in this communicator.
-    size_t   _num_nodes; ///< Number of compute nodes in this communicator.
-    MPI_Comm _comm;      ///< Corresponding MPI communicator.
+    size_t   _rank; ///< Rank of the MPI process in this communicator.
+    size_t   _size; ///< Number of MPI processes in this communicator.
+    MPI_Comm _comm; ///< Corresponding MPI communicator.
 
     size_t _root;        ///< Default root for MPI operations that require a root.
     int    _default_tag; ///< Default tag value used in point to point communication.
