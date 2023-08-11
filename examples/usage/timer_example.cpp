@@ -39,46 +39,43 @@ int main() {
 
     auto spend_some_time = [&]() {
         static std::mt19937                gen((comm.rank() + 17) * 1001);
-        std::uniform_int_distribution<int> distrib(1'000, 500'000'000);
+        std::uniform_int_distribution<int> distrib(1'000, 10'000'000);
         auto                               it = distrib(gen);
         for (volatile int i = 0; i < it; ++i)
             ;
     };
     timer::Timer t;
-    spend_some_time();
-    t.synchronize_and_start("outer_phase");
-    spend_some_time();
-    t.synchronize_and_start("internal1");
-    t.synchronize_and_start("internal2");
-    t.start("internal_sub");
+    t.synchronize_and_start("algorithm");
+    for (size_t i = 0; i < 3; ++i) {
+        t.synchronize_and_start("round" + std::to_string(i));
+        {
+            t.synchronize_and_start("preprocessing");
+            spend_some_time();
+            t.stop();
+
+            t.synchronize_and_start("core_algorithm");
+            for (size_t j = 0; j < 5u; ++j) {
+                t.start("subroutine");
+                spend_some_time();
+                t.stop_and_append(
+                    {timer::DataAggregationMode::min,
+                     timer::DataAggregationMode::max,
+                     timer::DataAggregationMode::gather}
+                );
+            }
+            t.stop();
+            t.synchronize_and_start("preprocessing");
+            spend_some_time();
+            t.stop();
+        }
+        t.stop_and_append();
+    }
     t.stop();
-    t.stop({timer::DataAggregationMode::min});
-    t.stop();
-    t.stop();
-    t.synchronize_and_start("outer_phase2");
-    t.stop();
-    t.synchronize_and_start("outer_phase");
-    spend_some_time();
-    t.stop_and_append();
-    t.synchronize_and_start("outer_phase");
-    spend_some_time();
-    spend_some_time();
-    t.stop_and_append(
-        {timer::DataAggregationMode::gather, timer::DataAggregationMode::max, timer::DataAggregationMode::min}
-    );
-    t.start("blabla");
 
     if (comm.is_root()) {
         std::cout << "evaluate" << std::endl;
     }
-    auto evaluated_tree = t.evaluate();
-    if (comm.is_root()) {
-        std::cout << "end evaluate" << std::endl;
-    }
     t.evaluate_and_print(kamping::timer::SimpleJsonPrinter{});
-    //if (comm.is_root()) {
-    //    kamping::timer::SimpleJsonPrinter{}.print(evaluated_tree);
-    //}
 
     return 0;
 }
