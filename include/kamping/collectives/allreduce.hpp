@@ -108,11 +108,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
 /// rank.
 /// - \ref kamping::op() wrapping the operation to apply to the input.
 ///
-/// The following parameters are optional:
-/// - \ref The single reduced value.
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @return The single output value.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_single(Args... args) const {
