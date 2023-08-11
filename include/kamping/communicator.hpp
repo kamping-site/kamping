@@ -16,7 +16,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
-#include <unordered_set>
 
 #include <kassert/kassert.hpp>
 #include <mpi.h>
