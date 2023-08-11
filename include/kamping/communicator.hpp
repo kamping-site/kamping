@@ -175,7 +175,7 @@ public:
         char my_name[MPI_MAX_PROCESSOR_NAME];
 
         int ret = MPI_Get_processor_name(my_name, &my_len);
-        THROWING_KASSERT(ret == MPI_SUCCESS, "MPI_Get_processor_name failed with error code " << ret);
+        THROW_IF_MPI_ERROR(ret, MPI_Get_processor_name);
         return std::string(my_name, asserting_cast<size_t>(my_len));
     }
 
@@ -272,7 +272,7 @@ public:
     /// @brief Split the communicator into NUMA nodes.
     /// @return \ref Communicator wrapping the newly split MPI communicator. Each rank will be in the communicator
     /// corresponding to its NUMA node.
-    [[nodiscard]] Communicator split_to_numa_nodes() const {
+    [[nodiscard]] Communicator split_to_shared_memory() const {
         MPI_Comm new_comm;
 
         // MPI_COMM_TYPE_HW_GUIDED is only available starting with MPI-4.0
@@ -280,11 +280,10 @@ public:
         // MPI_Info_create(&info);
         // MPI_Info_set(info, "mpi_hw_resource_type", "NUMANode");
         // auto ret = MPI_Comm_split_type(_comm, MPI_COMM_TYPE_HW_GUIDED, rank_signed(), info, &newcomm);
-        // KASSERT(ret == MPI_SUCCESS, "MPI_Comm_split_type failed with error code " << ret);
 
         // MPI_COMM_TYPE_SHARED is available starting with MPI-3.0
         auto ret = MPI_Comm_split_type(_comm, MPI_COMM_TYPE_SHARED, rank_signed(), MPI_INFO_NULL, &new_comm);
-        KASSERT(ret == MPI_SUCCESS, "MPI_Comm_split_type failed with error code " << ret);
+        THROW_IF_MPI_ERROR(ret, MPI_Comm_split_type);
 
         return Communicator(new_comm, true);
     }
