@@ -20,6 +20,7 @@
 #include <mpi.h>
 
 #include "helpers_for_testing.hpp"
+#include "kamping/comm_helper/num_numa_nodes.hpp"
 #include "kamping/communicator.hpp"
 
 using namespace ::kamping;
