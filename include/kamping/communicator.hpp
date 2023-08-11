@@ -162,18 +162,6 @@ public:
         return _size;
     }
 
-    /// @brief Number of MPI processes in this communicator as `size_t`. Alias vor size() .
-    /// @return Number of MPI processes in this communicator as `size_t`.
-    [[nodiscard]] size_t num_ranks() const {
-        return size();
-    }
-
-    /// @brief Number of MPI processes in this communicator as `int`. Alias vor size() .
-    /// @return Number of MPI processes in this communicator as `int`.
-    [[nodiscard]] int num_ranks_signed() const {
-        return size_signed();
-    }
-
     /// @brief Number of NUMA nodes (different shared memory regions) in this communicator as `size_t`.
     /// This operation is expensive (communicator splitting and communication). You should cache the result if you need
     /// it multiple times.

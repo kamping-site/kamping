@@ -49,8 +49,6 @@ TEST_F(CommunicatorTest, empty_constructor) {
     EXPECT_EQ(comm.rank_signed(), rank);
     EXPECT_EQ(comm.size_signed(), size);
     EXPECT_EQ(comm.size(), size);
-    EXPECT_EQ(comm.size(), comm.num_ranks());
-    EXPECT_EQ(comm.size_signed(), comm.num_ranks_signed());
     EXPECT_EQ(comm.num_numa_nodes(), 1);
     EXPECT_EQ(comm.root(), 0);
     EXPECT_EQ(comm.root_signed(), 0);
@@ -70,8 +68,6 @@ TEST_F(CommunicatorTest, constructor_with_mpi_communicator) {
     EXPECT_EQ(comm.rank(), self_rank);
     EXPECT_EQ(comm.size_signed(), self_size);
     EXPECT_EQ(comm.size(), self_size);
-    EXPECT_EQ(comm.size(), comm.num_ranks());
-    EXPECT_EQ(comm.size_signed(), comm.num_ranks_signed());
     EXPECT_EQ(comm.num_numa_nodes(), 1);
     EXPECT_EQ(comm.rank_signed(), 0);
     EXPECT_EQ(comm.rank(), 0);
