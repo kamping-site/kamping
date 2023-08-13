@@ -130,7 +130,7 @@ public:
     /// @return Root of the evaluation tree which encapsulated the aggregated data in a tree structure representing the
     /// measurements.
     auto evaluate() {
-        EvaluationTreeNode<double> root;
+        EvaluationTreeNode<double> root("root");
         evaluate(root, _timer_tree.root);
         return root;
     }
