@@ -622,15 +622,16 @@ inline auto send_mode(SendModeTag) {
     return internal::SendModeParameter<SendModeTag>{};
 }
 
-/// @brief generates a parameter object for a reduce operation.
+/// @brief generates a parameter object for a reduce operation. Accepts function objects, lambdas, function pointers or
+/// native \c MPI_Op as argument.
 ///
 /// @tparam Op the type of the operation
 /// @tparam Commutative tag whether the operation is commutative
 /// @param op the operation
 /// @param commute the commutativity tag
 ///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
-///     supported for builtin operations. This is used to streamline the interface so that the use does not have
-///     to provide commutativity info when the operation is builtin.
+///     supported for builtin and native operations. This is used to streamline the interface so that the use does not
+///     have to provide commutativity info when the operation is builtin.
 template <typename Op, typename Commutative = ops::internal::undefined_commutative_tag>
 internal::OperationBuilder<Op, Commutative>
 op(Op&& op, Commutative commute = ops::internal::undefined_commutative_tag{}) {
