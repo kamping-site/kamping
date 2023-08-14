@@ -269,23 +269,28 @@ public:
         return Communicator(new_comm, true);
     }
 
-    /// @brief Split the communicator into NUMA nodes.
-    /// @return \ref Communicator wrapping the newly split MPI communicator. Each rank will be in the communicator
-    /// corresponding to its NUMA node.
-    [[nodiscard]] Communicator split_to_shared_memory() const {
-        MPI_Comm new_comm;
-
+    /// @brief Split the communicator by the specified type (e.g., shared memory)
+    ///
+    /// @param type The only standard-conform value is \c MPI_COMM_TYPE_SHARED but your MPI implementation might support
+    /// other types. For example: \c OMPI_COMM_TYPE_L3CACHE.
+    [[nodiscard]] Communicator split_by_type(int const type) const {
         // MPI_COMM_TYPE_HW_GUIDED is only available starting with MPI-4.0
         // MPI_Info  info;
         // MPI_Info_create(&info);
         // MPI_Info_set(info, "mpi_hw_resource_type", "NUMANode");
         // auto ret = MPI_Comm_split_type(_comm, MPI_COMM_TYPE_HW_GUIDED, rank_signed(), info, &newcomm);
 
-        // MPI_COMM_TYPE_SHARED is available starting with MPI-3.0
-        auto ret = MPI_Comm_split_type(_comm, MPI_COMM_TYPE_SHARED, rank_signed(), MPI_INFO_NULL, &new_comm);
+        MPI_Comm   new_comm;
+        auto const ret = MPI_Comm_split_type(_comm, type, rank_signed(), MPI_INFO_NULL, &new_comm);
         THROW_IF_MPI_ERROR(ret, MPI_Comm_split_type);
-
         return Communicator(new_comm, true);
+    }
+
+    /// @brief Split the communicator into NUMA nodes.
+    /// @return \ref Communicator wrapping the newly split MPI communicator. Each rank will be in the communicator
+    /// corresponding to its NUMA node.
+    [[nodiscard]] Communicator split_to_shared_memory() const {
+        return split_by_type(MPI_COMM_TYPE_SHARED);
     }
 
     /// @brief Create subcommunicators.
