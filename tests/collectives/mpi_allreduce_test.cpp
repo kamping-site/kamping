@@ -214,3 +214,13 @@ TEST(AllreduceTest, allreduce_default_container_type) {
 //             "The send buffer has to be the same size on all ranks.");
 //     }
 // }
+
+TEST(AllreduceTest, allreduce_single) {
+    Communicator comm;
+
+    int       input  = comm.rank_signed();
+    int const result = comm.allreduce_single(send_buf(input), op(kamping::ops::plus<>{}));
+
+    int expected_result = (comm.size_signed() * (comm.size_signed() - 1)) / 2;
+    EXPECT_EQ(result, expected_result);
+}

@@ -96,3 +96,32 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
     return make_mpi_result(std::move(recv_buf));
 }
+
+/// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
+///
+/// This wrapper for \c MPI_Allreduce sends a single value from the root to all other ranks. Calling \c
+/// allreduce_single() is a shorthand for calling `allreduce` with a `send_buf` of size 1. It always issues only a
+/// single \c MPI_Allreduce call, as no receive counts have to be exchanged.
+///
+/// The following parameters are required:
+/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be of size 1 on each
+/// rank.
+/// - \ref kamping::op() wrapping the operation to apply to the input.
+///
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described above.
+/// @return The single output value.
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <typename... Args>
+auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_single(Args... args) const {
+    using namespace kamping::internal;
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS());
+
+    KASSERT(
+        select_parameter_type<ParameterType::send_buf>(args...).get().size() == 1ul,
+        "The send buffer has to be of size 1 on all ranks.",
+        assert::light
+    );
+
+    return this->allreduce(std::forward<Args>(args)...).extract_recv_buffer()[0];
+}
