@@ -272,10 +272,10 @@ TEST_F(CommunicatorTest, split_by_type) {
     EXPECT_EQ(l1cache_comm.size(), ranks_per_l1_cache);
 #endif // OMPI_COMM_TYPE_L1CACHE
 
-    mpi_comm_split_type_call_counter = 0;
-    expected_rank                    = comm.rank_signed();
-    expected_comm                    = comm.mpi_communicator();
-    comm.split_to_shared_memory();
+    mpi_comm_split_type_call_counter     = 0;
+    expected_rank                        = comm.rank_signed();
+    expected_comm                        = comm.mpi_communicator();
+    [[maybe_unused]] auto const new_comm = comm.split_to_shared_memory();
     EXPECT_EQ(mpi_comm_split_type_call_counter, 1);
 }
 
