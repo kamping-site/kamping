@@ -115,7 +115,7 @@ template <template <typename...> typename DefaultContainerType, template <typena
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_single(Args... args) const {
     using namespace kamping::internal;
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS());
 
     KASSERT(
         select_parameter_type<ParameterType::send_buf>(args...).get().size() == 1ul,
