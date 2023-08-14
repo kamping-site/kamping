@@ -56,7 +56,7 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_FALSE(int_iterator_span.empty());
     EXPECT_EQ(values.data(), int_iterator_span.data());
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) // not C++ 20
+#if ((defined(_MSVC_LANG) && _MSVC_LANG < 202002L) || __cplusplus < 202002L) // not C++ 20
     // if C++20 is used, we alias Span to std::span, but we cannot use deduction there, because argument deduction is
     // not allowed for alias templates but only for class templates.
     Span int_iterator_span_deducted(values.begin(), values.end());
