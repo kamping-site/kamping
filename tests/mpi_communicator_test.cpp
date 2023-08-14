@@ -258,14 +258,18 @@ TEST_F(CommunicatorTest, split_by_type) {
     mpi_comm_split_type_expected_key  = comm.rank_signed();
     mpi_comm_split_type_expected_comm = comm.mpi_communicator();
     ASSERT_GT(comm.num_numa_nodes(), 0);
-    auto const shared_mem_comm = comm.split_to_shared_memory();
-    EXPECT_EQ(shared_mem_comm.size(), comm.size() / comm.num_numa_nodes());
-    EXPECT_EQ(shared_mem_comm.rank(), comm.rank() % shared_mem_comm.size());
+    auto const shared_mem_comm_1 = comm.split_to_shared_memory();
+    EXPECT_EQ(shared_mem_comm_1.size(), comm.size() / comm.num_numa_nodes());
+    EXPECT_EQ(shared_mem_comm_1.rank(), comm.rank() % shared_mem_comm_1.size());
 
     mpi_comm_split_type_call_counter = 0;
-    auto const shared_mem_comm1      = comm.split_by_type(MPI_COMM_TYPE_SHARED);
-    EXPECT_EQ(shared_mem_comm1.size(), shared_mem_comm.size());
-    EXPECT_EQ(shared_mem_comm1.rank(), shared_mem_comm.rank());
+    auto const shared_mem_comm_2     = comm.split_by_type(MPI_COMM_TYPE_SHARED);
+    MPI_Group  group_1, group_2;
+    MPI_Comm_group(shared_mem_comm_1.mpi_communicator(), &group_1);
+    MPI_Comm_group(shared_mem_comm_2.mpi_communicator(), &group_2);
+    int cmp;
+    MPI_Group_compare(group_1, group_2, &cmp);
+    EXPECT_EQ(cmp, MPI_IDENT);
     EXPECT_EQ(mpi_comm_split_type_call_counter, 1);
 
 #ifdef OMPI_COMM_TYPE_L1CACHE
