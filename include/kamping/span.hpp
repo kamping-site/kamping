@@ -54,6 +54,7 @@ using Span = std::span<T>;
 #else // C++ 17
 
     #include <cstddef>
+    #include <iterator>
     #include <tuple>
 
 namespace kamping {
@@ -94,6 +95,17 @@ public:
         : _ptr(internal::to_address(first)),
           _size(static_cast<size_type>(last - first)) {}
 
+    /// @brief Constructs a span that is a view over the range \c range. The resulting span has
+    /// <code>data() == std::data(range)</code> and <code>size() == std::size()</code>.
+    ///
+    /// If <code>range</code> does not model a C++20 contiguous range, the
+    /// behavior is undefined. This is analagous to the behavior of \c std::span.
+    /// @param range The range.
+    /// @tparam Range The range type.
+    template <typename Range>
+    constexpr Span(Range&& range) : _ptr(std::data(range)),
+                                    _size(std::size(range)) {}
+
     /// @brief Get access to the underlying memory.
     ///
     /// @return Pointer to the underlying memory.
@@ -126,6 +138,9 @@ protected:
     pointer   _ptr;  ///< Pointer to the data referred to by Span.
     size_type _size; ///< Number of elements of type T referred to by Span.
 };
+
+template <typename Range>
+Span(Range&&) -> Span<typename std::remove_reference_t<Range>::value_type>;
 
 } // namespace kamping
 
