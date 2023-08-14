@@ -56,7 +56,7 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_FALSE(int_iterator_span.empty());
     EXPECT_EQ(values.data(), int_iterator_span.data());
 
-    Span int_iterator_span_deducted(values.begin(), values.end());
+    auto int_iterator_span_deducted = Span(values.begin(), values.end());
     EXPECT_EQ(values.size(), int_iterator_span_deducted.size());
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_iterator_span_deducted.size_bytes());
     EXPECT_FALSE(int_iterator_span_deducted.empty());
