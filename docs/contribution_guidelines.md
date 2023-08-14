@@ -46,5 +46,12 @@ git clone --recursive https://github.com/kamping-site/kamping.git
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ctest --test-dir build
+
+# Alternatively, if you have at least CMake 3.20
+git clone --recursive https://github.com/kamping-site/kamping.git
+# Supported build types are release relwithdeb debug
+cmake --preset release
+cmake --build --preset release --parallel
+ctest --preset release
 ```
 
