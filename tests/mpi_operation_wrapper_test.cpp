@@ -174,6 +174,12 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         MPI_Op_commutative(op.op(), &commute);
         EXPECT_FALSE(commute);
     }
+    // builtin native operation
+    {
+        auto op = make_op<int>(MPI_SUM, kamping::ops::internal::undefined_commutative_tag{});
+        EXPECT_EQ(op.op(), MPI_SUM);
+        EXPECT_FALSE(decltype(op)::is_builtin);
+    }
     // lambda on builtin type commutative
     {
         auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::ops::commutative);
