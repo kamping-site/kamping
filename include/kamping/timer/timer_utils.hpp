@@ -26,6 +26,10 @@
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "kamping/collectives/bcast.hpp"
+#include "kamping/collectives/gather.hpp"
+#include "kamping/communicator.hpp"
+
 namespace kamping::timer {
 
 ///@brief Either a scalar or vector of type \c T.
@@ -232,7 +236,7 @@ private:
     std::vector<Duration>            _durations; ///< Duration(s) of the node
     std::vector<DataAggregationMode> _duration_aggregation_operations{
         DataAggregationMode::max}; ///< Communicator-wide aggregation operation which will be performed on the
-                                   ///< durations.
+                                   ///< durations. @TODO replace this with a more space efficient variant
 };
 
 /// @brief Tree consisting of objects of type TimerTreeNode. The tree constitutes a hierarchy of time measurements
@@ -292,5 +296,38 @@ public:
 public:
     StorageType _aggregated_data; ///< Storage of the aggregated data.
 };
+
+/// @brief Checks that the given string is equal on all ranks in the given communicator.
+///
+/// @todo this function should be once superseded by a more general Communicator::is_same_on_all_ranks().
+/// @tparam Communicator Type of communicator.
+/// @param str String which is tested for equality on all ranks.
+/// @param comm Communicator on which the equality test is executed.
+/// @return Returns whether string is equal on all ranks.
+template <typename Communicator>
+inline bool is_string_same_on_all_ranks(std::string const& str, Communicator const& comm) {
+    auto has_same_size = comm.is_same_on_all_ranks(str.size());
+    if (!has_same_size) {
+        return false;
+    }
+    std::vector<char> name_as_char_vector;
+    std::copy(str.begin(), str.end(), std::back_inserter(name_as_char_vector));
+    auto res    = comm.gatherv(send_buf(name_as_char_vector));
+    auto result = true;
+    if (comm.is_root()) {
+        auto recv_buf = res.extract_recv_buffer();
+        for (std::size_t cur_rank = 0; cur_rank < comm.size(); ++cur_rank) {
+            auto              begin = recv_buf.begin() + static_cast<int>(cur_rank * str.size());
+            auto              end   = begin + static_cast<int>(str.size());
+            const std::string cur_string(begin, end);
+            if (cur_string != str) {
+                result = false;
+                break;
+            }
+        }
+    }
+    comm.bcast_single(send_recv_buf(result));
+    return result;
+}
 
 } // namespace kamping::timer

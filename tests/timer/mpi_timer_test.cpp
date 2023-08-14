@@ -240,11 +240,9 @@ TEST(TimerTest, stop_nested_scenario) {
     }
 }
 
-TEST(TimerTest, stop_nested_complex_scenario) {
-    auto const&  comm = comm_world();
-    Timer<>      timer;
-    const size_t repetitions = 5u;
-    for (size_t i = 0; i < 5; ++i) {
+auto setup_complex_scenario(size_t repetitions) {
+    Timer<> timer;
+    for (size_t i = 0; i < repetitions; ++i) {
         timer.start("measurement1");
         {
             timer.start("measurement11");
@@ -260,6 +258,13 @@ TEST(TimerTest, stop_nested_complex_scenario) {
         }
         timer.stop_and_append();
     }
+    return timer;
+}
+
+TEST(TimerTest, stop_nested_complex_scenario) {
+    auto const&       comm                 = comm_world();
+    size_t            repetitions          = 5u;
+    auto              timer                = setup_complex_scenario(repetitions);
     auto              evaluated_timer_tree = timer.evaluate();
     ValidationPrinter printer;
     printer.print(evaluated_timer_tree);
@@ -278,4 +283,33 @@ TEST(TimerTest, stop_nested_complex_scenario) {
              AggregatedDataSummary{}.set_is_scalar(false).set_num_entries(1).set_num_values(comm.size())}};
         EXPECT_EQ(printer.output, expected_output);
     };
+}
+
+TEST(TimerTest, print) {
+    const size_t      repetitions          = 5u;
+    auto              timer1               = setup_complex_scenario(repetitions);
+    auto              timer2               = setup_complex_scenario(repetitions);
+    auto              evaluated_timer_tree = timer1.evaluate();
+    ValidationPrinter printer1;
+    printer1.print(evaluated_timer_tree);
+    ValidationPrinter printer2;
+    timer2.evaluate_and_print(printer2);
+    EXPECT_EQ(printer1.output, printer2.output);
+}
+
+TEST(TimerTest, evaluate_non_trivial_communicator) {
+    auto const& comm       = comm_world();
+    auto        split_comm = comm.split(comm.rank() % 2);
+    Timer<>     timer(split_comm);
+    timer.synchronize_and_start("measurement");
+    timer.stop();
+    auto              evaluated_timer_tree = timer.evaluate();
+    ValidationPrinter printer;
+    printer.print(evaluated_timer_tree);
+
+    if (split_comm.is_root()) {
+        auto expected_output = std::unordered_map<std::string, AggregatedDataSummary>{
+            {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(1).set_num_values(1).set_is_scalar(true)}};
+        EXPECT_EQ(printer.output, expected_output);
+    }
 }

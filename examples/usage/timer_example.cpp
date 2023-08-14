@@ -71,10 +71,6 @@ int main() {
         t.stop_and_append();
     }
     t.stop();
-
-    if (comm.is_root()) {
-        std::cout << "evaluate" << std::endl;
-    }
     t.evaluate_and_print(kamping::timer::SimpleJsonPrinter{});
 
     return 0;

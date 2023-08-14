@@ -196,6 +196,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_timer_utils_with_communication
+    FILES timer/mpi_timer_utils_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_timer
     FILES timer/mpi_timer_test.cpp
     CORES 1 4

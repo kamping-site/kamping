@@ -194,19 +194,29 @@ private:
     void evaluate(
         EvaluationTreeNode<double>& evaluation_tree_node, internal::TimerTreeNode<double, double>& timer_tree_node
     ) {
+        KASSERT(
+            is_string_same_on_all_ranks(timer_tree_node.name(), _comm),
+            "Currently processed TimerTreeNode has not the same name on all ranks -> timers have diverged",
+            assert::heavy_communication
+        );
+        KASSERT(
+            _comm.is_same_on_all_ranks(timer_tree_node.durations().size()),
+            "Currently processed TimerTreeNode has not the same number of measurements on all ranks -> timers have "
+            "diverged",
+            assert::light_communication
+        );
+        for (auto const& item: timer_tree_node.durations()) {
+            auto recv_buf = _comm.gather(send_buf(item)).extract_recv_buffer();
+            if (!_comm.is_root()) {
+                continue;
+            }
+
+            for (auto const& aggregation_mode: timer_tree_node.duration_aggregation_operations()) {
+                aggregate_measurements_globally(aggregation_mode, recv_buf, evaluation_tree_node);
+            }
+        }
         for (auto& timer_tree_child: timer_tree_node.children()) {
             auto evaluation_tree_child = evaluation_tree_node.find_or_insert(timer_tree_child->name());
-            // TODO some kasserts for same name and number of items
-            for (auto const& item: timer_tree_child->durations()) {
-                auto recv_buf = _comm.gather(send_buf(item)).extract_recv_buffer();
-                if (!_comm.is_root()) {
-                    continue;
-                }
-
-                for (auto const& aggregation_mode: timer_tree_child->duration_aggregation_operations()) {
-                    aggregate_measurements_globally(aggregation_mode, recv_buf, *evaluation_tree_child);
-                }
-            }
             evaluate(*evaluation_tree_child, *timer_tree_child.get());
         }
     }
