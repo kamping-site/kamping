@@ -333,6 +333,71 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     }
 }
 
+TEST(ReduceTest, reduce_builtin_native_operation) {
+    Communicator comm;
+
+    std::vector<int> input = {1, 2, 3};
+
+    auto result = comm.reduce(send_buf(input), op(MPI_SUM)).extract_recv_buffer();
+
+    if (comm.is_root()) {
+        EXPECT_EQ(result.size(), 3);
+        std::vector<int> expected_result = {comm.size_signed() * 1, comm.size_signed() * 2, comm.size_signed() * 3};
+        EXPECT_EQ(result, expected_result);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+}
+
+TEST(ReduceTest, reduce_builtin_native_operation_with_incompatible_type) {
+    struct MyInt {
+        MyInt() noexcept : _value(0) {}
+        MyInt(int value) noexcept : _value(value) {}
+        int _value;
+        int operator+(MyInt const& rhs) const noexcept {
+            return this->_value + rhs._value;
+        }
+        bool operator==(MyInt const& rhs) const noexcept {
+            return this->_value == rhs._value;
+        }
+    };
+    Communicator comm;
+
+    std::vector<MyInt> input = {1, 2, 3};
+
+    EXPECT_KASSERT_FAILS(
+        auto result = comm.reduce(send_buf(input), op(MPI_SUM)).extract_recv_buffer(),
+        "The provided builtin operation is not compatible with datatype T."
+    )
+}
+
+void select_left_op_func(void* invec, void* inoutvec, int* len, MPI_Datatype* datatype) {
+    EXPECT_EQ(*datatype, MPI_INT);
+    int* invec_    = static_cast<int*>(invec);
+    int* inoutvec_ = static_cast<int*>(inoutvec);
+    std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, [](int const& left, int const&) { return left; });
+}
+
+TEST(ReduceTest, reduce_builtin_handmade_native_operation) {
+    Communicator comm;
+
+    MPI_Op select_left_op;
+    MPI_Op_create(&select_left_op_func, false, &select_left_op);
+
+    std::vector<int> input = {1 + comm.rank_signed(), 2 + comm.rank_signed(), 3 + comm.rank_signed()};
+
+    auto result = comm.reduce(send_buf(input), op(select_left_op)).extract_recv_buffer();
+
+    if (comm.is_root()) {
+        EXPECT_EQ(result.size(), 3);
+        std::vector<int> expected_result = {1, 2, 3};
+        EXPECT_EQ(result, expected_result);
+    } else {
+        EXPECT_EQ(result.size(), 0);
+    }
+    MPI_Op_free(&select_left_op);
+}
+
 TEST(ReduceTest, reduce_custom_operation_on_builtin_type_non_commutative) {
     Communicator comm;
 

@@ -1,0 +1,91 @@
+{
+    "version": 2,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 20,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "Default",
+            "description": "Default build options",
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "KAMPING_BUILD_EXAMPLES_AND_TESTS": "OFF",
+                "KAMPING_WARNINGS_ARE_ERRORS": "OFF",
+                "KASSERT_WARNINGS_ARE_ERRORS": "OFF"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "relwithdeb",
+            "displayName": "ReleaseWithDebugInfo",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/relwithdeb",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "relwithdeb",
+            "configurePreset": "relwithdeb"
+        },
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "default",
+            "hidden": true,
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "inherits": "default"
+        },
+        {
+            "name": "relwithdeb",
+            "configurePreset": "relwithdeb",
+            "inherits": "default"
+        },
+        {
+            "name": "debug",
+            "configurePreset": "debug",
+            "inherits": "default"
+        }
+    ]
+}

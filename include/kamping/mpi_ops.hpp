@@ -180,6 +180,10 @@ using logical_xor = kamping::internal::logical_xor_impl<T>;
 template <typename T = void>
 using bit_xor = std::bit_xor<T>;
 
+/// @brief builtin null operation (aka `MPI_OP_NULL`)
+template <typename T = void>
+struct null {};
+
 namespace internal {
 /// @brief tag for a commutative reduce operation
 struct commutative_tag {};
@@ -389,6 +393,39 @@ struct mpi_operation_traits<
 
 /// @todo support for MPI_MAXLOC and MPI_MINLOC
 
+/// @brief Helper function that maps an \c MPI_Op to the matching functor from \c kamping::ops. In case no function
+/// maps, the functor is called with \c kamping::ops::null<>{}.
+///
+/// @param op The operation.
+/// @param func The lambda to be called with the functor matching the \c MPI_Op, e.g. in the case of \c MPI_SUM we call
+/// \c func(kamping::ops::plus<>{}).
+template <typename Functor>
+auto with_operation_functor(MPI_Op op, Functor&& func) {
+    if (op == MPI_MAX) {
+        return func(ops::max<>{});
+    } else if (op == MPI_MIN) {
+        return func(ops::min<>{});
+    } else if (op == MPI_SUM) {
+        return func(ops::plus<>{});
+    } else if (op == MPI_PROD) {
+        return func(ops::multiplies<>{});
+    } else if (op == MPI_LAND) {
+        return func(ops::logical_and<>{});
+    } else if (op == MPI_LOR) {
+        return func(ops::logical_or<>{});
+    } else if (op == MPI_LXOR) {
+        return func(ops::logical_xor<>{});
+    } else if (op == MPI_BAND) {
+        return func(ops::bit_and<>{});
+    } else if (op == MPI_BOR) {
+        return func(ops::bit_or<>{});
+    } else if (op == MPI_BXOR) {
+        return func(ops::bit_xor<>{});
+    } else {
+        return func(ops::null<>{});
+    }
+}
+
 /// @brief type used by user-defined operations passed to \c MPI_Op_create
 using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
 
@@ -412,7 +449,8 @@ public:
 
     /// @brief creates an MPI operation for the specified functor
     /// @param op the functor to call for reduction.
-    ///  this has to be a binary function applicable to two arguments of type \c T which return a result of type  \c T
+    ///  this has to be a binary function applicable to two arguments of type \c T which return a result of type  \c
+    ///  T
     UserOperationWrapper(Op&& op [[maybe_unused]]) {
         static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
         MPI_Op_create(UserOperationWrapper<is_commutative, T, Op>::execute, is_commutative, &_mpi_op);
@@ -432,8 +470,8 @@ public:
 
     /// @returns the \c MPI_Op constructed for the provided functor.
     ///
-    /// Do not free this operation manually, because the destructor calls it. Some MPI implementations silently segfault
-    /// if an \c MPI_Op is freed multiple times.
+    /// Do not free this operation manually, because the destructor calls it. Some MPI implementations silently
+    /// segfault if an \c MPI_Op is freed multiple times.
     MPI_Op get_mpi_op() {
         return _mpi_op;
     }
@@ -549,6 +587,22 @@ public:
 
 private:
     UserOperationWrapper<commutative, T, Op> _operation;
+};
+
+/// @brief Wrapper for a native MPI_Op.
+template <typename T>
+class ReduceOperation<T, MPI_Op, ops::internal::undefined_commutative_tag, void> {
+public:
+    ReduceOperation(MPI_Op op, ops::internal::undefined_commutative_tag = {}) : _op(op) {}
+    static constexpr bool is_builtin = false; // set to false, because we can not decide that at compile time and don't
+                                              // need this information for a native \c MPI_Op
+
+    MPI_Op op() {
+        return _op;
+    }
+
+private:
+    MPI_Op _op;
 };
 
 template <typename T, typename Op, typename Commutative>

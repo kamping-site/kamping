@@ -146,7 +146,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     [[maybe_unused]] int err = MPI_Recv(
         recv_buf.data(),                                            // buf
         asserting_cast<int>(recv_count_param.get_single_element()), // count
-        mpi_datatype<recv_value_type>(),                            // dataype
+        mpi_datatype<recv_value_type>(),                            // datatype
         source,                                                     // source
         tag,                                                        // tag
         this->mpi_communicator(),                                   // comm

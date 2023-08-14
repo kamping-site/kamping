@@ -16,8 +16,10 @@
 
 #pragma once
 
+#include "kamping/assertion_levels.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameter_types.hpp"
+#include "kassert/kassert.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -61,8 +63,24 @@ public:
     /// @tparam T argument type of the reduction operation
     template <typename T>
     [[nodiscard]] auto build_operation() {
-        static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
-        return ReduceOperation<T, Op, Commutative>(std::forward<Op>(_op), Commutative{});
+        if constexpr (std::is_same_v<std::remove_reference_t<std::remove_const_t<Op>>, MPI_Op>) {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+            // mapping a MPI_Op to the corresponding function object requires a scan over all builtin operations
+            with_operation_functor(_op, [](auto operation) {
+                if constexpr (!std::is_same_v<decltype(operation), ops::null<>>) {
+                    // the user passed a builtin datatype, so we can do some checking
+                    KASSERT(
+                        (mpi_operation_traits<decltype(operation), T>::is_builtin),
+                        "The provided builtin operation is not compatible with datatype T."
+                    );
+                }
+            });
+#endif
+            return ReduceOperation<T, MPI_Op, ops::internal::undefined_commutative_tag>(_op);
+        } else {
+            static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
+            return ReduceOperation<T, Op, Commutative>(std::forward<Op>(_op), Commutative{});
+        }
     }
 
 private:
