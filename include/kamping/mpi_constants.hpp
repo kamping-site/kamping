@@ -18,7 +18,7 @@
 
 #include <mpi.h>
 namespace kamping {
-///@brief Wraps the possible results when calling \c MPI_Comm_compare on two MPI communcicator comm1 and comm2
+///@brief Wraps the possible results when calling \c MPI_Comm_compare on two MPI communicators comm1 and comm2
 enum class CommunicatorComparisonResult : int {
     identical = MPI_IDENT,     ///< Result if comm1 and comm2 are handles for same object.
     congruent = MPI_CONGRUENT, ///< Result if the underlying groups of comm1 and comm2 are identical but the

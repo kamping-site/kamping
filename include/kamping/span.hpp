@@ -85,7 +85,7 @@ public:
     /// <code>data() == kamping::internal::to_address(first)</code> and <code>size() == last-first</code>.
     ///
     /// If <code>[first, last)</code> is not a valid range, or if \c It does not model a C++20 contiguous iterator, the
-    /// behavior is undefined. This is analagous to the behavior of \c std::span.
+    /// behavior is undefined. This is analogous to the behavior of \c std::span.
     /// @param first begin iterator of the range
     /// @param last end iterator of the range
     /// @tparam It the iterator type.

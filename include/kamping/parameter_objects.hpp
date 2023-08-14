@@ -58,7 +58,7 @@ struct rank_null_t {}; ///< tag struct for \c MPI_PROC_NULL
 ///
 /// This is a specialized \c DataBuffer. Its main functionality is to provide
 /// ease-of-use functionality in the form of the methods \c rank() and \c
-/// rank_signed(), which return the ecapsulated rank and are easier to read in
+/// rank_signed(), which return the encapsulated rank and are easier to read in
 /// the code.
 // @tparam rank_type The \ref RankType encapsulated.
 // @tparam parameter_type The parameter type.
@@ -70,7 +70,7 @@ class RankDataBuffer {};
 ///
 /// This is a specialized \c DataBuffer. Its main functionality is to provide
 /// ease-of-use functionality in the form of the methods \c rank() and \c
-/// rank_signed(), which return the ecapsulated rank and are easier to read in
+/// rank_signed(), which return the encapsulated rank and are easier to read in
 /// the code.
 // @tparam rank_type The \ref RankType encapsulated.
 // @tparam parameter_type The parameter type.

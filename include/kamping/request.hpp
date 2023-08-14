@@ -28,7 +28,8 @@ public:
     Request(MPI_Request request = MPI_REQUEST_NULL) : _request(request) {}
 
     /// @brief Returns when the operation defined by the underlying request completes.
-    /// If the underlying request was intialized by a non-blocking communication call, it is set to \c MPI_REQUEST_NULL.
+    /// If the underlying request was initialized by a non-blocking communication call, it is set to \c
+    /// MPI_REQUEST_NULL.
     void wait() {
         int err = MPI_Wait(&_request, MPI_STATUS_IGNORE);
         THROW_IF_MPI_ERROR(err, MPI_Wait);
@@ -58,7 +59,7 @@ public:
         return _request;
     }
 
-    // TODO: request cancellation and querying of cancelation status
+    // TODO: request cancellation and querying of cancellation status
 
     /// @return Returns \c true if the other request wrapper points to the same request.
     bool operator==(Request const& other) const {
