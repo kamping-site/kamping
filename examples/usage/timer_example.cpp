@@ -72,6 +72,9 @@ int main() {
     }
     t.stop();
     t.evaluate_and_print(kamping::timer::SimpleJsonPrinter{});
+    std::cout << std::endl;
+    t.evaluate_and_print(kamping::timer::FlatPrinter{});
+    std::cout << std::endl;
 
     return 0;
 }

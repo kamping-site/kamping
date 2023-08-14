@@ -24,28 +24,62 @@ inline std::string quote_string(std::string const& str) {
     return "\"" + str + "\"";
 }
 
+namespace internal {
+/// @brief Able to print either a single value or a vector of value to the given outstream.
+/// @tparam Value type to print.
+template <typename T>
+struct ScalarOrVectorPrinter {
+    /// @brief Constructs a printer printing to the given outstream.
+    /// @param outstream Outstream to print on.
+    ScalarOrVectorPrinter(std::ostream& outstream) : _outstream{outstream} {}
+
+    /// @brief Outputs the content of the given vector to outstream.
+    /// @param vec Vector whose elements are comma-separated printed to the outstream.
+    void operator()(std::vector<T> const& vec) const {
+        _outstream << "[";
+        bool is_first = true;
+        for (auto const& elem: vec) {
+            if (!is_first) {
+                _outstream << ", ";
+            }
+            is_first = false;
+            _outstream << std::fixed << elem;
+        }
+        _outstream << "]";
+    }
+
+    /// @brief Outputs the given scalar to outstream.
+    /// @param scalar Scalar to be printed.
+    void operator()(T const& scalar) const {
+        _outstream << std::fixed << scalar;
+    }
+    std::ostream& _outstream; ///< Outstream used for printing.
+};
+} // namespace internal
+
 /// @brief Printer class that prints an evaluated TimerTree in Json format.
+///
+/// @tparam Duration Type to represent a duration.
+template <typename Duration = double>
 class SimpleJsonPrinter {
 public:
     /// @brief Construct a printer that use std::cout as outstream.
-    SimpleJsonPrinter() : _outstream{std::cout} {}
+    SimpleJsonPrinter() : _outstream{std::cout}, _interal_printer(_outstream) {}
 
     /// @brief Construct a printer printing to a given outstream.
     ///
     /// @param outstream Outstream on which the content is printed.
-    SimpleJsonPrinter(std::ostream& outstream) : _outstream{outstream} {}
+    SimpleJsonPrinter(std::ostream& outstream) : _outstream{outstream}, _interal_printer(_outstream) {}
     /// @brief Prints an evaluated TimerTree in Json format to stdout.
-    /// @tparam Duration Type to represent a duration.
     /// @param node Root node of the TimerTree to print.
     /// @param indentation Indentation to use for the node.
-    template <typename Duration>
     void print(EvaluationTreeNode<Duration> const& node, std::size_t indentation = 0) {
         const std::size_t indentation_per_level = 2;
         auto              name                  = node.name();
         auto              evaluation_data       = node.aggregated_data();
         _outstream << std::string(indentation, ' ') << quote_string(name) << ": {" << std::endl;
 
-        InternalPrinter<Duration> internal_printer{_outstream};
+        internal::ScalarOrVectorPrinter<Duration> _internal_printer{_outstream};
         _outstream << std::string(indentation + indentation_per_level, ' ') << quote_string("statistics") << ": {"
                    << std::endl;
         if (!evaluation_data.empty()) {
@@ -63,7 +97,7 @@ public:
                         _outstream << ", ";
                     }
                     is_first = false;
-                    std::visit(internal_printer, data_item);
+                    std::visit(_internal_printer, data_item);
                 }
                 _outstream << "]";
             }
@@ -91,26 +125,62 @@ public:
 
 private:
     std::ostream& _outstream; ///< Outstream to print on.
-    template <typename T>
-    struct InternalPrinter {
-        InternalPrinter(std::ostream& outstream) : _outstream{outstream} {}
-        void operator()(std::vector<T> const& vec) const {
-            _outstream << "[";
+    internal::ScalarOrVectorPrinter<Duration>
+        _interal_printer; ///< Internal printer able to print either a scalar or vector of durations.
+};
+
+/// @brief Printer class that prints an evaluated TimerTree in Json format.
+class FlatPrinter {
+public:
+    /// @brief Construct a printer that use std::cout as outstream.
+    FlatPrinter() : _outstream{std::cout} {}
+
+    /// @brief Construct a printer printing to a given outstream.
+    ///
+    /// @param outstream Outstream on which the content is printed.
+    FlatPrinter(std::ostream& outstream) : _outstream{outstream} {}
+    /// @brief Prints an evaluated TimerTree in Json format to stdout.
+    /// @tparam Duration Type to represent a duration.
+    /// @param node Root node of the TimerTree to print.
+    template <typename Duration>
+    void print(EvaluationTreeNode<Duration> const& node) {
+        _key_stack.push_back(node.name());
+        internal::ScalarOrVectorPrinter<Duration> internal_printer{_outstream};
+        for (auto const& [operation, aggregated_data]: node.aggregated_data()) {
+            _outstream << " " << concatenate_key_stack() << ":" << operation << "=[";
             bool is_first = true;
-            for (auto const& elem: vec) {
+            for (auto const& data_item: aggregated_data) {
                 if (!is_first) {
                     _outstream << ", ";
                 }
                 is_first = false;
-                _outstream << std::fixed << elem;
+                std::visit(internal_printer, data_item);
             }
             _outstream << "]";
         }
-        void operator()(T const& scalar) const {
-            _outstream << std::fixed << scalar;
+
+        for (auto const& child: node.children()) {
+            if (child) {
+                print(*child);
+            }
         }
-        std::ostream& _outstream;
-    };
+        _key_stack.pop_back();
+    }
+
+private:
+    std::ostream&            _outstream; ///< Outstream to print on.
+    std::vector<std::string> _key_stack; ///< Stack tracking the current path to the root.
+
+    std::string concatenate_key_stack() const {
+        std::string str;
+        for (auto const& key: _key_stack) {
+            if (!str.empty()) {
+                str.append(".");
+            }
+            str.append(key);
+        }
+        return str;
+    }
 };
 
 } // namespace kamping::timer
