@@ -56,17 +56,31 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_FALSE(int_iterator_span.empty());
     EXPECT_EQ(values.data(), int_iterator_span.data());
 
-    auto int_iterator_span_deducted = Span(values.begin(), values.end());
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) // not C++ 20
+    // if C++20 is used, we alias Span to std::span, but we cannot use deduction there, because argument deduction is
+    // not allowed for alias templates but only for class templates.
+    Span int_iterator_span_deducted(values.begin(), values.end());
     EXPECT_EQ(values.size(), int_iterator_span_deducted.size());
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_iterator_span_deducted.size_bytes());
     EXPECT_FALSE(int_iterator_span_deducted.empty());
     EXPECT_EQ(values.data(), int_iterator_span_deducted.data());
+#endif
 
     Span<int> int_range_span(values);
     EXPECT_EQ(values.size(), int_range_span.size());
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_range_span.size_bytes());
     EXPECT_FALSE(int_range_span.empty());
     EXPECT_EQ(values.data(), int_range_span.data());
+
+#if ((defined(_MSVC_LANG) && _MSVC_LANG < 202002L) || __cplusplus < 202002L) // not C++ 20
+    // if C++20 is used, we alias Span to std::span, but we cannot use deduction there, because argument deduction is
+    // not allowed for alias templates but only for class templates.
+    Span int_range_span_deducted(values);
+    EXPECT_EQ(values.size(), int_range_span_deducted.size());
+    EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_range_span_deducted.size_bytes());
+    EXPECT_FALSE(int_range_span_deducted.empty());
+    EXPECT_EQ(values.data(), int_range_span_deducted.data());
+#endif
 
     Span<int> empty_span = {values.data(), 0};
     EXPECT_TRUE(empty_span.empty());
