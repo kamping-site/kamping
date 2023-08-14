@@ -174,7 +174,7 @@
 // kamping::internal::ParameterType::recv_buf"
 //
 // We do this because we need both versions of the parameter types: to print nice error messages, we only need the names
-// of the types without proceeding `kamping::internal::ParameterType::`; to implement the checks, we need the actual
+// of the types without preceding `kamping::internal::ParameterType::`; to implement the checks, we need the actual
 // name of the symbol to generate valid C++ code.
 //
 // Note that argument "ignore" argument in this macro is required because the "..." parameter of
