@@ -180,6 +180,7 @@ using logical_xor = kamping::internal::logical_xor_impl<T>;
 template <typename T = void>
 using bit_xor = std::bit_xor<T>;
 
+/// @brief builtin null operation (aka `MPI_OP_NULL`)
 template <typename T = void>
 struct null {};
 
@@ -392,6 +393,12 @@ struct mpi_operation_traits<
 
 /// @todo support for MPI_MAXLOC and MPI_MINLOC
 
+/// @brief Helper function that maps an \c MPI_Op to the matching functor from \c kamping::ops. In case no function
+/// maps, the functor is called with \c kamping::ops::null<>{}.
+///
+/// @param op The operation.
+/// @param func The lambda to be called with the functor matching the \c MPI_Op, e.g. in the case of \c MPI_SUM we call
+/// \c func(kamping::ops::plus<>{}).
 template <typename Functor>
 auto with_operation_functor(MPI_Op op, Functor&& func) {
     if (op == MPI_MAX) {
@@ -582,11 +589,13 @@ private:
     UserOperationWrapper<commutative, T, Op> _operation;
 };
 
+/// @brief Wrapper for a native MPI_Op.
 template <typename T>
 class ReduceOperation<T, MPI_Op, ops::internal::undefined_commutative_tag, void> {
 public:
-    ReduceOperation(MPI_Op op) : _op(op) {}
-    static constexpr bool is_builtin = false;
+    ReduceOperation(MPI_Op op, ops::internal::undefined_commutative_tag = {}) : _op(op) {}
+    static constexpr bool is_builtin = false; // set to false, because we can not decide that at compile time and don't
+                                              // need this information for a native \c MPI_Op
 
     MPI_Op op() {
         return _op;
