@@ -163,7 +163,7 @@ public:
         }
     }
 
-public:
+private:
     internal::TimerTree<double, double>
                             _timer_tree; ///< Timer tree used to represent the hiearchical time measurements.
     CommunicatorType const& _comm;       ///< Communicator in which the time measurements take place.
@@ -184,13 +184,13 @@ public:
     /// @param duration_aggregation_modi Specifies how the measurement duration is aggregated over all participationg
     /// ranks when Timer::aggregate() is called.
     void stop_impl(
-        KeyAggregationMode key_aggregation_mode, std::vector<DataAggregationMode> const& duration_aggreation_modi
+        KeyAggregationMode key_aggregation_mode, std::vector<DataAggregationMode> const& duration_aggregation_modi
     ) {
         auto endpoint   = Environment<>::wtime();
         auto startpoint = _timer_tree.current_node->startpoint();
         _timer_tree.current_node->aggregate_measurements_locally(endpoint - startpoint, key_aggregation_mode);
-        if (!duration_aggreation_modi.empty()) {
-            _timer_tree.current_node->duration_aggregation_operations() = duration_aggreation_modi;
+        if (!duration_aggregation_modi.empty()) {
+            _timer_tree.current_node->duration_aggregation_operations() = duration_aggregation_modi;
         }
         _timer_tree.current_node = _timer_tree.current_node->parent_ptr();
     }
@@ -268,9 +268,9 @@ public:
 /// @brief A basic Timer that uses kamping::Communicator<> as underlying communicator type.
 using BasicTimer = Timer<Communicator<>>;
 
-/// @brief Gets a reference to a \ref BasicTimer.
+/// @brief Gets a reference to a kamping::measurements::BasicTimer.
 ///
-/// @return A reference to a \ref BasicCommunicator.
+/// @return A reference to a kamping::measurements::BasicCommunicator.
 inline Timer<Communicator<>>& timer() {
     static Timer<Communicator<>> timer;
     return timer;

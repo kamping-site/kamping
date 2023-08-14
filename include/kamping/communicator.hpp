@@ -463,7 +463,7 @@ public:
     template <typename Value>
     bool is_same_on_all_ranks(Value const& value) const;
 
-public:
+private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
     /// @return Rank of the current MPI process in the communicator.
     size_t get_mpi_rank(MPI_Comm comm) const {
