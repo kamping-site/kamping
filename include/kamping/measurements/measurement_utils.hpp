@@ -30,7 +30,7 @@
 #include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
 
-namespace kamping::timer {
+namespace kamping::measurements {
 
 ///@brief Either a scalar or vector of type \c T.
 ///@tparam T Type.
@@ -45,13 +45,14 @@ enum class KeyAggregationMode {
 
 /// @brief Enum to specify how time duration shall be aggregated across the participating ranks.
 enum class DataAggregationMode {
-    min,   ///< The minimum of the durations on the participating ranks will be computed.
-    max,   ///< The maximum of the durations on the participating ranks will be computed.
-    gather ///< The duration data on the participating ranks will be collected in a container.
+    min,   ///< The minimum of the measurement data on the participating ranks will be computed.
+    max,   ///< The maximum of the measurement data on the participating ranks will be computed.
+    sum,   ///< The sum of the measurement data on the participating ranks will be computed.
+    gather ///< The measurement data on the participating ranks will be collected in a container.
 };
-} // namespace kamping::timer
+} // namespace kamping::measurements
 
-namespace kamping::timer::internal {
+namespace kamping::measurements::internal {
 /// @brief Object encapsulating a maximum operation on a given range of objects.
 struct Max {
     /// @brief Apply a maximum computation of the given range of objects.
@@ -96,6 +97,30 @@ struct Min {
     /// @return Operations name.
     static std::string operation_name() {
         return "min";
+    }
+};
+
+/// @brief Object encapsulating a summation operation on a given range of objects.
+struct Sum {
+    /// @brief Apply a summation computation of the given range of objects.
+    /// @tparam Container Type of container storing the objects.
+    /// @param container Container storing objects on which the aggregation operation is applied.
+    /// @return std::optional which either contains sum of elements in the container or is empty if container is
+    /// empty.
+    template <typename Container>
+    static auto compute(Container const& container) {
+        using T = typename Container::value_type;
+        if (container.size() == 0) {
+            return std::optional<T>{};
+        }
+        auto const sum = std::accumulate(container.begin(), container.end(), T{});
+        return std::make_optional(sum);
+    }
+
+    /// @brief Returns operation's name.
+    /// @return Operations name.
+    static std::string operation_name() {
+        return "sum";
     }
 };
 
@@ -196,9 +221,9 @@ public:
     /// @brief Add the result of a time measurement (i.e. a duration) to the node.
     ///
     /// @param duration Duration which is added to the node.
-    /// @param mode The kamping::timer::KeyAggregationMode parameter determines how multiple time measurements shall
-    /// be handled. They can either be accumulated (the durations are added together) or appended (the durations are
-    /// stored in a list).
+    /// @param mode The kamping::measurements::KeyAggregationMode parameter determines how multiple time measurements
+    /// shall be handled. They can either be accumulated (the durations are added together) or appended (the durations
+    /// are stored in a list).
     void aggregate_measurements_locally(Duration const& duration, KeyAggregationMode const& mode) {
         switch (mode) {
             case KeyAggregationMode::accumulate:
@@ -249,12 +274,19 @@ struct TimerTree {
     TimerTree() : root{"root"}, current_node(&root) {
         root.parent_ptr() = &root;
     }
+
+    /// @brief Resets the root node (i.e. deletes and assigns a new empty node).
+    void reset() {
+        root         = TimerTreeNode<TimePoint, Duration>{"root"};
+        current_node = &root;
+    }
+
     TimerTreeNode<TimePoint, Duration>  root;         ///< Root node of the tree.
     TimerTreeNode<TimePoint, Duration>* current_node; ///< Pointer to the currently active node of the tree.
 };
-} // namespace kamping::timer::internal
+} // namespace kamping::measurements::internal
 
-namespace kamping::timer {
+namespace kamping::measurements {
 /// @brief Class representing a node in the timer tree. Each node represents a time measurement (or multiple with
 /// the
 ///  same key). A node can have multiple children which represent nested time measurements. The measurements
@@ -330,4 +362,4 @@ inline bool is_string_same_on_all_ranks(std::string const& str, Communicator con
     return result;
 }
 
-} // namespace kamping::timer
+} // namespace kamping::measurements

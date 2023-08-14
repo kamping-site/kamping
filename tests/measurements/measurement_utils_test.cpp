@@ -21,17 +21,17 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include "kamping/timer/timer_utils.hpp"
+#include "kamping/measurements/measurement_utils.hpp"
 
-using namespace kamping::timer;
-using namespace kamping::timer::internal;
+using namespace kamping::measurements;
+using namespace kamping::measurements::internal;
 
 struct DummyNode : public TreeNode<DummyNode> {
     using TreeNode<DummyNode>::TreeNode; // make base class constructors available
 };
 
 TEST(TreeNodeTest, node_construction) {
-    using namespace kamping::timer::internal;
+    using namespace kamping::measurements::internal;
     {
         DummyNode root;
         EXPECT_EQ(root.name(), "");
@@ -52,7 +52,7 @@ TEST(TreeNodeTest, node_construction) {
 }
 
 TEST(TreeNodeTest, find_or_insert_basic_tree_construction) {
-    using namespace kamping::timer::internal;
+    using namespace kamping::measurements::internal;
     DummyNode root("root");
     auto      child1  = root.find_or_insert("child1");
     auto      child2  = root.find_or_insert("child2");
@@ -70,7 +70,7 @@ TEST(TreeNodeTest, find_or_insert_basic_tree_construction) {
 }
 
 TEST(TreeNodeTest, find_or_insert_basic_navigation_structure) {
-    using namespace kamping::timer::internal;
+    using namespace kamping::measurements::internal;
     DummyNode root("root");
     auto      child1  = root.find_or_insert("child1");
     auto      child2  = root.find_or_insert("child2");
@@ -112,6 +112,10 @@ TEST(MinTest, operation_name) {
     EXPECT_EQ(Min::operation_name(), "min");
 }
 
+TEST(SumTest, operation_name) {
+    EXPECT_EQ(Sum::operation_name(), "sum");
+}
+
 TEST(GatherTest, operation_name) {
     EXPECT_EQ(Gather::operation_name(), "gather");
 }
@@ -132,6 +136,15 @@ TEST(MinTest, compute_basics) {
     auto res = Min::compute(vec);
     EXPECT_TRUE(res);
     EXPECT_EQ(res.value(), 1);
+}
+
+TEST(SumTest, compute_basics) {
+    std::vector<int> vec;
+    EXPECT_EQ(Sum::compute(vec), std::nullopt);
+    vec      = {5, 1, 99};
+    auto res = Sum::compute(vec);
+    EXPECT_TRUE(res);
+    EXPECT_EQ(res.value(), 105);
 }
 
 TEST(GatherTest, compute_basics) {

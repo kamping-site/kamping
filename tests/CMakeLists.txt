@@ -34,7 +34,7 @@ kamping_register_test(test_helpers_for_testing FILES helpers_for_testing_test.cp
 kamping_register_test(test_operation_builder FILES operation_builder_test.cpp)
 kamping_register_test(test_has_member FILES has_member_test.cpp)
 kamping_register_test(test_rank_ranges FILES rank_ranges_test.cpp)
-kamping_register_test(test_timer_utils FILES timer/timer_utils_test.cpp)
+kamping_register_test(test_measurement_utils FILES measurements/measurement_utils_test.cpp)
 
 # Registering tests with MPI:
 
@@ -196,13 +196,13 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
-    test_timer_utils_with_communication
-    FILES timer/mpi_timer_utils_test.cpp
+    test_measurement_utils_with_communication
+    FILES measurements/mpi_measurement_utils_test.cpp
     CORES 1 4
 )
 kamping_register_mpi_test(
     test_timer
-    FILES timer/mpi_timer_test.cpp
+    FILES measurements/mpi_timer_test.cpp
     CORES 1 4
 )
 

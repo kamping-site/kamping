@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include "kamping/timer/timer.hpp"
+#include "kamping/measurements/timer.hpp"
 
-namespace kamping::timer {
+namespace kamping::measurements {
 
 /// @brief Puts quotation marks around a given string.
 /// @param str String to be quoted.
@@ -183,4 +183,4 @@ private:
     }
 };
 
-} // namespace kamping::timer
+} // namespace kamping::measurements

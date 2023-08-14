@@ -22,11 +22,11 @@
 #include <mpi.h>
 
 #include "../helpers_for_testing.hpp"
-#include "kamping/timer/timer.hpp"
+#include "kamping/measurements/timer.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
-using namespace ::timer;
+using namespace ::measurements;
 
 struct AggregatedDataSummary {
     bool   is_scalar{true};
@@ -74,7 +74,7 @@ struct VisitorReturningSizeAndCategory {
 // Traverses the evaluation tree and returns a smmary of the aggregated data that can be used to verify to some degree
 // the executed timings
 struct ValidationPrinter {
-    void print(timer::EvaluationTreeNode<double> const& node) {
+    void print(measurements::EvaluationTreeNode<double> const& node) {
         key_stack.push_back(node.name());
         for (auto const& [operation, aggregated_data]: node.aggregated_data()) {
             AggregatedDataSummary summary;
@@ -248,7 +248,7 @@ auto setup_complex_scenario(size_t repetitions) {
         timer.start("measurement1");
         {
             timer.start("measurement11");
-            timer.stop({timer::DataAggregationMode::gather, timer::DataAggregationMode::max});
+            timer.stop({measurements::DataAggregationMode::gather, measurements::DataAggregationMode::max});
             timer.start("measurement12");
             {
                 timer.synchronize_and_start("measurement121");
@@ -310,6 +310,35 @@ TEST(TimerTest, evaluate_non_trivial_communicator) {
     printer.print(evaluated_timer_tree);
 
     if (split_comm.is_root()) {
+        std::unordered_map<std::string, AggregatedDataSummary> expected_output{
+            {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(1).set_num_values(1).set_is_scalar(true)}};
+        EXPECT_EQ(printer.output, expected_output);
+    }
+}
+
+TEST(TimerTest, clear) {
+    Communicator<> comm;
+    const size_t   repetitions = 5u;
+    auto           timer       = setup_complex_scenario(repetitions);
+    timer.clear();
+    ValidationPrinter printer;
+    timer.evaluate_and_print(printer);
+    if (comm.is_root()) {
+        EXPECT_EQ(printer.output.size(), 0u);
+    };
+}
+
+TEST(TimerTest, singleton) {
+    Communicator<> comm;
+    auto&          timer = kamping::measurements::timer();
+    timer.clear();
+    timer.start("measurement");
+    timer.stop();
+    auto              evaluated_timer_tree = timer.evaluate();
+    ValidationPrinter printer;
+    printer.print(evaluated_timer_tree);
+
+    if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
             {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(1).set_num_values(1).set_is_scalar(true)}};
         EXPECT_EQ(printer.output, expected_output);

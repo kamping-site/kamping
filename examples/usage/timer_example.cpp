@@ -24,9 +24,9 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/measurements/printer.hpp"
+#include "kamping/measurements/timer.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/timer/printer.hpp"
-#include "kamping/timer/timer.hpp"
 
 int main() {
     using namespace kamping;
@@ -44,7 +44,7 @@ int main() {
         for (volatile int i = 0; i < it; ++i)
             ;
     };
-    timer::Timer t;
+    auto& t = kamping::measurements::timer();
     t.synchronize_and_start("algorithm");
     for (size_t i = 0; i < 3; ++i) {
         t.synchronize_and_start("round" + std::to_string(i));
@@ -58,9 +58,9 @@ int main() {
                 t.start("subroutine");
                 spend_some_time();
                 t.stop_and_append(
-                    {timer::DataAggregationMode::min,
-                     timer::DataAggregationMode::max,
-                     timer::DataAggregationMode::gather}
+                    {measurements::DataAggregationMode::min,
+                     measurements::DataAggregationMode::max,
+                     measurements::DataAggregationMode::gather}
                 );
             }
             t.stop();
@@ -71,9 +71,9 @@ int main() {
         t.stop_and_append();
     }
     t.stop();
-    t.evaluate_and_print(kamping::timer::SimpleJsonPrinter{});
+    t.evaluate_and_print(kamping::measurements::SimpleJsonPrinter{});
     std::cout << std::endl;
-    t.evaluate_and_print(kamping::timer::FlatPrinter{});
+    t.evaluate_and_print(kamping::measurements::FlatPrinter{});
     std::cout << std::endl;
 
     return 0;

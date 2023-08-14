@@ -23,9 +23,9 @@
 #include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/timer/timer_utils.hpp"
+#include "kamping/measurements/measurement_utils.hpp"
 
-namespace kamping::timer {
+namespace kamping::measurements {
 
 /// @brief Distributed timer object.
 ///
@@ -135,6 +135,15 @@ public:
         return root;
     }
 
+    /// @brief Clears all stored measurements.
+    void clear() {
+        std::cout << "add root: " << &(_timer_tree.root) << std::endl;
+        std::cout << "current : " << _timer_tree.current_node << std::endl;
+        _timer_tree.reset();
+        std::cout << "add root: " << &(_timer_tree.root) << std::endl;
+        std::cout << "current : " << _timer_tree.current_node << std::endl;
+    }
+
     /// @brief Aggregates and outputs the the executed measurements. The output is done via the print()
     /// method of a given Printer object.
     ///
@@ -154,10 +163,10 @@ public:
         }
     }
 
-private:
+public:
     internal::TimerTree<double, double>
-                     _timer_tree; ///< Timer tree used to represent the hiearchical time measurements.
-    CommunicatorType _comm;       ///< Communicator in which the time measurements take place.
+                            _timer_tree; ///< Timer tree used to represent the hiearchical time measurements.
+    CommunicatorType const& _comm;       ///< Communicator in which the time measurements take place.
 
     /// @brief Starts a time measurement.
     void start_impl(std::string const& key, bool use_barrier) {
@@ -227,9 +236,9 @@ private:
     /// @param gathered_data Durations gathered from all participating ranks.
     /// @param evaluation_node Object where the aggregated and evaluated durations are stored.
     void aggregate_measurements_globally(
-        DataAggregationMode                         mode,
-        std::vector<double> const&                  gathered_data,
-        kamping::timer::EvaluationTreeNode<double>& evaluation_node
+        DataAggregationMode                                mode,
+        std::vector<double> const&                         gathered_data,
+        kamping::measurements::EvaluationTreeNode<double>& evaluation_node
     ) {
         switch (mode) {
             case DataAggregationMode::max: {
@@ -242,6 +251,11 @@ private:
                 evaluation_node.add(Operation::operation_name(), Operation::compute(gathered_data));
                 break;
             }
+            case DataAggregationMode::sum: {
+                using Operation = internal::Sum;
+                evaluation_node.add(Operation::operation_name(), Operation::compute(gathered_data));
+                break;
+            }
             case DataAggregationMode::gather: {
                 using Operation = internal::Gather;
                 evaluation_node.add(Operation::operation_name(), Operation::compute(gathered_data));
@@ -250,4 +264,16 @@ private:
         }
     }
 };
-} // namespace kamping::timer
+
+/// @brief A basic Timer that uses kamping::Communicator<> as underlying communicator type.
+using BasicTimer = Timer<Communicator<>>;
+
+/// @brief Gets a reference to a \ref BasicTimer.
+///
+/// @return A reference to a \ref BasicCommunicator.
+inline Timer<Communicator<>>& timer() {
+    static Timer<Communicator<>> timer;
+    return timer;
+}
+
+} // namespace kamping::measurements
