@@ -21,7 +21,10 @@
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "kamping/assertion_levels.hpp"
+#include "kamping/checking_casts.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/span.hpp"
 
 namespace kamping {
 
@@ -181,6 +184,53 @@ public:
         internal::registered_mpi_types.clear();
     }
 
+    static const size_t bsend_overhead = MPI_BSEND_OVERHEAD;
+
+    /// @brief Attach a buffer to use for buffered send operations to the environment.
+    ///
+    /// @tparam T The type of the buffer.
+    /// @param The buffer. The user is responsible for allocating the buffer, attaching it, detaching it and freeing the
+    /// memory after detaching. For convenience, the buffer may be a span of any type, but the type is ignored by MPI.
+    template <typename T>
+    void buffer_attach(Span<T> buffer) {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!has_buffer_attached, "You may only attach one buffer at a time.");
+#endif
+        int err = MPI_Buffer_attach(buffer.data(), asserting_cast<int>(buffer.size() * sizeof(T)));
+        THROW_IF_MPI_ERROR(err, MPI_Buffer_attach);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        has_buffer_attached = true;
+#endif
+    }
+
+    // TODO: maybe we want buffer_allocate. This would require us keeping track of the buffer internally.
+
+    /// @brief Detach a buffer attached via \ref buffer_attach.
+    ///
+    /// @tparam T The type of the span to return. Defaults to \c std::byte.
+    /// @return A span pointing to the previously attached buffer. The type of the returned span can be controlled via
+    /// the parameter \c T. The pointer to the buffer stored internally by MPI is reinterpreted accordingly.
+    template <typename T = std::byte>
+    Span<T> buffer_detach() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(has_buffer_attached, "There is currently no buffer attached.");
+#endif
+        void* buffer_ptr;
+        int   buffer_size;
+        int   err = MPI_Buffer_detach(&buffer_ptr, &buffer_size);
+        THROW_IF_MPI_ERROR(err, MPI_Buffer_detach);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        has_buffer_attached = false;
+#endif
+        KASSERT(
+            static_cast<size_t>(buffer_size) % sizeof(T) == size_t{0},
+            "The buffer size is not a multiple of the size of T."
+        );
+
+        // convert the returned pointer and size to a span of type T
+        return Span<T>{static_cast<T*>(buffer_ptr), asserting_cast<size_t>(buffer_size) / sizeof(T)};
+    }
+
     /// @brief Calls MPI_Finalize if finalize() has not been called before. Also frees all registered MPI data types.
     ~Environment() {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
@@ -199,6 +249,11 @@ public:
             }
         }
     }
+
+private:
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    bool has_buffer_attached = false; ///< Is there currently a attached buffer?
+#endif
 
 }; // class Environment
 
