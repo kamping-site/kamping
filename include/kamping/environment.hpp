@@ -32,8 +32,11 @@ inline std::vector<MPI_Datatype> registered_mpi_types;
 
 /// @brief Configuration for the behavior of the constructors and destructor of \ref kamping::Environment.
 enum class InitMPIMode {
-    InitFinalize,  ///< Call \c MPI_Init in the constructor of \ref Environment.
-    NoInitFinalize ///< Do not call \c MPI_Init in the constructor of \ref Environment.
+    InitFinalize,           ///< Call \c MPI_Init in the constructor of \ref Environment.
+    NoInitFinalize,         ///< Do not call \c MPI_Init in the constructor of \ref Environment.
+    InitFinalizeIfNecessary ///< Call \c MPI_Init in the constructor of \ref Environment if \c MPI_Init has not been
+                            ///< called before. Call \c MPI_Finalize in the destructor of \ref Environment if \c
+                            ///< MPI_Init was called in the constructor.
 };
 
 /// @brief Wrapper for MPI functions that don't require a communicator. If the template parameter `init_finalize_mode`
@@ -52,6 +55,9 @@ public:
     Environment(int& argc, char**& argv) {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
             init(argc, argv);
+        } else if constexpr (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary) {
+            init(argc, argv);
+            _finalize = true;
         }
     }
 
@@ -59,6 +65,9 @@ public:
     Environment() {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
             init();
+        } else if constexpr (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary) {
+            init();
+            _finalize = true;
         }
     }
 
@@ -194,7 +203,8 @@ public:
 
     /// @brief Calls MPI_Finalize if finalize() has not been called before. Also frees all registered MPI data types.
     ~Environment() {
-        if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
+        if (init_finalize_mode == InitMPIMode::InitFinalize
+            || (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary && _finalize)) {
             bool is_already_finalized = false;
             try {
                 is_already_finalized = finalized();
@@ -211,6 +221,8 @@ public:
         }
     }
 
+private:
+    bool _finalize = false;
 }; // class Environment
 
 /// @brief A global environment object to use when you don't want to create a new Environment object.
