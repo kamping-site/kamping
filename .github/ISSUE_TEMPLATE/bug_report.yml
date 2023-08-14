@@ -1,0 +1,64 @@
+name: Bug report
+description: Create a report to help us improve existing features
+labels: ["Type: Possible bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have used the search function for [open](https://github.com/kamping-site/kamping/issues) **and** [closed](https://github.com/kamping-stie/kamping/issues?q=is%3Aissue+is%3Aclosed) issues to see if someone else has already submitted the same bug report.
+          required: true
+        - label: I will describe the problem with as much detail as possible.
+          required: true
+        - label: I build KaMPIng in Debug mode and will include all error and warning messages.
+          required: true
+  - type: input
+    id: kamping_version
+    attributes:
+      label: KaMPIng Version
+      description: The KaMPIng release number or git-commit hash.
+      placeholder: x.y.z
+    validations:
+      required: true
+  - type: input
+    id: mpi_version
+    attributes:
+      label: MPI Implementation and Version
+      description: OpenMPI/IntelMPI/MPICH/... + version
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Harware (especially network hardware)
+  - type: input
+    id: first
+    attributes:
+      label: First occurred
+      placeholder: On 1970-01-01
+  - type: textarea
+    id: steps
+    attributes:
+      label: Minimal Buggy Example
+      placeholder: |
+        // Your code here, should compile
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Output
+      description: Which output or behaviour do you expect?
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Behaviour
+      description: What output or beheaviour do you get?
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: If you are experiencing a crash, including the output including the stacktrace will likely get it fixed sooner. Please build in Debug mode.
