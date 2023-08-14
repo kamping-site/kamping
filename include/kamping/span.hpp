@@ -142,6 +142,8 @@ protected:
 template <typename Range>
 Span(Range&&) -> Span<typename std::remove_reference_t<Range>::value_type>;
 
+template <typename It>
+Span(It, It) -> Span<typename std::iterator_traits<It>::value_type>;
 } // namespace kamping
 
 #endif // C++ 17
