@@ -206,8 +206,8 @@ TEST_F(EnvironmentTest, butter_attach_and_detach_with_other_type) {
 
 TEST_F(EnvironmentTest, buffer_attach_and_detach_with_other_type_not_matching) {
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
-    using attach_type = char;
-    using detach_type = double;
+    using attach_type                  = char;
+    using detach_type [[maybe_unused]] = double;
     std::vector<attach_type> buffer;
     buffer.resize(13);
     env.buffer_attach(kamping::Span<attach_type>{buffer.begin(), buffer.end()});
