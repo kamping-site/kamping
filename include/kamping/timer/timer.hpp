@@ -83,21 +83,21 @@ public:
     void synchronize_and_start(std::string const& key) {
         bool const use_barrier = true;
         start_impl(key, use_barrier);
-    };
+    }
 
     /// @brief Starts the measuremt with the given key.
     /// @param key Key with which the started time measurement is associated.
     void start(std::string const& key) {
         bool const use_barrier = false;
         start_impl(key, use_barrier);
-    };
+    }
 
     /// @brief Stops the currently active measurement and store the result.
     /// @param duration_aggregation_modi Specify how the measurement duration is aggregated over all participationg
     /// PEs when Timer::aggregate() is called.
     void stop(std::vector<DataAggregationMode> const& duration_aggregation_modi = std::vector<DataAggregationMode>{}) {
         stop_impl(KeyAggregationMode::accumulate, duration_aggregation_modi);
-    };
+    }
 
     /// @brief Stops the currently active measurement and store the result. If the key associated with the
     /// measurement that is stopped has already been used at the current hierarchy level the duration is added to
@@ -108,7 +108,7 @@ public:
         std::vector<DataAggregationMode> const& duration_aggregation_modi = std::vector<DataAggregationMode>{}
     ) {
         stop_impl(KeyAggregationMode::accumulate, duration_aggregation_modi);
-    };
+    }
 
     /// @brief Stops the currently active measurement and store the result. If the key associated with the
     /// measurement that is stopped has already been used at the current hierarchy level the duration is append to a
@@ -119,7 +119,7 @@ public:
         std::vector<DataAggregationMode> const& duration_aggregation_modi = std::vector<DataAggregationMode>{}
     ) {
         stop_impl(KeyAggregationMode::append, duration_aggregation_modi);
-    };
+    }
 
     /// @brief Evaluates the time measurements represented by the timer tree for which the current node is the root
     /// node globally. The measured durations are aggregated over all participating PEs and the result is stored at
@@ -167,7 +167,7 @@ private:
         }
         node->startpoint()       = Environment<>::wtime();
         _timer_tree.current_node = node;
-    };
+    }
 
     /// @brief Stops the currently active measurement and store the result.
     /// @param key_aggregation_mode Specifies how the measurement duration is locally aggregated when there are multiple
@@ -184,7 +184,7 @@ private:
             _timer_tree.current_node->duration_aggregation_operations() = duration_aggreation_modi;
         }
         _timer_tree.current_node = _timer_tree.current_node->parent_ptr();
-    };
+    }
 
     /// @brief Traverses and evaluates the given TimerTreeNode and stores the result in the corresponding
     /// EvaluationTreeNode

@@ -30,14 +30,15 @@ using namespace ::testing;
 using namespace ::timer;
 
 TEST(TimerUtilsTest, is_string_same_on_all_ranks_basics) {
+    Communicator<> comm;
     const std::string empty;
     const std::string non_empty("abc");
-    EXPECT_TRUE(is_string_same_on_all_ranks(empty, comm_world()));
-    EXPECT_TRUE(is_string_same_on_all_ranks(non_empty, comm_world()));
+    EXPECT_TRUE(is_string_same_on_all_ranks(empty, comm));
+    EXPECT_TRUE(is_string_same_on_all_ranks(non_empty, comm));
 }
 
 TEST(TimerUtilsTest, is_string_same_on_all_ranks) {
-    auto const& comm = comm_world();
+    Communicator<> comm;
     if (comm.size() <= 1) {
         return;
     }
