@@ -125,6 +125,15 @@ public:
         std::swap(_owns_mpi_comm, other._owns_mpi_comm);
     }
 
+    /// @brief Terminates MPI execution environment (on all processes in this Communicator).
+    /// Beware of MPI implementations who might terminate all processes, whether they are in this communicator or not.
+    ///
+    /// @param errorcode Error code to return to invoking environment.
+    void abort(int errorcode = 1) const {
+        [[maybe_unused]] int err = MPI_Abort(_comm, errorcode);
+        THROW_IF_MPI_ERROR(err, MPI_Abort);
+    }
+
     /// @brief Rank of the current MPI process in the communicator as `int`.
     /// @return Rank of the current MPI process in the communicator as `int`.
     [[nodiscard]] int rank_signed() const {
