@@ -184,13 +184,15 @@ public:
         internal::registered_mpi_types.clear();
     }
 
-    static const size_t bsend_overhead = MPI_BSEND_OVERHEAD;
+    static const size_t bsend_overhead = MPI_BSEND_OVERHEAD; ///< Provides an upper bound on the additional memory
+                                                             ///< required by buffered send operations.
 
     /// @brief Attach a buffer to use for buffered send operations to the environment.
     ///
     /// @tparam T The type of the buffer.
-    /// @param The buffer. The user is responsible for allocating the buffer, attaching it, detaching it and freeing the
-    /// memory after detaching. For convenience, the buffer may be a span of any type, but the type is ignored by MPI.
+    /// @param buffer The buffer. The user is responsible for allocating the buffer, attaching it, detaching it and
+    /// freeing the memory after detaching. For convenience, the buffer may be a span of any type, but the type is
+    /// ignored by MPI.
     template <typename T>
     void buffer_attach(Span<T> buffer) {
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
