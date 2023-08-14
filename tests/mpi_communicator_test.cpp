@@ -239,6 +239,46 @@ TEST_F(CommunicatorTest, split_and_rank_conversion) {
     }
 }
 
+int      expected_rank;
+MPI_Comm expected_comm;
+uint32_t mpi_comm_split_type_call_counter = 0;
+
+int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm* newcomm) {
+    mpi_comm_split_type_call_counter++;
+    return PMPI_Comm_split_type(comm, split_type, key, info, newcomm);
+    EXPECT_EQ(expected_comm, comm);
+    EXPECT_EQ(expected_rank, key);
+    EXPECT_EQ(info, MPI_INFO_NULL);
+    EXPECT_EQ(split_type, MPI_COMM_TYPE_SHARED);
+}
+
+TEST_F(CommunicatorTest, split_by_type) {
+    Communicator comm;
+
+    // For this tests, we're assuming that we're running on a system in which each NUMA node has the same number of
+    // ranks.
+    ASSERT_GT(comm.num_numa_nodes(), 0);
+    auto const shared_mem_comm = comm.split_to_shared_memory();
+    EXPECT_EQ(shared_mem_comm.size(), comm.size() / comm.num_numa_nodes());
+    EXPECT_EQ(shared_mem_comm.rank(), comm.rank() % shared_mem_comm.size());
+
+    auto const shared_mem_comm1 = comm.split_by_type(MPI_COMM_TYPE_SHARED);
+    EXPECT_EQ(shared_mem_comm1.size(), shared_mem_comm.size());
+    EXPECT_EQ(shared_mem_comm1.rank(), shared_mem_comm.rank());
+
+#ifdef OMPI_COMM_TYPE_L1CACHE
+    constexpr size_t ranks_per_l1_cache = 1; // on all modern processors, assuming no oversubscription
+    auto const       l1cache_comm       = comm.split_by_type(OMPI_COMM_TYPE_L1CACHE);
+    EXPECT_EQ(l1cache_comm.size(), ranks_per_l1_cache);
+#endif // OMPI_COMM_TYPE_L1CACHE
+
+    mpi_comm_split_type_call_counter = 0;
+    expected_rank                    = comm.rank_signed();
+    expected_comm                    = comm.mpi_communicator();
+    comm.split_to_shared_memory();
+    EXPECT_EQ(mpi_comm_split_type_call_counter, 1);
+}
+
 TEST_F(CommunicatorTest, create_communicators_via_provided_ranks) {
     Communicator comm;
 
