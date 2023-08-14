@@ -241,21 +241,3 @@ TEST(EvaluationNodeTest, add_multiple_aggregation_operation) {
         EXPECT_EQ(contained_values, expected_values);
     }
 }
-TEST(TimerUtilsTest, is_string_same_on_all_ranks_basics) {
-    const std::string empty;
-    const std::string non_empty("abc");
-    EXPECT_TRUE(is_string_same_on_all_ranks(empty, kamping::comm_world()));
-    EXPECT_TRUE(is_string_same_on_all_ranks(non_empty, kamping::comm_world()));
-}
-
-TEST(TimerUtilsTest, is_string_same_on_all_ranks) {
-    auto const& comm = kamping::comm_world();
-    if (comm.size() <= 1) {
-        return;
-    }
-    std::string str("abc");
-    if (comm.rank() + 1 == comm.size()) {
-        str = "cba";
-    }
-    EXPECT_FALSE(is_string_same_on_all_ranks(str, comm));
-}

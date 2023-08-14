@@ -27,7 +27,6 @@ inline std::string quote_string(std::string const& str) {
 /// @brief Printer class that prints an evaluated TimerTree in Json format.
 class SimpleJsonPrinter {
 public:
-
     /// @brief Prints an evaluated TimerTree in Json format to stdout.
     /// @tparam Duration Type to represent a duration.
     /// @param node Root node of the TimerTree to print.
