@@ -34,14 +34,14 @@ struct AggregatedDataSummary {
     size_t num_entries{0u};
     size_t num_values_per_entry{0u};
     bool   operator==(AggregatedDataSummary const& other) const {
-        bool const result = std::make_tuple(is_scalar, are_entries_consistent, num_entries, num_values_per_entry)
-                            == std::make_tuple(
+          bool const result = std::make_tuple(is_scalar, are_entries_consistent, num_entries, num_values_per_entry)
+                              == std::make_tuple(
                                 other.is_scalar,
                                 other.are_entries_consistent,
                                 other.num_entries,
                                 other.num_values_per_entry
                             );
-        return result;
+          return result;
     }
     auto& set_num_entries(size_t num_entries_) {
         num_entries = num_entries_;
