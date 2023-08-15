@@ -103,6 +103,34 @@ TEST_F(CommunicatorTest, is_root) {
     }
 }
 
+uint32_t mpi_abort_call_count           = 0;
+int      mpi_abort_expected_return_code = 1;
+MPI_Comm mpi_abort_expected_comm        = nullptr;
+
+int MPI_Abort(MPI_Comm comm, int errorcode) {
+    mpi_abort_call_count++;
+    EXPECT_EQ(errorcode, mpi_abort_expected_return_code);
+    EXPECT_EQ(comm, mpi_abort_expected_comm);
+    return 0;
+}
+
+TEST_F(CommunicatorTest, abort) {
+    Communicator comm;
+
+    mpi_abort_call_count           = 0;
+    mpi_abort_expected_return_code = 1;
+    mpi_abort_expected_comm        = comm.mpi_communicator();
+    comm.abort();
+    EXPECT_EQ(mpi_abort_call_count, 1);
+
+    auto const new_comm = comm.split(0);
+
+    mpi_abort_expected_return_code = 2;
+    mpi_abort_expected_comm        = new_comm.mpi_communicator();
+    new_comm.abort(2);
+    EXPECT_EQ(mpi_abort_call_count, 2);
+}
+
 TEST_F(CommunicatorTest, set_root_bound_check) {
     Communicator comm;
     for (int i = -(2 * size); i < (2 * size); ++i) {
