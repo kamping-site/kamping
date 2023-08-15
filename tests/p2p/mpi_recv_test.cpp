@@ -292,3 +292,123 @@ TEST_F(RecvTest, recv_from_invalid_tag_with_explicit_recv_count) {
     std::vector  v{1, 2, 3, 4, 5};
     EXPECT_KASSERT_FAILS({ comm.recv(recv_buf(v), status_out(), tag(-1), recv_counts(1)); }, "invalid tag");
 }
+
+TEST_F(RecvTest, recv_single_int_from_arbitrary_source) {
+    Communicator comm;
+    int          message = comm.rank_signed();
+    MPI_Request  req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    MPI_Issend(
+        &message,                // send_buf
+        1,                       // send_count
+        MPI_INT,                 // send_type
+        0,                       // destination
+        comm.rank_signed(),      // tag
+        comm.mpi_communicator(), // comm
+        &req                     // request
+    );
+    if (comm.rank() == 0) {
+        for (size_t other = 0; other < comm.size(); other++) {
+            Status recv_status;
+            int    received_message = comm.recv_single<int>(status(recv_status));
+            int    source           = recv_status.source_signed();
+            EXPECT_EQ(recv_status.tag(), source);
+            EXPECT_EQ(recv_status.count<int>(), 1);
+            EXPECT_EQ(received_message, source);
+        }
+    }
+    EXPECT_EQ(probe_counter, 0);
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(RecvTest, recv_single_int_from_explicit_source) {
+    Communicator comm;
+    int          message = comm.rank_signed();
+    MPI_Request  req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    MPI_Issend(
+        &message,                // send_buf
+        1,                       // send_count
+        MPI_INT,                 // send_type
+        0,                       // destination
+        comm.rank_signed(),      // tag
+        comm.mpi_communicator(), // comm
+        &req                     // request
+    );
+    if (comm.rank() == 0) {
+        for (size_t other = 0; other < comm.size(); other++) {
+            Status recv_status;
+            int    received_message = comm.recv_single<int>(source(other), status(recv_status));
+            int    source           = recv_status.source_signed();
+            EXPECT_EQ(source, other);
+            EXPECT_EQ(recv_status.tag(), source);
+            EXPECT_EQ(recv_status.count<int>(), 1);
+            EXPECT_EQ(received_message, source);
+        }
+    }
+    EXPECT_EQ(probe_counter, 0);
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(RecvTest, recv_single_int_from_explicit_source_and_explicit_tag) {
+    Communicator comm;
+    int          message = comm.rank_signed();
+    MPI_Request  req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    MPI_Issend(
+        &message,                // send_buf
+        1,                       // send_count
+        MPI_INT,                 // send_type
+        0,                       // destination
+        comm.rank_signed(),      // tag
+        comm.mpi_communicator(), // comm
+        &req                     // request
+    );
+    if (comm.rank() == 0) {
+        for (size_t other = 0; other < comm.size(); other++) {
+            Status recv_status;
+            int    received_message =
+                comm.recv_single<int>(source(other), tag(static_cast<int>(other)), status(recv_status));
+            int source = recv_status.source_signed();
+            EXPECT_EQ(source, other);
+            EXPECT_EQ(recv_status.tag(), source);
+            EXPECT_EQ(recv_status.count<int>(), 1);
+            EXPECT_EQ(received_message, source);
+        }
+    }
+    EXPECT_EQ(probe_counter, 0);
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(RecvTest, recv_single_int_from_explicit_source_and_explicit_ignore_status) {
+    Communicator comm;
+    int          message = comm.rank_signed();
+    MPI_Request  req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    MPI_Issend(
+        &message,                // send_buf
+        1,                       // send_count
+        MPI_INT,                 // send_type
+        0,                       // destination
+        comm.rank_signed(),      // tag
+        comm.mpi_communicator(), // comm
+        &req                     // request
+    );
+    if (comm.rank() == 0) {
+        for (size_t other = 0; other < comm.size(); other++) {
+            int received_message = comm.recv_single<int>(source(other), tag(static_cast<int>(other)));
+            EXPECT_EQ(received_message, other);
+        }
+    }
+    EXPECT_EQ(probe_counter, 0);
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(RecvTest, recv_single_int_from_invalid_tag) {
+    Communicator comm;
+    EXPECT_KASSERT_FAILS({ comm.recv_single<int>(tag(-1)); }, "invalid tag");
+}

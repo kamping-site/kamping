@@ -156,3 +156,28 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
 
     return make_mpi_result(std::move(recv_buf), std::move(recv_count_param), std::move(status));
 }
+
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <typename recv_value_type_tparam, typename... Args>
+auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args... args) const {
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(tag, source, status));
+
+    using default_source_buf_type = decltype(kamping::source(rank::any));
+    using source_param_type       = std::remove_reference_t<decltype(internal::select_parameter_type_or_default<
+                                                               internal::ParameterType::source,
+                                                               default_source_buf_type>({}, args...))>;
+    static_assert(
+        source_param_type::rank_type != internal::RankType::null,
+        "You cannot receive an element from source null."
+    );
+
+    using default_status_param_type = decltype(kamping::status(kamping::ignore<>));
+    using status_param_type         = std::remove_reference_t<decltype(internal::select_parameter_type_or_default<
+                                                               internal::ParameterType::status,
+                                                               default_status_param_type>({}, args...))>;
+    static_assert(
+        status_param_type::type != internal::StatusParamType::owning,
+        "Owning status is not allowed here, because we have no way of returning it."
+    );
+    return recv<recv_value_type_tparam>(recv_counts(1), std::forward<Args>(args)...).extract_recv_buffer()[0];
+}
