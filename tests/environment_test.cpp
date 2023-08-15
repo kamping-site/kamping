@@ -238,3 +238,20 @@ TEST_F(EnvironmentTest, buffer_detach_none_fails) {
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
     EXPECT_KASSERT_FAILS(env.buffer_detach<int>(), "There is currently no buffer attached.");
 }
+
+TEST_F(EnvironmentTest, buffer_detach_multiple_fails) {
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    std::vector<int>                                  buffer;
+    buffer.resize(42);
+    env.buffer_attach(kamping::Span<int>{buffer.begin(), buffer.end()});
+    EXPECT_EQ(attached_buffer_ptr, buffer.data());
+    EXPECT_EQ(attached_buffer_size, 42 * sizeof(int));
+
+    auto detached_buffer = env.buffer_detach<int>();
+    EXPECT_EQ(detached_buffer_ptr, buffer.data());
+    EXPECT_EQ(detached_buffer_size, 42 * sizeof(int));
+    EXPECT_EQ(detached_buffer.data(), buffer.data());
+    EXPECT_EQ(detached_buffer.size(), buffer.size());
+
+    EXPECT_KASSERT_FAILS(env.buffer_detach<int>(), "There is currently no buffer attached.");
+}
