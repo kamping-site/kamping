@@ -164,7 +164,7 @@ int MPI_Buffer_detach(void* buffer, int* size) {
     return err;
 }
 
-TEST_F(EnvironmentTest, butter_attach_and_detach) {
+TEST_F(EnvironmentTest, buffer_attach_and_detach) {
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
     std::vector<int>                                  buffer;
     buffer.resize(42);
@@ -181,7 +181,7 @@ TEST_F(EnvironmentTest, butter_attach_and_detach) {
     EXPECT_EQ(detached_buffer.size(), buffer.size());
 }
 
-TEST_F(EnvironmentTest, butter_attach_and_detach_with_other_type) {
+TEST_F(EnvironmentTest, buffer_attach_and_detach_with_other_type) {
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
     using attach_type = double;
     using detach_type = char;

@@ -205,9 +205,9 @@ public:
 #endif
     }
 
-    // TODO: maybe we want buffer_allocate. This would require us keeping track of the buffer internally.
+    /// @todo: maybe we want buffer_allocate. This would require us keeping track of the buffer internally.
 
-    /// @brief Detach a buffer attached via \ref buffer_attach.
+    /// @brief Detach a buffer attached via \ref buffer_attach().
     ///
     /// @tparam T The type of the span to return. Defaults to \c std::byte.
     /// @return A span pointing to the previously attached buffer. The type of the returned span can be controlled via
