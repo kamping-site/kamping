@@ -34,14 +34,14 @@ struct AggregatedDataSummary {
     size_t num_entries{0u};
     size_t num_values_per_entry{0u};
     bool   operator==(AggregatedDataSummary const& other) const {
-          bool const result = std::make_tuple(is_scalar, are_entries_consistent, num_entries, num_values_per_entry)
-                              == std::make_tuple(
+        bool const result = std::make_tuple(is_scalar, are_entries_consistent, num_entries, num_values_per_entry)
+                            == std::make_tuple(
                                 other.is_scalar,
                                 other.are_entries_consistent,
                                 other.num_entries,
                                 other.num_values_per_entry
                             );
-          return result;
+        return result;
     }
     auto& set_num_entries(size_t num_entries_) {
         num_entries = num_entries_;
@@ -299,15 +299,47 @@ TEST(TimerTest, print) {
     EXPECT_EQ(printer1.output, printer2.output);
 }
 
+TEST(TimerTest, synchronize_and_start_non_trivial_communicator) {
+    auto const& comm       = comm_world();
+    int const   color      = comm.rank() % 2;
+    auto        split_comm = comm.split(color);
+    Timer<>     timer(split_comm);
+    // checks (among other things) that synchronize uses the subcommunicator for the barrier
+    if (color == 0) {
+        timer.synchronize_and_start("measurement");
+    }
+}
+
 TEST(TimerTest, evaluate_non_trivial_communicator) {
     auto const& comm       = comm_world();
-    auto        split_comm = comm.split(comm.rank() % 2);
+    int const   color      = comm.rank() % 2;
+    auto        split_comm = comm.split(color);
+    Timer<>     timer(split_comm);
+    if (color == 0) {
+        timer.synchronize_and_start("measurement");
+        timer.stop();
+        auto              evaluated_timer_tree = timer.evaluate();
+        ValidationPrinter printer;
+        printer.print(evaluated_timer_tree);
+
+        if (split_comm.is_root()) {
+            std::unordered_map<std::string, AggregatedDataSummary> expected_output{
+                {"root.measurement:max",
+                 AggregatedDataSummary{}.set_num_entries(1).set_num_values(1).set_is_scalar(true)}};
+            EXPECT_EQ(printer.output, expected_output);
+        }
+    }
+}
+
+TEST(TimerTest, evaluate_and_print_non_trivial_communicator) {
+    auto const& comm       = comm_world();
+    int const   color      = comm.rank() % 2;
+    auto        split_comm = comm.split(color);
     Timer<>     timer(split_comm);
     timer.synchronize_and_start("measurement");
     timer.stop();
-    auto              evaluated_timer_tree = timer.evaluate();
     ValidationPrinter printer;
-    printer.print(evaluated_timer_tree);
+    timer.evaluate_and_print(printer);
 
     if (split_comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{

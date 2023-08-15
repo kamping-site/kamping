@@ -137,11 +137,7 @@ public:
 
     /// @brief Clears all stored measurements.
     void clear() {
-        std::cout << "add root: " << &(_timer_tree.root) << std::endl;
-        std::cout << "current : " << _timer_tree.current_node << std::endl;
         _timer_tree.reset();
-        std::cout << "add root: " << &(_timer_tree.root) << std::endl;
-        std::cout << "current : " << _timer_tree.current_node << std::endl;
     }
 
     /// @brief Aggregates and outputs the the executed measurements. The output is done via the print()
@@ -158,7 +154,7 @@ public:
     template <typename Printer>
     void evaluate_and_print(Printer&& printer) {
         auto evaluation_tree_root = evaluate();
-        if (comm_world().is_root()) {
+        if (_comm.is_root()) {
             printer.print(evaluation_tree_root);
         }
     }
@@ -172,7 +168,7 @@ private:
     void start_impl(std::string const& key, bool use_barrier) {
         auto node = _timer_tree.current_node->find_or_insert(key);
         if (use_barrier) {
-            comm_world().barrier();
+            _comm.barrier();
         }
         node->startpoint()       = Environment<>::wtime();
         _timer_tree.current_node = node;
