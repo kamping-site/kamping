@@ -261,7 +261,8 @@ public:
 
     /// @brief Calls MPI_Finalize if finalize() has not been called before. Also frees all registered MPI data types.
     ~Environment() {
-        if constexpr (init_finalize_mode == InitMPIMode::InitFinalize || (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary && _finalize)) {
+        if (init_finalize_mode == InitMPIMode::InitFinalize
+            || (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary && _finalize)) {
             bool is_already_finalized = false;
             try {
                 is_already_finalized = finalized();
