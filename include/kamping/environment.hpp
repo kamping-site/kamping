@@ -59,9 +59,7 @@ public:
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
             init(argc, argv);
         } else if constexpr (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary) {
-            int flag;
-            MPI_Initialized(&flag);
-            if (!flag) {
+            if (!initialized()) {
                 init(argc, argv);
                 _finalize = true;
             } else {
@@ -75,8 +73,12 @@ public:
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
             init();
         } else if constexpr (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary) {
-            init();
-            _finalize = true;
+            if (!initialized()) {
+                init();
+                _finalize = true;
+            } else {
+                _finalize = false;
+            }
         }
     }
 
