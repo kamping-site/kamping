@@ -175,6 +175,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described
 /// above.
+/// @return The received value of type \ref recv_value_type_tparam.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename recv_value_type_tparam, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args... args) const {
