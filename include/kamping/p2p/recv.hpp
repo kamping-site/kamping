@@ -198,5 +198,5 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args..
         "KaMPIng cannot allocate a status object for you here, because we have no way of returning it. Pass a "
         "reference to a status object instead."
     );
-    return recv<recv_value_type_tparam>(recv_counts(1), std::forward<Args>(args)...).extract_recv_buffer()[0];
+    return recv(recv_counts(1), recv_buf(alloc_new<recv_value_type_tparam>), std::forward<Args>(args)...).extract_recv_buffer();
 }
