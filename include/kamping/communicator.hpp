@@ -24,6 +24,9 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/mpi_constants.hpp"
+#include "kamping/mpi_datatype.hpp"
+#include "kamping/mpi_ops.hpp"
+#include "kamping/named_parameters.hpp"
 #include "kamping/rank_ranges.hpp"
 
 namespace kamping {
@@ -158,6 +161,24 @@ public:
         return _size;
     }
 
+    /// @brief Number of NUMA nodes (different shared memory regions) in this communicator.
+    /// This operation is expensive (communicator splitting and communication). You should cache the result if you need
+    /// it multiple times.
+    /// @return Number of compute nodes (hostnames) in this communicator.
+    [[nodiscard]] size_t num_numa_nodes() const;
+
+    /// @brief Get this 'processor's' name using \c MPI_Get_processor_name.
+    /// @return This 'processor's' name. Nowadays, this oftentimes is the hostname.
+    std::string processor_name() const {
+        // Get the name of this node.
+        int  my_len;
+        char my_name[MPI_MAX_PROCESSOR_NAME];
+
+        int ret = MPI_Get_processor_name(my_name, &my_len);
+        THROW_IF_MPI_ERROR(ret, MPI_Get_processor_name);
+        return std::string(my_name, asserting_cast<size_t>(my_len));
+    }
+
     /// @brief MPI communicator corresponding to this communicator.
     /// @return MPI communicator corresponding to this communicator.
     [[nodiscard]] MPI_Comm mpi_communicator() const {
@@ -247,6 +268,31 @@ public:
         MPI_Comm_split(_comm, color, key, &new_comm);
         return Communicator(new_comm, true);
     }
+
+    /// @brief Split the communicator by the specified type (e.g., shared memory)
+    ///
+    /// @param type The only standard-conform value is \c MPI_COMM_TYPE_SHARED but your MPI implementation might support
+    /// other types. For example: \c OMPI_COMM_TYPE_L3CACHE.
+    [[nodiscard]] Communicator split_by_type(int const type) const {
+        // MPI_COMM_TYPE_HW_GUIDED is only available starting with MPI-4.0
+        // MPI_Info  info;
+        // MPI_Info_create(&info);
+        // MPI_Info_set(info, "mpi_hw_resource_type", "NUMANode");
+        // auto ret = MPI_Comm_split_type(_comm, MPI_COMM_TYPE_HW_GUIDED, rank_signed(), info, &newcomm);
+
+        MPI_Comm   new_comm;
+        auto const ret = MPI_Comm_split_type(_comm, type, rank_signed(), MPI_INFO_NULL, &new_comm);
+        THROW_IF_MPI_ERROR(ret, MPI_Comm_split_type);
+        return Communicator(new_comm, true);
+    }
+
+    /// @brief Split the communicator into NUMA nodes.
+    /// @return \ref Communicator wrapping the newly split MPI communicator. Each rank will be in the communicator
+    /// corresponding to its NUMA node.
+    [[nodiscard]] Communicator split_to_shared_memory() const {
+        return split_by_type(MPI_COMM_TYPE_SHARED);
+    }
+
     /// @brief Create subcommunicators.
     ///
     /// This method requires globally available information on the ranks in the subcommunicators.
@@ -415,6 +461,9 @@ public:
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto recv(Args... args) const;
 
+    template <typename recv_value_type_tparam, typename... Args>
+    auto recv_single(Args... args) const;
+
     template <typename... Args>
     auto alltoall(Args... args) const;
 
@@ -503,8 +552,8 @@ private:
     size_t _root;        ///< Default root for MPI operations that require a root.
     int    _default_tag; ///< Default tag value used in point to point communication.
 
-    bool _owns_mpi_comm; ///< Whether the Communicator Objects owns the contained MPI_Comm, i.e. whether it is allowed
-                         ///< to free it in the destructor.
+    bool _owns_mpi_comm; ///< Whether the Communicator Objects owns the contained MPI_Comm, i.e. whether it is
+                         ///< allowed to free it in the destructor.
 
 }; // class communicator
 

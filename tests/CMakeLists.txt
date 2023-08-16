@@ -359,3 +359,9 @@ kamping_register_compilation_failure_test(
     SECTIONS "COPY_CONSTRUCT_OP_BUILDER_BUFFER" "COPY_ASSIGN_OP_BUILDER_BUFFER"
     LIBRARIES kamping_base
 )
+kamping_register_compilation_failure_test(
+    test_mpi_recv_compilation_failure
+    FILES p2p/mpi_recv_compilation_failure_test.cpp
+    SECTIONS "OWNING_STATUS" "PROC_NULL" "RECV_COUNT_GIVEN" "RECV_BUF_GIVEN"
+    LIBRARIES kamping_base
+)
