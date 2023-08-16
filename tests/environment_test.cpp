@@ -87,6 +87,7 @@ TEST_F(EnvironmentTest, wtick) {
 }
 
 TEST_F(EnvironmentTest, init) {
+    // MPI_Init was already called by our custom test main().
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
     EXPECT_TRUE(env.initialized());
     // This should succeed because init checks whether MPI_Init has already been called.
@@ -94,6 +95,7 @@ TEST_F(EnvironmentTest, init) {
 }
 
 TEST_F(EnvironmentTest, init_unchecked) {
+    // MPI_Init was already called by our custom test main().
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
     EXPECT_TRUE(env.initialized());
     EXPECT_KASSERT_FAILS(env.init_unchecked(), "Trying to call MPI_Init twice");

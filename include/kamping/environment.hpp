@@ -59,8 +59,14 @@ public:
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
             init(argc, argv);
         } else if constexpr (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary) {
-            init(argc, argv);
-            _finalize = true;
+            int flag;
+            MPI_Initialized(&flag);
+            if (!flag) {
+                init(argc, argv);
+                _finalize = true;
+            } else {
+                _finalize = false;
+            }
         }
     }
 
