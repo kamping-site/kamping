@@ -225,8 +225,10 @@ target_compile_definitions(
 target_compile_definitions(test_environment_init_finalize_manual PRIVATE -D_GLIBCXX_DEBUG)
 target_compile_definitions(test_environment_init_finalize_manual PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
 katestrophe_add_mpi_test(test_environment_init_finalize_manual CORES 1 4)
-# Test InitMPIMode::InitFinalizeIfNecessary autoamtically decides if it need to call MPI_Init and MPI_Finalize Not
-# necessary, with argc and argv
+
+# Test InitMPIMode::InitFinalizeIfNecessary autoamtically decides if it need to call MPI_Init() and MPI_Finalize()
+
+# Not necessary, with argc and argv
 add_executable(test_environment_init_finalize_if_necessary_0 environment_init_finalize_if_necessary_test.cpp)
 target_link_libraries(test_environment_init_finalize_if_necessary_0 PRIVATE kamping_base MPI::MPI_CXX)
 target_compile_definitions(test_environment_init_finalize_if_necessary_0 PRIVATE -DKAMPING_ENVIRONMENT_TEST_WITH_PARAM)
