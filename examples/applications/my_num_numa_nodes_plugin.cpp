@@ -1,8 +1,10 @@
 
 #include <cstddef>
 
+#include <kamping/collectives/allreduce.hpp>
 #include <mpi.h>
 
+#include "kamping/comm_helper/num_numa_nodes.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/mpi_ops.hpp"
@@ -11,31 +13,44 @@
 
 using namespace ::kamping;
 
-/// @brief A plugin implementing a simple sparse all-to-all communication.
+/// @brief A plugin implementing the \c num_numa_nodes() function.
 /// We're using CRTP to inject plugins into the kamping::Communicator class.
 template <typename Comm>
 class MyNumNumaNodesPlugin : public plugins::PluginBase<Comm, MyNumNumaNodesPlugin> {
 public:
-    template <typename... Args>
-    auto my_num_numa_nodes() const {
-        // Split this communicator into NUMA nodes.
-        auto numa_comm = this->split_to_numa_nodes();
-
-        // Determine the lowest rank on each NUMA node.
-        size_t const numa_representative = numa_comm.allreduce_single(send_buf(this->rank()), op(ops::min<>{}));
-
-        // Determine the number of NUMA nodes by counting the number of distinct lowest ranks.
-        size_t const num_numa_nodes =
-            this->allreduce_single(send_buf(numa_representative == numa_comm.rank() ? 1 : 0), op(ops::plus<>{}));
-
-        return num_numa_nodes;
-    }
+    /// @brief Number of NUMA nodes (different shared memory regions) in this communicator.
+    /// This operation is expensive (communicator splitting and communication). You should cache the result if you need
+    /// it multiple times.
+    /// @return Number of compute nodes (hostnames) in this communicator.
+    size_t my_num_numa_nodes() const;
 };
 
+template <typename Comm>
+size_t MyNumNumaNodesPlugin<Comm>::my_num_numa_nodes() const {
+    // Uses the \c to_communicator() function of \c PluginBase to cast itself to \c Comm
+    auto& self = this->to_communicator();
+
+    // Split this communicator into NUMA nodes.
+    auto numa_comm = self.split_to_shared_memory();
+
+    // Determine the lowest rank on each NUMA node.
+    size_t const numa_representative = numa_comm.allreduce_single(send_buf(self.rank()), op(ops::min<>{}));
+
+    // Determine the number of NUMA nodes by counting the number of distinct lowest ranks.
+    size_t const num_numa_nodes =
+        self.allreduce_single(send_buf(numa_representative == numa_comm.rank() ? 1ul : 0), op(ops::plus<>{}));
+
+    return num_numa_nodes;
+}
+
 int main(int argc, char** argv) {
-    Environment<>                                            env(argc, argv);
+    // Call MPI_Init() and MPI_Finalize() automatically.
+    Environment<> env(argc, argv);
+
+    // Create a new communicator object with the desired plugins.
     kamping::Communicator<std::vector, MyNumNumaNodesPlugin> comm;
 
+    // Check that our implementation matches the reference implementation and output put the result.
     KASSERT(comm.my_num_numa_nodes() == comm.num_numa_nodes());
     std::cout << "Number of numa nodes: " << comm.my_num_numa_nodes() << std::endl;
 
