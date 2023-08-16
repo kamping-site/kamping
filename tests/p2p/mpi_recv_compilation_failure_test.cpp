@@ -32,6 +32,7 @@ int main(int /*argc*/, char** /*argv*/) {
 #elif defined(RECV_BUF_GIVEN)
     comm.recv_single<int>(recv_buf(value));
 #else
+    comm.recv_single<int>();
     // If none of the above sections is active, this file will compile successfully.
 #endif
 }
