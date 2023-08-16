@@ -99,7 +99,7 @@ public:
     /// <code>data() == std::data(range)</code> and <code>size() == std::size()</code>.
     ///
     /// If <code>range</code> does not model a C++20 contiguous range, the
-    /// behavior is undefined. This is analagous to the behavior of \c std::span.
+    /// behavior is undefined. This is analogous to the behavior of \c std::span.
     /// @param range The range.
     /// @tparam Range The range type.
     template <typename Range>
