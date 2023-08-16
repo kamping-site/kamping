@@ -163,18 +163,17 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
 /// the received value.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::tag() recv message with this tag. Defaults to receiving
-/// for an arbitrary tag, i.e. \c tag(tags::any).
-/// - \ref kamping::source() receive a message sent from this source rank.
+/// - \ref kamping::tag() recv message with this tag. Defaults to receiving for an arbitrary tag, i.e.
+/// <code>tag(tags::any)</code>.
+/// - \ref kamping::source() receive a message sent from this source rank. Defaults to
+/// <code>kamping::source(kamping::rank::any)</code>.
 /// - \ref kamping::status()  Returns info about the received message by setting the appropriate fields in the status
 /// object passed by the user. The status can be ignored by passing \c kamping::status(kamping::ignore<>). This is the
 /// default.
 ///
-///
 /// @tparam recv_value_type_tparam The type of the message to be received.
 /// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described
-/// above.
+/// @param args All required and any number of the optional buffers described above.
 /// @return The received value of type \ref recv_value_type_tparam.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename recv_value_type_tparam, typename... Args>
@@ -187,7 +186,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args..
                                                                default_source_buf_type>({}, args...))>;
     static_assert(
         source_param_type::rank_type != internal::RankType::null,
-        "You cannot receive an element from source null."
+        "You cannot receive an element from source kamping::rank::null."
     );
 
     using default_status_param_type = decltype(kamping::status(kamping::ignore<>));
@@ -196,7 +195,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args..
                                                                default_status_param_type>({}, args...))>;
     static_assert(
         status_param_type::type != internal::StatusParamType::owning,
-        "Owning status is not allowed here, because we have no way of returning it."
+        "KaMPIng cannot allocate a status object for you here, because we have no way of returning it. Pass a "
+        "reference to a status object instead."
     );
     return recv<recv_value_type_tparam>(recv_counts(1), std::forward<Args>(args)...).extract_recv_buffer()[0];
 }
