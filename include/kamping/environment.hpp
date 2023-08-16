@@ -142,17 +142,6 @@ public:
         return result == true;
     }
 
-    /// @brief Terminates MPI execution environment (all processes in MPI_COMM_WORLD).
-    ///
-    /// @param errorcode Error code to return to invoking environment.
-    void abort(int errorcode) const {
-        // According to the MPICH documentation (https://www.mpich.org/static/docs/v3.1/www3/MPI_Abort.html)
-        // In most systems (all to date), terminates all processes, regardless of if they're in the provided
-        // communicator or not. Thus, we can just pass MPI_COMM_WORLD.
-        [[maybe_unused]] int err = MPI_Abort(MPI_COMM_WORLD, errorcode);
-        THROW_IF_MPI_ERROR(err, MPI_Abort);
-    }
-
     /// @brief Checks whether MPI_Finalize has been called.
     ///
     /// @return \c true if MPI_Finalize has been called, \c false otherwise.
