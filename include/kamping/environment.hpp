@@ -254,7 +254,7 @@ public:
 
 private:
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    bool has_buffer_attached = false; ///< Is there currently a attached buffer?
+    bool has_buffer_attached = false; ///< Is there currently an attached buffer?
 #endif
 
 }; // class Environment
