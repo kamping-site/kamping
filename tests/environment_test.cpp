@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -24,6 +24,10 @@
 using namespace ::kamping;
 
 std::set<MPI_Datatype> freed_types;
+void*                  attached_buffer_ptr  = nullptr;
+int                    attached_buffer_size = 0;
+void*                  detached_buffer_ptr  = nullptr;
+int                    detached_buffer_size = 0;
 
 int MPI_Type_free(MPI_Datatype* type) {
     freed_types.insert(*type);
@@ -38,10 +42,21 @@ struct EnvironmentTest : testing::Test {
         EXPECT_TRUE(flag);
         mpi_tag_ub = *value;
         freed_types.clear();
+        attached_buffer_ptr  = nullptr;
+        attached_buffer_size = 0;
+        detached_buffer_ptr  = nullptr;
+        detached_buffer_size = 0;
     }
 
     void TearDown() override {
+        void* buffer;
         freed_types.clear();
+        int size;
+        MPI_Buffer_detach(&buffer, &size);
+        attached_buffer_ptr  = nullptr;
+        attached_buffer_size = 0;
+        detached_buffer_ptr  = nullptr;
+        detached_buffer_size = 0;
     }
 
     int mpi_tag_ub;
@@ -134,4 +149,109 @@ TEST_F(EnvironmentTest, free_registered_tests) {
     env.free_registered_mpi_types();
     freed_types.clear();
     EXPECT_TRUE(freed_types.empty());
+}
+
+int MPI_Buffer_attach(void* buffer, int size) {
+    attached_buffer_ptr  = buffer;
+    attached_buffer_size = size;
+    return PMPI_Buffer_attach(buffer, size);
+}
+
+int MPI_Buffer_detach(void* buffer, int* size) {
+    int err              = PMPI_Buffer_detach(buffer, size);
+    detached_buffer_ptr  = *static_cast<void**>(buffer);
+    detached_buffer_size = *size;
+    return err;
+}
+
+TEST_F(EnvironmentTest, buffer_attach_and_detach) {
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    std::vector<int>                                  buffer;
+    buffer.resize(42);
+    env.buffer_attach(kamping::Span<int>{buffer.begin(), buffer.end()});
+
+    EXPECT_EQ(attached_buffer_ptr, buffer.data());
+    EXPECT_EQ(attached_buffer_size, 42 * sizeof(int));
+
+    auto detached_buffer = env.buffer_detach<int>();
+
+    EXPECT_EQ(detached_buffer_ptr, buffer.data());
+    EXPECT_EQ(detached_buffer_size, 42 * sizeof(int));
+    EXPECT_EQ(detached_buffer.data(), buffer.data());
+    EXPECT_EQ(detached_buffer.size(), buffer.size());
+}
+
+TEST_F(EnvironmentTest, buffer_attach_and_detach_with_other_type) {
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    using attach_type = double;
+    using detach_type = char;
+    std::vector<attach_type> buffer;
+    buffer.resize(13);
+    env.buffer_attach(kamping::Span<attach_type>{buffer.begin(), buffer.end()});
+
+    EXPECT_EQ(attached_buffer_ptr, buffer.data());
+    EXPECT_EQ(attached_buffer_size, 13 * sizeof(attach_type));
+
+    auto detached_buffer = env.buffer_detach<detach_type>();
+
+    // test if the detached buffer machtes the original buffer
+    EXPECT_EQ(attached_buffer_ptr, detached_buffer_ptr);
+    EXPECT_EQ(attached_buffer_size, detached_buffer_size);
+
+    EXPECT_EQ(detached_buffer_ptr, buffer.data());
+    EXPECT_EQ(detached_buffer_size, 13 * sizeof(attach_type));
+    EXPECT_EQ(static_cast<void*>(detached_buffer.data()), static_cast<void*>(buffer.data()));
+    EXPECT_EQ(detached_buffer.size_bytes(), 13 * sizeof(attach_type));
+}
+
+TEST_F(EnvironmentTest, buffer_attach_and_detach_with_other_type_not_matching) {
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    using attach_type                  = char;
+    using detach_type [[maybe_unused]] = double;
+    std::vector<attach_type> buffer;
+    buffer.resize(13);
+    env.buffer_attach(kamping::Span<attach_type>{buffer.begin(), buffer.end()});
+
+    EXPECT_EQ(attached_buffer_ptr, buffer.data());
+    EXPECT_EQ(attached_buffer_size, 13 * sizeof(attach_type));
+
+    EXPECT_KASSERT_FAILS(env.buffer_detach<detach_type>(), "The buffer size is not a multiple of the size of T.");
+}
+
+TEST_F(EnvironmentTest, buffer_attach_multiple_fails) {
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    std::vector<int>                                  buffer1;
+    buffer1.resize(42);
+    std::vector<int> buffer2;
+    buffer2.resize(13);
+    env.buffer_attach(kamping::Span<int>{buffer1.begin(), buffer1.end()});
+    EXPECT_EQ(attached_buffer_ptr, buffer1.data());
+    EXPECT_EQ(attached_buffer_size, 42 * sizeof(int));
+
+    EXPECT_KASSERT_FAILS(
+        env.buffer_attach(kamping::Span<int>{buffer2.begin(), buffer2.end()}),
+        "You may only attach one buffer at a time."
+    );
+}
+
+TEST_F(EnvironmentTest, buffer_detach_none_fails) {
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    EXPECT_KASSERT_FAILS(env.buffer_detach<int>(), "There is currently no buffer attached.");
+}
+
+TEST_F(EnvironmentTest, buffer_detach_multiple_fails) {
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    std::vector<int>                                  buffer;
+    buffer.resize(42);
+    env.buffer_attach(kamping::Span<int>{buffer.begin(), buffer.end()});
+    EXPECT_EQ(attached_buffer_ptr, buffer.data());
+    EXPECT_EQ(attached_buffer_size, 42 * sizeof(int));
+
+    auto detached_buffer = env.buffer_detach<int>();
+    EXPECT_EQ(detached_buffer_ptr, buffer.data());
+    EXPECT_EQ(detached_buffer_size, 42 * sizeof(int));
+    EXPECT_EQ(detached_buffer.data(), buffer.data());
+    EXPECT_EQ(detached_buffer.size(), buffer.size());
+
+    EXPECT_KASSERT_FAILS(env.buffer_detach<int>(), "There is currently no buffer attached.");
 }
