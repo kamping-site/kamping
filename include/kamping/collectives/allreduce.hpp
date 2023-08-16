@@ -122,6 +122,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_single(A
         "The send buffer has to be of size 1 on all ranks.",
         assert::light
     );
+    using value_type = typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...))>::value_type;
 
-    return this->allreduce(std::forward<Args>(args)...).extract_recv_buffer()[0];
+    return this->allreduce(std::forward<Args>(args)..., recv_buf(alloc_new<value_type>)).extract_recv_buffer();
 }
