@@ -100,7 +100,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
 /// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
 ///
 /// This wrapper for \c MPI_Allreduce sends a single value from the root to all other ranks. Calling allreduce_single()
-/// is a shorthand for calling allreduce() with a \ref send_buf of size 1. It always issues only a single
+/// is a shorthand for calling allreduce() with a \ref kamping::send_buf of size 1. It always issues only a single
 /// <code>MPI_Allreduce</code> call, as no receive counts have to be exchanged.
 ///
 /// The following parameters are required:
