@@ -263,19 +263,27 @@ public:
                 // During testing we sometimes force KASSERT to throw exceptions. During the resulting stack unwinding,
                 // code in this desturcor might be executed and thus throwing another exception will result in calling
                 // std::abort(). We're disabling the respective warning here.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wterminate"
+#ifdef __GNUC__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wterminate"
+#endif
                 KASSERT(false, "MPI_Finalized call failed.");
-#pragma GCC diagnostic pop
+#ifdef __GNUC__
+    #pragma GCC diagnostic pop
+#endif
             }
             if (!is_already_finalized) {
                 free_registered_mpi_types();
                 [[maybe_unused]] int err = MPI_Finalize();
                 // see above
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wterminate"
+#ifdef __GNUC__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wterminate"
+#endif
                 KASSERT(err == MPI_SUCCESS, "MPI_Finalize call failed.");
-#pragma GCC diagnostic pop
+#ifdef __GNUC__
+    #pragma GCC diagnostic pop
+#endif
             }
         }
     }
