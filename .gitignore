@@ -647,3 +647,6 @@ docs/html/**
 
 # MacOS files
 .DS_Store
+
+# clangd config file
+.clangd
