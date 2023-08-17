@@ -53,8 +53,9 @@
 /// - \ref kamping::status() or \ref kamping::status_out(). Returns info about the received message by setting the
 /// appropriate fields in the status object passed by the user. If \ref kamping::status_out() is passed, constructs a
 /// status object which may be retrieved by the user. The status can be ignored by passing \c
-/// kamping::status(kamping::ignore<>). This is the default. The following parameter is optional, but leads to an
-/// additional call to \c MPI_Probe if not present:
+/// kamping::status(kamping::ignore<>). This is the default.
+///
+/// The following parameter is optional, but leads to an additional call to \c MPI_Probe if not present:
 /// - \ref kamping::recv_counts() the number of elements to receive. Will be probed before receiving if not given.
 ///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::recv_buf() is given.
