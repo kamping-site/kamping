@@ -217,6 +217,12 @@ public:
         return &_status.native();
     }
 
+    /// @return A reference to the wrapped status object.
+    inline Status& status() {
+        kassert_not_extracted("Cannot get a status that has already been extracted.");
+        return _status;
+    }
+
 private:
     Status& _status; ///< The wrapped status;
 };
@@ -237,6 +243,12 @@ public:
     inline MPI_Status* native_ptr() {
         kassert_not_extracted("Cannot get a status that has already been extracted.");
         return &_status.native();
+    }
+
+    /// @return A reference to the wrapped status object.
+    inline Status& status() {
+        kassert_not_extracted("Cannot get a status that has already been extracted.");
+        return _status;
     }
 
     /// @brief Moves the wrapped status object out of the parameter.
