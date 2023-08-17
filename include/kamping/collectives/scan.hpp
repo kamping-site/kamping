@@ -132,6 +132,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_single(Args..
         "The send buffer has to be of size 1 on all ranks.",
         assert::light
     );
-
-    return this->scan(std::forward<Args>(args)...).extract_recv_buffer()[0];
+    using value_type =
+        typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...))>::value_type;
+    return this->scan(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...).extract_recv_buffer();
 }
