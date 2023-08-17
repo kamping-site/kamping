@@ -99,9 +99,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
 
 /// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
 ///
-/// This wrapper for \c MPI_Allreduce sends a single value from the root to all other ranks. Calling \c
-/// allreduce_single() is a shorthand for calling `allreduce` with a `send_buf` of size 1. It always issues only a
-/// single \c MPI_Allreduce call, as no receive counts have to be exchanged.
+/// This wrapper for \c MPI_Allreduce sends a single value from the root to all other ranks. Calling allreduce_single()
+/// is a shorthand for calling allreduce() with a \ref send_buf of size 1. It always issues only a single
+/// <code>MPI_Allreduce</code> call, as no receive counts have to be exchanged.
 ///
 /// The following parameters are required:
 /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be of size 1 on each
@@ -122,7 +122,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_single(A
         "The send buffer has to be of size 1 on all ranks.",
         assert::light
     );
-    using value_type = typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...))>::value_type;
+    using value_type =
+        typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...))>::value_type;
 
     return this->allreduce(std::forward<Args>(args)..., recv_buf(alloc_new<value_type>)).extract_recv_buffer();
 }

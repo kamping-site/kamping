@@ -38,7 +38,7 @@
 /// @brief Wrapper for \c MPI_Recv.
 ///
 /// This wraps \c MPI_Recv. This operation performs a standard blocking receive.
-/// If the \ref kamping::send_counts() parameter is not specified, this first performs a probe, followed by a receive of
+/// If the \ref kamping::recv_counts() parameter is not specified, this first performs a probe, followed by a receive of
 /// the probed message with the probed message size.
 ///
 /// The following parameters are optional:
@@ -46,18 +46,16 @@
 /// accommodate the number of elements to receive. Use \c kamping::Span with enough space if you do not want the buffer
 /// to be resized. If no \ref kamping::recv_buf() is provided, the type that should be received has to be passed as a
 /// template parameter to \c recv().
-/// - \ref kamping::tag() recv message with this tag. Defaults to receiving
-/// for an arbitrary tag, i.e. \c tag(tags::any).
-/// - \ref kamping::source() receive a message sent from this source rank.
-/// Defaults to probing for an arbitrary source, i.e. \c source(rank::any).
-/// - \ref kamping::status() or \ref kamping::status_out(). Returns info about
-/// the received message by setting the appropriate fields in the status object
-/// passed by the user. If \ref kamping::status_out() is passed, constructs a
-/// status object which may be retrieved by the user. The status can be ignored by
-/// passing \c kamping::status(kamping::ignore<>). This is the default.
-///
-/// The following parameter is optional, but leads to an additional call to \c MPI_Probe if not present:
-/// - \ref kamping::send_counts() the number of elements to receive. Will be probed before receiving if not given.
+/// - \ref kamping::tag() recv message with this tag. Defaults to receiving for an arbitrary tag, i.e. \c
+/// tag(tags::any).
+/// - \ref kamping::source() receive a message sent from this source rank. Defaults to probing for an arbitrary source,
+/// i.e. \c source(rank::any).
+/// - \ref kamping::status() or \ref kamping::status_out(). Returns info about the received message by setting the
+/// appropriate fields in the status object passed by the user. If \ref kamping::status_out() is passed, constructs a
+/// status object which may be retrieved by the user. The status can be ignored by passing \c
+/// kamping::status(kamping::ignore<>). This is the default. The following parameter is optional, but leads to an
+/// additional call to \c MPI_Probe if not present:
+/// - \ref kamping::recv_counts() the number of elements to receive. Will be probed before receiving if not given.
 ///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::recv_buf() is given.
 /// @tparam Args Automatically deducted template parameters.
@@ -198,5 +196,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args..
         "KaMPIng cannot allocate a status object for you here, because we have no way of returning it. Pass a "
         "reference to a status object instead."
     );
-    return recv(recv_counts(1), recv_buf(alloc_new<recv_value_type_tparam>), std::forward<Args>(args)...).extract_recv_buffer();
+    return recv(recv_counts(1), recv_buf(alloc_new<recv_value_type_tparam>), std::forward<Args>(args)...)
+        .extract_recv_buffer();
 }
