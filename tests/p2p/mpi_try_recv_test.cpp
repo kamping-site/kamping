@@ -46,7 +46,11 @@ TEST_F(RecvTest, recv_vector_from_arbitrary_source) {
     MPI_Request      req;
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
-    EXPECT_FALSE(comm.try_recv<int>().has_value());
+    auto msg = comm.try_recv<int>();
+    EXPECT_FALSE(msg);
+    if (msg) {
+        std::cout << "Source: " << msg->extract_status().source() << std::endl;
+    }
 
     // Each rank sends a message with its rank as tag to rank 0.
     // The message has comm.rank() elements.
