@@ -29,7 +29,7 @@ using namespace kamping;
 KAMPING_MAKE_HAS_MEMBER(extract_status)
 KAMPING_MAKE_HAS_MEMBER(extract_recv_buffer)
 
-class RecvTest : public ::testing::Test {
+class TryRecvTest : public ::testing::Test {
     void SetUp() override {
         // this makes sure that messages don't spill from other tests
         MPI_Barrier(MPI_COMM_WORLD);
@@ -40,7 +40,7 @@ class RecvTest : public ::testing::Test {
     }
 };
 
-TEST_F(RecvTest, recv_vector_from_arbitrary_source) {
+TEST_F(TryRecvTest, try_recv_vector_from_arbitrary_source) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -96,7 +96,7 @@ TEST_F(RecvTest, recv_vector_from_arbitrary_source) {
     EXPECT_EQ(comm.try_recv<long>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_vector_from_explicit_source) {
+TEST_F(TryRecvTest, try_recv_vector_from_explicit_source) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -144,7 +144,7 @@ TEST_F(RecvTest, recv_vector_from_explicit_source) {
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_vector_from_explicit_source_and_explicit_tag) {
+TEST_F(TryRecvTest, try_recv_vector_from_explicit_source_and_explicit_tag) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
@@ -192,7 +192,7 @@ TEST_F(RecvTest, recv_vector_from_explicit_source_and_explicit_tag) {
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_vector_with_explicit_size) {
+TEST_F(TryRecvTest, try_recv_vector_with_explicit_size) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     MPI_Request  req = MPI_REQUEST_NULL;
@@ -236,7 +236,7 @@ TEST_F(RecvTest, recv_vector_with_explicit_size) {
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_vector_with_input_status) {
+TEST_F(TryRecvTest, try_recv_vector_with_input_status) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     MPI_Request  req = MPI_REQUEST_NULL;
@@ -278,7 +278,7 @@ TEST_F(RecvTest, recv_vector_with_input_status) {
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_default_custom_container_without_recv_buf) {
+TEST_F(TryRecvTest, try_recv_default_custom_container_without_recv_buf) {
     Communicator<testing::OwnContainer> comm;
     std::vector                         v{1, 2, 3, 4, 5};
     MPI_Request                         req = MPI_REQUEST_NULL;
@@ -317,7 +317,7 @@ TEST_F(RecvTest, recv_default_custom_container_without_recv_buf) {
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_from_proc_null) {
+TEST_F(TryRecvTest, try_recv_from_proc_null) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
 
@@ -342,13 +342,13 @@ TEST_F(RecvTest, recv_from_proc_null) {
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_from_invalid_tag) {
+TEST_F(TryRecvTest, try_recv_from_invalid_tag) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     EXPECT_KASSERT_FAILS({ comm.try_recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
 }
 
-TEST_F(RecvTest, recv_from_invalid_tag_with_explicit_recv_count) {
+TEST_F(TryRecvTest, try_recv_from_invalid_tag_with_explicit_recv_count) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     EXPECT_KASSERT_FAILS({ comm.try_recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
