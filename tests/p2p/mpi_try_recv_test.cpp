@@ -19,6 +19,7 @@
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/has_member.hpp"
 #include "kamping/named_parameters.hpp"
@@ -29,7 +30,7 @@ using namespace kamping;
 KAMPING_MAKE_HAS_MEMBER(extract_status)
 KAMPING_MAKE_HAS_MEMBER(extract_recv_buffer)
 
-class RecvTest : public ::testing::Test {
+class TryRecvTest : public ::testing::Test {
     void SetUp() override {
         // this makes sure that messages don't spill from other tests
         MPI_Barrier(MPI_COMM_WORLD);
@@ -40,13 +41,14 @@ class RecvTest : public ::testing::Test {
     }
 };
 
-TEST_F(RecvTest, recv_vector_from_arbitrary_source) {
+TEST_F(TryRecvTest, try_recv_vector_from_arbitrary_source) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_FALSE(comm.try_recv<int>().has_value());
+    comm.barrier();
 
     // Each rank sends a message with its rank as tag to rank 0.
     // The message has comm.rank() elements.
@@ -89,16 +91,18 @@ TEST_F(RecvTest, recv_vector_from_arbitrary_source) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so this should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<long>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_vector_from_explicit_source) {
+TEST_F(TryRecvTest, try_recv_vector_from_explicit_source) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     // Each rank sends a message with its rank as tag to rank 0.
     // The message has comm.rank() elements.
@@ -137,16 +141,18 @@ TEST_F(RecvTest, recv_vector_from_explicit_source) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_vector_from_explicit_source_and_explicit_tag) {
+TEST_F(TryRecvTest, try_recv_vector_from_explicit_source_and_explicit_tag) {
     Communicator     comm;
     std::vector<int> v(comm.rank(), 42);
     MPI_Request      req;
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     // Each rank sends a message with its rank as tag to rank 0.
     // The message has comm.rank() elements.
@@ -185,16 +191,18 @@ TEST_F(RecvTest, recv_vector_from_explicit_source_and_explicit_tag) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_vector_with_explicit_size) {
+TEST_F(TryRecvTest, try_recv_vector_with_explicit_size) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     MPI_Request  req = MPI_REQUEST_NULL;
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     if (comm.is_root()) {
         auto other_rank = comm.rank_shifted_cyclic(1);
@@ -229,16 +237,18 @@ TEST_F(RecvTest, recv_vector_with_explicit_size) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_vector_with_input_status) {
+TEST_F(TryRecvTest, try_recv_vector_with_input_status) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     MPI_Request  req = MPI_REQUEST_NULL;
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     if (comm.is_root()) {
         auto other_rank = comm.rank_shifted_cyclic(1);
@@ -271,16 +281,18 @@ TEST_F(RecvTest, recv_vector_with_input_status) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_default_custom_container_without_recv_buf) {
+TEST_F(TryRecvTest, try_recv_default_custom_container_without_recv_buf) {
     Communicator<testing::OwnContainer> comm;
     std::vector                         v{1, 2, 3, 4, 5};
     MPI_Request                         req = MPI_REQUEST_NULL;
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     if (comm.is_root()) {
         auto other_rank = comm.rank_shifted_cyclic(1);
@@ -310,15 +322,17 @@ TEST_F(RecvTest, recv_default_custom_container_without_recv_buf) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_from_proc_null) {
+TEST_F(TryRecvTest, try_recv_from_proc_null) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     while (true) {
         auto result_opt = comm.try_recv(source(rank::null), recv_buf(v), status_out());
@@ -335,16 +349,17 @@ TEST_F(RecvTest, recv_from_proc_null) {
     }
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(RecvTest, recv_from_invalid_tag) {
+TEST_F(TryRecvTest, try_recv_from_invalid_tag) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     EXPECT_KASSERT_FAILS({ comm.try_recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
 }
 
-TEST_F(RecvTest, recv_from_invalid_tag_with_explicit_recv_count) {
+TEST_F(TryRecvTest, try_recv_from_invalid_tag_with_explicit_recv_count) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     EXPECT_KASSERT_FAILS({ comm.try_recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
