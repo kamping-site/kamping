@@ -528,3 +528,8 @@ TEST_F(IProbeTest, nothing_to_probe) {
     Communicator comm;
     EXPECT_FALSE(comm.iprobe());
 }
+
+TEST_F(IProbeTest, nothing_to_probe_with_status) {
+    Communicator comm;
+    EXPECT_FALSE(comm.iprobe(status_out()).has_value());
+}
