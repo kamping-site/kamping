@@ -118,7 +118,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
     // Use a matched probe to check if a message with the given source and tag is available for receiving.
     int         msg_avail;
     MPI_Message message;
-    MPI_Improbe(source, tag, _comm, &msg_avail, &message, &status.native());
+
+    [[maybe_unused]] int err = MPI_Improbe(source, tag, _comm, &msg_avail, &message, &status.native());
+    THROW_IF_MPI_ERROR(err, MPI_Improbe);
 
     // If a message is available, receive it using a matched receive
     if (msg_avail) {
@@ -138,7 +140,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         }
 
         // Use a matched receive to receive exactly the message we probed. This ensures this method is thread-safe.
-        [[maybe_unused]] int err = MPI_Mrecv(
+        err = MPI_Mrecv(
             recv_buf.data(),                 // buf
             count,                           // count
             mpi_datatype<recv_value_type>(), // datatype
