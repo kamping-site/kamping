@@ -46,11 +46,8 @@ TEST_F(TryRecvTest, try_recv_vector_from_arbitrary_source) {
     MPI_Request      req;
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
-    auto msg = comm.try_recv<int>();
-    EXPECT_FALSE(msg);
-    if (msg) {
-        std::cout << "Source: " << msg->extract_status().source() << std::endl;
-    }
+    EXPECT_FALSE(comm.try_recv<int>().has_value());
+    comm.barrier();
 
     // Each rank sends a message with its rank as tag to rank 0.
     // The message has comm.rank() elements.
@@ -93,6 +90,7 @@ TEST_F(TryRecvTest, try_recv_vector_from_arbitrary_source) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so this should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<long>(), std::nullopt);
 }
 
@@ -103,6 +101,7 @@ TEST_F(TryRecvTest, try_recv_vector_from_explicit_source) {
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     // Each rank sends a message with its rank as tag to rank 0.
     // The message has comm.rank() elements.
@@ -141,6 +140,7 @@ TEST_F(TryRecvTest, try_recv_vector_from_explicit_source) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -151,6 +151,7 @@ TEST_F(TryRecvTest, try_recv_vector_from_explicit_source_and_explicit_tag) {
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     // Each rank sends a message with its rank as tag to rank 0.
     // The message has comm.rank() elements.
@@ -189,6 +190,7 @@ TEST_F(TryRecvTest, try_recv_vector_from_explicit_source_and_explicit_tag) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -199,6 +201,7 @@ TEST_F(TryRecvTest, try_recv_vector_with_explicit_size) {
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     if (comm.is_root()) {
         auto other_rank = comm.rank_shifted_cyclic(1);
@@ -233,6 +236,7 @@ TEST_F(TryRecvTest, try_recv_vector_with_explicit_size) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -243,6 +247,7 @@ TEST_F(TryRecvTest, try_recv_vector_with_input_status) {
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     if (comm.is_root()) {
         auto other_rank = comm.rank_shifted_cyclic(1);
@@ -275,6 +280,7 @@ TEST_F(TryRecvTest, try_recv_vector_with_input_status) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -285,6 +291,7 @@ TEST_F(TryRecvTest, try_recv_default_custom_container_without_recv_buf) {
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     if (comm.is_root()) {
         auto other_rank = comm.rank_shifted_cyclic(1);
@@ -314,6 +321,7 @@ TEST_F(TryRecvTest, try_recv_default_custom_container_without_recv_buf) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -323,6 +331,7 @@ TEST_F(TryRecvTest, try_recv_from_proc_null) {
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
 
     while (true) {
         auto result_opt = comm.try_recv(source(rank::null), recv_buf(v), status_out());
@@ -339,6 +348,7 @@ TEST_F(TryRecvTest, try_recv_from_proc_null) {
     }
 
     // No more messages are inflight, so the try_recv() should return std::nullopt
+    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
