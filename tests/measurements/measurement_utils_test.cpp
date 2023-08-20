@@ -54,32 +54,28 @@ TEST(TreeNodeTest, node_construction) {
 TEST(TreeNodeTest, find_or_insert_basic_tree_construction) {
     using namespace kamping::measurements::internal;
     DummyNode root("root");
-    auto      child1  = root.find_or_insert("child1");
-    auto      child2  = root.find_or_insert("child2");
-    auto      child11 = child1->find_or_insert("child11");
-    auto      child12 = child1->find_or_insert("child12");
-    EXPECT_NE(child1, nullptr);
-    EXPECT_NE(child2, nullptr);
-    EXPECT_NE(child11, nullptr);
-    EXPECT_NE(child12, nullptr);
+    auto&     child1  = root.find_or_insert("child1");
+    auto&     child2  = root.find_or_insert("child2");
+    auto&     child11 = child1.find_or_insert("child11");
+    auto&     child12 = child1.find_or_insert("child12");
     // test find part of find_or_insert
-    EXPECT_EQ(root.find_or_insert("child1"), child1);
-    EXPECT_EQ(root.find_or_insert("child2"), child2);
-    EXPECT_EQ(child1->find_or_insert("child11"), child11);
-    EXPECT_EQ(child1->find_or_insert("child12"), child12);
+    EXPECT_EQ(&root.find_or_insert("child1"), &child1);
+    EXPECT_EQ(&root.find_or_insert("child2"), &child2);
+    EXPECT_EQ(&child1.find_or_insert("child11"), &child11);
+    EXPECT_EQ(&child1.find_or_insert("child12"), &child12);
 }
 
 TEST(TreeNodeTest, find_or_insert_basic_navigation_structure) {
     using namespace kamping::measurements::internal;
     DummyNode root("root");
-    auto      child1  = root.find_or_insert("child1");
-    auto      child2  = root.find_or_insert("child2");
-    auto      child11 = child1->find_or_insert("child11");
-    auto      child12 = child1->find_or_insert("child12");
+    auto&     child1  = root.find_or_insert("child1");
+    auto&     child2  = root.find_or_insert("child2");
+    auto&     child11 = child1.find_or_insert("child11");
+    auto&     child12 = child1.find_or_insert("child12");
 
-    auto contains_child = [](DummyNode& node, DummyNode* child_ptr) {
-        auto it = std::find_if(node.children().begin(), node.children().end(), [&](const auto& child) {
-            return child.get() == child_ptr;
+    auto contains_child = [](DummyNode& node, DummyNode& child) {
+        auto it = std::find_if(node.children().begin(), node.children().end(), [&](const auto& cur_child) {
+            return cur_child.get() == &child;
         });
         return it != node.children().end();
     };
@@ -89,19 +85,19 @@ TEST(TreeNodeTest, find_or_insert_basic_navigation_structure) {
     EXPECT_TRUE(contains_child(root, child1));
     EXPECT_TRUE(contains_child(root, child2));
 
-    EXPECT_EQ(child1->parent_ptr(), &root);
-    EXPECT_EQ(child1->children().size(), 2u);
-    EXPECT_TRUE(contains_child(*child1, child11));
-    EXPECT_TRUE(contains_child(*child1, child12));
+    EXPECT_EQ(child1.parent_ptr(), &root);
+    EXPECT_EQ(child1.children().size(), 2u);
+    EXPECT_TRUE(contains_child(child1, child11));
+    EXPECT_TRUE(contains_child(child1, child12));
 
-    EXPECT_EQ(child2->parent_ptr(), &root);
-    EXPECT_EQ(child2->children().size(), 0u);
+    EXPECT_EQ(child2.parent_ptr(), &root);
+    EXPECT_EQ(child2.children().size(), 0u);
 
-    EXPECT_EQ(child11->parent_ptr(), child1);
-    EXPECT_EQ(child11->children().size(), 0u);
+    EXPECT_EQ(child11.parent_ptr(), &child1);
+    EXPECT_EQ(child11.children().size(), 0u);
 
-    EXPECT_EQ(child12->parent_ptr(), child1);
-    EXPECT_EQ(child12->children().size(), 0u);
+    EXPECT_EQ(child12.parent_ptr(), &child1);
+    EXPECT_EQ(child12.children().size(), 0u);
 }
 
 TEST(MaxTest, operation_name) {
@@ -206,13 +202,13 @@ TEST(EvaluationNodeTest, add_one_aggregation_operation) {
     double const               value1 = 5.0;
     std::vector<double> const  value2{6.0, 6.0};
     const std::string          operation = "op";
-    // add first result of aggreation op operation
+    // add first result of aggregation op operation
     node.add(operation, std::optional<double>{value1});
     EXPECT_EQ(node.aggregated_data().size(), 1u);
-    // add second result of aggreation op operation (which is empty and should result in a noop)
+    // add second result of aggregation op operation (which is empty and should result in a noop)
     node.add(operation, std::optional<double>{});
     EXPECT_EQ(node.aggregated_data().size(), 1u);
-    // add third result of aggreation op operation which is a list
+    // add third result of aggregation op operation which is a list
     node.add(operation, value2);
     EXPECT_EQ(node.aggregated_data().size(), 1u);
 
@@ -230,13 +226,13 @@ TEST(EvaluationNodeTest, add_multiple_aggregation_operation) {
     const std::string          operation1 = "op1";
     const std::string          operation2 = "op2";
     const std::string          operation3 = "op3";
-    // add result of aggreation op operation1
+    // add result of aggregation op operation1
     node.add(operation1, std::optional<double>{value1});
     EXPECT_EQ(node.aggregated_data().size(), 1u);
-    // add second result of aggreation op operation2 (which is empty and should result in a noop)
+    // add second result of aggregation op operation2 (which is empty and should result in a noop)
     node.add(operation2, std::optional<double>{});
     EXPECT_EQ(node.aggregated_data().size(), 1u);
-    // add result of aggreation op operation3 which is a list
+    // add result of aggregation op operation3 which is a list
     node.add(operation3, value2);
     EXPECT_EQ(node.aggregated_data().size(), 2u);
     {

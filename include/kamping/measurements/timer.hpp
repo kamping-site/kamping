@@ -29,11 +29,12 @@ namespace kamping::measurements {
 
 /// @brief Distributed timer object.
 ///
+/// ## Timer hierarchy: ##
 /// The timer is able to execute time measurements in a hierarchical manner.
 /// Time measurements are executed with a matching pair of calls to Timer::start() and Timer::stop().
 /// Each call to start() enters a new level in the hierarchy which is left again with the corresponding call to
-/// stop(). Time measurements can be nested and the parent measurement remains active while its child time
-/// measurment take place.
+/// stop(). Time measurements can be nested and the parent time measurement remains active while its child time
+/// measurement take place.
 ///
 /// See the following pseudocode example:
 ///
@@ -63,21 +64,51 @@ namespace kamping::measurements {
 /// // `-- postprocessing:......2.0 sec
 /// \endcode
 ///
-/// The order and argument of calls of start() and stop() must be identical on all ranks in the given communicator.
+/// The timer hierarchy that is implicitly created by start() and stop() must be identical on all ranks in the given
+/// communicator. The number of time measurements with a specific key may vary as long as the stored duration are
+/// identical (e.g. a measurement with "send_data" is execute one time on rank 0 and two times on rank 1 but the
+/// durations are accumulated on rank 1 (with stop_and_add()) resulting in the same number of stored durations as
+/// on rank 0).
+/// Specified communicator-wide duration aggregation operations on ranks other than the root rank are ignored.
+///
+/// ## Aggregation operations ##
+///
+/// There are two types of aggregation modes:
+///
+/// 1) Local key aggregation that specifies how time measurements with the same key will be stored.
+/// \code
+/// timer.start("measurementA").
+/// timer.stop_and_add()
+/// timer.start("measurementA").
+/// timer.stop_and_add().
+/// \endcode
+/// results in one stored duration for the key "measurementA" which is the sum of the two measured durations for
+/// "measurementA", whereas \code timer.start("measurementB"). timer.stop_and_append() timer.start("measurementB").
+/// timer.stop_and_append().
+/// \endcode
+/// results in a list of two durations for the key "measurementB".
+///
+/// 2) Communicator-wide data aggregation operations specify how the stored duration(s) for a specific measurement key
+/// shall be aggregated. The default operation (if no operations are specified via the stop() method) is to take the
+/// maximum duration over all ranks in the communicator. If there are multiple durations for a certain key, the
+/// aggregation operation is applied element-wise and the result remains a list with the same size as the number of
+/// input durations. The communicator-wide aggregation operation are applied in the evaluation phase started with
+/// calls to evaluate() or evaluate_and_print().
 ///
 /// @tparam CommunicatorType Communicator in which the time measurements are executed.
 template <typename CommunicatorType = Communicator<>>
 class Timer {
 public:
+    using Duration = double; ///< Type of durations. @todo make this customizable.
     /// @brief Constructs a timer using the \c MPI_COMM_WORLD communicator.
-    Timer() : _timer_tree{}, _comm{comm_world()} {}
+    Timer() : Timer{comm_world()} {}
 
     /// @brief Constructs a timer using a given communicator.
     ///
     /// @param comm Communicator in which the time measurements are executed.
     Timer(CommunicatorType const& comm) : _timer_tree{}, _comm{comm} {}
 
-    /// @brief Synchronizes all ranks in the underlying communicator via a barrier and then start the measuremt with
+    /// @brief Synchronizes all ranks in the underlying communicator via a barrier and then start the measurement with
     /// the given key.
     /// @param key Key with which the started time measurement is associated.
     void synchronize_and_start(std::string const& key) {
@@ -85,36 +116,39 @@ public:
         start_impl(key, use_barrier);
     }
 
-    /// @brief Starts the measuremt with the given key.
+    /// @brief Starts the measurement with the given key.
     /// @param key Key with which the started time measurement is associated.
     void start(std::string const& key) {
         bool const use_barrier = false;
         start_impl(key, use_barrier);
     }
 
-    /// @brief Stops the currently active measurement and store the result.
-    /// @param duration_aggregation_modi Specify how the measurement duration is aggregated over all participationg
-    /// PEs when Timer::aggregate() is called.
+    /// @brief Stops the currently active measurement and stores the result.
+    /// @todo Add a toggle option to the Timer class to set the default key aggregation behaviour for stop().
+    /// @todo Replace the duration_aggregation_mode parameter with a more efficient and ergonomic solution using
+    /// variadic templates.
+    /// @param duration_aggregation_modi Specify how the measurement duration is aggregated over all participating
+    /// ranks when Timer::aggregate() is called.
     void stop(std::vector<DataAggregationMode> const& duration_aggregation_modi = std::vector<DataAggregationMode>{}) {
         stop_impl(KeyAggregationMode::accumulate, duration_aggregation_modi);
     }
 
-    /// @brief Stops the currently active measurement and store the result. If the key associated with the
+    /// @brief Stops the currently active measurement and stores the result. If the key associated with the
     /// measurement that is stopped has already been used at the current hierarchy level the duration is added to
     /// the last measured duration at this hierarchy level with the same key.
-    /// @param duration_aggregation_modi Specify how the measurement duration is aggregated over all participationg
-    /// PEs when Timer::aggregate() is called.
-    void stop_and_accumulate(
+    /// @param duration_aggregation_modi Specify how the duration is aggregated over all participating
+    /// ranks when Timer::aggregate() is called.
+    void stop_and_add(
         std::vector<DataAggregationMode> const& duration_aggregation_modi = std::vector<DataAggregationMode>{}
     ) {
         stop_impl(KeyAggregationMode::accumulate, duration_aggregation_modi);
     }
 
-    /// @brief Stops the currently active measurement and store the result. If the key associated with the
-    /// measurement that is stopped has already been used at the current hierarchy level the duration is append to a
+    /// @brief Stops the currently active measurement and stores the result. If the key associated with the
+    /// measurement that is stopped has already been used at the current hierarchy level the duration is appended to a
     /// list of previously measured durations at this hierarchy level with the same key.
-    /// @param duration_aggregation_modi Specify how the measurement duration is aggregated over all participationg
-    /// PEs when Timer::aggregate() is called.
+    /// @param duration_aggregation_modi Specify how the measurement duration is aggregated over all participating
+    /// ranks when Timer::aggregate() is called.
     void stop_and_append(
         std::vector<DataAggregationMode> const& duration_aggregation_modi = std::vector<DataAggregationMode>{}
     ) {
@@ -130,7 +164,7 @@ public:
     /// @return Root of the evaluation tree which encapsulated the aggregated data in a tree structure representing the
     /// measurements.
     auto evaluate() {
-        EvaluationTreeNode<double> root("root");
+        EvaluationTreeNode<Duration> root("root");
         evaluate(root, _timer_tree.root);
         return root;
     }
@@ -140,7 +174,7 @@ public:
         _timer_tree.reset();
     }
 
-    /// @brief Aggregates and outputs the the executed measurements. The output is done via the print()
+    /// @brief Aggregates and outputs the executed measurements. The output is done via the print()
     /// method of a given Printer object.
     ///
     /// The print() method must accept an object of type EvaluationTreeNode and receives the root of the evaluated timer
@@ -160,30 +194,37 @@ public:
     }
 
 private:
-    internal::TimerTree<double, double>
-                            _timer_tree; ///< Timer tree used to represent the hiearchical time measurements.
+    internal::TimerTree<double, Duration>
+                            _timer_tree; ///< Timer tree used to represent the hierarchical time measurements.
     CommunicatorType const& _comm;       ///< Communicator in which the time measurements take place.
 
     /// @brief Starts a time measurement.
     void start_impl(std::string const& key, bool use_barrier) {
-        auto node = _timer_tree.current_node->find_or_insert(key);
+        auto& node       = _timer_tree.current_node->find_or_insert(key);
+        node.is_active() = true;
         if (use_barrier) {
             _comm.barrier();
         }
-        node->startpoint()       = Environment<>::wtime();
-        _timer_tree.current_node = node;
+        node.startpoint()        = Environment<>::wtime();
+        _timer_tree.current_node = &node;
     }
 
-    /// @brief Stops the currently active measurement and store the result.
+    /// @brief Stops the currently active measurement and stores the result.
     /// @param key_aggregation_mode Specifies how the measurement duration is locally aggregated when there are multiple
     /// measurements at the same level with identical key.
-    /// @param duration_aggregation_modi Specifies how the measurement duration is aggregated over all participationg
-    /// ranks when Timer::aggregate() is called.
+    /// @param duration_aggregation_modi Specifies how the measurement duration is aggregated over all participating
+    /// ranks when evaluate() is called.
     void stop_impl(
         KeyAggregationMode key_aggregation_mode, std::vector<DataAggregationMode> const& duration_aggregation_modi
     ) {
-        auto endpoint   = Environment<>::wtime();
-        auto startpoint = _timer_tree.current_node->startpoint();
+        auto endpoint = Environment<>::wtime();
+        KASSERT(
+            _timer_tree.current_node->is_active(),
+            "There is no corresponding call to start() associated with this call to stop()",
+            assert::light
+        );
+        _timer_tree.current_node->is_active() = false;
+        auto startpoint                       = _timer_tree.current_node->startpoint();
         _timer_tree.current_node->aggregate_measurements_locally(endpoint - startpoint, key_aggregation_mode);
         if (!duration_aggregation_modi.empty()) {
             _timer_tree.current_node->duration_aggregation_operations() = duration_aggregation_modi;
@@ -197,7 +238,7 @@ private:
     /// param evaluation_tree_node Node where the aggregated durations are stored.
     /// param timer_tree_node Node where the raw durations are stored.
     void evaluate(
-        EvaluationTreeNode<double>& evaluation_tree_node, internal::TimerTreeNode<double, double>& timer_tree_node
+        EvaluationTreeNode<Duration>& evaluation_tree_node, internal::TimerTreeNode<double, Duration>& timer_tree_node
     ) {
         KASSERT(
             is_string_same_on_all_ranks(timer_tree_node.name(), _comm),
@@ -210,19 +251,29 @@ private:
             "diverged",
             assert::light_communication
         );
-        for (auto const& item: timer_tree_node.durations()) {
-            auto recv_buf = _comm.gather(send_buf(item)).extract_recv_buffer();
+
+        // gather all durations at once as gathering all durations individually may deteriorate
+        // the performance of the evaluation operation significantly.
+        auto       recv_buf      = _comm.gatherv(send_buf(timer_tree_node.durations())).extract_recv_buffer();
+        auto const num_durations = timer_tree_node.durations().size();
+        for (size_t duration_idx = 0; duration_idx < num_durations; ++duration_idx) {
             if (!_comm.is_root()) {
                 continue;
             }
+            std::vector<Duration> cur_durations;
+            cur_durations.reserve(_comm.size());
+            // gather the durations belonging to the same measurement
+            for (size_t rank = 0; rank < _comm.size(); ++rank) {
+                cur_durations.push_back(recv_buf[duration_idx + rank * num_durations]);
+            }
 
             for (auto const& aggregation_mode: timer_tree_node.duration_aggregation_operations()) {
-                aggregate_measurements_globally(aggregation_mode, recv_buf, evaluation_tree_node);
+                aggregate_measurements_globally(aggregation_mode, cur_durations, evaluation_tree_node);
             }
         }
         for (auto& timer_tree_child: timer_tree_node.children()) {
-            auto evaluation_tree_child = evaluation_tree_node.find_or_insert(timer_tree_child->name());
-            evaluate(*evaluation_tree_child, *timer_tree_child.get());
+            auto& evaluation_tree_child = evaluation_tree_node.find_or_insert(timer_tree_child->name());
+            evaluate(evaluation_tree_child, *timer_tree_child.get());
         }
     }
 
@@ -233,7 +284,7 @@ private:
     /// @param evaluation_node Object where the aggregated and evaluated durations are stored.
     void aggregate_measurements_globally(
         DataAggregationMode                                mode,
-        std::vector<double> const&                         gathered_data,
+        std::vector<Duration> const&                       gathered_data,
         kamping::measurements::EvaluationTreeNode<double>& evaluation_node
     ) {
         switch (mode) {
@@ -260,9 +311,6 @@ private:
         }
     }
 };
-
-/// @brief A basic Timer that uses kamping::Communicator<> as underlying communicator type.
-using BasicTimer = Timer<Communicator<>>;
 
 /// @brief Gets a reference to a kamping::measurements::BasicTimer.
 ///

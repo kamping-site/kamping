@@ -142,19 +142,21 @@ struct Gather {
     }
 };
 
-/// @brief CRTP class to encapsulate all tree node related behaviour of DerivedNode.
-/// @tparam DerivedNode Type for which a tree node behaviour is added achieved.
+/// @brief Object representing a node in a tree. The class is not meant to be used on its own but to encapsulate the
+/// basic "tree-node behaviour" (e.g. management of children nodes etc.) for other specialised node classes like
+/// TimerTreeNode via CRTP paradigm.
+/// @tparam DerivedNode Specialised node type for which the basisc "tree node behaviour" is encapsulated.
 template <typename DerivedNode>
 class TreeNode {
 public:
-    /// @brief Construct node without pointer to parent and empty name
-    TreeNode() : _name{}, _parent_ptr{nullptr} {}
+    /// @brief Constructs node without pointer to parent and empty name.
+    TreeNode() : TreeNode(std::string{}) {}
 
-    /// @brief Construct node without pointer to parent.
+    /// @brief Constructs node without pointer to parent.
     /// @param name Name associated with this node.
-    TreeNode(std::string const& name) : _name{name}, _parent_ptr{nullptr} {}
+    TreeNode(std::string const& name) : TreeNode(name, nullptr) {}
 
-    /// @brief Construct node  pointer to parent.
+    /// @brief Constructs node pointer to parent.
     /// @param name Name associated with this node.
     /// @param parent Pointer to this node's parent pointer.
     TreeNode(std::string const& name, DerivedNode* parent) : _name{name}, _parent_ptr{parent} {}
@@ -162,17 +164,17 @@ public:
     /// @brief Searches the node's children for a node with the given name. If there is no such child a new node is
     /// inserted.
     /// @param name Name of the child which is searched.
-    /// @return Pointer to the node with the given name.
-    auto find_or_insert(std::string const& name) {
+    /// @return Reference to the node with the given name.
+    auto& find_or_insert(std::string const& name) {
         auto it = _children_map.find(name);
         if (it != _children_map.end()) {
-            return it->second;
+            return *it->second;
         } else {
             auto new_child        = std::make_unique<DerivedNode>(name, static_cast<DerivedNode*>(this));
             auto ptr_to_new_child = new_child.get();
             _children_map[name]   = ptr_to_new_child;
             _children_storage.push_back(std::move(new_child));
-            return ptr_to_new_child;
+            return *ptr_to_new_child;
         }
     }
 
@@ -256,9 +258,17 @@ public:
         return _duration_aggregation_operations;
     }
 
+    /// @brief Access to the is_active flag indicating whether there is an active time measurement associated with this
+    /// node.
+    /// @return Return a reference to is_active flag.
+    bool& is_active() {
+        return _is_active;
+    }
+
 private:
-    TimePoint                        _start;     ///< Point in time at which the current measurement has been started.
-    std::vector<Duration>            _durations; ///< Duration(s) of the node
+    TimePoint                        _start; ///< Point in time at which the current measurement has been started.
+    bool                             _is_active{false}; ///< Indicates whether a time measurement is currently active.
+    std::vector<Duration>            _durations;        ///< Duration(s) of the node
     std::vector<DataAggregationMode> _duration_aggregation_operations{
         DataAggregationMode::max}; ///< Communicator-wide aggregation operation which will be performed on the
                                    ///< durations. @TODO replace this with a more space efficient variant
@@ -342,9 +352,8 @@ inline bool is_string_same_on_all_ranks(std::string const& str, Communicator con
     if (!has_same_size) {
         return false;
     }
-    std::vector<char> name_as_char_vector;
-    std::copy(str.begin(), str.end(), std::back_inserter(name_as_char_vector));
-    auto res    = comm.gatherv(send_buf(name_as_char_vector));
+    // std::vector<char> name_as_char_vector;
+    auto res    = comm.gatherv(send_buf(str));
     auto result = true;
     if (comm.is_root()) {
         auto recv_buf = res.extract_recv_buffer();

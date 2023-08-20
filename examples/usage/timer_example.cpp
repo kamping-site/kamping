@@ -37,7 +37,7 @@ int main() {
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> output;
 
-    auto spend_some_time = [&]() {
+    auto sleep_some_time = [&]() {
         static std::mt19937                gen((comm.rank() + 17) * 1001);
         std::uniform_int_distribution<int> distrib(1'000, 10'000'000);
         auto                               it = distrib(gen);
@@ -50,13 +50,13 @@ int main() {
         t.synchronize_and_start("round" + std::to_string(i));
         {
             t.synchronize_and_start("preprocessing");
-            spend_some_time();
+            sleep_some_time();
             t.stop();
 
             t.synchronize_and_start("core_algorithm");
             for (size_t j = 0; j < 5u; ++j) {
                 t.start("subroutine");
-                spend_some_time();
+                sleep_some_time();
                 t.stop_and_append(
                     {measurements::DataAggregationMode::min,
                      measurements::DataAggregationMode::max,
@@ -65,7 +65,7 @@ int main() {
             }
             t.stop();
             t.synchronize_and_start("preprocessing");
-            spend_some_time();
+            sleep_some_time();
             t.stop();
         }
         t.stop_and_append();
