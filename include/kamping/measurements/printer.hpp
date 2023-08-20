@@ -64,13 +64,14 @@ template <typename Duration = double>
 class SimpleJsonPrinter {
 public:
     /// @brief Construct a printer that use std::cout as outstream.
-    SimpleJsonPrinter() : _outstream{std::cout}, _interal_printer(_outstream) {}
+    SimpleJsonPrinter() : SimpleJsonPrinter{std::cout} {}
 
     /// @brief Construct a printer printing to a given outstream.
     ///
     /// @param outstream Outstream on which the content is printed.
     SimpleJsonPrinter(std::ostream& outstream) : _outstream{outstream}, _interal_printer(_outstream) {}
     /// @brief Prints an evaluated TimerTree in Json format to stdout.
+    /// @todo expose indentation parameter to make the indentation customizable.
     /// @param node Root node of the TimerTree to print.
     /// @param indentation Indentation to use for the node.
     void print(EvaluationTreeNode<Duration> const& node, std::size_t indentation = 0) {
@@ -129,7 +130,24 @@ private:
         _interal_printer; ///< Internal printer able to print either a scalar or vector of durations.
 };
 
-/// @brief Printer class that prints an evaluated TimerTree in Json format.
+/// @brief Printer class that prints an evaluated TimerTree in a flat format in which the timer hierarchy is collapsed
+/// into a dot separated identifier per measurement.
+///
+/// For example:
+/// \code
+///   timer.start("algo")
+///     timer.start("subroutine")
+///       timer.start("subsubroutine")
+///       timer.stop()
+///     timer.stop()
+///   timer.stop()
+/// \endcode
+/// will return an output conceptually similar to
+/// \code
+/// // algo=<duration data> algo.subroutine= <duration data> algo.subroutine.subsubroutine= <duration data> ...
+/// \endcode
+/// when printed with FlatPrinter.
+///
 class FlatPrinter {
 public:
     /// @brief Construct a printer that use std::cout as outstream.
