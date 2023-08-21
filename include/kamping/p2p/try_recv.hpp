@@ -46,7 +46,7 @@
 /// to be resized. If no \ref kamping::recv_buf() is provided, the type that should be received has to be passed as a
 /// template parameter to \c try_recv().
 /// - \ref kamping::tag() the tag of the received message. Defaults to receiving for an arbitrary tag, i.e. \c tag(tags::any).
-/// - \ref kamping::source() receive a message sent from this source rank.Defaults to probing for an arbitrary source,
+/// - \ref kamping::source() the source rank of the message to receive. Defaults to probing for an arbitrary source,
 /// i.e. \c source(rank::any).
 /// - \ref kamping::status() or \ref kamping::status_out(). Returns info about the received message by setting the
 /// appropriate fields in the status object passed by the user. If \ref kamping::status_out() is passed, constructs a
