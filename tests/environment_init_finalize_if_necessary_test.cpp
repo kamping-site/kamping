@@ -23,13 +23,6 @@
 #include "kamping/environment.hpp"
 using namespace ::kamping;
 
-std::set<MPI_Datatype> freed_types;
-
-int MPI_Type_free(MPI_Datatype* type) {
-    freed_types.insert(*type);
-    return PMPI_Type_free(type);
-}
-
 // This is not using google test because our test setup would call MPI_Init before running any tests
 int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
     KASSERT(!mpi_env.initialized());
