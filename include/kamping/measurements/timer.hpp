@@ -118,14 +118,16 @@ public:
 
     /// @brief Synchronizes all ranks in the underlying communicator via a barrier and then start the measurement with
     /// the given key.
-    /// @param key Key with which the started time measurement is associated.
+    /// @param key Key with which the started time measurement is associated. Note that the user is responsible for
+    /// providing keys, which are valid in the used output format during printing.
     void synchronize_and_start(std::string const& key) {
         bool const use_barrier = true;
         start_impl(key, use_barrier);
     }
 
     /// @brief Starts the measurement with the given key.
-    /// @param key Key with which the started time measurement is associated.
+    /// @param key Key with which the started time measurement is associated. Note that the user is responsible for
+    /// providing keys, which are valid in the used output format during printing.
     void start(std::string const& key) {
         bool const use_barrier = false;
         start_impl(key, use_barrier);
