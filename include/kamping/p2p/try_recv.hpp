@@ -45,7 +45,7 @@
 /// accommodate the number of elements to receive. Use \c kamping::Span with enough space if you do not want the buffer
 /// to be resized. If no \ref kamping::recv_buf() is provided, the type that should be received has to be passed as a
 /// template parameter to \c try_recv().
-/// - \ref kamping::tag() recv message with this tag. Defaults to receivingfor an arbitrary tag, i.e. \c tag(tags::any).
+/// - \ref kamping::tag() the tag of the received message. Defaults to receiving for an arbitrary tag, i.e. \c tag(tags::any).
 /// - \ref kamping::source() receive a message sent from this source rank.Defaults to probing for an arbitrary source,
 /// i.e. \c source(rank::any).
 /// - \ref kamping::status() or \ref kamping::status_out(). Returns info about the received message by setting the
