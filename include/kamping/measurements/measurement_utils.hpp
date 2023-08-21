@@ -37,19 +37,36 @@ namespace kamping::measurements {
 template <typename T>
 using ScalarOrContainer = std::variant<T, std::vector<T>>;
 
-/// @brief Enum to specify how time measurements with same key shall be aggregated.
-enum class KeyAggregationMode {
+/// @brief Enum to specify how time measurements with same key shall be aggregated locally.
+enum class LocalAggregationMode {
     accumulate, ///< Tag used to indicate that data associated with identical keys will be accumulated into a scalar.
     append      ///< Tag used to indicate that data with identical keys will not be accumulated and stored in a list.
 };
 
-/// @brief Enum to specify how time duration shall be aggregated across the participating ranks.
-enum class DataAggregationMode {
+/// @brief Enum to specify how time durations with same key shall be aggregated across the participating ranks.
+enum class GlobalAggregationMode {
     min,   ///< The minimum of the measurement data on the participating ranks will be computed.
     max,   ///< The maximum of the measurement data on the participating ranks will be computed.
     sum,   ///< The sum of the measurement data on the participating ranks will be computed.
     gather ///< The measurement data on the participating ranks will be collected in a container.
 };
+
+/// @brief Returns name of given GlobalAggregationMode.
+/// @param mode Given mode for which a name as a string is requested.
+/// @return Name of mode as a string.
+inline std::string get_string(GlobalAggregationMode mode) {
+    switch (mode) {
+        case GlobalAggregationMode::min:
+            return "min";
+        case GlobalAggregationMode::max:
+            return "max";
+        case GlobalAggregationMode::sum:
+            return "sum";
+        case GlobalAggregationMode::gather:
+            return "gather";
+    }
+    return "No name string is specified for given mode.";
+}
 } // namespace kamping::measurements
 
 namespace kamping::measurements::internal {
@@ -69,11 +86,6 @@ struct Max {
         auto it = std::max_element(container.begin(), container.end());
         return std::make_optional(*it);
     }
-    /// @brief Returns operation's name.
-    /// @return Operations name.
-    static std::string operation_name() {
-        return "max";
-    }
 };
 
 /// @brief Object encapsulating a minimum operation on a given range of objects.
@@ -92,12 +104,6 @@ struct Min {
         auto it = std::min_element(container.begin(), container.end());
         return std::make_optional(*it);
     }
-
-    /// @brief Returns operation's name.
-    /// @return Operations name.
-    static std::string operation_name() {
-        return "min";
-    }
 };
 
 /// @brief Object encapsulating a summation operation on a given range of objects.
@@ -115,12 +121,6 @@ struct Sum {
         }
         auto const sum = std::accumulate(container.begin(), container.end(), T{});
         return std::make_optional(sum);
-    }
-
-    /// @brief Returns operation's name.
-    /// @return Operations name.
-    static std::string operation_name() {
-        return "sum";
     }
 };
 
@@ -214,10 +214,17 @@ template <typename TimePoint, typename Duration>
 class TimerTreeNode : public TreeNode<TimerTreeNode<TimePoint, Duration>> {
 public:
     using TreeNode<TimerTreeNode<TimePoint, Duration>>::TreeNode;
-    /// @brief Access to the point in time at which the currently active measurement has been started.
-    /// @return Reference to start point.
-    auto& startpoint() {
+
+    /// @brief Returns the point in time at which the currently active measurement has been started.
+    /// @return Point in time at which the currently active measurement has been started.
+    TimePoint startpoint() const {
         return _start;
+    }
+
+    /// @brief Sets the point in time at which the currently active measurement has been started.
+    /// @param start New start point for currently active measurement.
+    void startpoint(TimePoint start) {
+        _start = start;
     }
 
     /// @brief Add the result of a time measurement (i.e. a duration) to the node.
@@ -226,24 +233,18 @@ public:
     /// @param mode The kamping::measurements::KeyAggregationMode parameter determines how multiple time measurements
     /// shall be handled. They can either be accumulated (the durations are added together) or appended (the durations
     /// are stored in a list).
-    void aggregate_measurements_locally(Duration const& duration, KeyAggregationMode const& mode) {
+    void aggregate_measurements_locally(Duration const& duration, LocalAggregationMode const& mode) {
         switch (mode) {
-            case KeyAggregationMode::accumulate:
+            case LocalAggregationMode::accumulate:
                 if (_durations.empty()) {
                     _durations.push_back(duration);
                 } else {
                     _durations.back() += duration;
                 }
                 break;
-            case KeyAggregationMode::append:
+            case LocalAggregationMode::append:
                 _durations.push_back(duration);
         }
-    }
-
-    /// @brief Access to stored duration(s).
-    /// @return Return a reference to duration(s).
-    auto& durations() {
-        return _durations;
     }
 
     /// @brief Access to stored duration(s).
@@ -258,20 +259,25 @@ public:
         return _duration_aggregation_operations;
     }
 
-    /// @brief Access to the is_active flag indicating whether there is an active time measurement associated with this
-    /// node.
-    /// @return Return a reference to is_active flag.
-    bool& is_active() {
+    /// @brief Sets the activity status of this node (i.e. is there a currently active measurement).
+    /// @param is_active Activity status to set.
+    void is_active(bool is_active) {
+        _is_active = is_active;
+    }
+
+    /// @brief Getter for activity status.
+    /// @return Returns whether this node is associated with a currently active measurement.
+    bool is_active() const {
         return _is_active;
     }
 
 private:
-    TimePoint                        _start; ///< Point in time at which the current measurement has been started.
-    bool                             _is_active{false}; ///< Indicates whether a time measurement is currently active.
-    std::vector<Duration>            _durations;        ///< Duration(s) of the node
-    std::vector<DataAggregationMode> _duration_aggregation_operations{
-        DataAggregationMode::max}; ///< Communicator-wide aggregation operation which will be performed on the
-                                   ///< durations. @TODO replace this with a more space efficient variant
+    TimePoint                          _start; ///< Point in time at which the current measurement has been started.
+    bool                               _is_active{false}; ///< Indicates whether a time measurement is currently active.
+    std::vector<Duration>              _durations;        ///< Duration(s) of the node
+    std::vector<GlobalAggregationMode> _duration_aggregation_operations{
+        GlobalAggregationMode::max}; ///< Communicator-wide aggregation operation which will be performed on the
+                                     ///< durations. @TODO replace this with a more space efficient variant
 };
 
 /// @brief Tree consisting of objects of type TimerTreeNode. The tree constitutes a hierarchy of time measurements
@@ -304,12 +310,12 @@ namespace kamping::measurements {
 ///
 /// @tparam Duration  Type of a duration.
 template <typename Duration>
-class EvaluationTreeNode : public internal::TreeNode<EvaluationTreeNode<Duration>> {
+class AggregatedTreeNode : public internal::TreeNode<AggregatedTreeNode<Duration>> {
 public:
-    using internal::TreeNode<EvaluationTreeNode<Duration>>::TreeNode;
+    using internal::TreeNode<AggregatedTreeNode<Duration>>::TreeNode;
 
     ///@brief Type into which the aggregated data is stored together with the applied aggregation operation.
-    using StorageType = std::unordered_map<std::string, std::vector<ScalarOrContainer<Duration>>>;
+    using StorageType = std::unordered_map<GlobalAggregationMode, std::vector<ScalarOrContainer<Duration>>>;
 
     /// @brief Access to stored aggregated data.
     /// @return Reference to aggregated data.
@@ -319,20 +325,20 @@ public:
 
     /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied aggregation
     /// operation.
-    /// @param aggregation_operation Applied aggregation operations.
+    /// @param aggregation_mode Aggregation mode that has been applied to the duration data.
     /// @param data Scalar resulted from applying the given aggregation operation.
-    void add(std::string const& aggregation_operation, std::optional<Duration> data) {
+    void add(GlobalAggregationMode aggregation_mode, std::optional<Duration> data) {
         if (data) {
-            _aggregated_data[aggregation_operation].emplace_back(data.value());
+            _aggregated_data[aggregation_mode].emplace_back(data.value());
         }
     }
 
     /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied aggregation
     /// operation.
-    /// @param aggregation_operation Applied aggregation operations.
+    /// @param aggregation_mode Aggregation mode that has been applied to the duration data.
     /// @param data Vector of Scalars resulted from applying the given aggregation operation.
-    void add(const std::string aggregation_operation, std::vector<Duration> const& data) {
-        _aggregated_data[aggregation_operation].emplace_back(data);
+    void add(GlobalAggregationMode aggregation_mode, std::vector<Duration> const& data) {
+        _aggregated_data[aggregation_mode].emplace_back(data);
     }
 
 public:

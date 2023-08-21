@@ -100,20 +100,20 @@ TEST(TreeNodeTest, find_or_insert_basic_navigation_structure) {
     EXPECT_EQ(child12.children().size(), 0u);
 }
 
-TEST(MaxTest, operation_name) {
-    EXPECT_EQ(Max::operation_name(), "max");
+TEST(MeasurementUtilsTest, get_string_for_aggreation_operation_max) {
+    EXPECT_EQ(get_string(GlobalAggregationMode::max), "max");
 }
 
-TEST(MinTest, operation_name) {
-    EXPECT_EQ(Min::operation_name(), "min");
+TEST(MeasurementUtilsTest, get_string_for_aggreation_operation_min) {
+    EXPECT_EQ(get_string(GlobalAggregationMode::min), "min");
 }
 
-TEST(SumTest, operation_name) {
-    EXPECT_EQ(Sum::operation_name(), "sum");
+TEST(MeasurementUtilsTest, get_string_for_aggreation_operation_sum) {
+    EXPECT_EQ(get_string(GlobalAggregationMode::sum), "sum");
 }
 
-TEST(GatherTest, operation_name) {
-    EXPECT_EQ(Gather::operation_name(), "gather");
+TEST(MeasurementUtilsTest, get_string_for_aggreation_operation_gather) {
+    EXPECT_EQ(get_string(GlobalAggregationMode::gather), "gather");
 }
 
 TEST(MaxTest, compute_basics) {
@@ -156,10 +156,10 @@ TEST(TimerTreeNodeTest, aggregate_measurements_locally_basic_appending) {
     int const               duration2 = 1;
     int const               duration3 = 3;
     EXPECT_EQ(node.durations().size(), 0u);
-    node.aggregate_measurements_locally(duration1, KeyAggregationMode::append);
+    node.aggregate_measurements_locally(duration1, LocalAggregationMode::append);
     EXPECT_EQ(node.durations(), std::vector<int>{duration1});
-    node.aggregate_measurements_locally(duration2, KeyAggregationMode::append);
-    node.aggregate_measurements_locally(duration3, KeyAggregationMode::append);
+    node.aggregate_measurements_locally(duration2, LocalAggregationMode::append);
+    node.aggregate_measurements_locally(duration3, LocalAggregationMode::append);
     EXPECT_EQ(node.durations(), (std::vector<int>{duration1, duration2, duration3}));
 }
 
@@ -169,10 +169,10 @@ TEST(TimerTreeNodeTest, aggregate_measurements_locally_basic_accumulate) {
     int const               duration2 = 1;
     int const               duration3 = 3;
     EXPECT_EQ(node.durations().size(), 0u);
-    node.aggregate_measurements_locally(duration1, KeyAggregationMode::accumulate);
+    node.aggregate_measurements_locally(duration1, LocalAggregationMode::accumulate);
     EXPECT_EQ(node.durations(), std::vector<int>{duration1});
-    node.aggregate_measurements_locally(duration2, KeyAggregationMode::accumulate);
-    node.aggregate_measurements_locally(duration3, KeyAggregationMode::accumulate);
+    node.aggregate_measurements_locally(duration2, LocalAggregationMode::accumulate);
+    node.aggregate_measurements_locally(duration3, LocalAggregationMode::accumulate);
     EXPECT_EQ(node.durations(), (std::vector<int>{duration1 + duration2 + duration3}));
 }
 
@@ -182,10 +182,10 @@ TEST(TimerTreeNodeTest, aggregate_measurements_locally_basic_interleaved) {
     int const               duration2 = 1;
     int const               duration3 = 3;
     EXPECT_EQ(node.durations().size(), 0u);
-    node.aggregate_measurements_locally(duration1, KeyAggregationMode::accumulate);
+    node.aggregate_measurements_locally(duration1, LocalAggregationMode::accumulate);
     EXPECT_EQ(node.durations(), std::vector<int>{duration1});
-    node.aggregate_measurements_locally(duration2, KeyAggregationMode::append);
-    node.aggregate_measurements_locally(duration3, KeyAggregationMode::accumulate);
+    node.aggregate_measurements_locally(duration2, LocalAggregationMode::append);
+    node.aggregate_measurements_locally(duration3, LocalAggregationMode::accumulate);
     EXPECT_EQ(node.durations(), (std::vector<int>{duration1, duration2 + duration3}));
 }
 
@@ -198,10 +198,10 @@ TEST(TimerTreeTest, constructor) {
 }
 
 TEST(EvaluationNodeTest, add_one_aggregation_operation) {
-    EvaluationTreeNode<double> node;
+    AggregatedTreeNode<double> node;
     double const               value1 = 5.0;
     std::vector<double> const  value2{6.0, 6.0};
-    const std::string          operation = "op";
+    auto                       operation = GlobalAggregationMode::max;
     // add first result of aggregation op operation
     node.add(operation, std::optional<double>{value1});
     EXPECT_EQ(node.aggregated_data().size(), 1u);
@@ -220,12 +220,12 @@ TEST(EvaluationNodeTest, add_one_aggregation_operation) {
 }
 
 TEST(EvaluationNodeTest, add_multiple_aggregation_operation) {
-    EvaluationTreeNode<double> node;
+    AggregatedTreeNode<double> node;
     double const               value1 = 5.0;
     std::vector<double> const  value2{6.0, 6.0};
-    const std::string          operation1 = "op1";
-    const std::string          operation2 = "op2";
-    const std::string          operation3 = "op3";
+    auto                       operation1 = GlobalAggregationMode::max;
+    auto                       operation2 = GlobalAggregationMode::min;
+    auto                       operation3 = GlobalAggregationMode::gather;
     // add result of aggregation op operation1
     node.add(operation1, std::optional<double>{value1});
     EXPECT_EQ(node.aggregated_data().size(), 1u);

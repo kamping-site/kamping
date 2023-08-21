@@ -74,7 +74,7 @@ public:
     /// @todo expose indentation parameter to make the indentation customizable.
     /// @param node Root node of the TimerTree to print.
     /// @param indentation Indentation to use for the node.
-    void print(EvaluationTreeNode<Duration> const& node, std::size_t indentation = 0) {
+    void print(AggregatedTreeNode<Duration> const& node, std::size_t indentation = 0) {
         const std::size_t indentation_per_level = 2;
         auto              name                  = node.name();
         auto              evaluation_data       = node.aggregated_data();
@@ -90,7 +90,8 @@ public:
                     _outstream << "," << std::endl;
                 }
                 is_first_outer = false;
-                _outstream << std::string(indentation + 2 * indentation_per_level, ' ') << "\"" << op << "\""
+                _outstream << std::string(indentation + 2 * indentation_per_level, ' ') << "\"" << get_string(op)
+                           << "\""
                            << ": [";
                 bool is_first = true;
                 for (auto const& data_item: data) {
@@ -161,11 +162,11 @@ public:
     /// @tparam Duration Type to represent a duration.
     /// @param node Root node of the TimerTree to print.
     template <typename Duration>
-    void print(EvaluationTreeNode<Duration> const& node) {
+    void print(AggregatedTreeNode<Duration> const& node) {
         _key_stack.push_back(node.name());
         internal::ScalarOrVectorPrinter<Duration> internal_printer{_outstream};
         for (auto const& [operation, aggregated_data]: node.aggregated_data()) {
-            _outstream << " " << concatenate_key_stack() << ":" << operation << "=[";
+            _outstream << " " << concatenate_key_stack() << ":" << get_string(operation) << "=[";
             bool is_first = true;
             for (auto const& data_item: aggregated_data) {
                 if (!is_first) {

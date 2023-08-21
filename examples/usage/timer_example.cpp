@@ -11,9 +11,11 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <chrono>
 #include <iostream>
 #include <numeric>
 #include <random>
+#include <thread>
 #include <vector>
 
 #include <mpi.h>
@@ -39,10 +41,9 @@ int main() {
 
     auto sleep_some_time = [&]() {
         static std::mt19937                gen((comm.rank() + 17) * 1001);
-        std::uniform_int_distribution<int> distrib(1'000, 10'000'000);
-        auto                               it = distrib(gen);
-        for (volatile int i = 0; i < it; ++i)
-            ;
+        std::uniform_int_distribution<int> distrib(50, 10'000);
+        const std::chrono::microseconds    sleep_duration{distrib(gen)};
+        std::this_thread::sleep_for(sleep_duration);
     };
     // Get timer singleton. Alternatively you can also instantiate a new timer.
     auto& t = kamping::measurements::timer();
@@ -69,9 +70,9 @@ int main() {
                 // Furthermore, the measured durations are stored in a list instead of being summed up (- note that this
                 // measurement with key "subroutine" will be executed 3*5 times)
                 t.stop_and_append(
-                    {measurements::DataAggregationMode::min,
-                     measurements::DataAggregationMode::max,
-                     measurements::DataAggregationMode::gather}
+                    {measurements::GlobalAggregationMode::min,
+                     measurements::GlobalAggregationMode::max,
+                     measurements::GlobalAggregationMode::gather}
                 );
             }
             t.stop();
@@ -83,9 +84,9 @@ int main() {
     }
     t.stop();
     // Evaluates the timer and prints the aggregated duration using the print() method from SimpleJsonPrinter.
-    t.evaluate_and_print(kamping::measurements::SimpleJsonPrinter{});
+    t.aggregate_and_print(kamping::measurements::SimpleJsonPrinter{});
     std::cout << std::endl;
-    t.evaluate_and_print(kamping::measurements::FlatPrinter{});
+    t.aggregate_and_print(kamping::measurements::FlatPrinter{});
     std::cout << std::endl;
 
     return 0;

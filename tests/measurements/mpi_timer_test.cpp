@@ -70,7 +70,7 @@ struct VisitorReturningSizeAndCategory {
 // Traverses the evaluation tree and returns a smmary of the aggregated data that can be used to verify to some degree
 // the executed timings
 struct ValidationPrinter {
-    void print(measurements::EvaluationTreeNode<double> const& node) {
+    void print(measurements::AggregatedTreeNode<double> const& node) {
         key_stack.push_back(node.name());
         for (auto const& [operation, aggregated_data]: node.aggregated_data()) {
             AggregatedDataSummary summary;
@@ -91,7 +91,7 @@ struct ValidationPrinter {
                     return size == summary.num_values_per_entry && is_scalar == summary.is_scalar;
                 });
 
-            output[concatenate_key_stack() + ":" + operation] = summary;
+            output[concatenate_key_stack() + ":" + get_string(operation)] = summary;
         }
 
         for (auto const& child: node.children()) {
@@ -124,9 +124,9 @@ TEST(TimerTest, basics) {
     Timer<>     timer;
     timer.start("measurement");
     timer.stop();
-    auto              evaluated_timer_tree = timer.evaluate();
+    auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(evaluated_timer_tree);
+    printer.print(aggregated_timer_tree);
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -142,9 +142,9 @@ TEST(TimerTest, basics_append) {
     timer.stop();
     timer.start("measurement");
     timer.stop_and_append();
-    auto              evaluated_timer_tree = timer.evaluate();
+    auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(evaluated_timer_tree);
+    printer.print(aggregated_timer_tree);
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -160,9 +160,9 @@ TEST(TimerTest, basics_accumulate) {
     timer.stop();
     timer.start("measurement");
     timer.stop_and_add();
-    auto              evaluated_timer_tree = timer.evaluate();
+    auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(evaluated_timer_tree);
+    printer.print(aggregated_timer_tree);
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -177,21 +177,15 @@ TEST(TimerTest, stop_and_append_multiple_operations) {
     timer.start("measurement");
     timer.stop();
     timer.start("measurement");
-    // timer.stop_and_append({DataAggregationMode::max, , DataAggregationMode::gather});
-    timer.stop_and_append({DataAggregationMode::gather});
-    auto              evaluated_timer_tree = timer.evaluate();
+    timer.stop_and_append({GlobalAggregationMode::max, GlobalAggregationMode::min, GlobalAggregationMode::gather});
+    auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(evaluated_timer_tree);
+    printer.print(aggregated_timer_tree);
 
     if (comm.is_root()) {
-        //    std::unordered_map<std::string, AggregatedDataSummary> expected_output{
-        //        {"root.measurement:max",
-        //        AggregatedDataSummary{}.set_num_entries(2).set_num_values(1).set_is_scalar(true)},
-        //        {"root.measurement:min",
-        //        AggregatedDataSummary{}.set_num_entries(2).set_num_values(1).set_is_scalar(true)},
-        //        {"root.measurement:gather",
-        //         AggregatedDataSummary{}.set_num_entries(2).set_num_values(comm.size()).set_is_scalar(false)}};
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
+            {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(2).set_num_values(1).set_is_scalar(true)},
+            {"root.measurement:min", AggregatedDataSummary{}.set_num_entries(2).set_num_values(1).set_is_scalar(true)},
             {"root.measurement:gather",
              AggregatedDataSummary{}.set_num_entries(2).set_num_values(comm.size()).set_is_scalar(false)}};
 
@@ -205,10 +199,10 @@ TEST(TimerTest, stop_and_add_multiple_operations) {
     timer.start("measurement");
     timer.stop();
     timer.start("measurement");
-    timer.stop_and_add({DataAggregationMode::max, DataAggregationMode::min, DataAggregationMode::gather});
-    auto              evaluated_timer_tree = timer.evaluate();
+    timer.stop_and_add({GlobalAggregationMode::max, GlobalAggregationMode::min, GlobalAggregationMode::gather});
+    auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(evaluated_timer_tree);
+    printer.print(aggregated_timer_tree);
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -231,9 +225,9 @@ TEST(TimerTest, stop_nested_scenario) {
         timer.stop();
     }
     timer.stop();
-    auto              evaluated_timer_tree = timer.evaluate();
+    auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(evaluated_timer_tree);
+    printer.print(aggregated_timer_tree);
 
     if (comm.is_root()) {
         auto const expected_summary = AggregatedDataSummary{}.set_num_entries(1).set_num_values(1).set_is_scalar(true);
@@ -251,7 +245,7 @@ auto setup_complex_scenario(size_t repetitions) {
         timer.start("measurement1");
         {
             timer.start("measurement11");
-            timer.stop({measurements::DataAggregationMode::gather, measurements::DataAggregationMode::max});
+            timer.stop({measurements::GlobalAggregationMode::gather, measurements::GlobalAggregationMode::max});
             timer.start("measurement12");
             {
                 timer.synchronize_and_start("measurement121");
@@ -267,12 +261,12 @@ auto setup_complex_scenario(size_t repetitions) {
 }
 
 TEST(TimerTest, stop_nested_complex_scenario) {
-    auto const&       comm                 = comm_world();
-    size_t            repetitions          = 5u;
-    auto              timer                = setup_complex_scenario(repetitions);
-    auto              evaluated_timer_tree = timer.evaluate();
+    auto const&       comm                  = comm_world();
+    size_t            repetitions           = 5u;
+    auto              timer                 = setup_complex_scenario(repetitions);
+    auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(evaluated_timer_tree);
+    printer.print(aggregated_timer_tree);
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -291,14 +285,14 @@ TEST(TimerTest, stop_nested_complex_scenario) {
 }
 
 TEST(TimerTest, print) {
-    const size_t      repetitions          = 5u;
-    auto              timer1               = setup_complex_scenario(repetitions);
-    auto              timer2               = setup_complex_scenario(repetitions);
-    auto              evaluated_timer_tree = timer1.evaluate();
+    const size_t      repetitions           = 5u;
+    auto              timer1                = setup_complex_scenario(repetitions);
+    auto              timer2                = setup_complex_scenario(repetitions);
+    auto              aggregated_timer_tree = timer1.aggregate();
     ValidationPrinter printer1;
-    printer1.print(evaluated_timer_tree);
+    printer1.print(aggregated_timer_tree);
     ValidationPrinter printer2;
-    timer2.evaluate_and_print(printer2);
+    timer2.aggregate_and_print(printer2);
     EXPECT_EQ(printer1.output, printer2.output);
 }
 
@@ -313,7 +307,7 @@ TEST(TimerTest, synchronize_and_start_non_trivial_communicator) {
     }
 }
 
-TEST(TimerTest, evaluate_non_trivial_communicator) {
+TEST(TimerTest, aggregate_non_trivial_communicator) {
     auto const& comm       = comm_world();
     int const   color      = comm.rank() % 2;
     auto        split_comm = comm.split(color);
@@ -321,9 +315,9 @@ TEST(TimerTest, evaluate_non_trivial_communicator) {
     if (color == 0) {
         timer.synchronize_and_start("measurement");
         timer.stop();
-        auto              evaluated_timer_tree = timer.evaluate();
+        auto              aggregated_timer_tree = timer.aggregate();
         ValidationPrinter printer;
-        printer.print(evaluated_timer_tree);
+        printer.print(aggregated_timer_tree);
 
         if (split_comm.is_root()) {
             std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -334,7 +328,7 @@ TEST(TimerTest, evaluate_non_trivial_communicator) {
     }
 }
 
-TEST(TimerTest, evaluate_and_print_non_trivial_communicator) {
+TEST(TimerTest, aggregate_and_print_non_trivial_communicator) {
     auto const& comm       = comm_world();
     int const   color      = comm.rank() % 2;
     auto        split_comm = comm.split(color);
@@ -342,7 +336,7 @@ TEST(TimerTest, evaluate_and_print_non_trivial_communicator) {
     timer.synchronize_and_start("measurement");
     timer.stop();
     ValidationPrinter printer;
-    timer.evaluate_and_print(printer);
+    timer.aggregate_and_print(printer);
 
     if (split_comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -357,7 +351,7 @@ TEST(TimerTest, clear) {
     auto           timer       = setup_complex_scenario(repetitions);
     timer.clear();
     ValidationPrinter printer;
-    timer.evaluate_and_print(printer);
+    timer.aggregate_and_print(printer);
     if (comm.is_root()) {
         EXPECT_EQ(printer.output.size(), 0u);
     };
@@ -369,9 +363,9 @@ TEST(TimerTest, singleton) {
     timer.clear();
     timer.start("measurement");
     timer.stop();
-    auto              evaluated_timer_tree = timer.evaluate();
+    auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(evaluated_timer_tree);
+    printer.print(aggregated_timer_tree);
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
