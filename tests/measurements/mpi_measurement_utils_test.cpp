@@ -23,11 +23,12 @@
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
-#include "kamping/measurements/measurement_utils.hpp"
+#include "kamping/measurements/internal/measurement_utils.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
 using namespace kamping::measurements;
+using namespace kamping::measurements::internal;
 
 TEST(TimerUtilsTest, is_string_same_on_all_ranks_basics) {
     Communicator<>    comm;

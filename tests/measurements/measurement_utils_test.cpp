@@ -21,7 +21,8 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include "kamping/measurements/measurement_utils.hpp"
+#include "kamping/measurements/aggregated_tree_node.hpp"
+#include "kamping/measurements/internal/measurement_utils.hpp"
 
 using namespace kamping::measurements;
 using namespace kamping::measurements::internal;
@@ -197,7 +198,7 @@ TEST(TimerTreeTest, constructor) {
     EXPECT_EQ(timer_tree.root.parent_ptr(), &timer_tree.root);
 }
 
-TEST(EvaluationNodeTest, add_one_aggregation_operation) {
+TEST(AggregatedTreeNodeTest, add_one_aggregation_operation) {
     AggregatedTreeNode<double> node;
     double const               value1 = 5.0;
     std::vector<double> const  value2{6.0, 6.0};
@@ -219,7 +220,7 @@ TEST(EvaluationNodeTest, add_one_aggregation_operation) {
     EXPECT_EQ(contained_values, expected_values);
 }
 
-TEST(EvaluationNodeTest, add_multiple_aggregation_operation) {
+TEST(AggregatedTreeNodeTest, add_multiple_aggregation_operation) {
     AggregatedTreeNode<double> node;
     double const               value1 = 5.0;
     std::vector<double> const  value2{6.0, 6.0};

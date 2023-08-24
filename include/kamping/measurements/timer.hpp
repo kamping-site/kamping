@@ -23,7 +23,8 @@
 #include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/measurements/measurement_utils.hpp"
+#include "kamping/measurements/aggregated_tree_node.hpp"
+#include "kamping/measurements/internal/measurement_utils.hpp"
 
 namespace kamping::measurements {
 
@@ -50,6 +51,8 @@ namespace kamping::measurements {
 ///   timer.start("postprocessing");
 ///   timer.stop();                       // stops "postprocessing" measurement
 /// timer.stop();                         // stops "algorithm" measurement
+///
+/// timer.aggregate_and_print(Printer{}); // aggregates measurements across all participating ranks and print results
 /// \endcode
 ///
 /// This corresponds to the following timing hierarchy:
@@ -64,42 +67,53 @@ namespace kamping::measurements {
 /// // `-- postprocessing:......2.0 sec
 /// \endcode
 ///
-/// The timer hierarchy that is implicitly created by start() and stop() must be identical on all ranks in the given
-/// communicator. The number of time measurements with a specific key may vary as long as the stored duration are
-/// identical (e.g. a measurement with "send_data" is execute one time on rank 0 and two times on rank 1 but the
-/// durations are accumulated on rank 1 (with stop_and_add()) resulting in the same number of stored durations as
-/// on rank 0).
-/// Specified communicator-wide duration aggregation operations on ranks other than the root rank are ignored.
-///
 /// ## Aggregation operations ##
 ///
 /// There are two types of aggregation operations:
 ///
-/// 1) Local aggregations that specifies how repeated time measurements with the same key will be stored.
-/// \code
-/// timer.start("measurementA");
-/// timer.stop_and_add();
-/// timer.start("measurementA");
-/// timer.stop_and_add();
-/// \endcode
-/// results in one stored duration for the key "measurementA" which is the sum of the two measured durations for
-/// "measurementA", whereas
+/// 1) Local aggreation operations - It is possible to execute measurements with the same key multiple times. Local
+/// aggregation operations specify how these repeated time measurements will be stored. Currently, there are two
+/// options - stop_and_add() and stop_and_append(). See the following examples:
 ///
 /// \code
-/// timer.start("measurementB");
+/// timer.start("foo");
+/// timer.stop_and_add();
+/// timer.start("foo");
+/// timer.stop_and_add();
+/// \endcode
+/// The result of this program is one stored duration for the key "foo" which is the sum of the durations for the two
+/// measurements with key "foo".
+///
+/// The other option to handle repeated measurements with the same key is stop_and_append():
+/// \code
+/// timer.start("bar");
 /// timer.stop_and_append();
-/// timer.start("measurementB");
+/// timer.start("bar");
 /// timer.stop_and_append();
 /// \endcode
 ///
-/// results in a list with two durations for the key "measurementB".
+/// This program results in a list with two durations for the key "bar". We call the  number of durations
+/// stored for a key its \c dimension.
 ///
 /// 2) Global (communicator-wide) aggregation operations specify how the stored duration(s) for a specific measurement
 /// key shall be aggregated. The default operation (if no operations are specified via the stop() method) is to take the
 /// maximum duration over all ranks in the communicator. If there are multiple durations for a certain key, the
 /// aggregation operation is applied element-wise and the result remains a list with the same size as the number of
 /// input durations. The communicator-wide aggregation operation are applied in the evaluation phase started with
-/// calls to evaluate() or evaluate_and_print().
+/// calls to aggregate() or aggregate_and_print().
+///
+///
+/// The timer hierarchy that is implicitly created by start() and stop() must be the same on all ranks in the given
+/// communicator. The number of time measurements with a specific key may vary as long as the number of stored duration
+/// are the same:
+/// Consider for example a communicator of size two and rank 0 and 1 both measure the time of a function \c
+/// foo() each time it is called using the key \c "computation". This is only valid if either each rank calls foo()
+/// exactly the same number of times and local aggregation happens using the mode \c append, or if the measured time is
+/// locally aggregated using add, i.e. the value(s) stored for a single key at the same hierarchy level must have
+/// matching dimensions.
+/// Furthermore, global communicator-wide duration aggregation operations specified on ranks other than the root rank
+/// are ignored.
+///
 ///
 /// @see The usage example for Timer provides some more information on how the class can be used.
 ///
@@ -172,7 +186,7 @@ public:
     /// TimerTreeNode::data_aggregation_operations().
     /// The durations are aggregated node by node.
     ///
-    /// @return Root of the evaluation tree which encapsulated the aggregated data in a tree structure representing the
+    /// @return Root of the aggregation tree which encapsulated the aggregated data in a tree structure representing the
     /// measurements.
     auto aggregate() {
         AggregatedTreeNode<Duration> root("root");
@@ -225,7 +239,7 @@ private:
     /// @param local_aggregation_mode Specifies how the measurement duration is locally aggregated when there are
     /// multiple measurements at the same level with identical key.
     /// @param global_aggregation_modes Specifies how the measurement duration is aggregated over all participating
-    /// ranks when evaluate() is called.
+    /// ranks when aggregate() is called.
     void stop_impl(
         LocalAggregationMode local_aggregation_mode, std::vector<GlobalAggregationMode> const& global_aggregation_modes
     ) {

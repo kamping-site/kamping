@@ -12,16 +12,12 @@
 // <https://www.gnu.org/licenses/>.
 
 /// @file
-/// This file contains a (distributed) utility classes and functions that are needed for a distributed timer class.
+/// This file contains (distributed) utility classes and functions that are needed for a distributed timer class.
 
 #pragma once
 
 #include <memory>
 #include <optional>
-#include <string_view>
-#include <unordered_map>
-#include <variant>
-#include <vector>
 
 #include <kassert/kassert.hpp>
 #include <mpi.h>
@@ -29,45 +25,7 @@
 #include "kamping/collectives/bcast.hpp"
 #include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
-
-namespace kamping::measurements {
-
-///@brief Either a scalar or vector of type \c T.
-///@tparam T Type.
-template <typename T>
-using ScalarOrContainer = std::variant<T, std::vector<T>>;
-
-/// @brief Enum to specify how time measurements with same key shall be aggregated locally.
-enum class LocalAggregationMode {
-    accumulate, ///< Tag used to indicate that data associated with identical keys will be accumulated into a scalar.
-    append      ///< Tag used to indicate that data with identical keys will not be accumulated and stored in a list.
-};
-
-/// @brief Enum to specify how time durations with same key shall be aggregated across the participating ranks.
-enum class GlobalAggregationMode {
-    min,   ///< The minimum of the measurement data on the participating ranks will be computed.
-    max,   ///< The maximum of the measurement data on the participating ranks will be computed.
-    sum,   ///< The sum of the measurement data on the participating ranks will be computed.
-    gather ///< The measurement data on the participating ranks will be collected in a container.
-};
-
-/// @brief Returns name of given GlobalAggregationMode.
-/// @param mode Given mode for which a name as a string is requested.
-/// @return Name of mode as a string.
-inline std::string get_string(GlobalAggregationMode mode) {
-    switch (mode) {
-        case GlobalAggregationMode::min:
-            return "min";
-        case GlobalAggregationMode::max:
-            return "max";
-        case GlobalAggregationMode::sum:
-            return "sum";
-        case GlobalAggregationMode::gather:
-            return "gather";
-    }
-    return "No name string is specified for given mode.";
-}
-} // namespace kamping::measurements
+#include "kamping/measurements/measurement_aggregation_definitions.hpp"
 
 namespace kamping::measurements::internal {
 /// @brief Object encapsulating a maximum operation on a given range of objects.
@@ -300,50 +258,6 @@ struct TimerTree {
     TimerTreeNode<TimePoint, Duration>  root;         ///< Root node of the tree.
     TimerTreeNode<TimePoint, Duration>* current_node; ///< Pointer to the currently active node of the tree.
 };
-} // namespace kamping::measurements::internal
-
-namespace kamping::measurements {
-/// @brief Class representing a node in the timer tree. Each node represents a time measurement (or multiple with
-/// the
-///  same key). A node can have multiple children which represent nested time measurements. The measurements
-///  associated with a node's children are executed while the node's measurement is still active.
-///
-/// @tparam Duration  Type of a duration.
-template <typename Duration>
-class AggregatedTreeNode : public internal::TreeNode<AggregatedTreeNode<Duration>> {
-public:
-    using internal::TreeNode<AggregatedTreeNode<Duration>>::TreeNode;
-
-    ///@brief Type into which the aggregated data is stored together with the applied aggregation operation.
-    using StorageType = std::unordered_map<GlobalAggregationMode, std::vector<ScalarOrContainer<Duration>>>;
-
-    /// @brief Access to stored aggregated data.
-    /// @return Reference to aggregated data.
-    auto const& aggregated_data() const {
-        return _aggregated_data;
-    }
-
-    /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied aggregation
-    /// operation.
-    /// @param aggregation_mode Aggregation mode that has been applied to the duration data.
-    /// @param data Scalar resulted from applying the given aggregation operation.
-    void add(GlobalAggregationMode aggregation_mode, std::optional<Duration> data) {
-        if (data) {
-            _aggregated_data[aggregation_mode].emplace_back(data.value());
-        }
-    }
-
-    /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied aggregation
-    /// operation.
-    /// @param aggregation_mode Aggregation mode that has been applied to the duration data.
-    /// @param data Vector of Scalars resulted from applying the given aggregation operation.
-    void add(GlobalAggregationMode aggregation_mode, std::vector<Duration> const& data) {
-        _aggregated_data[aggregation_mode].emplace_back(data);
-    }
-
-public:
-    StorageType _aggregated_data; ///< Storage of the aggregated data.
-};
 
 /// @brief Checks that the given string is equal on all ranks in the given communicator.
 ///
@@ -376,5 +290,4 @@ inline bool is_string_same_on_all_ranks(std::string const& str, Communicator con
     comm.bcast_single(send_recv_buf(result));
     return result;
 }
-
-} // namespace kamping::measurements
+} // namespace kamping::measurements::internal
