@@ -267,7 +267,7 @@ private:
         AggregatedTreeNode<Duration>& evaluation_tree_node, internal::TimerTreeNode<double, Duration>& timer_tree_node
     ) {
         KASSERT(
-            is_string_same_on_all_ranks(timer_tree_node.name(), _comm),
+            internal::is_string_same_on_all_ranks(timer_tree_node.name(), _comm),
             "Currently processed TimerTreeNode has not the same name on all ranks -> timers have diverged",
             assert::heavy_communication
         );
