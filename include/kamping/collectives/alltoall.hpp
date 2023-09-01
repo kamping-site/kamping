@@ -36,11 +36,15 @@
 /// This wrapper for \c MPI_Alltoall sends the same amount of data from each rank to each rank. The following
 /// buffers are required:
 /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
-/// each rank and divisible by the size of the communicator. Each rank receives the same number of elements from
-/// this buffer. Rank 0 receives the first `<buffer size>/<communicator size>` elements, rank 1 the next, and so
-/// on. See alltoallv() if the amounts differ.
+/// each rank and divisible by the size of the communicator unless a send_count is explicitly given as parameter. Each
+/// rank receives the same number of elements from this buffer. Rank 0 receives the first `<buffer size>/<communicator
+/// size>` elements, rank 1 the next, and so on. See alltoallv() if the amounts differ.
 ///
-/// The following buffers are optional:
+/// The following parameters are optional:
+/// - \ref kamping::send_counts() specifying how many elements are sent. This parameter has to be an integer. If
+/// omitted, the size of send buffer divided by communicator size is used.
+/// - \ref kamping::recv_counts() specifying how many elements are received. This parameter has to be an integer. If
+/// omitted, the value of send_counts will be used.
 /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
 /// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
 /// received from rank 1, and so on.
@@ -50,7 +54,11 @@
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... args) const {
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
+    KAMPING_CHECK_PARAMETERS(
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf),
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_counts, recv_counts)
+    );
 
     auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
@@ -66,27 +74,40 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
-    static_assert(
-        std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
-        "Types of send and receive buffers do not match."
-    );
     static_assert(!std::is_const_v<recv_value_type>, "The receive buffer must not have a const value_type.");
-    KASSERT(mpi_send_type == mpi_recv_type, "The MPI receive type does not match the MPI send type.", assert::light);
 
     // Get the send and receive counts
+    using default_send_count_type = decltype(kamping::send_counts(alloc_new<int>));
+    using default_recv_count_type = decltype(kamping::recv_counts(alloc_new<int>));
+    auto&& send_count =
+        internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
+            std::make_tuple(asserting_cast<int>(send_buf.size() / size())),
+            args...
+        );
+    static_assert(
+        std::remove_reference_t<decltype(send_count)>::is_single_element,
+        "send_counts() parameter must be a single value."
+    );
+
+    auto&& recv_count =
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
+            std::make_tuple(send_count.get_single_element()),
+            args...
+        );
+    static_assert(
+        std::remove_reference_t<decltype(recv_count)>::is_single_element,
+        "recv_counts() parameter must be a single value."
+    );
+
     KASSERT(
-        send_buf.size() % size() == 0lu,
-        "The number of elements in send_buf is not divisible by the number of ranks in the communicator. Did you "
-        "mean to use alltoallv?",
+        (internal::has_to_be_computed<decltype(send_count)> || send_buf.size() % size() == 0lu),
+        "There are no send counts given and the number of elements in send_buf is not divisible by the number of "
+        "ranks "
+        "in the communicator.",
         assert::light
     );
-    int send_count = asserting_cast<int>(send_buf.size() / size());
 
-    size_t recv_buf_size = send_buf.size();
-    int    recv_count    = asserting_cast<int>(recv_buf_size / size());
-    KASSERT(send_count == recv_count, assert::light);
-    recv_buf.resize(recv_buf_size);
-    KASSERT(recv_buf_size == recv_buf.size(), assert::light);
+    recv_buf.resize(asserting_cast<size_t>(recv_count.get_single_element()) * size());
 
     // These KASSERTs are required to avoid a false warning from g++ in release mode
     KASSERT(send_buf.data() != nullptr, assert::light);
@@ -94,16 +115,16 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 
     [[maybe_unused]] int err = MPI_Alltoall(
         send_buf.data(),
-        send_count,
+        send_count.get_single_element(),
         mpi_send_type,
         recv_buf.data(),
-        recv_count,
+        recv_count.get_single_element(),
         mpi_recv_type,
         mpi_communicator()
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Alltoall);
-    return make_mpi_result(std::move(recv_buf));
+    return make_mpi_result(std::move(recv_buf), std::move(send_count), std::move(recv_count));
 }
 
 /// @brief Wrapper for \c MPI_Alltoallv.
