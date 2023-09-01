@@ -31,7 +31,7 @@ int main() {
     kamping::Environment e;
     Communicator         comm;
     std::vector<int>     input(2u * comm.size(), comm.rank_signed());
-    std::vector<int> output;
+    std::vector<int>     output;
 
     {
         // send/recv counts are automatically deduced
