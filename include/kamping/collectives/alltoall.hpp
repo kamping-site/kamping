@@ -40,7 +40,7 @@
 /// rank receives the same number of elements from this buffer. Rank 0 receives the first `<buffer size>/<communicator
 /// size>` elements, rank 1 the next, and so on. See alltoallv() if the amounts differ.
 ///
-/// The following buffers are optional:
+/// The following parameters are optional:
 /// - \ref kamping::send_counts() specifying how many elements are sent. This parameter has to be an integer. If
 /// omitted, the size of send buffer divided by communicator size is used.
 /// - \ref kamping::recv_counts() specifying how many elements are received. This parameter has to be an integer. If
@@ -84,13 +84,20 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             std::make_tuple(asserting_cast<int>(send_buf.size() / size())),
             args...
         );
+    static_assert(
+        std::remove_reference_t<decltype(send_count)>::is_single_element,
+        "send_counts() parameter must be a single value."
+    );
 
     auto&& recv_count =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
             std::make_tuple(send_count.get_single_element()),
             args...
-
         );
+    static_assert(
+        std::remove_reference_t<decltype(recv_count)>::is_single_element,
+        "recv_counts() parameter must be a single value."
+    );
 
     KASSERT(
         (internal::has_to_be_computed<decltype(send_count)> || send_buf.size() % size() == 0lu),
