@@ -31,12 +31,18 @@ TEST(AlltoallTest, single_element_no_receive_buffer) {
     std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
 
-    auto result = comm.alltoall(send_buf(input)).extract_recv_buffer();
+    auto mpi_result = comm.alltoall(send_buf(input));
 
-    EXPECT_EQ(result.size(), comm.size());
+    auto recv_buffer = mpi_result.extract_recv_buffer();
+    auto send_count  = mpi_result.extract_send_counts();
+    auto recv_count  = mpi_result.extract_recv_counts();
+
+    EXPECT_EQ(send_count, 1);
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_EQ(recv_buffer.size(), comm.size());
 
     std::vector<int> expected_result(comm.size(), comm.rank_signed());
-    EXPECT_EQ(result, expected_result);
+    EXPECT_EQ(recv_buffer, expected_result);
 }
 
 TEST(AlltoallTest, single_element_with_receive_buffer) {
@@ -45,13 +51,51 @@ TEST(AlltoallTest, single_element_with_receive_buffer) {
     std::vector<int> input(comm.size(), comm.rank_signed());
 
     std::vector<int> result;
-    comm.alltoall(send_buf(input), recv_buf(result));
+
+    auto mpi_result = comm.alltoall(send_buf(input), recv_buf(result));
+    auto send_count = mpi_result.extract_send_counts();
+    auto recv_count = mpi_result.extract_recv_counts();
+
+    EXPECT_EQ(send_count, 1);
+    EXPECT_EQ(recv_count, 1);
 
     EXPECT_EQ(result.size(), comm.size());
 
     std::vector<int> expected_result(comm.size());
     std::iota(expected_result.begin(), expected_result.end(), 0);
     EXPECT_EQ(result, expected_result);
+}
+
+TEST(AlltoallTest, single_element_with_send_counts) {
+    Communicator comm;
+
+    std::vector<int> input(comm.size(), comm.rank_signed());
+
+    auto             mpi_result = comm.alltoall(send_buf(input), send_counts(1));
+    std::vector<int> recv_buf   = mpi_result.extract_recv_buffer();
+    int              recv_count = mpi_result.extract_recv_counts();
+
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_EQ(recv_buf.size(), comm.size());
+
+    std::vector<int> expected_result(comm.size());
+    std::iota(expected_result.begin(), expected_result.end(), 0);
+    EXPECT_EQ(recv_buf, expected_result);
+}
+
+TEST(AlltoallTest, single_element_with_send_and_recv_counts) {
+    Communicator comm;
+
+    std::vector<int> input(comm.size(), comm.rank_signed());
+
+    auto             mpi_result = comm.alltoall(send_buf(input), send_counts(1), recv_counts(1));
+    std::vector<int> recv_buf   = mpi_result.extract_recv_buffer();
+
+    EXPECT_EQ(recv_buf.size(), comm.size());
+
+    std::vector<int> expected_result(comm.size());
+    std::iota(expected_result.begin(), expected_result.end(), 0);
+    EXPECT_EQ(recv_buf, expected_result);
 }
 
 TEST(AlltoallTest, multiple_elements) {
@@ -66,7 +110,32 @@ TEST(AlltoallTest, multiple_elements) {
     });
 
     std::vector<int> result;
-    comm.alltoall(send_buf(input), recv_buf(result));
+    auto             mpi_result = comm.alltoall(send_buf(input), recv_buf(result));
+
+    EXPECT_EQ(mpi_result.extract_send_counts(), 4);
+    EXPECT_EQ(mpi_result.extract_recv_counts(), 4);
+
+    EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
+
+    std::vector<int> expected_result(comm.size() * num_elements_per_processor_pair, comm.rank_signed());
+    EXPECT_EQ(result, expected_result);
+}
+
+TEST(AlltoallTest, given_send_count_overrides_deduced_send_count) {
+    Communicator comm;
+
+    int const num_elements_per_processor_pair = 4;
+
+    std::vector<int> input(comm.size() * num_elements_per_processor_pair);
+    std::iota(input.begin(), input.end(), 0);
+    std::transform(input.begin(), input.end(), input.begin(), [](int const element) -> int {
+        return element / num_elements_per_processor_pair;
+    });
+    input.resize(input.size() * 2); // send buffer holds more elements than actually being sent
+    std::vector<int> result;
+    auto mpi_result = comm.alltoall(send_buf(input), send_counts(num_elements_per_processor_pair), recv_buf(result));
+
+    EXPECT_EQ(mpi_result.extract_recv_counts(), num_elements_per_processor_pair);
 
     EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
 

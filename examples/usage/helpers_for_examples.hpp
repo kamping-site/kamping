@@ -47,4 +47,15 @@ void print_result_on_root(ContainerType<T> const& result, Communicator<Container
         print_result(result, comm);
     }
 }
+
+/// @brief Print the given string only on the root PE.
+/// @tparam Communicator Type of communicator (has to be a KaMPIng communicator).
+/// @param str The string to be printed.
+/// @param comm KaMPIng communicator to determine which PE is the root PE.
+template <typename Communicator>
+void print_on_root(std::string const& str, Communicator const& comm) {
+    if (comm.is_root()) {
+        print_result(str, comm);
+    }
+}
 } // namespace kamping
