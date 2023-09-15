@@ -181,6 +181,89 @@ TEST(AlltoallTest, default_container_type) {
     OwnContainer<int> result = comm.alltoall(send_buf(input)).extract_recv_buffer();
 }
 
+TEST(AlltoallTest, single_element_non_trivial_send_type) {
+    // Each rank sends one integer (with padding) to each other rank and receives the integer without padding.
+    Communicator     comm;
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    std::vector<int> input(3 * comm.size());
+    std::vector<int> recv_buffer(comm.size(), 0);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        input[3 * i] = static_cast<int>(i);
+    }
+
+    MPI_Type_commit(&int_padding_padding);
+    comm.alltoall(send_buf(input), send_type(int_padding_padding), send_counts(1), recv_buf(recv_buffer));
+    MPI_Type_free(&int_padding_padding);
+
+    std::vector<int> expected_result(comm.size(), comm.rank_signed());
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(AlltoallTest, single_element_non_trivial_recv_type) {
+    // Each rank sends one integer to each other rank and receives the integer with padding.
+    Communicator     comm;
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    std::vector<int> input(comm.size());
+    std::vector<int> recv_buffer(3 * comm.size(), 0);
+    std::iota(input.begin(), input.end(), 0);
+
+    MPI_Type_commit(&int_padding_padding);
+    comm.alltoall(send_buf(input), recv_type(int_padding_padding), recv_buf(recv_buffer));
+    MPI_Type_free(&int_padding_padding);
+
+    std::vector<int> expected_result(3 * comm.size());
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 3] = comm.rank_signed();
+    }
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(AlltoallTest, different_send_and_recv_counts) {
+    // Rank i sends
+    Communicator comm;
+    MPI_Datatype int_padding_int = MPI_INT_padding_MPI_INT();
+
+    std::vector<int> input(2 * comm.size());
+    std::vector<int> recv_buffer(3 * comm.size(), 0);
+    std::iota(input.begin(), input.end(), 0);
+
+    MPI_Type_commit(&int_padding_int);
+    auto mpi_result = comm.alltoall(send_buf(input), recv_counts(1), recv_type(int_padding_int), recv_buf(recv_buffer));
+    MPI_Type_free(&int_padding_int);
+
+    auto send_count = mpi_result.extract_send_counts();
+
+    EXPECT_EQ(send_count, 2);
+
+    std::vector<int> expected_result(3 * comm.size());
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 3]     = comm.rank_signed() * 2;
+        expected_result[i * 3 + 2] = comm.rank_signed() * 2 + 1;
+    }
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(AlltoallTest, different_send_and_recv_counts_without_explicit_mpi_types) {
+    Communicator comm;
+    struct CustomRecvStruct {
+        int  a;
+        int  b;
+        bool operator==(CustomRecvStruct const& other) const {
+            return std::tie(a, b) == std::tie(other.a, other.b);
+        }
+    };
+
+    std::vector<int>              input(2 * comm.size());
+    std::vector<CustomRecvStruct> recv_buffer(comm.size());
+    std::iota(input.begin(), input.end(), 0);
+    comm.alltoall(send_buf(input), recv_counts(1), recv_buf(recv_buffer));
+    std::vector<CustomRecvStruct> expected_result(comm.size());
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i] = CustomRecvStruct{comm.rank_signed() * 2, comm.rank_signed() * 2 + 1};
+    }
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
 // ------------------------------------------------------------
 // Alltoallv tests
 
@@ -712,4 +795,108 @@ TEST(AlltoallvTest, default_container_type) {
     OwnContainer<int> recv_counts = mpi_result.extract_recv_counts();
     OwnContainer<int> send_displs = mpi_result.extract_send_displs();
     OwnContainer<int> recv_displs = mpi_result.extract_recv_displs();
+}
+
+TEST(AlltoallvTest, receive_msg_in_reverse_order) {
+    // Rank i sends its rank j times to rank j. Rank i receives j's message at position comm.size() - (j + 1) via
+    // explicit recv_displs.
+    Communicator comm;
+
+    // prepare send buffer
+    int              num_elems_to_send = (comm.size_signed() * (comm.size_signed() - 1)) / 2; // gauss' sum formula
+    std::vector<int> input(static_cast<size_t>(num_elems_to_send), comm.rank_signed());
+
+    // prepare send counts
+    std::vector<int> send_counts(comm.size());
+    std::iota(send_counts.begin(), send_counts.end(), 0);
+
+    // prepare recv counts and displs
+    std::vector<int> recv_counts(comm.size(), comm.rank_signed());
+    std::vector<int> recv_displs(comm.size());
+    std::exclusive_scan(recv_counts.begin(), recv_counts.end(), recv_displs.begin(), 0u);
+    std::reverse(recv_displs.begin(), recv_displs.end());
+
+    auto expected_recv_buffer = [&]() {
+        std::vector<int> expected_recv_buf;
+        for (int i = 0; i < comm.size_signed(); ++i) {
+            int source_rank = comm.size_signed() - 1 - i;
+            std::fill_n(std::back_inserter(expected_recv_buf), comm.rank(), source_rank);
+        }
+        return expected_recv_buf;
+    };
+
+    {
+        // do the alltoallv without recv_counts
+        auto recv_buf =
+            comm.alltoallv(send_buf(input), kamping::send_counts(send_counts), kamping::recv_displs(recv_displs))
+                .extract_recv_buffer();
+
+        EXPECT_EQ(recv_buf, expected_recv_buffer());
+    }
+    {
+        // do the alltoallv with recv_counts
+        auto recv_buf = comm.alltoallv(
+                                send_buf(input),
+                                kamping::send_counts(send_counts),
+                                kamping::recv_counts(recv_counts),
+                                kamping::recv_displs(recv_displs)
+        )
+                            .extract_recv_buffer();
+        EXPECT_EQ(recv_buf, expected_recv_buffer());
+    }
+}
+
+TEST(AlltoallvTest, single_element_non_trivial_send_type) {
+    // Each rank sends one integer (with padding) to each other rank and receives the integer without padding.
+    Communicator     comm;
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    std::vector<int> input(3 * comm.size());
+    std::vector<int> recv_buffer(comm.size(), 0);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        input[3 * i] = static_cast<int>(i);
+    }
+    std::vector<int> send_counts(comm.size(), 1);
+
+    MPI_Type_commit(&int_padding_padding);
+    comm.alltoallv(
+        send_buf(input),
+        send_type(int_padding_padding),
+        kamping::send_counts(send_counts),
+        recv_buf(recv_buffer)
+    );
+    MPI_Type_free(&int_padding_padding);
+
+    std::vector<int> expected_result(comm.size(), comm.rank_signed());
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(AlltoallvTest, multiple_elements_non_trivial_recv_type) {
+    // Rank i sends i integers (without padding) to each other rank. Each rank receives the sent integers with padding.
+    Communicator comm;
+    MPI_Datatype int_padding_padding = MPI_INT_padding_padding();
+
+    std::vector<int> input(comm.size() * comm.rank(), comm.rank_signed());
+    std::vector<int> send_counts(comm.size(), comm.rank_signed());
+    size_t const     num_elems_to_recv =
+        static_cast<size_t>((comm.size_signed() * (comm.size_signed() - 1)) / 2); // gauss' sum formula
+    std::vector<int> recv_buffer(3 * num_elems_to_recv, 0);
+
+    MPI_Type_commit(&int_padding_padding);
+    comm.alltoallv(
+        send_buf(input),
+        kamping::send_counts(send_counts),
+        recv_type(int_padding_padding),
+        recv_buf(recv_buffer)
+    );
+    MPI_Type_free(&int_padding_padding);
+
+    std::vector<int> expected_result(3 * num_elems_to_recv);
+    size_t           base_idx = 0;
+    for (size_t i = 1; i < comm.size(); ++i) {
+        base_idx += (i - 1) * 3;
+        for (size_t j = 0; j < i; ++j) {
+            expected_result[base_idx + j * 3] = static_cast<int>(i);
+        }
+    }
+    EXPECT_EQ(recv_buffer, expected_result);
 }

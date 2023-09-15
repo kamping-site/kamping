@@ -444,8 +444,13 @@ auto recv_displs(std::initializer_list<T> displs) {
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
 /// will contain the received elements when the \c MPI call has been completed.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the received elements.
+/// contained \c value_type. In most wrapped MPI operations, \c resize() will be used to resize the container such that
+/// is able to store all received elements. If such a resizing behaviour is not desired or possible (e.g. for a static
+/// container), an object of type kamping::Span encapsulating the original container can be passed to the function. In
+/// this case no resizing will occur.
+///
+/// @tparam Container Container type which contains the received elements. The container can potentially be resized
+/// unless it is of type kamping::Span.
 /// @param container Container which will contain the received elements.
 /// @return Object referring to the storage containing the received elements.
 template <typename Container>
@@ -661,6 +666,45 @@ inline auto values_on_rank_0(std::initializer_list<T> values) {
         internal::ParameterType::values_on_rank_0,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer>(std::move(values));
+}
+
+/// @brief Generates a wrapper containing the send type to use in the respective \c MPI operation.
+/// @param send_type MPI_Datatype to use in the wrapped \c MPI operation.
+/// @return Object wrapping the send type.
+inline auto send_type(MPI_Datatype send_type) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_type,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer,
+        MPI_Datatype>(std::forward<MPI_Datatype>(send_type));
+}
+
+/// @brief Generates a wrapper containing the recv type to use in the respective \c MPI operation.
+/// @param recv_type MPI_Datatype to use in the wrapped \c MPI operation.
+/// @return Object wrapping the recv type.
+inline auto recv_type(MPI_Datatype recv_type) {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_type,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer>(std::forward<MPI_Datatype>(recv_type));
+}
+
+/// @brief Generates a wrapper for a send type output parameter without any user input.
+/// @return Wrapper for the send type that can be retrieved as structured binding.
+inline auto send_type_out() {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_type,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(alloc_new<MPI_Datatype>);
+}
+
+/// @brief Generates a wrapper for a recv type output parameter without any user input.
+/// @return Wrapper for the recv type that can be retrieved as structured binding.
+inline auto recv_type_out() {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_type,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer>(alloc_new<MPI_Datatype>);
 }
 /// @}
 } // namespace kamping

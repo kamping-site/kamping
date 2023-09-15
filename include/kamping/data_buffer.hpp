@@ -146,8 +146,8 @@ static constexpr bool is_vector_bool_v<
 template <typename T>
 static constexpr bool
     is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
-        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
-            std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
+        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value
+        && std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
 
 } // namespace internal
 
@@ -283,9 +283,11 @@ public:
 
     static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
+                                                          ///
     static constexpr bool is_single_element =
         !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
                                         ///< DataBuffer represents a container.
+
     using MemberTypeWithConst =
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
                                                                          ///< non-const depending on
@@ -317,6 +319,13 @@ public:
     using value_type_with_const =
         std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending
                                                                          ///< on modifiability
+
+    static constexpr bool is_resizable =
+        is_modifiable && !is_single_element
+        && !std::is_same_v<MemberType, Span<value_type>>; ///< @brief Indicates whether the underlying storage is (and
+                                                          ///< shall) be resized. @todo replace this with a construct
+                                                          ///< directly deduced from a template non-type argument
+                                                          ///< "is_resizable"
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.

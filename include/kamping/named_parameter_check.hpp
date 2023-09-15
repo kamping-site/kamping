@@ -370,6 +370,13 @@ template <typename BufferType>
 static constexpr bool has_to_be_computed =
     std::remove_reference_t<BufferType>::is_out_buffer || std::remove_reference_t<BufferType>::is_lib_allocated;
 
+/// @brief Checks if the buffer is allocated by kamping.
+/// @tparam BufferType The buffer type to be checked
+template <typename BufferType>
+static constexpr bool has_to_be_allocated_by_library =
+    std::remove_reference_t<BufferType>::is_lib_allocated;
+
+
 /// @brief Checks if all buffers have to be computed by kamping, i.e., if all buffers are output parameters of the
 /// buffers have been allocated by kamping.
 /// @tparam BufferTypes Any number of buffers types to be checked.

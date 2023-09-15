@@ -200,6 +200,19 @@ struct CustomAllocator {
     }
 };
 
+MPI_Datatype MPI_INT_padding_MPI_INT() {
+  MPI_Datatype new_type;
+  MPI_Type_vector(2, 1, 2,
+    MPI_INT, &new_type);
+  return new_type;
+}
+
+MPI_Datatype MPI_INT_padding_padding() {
+  MPI_Datatype new_type;
+  MPI_Type_create_resized(MPI_INT, 0, sizeof(int) * 3, &new_type);
+  return new_type;
+}
+
 //
 // Makros to test for failed KASSERT() statements.
 // Note that these macros could already be defined if we included the header that turns assertions into exceptions.
