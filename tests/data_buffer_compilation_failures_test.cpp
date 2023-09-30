@@ -20,9 +20,10 @@
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
     using namespace ::kamping::internal;
-    using ContainerType                = std::vector<int>;
-    ParameterType const parameter_type = ParameterType::recv_buf;
-    BufferType const    buffer_type    = BufferType::out_buffer;
+    using ContainerType                     = std::vector<int>;
+    ParameterType const      parameter_type = ParameterType::recv_buf;
+    BufferType const         buffer_type    = BufferType::out_buffer;
+    BufferResizePolicy const resize_policy  = BufferResizePolicy::always_resize;
 
     ContainerType const                                                   const_container;
     ContainerBasedConstBuffer<ContainerType, parameter_type, buffer_type> container_based_const_buffer(const_container);
@@ -34,10 +35,9 @@ int main(int /*argc*/, char** /*argv*/) {
 
     LibAllocatedSingleElementBuffer<int, parameter_type, buffer_type> lib_alloc_single_element_buffer;
 
-    ContainerType                                                                 container;
-    UserAllocatedContainerBasedBuffer<ContainerType, parameter_type, buffer_type> user_alloc_container_based_buffer(
-        container
-    );
+    ContainerType container;
+    UserAllocatedContainerBasedBuffer<ContainerType, parameter_type, buffer_type, resize_policy>
+        user_alloc_container_based_buffer(container);
 
     LibAllocatedContainerBasedBuffer<ContainerType, parameter_type, buffer_type> lib_alloc_container_based_buffer;
 
@@ -96,7 +96,8 @@ int main(int /*argc*/, char** /*argv*/) {
         ParameterType::send_buf,
         BufferModifiability::modifiable,
         BufferOwnership::owning,
-        BufferAllocation::user_allocated>
+        BufferAllocation::user_allocated,
+        BufferResizePolicy::do_not_resize>
         foo{};
 #elif defined(EXTRACT_USER_ALLOCATED_DATA_BUFFER)
     // should not be possible to extract a user allocated DataBuffer
@@ -105,7 +106,8 @@ int main(int /*argc*/, char** /*argv*/) {
         ParameterType::send_buf,
         BufferModifiability::modifiable,
         BufferOwnership::owning,
-        BufferAllocation::user_allocated>
+        BufferAllocation::user_allocated,
+        BufferResizePolicy::do_not_resize>
          foo{std::vector<int>()};
     auto bar = foo.extract();
 #elif defined(RESIZE_CONST_DATA_BUFFER)
@@ -115,7 +117,8 @@ int main(int /*argc*/, char** /*argv*/) {
         ParameterType::send_buf,
         BufferModifiability::constant,
         BufferOwnership::owning,
-        BufferAllocation::user_allocated>
+        BufferAllocation::user_allocated,
+        BufferResizePolicy::do_not_resize>
          foo{std::vector<int>()};
     auto bar = foo.resize(0);
 #elif defined(GET_SINGLE_ELEMENT_ON_VECTOR)
@@ -125,7 +128,8 @@ int main(int /*argc*/, char** /*argv*/) {
         ParameterType::send_buf,
         BufferModifiability::constant,
         BufferOwnership::owning,
-        BufferAllocation::user_allocated>
+        BufferAllocation::user_allocated,
+        BufferResizePolicy::do_not_resize>
         foo{std::vector<int>()};
     foo.get_single_element();
 #elif defined(ACCESS_CONST_VECTOR_BOOL)
@@ -135,7 +139,8 @@ int main(int /*argc*/, char** /*argv*/) {
         ParameterType::send_buf,
         BufferModifiability::constant,
         BufferOwnership::owning,
-        BufferAllocation::user_allocated> const foo{std::vector<bool>()};
+        BufferAllocation::user_allocated,
+        BufferResizePolicy::do_not_resize> const foo{std::vector<bool>()};
     foo.underlying();
 #elif defined(ACCESS_VECTOR_BOOL)
     // should not be possible to do something useful with a container based on std::vector<bool>
@@ -144,7 +149,8 @@ int main(int /*argc*/, char** /*argv*/) {
         ParameterType::send_buf,
         BufferModifiability::modifiable,
         BufferOwnership::owning,
-        BufferAllocation::user_allocated>
+        BufferAllocation::user_allocated,
+        BufferResizePolicy::do_not_resize>
         foo{std::vector<bool>()};
     foo.underlying();
 #else

@@ -255,9 +255,11 @@ TEST(ContainerBasedOwningBufferTest, move_constructor_is_enabled) {
 TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
     std::vector<int> int_vec{1, 2, 3, 2, 1};
 
-    constexpr ParameterType                                           ptype = ParameterType::send_counts;
-    constexpr BufferType                                              btype = BufferType::in_buffer;
-    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer_based_on_int_vector(int_vec);
+    constexpr ParameterType      ptype         = ParameterType::send_counts;
+    constexpr BufferType         btype         = BufferType::in_buffer;
+    constexpr BufferResizePolicy resize_policy = BufferResizePolicy::always_resize;
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, resize_policy> buffer_based_on_int_vector(int_vec
+    );
     EXPECT_EQ(int_vec.size(), buffer_based_on_int_vector.get().size());
     EXPECT_EQ(int_vec.data(), buffer_based_on_int_vector.get().data());
     EXPECT_FALSE(decltype(buffer_based_on_int_vector)::is_out_buffer);
@@ -283,11 +285,11 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
 TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_containers_other_than_vector) {
     testing::OwnContainer<int> own_container;
 
-    constexpr ParameterType                                                     ptype = ParameterType::recv_counts;
-    constexpr BufferType                                                        btype = BufferType::in_buffer;
-    UserAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container(
-        own_container
-    );
+    constexpr ParameterType      ptype         = ParameterType::recv_counts;
+    constexpr BufferType         btype         = BufferType::in_buffer;
+    constexpr BufferResizePolicy resize_policy = BufferResizePolicy::always_resize;
+    UserAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype, resize_policy>
+        buffer_based_on_own_container(own_container);
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_own_container.resize(requested_size);
@@ -305,12 +307,14 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_containers_other_tha
 }
 
 TEST(UserAllocatedContainerBasedBufferTest, move_constructor_is_enabled) {
-    constexpr ParameterType ptype = ParameterType::send_counts;
-    constexpr BufferType    btype = BufferType::in_buffer;
-    std::vector<int>        container{1, 2, 3};
-    auto const              const_container = container; // ensure that container is not altered
-    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer1(container);
-    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> buffer2(std::move(buffer1));
+    constexpr ParameterType      ptype = ParameterType::send_counts;
+    constexpr BufferType         btype = BufferType::in_buffer;
+    std::vector<int>             container{1, 2, 3};
+    auto const                   const_container = container; // ensure that container is not altered
+    constexpr BufferResizePolicy resize_policy   = BufferResizePolicy::always_resize;
+
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, resize_policy> buffer1(container);
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, resize_policy> buffer2(std::move(buffer1));
     EXPECT_EQ(buffer2.get().size(), const_container.size());
     EXPECT_TRUE(std::equal(const_container.begin(), const_container.end(), buffer2.get().data()));
 }
@@ -574,19 +578,20 @@ TEST(RootTest, move_constructor_assignment_operator_is_enabled) {
 }
 
 TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
-    std::vector<int>        data(20, 0);
-    Span<int>               container = {data.data(), data.size()};
-    constexpr ParameterType ptype     = ParameterType::send_counts;
-    constexpr BufferType    btype     = BufferType::in_buffer;
+    std::vector<int>             data(20, 0);
+    Span<int>                    container     = {data.data(), data.size()};
+    constexpr ParameterType      ptype         = ParameterType::send_counts;
+    constexpr BufferType         btype         = BufferType::in_buffer;
+    constexpr BufferResizePolicy resize_policy = BufferResizePolicy::always_resize;
 
-    UserAllocatedContainerBasedBuffer<Span<int>, ptype, btype> span_buffer(container);
+    UserAllocatedContainerBasedBuffer<Span<int>, ptype, btype, resize_policy> span_buffer(container);
 
     for (size_t i = 0; i <= 20; ++i) {
         span_buffer.resize(i);
         EXPECT_EQ(20, span_buffer.size());
     }
 
-    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype> vec_buffer(data);
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, resize_policy> vec_buffer(data);
 
     for (size_t i = 0; i <= 20; ++i) {
         vec_buffer.resize(i);
@@ -602,6 +607,7 @@ TEST(DataBufferTest, has_extract) {
             BufferModifiability::modifiable,
             BufferOwnership::owning,
             BufferType::in_buffer,
+            BufferResizePolicy::always_resize,
             BufferAllocation::lib_allocated>>,
         "Library allocated DataBuffers must have an extract() member function"
     );
@@ -612,6 +618,7 @@ TEST(DataBufferTest, has_extract) {
             BufferModifiability::modifiable,
             BufferOwnership::owning,
             BufferType::in_buffer,
+            BufferResizePolicy::always_resize,
             BufferAllocation::user_allocated>>,
         "User allocated DataBuffers must not have an extract() member function"
     );

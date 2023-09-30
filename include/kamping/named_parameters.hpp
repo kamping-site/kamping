@@ -45,6 +45,7 @@ namespace internal {
 /// modify the underlying container. `constant` otherwise.
 /// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
 /// @tparam Data Container or data type on which this buffer is based.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
 /// @tparam ValueType Requested value type for the the data buffer. If not specified, it will be deduced from the
 /// underlying container and no checking is performed.
 /// @param data Universal reference to a container or single element holding the data for the buffer.
@@ -54,6 +55,7 @@ template <
     ParameterType       parameter_type,
     BufferModifiability modifiability,
     BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
     typename ValueType = default_value_type_tag,
     typename Data>
 auto make_data_buffer(Data&& data) {
@@ -72,6 +74,7 @@ auto make_data_buffer(Data&& data) {
         modifiability,
         ownership,
         buffer_type,
+        buffer_resize_policy,
         BufferAllocation::user_allocated,
         ValueType>(std::forward<Data>(data));
 }
@@ -84,15 +87,17 @@ auto make_data_buffer(Data&& data) {
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
 /// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
-/// @tparam Data Container or data type on which this buffer is based.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
 /// @tparam ValueType Requested value type for the the data buffer. If not specified, it will be deduced from the
 /// underlying container and no checking is performed.
+/// @tparam Data Container or data type on which this buffer is based.
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
 template <
     ParameterType       parameter_type,
     BufferModifiability modifiability,
     BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
     typename ValueType = default_value_type_tag,
     typename Data>
 auto make_data_buffer(AllocNewT<Data>) {
@@ -102,6 +107,7 @@ auto make_data_buffer(AllocNewT<Data>) {
         BufferModifiability::modifiable, // something library allocated is always modifiable
         BufferOwnership::owning,
         buffer_type,
+        buffer_resize_policy,
         BufferAllocation::lib_allocated,
         ValueType>();
 }
@@ -114,15 +120,17 @@ auto make_data_buffer(AllocNewT<Data>) {
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
 /// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam ValueType The value type to initialize the \c Data template with. If not specified, this will fail.
 /// @tparam Data Container template this buffer is based on. The first template parameter is initialized with \c
 /// ValueType
-/// @tparam ValueType The value type to initialize the \c Data template with. If not specified, this will fail.
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
 template <
     ParameterType       parameter_type,
     BufferModifiability modifiability,
     BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
     typename ValueType = default_value_type_tag,
     template <typename...>
     typename Data>
@@ -138,6 +146,7 @@ auto make_data_buffer(AllocNewAutoT<Data>) {
         BufferModifiability::modifiable, // something library allocated is always modifiable
         BufferOwnership::owning,
         buffer_type,
+        buffer_resize_policy,
         BufferAllocation::lib_allocated,
         ValueType>();
 }
@@ -152,11 +161,17 @@ auto make_data_buffer(AllocNewAutoT<Data>) {
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
 /// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
 /// @tparam Data Container or data type on which this buffer is based.
 /// @param data std::initializer_list holding the data for the buffer.
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
-template <ParameterType parameter_type, BufferModifiability modifiability, BufferType buffer_type, typename Data>
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename Data>
 auto make_data_buffer(std::initializer_list<Data> data) {
     auto data_vec = [&]() {
         if constexpr (std::is_same_v<Data, bool>) {
@@ -175,6 +190,7 @@ auto make_data_buffer(std::initializer_list<Data> data) {
         modifiability,
         BufferOwnership::owning,
         buffer_type,
+        buffer_resize_policy,
         BufferAllocation::user_allocated>(std::move(data_vec));
 }
 
@@ -212,7 +228,8 @@ auto send_buf(Data&& data) {
     return internal::make_data_buffer<
         internal::ParameterType::send_buf,
         internal::BufferModifiability::constant,
-        internal::BufferType::in_buffer>(std::forward<Data>(data));
+        internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize>(std::forward<Data>(data));
 }
 
 /// @brief Generates a buffer taking ownership of the data pass to the send buffer as an initializer list.
@@ -225,26 +242,43 @@ auto send_buf(std::initializer_list<T> data) {
     return internal::make_data_buffer<
         internal::ParameterType::send_buf,
         internal::BufferModifiability::constant,
-        internal::BufferType::in_buffer>(std::move(data));
+        internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize>(std::move(data));
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
 /// and the root() of the operation. This buffer type may encapsulate const data and in which case it can only be used
 /// as the send buffer. For some functions (e.g. bcast), you have to pass a send_recv_buf as the send buffer.
 ///
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
 /// @tparam Data Data type representing the element(s) to send/receive.
 /// @param data Data (either a container which contains the elements or the element directly) to send or the buffer to
 /// receive into.
 /// @return Object referring to the storage containing the data elements to send / the received elements.
-template <typename Data>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Data>
 auto send_recv_buf(Data&& data) {
     constexpr internal::BufferModifiability modifiability = std::is_const_v<std::remove_reference_t<Data>>
                                                                 ? internal::BufferModifiability::constant
                                                                 : internal::BufferModifiability::modifiable;
-    return internal::
-        make_data_buffer<internal::ParameterType::send_recv_buf, modifiability, internal::BufferType::in_out_buffer>(
-            std::forward<Data>(data)
-        );
+    return internal::make_data_buffer<
+        internal::ParameterType::send_recv_buf,
+        modifiability,
+        internal::BufferType::in_out_buffer,
+        resize_policy>(std::forward<Data>(data));
+}
+
+/// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
+/// and the root() of the operation.
+/// @tparam Container Container type which contains the elements to send/receive. Container must provide \c data() and
+/// \c size() and \c resize() member functions and expose the contained \c value_type.
+/// @return Object referring to the storage containing the data elements to send / the received elements.
+template <typename Container>
+auto send_recv_buf(AllocNewT<Container>) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::in_out_buffer,
+        BufferResizePolicy::always_resize>(alloc_new<Container>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must
@@ -261,6 +295,7 @@ auto send_counts(Container&& container) {
         internal::ParameterType::send_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize,
         int>(std::forward<Container>(container));
 }
 
@@ -276,6 +311,7 @@ auto send_counts(std::initializer_list<T> counts) {
         internal::ParameterType::send_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize,
         int>(std::move(counts));
 }
 
@@ -283,22 +319,54 @@ auto send_counts(std::initializer_list<T> counts) {
 /// will contained the send counts when the \c MPI call has been completed.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
 /// @tparam Container Container type which contains the send counts.
 /// @param container Container which will contain the send counts.
 /// @return Object referring to the storage containing the send counts.
-template <typename Container>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Container>
 auto send_counts_out(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
+        resize_policy,
         int>(std::forward<Container>(container));
+}
+
+/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
+/// counts.
+/// @tparam Container Container type which contains the send counts. Container must provide \c data() and \c
+/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
+/// @return Object referring to the storage containing the send counts.
+template <typename Container>
+auto send_counts_out(AllocNewT<Container>) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_counts,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::always_resize,
+        int>(alloc_new<Container>);
+}
+
+/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
+/// counts.
+/// @tparam Container Container type which contains the send counts. Container must provide \c data() and \c
+/// size() and \c resize() member functions and expose the contained \c value_type.
+/// @return Object referring to the storage containing the send counts.
+template <template <typename...> typename Container>
+auto send_counts_out(AllocNewAutoT<Container>) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_counts,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::always_resize,
+        int>(alloc_new_auto<Container>);
 }
 
 /// @brief Generates a wrapper for a send counts output parameter without any user input.
 /// @return Wrapper for the send counts that can be retrieved as structured binding.
 inline auto send_counts_out() {
-    return send_counts_out(alloc_new<int>);
+    return send_counts_out<BufferResizePolicy::always_resize>(alloc_new<int>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must
@@ -315,6 +383,7 @@ auto recv_counts(Container&& container) {
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize,
         int>(std::forward<Container>(container));
 }
 
@@ -330,29 +399,63 @@ auto recv_counts(std::initializer_list<T> counts) {
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize,
         int>(std::move(counts));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
 /// will contained the receive counts when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
+/// The underlying container must provide \c data() and
+/// \c size() member functions and expose the contained \c value_type. If a resize policy other than
+/// BufferResizePolicy::do_not_resize is selected, the container must also provide a \c resize() member function.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
 /// @tparam Container Container type which contains the receive counts.
 /// @param container Container which will contain the receive counts.
 /// @return Object referring to the storage containing the receive counts.
-template <typename Container>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Container>
 auto recv_counts_out(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
+        resize_policy,
         int>(std::forward<Container>(container));
+}
+
+/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
+/// counts.
+/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
+/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
+/// @return Object referring to the storage containing the recv counts.
+template <typename Data>
+auto recv_counts_out(AllocNewT<Data> container) {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_counts,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::always_resize,
+        int>(container);
+}
+
+/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
+/// counts.
+/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
+/// size() and \c resize() member functions and expose the contained \c value_type.
+/// @return Object referring to the storage containing the recv counts.
+template <template <typename...> typename Data>
+auto recv_counts_out(AllocNewAutoT<Data> container) {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_counts,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::always_resize,
+        int>(container);
 }
 
 /// @brief Generates a wrapper for a recv counts output parameter without any user input.
 /// @return Wrapper for the recv counts that can be retrieved as structured binding.
 inline auto recv_counts_out() {
-    return recv_counts_out(alloc_new<int>);
+    return recv_counts_out<BufferResizePolicy::always_resize>(alloc_new<int>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
@@ -369,6 +472,7 @@ auto send_displs(Container&& container) {
         internal::ParameterType::send_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize,
         int>(std::forward<Container>(container));
 }
 
@@ -384,29 +488,63 @@ auto send_displs(std::initializer_list<T> displs) {
         internal::ParameterType::send_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize,
         int>(std::move(displs));
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
 /// will contain the send displacements when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
+/// The underlying container must provide \c data() and
+/// \c size() member functions and expose the contained \c value_type. If a resize policy other than
+/// BufferResizePolicy::do_not_resize is selected, the container must also provide a \c resize() member function.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
 /// @tparam Container Container type which contains the send displacements.
 /// @param container Container which will contain the send displacements.
 /// @return Object referring to the storage containing the send displacements.
-template <typename Container>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Container>
 auto send_displs_out(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
+        resize_policy,
         int>(std::forward<Container>(container));
+}
+
+/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
+/// displacements.
+/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
+/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
+/// @return Object referring to the storage containing the send displacements.
+template <typename Container>
+auto send_displs_out(AllocNewT<Container>) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::always_resize,
+        int>(alloc_new<Container>);
+}
+
+/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
+/// displacements.
+/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
+/// size() and \c resize() member functions and expose the contained \c value_type.
+/// @return Object referring to the storage containing the send displacements.
+template <template <typename...> typename Container>
+auto send_displs_out(AllocNewAutoT<Container>) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::always_resize,
+        int>(alloc_new_auto<Container>);
 }
 
 /// @brief Generates a wrapper for a send displs output parameter without any user input.
 /// @return Wrapper for the send displs that can be retrieved as structured binding.
 inline auto send_displs_out() {
-    return send_displs_out(alloc_new<int>);
+    return send_displs_out<BufferResizePolicy::always_resize>(alloc_new<int>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage
@@ -423,6 +561,7 @@ auto recv_displs(Container&& container) {
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize,
         int>(std::forward<Container>(container));
 }
 
@@ -438,44 +577,96 @@ auto recv_displs(std::initializer_list<T> displs) {
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize,
         int>(std::move(displs));
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
 /// will contain the received elements when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
+/// The underlying container must provide \c data() and
+/// \c size() member functions and expose the contained \c value_type. If a resize policy other than
+/// BufferResizePolicy::do_not_resize is selected, the container must also provide a \c resize() member function.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
 /// @tparam Container Container type which contains the received elements.
 /// @param container Container which will contain the received elements.
 /// @return Object referring to the storage containing the received elements.
-template <typename Container>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Container>
 auto recv_buf(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer>(std::forward<Container>(container));
+        internal::BufferType::out_buffer,
+        resize_policy>(std::forward<Container>(container));
+}
+
+/// @brief Generates a buffer wrapper based on a library allocated container for the receive buffer.
+/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
+/// contained \c value_type
+/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
+/// size() and \c resize() member functions and expose the contained \c value_type.
+/// @param container Container which will contain the received elements.
+/// @return Object referring to the storage containing the received elements.
+template <typename Data>
+auto recv_buf(AllocNewT<Data> container) {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::always_resize>(container);
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
 /// storage will contained the receive displacements when the \c MPI call has been completed. The underlying
 /// container must provide a \c data(), \c resize() and \c size() member function and expose the contained \c
 /// value_type
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
 /// @tparam Container Container type which contains the receive displacements.
 /// @param container Container which will contain the receive displacements.
 /// @return Object referring to the storage containing the receive displacements.
-template <typename Container>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Container>
 auto recv_displs_out(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
+        resize_policy,
         int>(std::forward<Container>(container));
+}
+
+/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
+/// displacements.
+/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
+/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
+/// @return Object referring to the storage containing the recv displacements.
+template <typename Data>
+auto recv_displs_out(AllocNewT<Data>) {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::always_resize,
+        int>(alloc_new<Data>);
+}
+
+/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
+/// displacements.
+/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
+/// size() and \c resize() member functions and expose the contained \c value_type.
+/// @return Object referring to the storage containing the recv displacements.
+template <template <typename...> typename Container>
+auto recv_displs_out(AllocNewAutoT<Container>) {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::always_resize,
+        int>(alloc_new_auto<Container>);
 }
 
 /// @brief Generates a wrapper for a recv displs output parameter without any user input.
 /// @return Wrapper for the recv displs that can be retrieved as structured binding.
 inline auto recv_displs_out() {
-    return recv_displs_out(alloc_new<int>);
+    return recv_displs_out<BufferResizePolicy::always_resize>(alloc_new<int>);
 }
 
 /// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
@@ -604,7 +795,8 @@ inline auto request(Request& request) {
     return internal::make_data_buffer<
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer>(request);
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::do_not_resize>(request);
 }
 
 /// @brief Internally allocate a request object and return it to the user.
@@ -612,7 +804,8 @@ inline auto request() {
     return internal::make_data_buffer<
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer>(alloc_new<Request>);
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::do_not_resize>(alloc_new<Request>);
 }
 
 /// @brief Send mode parameter for point to point communication.
@@ -647,7 +840,8 @@ inline auto values_on_rank_0(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::values_on_rank_0,
         internal::BufferModifiability::constant,
-        internal::BufferType::in_buffer>(std::forward<Container>(container));
+        internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize>(std::forward<Container>(container));
 }
 
 /// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
@@ -660,7 +854,8 @@ inline auto values_on_rank_0(std::initializer_list<T> values) {
     return internal::make_data_buffer<
         internal::ParameterType::values_on_rank_0,
         internal::BufferModifiability::constant,
-        internal::BufferType::in_buffer>(std::move(values));
+        internal::BufferType::in_buffer,
+        BufferResizePolicy::do_not_resize>(std::move(values));
 }
 /// @}
 } // namespace kamping

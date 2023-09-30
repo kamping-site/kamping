@@ -31,23 +31,51 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
+namespace kamping::internal {
+
+/// @brief Resizes the provided buffer according to the buffer's resize policy.
+///
+/// @tparam Buffer Type of the buffer to be resized.
+/// @tparam SizeFunc Functortype for the function to compute the required buffer size.
+/// @param buffer Buffer to be potentially resized.
+/// @param compute_required_size Functor which is used to compute the required buffer size. compute_required_size() is
+/// not called if the buffer's resize policy is BufferResizePolicy::do_not_resize.
+template <typename Buffer, typename SizeFunc>
+void resize_if_requested(Buffer& buffer, SizeFunc&& compute_required_size) {
+    if constexpr (buffer.buffer_resize_policy == BufferResizePolicy::always_resize) {
+        buffer.resize(compute_required_size());
+    } else if constexpr (buffer.buffer_resize_policy == BufferResizePolicy::resize_if_too_small) {
+        auto const required_size = compute_required_size();
+        if (buffer.size() < required_size) {
+            buffer.resize(required_size);
+        }
+    }
+}
+
+} // namespace kamping::internal
+
 /// @brief Wrapper for \c MPI_Alltoall.
 ///
 /// This wrapper for \c MPI_Alltoall sends the same amount of data from each rank to each rank. The following
 /// buffers are required:
 /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 /// each rank and divisible by the size of the communicator unless a send_count is explicitly given as parameter. Each
-/// rank receives the same number of elements from this buffer. Rank 0 receives the first `<buffer size>/<communicator
-/// size>` elements, rank 1 the next, and so on. See alltoallv() if the amounts differ.
+/// rank receives the same number of elements from this buffer.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::send_counts() specifying how many elements are sent. This parameter has to be an integer. If
 /// omitted, the size of send buffer divided by communicator size is used.
+///
 /// - \ref kamping::recv_counts() specifying how many elements are received. This parameter has to be an integer. If
 /// omitted, the value of send_counts will be used.
+///
 /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
 /// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
-/// received from rank 1, and so on.
+/// received from rank 1, and so on. The buffer will be resized according to the buffer's
+/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::do_not_resize, the buffer's underlying
+/// storage must be large enough to hold all received elements. This requires a size of at least `recv_counts *
+/// communicator size`.
+///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
@@ -107,7 +135,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         assert::light
     );
 
-    recv_buf.resize(asserting_cast<size_t>(recv_count.get_single_element()) * size());
+    resize_if_requested(recv_buf, [&]() { return asserting_cast<size_t>(recv_count.get_single_element()) * size(); });
 
     // These KASSERTs are required to avoid a false warning from g++ in release mode
     KASSERT(send_buf.data() != nullptr, assert::light);
@@ -133,6 +161,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 /// buffers are required:
 /// - \ref kamping::send_buf() containing the data that is sent to each rank. The size of this buffer has to be at least
 /// the sum of the send_counts argument.
+///
 /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
 ///
 /// The following parameters are optional but result in communication overhead if omitted:
@@ -140,11 +169,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 ///
 /// The following buffers are optional:
 /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
-/// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
-/// received from rank 1, and so on.
+/// the data received as specified for send_buf. The buffer will be resized according to the buffer's
+/// kamping::BufferResizePolicy. If resize policy is kamping::BufferResizePolicy::do_not_resize, the buffer's underlying
+/// storage must be large enough to store all received elements. This requires a size of at least  `max(recv_counts[i] +
+/// recv_displs[i])` for \c i in `[0, communicator size)`.
+///
 /// - \ref kamping::send_displs() containing the offsets of the messages in send_buf. The `send_counts[i]` elements
 /// starting at `send_buf[send_displs[i]]` will be sent to rank `i`. If omitted, this is calculated as the exclusive
 /// prefix-sum of `send_counts`.
+///
 /// - \ref kamping::recv_displs() containing the offsets of the messages in recv_buf. The `recv_counts[i]` elements
 /// starting at `recv_buf[recv_displs[i]]` will be received from rank `i`. If omitted, this is calculated as the
 /// exclusive prefix-sum of `recv_counts`.
@@ -235,10 +268,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     );
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
-        recv_counts.resize(this->size());
+        resize_if_requested(recv_counts, [&]() { return this->size(); });
         this->alltoall(kamping::send_buf(send_counts.get()), kamping::recv_buf(recv_counts.get()));
     }
-    KASSERT(recv_counts.size() == this->size(), assert::light);
+    KASSERT(recv_counts.size() >= this->size(), assert::light);
 
     // Calculate send_displs if necessary
     constexpr bool do_calculate_send_displs = internal::has_to_be_computed<decltype(send_displs)>;
@@ -248,14 +281,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         assert::light_communication
     );
     if constexpr (do_calculate_send_displs) {
-        send_displs.resize(this->size());
-        std::exclusive_scan(send_counts.data(), send_counts.data() + send_counts.size(), send_displs.data(), 0);
+        resize_if_requested(send_displs, [&]() { return this->size(); });
+        std::exclusive_scan(send_counts.data(), send_counts.data() + this->size(), send_displs.data(), 0);
     }
-    KASSERT(send_displs.size() == this->size(), assert::light);
-    // Check that send displs and send counts match the size of send_buf
+    KASSERT(send_displs.size() >= this->size(), assert::light);
+    // Check that send displs and send counts are large enough
     KASSERT(
-        *(send_counts.data() + send_counts.size() - 1) +       // Last element of send_counts
-                *(send_displs.data() + send_displs.size() - 1) // Last element of send_displs
+        *(send_counts.data() + this->size() - 1) +       // Last element of send_counts
+                *(send_displs.data() + this->size() - 1) // Last element of send_displs
             <= asserting_cast<int>(send_buf.size()),
         assert::light
     );
@@ -268,15 +301,28 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         assert::light_communication
     );
     if constexpr (do_calculate_recv_displs) {
-        recv_displs.resize(this->size());
-        std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), recv_displs.data(), 0);
+        resize_if_requested(recv_displs, [&]() { return this->size(); });
+        std::exclusive_scan(recv_counts.data(), recv_counts.data() + this->size(), recv_displs.data(), 0);
     }
-    KASSERT(recv_displs.size() == this->size(), assert::light);
+    KASSERT(recv_displs.size() >= this->size(), assert::light);
 
-    // Resize recv_buff
-    int recv_buf_size = *(recv_counts.data() + recv_counts.size() - 1) + // Last element of recv_counts
-                        *(recv_displs.data() + recv_displs.size() - 1);  // Last element of recv_displs
-    recv_buf.resize(asserting_cast<size_t>(recv_buf_size));
+    auto compute_required_recv_buf_size = [&]() {
+        if constexpr (do_calculate_recv_displs) {
+            // If recv displs are not provided as a parameter, they are monotonically increasing. In this case, it is
+            // safe to deduce the required recv_buf size by only considering  the last entry of recv_counts and
+            // recv_displs.
+            int recv_buf_size = *(recv_counts.data() + this->size() - 1) + // Last element of recv_counts
+                                *(recv_displs.data() + this->size() - 1);  // Last element of recv_displs
+            return asserting_cast<size_t>(recv_buf_size);
+        } else {
+            int recv_buf_size = 0;
+            for (size_t i = 0; i < size(); ++i) {
+                recv_buf_size = std::max(recv_buf_size, *(recv_counts.data() + i) + *(recv_displs.data() + i));
+            }
+            return asserting_cast<size_t>(recv_buf_size);
+        }
+    };
+    resize_if_requested(recv_buf, compute_required_recv_buf_size);
 
     // Do the actual alltoallv
     [[maybe_unused]] int err = MPI_Alltoallv(
