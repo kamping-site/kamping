@@ -42,9 +42,9 @@ namespace kamping::internal {
 /// not called if the buffer's resize policy is BufferResizePolicy::do_not_resize.
 template <typename Buffer, typename SizeFunc>
 void resize_if_requested(Buffer& buffer, SizeFunc&& compute_required_size) {
-    if constexpr (buffer.buffer_resize_policy == BufferResizePolicy::always_resize) {
+    if constexpr (Buffer::buffer_resize_policy == BufferResizePolicy::always_resize) {
         buffer.resize(compute_required_size());
-    } else if constexpr (buffer.buffer_resize_policy == BufferResizePolicy::resize_if_too_small) {
+    } else if constexpr (Buffer::buffer_resize_policy == BufferResizePolicy::resize_if_too_small) {
         auto const required_size = compute_required_size();
         if (buffer.size() < required_size) {
             buffer.resize(required_size);
