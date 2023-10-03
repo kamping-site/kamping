@@ -130,7 +130,7 @@ void test_user_allocated_buffer(
     EXPECT_TRUE(GeneratedBuffer::is_modifiable);
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
     EXPECT_EQ(GeneratedBuffer::buffer_type, expected_buffer_type);
-    EXPECT_EQ(GeneratedBuffer::buffer_resize_policy, expected_resize_policy);
+    EXPECT_EQ(GeneratedBuffer::resize_policy, expected_resize_policy);
 
     auto resize_write_check = [&](size_t nb_elements) {
         generated_buffer.resize(nb_elements);
@@ -158,7 +158,7 @@ void test_library_allocated_buffer(
     EXPECT_TRUE(GeneratedBuffer::is_modifiable);
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
     EXPECT_EQ(GeneratedBuffer::buffer_type, expected_buffer_type);
-    EXPECT_EQ(GeneratedBuffer::buffer_resize_policy, BufferResizePolicy::resize_to_fit);
+    EXPECT_EQ(GeneratedBuffer::resize_policy, BufferResizePolicy::resize_to_fit);
 
     // TODO How can we test if the underlying storage resizes correctly to x elements when calling
     // generated_buffer.resize(x)?
@@ -1314,7 +1314,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
@@ -1335,7 +1335,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::grow_only);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::grow_only);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
@@ -1357,7 +1357,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&single_int, &data_buf.underlying());
         static_assert(
@@ -1379,7 +1379,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const>,
             "Owning buffers must hold their data directly."
@@ -1400,7 +1400,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::grow_only);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::grow_only);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>>,
             "Owning buffers must hold their data directly."
@@ -1418,7 +1418,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, int>,
             "Owning buffers must hold their data directly."
@@ -1436,7 +1436,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, resize_policy);
+        EXPECT_EQ(data_buf.resize_policy, resize_policy);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>>,
             "Owning buffers must hold their data directly."
@@ -1454,7 +1454,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, resize_policy);
+        EXPECT_EQ(data_buf.resize_policy, resize_policy);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<int>>,
             "Owning buffers must hold their data directly."
@@ -1476,7 +1476,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, resize_policy);
+        EXPECT_EQ(data_buf.resize_policy, resize_policy);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
@@ -1496,7 +1496,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::resize_to_fit);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::resize_to_fit);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
@@ -1518,7 +1518,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&single_bool, &data_buf.underlying());
         static_assert(
@@ -1540,7 +1540,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool> const>,
             "Owning buffers must hold their data directly."
@@ -1561,7 +1561,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::resize_to_fit);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::resize_to_fit);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool>>,
             "Owning buffers must hold their data directly."
@@ -1579,7 +1579,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, bool>,
             "Owning buffers must hold their data directly."
@@ -1598,7 +1598,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<kabool>>,
             "Initializer lists of type bool have to be converted to std::vector<kabool>."
@@ -1617,7 +1617,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
+        EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<kabool>>,
             "Initializer lists of type bool have to be converted to std::vector<kabool>."

@@ -211,7 +211,7 @@ enum class BufferResizePolicy {
     no_resize,    ///< Policy indicating that the underlying buffer shall never be resized.
     grow_only,    ///< Policy indicating that the underlying buffer shall only be resized if the current size
                   ///< of the buffer is too small.
-    resize_to_fit ///< Tag indicating that the underlying buffer is resized such that it has exactly the required
+    resize_to_fit ///< Policy indicating that the underlying buffer is resized such that it has exactly the required
                   ///< size.
 };
 
@@ -287,7 +287,7 @@ public:
 
     static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
 
-    static constexpr BufferResizePolicy buffer_resize_policy =
+    static constexpr BufferResizePolicy resize_policy =
         buffer_resize_policy_param; ///< The policy specifying in which cases the buffer shall be resized.
 
     /// @brief \c true if the buffer is an out or in/out buffer that results will be written to and \c false
@@ -405,9 +405,9 @@ public:
     /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
     template <typename SizeFunc>
     void resize_if_requested(SizeFunc&& compute_required_size) {
-        if constexpr (buffer_resize_policy == BufferResizePolicy::resize_to_fit) {
+        if constexpr (resize_policy == BufferResizePolicy::resize_to_fit) {
             resize(compute_required_size());
-        } else if constexpr (buffer_resize_policy == BufferResizePolicy::grow_only) {
+        } else if constexpr (resize_policy == BufferResizePolicy::grow_only) {
             auto const required_size = compute_required_size();
             if (size() < required_size) {
                 resize(required_size);

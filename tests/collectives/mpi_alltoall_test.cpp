@@ -90,6 +90,7 @@ TEST(AlltoallTest, given_recv_buffer_is_bigger_than_required) {
     {
         // recv buffer will be resized to the number of recv elements
         auto recv_buffer = gen_recv_buf();
+        EXPECT_GT(recv_buffer.size(), comm.size());
         comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_to_fit>(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), comm.size());
         EXPECT_EQ(recv_buffer, expected_result);
@@ -876,7 +877,7 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         is_equal(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
     }
     {
-        // buffers will be resized as the resize policy is do_not_resize
+        // buffers will not be resized as the (implicit) resize policy is no_resize
         std::vector<int> recv_buffer(2 * comm.size(), default_init_value);
         std::vector<int> send_displs_buffer(2 * comm.size(), default_init_value);
         std::vector<int> recv_counts_buffer(2 * comm.size(), default_init_value);
@@ -899,7 +900,7 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         is_equal(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
     }
     {
-        // buffers will be resized as the (implicit) resize policy is do_not_resize
+        // buffers will not be resized as the (implicit) resize policy is no_resize
         std::vector<int> recv_buffer(2 * comm.size(), default_init_value);
         std::vector<int> send_displs_buffer(2 * comm.size(), default_init_value);
         std::vector<int> recv_counts_buffer(2 * comm.size(), default_init_value);

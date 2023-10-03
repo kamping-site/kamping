@@ -250,7 +250,8 @@ auto send_buf(std::initializer_list<T> data) {
 /// and the root() of the operation. This buffer type may encapsulate const data and in which case it can only be used
 /// as the send buffer. For some functions (e.g. bcast), you have to pass a send_recv_buf as the send buffer.
 ///
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. If omitted,
+/// the resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
 /// @tparam Data Data type representing the element(s) to send/receive.
 /// @param data Data (either a container which contains the elements or the element directly) to send or the buffer to
 /// receive into.
@@ -319,7 +320,8 @@ auto send_counts(std::initializer_list<T> counts) {
 /// will contained the send counts when the \c MPI call has been completed.
 /// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
 /// contained \c value_type
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
 /// @tparam Container Container type which contains the send counts.
 /// @param container Container which will contain the send counts.
 /// @return Object referring to the storage containing the send counts.
@@ -408,7 +410,8 @@ auto recv_counts(std::initializer_list<T> counts) {
 /// The underlying container must provide \c data() and
 /// \c size() member functions and expose the contained \c value_type. If a resize policy other than
 /// BufferResizePolicy::no_resize is selected, the container must also provide a \c resize() member function.
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
 /// @tparam Container Container type which contains the receive counts.
 /// @param container Container which will contain the receive counts.
 /// @return Object referring to the storage containing the receive counts.
@@ -497,7 +500,8 @@ auto send_displs(std::initializer_list<T> displs) {
 /// The underlying container must provide \c data() and
 /// \c size() member functions and expose the contained \c value_type. If a resize policy other than
 /// BufferResizePolicy::do_not_resize is selected, the container must also provide a \c resize() member function.
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer should be resized. The
+/// default resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
 /// @tparam Container Container type which contains the send displacements.
 /// @param container Container which will contain the send displacements.
 /// @return Object referring to the storage containing the send displacements.
@@ -619,7 +623,8 @@ auto recv_buf(AllocNewT<Data> container) {
 /// storage will contained the receive displacements when the \c MPI call has been completed. The underlying
 /// container must provide a \c data(), \c resize() and \c size() member function and expose the contained \c
 /// value_type
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
 /// @tparam Container Container type which contains the receive displacements.
 /// @param container Container which will contain the receive displacements.
 /// @return Object referring to the storage containing the receive displacements.

@@ -35,18 +35,18 @@
 ///
 /// This wrapper for \c MPI_Alltoall sends the same amount of data from each rank to each rank. The following
 /// buffers are required:
-/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
+/// - kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 /// each rank and divisible by the size of the communicator unless a send_count is explicitly given as parameter. Each
 /// rank receives the same number of elements from this buffer.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::send_counts() specifying how many elements are sent. This parameter has to be an integer. If
+/// - kamping::send_counts() specifying how many elements are sent. This parameter has to be an integer. If
 /// omitted, the size of send buffer divided by communicator size is used.
 ///
-/// - \ref kamping::recv_counts() specifying how many elements are received. This parameter has to be an integer. If
+/// - kamping::recv_counts() specifying how many elements are received. This parameter has to be an integer. If
 /// omitted, the value of send_counts will be used.
 ///
-/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
+/// - kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
 /// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
 /// received from rank 1, and so on. The buffer will be resized according to the buffer's
 /// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
@@ -112,7 +112,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         assert::light
     );
 
-    recv_buf.resize_if_requested([&]() { return asserting_cast<size_t>(recv_count.get_single_element()) * size(); });
+    auto compute_required_recv_buf_size = [&]() {
+        return asserting_cast<size_t>(recv_count.get_single_element()) * size();
+    };
+    recv_buf.resize_if_requested(compute_required_recv_buf_size);
+    KASSERT(recv_buf.size() >= compute_required_recv_buf_size(), assert::light);
 
     // These KASSERTs are required to avoid a false warning from g++ in release mode
     KASSERT(send_buf.data() != nullptr, assert::light);
@@ -136,26 +140,26 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 ///
 /// This wrapper for \c MPI_Alltoallv sends the different amounts of data from each rank to each rank. The following
 /// buffers are required:
-/// - \ref kamping::send_buf() containing the data that is sent to each rank. The size of this buffer has to be at least
+/// - kamping::send_buf() containing the data that is sent to each rank. The size of this buffer has to be at least
 /// the sum of the send_counts argument.
 ///
-/// - \ref kamping::send_counts() containing the number of elements to send to each rank.
+/// - kamping::send_counts() containing the number of elements to send to each rank.
 ///
 /// The following parameters are optional but result in communication overhead if omitted:
-/// - \ref kamping::recv_counts() containing the number of elements to receive from each rank.
+/// - kamping::recv_counts() containing the number of elements to receive from each rank.
 ///
 /// The following buffers are optional:
-/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
+/// - kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
 /// the data received as specified for send_buf. The buffer will be resized according to the buffer's
 /// kamping::BufferResizePolicy. If resize policy is kamping::BufferResizePolicy::no_resize, the buffer's underlying
 /// storage must be large enough to store all received elements. This requires a size of at least  `max(recv_counts[i] +
 /// recv_displs[i])` for \c i in `[0, communicator size)`.
 ///
-/// - \ref kamping::send_displs() containing the offsets of the messages in send_buf. The `send_counts[i]` elements
+/// - kamping::send_displs() containing the offsets of the messages in send_buf. The `send_counts[i]` elements
 /// starting at `send_buf[send_displs[i]]` will be sent to rank `i`. If omitted, this is calculated as the exclusive
 /// prefix-sum of `send_counts`.
 ///
-/// - \ref kamping::recv_displs() containing the offsets of the messages in recv_buf. The `recv_counts[i]` elements
+/// - kamping::recv_displs() containing the offsets of the messages in recv_buf. The `recv_counts[i]` elements
 /// starting at `recv_buf[recv_displs[i]]` will be received from rank `i`. If omitted, this is calculated as the
 /// exclusive prefix-sum of `recv_counts`.
 ///
@@ -292,6 +296,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
                                 *(recv_displs.data() + this->size() - 1);  // Last element of recv_displs
             return asserting_cast<size_t>(recv_buf_size);
         } else {
+            // If recv displs are user provided, they do not need to be monotonically increasing. Therefore, we have to
+            // compute the maximum of recv_displs and recv_counts from each rank to provide a receive buffer large
+            // enough to be able to receive all elements. This O(p) computation is only executed if the user wants
+            // kamping to resize the receive buffer.
             int recv_buf_size = 0;
             for (size_t i = 0; i < size(); ++i) {
                 recv_buf_size = std::max(recv_buf_size, *(recv_counts.data() + i) + *(recv_displs.data() + i));
@@ -301,6 +309,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     };
 
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
+    KASSERT(
+        recv_buf.size() >= compute_required_recv_buf_size(),
+        "Recv buffer is not large enough to hold all received elements.",
+        assert::light
+    );
 
     // Do the actual alltoallv
     [[maybe_unused]] int err = MPI_Alltoallv(
