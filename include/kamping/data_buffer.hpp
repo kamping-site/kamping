@@ -397,6 +397,26 @@ public:
         }
     }
 
+    /// @brief Resizes the underlying container if the buffer the buffer's resize policy allows and resizing is
+    /// necessary.
+    ///
+    /// @tparam Buffer Type of the buffer to be resized.
+    /// @tparam SizeFunc Functortype for the function to compute the required buffer size.
+    /// @param buffer Buffer to be potentially resized.
+    /// @param compute_required_size Functor which is used to compute the required buffer size. compute_required_size()
+    /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
+    template <typename SizeFunc>
+    void resize_if_requested(SizeFunc&& compute_required_size) {
+        if constexpr (buffer_resize_policy == BufferResizePolicy::resize_to_fit) {
+            resize(compute_required_size());
+        } else if constexpr (buffer_resize_policy == BufferResizePolicy::grow_only) {
+            auto const required_size = compute_required_size();
+            if (size() < required_size) {
+                resize(required_size);
+            }
+        }
+    }
+
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type const* data() const {

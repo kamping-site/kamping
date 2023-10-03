@@ -31,29 +31,6 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-namespace kamping::internal {
-
-/// @brief Resizes the provided buffer according to the buffer's resize policy.
-///
-/// @tparam Buffer Type of the buffer to be resized.
-/// @tparam SizeFunc Functortype for the function to compute the required buffer size.
-/// @param buffer Buffer to be potentially resized.
-/// @param compute_required_size Functor which is used to compute the required buffer size. compute_required_size() is
-/// not called if the buffer's resize policy is BufferResizePolicy::no_resize.
-template <typename Buffer, typename SizeFunc>
-void resize_if_requested(Buffer& buffer, SizeFunc&& compute_required_size) {
-    if constexpr (Buffer::buffer_resize_policy == BufferResizePolicy::resize_to_fit) {
-        buffer.resize(compute_required_size());
-    } else if constexpr (Buffer::buffer_resize_policy == BufferResizePolicy::grow_only) {
-        auto const required_size = compute_required_size();
-        if (buffer.size() < required_size) {
-            buffer.resize(required_size);
-        }
-    }
-}
-
-} // namespace kamping::internal
-
 /// @brief Wrapper for \c MPI_Alltoall.
 ///
 /// This wrapper for \c MPI_Alltoall sends the same amount of data from each rank to each rank. The following
@@ -135,7 +112,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         assert::light
     );
 
-    resize_if_requested(recv_buf, [&]() { return asserting_cast<size_t>(recv_count.get_single_element()) * size(); });
+    recv_buf.resize_if_requested([&]() { return asserting_cast<size_t>(recv_count.get_single_element()) * size(); });
 
     // These KASSERTs are required to avoid a false warning from g++ in release mode
     KASSERT(send_buf.data() != nullptr, assert::light);
@@ -268,7 +245,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     );
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
-        resize_if_requested(recv_counts, [&]() { return this->size(); });
+        recv_counts.resize_if_requested([&]() { return this->size(); });
         this->alltoall(kamping::send_buf(send_counts.get()), kamping::recv_buf(recv_counts.get()));
     }
     KASSERT(recv_counts.size() >= this->size(), assert::light);
@@ -281,7 +258,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         assert::light_communication
     );
     if constexpr (do_calculate_send_displs) {
-        resize_if_requested(send_displs, [&]() { return this->size(); });
+        send_displs.resize_if_requested([&]() { return this->size(); });
         std::exclusive_scan(send_counts.data(), send_counts.data() + this->size(), send_displs.data(), 0);
     }
     KASSERT(send_displs.size() >= this->size(), assert::light);
@@ -301,7 +278,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         assert::light_communication
     );
     if constexpr (do_calculate_recv_displs) {
-        resize_if_requested(recv_displs, [&]() { return this->size(); });
+        recv_displs.resize_if_requested([&]() { return this->size(); });
         std::exclusive_scan(recv_counts.data(), recv_counts.data() + this->size(), recv_displs.data(), 0);
     }
     KASSERT(recv_displs.size() >= this->size(), assert::light);
@@ -322,7 +299,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
             return asserting_cast<size_t>(recv_buf_size);
         }
     };
-    resize_if_requested(recv_buf, compute_required_recv_buf_size);
+
+    recv_buf.resize_if_requested(compute_required_recv_buf_size);
 
     // Do the actual alltoallv
     [[maybe_unused]] int err = MPI_Alltoallv(

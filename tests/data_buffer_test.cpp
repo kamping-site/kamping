@@ -634,6 +634,92 @@ TEST(ParameterFactoriesTest, is_int_type) {
     EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_displs));
 }
 
+TEST(DataBufferTest, resize_if_requested_with_resize_to_fit) {
+    std::vector<int>        data;
+    constexpr ParameterType ptype = ParameterType::send_counts;
+    constexpr BufferType    btype = BufferType::in_buffer;
+
+    const size_t required_size = 42;
+    int          call_counter  = 0;
+    auto         size_function = [&call_counter]() {
+        ++call_counter;
+        return required_size;
+    };
+    {
+        UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::resize_to_fit> buffer(data
+        );
+        buffer.resize_if_requested(size_function);
+        EXPECT_EQ(call_counter, 1);
+        EXPECT_EQ(data.size(), required_size);
+    }
+    // reset call counter
+    call_counter = 0;
+    {
+        data.resize(2 * required_size);
+        UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::resize_to_fit> buffer(data
+        );
+        buffer.resize_if_requested(size_function);
+        EXPECT_EQ(call_counter, 1);
+        EXPECT_EQ(data.size(), required_size);
+    }
+}
+
+TEST(DataBufferTest, resize_if_requested_with_grow_only) {
+    std::vector<int>        data;
+    constexpr ParameterType ptype = ParameterType::send_counts;
+    constexpr BufferType    btype = BufferType::in_buffer;
+
+    const size_t required_size = 42;
+    int          call_counter  = 0;
+    auto         size_function = [&call_counter]() {
+        ++call_counter;
+        return required_size;
+    };
+    {
+        UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::grow_only> buffer(data);
+        buffer.resize_if_requested(size_function);
+        EXPECT_EQ(call_counter, 1);
+        EXPECT_EQ(data.size(), required_size);
+    }
+    // reset call counter
+    call_counter = 0;
+    {
+        data.resize(2 * required_size);
+        UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::grow_only> buffer(data);
+        buffer.resize_if_requested(size_function);
+        EXPECT_EQ(call_counter, 1);
+        EXPECT_EQ(data.size(), 2 * required_size);
+    }
+}
+
+TEST(DataBufferTest, resize_if_requested_with_no_resize) {
+    std::vector<int>        data;
+    constexpr ParameterType ptype = ParameterType::send_counts;
+    constexpr BufferType    btype = BufferType::in_buffer;
+
+    const size_t required_size = 42;
+    int          call_counter  = 0;
+    auto         size_function = [&call_counter]() {
+        ++call_counter;
+        return required_size;
+    };
+    {
+        UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::no_resize> buffer(data);
+        buffer.resize_if_requested(size_function);
+        EXPECT_EQ(call_counter, 0);
+        EXPECT_EQ(data.size(), 0);
+    }
+    // reset call counter
+    call_counter = 0;
+    {
+        data.resize(2 * required_size);
+        UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::no_resize> buffer(data);
+        buffer.resize_if_requested(size_function);
+        EXPECT_EQ(call_counter, 0);
+        EXPECT_EQ(data.size(), 2 * required_size);
+    }
+}
+
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf, BufferType::in_buffer> buffer;
