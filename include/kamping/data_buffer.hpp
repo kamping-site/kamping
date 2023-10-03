@@ -400,9 +400,7 @@ public:
     /// @brief Resizes the underlying container if the buffer the buffer's resize policy allows and resizing is
     /// necessary.
     ///
-    /// @tparam Buffer Type of the buffer to be resized.
-    /// @tparam SizeFunc Functortype for the function to compute the required buffer size.
-    /// @param buffer Buffer to be potentially resized.
+    /// @tparam SizeFunc Type of the functor which computes the required buffer size.
     /// @param compute_required_size Functor which is used to compute the required buffer size. compute_required_size()
     /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
     template <typename SizeFunc>
