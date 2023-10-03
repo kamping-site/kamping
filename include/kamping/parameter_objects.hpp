@@ -81,7 +81,7 @@ class RankDataBuffer<RankType::value, type> final : private DataBuffer<
                                                         BufferModifiability::modifiable,
                                                         BufferOwnership::owning,
                                                         BufferType::in_buffer,
-                                                        BufferResizePolicy::do_not_resize,
+                                                        BufferResizePolicy::no_resize,
                                                         BufferAllocation::user_allocated> {
 private:
     using BaseClass = DataBuffer<
@@ -90,7 +90,7 @@ private:
         BufferModifiability::modifiable,
         BufferOwnership::owning,
         BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         BufferAllocation::user_allocated>;
 
 public:

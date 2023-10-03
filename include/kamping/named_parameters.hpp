@@ -229,7 +229,7 @@ auto send_buf(Data&& data) {
         internal::ParameterType::send_buf,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize>(std::forward<Data>(data));
+        BufferResizePolicy::no_resize>(std::forward<Data>(data));
 }
 
 /// @brief Generates a buffer taking ownership of the data pass to the send buffer as an initializer list.
@@ -243,7 +243,7 @@ auto send_buf(std::initializer_list<T> data) {
         internal::ParameterType::send_buf,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize>(std::move(data));
+        BufferResizePolicy::no_resize>(std::move(data));
 }
 
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
@@ -255,7 +255,7 @@ auto send_buf(std::initializer_list<T> data) {
 /// @param data Data (either a container which contains the elements or the element directly) to send or the buffer to
 /// receive into.
 /// @return Object referring to the storage containing the data elements to send / the received elements.
-template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Data>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Data>
 auto send_recv_buf(Data&& data) {
     constexpr internal::BufferModifiability modifiability = std::is_const_v<std::remove_reference_t<Data>>
                                                                 ? internal::BufferModifiability::constant
@@ -278,7 +278,7 @@ auto send_recv_buf(AllocNewT<Container>) {
         internal::ParameterType::send_recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::in_out_buffer,
-        BufferResizePolicy::always_resize>(alloc_new<Container>);
+        BufferResizePolicy::resize_to_fit>(alloc_new<Container>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must
@@ -295,7 +295,7 @@ auto send_counts(Container&& container) {
         internal::ParameterType::send_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int>(std::forward<Container>(container));
 }
 
@@ -311,7 +311,7 @@ auto send_counts(std::initializer_list<T> counts) {
         internal::ParameterType::send_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int>(std::move(counts));
 }
 
@@ -323,7 +323,7 @@ auto send_counts(std::initializer_list<T> counts) {
 /// @tparam Container Container type which contains the send counts.
 /// @param container Container which will contain the send counts.
 /// @return Object referring to the storage containing the send counts.
-template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Container>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_counts_out(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::send_counts,
@@ -344,7 +344,7 @@ auto send_counts_out(AllocNewT<Container>) {
         internal::ParameterType::send_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::always_resize,
+        BufferResizePolicy::resize_to_fit,
         int>(alloc_new<Container>);
 }
 
@@ -359,14 +359,14 @@ auto send_counts_out(AllocNewAutoT<Container>) {
         internal::ParameterType::send_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::always_resize,
+        BufferResizePolicy::resize_to_fit,
         int>(alloc_new_auto<Container>);
 }
 
 /// @brief Generates a wrapper for a send counts output parameter without any user input.
 /// @return Wrapper for the send counts that can be retrieved as structured binding.
 inline auto send_counts_out() {
-    return send_counts_out<BufferResizePolicy::always_resize>(alloc_new<int>);
+    return send_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<int>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must
@@ -383,7 +383,7 @@ auto recv_counts(Container&& container) {
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int>(std::forward<Container>(container));
 }
 
@@ -399,7 +399,7 @@ auto recv_counts(std::initializer_list<T> counts) {
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int>(std::move(counts));
 }
 
@@ -407,12 +407,12 @@ auto recv_counts(std::initializer_list<T> counts) {
 /// will contained the receive counts when the \c MPI call has been completed.
 /// The underlying container must provide \c data() and
 /// \c size() member functions and expose the contained \c value_type. If a resize policy other than
-/// BufferResizePolicy::do_not_resize is selected, the container must also provide a \c resize() member function.
+/// BufferResizePolicy::no_resize is selected, the container must also provide a \c resize() member function.
 /// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
 /// @tparam Container Container type which contains the receive counts.
 /// @param container Container which will contain the receive counts.
 /// @return Object referring to the storage containing the receive counts.
-template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Container>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_counts_out(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::recv_counts,
@@ -433,7 +433,7 @@ auto recv_counts_out(AllocNewT<Data> container) {
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::always_resize,
+        BufferResizePolicy::resize_to_fit,
         int>(container);
 }
 
@@ -448,14 +448,14 @@ auto recv_counts_out(AllocNewAutoT<Data> container) {
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::always_resize,
+        BufferResizePolicy::resize_to_fit,
         int>(container);
 }
 
 /// @brief Generates a wrapper for a recv counts output parameter without any user input.
 /// @return Wrapper for the recv counts that can be retrieved as structured binding.
 inline auto recv_counts_out() {
-    return recv_counts_out<BufferResizePolicy::always_resize>(alloc_new<int>);
+    return recv_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<int>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
@@ -472,7 +472,7 @@ auto send_displs(Container&& container) {
         internal::ParameterType::send_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int>(std::forward<Container>(container));
 }
 
@@ -488,7 +488,7 @@ auto send_displs(std::initializer_list<T> displs) {
         internal::ParameterType::send_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int>(std::move(displs));
 }
 
@@ -501,7 +501,7 @@ auto send_displs(std::initializer_list<T> displs) {
 /// @tparam Container Container type which contains the send displacements.
 /// @param container Container which will contain the send displacements.
 /// @return Object referring to the storage containing the send displacements.
-template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Container>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_displs_out(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::send_displs,
@@ -522,7 +522,7 @@ auto send_displs_out(AllocNewT<Container>) {
         internal::ParameterType::send_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::always_resize,
+        BufferResizePolicy::resize_to_fit,
         int>(alloc_new<Container>);
 }
 
@@ -537,14 +537,14 @@ auto send_displs_out(AllocNewAutoT<Container>) {
         internal::ParameterType::send_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::always_resize,
+        BufferResizePolicy::resize_to_fit,
         int>(alloc_new_auto<Container>);
 }
 
 /// @brief Generates a wrapper for a send displs output parameter without any user input.
 /// @return Wrapper for the send displs that can be retrieved as structured binding.
 inline auto send_displs_out() {
-    return send_displs_out<BufferResizePolicy::always_resize>(alloc_new<int>);
+    return send_displs_out<BufferResizePolicy::resize_to_fit>(alloc_new<int>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage
@@ -561,7 +561,7 @@ auto recv_displs(Container&& container) {
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int>(std::forward<Container>(container));
 }
 
@@ -577,7 +577,7 @@ auto recv_displs(std::initializer_list<T> displs) {
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int>(std::move(displs));
 }
 
@@ -590,7 +590,7 @@ auto recv_displs(std::initializer_list<T> displs) {
 /// @tparam Container Container type which contains the received elements.
 /// @param container Container which will contain the received elements.
 /// @return Object referring to the storage containing the received elements.
-template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Container>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_buf(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::recv_buf,
@@ -612,7 +612,7 @@ auto recv_buf(AllocNewT<Data> container) {
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::always_resize>(container);
+        BufferResizePolicy::resize_to_fit>(container);
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
@@ -623,7 +623,7 @@ auto recv_buf(AllocNewT<Data> container) {
 /// @tparam Container Container type which contains the receive displacements.
 /// @param container Container which will contain the receive displacements.
 /// @return Object referring to the storage containing the receive displacements.
-template <BufferResizePolicy resize_policy = BufferResizePolicy::do_not_resize, typename Container>
+template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_displs_out(Container&& container) {
     return internal::make_data_buffer<
         internal::ParameterType::recv_displs,
@@ -644,7 +644,7 @@ auto recv_displs_out(AllocNewT<Data>) {
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::always_resize,
+        BufferResizePolicy::resize_to_fit,
         int>(alloc_new<Data>);
 }
 
@@ -659,14 +659,14 @@ auto recv_displs_out(AllocNewAutoT<Container>) {
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::always_resize,
+        BufferResizePolicy::resize_to_fit,
         int>(alloc_new_auto<Container>);
 }
 
 /// @brief Generates a wrapper for a recv displs output parameter without any user input.
 /// @return Wrapper for the recv displs that can be retrieved as structured binding.
 inline auto recv_displs_out() {
-    return recv_displs_out<BufferResizePolicy::always_resize>(alloc_new<int>);
+    return recv_displs_out<BufferResizePolicy::resize_to_fit>(alloc_new<int>);
 }
 
 /// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
@@ -796,7 +796,7 @@ inline auto request(Request& request) {
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::do_not_resize>(request);
+        BufferResizePolicy::no_resize>(request);
 }
 
 /// @brief Internally allocate a request object and return it to the user.
@@ -805,7 +805,7 @@ inline auto request() {
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::do_not_resize>(alloc_new<Request>);
+        BufferResizePolicy::no_resize>(alloc_new<Request>);
 }
 
 /// @brief Send mode parameter for point to point communication.
@@ -841,7 +841,7 @@ inline auto values_on_rank_0(Container&& container) {
         internal::ParameterType::values_on_rank_0,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize>(std::forward<Container>(container));
+        BufferResizePolicy::no_resize>(std::forward<Container>(container));
 }
 
 /// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
@@ -855,7 +855,7 @@ inline auto values_on_rank_0(std::initializer_list<T> values) {
         internal::ParameterType::values_on_rank_0,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
-        BufferResizePolicy::do_not_resize>(std::move(values));
+        BufferResizePolicy::no_resize>(std::move(values));
 }
 /// @}
 } // namespace kamping

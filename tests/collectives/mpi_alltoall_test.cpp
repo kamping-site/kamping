@@ -61,7 +61,7 @@ TEST(AlltoallTest, single_element_with_receive_buffer) {
 
     std::vector<int> result;
 
-    auto mpi_result = comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::always_resize>(result));
+    auto mpi_result = comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_to_fit>(result));
     auto send_count = mpi_result.extract_send_counts();
     auto recv_count = mpi_result.extract_recv_counts();
 
@@ -90,14 +90,14 @@ TEST(AlltoallTest, given_recv_buffer_is_bigger_than_required) {
     {
         // recv buffer will be resized to the number of recv elements
         auto recv_buffer = gen_recv_buf();
-        comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::always_resize>(recv_buffer));
+        comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_to_fit>(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), comm.size());
         EXPECT_EQ(recv_buffer, expected_result);
     }
     {
         // recv buffer will not be resized as it is large enough
         auto recv_buffer = gen_recv_buf();
-        comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_if_too_small>(recv_buffer));
+        comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::grow_only>(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
         // first half of result buffer contains recv buffer, second half remains untouched
         const std::vector<int> first_half(recv_buffer.begin(), recv_buffer.begin() + comm.size_signed());
@@ -108,7 +108,7 @@ TEST(AlltoallTest, given_recv_buffer_is_bigger_than_required) {
     {
         // recv buffer will not be resized
         auto recv_buffer = gen_recv_buf();
-        comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::do_not_resize>(recv_buffer));
+        comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::no_resize>(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
         // first half of result buffer contains recv buffer, second half remains untouched
         const std::vector<int> first_half(recv_buffer.begin(), recv_buffer.begin() + comm.size_signed());
@@ -144,14 +144,14 @@ TEST(AlltoallTest, given_recv_buffer_is_smaller_than_required) {
     {
         // recv buffer will be resized to the number of recv elements
         auto recv_buffer = gen_recv_buf();
-        comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::always_resize>(recv_buffer));
+        comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_to_fit>(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), comm.size());
         EXPECT_EQ(recv_buffer, expected_result);
     }
     {
         // recv buffer will be resized as it is not large enough
         auto recv_buffer = gen_recv_buf();
-        comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_if_too_small>(recv_buffer));
+        comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::grow_only>(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), comm.size());
         EXPECT_EQ(recv_buffer, expected_result);
     }
@@ -201,7 +201,7 @@ TEST(AlltoallTest, multiple_elements) {
     });
 
     std::vector<int> result;
-    auto             mpi_result = comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::always_resize>(result));
+    auto             mpi_result = comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_to_fit>(result));
 
     EXPECT_EQ(mpi_result.extract_send_counts(), 4);
     EXPECT_EQ(mpi_result.extract_recv_counts(), 4);
@@ -227,7 +227,7 @@ TEST(AlltoallTest, given_send_count_overrides_deduced_send_count) {
     auto             mpi_result = comm.alltoall(
         send_buf(input),
         send_counts(num_elements_per_processor_pair),
-        recv_buf<BufferResizePolicy::always_resize>(result)
+        recv_buf<BufferResizePolicy::resize_to_fit>(result)
     );
 
     EXPECT_EQ(mpi_result.extract_recv_counts(), num_elements_per_processor_pair);
@@ -326,7 +326,7 @@ TEST(AlltoallvTest, single_element_with_receive_buffer) {
     std::vector<int> result;
     comm.alltoallv(
         send_buf(input),
-        recv_buf<BufferResizePolicy::always_resize>(result),
+        recv_buf<BufferResizePolicy::resize_to_fit>(result),
         kamping::send_counts(send_counts)
     );
 
@@ -358,7 +358,7 @@ TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
     std::vector<int> result;
     auto             mpi_result = comm.alltoallv(
         send_buf(input),
-        recv_buf<BufferResizePolicy::always_resize>(result),
+        recv_buf<BufferResizePolicy::resize_to_fit>(result),
         kamping::send_counts(send_counts)
     );
 
@@ -541,11 +541,11 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one) {
     OwnContainer<int>        recv_displs;
     comm.alltoallv(
         send_buf(input),
-        recv_buf<BufferResizePolicy::always_resize>(result),
+        recv_buf<BufferResizePolicy::resize_to_fit>(result),
         kamping::send_counts(send_counts),
-        send_displs_out<BufferResizePolicy::always_resize>(send_displs),
-        recv_counts_out<BufferResizePolicy::always_resize>(recv_counts),
-        recv_displs_out<BufferResizePolicy::always_resize>(recv_displs)
+        send_displs_out<BufferResizePolicy::resize_to_fit>(send_displs),
+        recv_counts_out<BufferResizePolicy::resize_to_fit>(recv_counts),
+        recv_displs_out<BufferResizePolicy::resize_to_fit>(recv_displs)
     );
 
     // Check recv buffer
@@ -623,11 +623,11 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_given_r
     OwnContainer<int>        recv_displs;
     comm.alltoallv(
         send_buf(input),
-        recv_buf<BufferResizePolicy::always_resize>(result),
+        recv_buf<BufferResizePolicy::resize_to_fit>(result),
         kamping::send_counts(send_counts),
-        send_displs_out<BufferResizePolicy::always_resize>(send_displs),
+        send_displs_out<BufferResizePolicy::resize_to_fit>(send_displs),
         kamping::recv_counts(recv_counts),
-        recv_displs_out<BufferResizePolicy::always_resize>(recv_displs)
+        recv_displs_out<BufferResizePolicy::resize_to_fit>(recv_displs)
     );
 
     // Check recv buffer
@@ -702,7 +702,7 @@ TEST(AlltoallvTest, custom_type_custom_container_rank_i_sends_i_plus_one_all_par
     // Do the alltoallv - all counts and displacements are already pre-calculated
     comm.alltoallv(
         send_buf(input),
-        recv_buf<BufferResizePolicy::always_resize>(result),
+        recv_buf<BufferResizePolicy::resize_to_fit>(result),
         kamping::send_counts(send_counts),
         kamping::send_displs(send_displs),
         kamping::recv_counts(recv_counts),
@@ -842,10 +842,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         comm.alltoallv(
             send_buf(input),
             send_counts(send_counts_buffer),
-            send_displs_out<BufferResizePolicy::always_resize>(send_displs_buffer),
-            recv_counts_out<BufferResizePolicy::always_resize>(recv_counts_buffer),
-            recv_displs_out<BufferResizePolicy::always_resize>(recv_displs_buffer),
-            recv_buf<BufferResizePolicy::always_resize>(recv_buffer)
+            send_displs_out<BufferResizePolicy::resize_to_fit>(send_displs_buffer),
+            recv_counts_out<BufferResizePolicy::resize_to_fit>(recv_counts_buffer),
+            recv_displs_out<BufferResizePolicy::resize_to_fit>(recv_displs_buffer),
+            recv_buf<BufferResizePolicy::resize_to_fit>(recv_buffer)
         );
         EXPECT_EQ(send_displs_buffer, expected_send_displs);
         EXPECT_EQ(recv_counts_buffer, expected_recv_counts);
@@ -861,10 +861,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         comm.alltoallv(
             send_buf(input),
             send_counts(send_counts_buffer),
-            send_displs_out<BufferResizePolicy::resize_if_too_small>(send_displs_buffer),
-            recv_counts_out<BufferResizePolicy::resize_if_too_small>(recv_counts_buffer),
-            recv_displs_out<BufferResizePolicy::resize_if_too_small>(recv_displs_buffer),
-            recv_buf<BufferResizePolicy::resize_if_too_small>(recv_buffer)
+            send_displs_out<BufferResizePolicy::grow_only>(send_displs_buffer),
+            recv_counts_out<BufferResizePolicy::grow_only>(recv_counts_buffer),
+            recv_displs_out<BufferResizePolicy::grow_only>(recv_displs_buffer),
+            recv_buf<BufferResizePolicy::grow_only>(recv_buffer)
         );
         EXPECT_EQ(send_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
@@ -884,10 +884,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         comm.alltoallv(
             send_buf(input),
             send_counts(send_counts_buffer),
-            send_displs_out<BufferResizePolicy::do_not_resize>(send_displs_buffer),
-            recv_counts_out<BufferResizePolicy::do_not_resize>(recv_counts_buffer),
-            recv_displs_out<BufferResizePolicy::do_not_resize>(recv_displs_buffer),
-            recv_buf<BufferResizePolicy::do_not_resize>(recv_buffer)
+            send_displs_out<BufferResizePolicy::no_resize>(send_displs_buffer),
+            recv_counts_out<BufferResizePolicy::no_resize>(recv_counts_buffer),
+            recv_displs_out<BufferResizePolicy::no_resize>(recv_displs_buffer),
+            recv_buf<BufferResizePolicy::no_resize>(recv_buffer)
         );
         EXPECT_EQ(send_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
@@ -947,10 +947,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required) {
         comm.alltoallv(
             send_buf(input),
             send_counts(send_counts_buffer),
-            send_displs_out<BufferResizePolicy::always_resize>(send_displs_buffer),
-            recv_counts_out<BufferResizePolicy::always_resize>(recv_counts_buffer),
-            recv_displs_out<BufferResizePolicy::always_resize>(recv_displs_buffer),
-            recv_buf<BufferResizePolicy::always_resize>(recv_buffer)
+            send_displs_out<BufferResizePolicy::resize_to_fit>(send_displs_buffer),
+            recv_counts_out<BufferResizePolicy::resize_to_fit>(recv_counts_buffer),
+            recv_displs_out<BufferResizePolicy::resize_to_fit>(recv_displs_buffer),
+            recv_buf<BufferResizePolicy::resize_to_fit>(recv_buffer)
         );
         EXPECT_EQ(send_displs_buffer, expected_send_displs);
         EXPECT_EQ(recv_counts_buffer, expected_recv_counts);
@@ -966,10 +966,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required) {
         comm.alltoallv(
             send_buf(input),
             send_counts(send_counts_buffer),
-            send_displs_out<BufferResizePolicy::resize_if_too_small>(send_displs_buffer),
-            recv_counts_out<BufferResizePolicy::resize_if_too_small>(recv_counts_buffer),
-            recv_displs_out<BufferResizePolicy::resize_if_too_small>(recv_displs_buffer),
-            recv_buf<BufferResizePolicy::resize_if_too_small>(recv_buffer)
+            send_displs_out<BufferResizePolicy::grow_only>(send_displs_buffer),
+            recv_counts_out<BufferResizePolicy::grow_only>(recv_counts_buffer),
+            recv_displs_out<BufferResizePolicy::grow_only>(recv_displs_buffer),
+            recv_buf<BufferResizePolicy::grow_only>(recv_buffer)
         );
         is_equal(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
         is_equal(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);

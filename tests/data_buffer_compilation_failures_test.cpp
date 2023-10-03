@@ -23,7 +23,7 @@ int main(int /*argc*/, char** /*argv*/) {
     using ContainerType                     = std::vector<int>;
     ParameterType const      parameter_type = ParameterType::recv_buf;
     BufferType const         buffer_type    = BufferType::out_buffer;
-    BufferResizePolicy const resize_policy  = BufferResizePolicy::always_resize;
+    BufferResizePolicy const resize_policy  = BufferResizePolicy::resize_to_fit;
 
     ContainerType const                                                   const_container;
     ContainerBasedConstBuffer<ContainerType, parameter_type, buffer_type> container_based_const_buffer(const_container);
@@ -97,7 +97,7 @@ int main(int /*argc*/, char** /*argv*/) {
         BufferModifiability::modifiable,
         BufferOwnership::owning,
         BufferAllocation::user_allocated,
-        BufferResizePolicy::do_not_resize>
+        BufferResizePolicy::no_resize>
         foo{};
 #elif defined(EXTRACT_USER_ALLOCATED_DATA_BUFFER)
     // should not be possible to extract a user allocated DataBuffer
@@ -107,7 +107,7 @@ int main(int /*argc*/, char** /*argv*/) {
         BufferModifiability::modifiable,
         BufferOwnership::owning,
         BufferAllocation::user_allocated,
-        BufferResizePolicy::do_not_resize>
+        BufferResizePolicy::no_resize>
          foo{std::vector<int>()};
     auto bar = foo.extract();
 #elif defined(RESIZE_CONST_DATA_BUFFER)
@@ -118,7 +118,7 @@ int main(int /*argc*/, char** /*argv*/) {
         BufferModifiability::constant,
         BufferOwnership::owning,
         BufferAllocation::user_allocated,
-        BufferResizePolicy::do_not_resize>
+        BufferResizePolicy::no_resize>
          foo{std::vector<int>()};
     auto bar = foo.resize(0);
 #elif defined(GET_SINGLE_ELEMENT_ON_VECTOR)
@@ -129,7 +129,7 @@ int main(int /*argc*/, char** /*argv*/) {
         BufferModifiability::constant,
         BufferOwnership::owning,
         BufferAllocation::user_allocated,
-        BufferResizePolicy::do_not_resize>
+        BufferResizePolicy::no_resize>
         foo{std::vector<int>()};
     foo.get_single_element();
 #elif defined(ACCESS_CONST_VECTOR_BOOL)
@@ -140,7 +140,7 @@ int main(int /*argc*/, char** /*argv*/) {
         BufferModifiability::constant,
         BufferOwnership::owning,
         BufferAllocation::user_allocated,
-        BufferResizePolicy::do_not_resize> const foo{std::vector<bool>()};
+        BufferResizePolicy::no_resize> const foo{std::vector<bool>()};
     foo.underlying();
 #elif defined(ACCESS_VECTOR_BOOL)
     // should not be possible to do something useful with a container based on std::vector<bool>
@@ -150,7 +150,7 @@ int main(int /*argc*/, char** /*argv*/) {
         BufferModifiability::modifiable,
         BufferOwnership::owning,
         BufferAllocation::user_allocated,
-        BufferResizePolicy::do_not_resize>
+        BufferResizePolicy::no_resize>
         foo{std::vector<bool>()};
     foo.underlying();
 #else

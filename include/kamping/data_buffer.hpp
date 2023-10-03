@@ -208,11 +208,11 @@ enum class BufferType { in_buffer, out_buffer, in_out_buffer };
 
 /// @brief Enum to specify in which cases a buffer is resized.
 enum class BufferResizePolicy {
-    do_not_resize,       ///< Tag indicating that the underlying buffer shall never be resized.
-    resize_if_too_small, ///< Tag indicating that the underlying buffer shall only be resized if the current size
-                         ///< of the buffer is too small.
-    always_resize        ///< Tag indicating that the underlying buffer is resized such that it has exactly the required
-                         ///< size.
+    no_resize,    ///< Policy indicating that the underlying buffer shall never be resized.
+    grow_only,    ///< Policy indicating that the underlying buffer shall only be resized if the current size
+                  ///< of the buffer is too small.
+    resize_to_fit ///< Tag indicating that the underlying buffer is resized such that it has exactly the required
+                  ///< size.
 };
 
 namespace internal {

@@ -257,7 +257,7 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
 
     constexpr ParameterType      ptype         = ParameterType::send_counts;
     constexpr BufferType         btype         = BufferType::in_buffer;
-    constexpr BufferResizePolicy resize_policy = BufferResizePolicy::always_resize;
+    constexpr BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
     UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, resize_policy> buffer_based_on_int_vector(int_vec
     );
     EXPECT_EQ(int_vec.size(), buffer_based_on_int_vector.get().size());
@@ -287,7 +287,7 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_containers_other_tha
 
     constexpr ParameterType      ptype         = ParameterType::recv_counts;
     constexpr BufferType         btype         = BufferType::in_buffer;
-    constexpr BufferResizePolicy resize_policy = BufferResizePolicy::always_resize;
+    constexpr BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
     UserAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype, resize_policy>
         buffer_based_on_own_container(own_container);
 
@@ -311,7 +311,7 @@ TEST(UserAllocatedContainerBasedBufferTest, move_constructor_is_enabled) {
     constexpr BufferType         btype = BufferType::in_buffer;
     std::vector<int>             container{1, 2, 3};
     auto const                   const_container = container; // ensure that container is not altered
-    constexpr BufferResizePolicy resize_policy   = BufferResizePolicy::always_resize;
+    constexpr BufferResizePolicy resize_policy   = BufferResizePolicy::resize_to_fit;
 
     UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, resize_policy> buffer1(container);
     UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, resize_policy> buffer2(std::move(buffer1));
@@ -582,7 +582,7 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
     Span<int>                    container     = {data.data(), data.size()};
     constexpr ParameterType      ptype         = ParameterType::send_counts;
     constexpr BufferType         btype         = BufferType::in_buffer;
-    constexpr BufferResizePolicy resize_policy = BufferResizePolicy::always_resize;
+    constexpr BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
 
     UserAllocatedContainerBasedBuffer<Span<int>, ptype, btype, resize_policy> span_buffer(container);
 
@@ -607,7 +607,7 @@ TEST(DataBufferTest, has_extract) {
             BufferModifiability::modifiable,
             BufferOwnership::owning,
             BufferType::in_buffer,
-            BufferResizePolicy::always_resize,
+            BufferResizePolicy::resize_to_fit,
             BufferAllocation::lib_allocated>>,
         "Library allocated DataBuffers must have an extract() member function"
     );
@@ -618,7 +618,7 @@ TEST(DataBufferTest, has_extract) {
             BufferModifiability::modifiable,
             BufferOwnership::owning,
             BufferType::in_buffer,
-            BufferResizePolicy::always_resize,
+            BufferResizePolicy::resize_to_fit,
             BufferAllocation::user_allocated>>,
         "User allocated DataBuffers must not have an extract() member function"
     );

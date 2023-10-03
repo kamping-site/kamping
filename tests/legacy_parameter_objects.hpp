@@ -36,7 +36,7 @@ using ContainerBasedConstBuffer = DataBuffer<
     BufferModifiability::constant,
     BufferOwnership::referencing,
     buffer_type,
-    BufferResizePolicy::do_not_resize>;
+    BufferResizePolicy::no_resize>;
 
 /// @brief Read-only buffer owning a container type passed to it.
 ///
@@ -53,7 +53,7 @@ using ContainerBasedOwningBuffer = DataBuffer<
     BufferModifiability::constant,
     BufferOwnership::owning,
     buffer_type,
-    BufferResizePolicy::do_not_resize>;
+    BufferResizePolicy::no_resize>;
 
 /// @brief Buffer based on a container type that has been allocated by the user (but may be resized if the provided
 /// space is not sufficient).
@@ -89,7 +89,7 @@ using LibAllocatedContainerBasedBuffer = DataBuffer<
     BufferModifiability::modifiable,
     BufferOwnership::owning,
     buffer_type,
-    BufferResizePolicy::always_resize,
+    BufferResizePolicy::resize_to_fit,
     BufferAllocation::lib_allocated>;
 
 /// @brief Constant buffer for a single type, i.e., not a container.
@@ -106,7 +106,7 @@ using SingleElementConstBuffer = DataBuffer<
     BufferModifiability::constant,
     BufferOwnership::referencing,
     buffer_type,
-    BufferResizePolicy::do_not_resize>;
+    BufferResizePolicy::no_resize>;
 
 /// @brief Buffer for a single element, which is not a container. The element is owned by the buffer.
 ///
@@ -122,7 +122,7 @@ using SingleElementOwningBuffer = DataBuffer<
     BufferModifiability::constant,
     BufferOwnership::owning,
     buffer_type,
-    BufferResizePolicy::do_not_resize>;
+    BufferResizePolicy::no_resize>;
 
 /// @brief Buffer based on a single element type that has been allocated by the library.
 ///
@@ -136,7 +136,7 @@ using LibAllocatedSingleElementBuffer = DataBuffer<
     BufferModifiability::modifiable,
     BufferOwnership::owning,
     buffer_type,
-    BufferResizePolicy::do_not_resize,
+    BufferResizePolicy::no_resize,
     BufferAllocation::lib_allocated>;
 
 /// @brief Buffer based on a single element type that has been allocated by the user.
@@ -153,5 +153,5 @@ using SingleElementModifiableBuffer = DataBuffer<
     BufferModifiability::modifiable,
     BufferOwnership::referencing,
     buffer_type,
-    BufferResizePolicy::do_not_resize>;
+    BufferResizePolicy::no_resize>;
 } // namespace kamping::internal

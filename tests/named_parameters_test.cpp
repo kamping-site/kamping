@@ -158,7 +158,7 @@ void test_library_allocated_buffer(
     EXPECT_TRUE(GeneratedBuffer::is_modifiable);
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
     EXPECT_EQ(GeneratedBuffer::buffer_type, expected_buffer_type);
-    EXPECT_EQ(GeneratedBuffer::buffer_resize_policy, BufferResizePolicy::always_resize);
+    EXPECT_EQ(GeneratedBuffer::buffer_resize_policy, BufferResizePolicy::resize_to_fit);
 
     // TODO How can we test if the underlying storage resizes correctly to x elements when calling
     // generated_buffer.resize(x)?
@@ -595,33 +595,33 @@ TEST(ParameterFactoriesTest, recv_buf_basics_user_alloc) {
         buffer_on_user_alloc_vector,
         ParameterType::recv_buf,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int_vec
     );
 }
 
 TEST(ParameterFactoriesTest, resizing_recv_buf_basics_user_alloc) {
     std::vector<int> int_vec;
-    auto             buffer_on_user_alloc_vector = recv_buf<BufferResizePolicy::always_resize>(int_vec);
+    auto             buffer_on_user_alloc_vector = recv_buf<BufferResizePolicy::resize_to_fit>(int_vec);
     using ExpectedValueType                      = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_on_user_alloc_vector,
         ParameterType::recv_buf,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::always_resize,
+        BufferResizePolicy::resize_to_fit,
         int_vec
     );
 }
 
 TEST(ParameterFactoriesTest, resizing_if_required_recv_buf_basics_user_alloc) {
     std::vector<int> int_vec;
-    auto             buffer_on_user_alloc_vector = recv_buf<BufferResizePolicy::resize_if_too_small>(int_vec);
+    auto             buffer_on_user_alloc_vector = recv_buf<BufferResizePolicy::grow_only>(int_vec);
     using ExpectedValueType                      = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_on_user_alloc_vector,
         ParameterType::recv_buf,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::resize_if_too_small,
+        BufferResizePolicy::grow_only,
         int_vec
     );
 }
@@ -645,14 +645,14 @@ TEST(ParameterFactoriesTest, send_counts_out_basics_user_alloc) {
         buffer_based_on_user_alloc_vector,
         ParameterType::send_counts,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int_vec
     );
 }
 
 TEST(ParameterFactoriesTest, always_resizing_send_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::always_resize;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
     auto                     buffer_based_on_user_alloc_vector = send_counts_out<resize_policy>(int_vec);
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -666,7 +666,7 @@ TEST(ParameterFactoriesTest, always_resizing_send_counts_out_basics_user_alloc) 
 
 TEST(ParameterFactoriesTest, resizing_if_required_send_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_if_too_small;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
     auto                     buffer_based_on_user_alloc_vector = send_counts_out<resize_policy>(int_vec);
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -707,14 +707,14 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
         buffer_based_on_user_alloc_vector,
         ParameterType::send_displs,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int_vec
     );
 }
 
 TEST(ParameterFactoriesTest, resizing_send_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::always_resize;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
     auto                     buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec);
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -728,7 +728,7 @@ TEST(ParameterFactoriesTest, resizing_send_displs_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_send_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_if_too_small;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
     auto                     buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec);
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -769,14 +769,14 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_user_alloc) {
         buffer_based_on_user_alloc_buffer,
         ParameterType::recv_counts,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int_vec
     );
 }
 
 TEST(ParameterFactoriesTest, resizing_recv_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::always_resize;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
     auto                     buffer_based_on_user_alloc_buffer = recv_counts_out<resize_policy>(int_vec);
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -790,7 +790,7 @@ TEST(ParameterFactoriesTest, resizing_recv_counts_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_recv_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_if_too_small;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
     auto                     buffer_based_on_user_alloc_buffer = recv_counts_out<resize_policy>(int_vec);
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -831,14 +831,14 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
         buffer_based_on_user_alloc_vector,
         ParameterType::recv_displs,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int_vec
     );
 }
 
 TEST(ParameterFactoriesTest, resizing_recv_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::always_resize;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
     auto                     buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec);
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -852,7 +852,7 @@ TEST(ParameterFactoriesTest, resizing_recv_displs_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_recv_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_if_too_small;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
     auto                     buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec);
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -1176,7 +1176,7 @@ TEST(ParameterFactoriesTest, single_and_multiple_element_modifiable_send_recv_bu
             std::vector<uint8_t>,
             ParameterType::send_recv_buf,
             BufferType::in_out_buffer,
-            BufferResizePolicy::do_not_resize>>;
+            BufferResizePolicy::no_resize>>;
     EXPECT_TRUE(vec_result);
 }
 
@@ -1189,14 +1189,14 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_user_alloc) {
         buffer_on_user_alloc_vector,
         ParameterType::send_recv_buf,
         internal::BufferType::in_out_buffer,
-        BufferResizePolicy::do_not_resize,
+        BufferResizePolicy::no_resize,
         int_vec
     );
 }
 
 TEST(ParameterFactoriesTest, resizing_send_recv_buf_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy               = BufferResizePolicy::always_resize;
+    const BufferResizePolicy resize_policy               = BufferResizePolicy::resize_to_fit;
     auto                     buffer_on_user_alloc_vector = send_recv_buf<resize_policy>(int_vec);
     using ExpectedValueType                              = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -1210,7 +1210,7 @@ TEST(ParameterFactoriesTest, resizing_send_recv_buf_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_send_recv_buf_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy               = BufferResizePolicy::resize_if_too_small;
+    const BufferResizePolicy resize_policy               = BufferResizePolicy::grow_only;
     auto                     buffer_on_user_alloc_vector = send_recv_buf<resize_policy>(int_vec);
     using ExpectedValueType                              = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -1310,13 +1310,11 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::do_not_resize>(
-                vec
-            );
+            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(vec);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::do_not_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
@@ -1329,15 +1327,15 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
     {
         // Modifiable, container, referencing, user allocated
         std::vector<int>                  vec;
-        constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
-        auto                              data_buf = internal::
-            make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::resize_if_too_small>(vec
+        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
+        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
+        auto                              data_buf =
+            internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::grow_only>(vec
             );
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::resize_if_too_small);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::grow_only);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
@@ -1353,13 +1351,13 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::do_not_resize>(
+            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
                 single_int
             );
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::do_not_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&single_int, &data_buf.underlying());
         static_assert(
@@ -1375,13 +1373,13 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::do_not_resize>(
+            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
                 std::move(vec)
             );
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::do_not_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const>,
             "Owning buffers must hold their data directly."
@@ -1398,11 +1396,11 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
             ptype,
             BufferModifiability::modifiable,
             btype,
-            BufferResizePolicy::resize_if_too_small>(alloc_new<std::vector<int>>);
+            BufferResizePolicy::grow_only>(alloc_new<std::vector<int>>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::resize_if_too_small);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::grow_only);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>>,
             "Owning buffers must hold their data directly."
@@ -1414,15 +1412,13 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         // Modifiable, single element, owning, lib_allocated
         constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
-        auto                              data_buf = internal::make_data_buffer<
-            ptype,
-            BufferModifiability::modifiable,
-            btype,
-            BufferResizePolicy::do_not_resize>(alloc_new<int>);
+        auto                              data_buf = internal::
+            make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::no_resize>(alloc_new<
+                                                                                                           int>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::do_not_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, int>,
             "Owning buffers must hold their data directly."
@@ -1434,7 +1430,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         // Modifiable, container, owning, user_allocated with initializer_list
         constexpr internal::ParameterType ptype         = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype         = internal::BufferType::in_buffer;
-        constexpr BufferResizePolicy      resize_policy = BufferResizePolicy::do_not_resize;
+        constexpr BufferResizePolicy      resize_policy = BufferResizePolicy::no_resize;
         auto                              data_buf =
             internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype, resize_policy>({1, 2, 3});
         EXPECT_EQ(data_buf.parameter_type, ptype);
@@ -1452,7 +1448,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
         // Constant, container, owning, user_allocated with initializer_list
         constexpr internal::ParameterType ptype         = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype         = internal::BufferType::in_buffer;
-        constexpr BufferResizePolicy      resize_policy = BufferResizePolicy::do_not_resize;
+        constexpr BufferResizePolicy      resize_policy = BufferResizePolicy::no_resize;
         auto                              data_buf =
             internal::make_data_buffer<ptype, BufferModifiability::constant, btype, resize_policy>({1, 2, 3});
         EXPECT_EQ(data_buf.parameter_type, ptype);
@@ -1475,7 +1471,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         testing::OwnContainer<bool>       vec           = {true, false};
         constexpr internal::ParameterType ptype         = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype         = internal::BufferType::in_buffer;
-        constexpr BufferResizePolicy      resize_policy = BufferResizePolicy::do_not_resize;
+        constexpr BufferResizePolicy      resize_policy = BufferResizePolicy::no_resize;
         auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::constant, btype, resize_policy>(vec);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
@@ -1496,11 +1492,11 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
         auto                              data_buf = internal::
-            make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::always_resize>(vec);
+            make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::resize_to_fit>(vec);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::always_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::resize_to_fit);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&vec, &data_buf.underlying());
         static_assert(
@@ -1516,13 +1512,13 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::do_not_resize>(
+            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
                 single_bool
             );
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::do_not_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
         // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
         EXPECT_EQ(&single_bool, &data_buf.underlying());
         static_assert(
@@ -1538,13 +1534,13 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::do_not_resize>(
+            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
                 std::move(vec)
             );
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::do_not_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool> const>,
             "Owning buffers must hold their data directly."
@@ -1561,11 +1557,11 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
             ptype,
             BufferModifiability::modifiable,
             btype,
-            BufferResizePolicy::always_resize>(alloc_new<testing::OwnContainer<bool>>);
+            BufferResizePolicy::resize_to_fit>(alloc_new<testing::OwnContainer<bool>>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::always_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::resize_to_fit);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool>>,
             "Owning buffers must hold their data directly."
@@ -1577,15 +1573,13 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         // Modifiable, single element, owning, lib_allocated
         constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
-        auto                              data_buf = internal::make_data_buffer<
-            ptype,
-            BufferModifiability::modifiable,
-            btype,
-            BufferResizePolicy::do_not_resize>(alloc_new<bool>);
+        auto                              data_buf = internal::
+            make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::no_resize>(alloc_new<
+                                                                                                           bool>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::do_not_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, bool>,
             "Owning buffers must hold their data directly."
@@ -1595,16 +1589,16 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
     }
     {
         // Modifiable, container, owning, user_allocated with initializer_list
-        constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
-        auto                              data_buf = internal::
-            make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::do_not_resize>(
+        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
+        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
+        auto                              data_buf =
+            internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::no_resize>(
                 {true, false, true}
             );
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::do_not_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<kabool>>,
             "Initializer lists of type bool have to be converted to std::vector<kabool>."
@@ -1617,13 +1611,13 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::do_not_resize>(
+            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
                 {true, false, true}
             );
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
-        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::do_not_resize);
+        EXPECT_EQ(data_buf.buffer_resize_policy, BufferResizePolicy::no_resize);
         static_assert(
             std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<kabool>>,
             "Initializer lists of type bool have to be converted to std::vector<kabool>."

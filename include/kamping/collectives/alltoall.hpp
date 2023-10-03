@@ -39,12 +39,12 @@ namespace kamping::internal {
 /// @tparam SizeFunc Functortype for the function to compute the required buffer size.
 /// @param buffer Buffer to be potentially resized.
 /// @param compute_required_size Functor which is used to compute the required buffer size. compute_required_size() is
-/// not called if the buffer's resize policy is BufferResizePolicy::do_not_resize.
+/// not called if the buffer's resize policy is BufferResizePolicy::no_resize.
 template <typename Buffer, typename SizeFunc>
 void resize_if_requested(Buffer& buffer, SizeFunc&& compute_required_size) {
-    if constexpr (Buffer::buffer_resize_policy == BufferResizePolicy::always_resize) {
+    if constexpr (Buffer::buffer_resize_policy == BufferResizePolicy::resize_to_fit) {
         buffer.resize(compute_required_size());
-    } else if constexpr (Buffer::buffer_resize_policy == BufferResizePolicy::resize_if_too_small) {
+    } else if constexpr (Buffer::buffer_resize_policy == BufferResizePolicy::grow_only) {
         auto const required_size = compute_required_size();
         if (buffer.size() < required_size) {
             buffer.resize(required_size);
@@ -72,7 +72,7 @@ void resize_if_requested(Buffer& buffer, SizeFunc&& compute_required_size) {
 /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
 /// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
 /// received from rank 1, and so on. The buffer will be resized according to the buffer's
-/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::do_not_resize, the buffer's underlying
+/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
 /// storage must be large enough to hold all received elements. This requires a size of at least `recv_counts *
 /// communicator size`.
 ///
@@ -170,7 +170,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 /// The following buffers are optional:
 /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
 /// the data received as specified for send_buf. The buffer will be resized according to the buffer's
-/// kamping::BufferResizePolicy. If resize policy is kamping::BufferResizePolicy::do_not_resize, the buffer's underlying
+/// kamping::BufferResizePolicy. If resize policy is kamping::BufferResizePolicy::no_resize, the buffer's underlying
 /// storage must be large enough to store all received elements. This requires a size of at least  `max(recv_counts[i] +
 /// recv_displs[i])` for \c i in `[0, communicator size)`.
 ///
