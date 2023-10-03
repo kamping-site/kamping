@@ -116,7 +116,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         return asserting_cast<size_t>(recv_count.get_single_element()) * size();
     };
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
-    KASSERT(recv_buf.size() >= compute_required_recv_buf_size(), assert::light);
+    KASSERT(
+        recv_buf.size() >= compute_required_recv_buf_size(),
+        "Recv buffer is not large enough to hold all received elements.",
+        assert::light
+    );
 
     // These KASSERTs are required to avoid a false warning from g++ in release mode
     KASSERT(send_buf.data() != nullptr, assert::light);
@@ -250,9 +254,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
         recv_counts.resize_if_requested([&]() { return this->size(); });
+        KASSERT(recv_counts.size() >= this->size(), assert::light);
         this->alltoall(kamping::send_buf(send_counts.get()), kamping::recv_buf(recv_counts.get()));
+    } else {
+        KASSERT(recv_counts.size() >= this->size(), assert::light);
     }
-    KASSERT(recv_counts.size() >= this->size(), assert::light);
 
     // Calculate send_displs if necessary
     constexpr bool do_calculate_send_displs = internal::has_to_be_computed<decltype(send_displs)>;
@@ -261,11 +267,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         "Send displacements are given on some ranks and have to be computed on others",
         assert::light_communication
     );
+
     if constexpr (do_calculate_send_displs) {
         send_displs.resize_if_requested([&]() { return this->size(); });
+        KASSERT(send_displs.size() >= this->size(), assert::light);
         std::exclusive_scan(send_counts.data(), send_counts.data() + this->size(), send_displs.data(), 0);
+    } else {
+        KASSERT(send_displs.size() >= this->size(), assert::light);
     }
-    KASSERT(send_displs.size() >= this->size(), assert::light);
+
     // Check that send displs and send counts are large enough
     KASSERT(
         *(send_counts.data() + this->size() - 1) +       // Last element of send_counts
@@ -283,9 +293,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     );
     if constexpr (do_calculate_recv_displs) {
         recv_displs.resize_if_requested([&]() { return this->size(); });
+        KASSERT(recv_displs.size() >= this->size(), assert::light);
         std::exclusive_scan(recv_counts.data(), recv_counts.data() + this->size(), recv_displs.data(), 0);
+    } else {
+        KASSERT(recv_displs.size() >= this->size(), assert::light);
     }
-    KASSERT(recv_displs.size() >= this->size(), assert::light);
 
     auto compute_required_recv_buf_size = [&]() {
         if constexpr (do_calculate_recv_displs) {

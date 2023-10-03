@@ -11,6 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
 #include <algorithm>
 #include <numeric>
 
@@ -276,6 +278,25 @@ TEST(AlltoallTest, default_container_type) {
     // This just has to compile
     OwnContainer<int> result = comm.alltoall(send_buf(input)).extract_recv_buffer();
 }
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+TEST(AlltoallTest, given_recv_buffer_with_no_resize_policy) {
+    Communicator comm;
+
+    std::vector<int>             input(comm.size(), comm.rank_signed());
+    constexpr BufferResizePolicy no_resize = BufferResizePolicy::no_resize;
+
+    std::vector<int> recv_buffer;
+    std::vector<int> send_displs_buffer;
+    std::vector<int> recv_counts_buffer;
+    std::vector<int> recv_displs_buffer;
+    EXPECT_KASSERT_FAILS(comm.alltoallv(send_buf(input), send_counts(1), recv_buf<no_resize>(recv_buffer)), "");
+    EXPECT_KASSERT_FAILS(
+        comm.alltoallv(send_buf(input), send_counts(1), recv_buf(recv_buffer)),
+        ""
+    ); // default is no_resize
+}
+#endif
 
 // ------------------------------------------------------------
 // Alltoallv tests
@@ -1027,3 +1048,147 @@ TEST(AlltoallvTest, non_monotonically_increasing_recv_displacements) {
         EXPECT_EQ(recv_buf, expected_recv_buffer());
     }
 }
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_policy) {
+    Communicator comm;
+
+    std::vector<int>             input(comm.size(), comm.rank_signed());
+    std::vector<int>             send_counts_buffer(comm.size(), 1);
+    constexpr BufferResizePolicy resize    = BufferResizePolicy::resize_to_fit;
+    constexpr BufferResizePolicy no_resize = BufferResizePolicy::no_resize;
+
+    {
+        // no kasserts fail
+        std::vector<int> recv_buffer;
+        std::vector<int> send_displs_buffer;
+        std::vector<int> recv_counts_buffer;
+        std::vector<int> recv_displs_buffer;
+        comm.alltoallv(
+            send_buf(input),
+            send_counts(send_counts_buffer),
+            send_displs_out<resize>(send_displs_buffer),
+            recv_counts_out<resize>(recv_counts_buffer),
+            recv_displs_out<resize>(recv_displs_buffer),
+            recv_buf<resize>(recv_buffer)
+        );
+    }
+    {
+        // test kassert for recv_buffer
+        std::vector<int> recv_buffer;
+        std::vector<int> send_displs_buffer;
+        std::vector<int> recv_counts_buffer;
+        std::vector<int> recv_displs_buffer;
+        EXPECT_KASSERT_FAILS(
+            comm.alltoallv(
+                send_buf(input),
+                send_counts(send_counts_buffer),
+                send_displs_out<resize>(send_displs_buffer),
+                recv_counts_out<resize>(recv_counts_buffer),
+                recv_displs_out<resize>(recv_displs_buffer),
+                recv_buf<no_resize>(recv_buffer)
+            ),
+            ""
+        );
+        // same check but this time without explicit no_resize for the recv buffer as this is the default resize policy
+        EXPECT_KASSERT_FAILS(
+            comm.alltoallv(
+                send_buf(input),
+                send_counts(send_counts_buffer),
+                send_displs_out<resize>(send_displs_buffer),
+                recv_counts_out<resize>(recv_counts_buffer),
+                recv_displs_out<resize>(recv_displs_buffer),
+                recv_buf(recv_buffer)
+            ),
+            ""
+        );
+    }
+    {
+        // test kassert for recv_displs
+        std::vector<int> recv_buffer;
+        std::vector<int> send_displs_buffer;
+        std::vector<int> recv_counts_buffer;
+        std::vector<int> recv_displs_buffer;
+        EXPECT_KASSERT_FAILS(
+            comm.alltoallv(
+                send_buf(input),
+                send_counts(send_counts_buffer),
+                send_displs_out<resize>(send_displs_buffer),
+                recv_counts_out<resize>(recv_counts_buffer),
+                recv_displs_out<no_resize>(recv_displs_buffer),
+                recv_buf<resize>(recv_buffer)
+            ),
+            ""
+        );
+        EXPECT_KASSERT_FAILS(
+            comm.alltoallv(
+                send_buf(input),
+                send_counts(send_counts_buffer),
+                send_displs_out<resize>(send_displs_buffer),
+                recv_counts_out<resize>(recv_counts_buffer),
+                recv_displs_out(recv_displs_buffer),
+                recv_buf<resize>(recv_buffer)
+            ),
+            ""
+        );
+    }
+    {
+        // test kassert for recv_counts
+        std::vector<int> recv_buffer;
+        std::vector<int> send_displs_buffer;
+        std::vector<int> recv_counts_buffer;
+        std::vector<int> recv_displs_buffer;
+        EXPECT_KASSERT_FAILS(
+            comm.alltoallv(
+                send_buf(input),
+                send_counts(send_counts_buffer),
+                send_displs_out<resize>(send_displs_buffer),
+                recv_counts_out<no_resize>(recv_counts_buffer),
+                recv_displs_out<resize>(recv_displs_buffer),
+                recv_buf<resize>(recv_buffer)
+            ),
+            ""
+        );
+        EXPECT_KASSERT_FAILS(
+            comm.alltoallv(
+                send_buf(input),
+                send_counts(send_counts_buffer),
+                send_displs_out<resize>(send_displs_buffer),
+                recv_counts_out(recv_counts_buffer),
+                recv_displs_out<resize>(recv_displs_buffer),
+                recv_buf<resize>(recv_buffer)
+            ),
+            ""
+        );
+    }
+    {
+        // test kassert for send_displs
+        std::vector<int> recv_buffer;
+        std::vector<int> send_displs_buffer;
+        std::vector<int> recv_counts_buffer;
+        std::vector<int> recv_displs_buffer;
+        EXPECT_KASSERT_FAILS(
+            comm.alltoallv(
+                send_buf(input),
+                send_counts(send_counts_buffer),
+                send_displs_out<no_resize>(send_displs_buffer),
+                recv_counts_out<resize>(recv_counts_buffer),
+                recv_displs_out<resize>(recv_displs_buffer),
+                recv_buf<resize>(recv_buffer)
+            ),
+            ""
+        );
+        EXPECT_KASSERT_FAILS(
+            comm.alltoallv(
+                send_buf(input),
+                send_counts(send_counts_buffer),
+                send_displs_out(send_displs_buffer),
+                recv_counts_out<resize>(recv_counts_buffer),
+                recv_displs_out<resize>(recv_displs_buffer),
+                recv_buf<resize>(recv_buffer)
+            ),
+            ""
+        );
+    }
+}
+#endif
