@@ -290,11 +290,11 @@ TEST(AlltoallTest, given_recv_buffer_with_no_resize_policy) {
     std::vector<int> send_displs_buffer;
     std::vector<int> recv_counts_buffer;
     std::vector<int> recv_displs_buffer;
-    EXPECT_KASSERT_FAILS(comm.alltoallv(send_buf(input), send_counts(1), recv_buf<no_resize>(recv_buffer)), "");
-    EXPECT_KASSERT_FAILS(
-        comm.alltoallv(send_buf(input), send_counts(1), recv_buf(recv_buffer)),
-        ""
-    ); // default is no_resize
+    // test kassert for sufficient size of recv buffer
+    EXPECT_KASSERT_FAILS(comm.alltoall(send_buf(input), send_counts(1), recv_buf<no_resize>(recv_buffer)), "");
+    // same test but this time without explicit no_resize for the recv buffer as this is the default resize
+    // policy
+    EXPECT_KASSERT_FAILS(comm.alltoall(send_buf(input), send_counts(1), recv_buf(recv_buffer)), "");
 }
 #endif
 

@@ -194,7 +194,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         !internal::has_to_be_computed<decltype(send_counts)>,
         "Send counts must be given as an input parameter"
     );
-    KASSERT(send_counts.size() == this->size(), assert::light);
+    KASSERT(send_counts.size() >= this->size(), "Send counts buffer is not large enough.", assert::light);
 
     // Get recv_counts
     using default_recv_counts_type = decltype(kamping::recv_counts_out(alloc_new<DefaultContainerType<int>>));
