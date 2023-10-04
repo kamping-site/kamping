@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -1120,6 +1120,8 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             ),
             ""
         );
+        // same check but this time without explicit no_resize for the recv displs buffer as this is the default resize
+        // policy
         EXPECT_KASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),
@@ -1149,6 +1151,8 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             ),
             ""
         );
+        // same check but this time without explicit no_resize for the recv counts buffer as this is the default resize
+        // policy
         EXPECT_KASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),
@@ -1178,6 +1182,8 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             ),
             ""
         );
+        // same check but this time without explicit no_resize for the send displs buffer as this is the default resize
+        // policy
         EXPECT_KASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),

@@ -254,10 +254,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
         recv_counts.resize_if_requested([&]() { return this->size(); });
-        KASSERT(recv_counts.size() >= this->size(), assert::light);
+        KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
         this->alltoall(kamping::send_buf(send_counts.get()), kamping::recv_buf(recv_counts.get()));
     } else {
-        KASSERT(recv_counts.size() >= this->size(), assert::light);
+        KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
     }
 
     // Calculate send_displs if necessary
@@ -270,10 +270,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
 
     if constexpr (do_calculate_send_displs) {
         send_displs.resize_if_requested([&]() { return this->size(); });
-        KASSERT(send_displs.size() >= this->size(), assert::light);
+        KASSERT(send_displs.size() >= this->size(), "Send displs buffer is not large enough.", assert::light);
         std::exclusive_scan(send_counts.data(), send_counts.data() + this->size(), send_displs.data(), 0);
     } else {
-        KASSERT(send_displs.size() >= this->size(), assert::light);
+        KASSERT(send_displs.size() >= this->size(), "Send displs buffer is not large enough.", assert::light);
     }
 
     // Check that send displs and send counts are large enough
@@ -293,10 +293,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     );
     if constexpr (do_calculate_recv_displs) {
         recv_displs.resize_if_requested([&]() { return this->size(); });
-        KASSERT(recv_displs.size() >= this->size(), assert::light);
+        KASSERT(recv_displs.size() >= this->size(), "Recv displs buffer is not large enough.", assert::light);
         std::exclusive_scan(recv_counts.data(), recv_counts.data() + this->size(), recv_displs.data(), 0);
     } else {
-        KASSERT(recv_displs.size() >= this->size(), assert::light);
+        KASSERT(recv_displs.size() >= this->size(), "Recv displs buffer is not large enough.", assert::light);
     }
 
     auto compute_required_recv_buf_size = [&]() {
