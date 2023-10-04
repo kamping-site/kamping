@@ -204,7 +204,18 @@ enum class BufferAllocation { lib_allocated, user_allocated };
 /// @brief Enum to specify whether a buffer is an in buffer of an out
 /// buffer. Out buffer will be used to directly write the result to.
 enum class BufferType { in_buffer, out_buffer, in_out_buffer };
+} // namespace internal
 
+/// @brief Enum to specify in which cases a buffer is resized.
+enum class BufferResizePolicy {
+    no_resize,    ///< Policy indicating that the underlying buffer shall never be resized.
+    grow_only,    ///< Policy indicating that the underlying buffer shall only be resized if the current size
+                  ///< of the buffer is too small.
+    resize_to_fit ///< Policy indicating that the underlying buffer is resized such that it has exactly the required
+                  ///< size.
+};
+
+namespace internal {
 /// @brief Wrapper to get the value type of a non-container type (aka the type itself).
 /// @tparam has_value_type_member Whether `T` has a value_type member
 /// @tparam T The type to get the value_type of
@@ -254,6 +265,8 @@ inline constexpr bool is_int_type(ParameterType parameter_type) {
 /// @tparam ownership `owning` if the buffer should hold the actual container.
 /// `referencing` if only a reference to an existing container should be held.
 /// @tparam buffer_type_param Type of buffer, i.e., \c in_buffer, \c out_buffer, or \c in_out_buffer.
+/// @tparam buffer_resize_policy_param Policy specifying whether (and if so, how) the underlying buffer shall be
+/// resized.
 /// @tparam allocation `lib_allocated` if the buffer was allocated by the library,
 /// @tparam ValueType requested value_type for the buffer. If it does not match the containers value type, compilation
 /// fails. By default, this is set to \c default_value_type_tag and the value_type is inferred from the underlying
@@ -264,6 +277,7 @@ template <
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param,
+    BufferResizePolicy  buffer_resize_policy_param,
     BufferAllocation    allocation = BufferAllocation::user_allocated,
     typename ValueType             = default_value_type_tag>
 class DataBuffer : private ParameterObjectBase {
@@ -272,6 +286,9 @@ public:
         parameter_type_param; ///< The type of parameter this buffer represents.
 
     static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
+
+    static constexpr BufferResizePolicy resize_policy =
+        buffer_resize_policy_param; ///< The policy specifying in which cases the buffer shall be resized.
 
     /// @brief \c true if the buffer is an out or in/out buffer that results will be written to and \c false
     /// otherwise.
@@ -360,6 +377,12 @@ public:
         // Technically not needed here because _data is const in this case, so we can't call resize() anyways. But this
         // gives a nicer error message.
         static_assert(is_modifiable, "Trying to resize a constant DataBuffer");
+
+        // TODO use the following static_asserts once all wrapped MPI calls have been adapted.
+        // static_assert(
+        //    buffer_resize_policy != BufferResizePolicy::do_not_resize,
+        //    "Trying to resize a buffer which is marked as do_not_resize."
+        //);
         kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
         if constexpr (is_single_element) {
             KASSERT(
@@ -371,6 +394,24 @@ public:
             KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
         } else {
             underlying().resize(size);
+        }
+    }
+
+    /// @brief Resizes the underlying container if the buffer the buffer's resize policy allows and resizing is
+    /// necessary.
+    ///
+    /// @tparam SizeFunc Type of the functor which computes the required buffer size.
+    /// @param compute_required_size Functor which is used to compute the required buffer size. compute_required_size()
+    /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
+    template <typename SizeFunc>
+    void resize_if_requested(SizeFunc&& compute_required_size) {
+        if constexpr (resize_policy == BufferResizePolicy::resize_to_fit) {
+            resize(compute_required_size());
+        } else if constexpr (resize_policy == BufferResizePolicy::grow_only) {
+            auto const required_size = compute_required_size();
+            if (size() < required_size) {
+                resize(required_size);
+            }
         }
     }
 
