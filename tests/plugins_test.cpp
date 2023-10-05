@@ -19,6 +19,7 @@
 #include "kamping/collectives/allreduce.hpp"
 #include "kamping/collectives/reduce.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/send.hpp"
@@ -121,7 +122,7 @@ TEST(PluginsTest, replace_implementation) {
         faultyComm.template AlternativeAllreducePlugin<decltype(faultyComm)>::allreduce(
             kamping::send_buf(input),
             kamping::op(kamping::ops::plus<>{}),
-            kamping::recv_buf(result)
+            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
         );
 
         // Check result of the alternative allreduce implementation.
