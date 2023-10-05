@@ -104,6 +104,20 @@ TEST(AllgatherTest, allgather_single_element_with_explicit_send_and_recv_count) 
     }
 }
 
+TEST(AllgatherTest, allgather_single_element_with_send_and_recv_count_out) {
+    Communicator           comm;
+    const std::vector<int> data{comm.rank_signed()};
+    {
+        // the values in send_counts_out, recv_counts_out should be ignored as they merely provide "storage" for the
+        // values computed by kamping. (A mechanism which is not that useful for plain integers)
+        auto result = comm.allgather(send_buf(data), send_counts_out(alloc_new<int>), recv_counts_out(alloc_new<int>));
+        auto recv_buf = result.extract_recv_buffer();
+        for (size_t i = 0; i < comm.size(); ++i) {
+            EXPECT_EQ(recv_buf[i], i);
+        }
+    }
+}
+
 TEST(AllgatherTest, allgather_single_element_with_given_recv_buf_bigger_than_required) {
     Communicator           comm;
     const std::vector<int> data{comm.rank_signed()};

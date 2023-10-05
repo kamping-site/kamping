@@ -169,19 +169,24 @@ TEST(AlltoallTest, single_element_with_send_counts) {
     EXPECT_EQ(recv_buf, expected_result);
 }
 
-TEST(AlltoallTest, single_element_with_send_and_recv_counts) {
+TEST(AlltoallTest, single_element_with_send_and_recv_counts_out) {
     Communicator comm;
 
     std::vector<int> input(comm.size(), comm.rank_signed());
 
-    auto             mpi_result = comm.alltoall(send_buf(input), send_counts(1), recv_counts(1));
+    // the values in send_counts_out, recv_counts_out should be ignored as they merely provide "storage" for the values
+    // computed by kamping. (A mechanism which is not that useful for plain integers)
+    auto mpi_result = comm.alltoall(send_buf(input), send_counts_out(alloc_new<int>), recv_counts_out(alloc_new<int>));
     std::vector<int> recv_buf   = mpi_result.extract_recv_buffer();
+    int              send_count = mpi_result.extract_send_counts();
+    int              recv_count = mpi_result.extract_recv_counts();
 
     EXPECT_EQ(recv_buf.size(), comm.size());
 
     std::vector<int> expected_result(comm.size());
     std::iota(expected_result.begin(), expected_result.end(), 0);
-    EXPECT_EQ(recv_buf, expected_result);
+    EXPECT_EQ(send_count, 1);
+    EXPECT_EQ(recv_count, 1);
 }
 
 TEST(AlltoallTest, multiple_elements) {

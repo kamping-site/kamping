@@ -82,22 +82,26 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 
     static_assert(!std::is_const_v<recv_value_type>, "The receive buffer must not have a const value_type.");
 
-    // Get the send and receive counts
-    using default_send_count_type = decltype(kamping::send_counts(alloc_new<int>));
-    using default_recv_count_type = decltype(kamping::recv_counts(alloc_new<int>));
+    // Get the send counts
+    using default_send_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
     auto&& send_count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
-            std::make_tuple(asserting_cast<int>(send_buf.size() / size())),
+            std::tuple(),
             args...
         );
     static_assert(
         std::remove_reference_t<decltype(send_count)>::is_single_element,
         "send_counts() parameter must be a single value."
     );
-
+    constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
+    if constexpr (do_compute_send_count) {
+        (*send_count.data()) = asserting_cast<int>(send_buf.size() / size());
+    }
+    // Get the recv counts
+    using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
     auto&& recv_count =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
-            std::make_tuple(send_count.get_single_element()),
+            std::make_tuple(),
             args...
         );
     static_assert(
@@ -105,8 +109,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         "recv_counts() parameter must be a single value."
     );
 
+    constexpr bool do_compute_recv_count = internal::has_to_be_computed<decltype(recv_count)>;
+    if constexpr (do_compute_recv_count) {
+        (*recv_count.data()) = send_count.get_single_element();
+    }
+
     KASSERT(
-        (internal::has_to_be_computed<decltype(send_count)> || send_buf.size() % size() == 0lu),
+        (do_compute_send_count || send_buf.size() % size() == 0lu),
         "There are no send counts given and the number of elements in send_buf is not divisible by the number of "
         "ranks "
         "in the communicator.",

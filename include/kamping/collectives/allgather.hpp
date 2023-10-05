@@ -75,28 +75,37 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
         "elements.",
         assert::light_communication
     );
-    // Get the send and receive counts
+    // Get the send counts
     using default_send_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
-    using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
     auto&& send_count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
-            std::make_tuple(asserting_cast<int>(send_buf.size())),
+            std::tuple(),
             args...
         );
     static_assert(
         std::remove_reference_t<decltype(send_count)>::is_single_element,
         "send_counts() parameter must be a single value."
     );
+    constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
+    if constexpr (do_compute_send_count) {
+        (*send_count.data()) = asserting_cast<int>(send_buf.size());
+    }
 
+    // Get the receive counts
+    using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
     auto&& recv_count =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
-            std::make_tuple(send_count.get_single_element()),
+            std::tuple(),
             args...
         );
     static_assert(
         std::remove_reference_t<decltype(recv_count)>::is_single_element,
         "recv_counts() parameter must be a single value."
     );
+    constexpr bool do_compute_recv_count = internal::has_to_be_computed<decltype(recv_count)>;
+    if constexpr (do_compute_recv_count) {
+        (*recv_count.data()) = send_count.get_single_element();
+    }
     // TODO remove/adapt this kassert once custom mpi send/recv types are supported
     KASSERT(
         send_count.get_single_element() == recv_count.get_single_element(),
@@ -137,7 +146,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
         this->mpi_communicator()
     );
     THROW_IF_MPI_ERROR(err, MPI_Allgather);
-    return make_mpi_result(std::move(recv_buf));
+    return make_mpi_result(std::move(recv_buf), std::move(send_count), std::move(recv_count));
 }
 
 /// @brief Wrapper for \c MPI_Allgatherv.
@@ -192,18 +201,23 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         );
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
-    // Get the send and receive counts
-    using default_send_count_type  = decltype(kamping::send_counts_out(alloc_new<int>));
-    using default_recv_counts_type = decltype(kamping::recv_counts_out(alloc_new<DefaultContainerType<int>>));
+    // Get the send counts
+    using default_send_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
     auto&& send_count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
-            std::make_tuple(asserting_cast<int>(send_buf.size())),
+            std::tuple(),
             args...
         );
     static_assert(
         std::remove_reference_t<decltype(send_count)>::is_single_element,
         "send_counts() parameter must be a single value."
     );
+    constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
+    if constexpr (do_compute_send_count) {
+        (*send_count.data()) = asserting_cast<int>(send_buf.size());
+    }
+    // Get the recv counts
+    using default_recv_counts_type = decltype(kamping::recv_counts_out(alloc_new<DefaultContainerType<int>>));
     auto&& recv_counts =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
             std::tuple(),
@@ -211,17 +225,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         );
     using recv_counts_type = typename std::remove_reference_t<decltype(recv_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
-
-    // Get recv_displs
-    using default_recv_displs_type = decltype(kamping::recv_displs_out(alloc_new<DefaultContainerType<int>>));
-    auto&& recv_displs =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
-            std::tuple(),
-            args...
-        );
-    using recv_displs_type = typename std::remove_reference_t<decltype(recv_displs)>::value_type;
-    static_assert(std::is_same_v<std::remove_const_t<recv_displs_type>, int>, "Recv displs must be of type int");
-
     // Calculate recv_counts if necessary
     constexpr bool do_calculate_recv_counts = internal::has_to_be_computed<decltype(recv_counts)>;
     KASSERT(
@@ -239,6 +242,16 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     } else {
         KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
     }
+
+    // Get recv_displs
+    using default_recv_displs_type = decltype(kamping::recv_displs_out(alloc_new<DefaultContainerType<int>>));
+    auto&& recv_displs =
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
+            std::tuple(),
+            args...
+        );
+    using recv_displs_type = typename std::remove_reference_t<decltype(recv_displs)>::value_type;
+    static_assert(std::is_same_v<std::remove_const_t<recv_displs_type>, int>, "Recv displs must be of type int");
 
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
 
@@ -285,5 +298,5 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     );
     THROW_IF_MPI_ERROR(err, MPI_Allgatherv);
 
-    return make_mpi_result(std::move(recv_buf), std::move(recv_counts), std::move(recv_displs));
+    return make_mpi_result(std::move(recv_buf), std::move(send_count), std::move(recv_counts), std::move(recv_displs));
 }
