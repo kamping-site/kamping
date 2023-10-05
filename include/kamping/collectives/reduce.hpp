@@ -53,7 +53,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf, op),
-        KAMPING_OPTIONAL_PARAMETERS(recv_buf, root)
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_counts, root)
     );
 
     // Get all parameters
@@ -78,6 +78,20 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
     // If you want to understand the syntax of the following line, ignore the "template " ;-)
     auto operation = operation_param.template build_operation<send_value_type>();
 
+    using default_send_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
+    auto&& send_count =
+        internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
+            {},
+            args...
+        );
+    static_assert(
+        std::remove_reference_t<decltype(send_count)>::is_single_element,
+        "send_counts() parameter must be a single value."
+    );
+    if constexpr (has_to_be_computed<decltype(send_count)>) {
+        send_count.underlying() = asserting_cast<int>(send_buf.size());
+    }
+
     // Check parameters
     static_assert(
         std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
@@ -91,22 +105,34 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
         "Root has to be the same on all ranks.",
         assert::light_communication
     );
+    auto compute_required_recv_buf_size = [&] {
+        return asserting_cast<size_t>(send_count.get_single_element());
+    };
+    recv_buf.resize_if_requested(compute_required_recv_buf_size);
+    KASSERT(
+        recv_buf.size() >= compute_required_recv_buf_size(),
+        "Recv buffer is not large enough to hold all received elements.",
+        assert::light
+    );
+    // from the standard:
+    // > The routine is called by all group members using the same arguments for count, datatype, op,
+    // > root and comm.
+    KASSERT(
+        this->is_same_on_all_ranks(send_count.get_single_element()),
+        "send_count() has to be the same on all ranks.",
+        assert::light_communication
+    );
 
-    send_value_type* recv_buf_ptr = nullptr;
-    if (rank_signed() == root.rank_signed()) {
-        recv_buf.resize(send_buf.size());
-        recv_buf_ptr = recv_buf.data();
-    }
     [[maybe_unused]] int err = MPI_Reduce(
-        send_buf.data(),
-        recv_buf_ptr,
-        asserting_cast<int>(send_buf.size()),
-        type,
-        operation.op(),
-        root.rank_signed(),
-        mpi_communicator()
+        send_buf.data(),                 // send_buf
+        recv_buf.data(),                 // recv_buf
+        send_count.get_single_element(), // count
+        type,                            // type
+        operation.op(),                  // op
+        root.rank_signed(),              // root
+        mpi_communicator()               // comm
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return make_mpi_result(std::move(recv_buf));
+    return make_mpi_result(std::move(recv_buf), std::move(send_count));
 }
