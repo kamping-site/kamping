@@ -95,13 +95,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
     );
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
-        (*send_count.data()) = asserting_cast<int>(send_buf.size() / size());
+        send_count.underlying() = asserting_cast<int>(send_buf.size() / size());
     }
     // Get the recv counts
     using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
     auto&& recv_count =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
-            std::make_tuple(),
+            std::tuple(),
             args...
         );
     static_assert(
@@ -111,7 +111,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 
     constexpr bool do_compute_recv_count = internal::has_to_be_computed<decltype(recv_count)>;
     if constexpr (do_compute_recv_count) {
-        (*recv_count.data()) = send_count.get_single_element();
+        recv_count.underlying() = send_count.get_single_element();
     }
 
     KASSERT(

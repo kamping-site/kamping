@@ -88,7 +88,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
     );
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
-        (*send_count.data()) = asserting_cast<int>(send_buf.size());
+        send_count.underlying() = asserting_cast<int>(send_buf.size());
     }
 
     // Get the receive counts
@@ -104,7 +104,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
     );
     constexpr bool do_compute_recv_count = internal::has_to_be_computed<decltype(recv_count)>;
     if constexpr (do_compute_recv_count) {
-        (*recv_count.data()) = send_count.get_single_element();
+        recv_count.underlying() = send_count.get_single_element();
     }
     // TODO remove/adapt this kassert once custom mpi send/recv types are supported
     KASSERT(
@@ -214,7 +214,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     );
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
-        (*send_count.data()) = asserting_cast<int>(send_buf.size());
+        send_count.underlying() = asserting_cast<int>(send_buf.size());
     }
     // Get the recv counts
     using default_recv_counts_type = decltype(kamping::recv_counts_out(alloc_new<DefaultContainerType<int>>));
