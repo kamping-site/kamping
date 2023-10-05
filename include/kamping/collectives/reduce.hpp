@@ -41,6 +41,8 @@
 /// - \ref kamping::op() wrapping the operation to apply to the input.
 ///
 /// The following parameters are optional:
+/// - \ref kamping::send_counts() specifiying how many elements of the buffer take part in the reduction.
+/// This parameter has to be an integer. If ommited, this size of the send buffer is used as a default.
 /// - \ref kamping::recv_buf() containing a buffer for the output.
 /// - \ref kamping::root() the root rank. If not set, the default root process of the communicator will be used.
 /// @tparam Args Automatically deducted template parameters.
