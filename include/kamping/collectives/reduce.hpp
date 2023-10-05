@@ -42,7 +42,7 @@
 ///
 /// The following parameters are optional:
 /// -  kamping::send_counts() specifiying how many elements of the buffer take part in the reduction.
-/// This parameter has to be an integer. If ommited, this size of the send buffer is used as a default.
+/// This parameter has to be an integer. If ommited, the size of the send buffer is used as a default.
 /// -  kamping::recv_buf() containing a buffer for the output.
 /// -  kamping::root() the root rank. If not set, the default root process of the communicator will be used.
 /// @tparam Args Automatically deducted template parameters.
