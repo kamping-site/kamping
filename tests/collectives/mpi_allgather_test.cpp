@@ -165,9 +165,7 @@ TEST(AllgatherTest, given_recv_buffer_smaller_than_required) {
 TEST(AllgatherTest, given_recv_buffer_smaller_than_required_with_policy_no_resize) {
     Communicator comm;
 
-    std::vector<int>             input{comm.rank_signed()};
-    constexpr BufferResizePolicy no_resize = BufferResizePolicy::no_resize;
-
+    std::vector<int> input{comm.rank_signed()};
     std::vector<int> recv_buffer;
     // test kassert for sufficient size of recv buffer
     EXPECT_KASSERT_FAILS(comm.allgather(send_buf(input), recv_buf<no_resize>(recv_buffer)), "");
