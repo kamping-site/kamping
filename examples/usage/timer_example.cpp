@@ -40,7 +40,7 @@ int main() {
     std::vector<int> output;
 
     auto sleep_some_time = [&]() {
-      static std::mt19937                gen(static_cast<std::mt19937::result_type>(comm.rank() + 17) * 1001);
+        static std::mt19937                gen(static_cast<std::mt19937::result_type>(comm.rank() + 17) * 1001);
         std::uniform_int_distribution<int> distrib(50, 10'000);
         const std::chrono::microseconds    sleep_duration{distrib(gen)};
         std::this_thread::sleep_for(sleep_duration);
