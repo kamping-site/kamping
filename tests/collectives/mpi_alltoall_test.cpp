@@ -275,9 +275,7 @@ TEST(AlltoallTest, default_container_type) {
 TEST(AlltoallTest, given_recv_buffer_with_no_resize_policy) {
     Communicator comm;
 
-    std::vector<int>             input(comm.size(), comm.rank_signed());
-    constexpr BufferResizePolicy no_resize = BufferResizePolicy::no_resize;
-
+    std::vector<int> input(comm.size(), comm.rank_signed());
     std::vector<int> recv_buffer;
     std::vector<int> send_displs_buffer;
     std::vector<int> recv_counts_buffer;
