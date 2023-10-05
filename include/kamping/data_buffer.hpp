@@ -215,6 +215,16 @@ enum class BufferResizePolicy {
                   ///< size.
 };
 
+constexpr BufferResizePolicy no_resize =
+    BufferResizePolicy::no_resize; ///< Constant storing a BufferResizePolicy::no_resize enum member. It can be used to
+                                   ///< declare a buffer's resize policy in more concise manner.
+constexpr BufferResizePolicy grow_only =
+    BufferResizePolicy::grow_only; ///< Constant storing a BufferResizePolicy::grow_only enum member. It can be used to
+                                   ///< declare a buffer's resize policy in more concise manner.
+constexpr BufferResizePolicy resize_to_fit =
+    BufferResizePolicy::resize_to_fit; ///< Constant storing a BufferResizePolicy::resize_to_fit enum member. It can be
+                                       ///< used to declare a buffer's resize policy in more concise manner.
+
 namespace internal {
 /// @brief Wrapper to get the value type of a non-container type (aka the type itself).
 /// @tparam has_value_type_member Whether `T` has a value_type member

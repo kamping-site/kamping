@@ -28,14 +28,6 @@
 using namespace ::kamping;
 using namespace ::testing;
 
-template <typename Cont1, typename Cont2>
-void is_equal(Cont1 const& lhs, Cont2 const& rhs) {
-    EXPECT_EQ(lhs.size(), rhs.size());
-    for (int i = 0; i < asserting_cast<int>(lhs.size()); ++i) {
-        EXPECT_EQ(*(lhs.data() + i), *(rhs.data() + i));
-    }
-}
-
 TEST(AlltoallTest, single_element_no_receive_buffer) {
     Communicator comm;
 
@@ -892,10 +884,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        is_equal(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        is_equal(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        is_equal(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        is_equal(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        expect_eq(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
+        expect_eq(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
+        expect_eq(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
+        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
     }
     {
         // buffers will not be resized as the (implicit) resize policy is no_resize
@@ -915,10 +907,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        is_equal(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        is_equal(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        is_equal(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        is_equal(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        expect_eq(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
+        expect_eq(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
+        expect_eq(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
+        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
     }
     {
         // buffers will not be resized as the (implicit) resize policy is no_resize
@@ -938,10 +930,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        is_equal(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        is_equal(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        is_equal(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        is_equal(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        expect_eq(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
+        expect_eq(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
+        expect_eq(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
+        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
     }
 }
 
@@ -993,16 +985,16 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required) {
             recv_displs_out<BufferResizePolicy::grow_only>(recv_displs_buffer),
             recv_buf<BufferResizePolicy::grow_only>(recv_buffer)
         );
-        is_equal(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        is_equal(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        is_equal(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        is_equal(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        expect_eq(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
+        expect_eq(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
+        expect_eq(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
+        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
     }
 }
 
 TEST(AlltoallvTest, non_monotonically_increasing_recv_displacements) {
-    // Rank i sends its rank j times to rank j. Rank i receives j's message at position comm.size() - (j + 1) via
-    // explicit recv_displs.
+    // Rank i sends its rank j times to rank j. Rank i receives j's message at position comm.size() - (j + 1)*i via
+    // explicit recv_displs. E.g. on rank 2 we expect recv buffer = [(size-1),(size-1), (size-2),(size-2), ..., 0, 0]
     Communicator comm;
 
     // prepare send buffer
