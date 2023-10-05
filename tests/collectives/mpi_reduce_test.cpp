@@ -11,6 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
@@ -153,7 +154,7 @@ TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
         input = true;
     }
 
-    comm.reduce(send_buf(input), recv_buf(result), op(ops::logical_or<>{}));
+    comm.reduce(send_buf(input), recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result), op(ops::logical_or<>{}));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
@@ -164,13 +165,44 @@ TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
     }
 }
 
+TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool_no_resize) {
+    Communicator comm;
+
+    bool               input = false;
+    OwnContainer<bool> result(3, false);
+    if (comm.rank() == 1 % comm.size()) {
+        input = true;
+    }
+
+    comm.reduce(
+        send_buf(input),
+        recv_buf<kamping::BufferResizePolicy::no_resize>(result),
+        send_counts(1),
+        op(ops::logical_or<>{})
+    );
+
+    if (comm.is_root()) {
+        EXPECT_EQ(result.size(), 3);
+        OwnContainer<bool> expected_result = {true, false, false};
+        EXPECT_EQ(result, expected_result);
+    } else {
+        EXPECT_EQ(result.size(), 3);
+        OwnContainer<bool> expected_result = {false, false, false};
+        EXPECT_EQ(result, expected_result);
+    }
+}
+
 TEST(ReduceTest, reduce_with_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+    );
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
 
@@ -184,7 +216,11 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     // Change default root and test with communicator's default root again
     result = {};
     comm.root(comm.size() - 1);
-    comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+    );
     if (comm.is_root()) {
         EXPECT_EQ(comm.root(), comm.size() - 1);
         EXPECT_EQ(result.size(), 2);
@@ -196,7 +232,12 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     // Pass any possible root to reduce
     for (size_t i = 0; i < comm.size(); ++i) {
         result = {};
-        comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result), root(i));
+        comm.reduce(
+            send_buf(input),
+            op(kamping::ops::plus<>{}),
+            recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result),
+            root(i)
+        );
         if (comm.rank() == i) {
             EXPECT_EQ(comm.root(), comm.size() - 1);
             EXPECT_EQ(result.size(), 2);
@@ -207,13 +248,79 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     }
 }
 
+TEST(ReduceTest, reduce_with_receive_buffer_no_resize_and_explicit_send_count) {
+    Communicator comm;
+
+    std::vector<int> input  = {1, 2, 3, 4};
+    std::vector<int> result = {42, 42};
+
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::no_resize>(result),
+        send_counts(1)
+    );
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_THAT(result, ElementsAre(comm.size(), 42));
+    } else {
+        EXPECT_THAT(result, ElementsAre(42, 42));
+    }
+}
+
+TEST(ReduceTest, reduce_with_receive_buffer_resize_to_fit_and_explicit_send_count) {
+    Communicator comm;
+
+    std::vector<int> input  = {1, 2, 3, 4};
+    std::vector<int> result = {42, 42};
+
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result),
+        send_counts(1)
+    );
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_THAT(result, ElementsAre(comm.size()));
+    } else {
+        // do not touch the buffer on non root rank
+        EXPECT_THAT(result, ElementsAre(42, 42));
+    }
+}
+
+TEST(ReduceTest, reduce_with_receive_buffer_grow_only_and_explicit_send_count) {
+    Communicator comm;
+
+    std::vector<int> input  = {1, 2, 3, 4};
+    std::vector<int> result = {42, 42};
+
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::grow_only>(result),
+        send_counts(1)
+    );
+
+    // not resized to 1 because big enough
+    if (comm.rank() == comm.root()) {
+        EXPECT_THAT(result, ElementsAre(comm.size(), 42));
+    } else {
+        EXPECT_THAT(result, ElementsAre(42, 42));
+    }
+}
+
 TEST(ReduceTest, reduce_with_receive_buffer_on_root) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
     if (comm.is_root()) {
         std::vector<int> result;
-        comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+        comm.reduce(
+            send_buf(input),
+            op(kamping::ops::plus<>{}),
+            recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+        );
         EXPECT_EQ(result.size(), 2);
         std::vector<int> expected_result = {
             (comm.size_signed() * (comm.size_signed() - 1)) / 2,
