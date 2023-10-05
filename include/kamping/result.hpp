@@ -201,14 +201,14 @@ auto make_mpi_result(Args... args) {
     auto&& recv_buf = [&]() {
         // I'm not sure why return value optimization doesn't apply here, but the moves seem to be necessary.
         if constexpr (internal::has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
-            return std::move(internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...));
+            auto& param = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
+	    return std::move(param);
         } else {
-            return std::move(
-                internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(
-                    std::tuple(),
-                    args...
-                )
+            auto&& param = internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(
+                std::tuple(),
+                args...
             );
+            return std::move(param);
         }
     }();
 
