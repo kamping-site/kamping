@@ -49,8 +49,11 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_FALSE(const_int_span.empty());
     EXPECT_EQ(values.data(), const_int_span.data());
     EXPECT_EQ(const_int_span.data(), int_span.data());
-
+#if (defined(__clang__) && __clang_major__ < 15)
+    Span<int> int_iterator_span(values.data(), values.data() + values.size());
+#else
     Span<int> int_iterator_span(values.begin(), values.end());
+#endif
     EXPECT_EQ(values.size(), int_iterator_span.size());
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_iterator_span.size_bytes());
     EXPECT_FALSE(int_iterator_span.empty());
@@ -82,13 +85,13 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_EQ(values.data(), int_range_span_deducted.data());
 #endif
 
-    Span<int> empty_span = {values.data(), 0};
+    Span<int> empty_span{values.data(), Span<int>::size_type{0}};
     EXPECT_TRUE(empty_span.empty());
     EXPECT_EQ(0, empty_span.size());
     EXPECT_EQ(0, empty_span.size_bytes());
     EXPECT_EQ(values.data(), empty_span.data());
 
-    Span<int> nullptr_span = {static_cast<int*>(nullptr), 0};
+    Span<int> nullptr_span = {static_cast<int*>(nullptr), Span<int>::size_type{0}};
     EXPECT_TRUE(nullptr_span.empty());
     EXPECT_EQ(0, nullptr_span.size());
     EXPECT_EQ(0, nullptr_span.size_bytes());
