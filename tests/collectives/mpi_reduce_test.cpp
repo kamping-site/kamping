@@ -153,7 +153,7 @@ TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
         input = true;
     }
 
-    comm.reduce(send_buf(input), recv_buf(result), op(ops::logical_or<>{}));
+    comm.reduce(send_buf(input), recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result), op(ops::logical_or<>{}));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
@@ -170,7 +170,11 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+    );
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
 
@@ -184,7 +188,11 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     // Change default root and test with communicator's default root again
     result = {};
     comm.root(comm.size() - 1);
-    comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+    );
     if (comm.is_root()) {
         EXPECT_EQ(comm.root(), comm.size() - 1);
         EXPECT_EQ(result.size(), 2);
@@ -196,7 +204,12 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     // Pass any possible root to reduce
     for (size_t i = 0; i < comm.size(); ++i) {
         result = {};
-        comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result), root(i));
+        comm.reduce(
+            send_buf(input),
+            op(kamping::ops::plus<>{}),
+            recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result),
+            root(i)
+        );
         if (comm.rank() == i) {
             EXPECT_EQ(comm.root(), comm.size() - 1);
             EXPECT_EQ(result.size(), 2);
@@ -213,7 +226,11 @@ TEST(ReduceTest, reduce_with_receive_buffer_on_root) {
     std::vector<int> input = {comm.rank_signed(), 42};
     if (comm.is_root()) {
         std::vector<int> result;
-        comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+        comm.reduce(
+            send_buf(input),
+            op(kamping::ops::plus<>{}),
+            recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+        );
         EXPECT_EQ(result.size(), 2);
         std::vector<int> expected_result = {
             (comm.size_signed() * (comm.size_signed() - 1)) / 2,

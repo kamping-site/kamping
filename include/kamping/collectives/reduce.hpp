@@ -107,15 +107,17 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
         "Root has to be the same on all ranks.",
         assert::light_communication
     );
-    auto compute_required_recv_buf_size = [&] {
-        return asserting_cast<size_t>(send_count.get_single_element());
-    };
-    recv_buf.resize_if_requested(compute_required_recv_buf_size);
-    KASSERT(
-        recv_buf.size() >= compute_required_recv_buf_size(),
-        "Recv buffer is not large enough to hold all received elements.",
-        assert::light
-    );
+    if (is_root(root.rank_signed())) {
+        auto compute_required_recv_buf_size = [&] {
+            return asserting_cast<size_t>(send_count.get_single_element());
+        };
+        recv_buf.resize_if_requested(compute_required_recv_buf_size);
+        KASSERT(
+            recv_buf.size() >= compute_required_recv_buf_size(),
+            "Recv buffer is not large enough to hold all received elements.",
+            assert::light
+        );
+    }
     // from the standard:
     // > The routine is called by all group members using the same arguments for count, datatype, op,
     // > root and comm.
