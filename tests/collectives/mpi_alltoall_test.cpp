@@ -1045,10 +1045,8 @@ TEST(AlltoallvTest, non_monotonically_increasing_recv_displacements) {
 TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_policy) {
     Communicator comm;
 
-    std::vector<int>             input(comm.size(), comm.rank_signed());
-    std::vector<int>             send_counts_buffer(comm.size(), 1);
-    constexpr BufferResizePolicy resize    = BufferResizePolicy::resize_to_fit;
-    constexpr BufferResizePolicy no_resize = BufferResizePolicy::no_resize;
+    std::vector<int> input(comm.size(), comm.rank_signed());
+    std::vector<int> send_counts_buffer(comm.size(), 1);
 
     {
         // no kasserts fail
@@ -1059,10 +1057,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
         comm.alltoallv(
             send_buf(input),
             send_counts(send_counts_buffer),
-            send_displs_out<resize>(send_displs_buffer),
-            recv_counts_out<resize>(recv_counts_buffer),
-            recv_displs_out<resize>(recv_displs_buffer),
-            recv_buf<resize>(recv_buffer)
+            send_displs_out<resize_to_fit>(send_displs_buffer),
+            recv_counts_out<resize_to_fit>(recv_counts_buffer),
+            recv_displs_out<resize_to_fit>(recv_displs_buffer),
+            recv_buf<resize_to_fit>(recv_buffer)
         );
     }
     {
@@ -1075,9 +1073,9 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
                 recv_buf<no_resize>(recv_buffer)
             ),
             ""
@@ -1087,9 +1085,9 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
                 recv_buf(recv_buffer)
             ),
             ""
@@ -1105,10 +1103,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
                 recv_displs_out<no_resize>(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
@@ -1118,10 +1116,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
                 recv_displs_out(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
@@ -1136,10 +1134,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
                 recv_counts_out<no_resize>(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
@@ -1149,10 +1147,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
                 recv_counts_out(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
@@ -1168,9 +1166,9 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
                 send_buf(input),
                 send_counts(send_counts_buffer),
                 send_displs_out<no_resize>(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
@@ -1181,9 +1179,9 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
                 send_buf(input),
                 send_counts(send_counts_buffer),
                 send_displs_out(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
