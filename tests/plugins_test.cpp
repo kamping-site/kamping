@@ -97,7 +97,11 @@ TEST(PluginsTest, replace_implementation) {
         std::vector<int> result;
 
         // Calling allreduce on this communicator uses the original allreduce implementation.
-        faultyComm.allreduce(kamping::send_buf(input), kamping::op(kamping::ops::plus<>{}), kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result));
+        faultyComm.allreduce(
+            kamping::send_buf(input),
+            kamping::op(kamping::ops::plus<>{}),
+            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+        );
 
         // On all ranks, the result of the reduce operation is available. Even on rank 0 where the alternative allreduce
         // implementation would leave result unchanged.
@@ -147,7 +151,11 @@ TEST(PluginsTest, replace_implementation) {
     std::vector<int> result;
 
     // Because of the using-declaration in MyComm, this uses the alternative allreduce implementation.
-    comm.allreduce(kamping::send_buf(input), kamping::op(kamping::ops::plus<>{}), kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result));
+    comm.allreduce(
+        kamping::send_buf(input),
+        kamping::op(kamping::ops::plus<>{}),
+        kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+    );
 
     // Check result of the alternative allreduce implementation.
     if (comm.rank() == 0) {
