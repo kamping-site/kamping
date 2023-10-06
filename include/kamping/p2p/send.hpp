@@ -70,7 +70,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
         std::remove_reference_t<decltype(send_count)>::is_single_element,
         "send_counts() parameter must be a single value."
     );
-    if (has_to_be_computed<decltype(send_count)>) {
+    if constexpr (has_to_be_computed<decltype(send_count)>) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());
     }
 
