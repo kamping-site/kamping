@@ -101,19 +101,29 @@ TEST(AllreduceTest, allreduce_with_receive_buffer_no_resize_too_small) {
     Communicator comm;
 
     std::vector<int> input = {1, 2, 3, 4};
-    std::vector<int> result;
-
-    EXPECT_KASSERT_FAILS(
-        {
-            comm.allreduce(
-                send_buf(input),
-                op(kamping::ops::plus<>{}),
-                recv_buf<kamping::BufferResizePolicy::no_resize>(result),
-                send_counts(1)
-            );
-        },
-        ""
-    );
+    if (comm.root()) {
+        std::vector<int> result;
+        // we only want this to fail on root, because failing on all ranks hangs the test.
+        EXPECT_KASSERT_FAILS(
+            {
+                comm.allreduce(
+                    send_buf(input),
+                    op(kamping::ops::plus<>{}),
+                    recv_buf<kamping::BufferResizePolicy::no_resize>(result),
+                    send_counts(1)
+                );
+            },
+            ""
+        );
+    } else {
+        std::vector<int> result(2);
+        comm.allreduce(
+            send_buf(input),
+            op(kamping::ops::plus<>{}),
+            recv_buf<kamping::BufferResizePolicy::no_resize>(result),
+            send_counts(1)
+        );
+    }
 }
 
 TEST(AllreduceTest, allreduce_builtin_op_on_non_builtin_type) {
