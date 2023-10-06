@@ -35,15 +35,15 @@
 /// This wraps \c MPI_Send. This operation sends the elements in the input buffer provided via \c
 /// kamping::send_buf() to the specified receiver rank using standard send mode.
 /// The following parameters are required:
-/// - \ref kamping::send_buf() containing the data that is sent.
-/// - \ref kamping::destination() the receiving rank.
+/// - kamping::send_buf() containing the data that is sent.
+/// - kamping::destination() the receiving rank.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref
+/// - kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref
 /// Communicator::default_tag()) if not present.
-/// - \ref kamping::send_counts() specifiying how many elements of the buffer are sent.
+/// - kamping::send_counts() specifiying how many elements of the buffer are sent.
 /// This parameter has to be an integer. If ommited, the size of the send buffer is used as a default.
-/// - \ref kamping::send_mode() the send mode to use. Defaults to standard MPI_Send.
+/// - kamping::send_mode() the send mode to use. Defaults to standard MPI_Send.
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
