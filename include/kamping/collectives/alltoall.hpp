@@ -23,6 +23,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/collectives_helpers.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/mpi_datatype.hpp"
@@ -81,22 +82,26 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 
     static_assert(!std::is_const_v<recv_value_type>, "The receive buffer must not have a const value_type.");
 
-    // Get the send and receive counts
-    using default_send_count_type = decltype(kamping::send_counts(alloc_new<int>));
-    using default_recv_count_type = decltype(kamping::recv_counts(alloc_new<int>));
+    // Get the send counts
+    using default_send_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
     auto&& send_count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
-            std::make_tuple(asserting_cast<int>(send_buf.size() / size())),
+            std::tuple(),
             args...
         );
     static_assert(
         std::remove_reference_t<decltype(send_count)>::is_single_element,
         "send_counts() parameter must be a single value."
     );
-
+    constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
+    if constexpr (do_compute_send_count) {
+        send_count.underlying() = asserting_cast<int>(send_buf.size() / size());
+    }
+    // Get the recv counts
+    using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
     auto&& recv_count =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
-            std::make_tuple(send_count.get_single_element()),
+            std::tuple(),
             args...
         );
     static_assert(
@@ -104,8 +109,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         "recv_counts() parameter must be a single value."
     );
 
+    constexpr bool do_compute_recv_count = internal::has_to_be_computed<decltype(recv_count)>;
+    if constexpr (do_compute_recv_count) {
+        recv_count.underlying() = send_count.get_single_element();
+    }
+
     KASSERT(
-        (internal::has_to_be_computed<decltype(send_count)> || send_buf.size() % size() == 0lu),
+        (do_compute_send_count || send_buf.size() % size() == 0lu),
         "There are no send counts given and the number of elements in send_buf is not divisible by the number of "
         "ranks "
         "in the communicator.",
@@ -300,24 +310,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     }
 
     auto compute_required_recv_buf_size = [&]() {
-        if constexpr (do_calculate_recv_displs) {
-            // If recv displs are not provided as a parameter, they are monotonically increasing. In this case, it is
-            // safe to deduce the required recv_buf size by only considering  the last entry of recv_counts and
-            // recv_displs.
-            int recv_buf_size = *(recv_counts.data() + this->size() - 1) + // Last element of recv_counts
-                                *(recv_displs.data() + this->size() - 1);  // Last element of recv_displs
-            return asserting_cast<size_t>(recv_buf_size);
-        } else {
-            // If recv displs are user provided, they do not need to be monotonically increasing. Therefore, we have to
-            // compute the maximum of recv_displs and recv_counts from each rank to provide a receive buffer large
-            // enough to be able to receive all elements. This O(p) computation is only executed if the user wants
-            // kamping to resize the receive buffer.
-            int recv_buf_size = 0;
-            for (size_t i = 0; i < size(); ++i) {
-                recv_buf_size = std::max(recv_buf_size, *(recv_counts.data() + i) + *(recv_displs.data() + i));
-            }
-            return asserting_cast<size_t>(recv_buf_size);
-        }
+        return compute_required_recv_buf_size_in_vectorized_communication(recv_counts, recv_displs, this->size());
     };
 
     recv_buf.resize_if_requested(compute_required_recv_buf_size);

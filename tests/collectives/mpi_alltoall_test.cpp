@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <numeric>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
@@ -27,14 +28,6 @@
 
 using namespace ::kamping;
 using namespace ::testing;
-
-template <typename Cont1, typename Cont2>
-void is_equal(Cont1 const& lhs, Cont2 const& rhs) {
-    EXPECT_EQ(lhs.size(), rhs.size());
-    for (int i = 0; i < asserting_cast<int>(lhs.size()); ++i) {
-        EXPECT_EQ(*(lhs.data() + i), *(rhs.data() + i));
-    }
-}
 
 TEST(AlltoallTest, single_element_no_receive_buffer) {
     Communicator comm;
@@ -177,19 +170,24 @@ TEST(AlltoallTest, single_element_with_send_counts) {
     EXPECT_EQ(recv_buf, expected_result);
 }
 
-TEST(AlltoallTest, single_element_with_send_and_recv_counts) {
+TEST(AlltoallTest, single_element_with_send_and_recv_counts_out) {
     Communicator comm;
 
     std::vector<int> input(comm.size(), comm.rank_signed());
 
-    auto             mpi_result = comm.alltoall(send_buf(input), send_counts(1), recv_counts(1));
+    // the values in send_counts_out, recv_counts_out should be ignored as they merely provide "storage" for the values
+    // computed by kamping. (A mechanism which is not that useful for plain integers)
+    auto mpi_result = comm.alltoall(send_buf(input), send_counts_out(alloc_new<int>), recv_counts_out(alloc_new<int>));
     std::vector<int> recv_buf   = mpi_result.extract_recv_buffer();
+    int              send_count = mpi_result.extract_send_counts();
+    int              recv_count = mpi_result.extract_recv_counts();
 
     EXPECT_EQ(recv_buf.size(), comm.size());
 
     std::vector<int> expected_result(comm.size());
     std::iota(expected_result.begin(), expected_result.end(), 0);
-    EXPECT_EQ(recv_buf, expected_result);
+    EXPECT_EQ(send_count, 1);
+    EXPECT_EQ(recv_count, 1);
 }
 
 TEST(AlltoallTest, multiple_elements) {
@@ -283,9 +281,7 @@ TEST(AlltoallTest, default_container_type) {
 TEST(AlltoallTest, given_recv_buffer_with_no_resize_policy) {
     Communicator comm;
 
-    std::vector<int>             input(comm.size(), comm.rank_signed());
-    constexpr BufferResizePolicy no_resize = BufferResizePolicy::no_resize;
-
+    std::vector<int> input(comm.size(), comm.rank_signed());
     std::vector<int> recv_buffer;
     std::vector<int> send_displs_buffer;
     std::vector<int> recv_counts_buffer;
@@ -892,10 +888,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        is_equal(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        is_equal(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        is_equal(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        is_equal(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(send_displs_buffer.data(), comm.size()), ElementsAreArray(expected_send_displs));
+        EXPECT_THAT(Span(recv_counts_buffer.data(), comm.size()), ElementsAreArray(expected_recv_counts));
+        EXPECT_THAT(Span(recv_displs_buffer.data(), comm.size()), ElementsAreArray(expected_recv_displs));
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
     {
         // buffers will not be resized as the (implicit) resize policy is no_resize
@@ -915,10 +911,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        is_equal(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        is_equal(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        is_equal(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        is_equal(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(send_displs_buffer.data(), comm.size()), ElementsAreArray(expected_send_displs));
+        EXPECT_THAT(Span(recv_counts_buffer.data(), comm.size()), ElementsAreArray(expected_recv_counts));
+        EXPECT_THAT(Span(recv_displs_buffer.data(), comm.size()), ElementsAreArray(expected_recv_displs));
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
     {
         // buffers will not be resized as the (implicit) resize policy is no_resize
@@ -938,10 +934,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        is_equal(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        is_equal(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        is_equal(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        is_equal(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(send_displs_buffer.data(), comm.size()), ElementsAreArray(expected_send_displs));
+        EXPECT_THAT(Span(recv_counts_buffer.data(), comm.size()), ElementsAreArray(expected_recv_counts));
+        EXPECT_THAT(Span(recv_displs_buffer.data(), comm.size()), ElementsAreArray(expected_recv_displs));
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
 }
 
@@ -993,16 +989,16 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required) {
             recv_displs_out<BufferResizePolicy::grow_only>(recv_displs_buffer),
             recv_buf<BufferResizePolicy::grow_only>(recv_buffer)
         );
-        is_equal(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        is_equal(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        is_equal(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        is_equal(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(send_displs_buffer.data(), comm.size()), ElementsAreArray(expected_send_displs));
+        EXPECT_THAT(Span(recv_counts_buffer.data(), comm.size()), ElementsAreArray(expected_recv_counts));
+        EXPECT_THAT(Span(recv_displs_buffer.data(), comm.size()), ElementsAreArray(expected_recv_displs));
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
 }
 
 TEST(AlltoallvTest, non_monotonically_increasing_recv_displacements) {
-    // Rank i sends its rank j times to rank j. Rank i receives j's message at position comm.size() - (j + 1) via
-    // explicit recv_displs.
+    // Rank i sends its rank j times to rank j. Rank i receives j's message at position comm.size() - (j + 1)*i via
+    // explicit recv_displs. E.g. on rank 2 we expect recv buffer = [(size-1),(size-1), (size-2),(size-2), ..., 0, 0]
     Communicator comm;
 
     // prepare send buffer
@@ -1053,10 +1049,8 @@ TEST(AlltoallvTest, non_monotonically_increasing_recv_displacements) {
 TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_policy) {
     Communicator comm;
 
-    std::vector<int>             input(comm.size(), comm.rank_signed());
-    std::vector<int>             send_counts_buffer(comm.size(), 1);
-    constexpr BufferResizePolicy resize    = BufferResizePolicy::resize_to_fit;
-    constexpr BufferResizePolicy no_resize = BufferResizePolicy::no_resize;
+    std::vector<int> input(comm.size(), comm.rank_signed());
+    std::vector<int> send_counts_buffer(comm.size(), 1);
 
     {
         // no kasserts fail
@@ -1067,10 +1061,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
         comm.alltoallv(
             send_buf(input),
             send_counts(send_counts_buffer),
-            send_displs_out<resize>(send_displs_buffer),
-            recv_counts_out<resize>(recv_counts_buffer),
-            recv_displs_out<resize>(recv_displs_buffer),
-            recv_buf<resize>(recv_buffer)
+            send_displs_out<resize_to_fit>(send_displs_buffer),
+            recv_counts_out<resize_to_fit>(recv_counts_buffer),
+            recv_displs_out<resize_to_fit>(recv_displs_buffer),
+            recv_buf<resize_to_fit>(recv_buffer)
         );
     }
     {
@@ -1083,9 +1077,9 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
                 recv_buf<no_resize>(recv_buffer)
             ),
             ""
@@ -1095,9 +1089,9 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
                 recv_buf(recv_buffer)
             ),
             ""
@@ -1113,10 +1107,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
                 recv_displs_out<no_resize>(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
@@ -1126,10 +1120,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
                 recv_displs_out(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
@@ -1144,10 +1138,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
                 recv_counts_out<no_resize>(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
@@ -1157,10 +1151,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
-                send_displs_out<resize>(send_displs_buffer),
+                send_displs_out<resize_to_fit>(send_displs_buffer),
                 recv_counts_out(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
@@ -1176,9 +1170,9 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
                 send_buf(input),
                 send_counts(send_counts_buffer),
                 send_displs_out<no_resize>(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );
@@ -1189,9 +1183,9 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
                 send_buf(input),
                 send_counts(send_counts_buffer),
                 send_displs_out(send_displs_buffer),
-                recv_counts_out<resize>(recv_counts_buffer),
-                recv_displs_out<resize>(recv_displs_buffer),
-                recv_buf<resize>(recv_buffer)
+                recv_counts_out<resize_to_fit>(recv_counts_buffer),
+                recv_displs_out<resize_to_fit>(recv_displs_buffer),
+                recv_buf<resize_to_fit>(recv_buffer)
             ),
             ""
         );

@@ -42,6 +42,8 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_span.size_bytes());
     EXPECT_FALSE(int_span.empty());
     EXPECT_EQ(values.data(), int_span.data());
+    EXPECT_EQ(values.data(), &(*int_span.begin()));
+    EXPECT_EQ(std::next(int_span.begin(), static_cast<int>(int_span.size())), int_span.end());
 
     Span<int const> const_int_span = {values.data(), values.size()};
     EXPECT_EQ(values.size(), const_int_span.size());
@@ -49,6 +51,9 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_FALSE(const_int_span.empty());
     EXPECT_EQ(values.data(), const_int_span.data());
     EXPECT_EQ(const_int_span.data(), int_span.data());
+    EXPECT_EQ(const_int_span.data(), &(*const_int_span.begin()));
+    EXPECT_EQ(std::next(const_int_span.begin(), static_cast<int>(const_int_span.size())), const_int_span.end());
+
 #if (defined(__clang__) && __clang_major__ < 15)
     Span<int> int_iterator_span(values.data(), values.data() + values.size());
 #else
@@ -58,6 +63,11 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_iterator_span.size_bytes());
     EXPECT_FALSE(int_iterator_span.empty());
     EXPECT_EQ(values.data(), int_iterator_span.data());
+    EXPECT_EQ(int_iterator_span.data(), &(*int_iterator_span.begin()));
+    EXPECT_EQ(
+        std::next(int_iterator_span.begin(), static_cast<int>(int_iterator_span.size())),
+        int_iterator_span.end()
+    );
 
 #if ((defined(_MSVC_LANG) && _MSVC_LANG < 202002L) || __cplusplus < 202002L) // not C++ 20
     // if C++20 is used, we alias Span to std::span, but we cannot use deduction there, because argument deduction is
@@ -67,6 +77,11 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_iterator_span_deducted.size_bytes());
     EXPECT_FALSE(int_iterator_span_deducted.empty());
     EXPECT_EQ(values.data(), int_iterator_span_deducted.data());
+    EXPECT_EQ(int_iterator_span_deducted.data(), &(*int_iterator_span_deducted.begin()));
+    EXPECT_EQ(
+        std::next(int_iterator_span_deducted.begin(), static_cast<int>(int_iterator_span_deducted.size())),
+        int_iterator_span_deducted.end()
+    );
 #endif
 
     Span<int> int_range_span(values);
@@ -74,6 +89,8 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_range_span.size_bytes());
     EXPECT_FALSE(int_range_span.empty());
     EXPECT_EQ(values.data(), int_range_span.data());
+    EXPECT_EQ(int_range_span.data(), &(*int_range_span.begin()));
+    EXPECT_EQ(std::next(int_range_span.begin(), static_cast<int>(int_range_span.size())), int_range_span.end());
 
 #if ((defined(_MSVC_LANG) && _MSVC_LANG < 202002L) || __cplusplus < 202002L) // not C++ 20
     // if C++20 is used, we alias Span to std::span, but we cannot use deduction there, because argument deduction is
@@ -83,6 +100,11 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_EQ(values.size() * sizeof(decltype(values)::value_type), int_range_span_deducted.size_bytes());
     EXPECT_FALSE(int_range_span_deducted.empty());
     EXPECT_EQ(values.data(), int_range_span_deducted.data());
+    EXPECT_EQ(int_range_span_deducted.data(), &(*int_range_span_deducted.begin()));
+    EXPECT_EQ(
+        std::next(int_range_span_deducted.begin(), static_cast<int>(int_range_span_deducted.size())),
+        int_range_span_deducted.end()
+    );
 #endif
 
     Span<int> empty_span{values.data(), Span<int>::size_type{0}};
@@ -90,12 +112,14 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_EQ(0, empty_span.size());
     EXPECT_EQ(0, empty_span.size_bytes());
     EXPECT_EQ(values.data(), empty_span.data());
+    EXPECT_EQ(empty_span.begin(), empty_span.end());
 
     Span<int> nullptr_span = {static_cast<int*>(nullptr), Span<int>::size_type{0}};
     EXPECT_TRUE(nullptr_span.empty());
     EXPECT_EQ(0, nullptr_span.size());
     EXPECT_EQ(0, nullptr_span.size_bytes());
     EXPECT_EQ(nullptr, nullptr_span.data());
+    EXPECT_EQ(nullptr_span.begin(), nullptr_span.end());
 
     static_assert(std::is_pointer_v<decltype(int_span.data())>, "Member data() of int_span does not return a pointer.");
     static_assert(
