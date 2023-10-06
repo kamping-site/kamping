@@ -264,6 +264,9 @@ TEST_F(RecvTest, recv_vector_with_explicit_size_no_resize_too_small) {
             { comm.recv(recv_buf<BufferResizePolicy::no_resize>(message), recv_counts(5), status_out()); },
             "not large enough"
         );
+        // actually receive it to clean up.
+        message.resize(5);
+        comm.recv(recv_buf<BufferResizePolicy::no_resize>(message), recv_counts(5), status_out());
     }
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
