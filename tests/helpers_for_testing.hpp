@@ -226,14 +226,5 @@ struct CustomAllocator {
     #endif
 #endif
 
-///@brief Expect that two containers are element-wise equal (useful if the container types differ).
-template <typename Cont1, typename Cont2>
-void expect_eq(Cont1 const& lhs, Cont2 const& rhs) {
-    EXPECT_EQ(lhs.size(), rhs.size());
-    for (int i = 0; i < kamping::asserting_cast<int>(lhs.size()); ++i) {
-        EXPECT_EQ(*(lhs.data() + i), *(rhs.data() + i));
-    }
-}
-
 /// @}
 } // namespace testing

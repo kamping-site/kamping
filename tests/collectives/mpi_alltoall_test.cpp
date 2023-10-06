@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <numeric>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
@@ -887,10 +888,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        expect_eq(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        expect_eq(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        expect_eq(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(send_displs_buffer.data(), comm.size()), ElementsAreArray(expected_send_displs));
+        EXPECT_THAT(Span(recv_counts_buffer.data(), comm.size()), ElementsAreArray(expected_recv_counts));
+        EXPECT_THAT(Span(recv_displs_buffer.data(), comm.size()), ElementsAreArray(expected_recv_displs));
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
     {
         // buffers will not be resized as the (implicit) resize policy is no_resize
@@ -910,10 +911,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        expect_eq(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        expect_eq(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        expect_eq(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(send_displs_buffer.data(), comm.size()), ElementsAreArray(expected_send_displs));
+        EXPECT_THAT(Span(recv_counts_buffer.data(), comm.size()), ElementsAreArray(expected_recv_counts));
+        EXPECT_THAT(Span(recv_displs_buffer.data(), comm.size()), ElementsAreArray(expected_recv_displs));
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
     {
         // buffers will not be resized as the (implicit) resize policy is no_resize
@@ -933,10 +934,10 @@ TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
         EXPECT_EQ(recv_counts_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_displs_buffer.size(), 2 * comm.size());
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        expect_eq(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        expect_eq(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        expect_eq(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(send_displs_buffer.data(), comm.size()), ElementsAreArray(expected_send_displs));
+        EXPECT_THAT(Span(recv_counts_buffer.data(), comm.size()), ElementsAreArray(expected_recv_counts));
+        EXPECT_THAT(Span(recv_displs_buffer.data(), comm.size()), ElementsAreArray(expected_recv_displs));
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
 }
 
@@ -988,10 +989,10 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required) {
             recv_displs_out<BufferResizePolicy::grow_only>(recv_displs_buffer),
             recv_buf<BufferResizePolicy::grow_only>(recv_buffer)
         );
-        expect_eq(Span(send_displs_buffer.data(), comm.size()), expected_send_displs);
-        expect_eq(Span(recv_counts_buffer.data(), comm.size()), expected_recv_counts);
-        expect_eq(Span(recv_displs_buffer.data(), comm.size()), expected_recv_displs);
-        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(send_displs_buffer.data(), comm.size()), ElementsAreArray(expected_send_displs));
+        EXPECT_THAT(Span(recv_counts_buffer.data(), comm.size()), ElementsAreArray(expected_recv_counts));
+        EXPECT_THAT(Span(recv_displs_buffer.data(), comm.size()), ElementsAreArray(expected_recv_displs));
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
 }
 

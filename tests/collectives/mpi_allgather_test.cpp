@@ -13,10 +13,10 @@
 
 #include "../test_assertions.hpp"
 
-#include "gmock/gmock.h"
 #include <cstddef>
 #include <numeric>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -136,21 +136,21 @@ TEST(AllgatherTest, allgather_single_element_with_given_recv_buf_bigger_than_req
         std::vector<int> recv_buffer(2 * comm.size());
         comm.allgather(send_buf(data), recv_buf<grow_only>(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
     {
         // recv buffer will not be resized as the policy is no_resize
         std::vector<int> recv_buffer(2 * comm.size());
         comm.allgather(send_buf(data), recv_buf<no_resize>(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
     {
         // recv buffer will not be resized as the policy is no_resize (default)
         std::vector<int> recv_buffer(2 * comm.size());
         comm.allgather(send_buf(data), recv_buf(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
-        expect_eq(Span(recv_buffer.data(), comm.size()), expected_recv_buffer);
+        EXPECT_THAT(Span(recv_buffer.data(), comm.size()), ElementsAreArray(expected_recv_buffer));
     }
 }
 
