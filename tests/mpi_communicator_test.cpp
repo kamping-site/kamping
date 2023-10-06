@@ -106,7 +106,7 @@ TEST_F(CommunicatorTest, is_root) {
 
 uint32_t mpi_abort_call_count           = 0;
 int      mpi_abort_expected_return_code = 1;
-MPI_Comm mpi_abort_expected_comm        = nullptr;
+MPI_Comm mpi_abort_expected_comm        = MPI_COMM_NULL;
 
 int MPI_Abort(MPI_Comm comm, int errorcode) {
     mpi_abort_call_count++;
