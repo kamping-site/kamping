@@ -95,7 +95,10 @@ TEST(AllgatherTest, allgather_single_element_with_explicit_send_and_recv_count) 
         }
     }
     {
-        // test that send_count parameter overwrites automatic deduction of send counts from the size of the send buffer
+        // test that recv_count parameter overwrites automatic deduction of recv counts from the size of the send
+        // counts. Currently these two values must be identical, as we do not yet support custom mpi datatypes where
+        // send and recv counts may differ due to different send/recv types. // TODO adapt comment once custom mpi
+        // datatypes are supported.
         auto result   = comm.allgather(send_buf(data), send_counts(send_count), recv_counts(recv_count));
         auto recv_buf = result.extract_recv_buffer();
         for (size_t i = 0; i < comm.size(); ++i) {
@@ -104,7 +107,7 @@ TEST(AllgatherTest, allgather_single_element_with_explicit_send_and_recv_count) 
     }
 }
 
-TEST(AllgatherTest, allgather_single_element_with_send_and_recv_count_out) {
+TEST(AllgatherTest, allgather_single_element_with_r_values_in_send_and_recv_count_out) {
     Communicator           comm;
     const std::vector<int> data{comm.rank_signed()};
     {
@@ -112,6 +115,23 @@ TEST(AllgatherTest, allgather_single_element_with_send_and_recv_count_out) {
         // values computed by kamping. (A mechanism which is not that useful for plain integers)
         auto result = comm.allgather(send_buf(data), send_counts_out(alloc_new<int>), recv_counts_out(alloc_new<int>));
         auto recv_buf = result.extract_recv_buffer();
+        for (size_t i = 0; i < comm.size(); ++i) {
+            EXPECT_EQ(recv_buf[i], i);
+        }
+    }
+}
+
+TEST(AllgatherTest, allgather_single_element_with_l_values_in_send_and_recv_count_out) {
+    Communicator           comm;
+    const std::vector<int> data{comm.rank_signed()};
+    {
+        // the values in send_counts_out, recv_counts_out should be ignored
+        int  send_count = -1;
+        int  recv_count = -1;
+        auto result     = comm.allgather(send_buf(data), send_counts_out(send_count), recv_counts_out(recv_count));
+        auto recv_buf   = result.extract_recv_buffer();
+        EXPECT_EQ(send_count, 1);
+        EXPECT_EQ(recv_count, 1);
         for (size_t i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(recv_buf[i], i);
         }

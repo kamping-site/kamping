@@ -138,10 +138,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
     // error code can be unused if KTHROW is removed at compile time
     [[maybe_unused]] int err = MPI_Allgather(
         send_buf.data(),
-        asserting_cast<int>(send_count.get_single_element()),
+        send_count.get_single_element(),
         mpi_send_type,
         recv_buf.data(),
-        asserting_cast<int>(recv_count.get_single_element()),
+        recv_count.get_single_element(),
         mpi_recv_type,
         this->mpi_communicator()
     );
@@ -287,14 +287,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
 
     // error code can be unused if KTHROW is removed at compile time
     [[maybe_unused]] int err = MPI_Allgatherv(
-        send_buf.data(),                                      // sendbuf
-        asserting_cast<int>(send_count.get_single_element()), // sendcounts
-        mpi_send_type,                                        // sendtype
-        recv_buf.data(),                                      // recvbuf
-        recv_counts.data(),                                   // recvcounts
-        recv_displs.data(),                                   // recvdispls
-        mpi_recv_type,                                        // recvtype
-        this->mpi_communicator()                              // communicator
+        send_buf.data(),                 // sendbuf
+        send_count.get_single_element(), // sendcounts
+        mpi_send_type,                   // sendtype
+        recv_buf.data(),                 // recvbuf
+        recv_counts.data(),              // recvcounts
+        recv_displs.data(),              // recvdispls
+        mpi_recv_type,                   // recvtype
+        this->mpi_communicator()         // communicator
     );
     THROW_IF_MPI_ERROR(err, MPI_Allgatherv);
 

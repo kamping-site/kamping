@@ -304,7 +304,7 @@ TEST(AllgathervTest, allgather_single_element_with_given_buffers_smaller_than_re
         EXPECT_EQ(recv_displs, expected_recv_displs);
     }
     {
-        // recv buffer will not be resized as it is large enough and policy is grow_only
+        // recv buffer will be resized as it is not large enough and policy is grow_only
         std::vector<int> recv_buffer(comm.size() / 2);
         std::vector<int> recv_counts(comm.size() / 2);
         std::vector<int> recv_displs(comm.size() / 2);
