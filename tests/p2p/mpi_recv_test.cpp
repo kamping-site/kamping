@@ -262,7 +262,7 @@ TEST_F(RecvTest, recv_vector_with_explicit_size_no_resize_too_small) {
         EXPECT_EQ(probe_counter, 0);
         EXPECT_KASSERT_FAILS(
             { comm.recv(recv_buf<BufferResizePolicy::no_resize>(message), recv_counts(5), status_out()); },
-            "not large enough"
+            ""Recv buffer is not large enough to hold all received elements.""
         );
         // actually receive it to clean up.
         message.resize(5);
