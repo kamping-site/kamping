@@ -196,6 +196,7 @@ TEST_F(ISendTest, send_vector_with_explicit_send_count) {
         MPI_Mprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &msg, &status);
         int count;
         MPI_Get_count(&status, MPI_INT, &count);
+        EXPECT_EQ(count, 2);
         MPI_Mrecv(result.data(), count, MPI_INT, &msg, MPI_STATUS_IGNORE);
         EXPECT_THAT(result, ElementsAre(42, 3, -1, -1));
         EXPECT_EQ(status.MPI_SOURCE, comm.root());
