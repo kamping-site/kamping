@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -120,16 +120,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
             std::tuple(),
             args...
         );
-
-    KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
-    int            source                         = source_param.rank_signed();
-    int            tag                            = tag_param.tag();
-    constexpr bool recv_count_is_output_parameter = internal::has_to_be_computed<decltype(recv_count_param)>;
     static_assert(
         std::remove_reference_t<decltype(recv_count_param)>::is_single_element,
         "recv_counts() parameter must be a single value."
     );
-    if constexpr (recv_count_is_output_parameter) {
+
+    KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
+    int source = source_param.rank_signed();
+    int tag    = tag_param.tag();
+    if constexpr (internal::has_to_be_computed<decltype(recv_count_param)>) {
         Status probe_status      = this->probe(source_param.clone(), tag_param.clone(), status_out()).extract_status();
         source                   = probe_status.source_signed();
         tag                      = probe_status.tag();
@@ -139,17 +138,25 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     // Ensure that we do not touch the recv buffer if MPI_PROC_NULL is passed,
     // because this is what the standard guarantees.
     if constexpr (std::remove_reference_t<decltype(source_param)>::rank_type != internal::RankType::null) {
-        recv_buf.resize(asserting_cast<size_t>(recv_count_param.get_single_element()));
+        auto compute_required_recv_buf_size = [&] {
+            return asserting_cast<size_t>(recv_count_param.get_single_element());
+        };
+        recv_buf.resize_if_requested(compute_required_recv_buf_size);
+        KASSERT(
+            recv_buf.size() >= compute_required_recv_buf_size(),
+            "Recv buffer is not large enough to hold all received elements.",
+            assert::light
+        );
     }
 
     [[maybe_unused]] int err = MPI_Recv(
-        recv_buf.data(),                                            // buf
-        asserting_cast<int>(recv_count_param.get_single_element()), // count
-        mpi_datatype<recv_value_type>(),                            // datatype
-        source,                                                     // source
-        tag,                                                        // tag
-        this->mpi_communicator(),                                   // comm
-        status.native_ptr()                                         // status
+        recv_buf.data(),                       // buf
+        recv_count_param.get_single_element(), // count
+        mpi_datatype<recv_value_type>(),       // datatype
+        source,                                // source
+        tag,                                   // tag
+        this->mpi_communicator(),              // comm
+        status.native_ptr()                    // status
     );
     THROW_IF_MPI_ERROR(err, MPI_Recv);
 
