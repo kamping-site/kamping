@@ -50,7 +50,7 @@ TEST(AllreduceTest, allreduce_with_receive_buffer) {
     EXPECT_EQ(result, expected_result);
 }
 
-TEST(AllreduceTest, allreduce_with_receive_buffer_resize_to_big) {
+TEST(AllreduceTest, allreduce_with_receive_buffer_resize_too_big) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
