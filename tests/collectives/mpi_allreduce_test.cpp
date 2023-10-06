@@ -1,7 +1,6 @@
-
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -39,7 +38,11 @@ TEST(AllreduceTest, allreduce_with_receive_buffer) {
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.allreduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+    );
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
