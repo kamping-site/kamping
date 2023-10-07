@@ -39,11 +39,7 @@ TEST(AllreduceTest, allreduce_with_receive_buffer) {
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    comm.allreduce(
-        send_buf(input),
-        op(kamping::ops::plus<>{}),
-        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
-    );
+    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result));
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
@@ -56,11 +52,7 @@ TEST(AllreduceTest, allreduce_with_receive_buffer_resize_too_big) {
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result(10, -1);
 
-    comm.allreduce(
-        send_buf(input),
-        op(kamping::ops::plus<>{}),
-        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
-    );
+    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result));
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
@@ -73,12 +65,7 @@ TEST(AllreduceTest, allreduce_with_receive_buffer_no_resize_and_explicit_send_co
     std::vector<int> input  = {1, 2, 3, 4};
     std::vector<int> result = {42, 42};
 
-    comm.allreduce(
-        send_buf(input),
-        op(kamping::ops::plus<>{}),
-        recv_buf<kamping::BufferResizePolicy::no_resize>(result),
-        send_counts(1)
-    );
+    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<no_resize>(result), send_counts(1));
     EXPECT_THAT(result, ElementsAre(comm.size(), 42));
 }
 
@@ -88,12 +75,7 @@ TEST(AllreduceTest, allreduce_with_receive_buffer_grow_only_and_explicit_send_co
     std::vector<int> input  = {1, 2, 3, 4};
     std::vector<int> result = {42, 42};
 
-    comm.allreduce(
-        send_buf(input),
-        op(kamping::ops::plus<>{}),
-        recv_buf<kamping::BufferResizePolicy::grow_only>(result),
-        send_counts(1)
-    );
+    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<grow_only>(result), send_counts(1));
     EXPECT_THAT(result, ElementsAre(comm.size(), 42));
 }
 
@@ -109,7 +91,7 @@ TEST(AllreduceTest, allreduce_with_receive_buffer_no_resize_too_small) {
                 comm.allreduce(
                     send_buf(input),
                     op(kamping::ops::plus<>{}),
-                    recv_buf<kamping::BufferResizePolicy::no_resize>(result),
+                    recv_buf<no_resize>(result),
                     send_counts(1)
                 );
             },
@@ -117,12 +99,7 @@ TEST(AllreduceTest, allreduce_with_receive_buffer_no_resize_too_small) {
         );
     } else {
         std::vector<int> result(2);
-        comm.allreduce(
-            send_buf(input),
-            op(kamping::ops::plus<>{}),
-            recv_buf<kamping::BufferResizePolicy::no_resize>(result),
-            send_counts(1)
-        );
+        comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<no_resize>(result), send_counts(1));
     }
 }
 
