@@ -23,6 +23,7 @@
 #include "kamping/collectives/scatter.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/span.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -82,7 +83,7 @@ TEST(ScattervTest, scatterv_equiv_single_element_out_recv_buf) {
     auto const       input  = create_equiv_sized_input_vector_on_root(comm, 1);
     auto const       counts = create_equiv_counts_on_root(comm, 1);
     std::vector<int> result;
-    comm.scatterv(send_buf(input), send_counts(counts), recv_counts(1), recv_buf(result));
+    comm.scatterv(send_buf(input), send_counts(counts), recv_counts(1), recv_buf<resize_to_fit>(result));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -117,50 +118,54 @@ TEST(ScattervTest, scatterv_equiv_single_element_out_recv_counts) {
     auto const counts = create_equiv_counts_on_root(comm, 1);
     int        recv_count;
     int        result;
-    comm.scatterv(send_buf(input), send_counts(counts), recv_counts_out(recv_count), recv_buf(result));
+    comm.scatterv(send_buf(input), send_counts(counts), recv_counts_out(recv_count), recv_buf<resize_to_fit>(result));
 
     EXPECT_EQ(recv_count, 1);
     EXPECT_EQ(result, comm.rank_signed());
 }
 
-TEST(ScattervTest, scatterv_equiv_single_element_out_send_counts) {
-    Communicator comm;
+// TEST(ScattervTest, scatterv_equiv_single_element_out_send_counts) {
+//     Communicator comm;
+//
+//     auto const       input      = create_equiv_sized_input_vector_on_root(comm, 1);
+//     int const        recv_count = 1;
+//     int              result;
+//     std::vector<int> send_counts;
+//     comm.scatterv(send_buf(input), send_counts_out(send_counts), recv_counts(recv_count), recv_buf(result));
+//
+//     if (comm.is_root()) {
+//         EXPECT_EQ(send_counts.size(), comm.size());
+//         EXPECT_THAT(send_counts, Each(Eq(1)));
+//     }
+//     EXPECT_EQ(result, comm.rank_signed());
+// }
 
-    auto const       input      = create_equiv_sized_input_vector_on_root(comm, 1);
-    int const        recv_count = 1;
-    int              result;
-    std::vector<int> send_counts;
-    comm.scatterv(send_buf(input), send_counts_out(send_counts), recv_counts(recv_count), recv_buf(result));
-
-    if (comm.is_root()) {
-        EXPECT_EQ(send_counts.size(), comm.size());
-        EXPECT_THAT(send_counts, Each(Eq(1)));
-    }
-    EXPECT_EQ(result, comm.rank_signed());
-}
-
-TEST(ScattervTest, scatterv_equiv_single_element_return_send_counts) {
-    Communicator comm;
-
-    auto const input      = create_equiv_sized_input_vector_on_root(comm, 1);
-    int const  recv_count = 1;
-    int        result;
-    auto send_counts = comm.scatterv(send_buf(input), recv_counts(recv_count), recv_buf(result)).extract_send_counts();
-
-    if (comm.is_root()) {
-        EXPECT_EQ(send_counts.size(), comm.size());
-        EXPECT_THAT(send_counts, Each(Eq(1)));
-    }
-    EXPECT_EQ(result, comm.rank_signed());
-}
+// TEST(ScattervTest, scatterv_equiv_single_element_return_send_counts) {
+//     Communicator comm;
+//
+//     auto const input      = create_equiv_sized_input_vector_on_root(comm, 1);
+//     int const  recv_count = 1;
+//     int        result;
+//     auto send_counts = comm.scatterv(send_buf(input), recv_counts(recv_count),
+//     recv_buf(result)).extract_send_counts();
+//
+//     if (comm.is_root()) {
+//         EXPECT_EQ(send_counts.size(), comm.size());
+//         EXPECT_THAT(send_counts, Each(Eq(1)));
+//     }
+//     EXPECT_EQ(result, comm.rank_signed());
+// }
 
 TEST(ScattervTest, scatterv_equiv_single_element_return_send_displs) {
     Communicator comm;
 
-    auto const input      = create_equiv_sized_input_vector_on_root(comm, 1);
-    int const  recv_count = 1;
+    auto const input       = create_equiv_sized_input_vector_on_root(comm, 1);
+    auto const send_counts = create_equiv_counts_on_root(comm, 1);
+    int const  recv_count  = 1;
     int        result;
-    auto send_displs = comm.scatterv(send_buf(input), recv_counts(recv_count), recv_buf(result)).extract_send_displs();
+    auto       send_displs =
+        comm.scatterv(send_buf(input), recv_counts(recv_count), kamping::send_counts(send_counts), recv_buf(result))
+            .extract_send_displs();
 
     if (comm.is_root()) {
         EXPECT_EQ(send_displs.size(), comm.size());
@@ -178,13 +183,16 @@ TEST(ScattervTest, scatterv_equiv_single_element_out_send_displs) {
     auto const       counts = create_equiv_counts_on_root(comm, 1);
     int              result;
     std::vector<int> displs;
-    comm.scatterv(send_buf(input), send_counts(counts), send_displs_out(displs), recv_buf(result));
+    comm.scatterv(send_buf(input), send_counts(counts), send_displs_out<resize_to_fit>(displs), recv_buf(result));
 
     if (comm.is_root()) {
         EXPECT_EQ(displs.size(), comm.size());
         for (int pe = 0; pe < comm.size_signed(); ++pe) {
             EXPECT_EQ(displs[static_cast<std::size_t>(pe)], pe);
         }
+    } else {
+        // displacement buffer should not be touched on non-root PEs
+        EXPECT_EQ(displs.size(), 0);
     }
 
     EXPECT_EQ(result, comm.rank_signed());
@@ -197,15 +205,22 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements) {
     auto const       counts = create_equiv_counts_on_root(comm, comm.size_signed());
     std::vector<int> displs;
     int              recv_count;
-    auto const       result =
-        comm.scatterv(send_buf(input), send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count))
-            .extract_recv_buffer();
+    auto const       result = comm.scatterv(
+                                send_buf(input),
+                                send_counts(counts),
+                                send_displs_out<resize_to_fit>(displs),
+                                recv_counts_out(recv_count)
+    )
+                            .extract_recv_buffer();
 
     if (comm.is_root()) {
         ASSERT_EQ(displs.size(), comm.size());
         for (int pe = 0; pe < comm.size_signed(); ++pe) {
             EXPECT_EQ(displs[static_cast<std::size_t>(pe)], pe * comm.size_signed());
         }
+    } else {
+        // displacement buffer should not be touched on non-root PEs
+        EXPECT_EQ(displs.size(), 0);
     }
 
     EXPECT_EQ(recv_count, comm.size_signed());
@@ -222,12 +237,17 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements_send_buf_only_on_root_no_rec
     int              recv_count;
     std::vector<int> result;
     if (comm.is_root()) {
-        result =
-            comm.scatterv(send_buf(input), send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count))
-                .extract_recv_buffer();
-    } else {
-        result = comm.scatterv<int>(send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count))
+        result = comm.scatterv(
+                         send_buf(input),
+                         send_counts(counts),
+                         send_displs_out<resize_to_fit>(displs),
+                         recv_counts_out(recv_count)
+        )
                      .extract_recv_buffer();
+    } else {
+        result =
+            comm.scatterv<int>(send_counts(counts), send_displs_out<resize_to_fit>(displs), recv_counts_out(recv_count))
+                .extract_recv_buffer();
     }
 
     if (comm.is_root()) {
@@ -235,6 +255,9 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements_send_buf_only_on_root_no_rec
         for (int pe = 0; pe < comm.size_signed(); ++pe) {
             EXPECT_EQ(displs[static_cast<std::size_t>(pe)], pe * comm.size_signed());
         }
+    } else {
+        // displacement buffer should not be touched on non-root PEs
+        EXPECT_EQ(displs.size(), 0);
     }
 
     EXPECT_EQ(recv_count, comm.size_signed());
@@ -251,11 +274,20 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements_send_buf_only_on_root_with_r
     int              recv_count;
     std::vector<int> result;
     if (comm.is_root()) {
-        result =
-            comm.scatterv(send_buf(input), send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count))
-                .extract_recv_buffer();
+        result = comm.scatterv(
+                         send_buf(input),
+                         send_counts(counts),
+                         send_displs_out<resize_to_fit>(displs),
+                         recv_counts_out(recv_count)
+        )
+                     .extract_recv_buffer();
     } else {
-        comm.scatterv(recv_buf(result), send_counts(counts), send_displs_out(displs), recv_counts_out(recv_count));
+        comm.scatterv(
+            recv_buf<resize_to_fit>(result),
+            send_counts(counts),
+            send_displs_out(displs),
+            recv_counts_out(recv_count)
+        );
     }
 
     if (comm.is_root()) {
@@ -263,6 +295,9 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements_send_buf_only_on_root_with_r
         for (int pe = 0; pe < comm.size_signed(); ++pe) {
             EXPECT_EQ(displs[static_cast<std::size_t>(pe)], pe * comm.size_signed());
         }
+    } else {
+        // displacement buffer should not be touched on non-root PEs
+        EXPECT_EQ(displs.size(), 0);
     }
 
     EXPECT_EQ(recv_count, comm.size_signed());
@@ -310,10 +345,211 @@ TEST(ScattervTest, scatterv_default_container_type) {
     Communicator<OwnContainer> comm;
 
     std::vector<int> const input  = create_equiv_sized_input_vector_on_root(comm, 1);
-    auto                   result = comm.scatterv(send_buf(input), recv_counts(1));
+    std::vector<int> const counts = create_equiv_counts_on_root(comm, 1);
+    auto                   result = comm.scatterv(send_buf(input), send_counts(counts), recv_counts(1));
 
     // This just has to compile
     OwnContainer<int> recv_buf    = result.extract_recv_buffer();
     OwnContainer<int> send_displs = result.extract_send_displs();
-    OwnContainer<int> send_counts = result.extract_send_counts();
+}
+
+TEST(ScattervTest, scatterv_single_element_with_given_recv_buf_bigger_than_required) {
+    Communicator comm;
+    auto const   input  = create_equiv_sized_input_vector_on_root(comm, 1);
+    auto const   counts = create_equiv_counts_on_root(comm, 1);
+    {
+        // recv buffer will be resized as resize policy is resize_to_fit
+        std::vector<int> result{0, -1};
+        comm.scatterv(send_buf(input), send_counts(counts), recv_buf<resize_to_fit>(result));
+        ASSERT_EQ(result.size(), 1);
+        EXPECT_EQ(result.front(), comm.rank());
+    }
+    {
+        // recv buffer will not be resized as it is large enough and policy is grow_only
+        std::vector<int> result{0, -1};
+        comm.scatterv(send_buf(input), send_counts(counts), recv_buf<grow_only>(result));
+        ASSERT_EQ(result.size(), 2);
+        EXPECT_THAT(result, ElementsAre(comm.rank(), -1));
+    }
+    {
+        // recv buffer will not be resized as policy is no_resize
+        std::vector<int> result{0, -1};
+        comm.scatterv(send_buf(input), send_counts(counts), recv_buf<no_resize>(result));
+        ASSERT_EQ(result.size(), 2);
+        EXPECT_THAT(result, ElementsAre(comm.rank(), -1));
+    }
+    {
+        // recv buffer will not be resized as default policy is no_resize
+        std::vector<int> result{0, -1};
+        comm.scatterv(send_buf(input), send_counts(counts), recv_buf(result));
+        ASSERT_EQ(result.size(), 2);
+        EXPECT_THAT(result, ElementsAre(comm.rank(), -1));
+    }
+}
+
+TEST(ScatterTest, scatterv_single_element_with_given_recv_buf_smaller_than_required) {
+    Communicator comm;
+    auto const   input  = create_equiv_sized_input_vector_on_root(comm, 1);
+    auto const   counts = create_equiv_counts_on_root(comm, 1);
+
+    {
+        // recv buffer will be resized as resize policy is resize_to_fit
+        std::vector<int> result;
+        comm.scatterv(send_buf(input), send_counts(counts), recv_buf<resize_to_fit>(result));
+        ASSERT_EQ(result.size(), 1);
+        EXPECT_EQ(result.front(), comm.rank());
+    }
+    {
+        // recv buffer will be resized as resize policy is grow_only
+        std::vector<int> result;
+        comm.scatterv(send_buf(input), send_counts(counts), recv_buf<grow_only>(result));
+        ASSERT_EQ(result.size(), 1);
+        EXPECT_EQ(result.front(), comm.rank());
+    }
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    {
+        // recv buffer will not be resized as policy is no_resize; therefore the kassert for a sufficiently sized recv
+        // buffer will fail
+        std::vector<int> result;
+        EXPECT_KASSERT_FAILS(comm.scatterv(send_buf(input), send_counts(counts), recv_buf<no_resize>(result)), "");
+    }
+
+    {
+        // recv buffer will not be resized as default policy is no_resize; therefore the kassert for a sufficiently
+        // sized recv buffer will fail
+        std::vector<int> result;
+        EXPECT_KASSERT_FAILS(comm.scatterv(send_buf(input), send_counts(counts), recv_buf(result)), "");
+    }
+#endif
+}
+
+TEST(ScattervTest, scatterv_single_element_with_given_send_displs_bigger_than_required) {
+    Communicator     comm;
+    auto const       input  = create_equiv_sized_input_vector_on_root(comm, 1);
+    auto const       counts = create_equiv_counts_on_root(comm, 1);
+    std::vector<int> expected_send_displs_on_root(comm.size());
+    std::exclusive_scan(counts.begin(), counts.end(), expected_send_displs_on_root.begin(), 0);
+    int const default_value = 42;
+
+    {
+        // send displs buffer will be resized on root as resize policy is resize_to_fit
+        std::vector<int> send_displs(2 * comm.size(), default_value);
+        auto             mpi_result =
+            comm.scatterv(send_buf(input), send_displs_out<resize_to_fit>(send_displs), send_counts(counts));
+        auto recv_buf = mpi_result.extract_recv_buffer();
+        ASSERT_EQ(recv_buf.size(), 1);
+        EXPECT_EQ(recv_buf.front(), comm.rank());
+        if (comm.is_root()) {
+            EXPECT_EQ(send_displs.size(), comm.size());
+            EXPECT_EQ(send_displs, expected_send_displs_on_root);
+        } else {
+            // send displacements should not be altered on non-root PEs
+            EXPECT_EQ(send_displs.size(), 2 * comm.size());
+            EXPECT_EQ(send_displs, std::vector<int>(2 * comm.size(), default_value));
+        }
+    }
+    {
+        // send displs buffer will not be resized on root as it is large enough and resize policy is grow only
+        std::vector<int> send_displs(2 * comm.size(), default_value);
+        auto mpi_result = comm.scatterv(send_buf(input), send_displs_out<grow_only>(send_displs), send_counts(counts));
+        auto recv_buf   = mpi_result.extract_recv_buffer();
+        ASSERT_EQ(recv_buf.size(), 1);
+        EXPECT_EQ(recv_buf.front(), comm.rank());
+        if (comm.is_root()) {
+            EXPECT_EQ(send_displs.size(), 2 * comm.size());
+            // first half send displacements
+            EXPECT_THAT(Span<int>(send_displs.data(), comm.size()), ElementsAreArray(expected_send_displs_on_root));
+            // second half send displacements (should not be altered)
+            EXPECT_THAT(
+                Span<int>(send_displs.data() + comm.size(), comm.size()),
+                ElementsAreArray(std::vector<int>(comm.size(), default_value))
+            );
+        } else {
+            // send displacement should not be altered on non-root PEs
+            EXPECT_EQ(send_displs, std::vector<int>(2 * comm.size(), default_value));
+        }
+    }
+    {
+        // send displs buffer will not be resized on root as resize policy is no_resize
+        std::vector<int> send_displs(2 * comm.size(), default_value);
+        auto mpi_result = comm.scatterv(send_buf(input), send_displs_out<no_resize>(send_displs), send_counts(counts));
+        auto recv_buf   = mpi_result.extract_recv_buffer();
+        ASSERT_EQ(recv_buf.size(), 1);
+        EXPECT_EQ(recv_buf.front(), comm.rank());
+        if (comm.is_root()) {
+            EXPECT_EQ(send_displs.size(), 2 * comm.size());
+            // first half send displacements
+            EXPECT_THAT(Span<int>(send_displs.data(), comm.size()), ElementsAreArray(expected_send_displs_on_root));
+            // second half send displacements (should not be altered)
+            EXPECT_THAT(
+                Span<int>(send_displs.data() + comm.size(), comm.size()),
+                ElementsAreArray(std::vector<int>(comm.size(), default_value))
+            );
+        } else {
+            // send displacement should not be altered on non-root PEs
+            EXPECT_EQ(send_displs, std::vector<int>(2 * comm.size(), default_value));
+        }
+    }
+    {
+        // send displs buffer will not be resized on root as resize policy is no_resize (default value)
+        std::vector<int> send_displs(2 * comm.size(), default_value);
+        auto             mpi_result = comm.scatterv(send_buf(input), send_displs_out(send_displs), send_counts(counts));
+        auto             recv_buf   = mpi_result.extract_recv_buffer();
+        ASSERT_EQ(recv_buf.size(), 1);
+        EXPECT_EQ(recv_buf.front(), comm.rank());
+        if (comm.is_root()) {
+            EXPECT_EQ(send_displs.size(), 2 * comm.size());
+            // first half send displacements
+            EXPECT_THAT(Span<int>(send_displs.data(), comm.size()), ElementsAreArray(expected_send_displs_on_root));
+            // second half send displacements (should not be altered)
+            EXPECT_THAT(
+                Span<int>(send_displs.data() + comm.size(), comm.size()),
+                ElementsAreArray(std::vector<int>(comm.size(), default_value))
+            );
+        } else {
+            // send displacement should not be altered on non-root PEs
+            EXPECT_EQ(send_displs, std::vector<int>(2 * comm.size(), default_value));
+        }
+    }
+}
+
+TEST(ScattervTest, scatterv_single_element_with_given_send_displs_smaller_than_required) {
+    Communicator     comm;
+    auto const       input  = create_equiv_sized_input_vector_on_root(comm, 1);
+    auto const       counts = create_equiv_counts_on_root(comm, 1);
+    std::vector<int> expected_send_displs_on_root(comm.size());
+    std::exclusive_scan(counts.begin(), counts.end(), expected_send_displs_on_root.begin(), 0);
+
+    {
+        // send displs buffer will be resized on root as resize policy is resize_to_fit
+        std::vector<int> send_displs;
+        auto             mpi_result =
+            comm.scatterv(send_buf(input), send_displs_out<resize_to_fit>(send_displs), send_counts(counts));
+        auto recv_buf = mpi_result.extract_recv_buffer();
+        ASSERT_EQ(recv_buf.size(), 1);
+        EXPECT_EQ(recv_buf.front(), comm.rank());
+        if (comm.is_root()) {
+            EXPECT_EQ(send_displs.size(), comm.size());
+            EXPECT_EQ(send_displs, expected_send_displs_on_root);
+        } else {
+            // send displacements should not be altered on non-root PEs
+            EXPECT_EQ(send_displs.size(), 0);
+        }
+    }
+    {
+        // send displs buffer will not be resized on root as it is large enough and resize policy is grow only
+        std::vector<int> send_displs;
+        auto mpi_result = comm.scatterv(send_buf(input), send_displs_out<grow_only>(send_displs), send_counts(counts));
+        auto recv_buf   = mpi_result.extract_recv_buffer();
+        ASSERT_EQ(recv_buf.size(), 1);
+        EXPECT_EQ(recv_buf.front(), comm.rank());
+        if (comm.is_root()) {
+            EXPECT_EQ(send_displs.size(), comm.size());
+            EXPECT_EQ(send_displs, expected_send_displs_on_root);
+        } else {
+            EXPECT_EQ(send_displs.size(), 0);
+        }
+    }
+    // cannot test kassert for no_resize policy as this will lead to undefined MPI behaviour due to communication
+    // attempts from non-root ranks when the kassert on the root has already failed.
 }
