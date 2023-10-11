@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPIng Authors
+// Copyright 2021-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -459,6 +459,43 @@ auto recv_counts_out(AllocNewAutoT<Data> container) {
 /// @return Wrapper for the recv counts that can be retrieved as structured binding.
 inline auto recv_counts_out() {
     return recv_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<int>);
+}
+
+/// @brief The number of elements to send or receive (depending on whether the process is root or not).
+/// @param count The number of elements.
+/// @return The corresponding parameter object.
+inline auto send_recv_count(int count) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_recv_count,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer,
+        BufferResizePolicy::no_resize,
+        int>(std::move(count));
+}
+
+/// @brief Output parameter for the number of elements sent or received (depending on whether the process is root or
+/// not). The value will be returned as part of the result of the MPI call.
+/// @return The corresponding parameter object.
+inline auto send_recv_count_out() {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_recv_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(alloc_new<int>);
+}
+
+/// @brief Output parameter for the number of elements sent or received (depending on whether the process is root or
+/// not). The value will be stored in the provided reference.
+/// @param count Reference to the location to story the count at.
+/// @return The corresponding parameter object.
+inline auto send_recv_count_out(int& count) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_recv_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(count);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage

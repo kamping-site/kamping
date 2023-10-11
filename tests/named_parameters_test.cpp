@@ -884,6 +884,43 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc_without_explic
     );
 }
 
+TEST(ParameterFactoriesTest, send_recv_count_in) {
+    auto param       = send_recv_count(42);
+    using param_type = std::remove_reference_t<decltype(param)>;
+    EXPECT_EQ(param.size(), 1);
+    EXPECT_EQ(param.underlying(), 42);
+    EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+    EXPECT_EQ(param_type::parameter_type, ParameterType::send_recv_count);
+    EXPECT_EQ(param_type::buffer_type, BufferType::in_buffer);
+    EXPECT_FALSE(param_type::is_modifiable);
+}
+
+TEST(ParameterFactoriesTest, send_recv_count_out) {
+    { // lib-allocated memory
+        auto param       = send_recv_count_out();
+        using param_type = std::remove_reference_t<decltype(param)>;
+        EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+        EXPECT_EQ(param_type::parameter_type, ParameterType::send_recv_count);
+        EXPECT_EQ(param_type::buffer_type, BufferType::out_buffer);
+        EXPECT_TRUE(param_type::is_modifiable);
+        param.underlying() = 42;
+        EXPECT_EQ(param.get_single_element(), 42);
+        EXPECT_EQ(param.extract(), 42);
+    }
+    { // user-allocated memory
+        int  count       = -1;
+        auto param       = send_recv_count_out(count);
+        using param_type = std::remove_reference_t<decltype(param)>;
+        EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+        EXPECT_EQ(param_type::parameter_type, ParameterType::send_recv_count);
+        EXPECT_EQ(param_type::buffer_type, BufferType::out_buffer);
+        EXPECT_TRUE(param_type::is_modifiable);
+        EXPECT_EQ(param.get_single_element(), -1);
+        param.underlying() = 42;
+        EXPECT_EQ(param.get_single_element(), 42);
+    }
+}
+
 TEST(ParameterFactoriesTest, root_basics) {
     auto root_obj = root(22);
     EXPECT_EQ(root_obj.rank_signed(), 22);

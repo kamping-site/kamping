@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPIng Authors
+// Copyright 2021-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -48,6 +48,8 @@ enum class ParameterType {
     send_displs,     ///< Tag used to represent a send displacements buffer, i.e. a
                      ///< buffer containing the send displacements from the involved
                      ///< PEs.
+    send_recv_count, ///< Tag used to represent the number of elements to be sent or
+                     ///< received (depending on whether the process is root or not).
     op,              ///< Tag used to represent a reduce operation in a \c MPI call.
     source,          ///< Tag used to represent the sending PE in a \c MPI call.
     destination,     ///< Tag used to represent the receiving PE in a \c MPI call.
