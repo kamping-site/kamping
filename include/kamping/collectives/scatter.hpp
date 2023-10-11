@@ -313,24 +313,19 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     auto&& send_displs =
         select_parameter_type_or_default<ParameterType::send_displs, default_send_displs_type>(std::tuple(), args...);
 
-    constexpr bool do_compute_send_displs = has_to_be_computed<decltype(send_displs)>;
-    if constexpr (do_compute_send_displs) {
-        send_displs.resize_if_requested([&]() {
-            if (is_root(root_val)) {
-                return this->size();
-            } else {
-                // do not change the size of the buffer on non-root PEs
-                return send_displs.size();
-            }
-        });
-    }
-    KASSERT(
-        !is_root(root_val) || send_displs.size() >= size(),
-        "Send displs buffer is smaller than the number of PEs at the root PE.",
-        assert::light
-    );
-    if constexpr (do_compute_send_displs) {
-        if (is_root(root_val)) {
+    if (is_root(root_val)) {
+        // send displacements are only considered on the root PE and ignored by MPI on all non-root PEs.
+        constexpr bool do_compute_send_displs = has_to_be_computed<decltype(send_displs)>;
+        if constexpr (do_compute_send_displs) {
+            send_displs.resize_if_requested([&]() { return this->size(); });
+        }
+        KASSERT(
+            send_displs.size() >= size(),
+            "Send displs buffer is smaller than the number of PEs at the root PE.",
+            assert::light
+        );
+
+        if constexpr (do_compute_send_displs) {
             std::exclusive_scan(send_counts.data(), send_counts.data() + size(), send_displs.data(), 0);
         }
     }
