@@ -918,6 +918,7 @@ TEST(ParameterFactoriesTest, send_recv_count_out) {
         EXPECT_EQ(param.get_single_element(), -1);
         param.underlying() = 42;
         EXPECT_EQ(param.get_single_element(), 42);
+        EXPECT_EQ(count, 42);
     }
 }
 
