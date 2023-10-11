@@ -12,6 +12,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
 #include "gmock/gmock.h"
 
 #include <gtest/gtest.h>
@@ -50,10 +52,12 @@ TEST(ScanTest, scan_single_vector_of_size_2) {
 
     std::vector<int> input = {42, 1};
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(
         (comm.scan_single(send_buf(input), op(kamping::ops::plus<>{}))),
         "The send buffer has to be of size 1 on all ranks."
     );
+#endif
 }
 
 TEST(ScanTest, scan_explicit_send_recv_count_smaller_than_send_buffer_size) {
@@ -323,6 +327,7 @@ TEST(ScanTest, single_element_with_given_recv_buf_smaller_than_required) {
         comm.scan(send_buf(input), recv_buf<grow_only>(recv_buffer), op(kamping::ops::plus<>{}));
         EXPECT_EQ(recv_buffer, expected_recv_buffer);
     }
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     {
         // recv buffer will not be resized as the policy is no_resize
         std::vector<int> recv_buffer;
@@ -339,4 +344,5 @@ TEST(ScanTest, single_element_with_given_recv_buf_smaller_than_required) {
             ""
         );
     }
+#endif
 }
