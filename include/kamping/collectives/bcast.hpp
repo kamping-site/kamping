@@ -148,6 +148,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
 
         // Output the recv count via the output_parameter
         count_param.underlying() = count;
+    } else {
+        KASSERT(
+            (!this->is_root(root.rank_signed()) || has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()
+            ),
+            "send_recv_buf must be provided on the root rank.",
+            assert::light
+        );
     }
 
     // Resize my send_recv_buf to be able to hold all received data on all non_root ranks.
