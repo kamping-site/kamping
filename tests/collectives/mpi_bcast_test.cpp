@@ -196,7 +196,7 @@ TEST(BcastTest, vector_default_resize_policy_should_be_no_resize) {
         EXPECT_THAT(Span<int>(values.data(), 4), Each(Eq(comm.root())));
         EXPECT_THAT(Span<int>(values.data() + 4, values.size() - 4), Each(Eq(-1)));
     }
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
     { // buffer on receiving side too small
         std::vector<int> values;
         if (comm.is_root()) {
@@ -229,7 +229,7 @@ TEST(BcastTest, vector_resize_policy_no_resize) {
         EXPECT_THAT(Span<int>(values.data(), 4), Each(Eq(comm.root())));
         EXPECT_THAT(Span<int>(values.data() + 4, values.size() - 4), Each(Eq(-1)));
     }
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
     { // buffer on receiving side too small
         std::vector<int> values;
         if (comm.is_root()) {
@@ -323,7 +323,7 @@ TEST(BcastTest, send_recv_buf_parameter_only_on_root) {
     EXPECT_THAT(message, ElementsAre(42, 1337));
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION)
 TEST(BcastTest, roots_differ) {
     Communicator comm;
     if (comm.size() > 1) {
@@ -336,7 +336,7 @@ TEST(BcastTest, roots_differ) {
 }
 #endif
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
 TEST(BcastTest, send_recv_buf_parameter_required_on_root) {
     Communicator comm;
 
