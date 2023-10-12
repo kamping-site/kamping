@@ -53,7 +53,7 @@ int main() {
 
     std::vector<int> values(4);
     std::fill(values.begin(), values.end(), comm.rank());
-    comm.bcast(send_recv_buf(values), recv_counts(4), root(1));
+    comm.bcast(send_recv_buf(values), send_recv_count(4), root(1));
     print_result(values, comm);
 
     // The expected output on 4 ranks is a permutation of the following lines:

@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPIng Authors
+// Copyright 2021-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -53,6 +53,7 @@ void test_recv_buffer_in_MPIResult() {
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_buffer();
     for (size_t i = 0; i < 10; ++i) {
@@ -77,6 +78,7 @@ void test_recv_counts_in_MPIResult() {
         std::move(recv_counts),
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
         ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_counts();
     for (size_t i = 0; i < 10; ++i) {
@@ -95,6 +97,7 @@ void test_recv_count_in_MPIResult() {
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         std::move(recv_count_wrapper),
+        ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{}};
@@ -118,6 +121,7 @@ void test_recv_displs_in_MPIResult() {
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         std::move(recv_displs),
+        ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_recv_displs();
@@ -143,6 +147,7 @@ void test_send_counts_in_MPIResult() {
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         std::move(send_counts),
+        ResultCategoryNotUsed{},
         ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_send_counts();
     for (size_t i = 0; i < 10; ++i) {
@@ -167,7 +172,8 @@ void test_send_displs_in_MPIResult() {
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
-        std::move(send_displs)};
+        std::move(send_displs),
+        ResultCategoryNotUsed{}};
     UnderlyingContainer underlying_container = mpi_result.extract_send_displs();
     for (size_t i = 0; i < 10; ++i) {
         EXPECT_EQ(underlying_container[i], i);
@@ -231,6 +237,22 @@ TEST(MpiResultTest, extract_send_displs_basics_own_container) {
     testing::test_send_displs_in_MPIResult<testing::OwnContainer<int>>();
 }
 
+TEST(MpiResultTest, extract_send_recv_count) {
+    using namespace kamping;
+    using namespace kamping::internal;
+    auto send_recv_count         = kamping::send_recv_count_out();
+    send_recv_count.underlying() = 42;
+    MPIResult mpi_result{
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        ResultCategoryNotUsed{},
+        std::move(send_recv_count)};
+    EXPECT_EQ(mpi_result.extract_send_recv_count(), 42);
+}
+
 TEST(MpiResultTest, extract_status_basics) {
     using namespace kamping;
     using namespace kamping::internal;
@@ -239,6 +261,7 @@ TEST(MpiResultTest, extract_status_basics) {
     status.native_ptr()->MPI_TAG = 42;
     MPIResult mpi_result{
         std::move(status),
+        ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
         ResultCategoryNotUsed{},
@@ -254,8 +277,9 @@ KAMPING_MAKE_HAS_MEMBER(extract_recv_counts)
 KAMPING_MAKE_HAS_MEMBER(extract_recv_displs)
 KAMPING_MAKE_HAS_MEMBER(extract_send_counts)
 KAMPING_MAKE_HAS_MEMBER(extract_send_displs)
+KAMPING_MAKE_HAS_MEMBER(extract_send_recv_count)
 
-TEST(MPIResultTest, removed_extract_functions) {
+TEST(MpiResultTest, removed_extract_functions) {
     using namespace ::kamping;
     using namespace ::kamping::internal;
     constexpr BufferType btype = BufferType::in_buffer;
@@ -267,25 +291,29 @@ TEST(MPIResultTest, removed_extract_functions) {
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_sanity_check;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_sanity_check;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs_sanity_check;
-        kamping::MPIResult                                                                    mpi_result_sanity_check{
+        LibAllocatedContainerBasedBuffer<int, ParameterType::send_recv_count, btype> send_recv_count_sanity_check;
+        kamping::MPIResult                                                           mpi_result_sanity_check{
             std::move(status_sanity_check),
             std::move(recv_buf_sanity_check),
             std::move(recv_counts_sanity_check),
             std::move(recv_displs_sanity_check),
             std::move(send_counts_sanity_check),
-            std::move(send_displs_sanity_check)};
+            std::move(send_displs_sanity_check),
+            std::move(send_recv_count_sanity_check)};
         EXPECT_TRUE(has_member_extract_status_v<decltype(mpi_result_sanity_check)>);
         EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(mpi_result_sanity_check)>);
         EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(mpi_result_sanity_check)>);
         EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(mpi_result_sanity_check)>);
         EXPECT_TRUE(has_member_extract_send_counts_v<decltype(mpi_result_sanity_check)>);
         EXPECT_TRUE(has_member_extract_send_displs_v<decltype(mpi_result_sanity_check)>);
+        EXPECT_TRUE(has_member_extract_send_recv_count_v<decltype(mpi_result_sanity_check)>);
         EXPECT_FALSE(decltype(mpi_result_sanity_check)::is_empty);
     }
 
     {
         // none of the extract function should work if the underlying buffer does not provide a member extract().
         kamping::MPIResult mpi_result{
+            ResultCategoryNotUsed{},
             ResultCategoryNotUsed{},
             ResultCategoryNotUsed{},
             ResultCategoryNotUsed{},
@@ -298,6 +326,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         EXPECT_FALSE(has_member_extract_recv_displs_v<decltype(mpi_result)>);
         EXPECT_FALSE(has_member_extract_send_counts_v<decltype(mpi_result)>);
         EXPECT_FALSE(has_member_extract_send_displs_v<decltype(mpi_result)>);
+        EXPECT_FALSE(has_member_extract_send_recv_count_v<decltype(mpi_result)>);
         EXPECT_TRUE(decltype(mpi_result)::is_empty);
     }
 
@@ -307,12 +336,14 @@ TEST(MPIResultTest, removed_extract_functions) {
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_status;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_status;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs_status;
+        LibAllocatedContainerBasedBuffer<int, ParameterType::send_recv_count, btype>          send_recv_count;
         auto result_status = make_mpi_result(
             std::move(recv_counts_status),
             std::move(recv_displs_status),
             std::move(send_counts_status),
             std::move(send_displs_status),
-            std::move(recv_buf_status)
+            std::move(recv_buf_status),
+            std::move(send_recv_count)
         );
         EXPECT_FALSE(has_member_extract_status_v<decltype(result_status)>);
         EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result_status)>);
@@ -320,6 +351,7 @@ TEST(MPIResultTest, removed_extract_functions) {
         EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_status)>);
         EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_status)>);
         EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_status)>);
+        EXPECT_TRUE(has_member_extract_send_recv_count_v<decltype(result_status)>);
         EXPECT_FALSE(decltype(result_status)::is_empty);
     }
 
