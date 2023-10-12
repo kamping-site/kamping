@@ -208,6 +208,9 @@ TEST(BcastTest, vector_default_resize_policy_should_be_no_resize) {
 
         if (!comm.is_root()) {
             EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values)), "");
+            // now join the bcast posted on root so we don't interfere with other tests
+            values.resize(100);
+            MPI_Bcast(values.data(), 100, MPI_INT, comm.root_signed(), comm.mpi_communicator());
         } else {
             comm.bcast(send_recv_buf(values));
         }
@@ -241,6 +244,9 @@ TEST(BcastTest, vector_resize_policy_no_resize) {
 
         if (!comm.is_root()) {
             EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf<no_resize>(values)), "");
+            // now join the bcast posted on root so we don't interfere with other tests
+            values.resize(100);
+            MPI_Bcast(values.data(), 100, MPI_INT, comm.root_signed(), comm.mpi_communicator());
         } else {
             comm.bcast(send_recv_buf<no_resize>(values));
         }
