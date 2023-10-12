@@ -41,9 +41,9 @@
 /// non-root ranks to fit exactly the received data.
 ///
 /// The following parameter is optional but causes additional communication if not present.
-/// - \ref kamping::recv_counts() specifying how many elements are broadcasted. If not specified, will be
-/// communicated through an additional bcast. If not specified, we broadcast the whole send_recv_buf. If specified,
-/// has to be the same on all ranks (including the root). Has to either be specified or not specified on all ranks.
+/// - \ref kamping::send_recv_count() specifying how many elements are broadcasted. This parameter must be given either
+/// on all or none of the ranks. If not specified, the count is set to the size of kamping::send_recv_buf() on
+/// root and broadcasted to all other ranks.
 ///
 /// The following parameter is optional:
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c
