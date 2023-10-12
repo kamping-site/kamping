@@ -221,8 +221,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
         std::tuple(this->root()),
         args...
     );
-    // we have to do this check with communication, because else the other ranks would already start with the broadcast
-    // and indefinitely wait for the root
+    // we have to do this check with communication, because otherwise the other ranks would already start with the
+    // broadcast and indefinitely wait for the root
     if constexpr (kassert::internal::assertion_enabled(assert::light_communication)) {
         bool root_has_buffer = has_parameter_type<internal::ParameterType::send_recv_buf, Args...>();
         int  err = MPI_Bcast(&root_has_buffer, 1, MPI_CXX_BOOL, root.rank_signed(), this->mpi_communicator());

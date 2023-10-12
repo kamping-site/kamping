@@ -185,7 +185,7 @@ TEST(BcastTest, vector_send_recv_count_deduction) {
 TEST(BcastTest, vector_default_resize_policy_should_be_no_resize) {
     Communicator comm;
 
-    { // all large buffers are large enough and are not resized
+    { // send_recv_buffer is large enough and is not resized
         std::vector<int> values(4 + comm.rank() + 2, -1);
         if (comm.is_root()) {
             std::fill(values.begin(), values.begin() + 4, comm.rank());
@@ -221,7 +221,7 @@ TEST(BcastTest, vector_default_resize_policy_should_be_no_resize) {
 TEST(BcastTest, vector_resize_policy_no_resize) {
     Communicator comm;
 
-    { // all large buffers are large enough and are not resized
+    { // send_recv_buffer is large enough and is not resized
         std::vector<int> values(4 + comm.rank() + 2, -1);
         if (comm.is_root()) {
             std::fill(values.begin(), values.begin() + 4, comm.rank());
@@ -290,10 +290,9 @@ TEST(BcastTest, vector_resize_to_fit) {
             std::fill(values.begin(), values.end(), comm.rank());
         }
 
-        comm.bcast(send_recv_buf<grow_only>(values), send_recv_count(4));
-        EXPECT_EQ(values.size(), 4 + comm.rank());
-        EXPECT_THAT(Span<int>(values.data(), 4), Each(Eq(comm.root())));
-        EXPECT_THAT(Span<int>(values.data() + 4, values.size() - 4), Each(Eq(-1)));
+        comm.bcast(send_recv_buf<resize_to_fit>(values), send_recv_count(4));
+        EXPECT_EQ(values.size(), 4);
+        EXPECT_THAT(values, Each(Eq(comm.root())));
     }
     { // buffers which are too small are resized
         std::vector<int> values(1);
@@ -302,7 +301,7 @@ TEST(BcastTest, vector_resize_to_fit) {
             std::fill(values.begin(), values.end(), comm.rank());
         }
 
-        comm.bcast(send_recv_buf<grow_only>(values), send_recv_count(4));
+        comm.bcast(send_recv_buf<resize_to_fit>(values), send_recv_count(4));
         EXPECT_EQ(values.size(), 4);
         EXPECT_THAT(values, Each(Eq(comm.root())));
     }
