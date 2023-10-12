@@ -336,18 +336,14 @@ TEST(BcastTest, roots_differ) {
 }
 #endif
 
-// #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-// TEST(BcastTest, send_recv_buf_parameter_required_on_root) {
-//     Communicator comm;
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+TEST(BcastTest, send_recv_buf_parameter_required_on_root) {
+    Communicator comm;
 
-//     OwnContainer<int> message;
-//     if (comm.is_root()) {
-//         EXPECT_KASSERT_FAILS(comm.bcast<int>(), "send_recv_buf must be provided on the root rank.");
-//     } else {
-//         comm.bcast<int>();
-//     }
-// }
-// #endif
+    OwnContainer<int> message;
+    EXPECT_KASSERT_FAILS(comm.bcast<int>(), "send_recv_buf must be provided on the root rank.");
+}
+#endif
 
 TEST(BcastTest, bcast_single) {
     // bcast_single is a wrapper around bcast, providing the send_recv_count(1).
@@ -384,16 +380,14 @@ TEST(BcastTest, bcast_single_send_recv_buf_parameter_only_on_root) {
     EXPECT_EQ(value, 0);
 }
 
-// TEST(BcastTest, bcast_single_send_recv_buf_parameter_required_on_root) {
-//     Communicator comm;
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION)
+TEST(BcastTest, bcast_single_send_recv_buf_parameter_required_on_root) {
+    Communicator comm;
 
-//     OwnContainer<int> message;
-//     if (comm.is_root()) {
-//         if (KASSERT_ENABLED(kamping::assert::light)) {
-//             EXPECT_KASSERT_FAILS(comm.bcast_single<int>(), " send_recv_buf must be provided on the root rank.");
-//         }
-//     }
-// }
+    OwnContainer<int> message;
+    EXPECT_KASSERT_FAILS(comm.bcast_single<int>(), "send_recv_buf must be provided on the root rank.");
+}
+#endif
 
 TEST(BcastTest, bcast_single_invalid_parameters) {
     Communicator comm;

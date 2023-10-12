@@ -78,14 +78,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         assert::light_communication
     );
 
-    if (this->is_root(root.rank_signed())) {
-        KASSERT(
-            has_parameter_type<internal::ParameterType::send_recv_buf>(args...),
-            "send_recv_buf must be provided on the root rank.",
-            assert::light
-        );
-    }
-
     using default_send_recv_buf_type =
         decltype(kamping::send_recv_buf(alloc_new<DefaultContainerType<recv_value_type_tparam>>));
     auto&& send_recv_buf =
@@ -125,10 +117,18 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         assert::light_communication
     );
     if constexpr (count_has_to_be_computed) {
-        int count;
+        int       count;
+        int const NO_BUF_ON_ROOT = -1;
         if (this->is_root(root.rank_signed())) {
             count_param.underlying() = asserting_cast<int>(send_recv_buf.size());
             count                    = count_param.get_single_element();
+
+            if constexpr (!has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
+                // if no send_recv_buf is provided on the root rank, we abuse the recv_count parameter to signal that
+                // there is no buffer on the root rank to all other ranks.
+                // This allows us to fail on all ranks if the root rank does not provide a buffer.
+                count = NO_BUF_ON_ROOT;
+            };
         }
         // Transfer the recv_count
         // This error code is unused if KTHROW is removed at compile time.
@@ -141,6 +141,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
             this->mpi_communicator()         // comm
         );
         THROW_IF_MPI_ERROR(err, MPI_Bcast);
+
+        // it is valid to do this check here, because if no send_recv_buf is provided on the root rank, we have
+        // always have deduce counts and get into this branch.
+        KASSERT(count != NO_BUF_ON_ROOT, "send_recv_buf must be provided on the root rank.", assert::light);
 
         // Output the recv count via the output_parameter
         count_param.underlying() = count;
@@ -202,23 +206,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
 
     using namespace kamping::internal;
 
-    // In contrast to bcast(...), the recv_counts is not a possible parameter.
+    // In contrast to bcast(...), send_recv_count is not a possible parameter.
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(send_recv_buf, root));
-
-    // Get the root PE
-    auto&& root = select_parameter_type_or_default<ParameterType::root, internal::RootDataBuffer>(
-        std::tuple(this->root()),
-        args...
-    );
-    KASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.", assert::light);
-
-    if (this->is_root(root.rank_signed())) {
-        KASSERT(
-            has_parameter_type<internal::ParameterType::send_recv_buf>(args...),
-            "send_recv_buf must be provided on the root rank.",
-            assert::light
-        );
-    }
 
     if constexpr (has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
         KASSERT(
@@ -226,6 +215,19 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
             "The send/receive buffer has to be of size 1 on all ranks.",
             assert::light
         );
+    }
+    // Get the root PE
+    auto&& root = select_parameter_type_or_default<ParameterType::root, internal::RootDataBuffer>(
+        std::tuple(this->root()),
+        args...
+    );
+    // we have to do this check with communication, because else the other ranks would already start with the broadcast
+    // and indefinitely wait for the root
+    if constexpr (kassert::internal::assertion_enabled(assert::light_communication)) {
+        bool root_has_buffer = has_parameter_type<internal::ParameterType::send_recv_buf, Args...>();
+        int  err = MPI_Bcast(&root_has_buffer, 1, MPI_CXX_BOOL, root.rank_signed(), this->mpi_communicator());
+        THROW_IF_MPI_ERROR(err, MPI_Bcast);
+        KASSERT(root_has_buffer, "send_recv_buf must be provided on the root rank.", assert::light_communication);
     }
 
     if constexpr (has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
