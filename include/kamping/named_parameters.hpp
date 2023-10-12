@@ -461,7 +461,7 @@ inline auto recv_counts_out() {
     return recv_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<int>);
 }
 
-/// @brief The number of elements to send or receive (depending on whether the process is root or not).
+/// @brief The number of elements to send or receive.
 /// @param count The number of elements.
 /// @return The corresponding parameter object.
 inline auto send_recv_count(int count) {
@@ -473,8 +473,8 @@ inline auto send_recv_count(int count) {
         int>(std::move(count));
 }
 
-/// @brief Output parameter for the number of elements sent or received (depending on whether the process is root or
-/// not). The value will be returned as part of the result of the MPI call.
+/// @brief Output parameter for the number of elements sent or received.
+/// The value will be returned as part of the result of the MPI call.
 /// @return The corresponding parameter object.
 inline auto send_recv_count_out() {
     return internal::make_data_buffer<
@@ -485,8 +485,8 @@ inline auto send_recv_count_out() {
         int>(alloc_new<int>);
 }
 
-/// @brief Output parameter for the number of elements sent or received (depending on whether the process is root or
-/// not). The value will be stored in the provided reference.
+/// @brief Output parameter for the number of elements sent or received.
+/// The value will be stored in the provided reference.
 /// @param count Reference to the location to story the count at.
 /// @return The corresponding parameter object.
 inline auto send_recv_count_out(int& count) {

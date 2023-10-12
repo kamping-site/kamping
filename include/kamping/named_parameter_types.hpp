@@ -49,7 +49,7 @@ enum class ParameterType {
                      ///< buffer containing the send displacements from the involved
                      ///< PEs.
     send_recv_count, ///< Tag used to represent the number of elements to be sent or
-                     ///< received (depending on whether the process is root or not).
+                     ///< received.
     op,              ///< Tag used to represent a reduce operation in a \c MPI call.
     source,          ///< Tag used to represent the sending PE in a \c MPI call.
     destination,     ///< Tag used to represent the receiving PE in a \c MPI call.
