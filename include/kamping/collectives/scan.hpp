@@ -46,9 +46,8 @@
 /// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
 /// storage must be large enough to hold all received elements. This requires a size of at least `send_recv_count`.
 ///
-/// @todo replace with send_recv_count once this has been implemented by niklas
-/// - kamping::send_counts() containing the number of elements to send. This parameter has to be an integer and has to
-/// be the same at each rank.
+/// - kamping::send_recv_count() containing the number of elements to be processed in this operation. This parameter has
+/// to be the same at each rank.
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
