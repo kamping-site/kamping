@@ -47,7 +47,7 @@
 /// storage must be large enough to hold all received elements. This requires a size of at least `send_recv_count`.
 ///
 /// - kamping::send_recv_count() containing the number of elements to be processed in this operation. This parameter has
-/// to be the same at each rank.
+/// to be the same at each rank. If omitted, the size of the send buffer will be used as send_recv_count.
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
