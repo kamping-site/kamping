@@ -13,6 +13,7 @@
 
 #include <set>
 
+#include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -23,6 +24,7 @@
 #include "kamping/parameter_objects.hpp"
 
 using namespace ::kamping;
+using namespace ::testing;
 
 // Note: These invariants tested here only hold when the tests are executed using more than one MPI rank!
 
@@ -173,6 +175,32 @@ TEST_F(ISendTest, send_vector) {
         ASSERT_EQ(msg, (std::vector<int>{42, 3, 8, 7}));
         ASSERT_EQ(status.MPI_SOURCE, comm.root());
         ASSERT_EQ(status.MPI_TAG, 0);
+    }
+}
+
+TEST_F(ISendTest, send_vector_with_explicit_send_count) {
+    Communicator comm;
+    auto         other_rank = (comm.root() + 1) % comm.size();
+    if (comm.is_root()) {
+        std::vector<int> values{42, 3, 8, 7};
+        auto             req = comm.isend(send_buf(values), send_counts(2), destination(other_rank));
+        EXPECT_EQ(isend_counter, 1);
+        EXPECT_EQ(ibsend_counter, 0);
+        EXPECT_EQ(issend_counter, 0);
+        EXPECT_EQ(irsend_counter, 0);
+        req.wait();
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> result(4, -1);
+        MPI_Status       status;
+        MPI_Message      msg;
+        MPI_Mprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &msg, &status);
+        int count;
+        MPI_Get_count(&status, MPI_INT, &count);
+        EXPECT_EQ(count, 2);
+        MPI_Mrecv(result.data(), count, MPI_INT, &msg, MPI_STATUS_IGNORE);
+        EXPECT_THAT(result, ElementsAre(42, 3, -1, -1));
+        EXPECT_EQ(status.MPI_SOURCE, comm.root());
+        EXPECT_EQ(status.MPI_TAG, 0);
     }
 }
 

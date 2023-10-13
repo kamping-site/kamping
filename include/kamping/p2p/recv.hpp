@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -38,7 +38,7 @@
 /// @brief Wrapper for \c MPI_Recv.
 ///
 /// This wraps \c MPI_Recv. This operation performs a standard blocking receive.
-/// If the \ref kamping::send_counts() parameter is not specified, this first performs a probe, followed by a receive of
+/// If the \ref kamping::recv_counts() parameter is not specified, this first performs a probe, followed by a receive of
 /// the probed message with the probed message size.
 ///
 /// The following parameters are optional:
@@ -46,18 +46,17 @@
 /// accommodate the number of elements to receive. Use \c kamping::Span with enough space if you do not want the buffer
 /// to be resized. If no \ref kamping::recv_buf() is provided, the type that should be received has to be passed as a
 /// template parameter to \c recv().
-/// - \ref kamping::tag() recv message with this tag. Defaults to receiving
-/// for an arbitrary tag, i.e. \c tag(tags::any).
-/// - \ref kamping::source() receive a message sent from this source rank.
-/// Defaults to probing for an arbitrary source, i.e. \c source(rank::any).
-/// - \ref kamping::status() or \ref kamping::status_out(). Returns info about
-/// the received message by setting the appropriate fields in the status object
-/// passed by the user. If \ref kamping::status_out() is passed, constructs a
-/// status object which may be retrieved by the user. The status can be ignored by
-/// passing \c kamping::status(kamping::ignore<>). This is the default.
+/// - \ref kamping::tag() recv message with this tag. Defaults to receiving for an arbitrary tag, i.e. \c
+/// tag(tags::any).
+/// - \ref kamping::source() receive a message sent from this source rank. Defaults to probing for an arbitrary source,
+/// i.e. \c source(rank::any).
+/// - \ref kamping::status() or \ref kamping::status_out(). Returns info about the received message by setting the
+/// appropriate fields in the status object passed by the user. If \ref kamping::status_out() is passed, constructs a
+/// status object which may be retrieved by the user. The status can be ignored by passing \c
+/// kamping::status(kamping::ignore<>). This is the default.
 ///
 /// The following parameter is optional, but leads to an additional call to \c MPI_Probe if not present:
-/// - \ref kamping::send_counts() the number of elements to receive. Will be probed before receiving if not given.
+/// - \ref kamping::recv_counts() the number of elements to receive. Will be probed before receiving if not given.
 ///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::recv_buf() is given.
 /// @tparam Args Automatically deducted template parameters.
@@ -121,16 +120,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
             std::tuple(),
             args...
         );
-
-    KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
-    int            source                         = source_param.rank_signed();
-    int            tag                            = tag_param.tag();
-    constexpr bool recv_count_is_output_parameter = internal::has_to_be_computed<decltype(recv_count_param)>;
     static_assert(
         std::remove_reference_t<decltype(recv_count_param)>::is_single_element,
         "recv_counts() parameter must be a single value."
     );
-    if constexpr (recv_count_is_output_parameter) {
+
+    KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
+    int source = source_param.rank_signed();
+    int tag    = tag_param.tag();
+    if constexpr (internal::has_to_be_computed<decltype(recv_count_param)>) {
         Status probe_status      = this->probe(source_param.clone(), tag_param.clone(), status_out()).extract_status();
         source                   = probe_status.source_signed();
         tag                      = probe_status.tag();
@@ -140,17 +138,25 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     // Ensure that we do not touch the recv buffer if MPI_PROC_NULL is passed,
     // because this is what the standard guarantees.
     if constexpr (std::remove_reference_t<decltype(source_param)>::rank_type != internal::RankType::null) {
-        recv_buf.resize(asserting_cast<size_t>(recv_count_param.get_single_element()));
+        auto compute_required_recv_buf_size = [&] {
+            return asserting_cast<size_t>(recv_count_param.get_single_element());
+        };
+        recv_buf.resize_if_requested(compute_required_recv_buf_size);
+        KASSERT(
+            recv_buf.size() >= compute_required_recv_buf_size(),
+            "Recv buffer is not large enough to hold all received elements.",
+            assert::light
+        );
     }
 
     [[maybe_unused]] int err = MPI_Recv(
-        recv_buf.data(),                                            // buf
-        asserting_cast<int>(recv_count_param.get_single_element()), // count
-        mpi_datatype<recv_value_type>(),                            // datatype
-        source,                                                     // source
-        tag,                                                        // tag
-        this->mpi_communicator(),                                   // comm
-        status.native_ptr()                                         // status
+        recv_buf.data(),                       // buf
+        recv_count_param.get_single_element(), // count
+        mpi_datatype<recv_value_type>(),       // datatype
+        source,                                // source
+        tag,                                   // tag
+        this->mpi_communicator(),              // comm
+        status.native_ptr()                    // status
     );
     THROW_IF_MPI_ERROR(err, MPI_Recv);
 
@@ -198,5 +204,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args..
         "KaMPIng cannot allocate a status object for you here, because we have no way of returning it. Pass a "
         "reference to a status object instead."
     );
-    return recv<recv_value_type_tparam>(recv_counts(1), std::forward<Args>(args)...).extract_recv_buffer()[0];
+    return recv(recv_counts(1), recv_buf(alloc_new<recv_value_type_tparam>), std::forward<Args>(args)...)
+        .extract_recv_buffer();
 }

@@ -35,8 +35,11 @@ inline std::vector<MPI_Datatype> registered_mpi_types;
 
 /// @brief Configuration for the behavior of the constructors and destructor of \ref kamping::Environment.
 enum class InitMPIMode {
-    InitFinalize,  ///< Call \c MPI_Init in the constructor of \ref Environment.
-    NoInitFinalize ///< Do not call \c MPI_Init in the constructor of \ref Environment.
+    InitFinalize,           ///< Call \c MPI_Init in the constructor of \ref Environment.
+    NoInitFinalize,         ///< Do not call \c MPI_Init in the constructor of \ref Environment.
+    InitFinalizeIfNecessary ///< Call \c MPI_Init in the constructor of \ref Environment if \c MPI_Init has not been
+                            ///< called before. Call \c MPI_Finalize in the destructor of \ref Environment if \c
+                            ///< MPI_Init was called in the constructor.
 };
 
 /// @brief Wrapper for MPI functions that don't require a communicator. If the template parameter `init_finalize_mode`
@@ -55,6 +58,13 @@ public:
     Environment(int& argc, char**& argv) {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
             init(argc, argv);
+        } else if constexpr (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary) {
+            if (!initialized()) {
+                init(argc, argv);
+                _finalize = true;
+            } else {
+                _finalize = false;
+            }
         }
     }
 
@@ -62,6 +72,13 @@ public:
     Environment() {
         if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
             init();
+        } else if constexpr (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary) {
+            if (!initialized()) {
+                init();
+                _finalize = true;
+            } else {
+                _finalize = false;
+            }
         }
     }
 
@@ -235,26 +252,46 @@ public:
 
     /// @brief Calls MPI_Finalize if finalize() has not been called before. Also frees all registered MPI data types.
     ~Environment() {
-        if constexpr (init_finalize_mode == InitMPIMode::InitFinalize) {
+        if (init_finalize_mode == InitMPIMode::InitFinalize
+            || (init_finalize_mode == InitMPIMode::InitFinalizeIfNecessary && _finalize)) {
             bool is_already_finalized = false;
             try {
                 is_already_finalized = finalized();
             } catch (MpiErrorException&) {
                 // Just kassert. We can't throw exceptions in the destructor.
+
+                // During testing we sometimes force KASSERT to throw exceptions. During the resulting stack unwinding,
+                // code in this desturcor might be executed and thus throwing another exception will result in calling
+                // std::abort(). We're disabling the respective warning here.
+#if defined(__GNUC__) and not defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wterminate"
+#endif
                 KASSERT(false, "MPI_Finalized call failed.");
+#if defined(__GNUC__) and not defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
             }
             if (!is_already_finalized) {
                 free_registered_mpi_types();
-                // Just kassert the error code. We can't throw exceptions in the destructor.
                 [[maybe_unused]] int err = MPI_Finalize();
+                // see above
+#if defined(__GNUC__) and not defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wterminate"
+#endif
                 KASSERT(err == MPI_SUCCESS, "MPI_Finalize call failed.");
+#if defined(__GNUC__) and not defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
             }
         }
     }
 
 private:
+    bool _finalize = false;
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    bool has_buffer_attached = false; ///< Is there currently a attached buffer?
+    bool has_buffer_attached = false; ///< Is there currently an attached buffer?
 #endif
 
 }; // class Environment

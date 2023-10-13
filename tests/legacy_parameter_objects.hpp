@@ -30,8 +30,13 @@ namespace kamping::internal {
 /// @tparam ParameterType parameter type represented by this buffer.
 /// @tparam buffer_type Type of the buffer, i.e., in, out, or in_out.
 template <typename Container, ParameterType parameter_type, BufferType buffer_type>
-using ContainerBasedConstBuffer =
-    DataBuffer<Container, parameter_type, BufferModifiability::constant, BufferOwnership::referencing, buffer_type>;
+using ContainerBasedConstBuffer = DataBuffer<
+    Container,
+    parameter_type,
+    BufferModifiability::constant,
+    BufferOwnership::referencing,
+    buffer_type,
+    BufferResizePolicy::no_resize>;
 
 /// @brief Read-only buffer owning a container type passed to it.
 ///
@@ -42,8 +47,13 @@ using ContainerBasedConstBuffer =
 /// @tparam ParameterType parameter type represented by this buffer.
 /// @tparam buffer_type Type of the buffer, i.e., in, out, or in_out.
 template <typename Container, ParameterType parameter_type, BufferType buffer_type>
-using ContainerBasedOwningBuffer =
-    DataBuffer<Container, parameter_type, BufferModifiability::constant, BufferOwnership::owning, buffer_type>;
+using ContainerBasedOwningBuffer = DataBuffer<
+    Container,
+    parameter_type,
+    BufferModifiability::constant,
+    BufferOwnership::owning,
+    buffer_type,
+    BufferResizePolicy::no_resize>;
 
 /// @brief Buffer based on a container type that has been allocated by the user (but may be resized if the provided
 /// space is not sufficient).
@@ -54,9 +64,15 @@ using ContainerBasedOwningBuffer =
 /// @tparam Container Container on which this buffer is based.
 /// @tparam ParameterType parameter type represented by this buffer.
 /// @tparam buffer_type Type of the buffer, i.e., in, out, or in_out.
-template <typename Container, ParameterType parameter_type, BufferType buffer_type>
-using UserAllocatedContainerBasedBuffer =
-    DataBuffer<Container, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing, buffer_type>;
+/// @tparam resize_policy Policy specifying if (and how) the underlying buffer shall be resized.
+template <typename Container, ParameterType parameter_type, BufferType buffer_type, BufferResizePolicy resize_policy>
+using UserAllocatedContainerBasedBuffer = DataBuffer<
+    Container,
+    parameter_type,
+    BufferModifiability::modifiable,
+    BufferOwnership::referencing,
+    buffer_type,
+    resize_policy>;
 
 /// @brief Buffer based on a container type that will be allocated by the library (using the container's allocator)
 ///
@@ -73,6 +89,7 @@ using LibAllocatedContainerBasedBuffer = DataBuffer<
     BufferModifiability::modifiable,
     BufferOwnership::owning,
     buffer_type,
+    BufferResizePolicy::resize_to_fit,
     BufferAllocation::lib_allocated>;
 
 /// @brief Constant buffer for a single type, i.e., not a container.
@@ -83,8 +100,13 @@ using LibAllocatedContainerBasedBuffer = DataBuffer<
 /// @tparam ParameterType Parameter type represented by this buffer.
 /// @tparam buffer_type Type of the buffer, i.e., in, out, or in_out.
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
-using SingleElementConstBuffer =
-    DataBuffer<DataType, parameter_type, BufferModifiability::constant, BufferOwnership::referencing, buffer_type>;
+using SingleElementConstBuffer = DataBuffer<
+    DataType,
+    parameter_type,
+    BufferModifiability::constant,
+    BufferOwnership::referencing,
+    buffer_type,
+    BufferResizePolicy::no_resize>;
 
 /// @brief Buffer for a single element, which is not a container. The element is owned by the buffer.
 ///
@@ -94,8 +116,13 @@ using SingleElementConstBuffer =
 /// @tparam ParameterType Parameter type represented by this buffer.
 /// @tparam buffer_type Type of the buffer, i.e., in, out, or in_out.
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
-using SingleElementOwningBuffer =
-    DataBuffer<DataType, parameter_type, BufferModifiability::constant, BufferOwnership::owning, buffer_type>;
+using SingleElementOwningBuffer = DataBuffer<
+    DataType,
+    parameter_type,
+    BufferModifiability::constant,
+    BufferOwnership::owning,
+    buffer_type,
+    BufferResizePolicy::no_resize>;
 
 /// @brief Buffer based on a single element type that has been allocated by the library.
 ///
@@ -109,6 +136,7 @@ using LibAllocatedSingleElementBuffer = DataBuffer<
     BufferModifiability::modifiable,
     BufferOwnership::owning,
     buffer_type,
+    BufferResizePolicy::no_resize,
     BufferAllocation::lib_allocated>;
 
 /// @brief Buffer based on a single element type that has been allocated by the user.
@@ -119,7 +147,11 @@ using LibAllocatedSingleElementBuffer = DataBuffer<
 /// @tparam ParameterType parameter type represented by this buffer.
 /// @tparam buffer_type Type of the buffer, i.e., in, out, or in_out.
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
-using SingleElementModifiableBuffer =
-    DataBuffer<DataType, parameter_type, BufferModifiability::modifiable, BufferOwnership::referencing, buffer_type>;
-
+using SingleElementModifiableBuffer = DataBuffer<
+    DataType,
+    parameter_type,
+    BufferModifiability::modifiable,
+    BufferOwnership::referencing,
+    buffer_type,
+    BufferResizePolicy::no_resize>;
 } // namespace kamping::internal

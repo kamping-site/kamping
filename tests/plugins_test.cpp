@@ -19,6 +19,7 @@
 #include "kamping/collectives/allreduce.hpp"
 #include "kamping/collectives/reduce.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/send.hpp"
@@ -96,7 +97,11 @@ TEST(PluginsTest, replace_implementation) {
         std::vector<int> result;
 
         // Calling allreduce on this communicator uses the original allreduce implementation.
-        faultyComm.allreduce(kamping::send_buf(input), kamping::op(kamping::ops::plus<>{}), kamping::recv_buf(result));
+        faultyComm.allreduce(
+            kamping::send_buf(input),
+            kamping::op(kamping::ops::plus<>{}),
+            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+        );
 
         // On all ranks, the result of the reduce operation is available. Even on rank 0 where the alternative allreduce
         // implementation would leave result unchanged.
@@ -121,7 +126,7 @@ TEST(PluginsTest, replace_implementation) {
         faultyComm.template AlternativeAllreducePlugin<decltype(faultyComm)>::allreduce(
             kamping::send_buf(input),
             kamping::op(kamping::ops::plus<>{}),
-            kamping::recv_buf(result)
+            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
         );
 
         // Check result of the alternative allreduce implementation.
@@ -146,7 +151,11 @@ TEST(PluginsTest, replace_implementation) {
     std::vector<int> result;
 
     // Because of the using-declaration in MyComm, this uses the alternative allreduce implementation.
-    comm.allreduce(kamping::send_buf(input), kamping::op(kamping::ops::plus<>{}), kamping::recv_buf(result));
+    comm.allreduce(
+        kamping::send_buf(input),
+        kamping::op(kamping::ops::plus<>{}),
+        kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+    );
 
     // Check result of the alternative allreduce implementation.
     if (comm.rank() == 0) {

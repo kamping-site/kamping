@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -75,6 +75,7 @@ public:
     using const_pointer   = T const*;            ///< The type of a const pointer to a single elements in the span.
     using reference       = T&;                  ///< The type of a reference to a single elements in the span.
     using const_reference = T const&;            ///< The type of a const reference to a single elements in the span.
+    using iterator        = pointer;             ///< The type of an iterator to a single elements in the span.
 
     /// @brief Constructor for a span from a pointer and a size.
     ///
@@ -99,7 +100,7 @@ public:
     /// <code>data() == std::data(range)</code> and <code>size() == std::size()</code>.
     ///
     /// If <code>range</code> does not model a C++20 contiguous range, the
-    /// behavior is undefined. This is analagous to the behavior of \c std::span.
+    /// behavior is undefined. This is analogous to the behavior of \c std::span.
     /// @param range The range.
     /// @tparam Range The range type.
     template <typename Range>
@@ -111,6 +112,20 @@ public:
     /// @return Pointer to the underlying memory.
     constexpr pointer data() const noexcept {
         return _ptr;
+    }
+
+    /// @brief Get iterator pointing to the first element of the span.
+    ///
+    /// @return Iterator pointing to the first element of the span.
+    constexpr iterator begin() const noexcept {
+        return _ptr;
+    }
+
+    /// @brief Get iterator pointing past the last element of the span.
+    ///
+    /// @return Iterator pointing past the last element of the span.
+    constexpr iterator end() const noexcept {
+        return _ptr + size();
     }
 
     /// @brief Returns the number of elements in the Span.

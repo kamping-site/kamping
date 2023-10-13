@@ -56,7 +56,15 @@ struct ResultCategoryNotUsed {};
 /// elements.
 /// @tparam SendDispls Buffer type containing the displacements of the sent
 /// elements.
-template <class StatusObject, class RecvBuf, class RecvCounts, class RecvDispls, class SendCounts, class SendDispls>
+/// @tparam SendRecvCount Buffer type containing the send recv count (only used by bcast).
+template <
+    class StatusObject,
+    class RecvBuf,
+    class RecvCounts,
+    class RecvDispls,
+    class SendCounts,
+    class SendDispls,
+    class SendRecvCount>
 class MPIResult {
 private:
     /// @brief Helper for implementing \ref is_empty. Returns \c true if all template arguments passed are equal to \ref
@@ -67,7 +75,7 @@ private:
 public:
     /// @brief \c true, if the result does not encapsulate any data.
     static constexpr bool is_empty =
-        is_empty_impl<StatusObject, RecvBuf, RecvCounts, RecvDispls, SendCounts, SendDispls>;
+        is_empty_impl<StatusObject, RecvBuf, RecvCounts, RecvDispls, SendCounts, SendDispls, SendRecvCount>;
 
     /// @brief Constructor of MPIResult.
     ///
@@ -75,19 +83,21 @@ public:
     /// owns) the memory for the associated results, the empty placeholder type ResultCategoryNotUsed must be passed to
     /// the constructor instead of an actual buffer object.
     MPIResult(
-        StatusObject&& status,
-        RecvBuf&&      recv_buf,
-        RecvCounts&&   recv_counts,
-        RecvDispls&&   recv_displs,
-        SendCounts&&   send_counts,
-        SendDispls&&   send_displs
+        StatusObject&&  status,
+        RecvBuf&&       recv_buf,
+        RecvCounts&&    recv_counts,
+        RecvDispls&&    recv_displs,
+        SendCounts&&    send_counts,
+        SendDispls&&    send_displs,
+        SendRecvCount&& send_recv_count
     )
         : _status(std::forward<StatusObject>(status)),
           _recv_buffer(std::forward<RecvBuf>(recv_buf)),
           _recv_counts(std::forward<RecvCounts>(recv_counts)),
           _recv_displs(std::forward<RecvDispls>(recv_displs)),
           _send_counts(std::forward<SendCounts>(send_counts)),
-          _send_displs(std::forward<SendDispls>(send_displs)) {}
+          _send_displs(std::forward<SendDispls>(send_displs)),
+          _send_recv_count(std::forward<SendRecvCount>(send_recv_count)) {}
 
     /// @brief Extracts the \c kamping::Status from the MPIResult object.
     ///
@@ -167,6 +177,19 @@ public:
         return _send_displs.extract();
     }
 
+    /// @brief Extracts the \c send_recv_count from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam SendRecvCount_ Template parameter helper only needed to remove this function if SendRecvCount does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the send displacements.
+    template <
+        typename SendRecvCount_                                                  = SendRecvCount,
+        std::enable_if_t<kamping::internal::has_extract_v<SendRecvCount_>, bool> = true>
+    decltype(auto) extract_send_recv_count() {
+        return _send_recv_count.extract();
+    }
+
 private:
     StatusObject _status;    ///< The status object. May be empty if the status is owned by the caller of KaMPIng.
     RecvBuf _recv_buffer;    ///< Buffer object containing the received elements. May be empty if the received elements
@@ -179,6 +202,9 @@ private:
                              ///< written into storage owned by the caller of KaMPIng.
     SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if the send
                              ///< displacements have been written into storage owned by the caller of KaMPIng.
+    SendRecvCount _send_recv_count; ///< Buffer object containing the the combined send recv count (only used by bcast).
+                                    ///< May be empty if the send displacements have been written into storage owned by
+                                    ///< the caller of KaMPIng.
 };
 
 /// @brief Factory creating the MPIResult.
@@ -201,14 +227,14 @@ auto make_mpi_result(Args... args) {
     auto&& recv_buf = [&]() {
         // I'm not sure why return value optimization doesn't apply here, but the moves seem to be necessary.
         if constexpr (internal::has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
-            return std::move(internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...));
+            auto& param = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
+            return std::move(param);
         } else {
-            return std::move(
-                internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(
-                    std::tuple(),
-                    args...
-                )
+            auto&& param = internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(
+                std::tuple(),
+                args...
             );
+            return std::move(param);
         }
     }();
 
@@ -228,6 +254,11 @@ auto make_mpi_result(Args... args) {
         std::tuple(),
         args...
     );
+    auto&& send_recv_count =
+        internal::select_parameter_type_or_default<internal::ParameterType::send_recv_count, default_type>(
+            std::tuple(),
+            args...
+        );
 
     auto&& status = internal::select_parameter_type_or_default<internal::ParameterType::status, default_type>(
         std::tuple(),
@@ -240,7 +271,8 @@ auto make_mpi_result(Args... args) {
         std::move(recv_counts),
         std::move(recv_displs),
         std::move(send_counts),
-        std::move(send_displs)
+        std::move(send_displs),
+        std::move(send_recv_count)
     );
 }
 
