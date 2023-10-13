@@ -50,10 +50,10 @@
 /// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
 /// storage must be large enough to hold all received elements. This requires a size of at least `send_recv_count`.
 ///
-/// - \ref kamping::send_recv_count() containing the number of elements to be processed in this operation. This
+///  - \ref kamping::send_recv_count() containing the number of elements to be processed in this operation. This
 /// parameter has to be the same at each rank. If omitted, the size of the send buffer will be used as send_recv_count.
 ///
-/// - \ref kamping::values_on_rank_0() containing the value(s) that is/are returned in the \c recv_buf of rank 0. \c
+///  - \ref kamping::values_on_rank_0() containing the value(s) that is/are returned in the \c recv_buf of rank 0. \c
 ///  values_on_rank_0 must be a container of the same size as \c recv_buf or a single value (which will be reused for
 ///  all elements of the \c recv_buf).
 ///
