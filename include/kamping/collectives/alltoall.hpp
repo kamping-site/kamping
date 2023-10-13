@@ -41,17 +41,17 @@
 /// rank receives the same number of elements from this buffer.
 ///
 /// The following parameters are optional:
-/// - kamping::send_counts() specifying how many elements are sent. This parameter has to be an integer. If
+/// - kamping::send_count() specifying how many elements are sent. If
 /// omitted, the size of send buffer divided by communicator size is used.
 ///
-/// - kamping::recv_counts() specifying how many elements are received. This parameter has to be an integer. If
+/// - kamping::recv_count() specifying how many elements are received. If
 /// omitted, the value of send_counts will be used.
 ///
 /// - kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
 /// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
 /// received from rank 1, and so on. The buffer will be resized according to the buffer's
 /// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements. This requires a size of at least `recv_counts *
+/// storage must be large enough to hold all received elements. This requires a size of at least `recv_count *
 /// communicator size`.
 ///
 /// @tparam Args Automatically deducted template parameters.
@@ -63,7 +63,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf),
-        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_counts, recv_counts)
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_count, recv_count)
     );
 
     auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
@@ -83,31 +83,23 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
     static_assert(!std::is_const_v<recv_value_type>, "The receive buffer must not have a const value_type.");
 
     // Get the send counts
-    using default_send_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
+    using default_send_count_type = decltype(kamping::send_count_out());
     auto&& send_count =
-        internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
+        internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
         );
-    static_assert(
-        std::remove_reference_t<decltype(send_count)>::is_single_element,
-        "send_counts() parameter must be a single value."
-    );
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size() / size());
     }
     // Get the recv counts
-    using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
+    using default_recv_count_type = decltype(kamping::recv_count_out());
     auto&& recv_count =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
             std::tuple(),
             args...
         );
-    static_assert(
-        std::remove_reference_t<decltype(recv_count)>::is_single_element,
-        "recv_counts() parameter must be a single value."
-    );
 
     constexpr bool do_compute_recv_count = internal::has_to_be_computed<decltype(recv_count)>;
     if constexpr (do_compute_recv_count) {

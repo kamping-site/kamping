@@ -59,6 +59,8 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_types_match) {
         internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed,
+        internal::ResultCategoryNotUsed,
+        internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed>;
     auto request_obj = request();
     auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
@@ -113,6 +115,8 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_extract_works) {
         internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed,
+        internal::ResultCategoryNotUsed,
+        internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed>;
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
@@ -156,6 +160,8 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_extract_works) {
         internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed,
+        internal::ResultCategoryNotUsed,
+        internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed>;
     auto request_obj        = request();
     auto nonblocking_result = kamping::make_nonblocking_result(std::move(request_obj));
@@ -182,6 +188,8 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_extract_works) {
     using expected_result_type = MPIResult<
         internal::ResultCategoryNotUsed,
         decltype(recv_buf_obj),
+        internal::ResultCategoryNotUsed,
+        internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed,
         internal::ResultCategoryNotUsed,

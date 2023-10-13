@@ -371,6 +371,42 @@ inline auto send_counts_out() {
     return send_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<int>);
 }
 
+/// @brief The number of elements to send.
+/// @param count The number of elements.
+/// @return The corresponding parameter object.
+inline auto send_count(int count) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_count,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer,
+        BufferResizePolicy::no_resize,
+        int>(std::move(count));
+}
+
+/// @brief Output parameter for the number of elements sent.
+/// The value will be returned as part of the result of the MPI call.
+/// @return The corresponding parameter object.
+inline auto send_count_out() {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(alloc_new<int>);
+}
+
+/// @brief Output parameter for the number of elements sent.
+/// The value will be stored in the provided reference.
+/// @param count Reference to the location to story the count at.
+/// @return The corresponding parameter object.
+inline auto send_count_out(int& count) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(count);
+}
 /// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must
 /// contain the recv counts from each relevant PE.
 ///
@@ -459,6 +495,43 @@ auto recv_counts_out(AllocNewAutoT<Data> container) {
 /// @return Wrapper for the recv counts that can be retrieved as structured binding.
 inline auto recv_counts_out() {
     return recv_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<int>);
+}
+
+/// @brief The number of elements to received.
+/// @param count The number of elements.
+/// @return The corresponding parameter object.
+inline auto recv_count(int count) {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_count,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer,
+        BufferResizePolicy::no_resize,
+        int>(std::move(count));
+}
+
+/// @brief Output parameter for the number of elements received.
+/// The value will be returned as part of the result of the MPI call.
+/// @return The corresponding parameter object.
+inline auto recv_count_out() {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(alloc_new<int>);
+}
+
+/// @brief Output parameter for the number of elements received.
+/// The value will be stored in the provided reference.
+/// @param count Reference to the location to story the count at.
+/// @return The corresponding parameter object.
+inline auto recv_count_out(int& count) {
+    return internal::make_data_buffer<
+        internal::ParameterType::recv_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(count);
 }
 
 /// @brief The number of elements to send or receive.

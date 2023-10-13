@@ -38,8 +38,8 @@ TEST(AlltoallTest, single_element_no_receive_buffer) {
     auto mpi_result = comm.alltoall(send_buf(input));
 
     auto recv_buffer = mpi_result.extract_recv_buffer();
-    auto send_count  = mpi_result.extract_send_counts();
-    auto recv_count  = mpi_result.extract_recv_counts();
+    auto send_count  = mpi_result.extract_send_count();
+    auto recv_count  = mpi_result.extract_recv_count();
 
     EXPECT_EQ(send_count, 1);
     EXPECT_EQ(recv_count, 1);
@@ -57,8 +57,8 @@ TEST(AlltoallTest, single_element_with_receive_buffer) {
     std::vector<int> result;
 
     auto mpi_result = comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_to_fit>(result));
-    auto send_count = mpi_result.extract_send_counts();
-    auto recv_count = mpi_result.extract_recv_counts();
+    auto send_count = mpi_result.extract_send_count();
+    auto recv_count = mpi_result.extract_recv_count();
 
     EXPECT_EQ(send_count, 1);
     EXPECT_EQ(recv_count, 1);
@@ -153,14 +153,14 @@ TEST(AlltoallTest, given_recv_buffer_is_smaller_than_required) {
     }
 }
 
-TEST(AlltoallTest, single_element_with_send_counts) {
+TEST(AlltoallTest, single_element_with_send_count) {
     Communicator comm;
 
     std::vector<int> input(comm.size(), comm.rank_signed());
 
-    auto             mpi_result = comm.alltoall(send_buf(input), send_counts(1));
+    auto             mpi_result = comm.alltoall(send_buf(input), send_count(1));
     std::vector<int> recv_buf   = mpi_result.extract_recv_buffer();
-    int              recv_count = mpi_result.extract_recv_counts();
+    int              recv_count = mpi_result.extract_recv_count();
 
     EXPECT_EQ(recv_count, 1);
     EXPECT_EQ(recv_buf.size(), comm.size());
@@ -177,10 +177,10 @@ TEST(AlltoallTest, single_element_with_send_and_recv_counts_out) {
 
     // the values in send_counts_out, recv_counts_out should be ignored as they merely provide "storage" for the values
     // computed by kamping. (A mechanism which is not that useful for plain integers)
-    auto mpi_result = comm.alltoall(send_buf(input), send_counts_out(alloc_new<int>), recv_counts_out(alloc_new<int>));
+    auto             mpi_result = comm.alltoall(send_buf(input), send_count_out(), recv_count_out());
     std::vector<int> recv_buf   = mpi_result.extract_recv_buffer();
-    int              send_count = mpi_result.extract_send_counts();
-    int              recv_count = mpi_result.extract_recv_counts();
+    int              send_count = mpi_result.extract_send_count();
+    int              recv_count = mpi_result.extract_recv_count();
 
     EXPECT_EQ(recv_buf.size(), comm.size());
 
@@ -204,8 +204,8 @@ TEST(AlltoallTest, multiple_elements) {
     std::vector<int> result;
     auto             mpi_result = comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_to_fit>(result));
 
-    EXPECT_EQ(mpi_result.extract_send_counts(), 4);
-    EXPECT_EQ(mpi_result.extract_recv_counts(), 4);
+    EXPECT_EQ(mpi_result.extract_send_count(), 4);
+    EXPECT_EQ(mpi_result.extract_recv_count(), 4);
 
     EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
 
@@ -227,11 +227,11 @@ TEST(AlltoallTest, given_send_count_overrides_deduced_send_count) {
     std::vector<int> result;
     auto             mpi_result = comm.alltoall(
         send_buf(input),
-        send_counts(num_elements_per_processor_pair),
+        send_count(num_elements_per_processor_pair),
         recv_buf<BufferResizePolicy::resize_to_fit>(result)
     );
 
-    EXPECT_EQ(mpi_result.extract_recv_counts(), num_elements_per_processor_pair);
+    EXPECT_EQ(mpi_result.extract_recv_count(), num_elements_per_processor_pair);
 
     EXPECT_EQ(result.size(), comm.size() * num_elements_per_processor_pair);
 
@@ -287,10 +287,10 @@ TEST(AlltoallTest, given_recv_buffer_with_no_resize_policy) {
     std::vector<int> recv_counts_buffer;
     std::vector<int> recv_displs_buffer;
     // test kassert for sufficient size of recv buffer
-    EXPECT_KASSERT_FAILS(comm.alltoall(send_buf(input), send_counts(1), recv_buf<no_resize>(recv_buffer)), "");
+    EXPECT_KASSERT_FAILS(comm.alltoall(send_buf(input), send_count(1), recv_buf<no_resize>(recv_buffer)), "");
     // same test but this time without explicit no_resize for the recv buffer as this is the default resize
     // policy
-    EXPECT_KASSERT_FAILS(comm.alltoall(send_buf(input), send_counts(1), recv_buf(recv_buffer)), "");
+    EXPECT_KASSERT_FAILS(comm.alltoall(send_buf(input), send_count(1), recv_buf(recv_buffer)), "");
 }
 #endif
 
