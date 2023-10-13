@@ -11,6 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
 #include <numeric>
 
 #include <gmock/gmock-matchers.h>
