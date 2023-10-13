@@ -1,7 +1,7 @@
 
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -37,12 +37,17 @@
 /// according to the function op) of the values in the sendbufs of processes with ranks \f$0, ..., i\f$ (inclusive).
 ///
 /// The following parameters are required:
-/// - \ref kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be the
+/// - kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be the
 ///  same size at each rank.
-/// - \ref kamping::op() wrapping the operation to apply to the input.
+/// - kamping::op() wrapping the operation to apply to the input.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::recv_buf() containing a buffer for the output.
+/// - kamping::recv_buf() containing a buffer for the output. The buffer will be resized according to the buffer's
+/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
+/// storage must be large enough to hold all received elements. This requires a size of at least `send_recv_count`.
+///
+/// - kamping::send_recv_count() containing the number of elements to be processed in this operation. This parameter has
+/// to be the same at each rank. If omitted, the size of the send buffer will be used as send_recv_count.
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
@@ -51,17 +56,16 @@ template <template <typename...> typename DefaultContainerType, template <typena
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args) const {
     using namespace kamping::internal;
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(recv_buf));
+    KAMPING_CHECK_PARAMETERS(
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(send_buf, op),
+        KAMPING_OPTIONAL_PARAMETERS(send_recv_count, recv_buf)
+    );
 
     // Get the send buffer and deduce the send and recv value types.
     auto const& send_buf          = select_parameter_type<ParameterType::send_buf>(args...).get();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
-    KASSERT(
-        is_same_on_all_ranks(send_buf.size()),
-        "The send buffer has to be the same size on all ranks.",
-        assert::light_communication
-    );
 
     // Deduce the recv buffer type and get (if provided) the recv buffer or allocate one (if not provided).
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
@@ -73,23 +77,42 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
         "Types of send and receive buffers do not match."
     );
 
+    // Get the send_recv count
+    using default_send_recv_count_type = decltype(kamping::send_recv_count_out());
+    auto&& send_recv_count             = internal::select_parameter_type_or_default<
+        internal::ParameterType::send_recv_count,
+        default_send_recv_count_type>(std::tuple(), args...);
+
+    constexpr bool do_compute_send_recv_count = internal::has_to_be_computed<decltype(send_recv_count)>;
+    if constexpr (do_compute_send_recv_count) {
+        send_recv_count.underlying() = asserting_cast<int>(send_buf.size());
+    }
+
+    KASSERT(
+        is_same_on_all_ranks(send_recv_count.get_single_element()),
+        "The send_recv_count has to be the same on all ranks.",
+        assert::light_communication
+    );
+
     // Get the operation used for the reduction. The signature of the provided function is checked while building.
     auto& operation_param = select_parameter_type<ParameterType::op>(args...);
     auto  operation       = operation_param.template build_operation<send_value_type>();
 
-    // Resize the recv buffer to the same size as the send buffer; get the pointer needed for the MPI call.
-    send_value_type* recv_buf_ptr = nullptr;
-    recv_buf.resize(send_buf.size());
-    recv_buf_ptr = recv_buf.data();
-    KASSERT(recv_buf_ptr != nullptr, assert::light);
-    KASSERT(recv_buf.size() == send_buf.size(), assert::light);
-    // send_buf.size() is equal on all ranks, as checked above.
+    auto compute_required_recv_buf_size = [&]() {
+        return asserting_cast<size_t>(send_recv_count.get_single_element());
+    };
+    recv_buf.resize_if_requested(compute_required_recv_buf_size);
+    KASSERT(
+        recv_buf.size() >= compute_required_recv_buf_size(),
+        "Recv buffer is not large enough to hold all received elements.",
+        assert::light
+    );
 
     // Perform the MPI_Scan call and return.
     [[maybe_unused]] int err = MPI_Scan(
         send_buf.data(),                      // sendbuf
-        recv_buf_ptr,                         // recvbuf,
-        asserting_cast<int>(send_buf.size()), // count
+        recv_buf.data(),                      // recvbuf,
+        send_recv_count.get_single_element(), // count
         mpi_datatype<send_value_type>(),      // datatype,
         operation.op(),                       // op
         mpi_communicator()                    // communicator
@@ -108,9 +131,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 /// i\f$ (inclusive).
 ///
 /// The following parameters are required:
-/// - \ref kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be of
+/// - kamping::send_buf() containing the data for which to perform the scan. This buffer has to be of
 /// size 1 on each rank.
-/// - \ref kamping::op() wrapping the operation to apply to the input.
+/// - kamping::op() wrapping the operation to apply to the input.
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
