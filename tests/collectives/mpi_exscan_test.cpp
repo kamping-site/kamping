@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -13,6 +13,7 @@
 
 #include "../test_assertions.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
@@ -88,11 +89,90 @@ TEST(ExscanTest, with_receive_buffer) {
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result));
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {((comm.rank_signed() - 1) * comm.rank_signed()) / 2, comm.rank_signed() * 42};
     EXPECT_EQ(result, expected_result);
+}
+
+TEST(ExscanTest, with_receive_buffer_and_explicit_send_recv_count) {
+    Communicator comm;
+
+    std::vector<int> input = {1, 2};
+    std::vector<int> result;
+
+    comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), send_recv_count(1), recv_buf<resize_to_fit>(result));
+    EXPECT_THAT(result, ElementsAre(comm.rank_signed()));
+}
+
+TEST(ExscanTest, with_receive_buffer_send_recv_count_out) {
+    // tests that send_recv_count_out is not used to determine the number of elements to send.
+    Communicator comm;
+
+    std::vector<int> input = {1};
+    std::vector<int> result;
+    int              send_recv_count_value = -1;
+
+    comm.exscan(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        send_recv_count_out(send_recv_count_value),
+        recv_buf<resize_to_fit>(result)
+    );
+    EXPECT_EQ(send_recv_count_value, 1);
+    EXPECT_THAT(result, ElementsAre(comm.rank_signed()));
+}
+
+TEST(ExscanTest, recv_buffer_is_given_and_larger_than_required) {
+    Communicator comm;
+
+    std::vector<int> input = {1};
+
+    {
+        std::vector<int> result(2, -1);
+        // recv buffer will be resizes to size 1 as policy is resize_to_fit
+        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result));
+        EXPECT_THAT(result, ElementsAre(comm.rank_signed()));
+    }
+    {
+        std::vector<int> result(2, -1);
+        // recv buffer will not be resizes as it large enough and resize policy is grow_only
+        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<grow_only>(result));
+        EXPECT_THAT(result, ElementsAre(comm.rank_signed(), -1));
+    }
+    {
+        std::vector<int> result(2, -1);
+        // recv buffer will not be resizes as resize policy is no resize
+        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<no_resize>(result));
+        EXPECT_THAT(result, ElementsAre(comm.rank_signed(), -1));
+    }
+}
+
+TEST(ExscanTest, recv_buffer_is_given_and_smaller_than_required) {
+    Communicator comm;
+
+    const std::vector<int> input = {1};
+
+    {
+        std::vector<int> result;
+        // recv buffer will be resizes to size 1 as policy is resize_to_fit
+        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result));
+        EXPECT_THAT(result, ElementsAre(comm.rank_signed()));
+    }
+    {
+        std::vector<int> result;
+        // recv buffer will be resizes to size 1 as policy is grow_only and given underlying buffer is too small
+        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<grow_only>(result));
+        EXPECT_THAT(result, ElementsAre(comm.rank_signed()));
+    }
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    {
+        std::vector<int> result;
+        // recv buffer will not be resizes as resize policy is no resize
+        EXPECT_KASSERT_FAILS(comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<no_resize>(result)), "");
+    }
+#endif
 }
 
 TEST(ExscanTest, builtin_op_on_non_builtin_type) {
@@ -160,6 +240,52 @@ TEST(ExscanTest, non_identity_values_on_rank_0) {
         expected_result.push_back(0);
     }
     EXPECT_EQ(result, expected_result);
+}
+
+TEST(ExscanTest, non_identity_value_on_rank_0_with_given_recv_buffer_bigger_than_required) {
+    // ensure that the postprocessing on rank 0 does not rely on the size of the recv buffer but the (auto-deduced)
+    // send_recv_count
+    Communicator comm;
+
+    std::vector<int> input = {0};
+    std::vector<int> result{-1, -1}; // bigger than required
+    int const        default_value_on_rank_0 = 1337;
+
+    comm.exscan(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        values_on_rank_0(default_value_on_rank_0),
+        recv_buf<no_resize>(result)
+    );
+    if (comm.rank() == 0) {
+        EXPECT_THAT(result, ElementsAre(default_value_on_rank_0, -1));
+    } else {
+        EXPECT_THAT(result, ElementsAre(0, -1));
+    }
+}
+
+TEST(ExscanTest, non_identity_values_on_rank_0_with_given_recv_buffer_bigger_than_required) {
+    // ensure that the postprocessing on rank 0 does not rely on the size of the recv buffer but the (auto-deduced)
+    // send_recv_count
+    Communicator comm;
+
+    const std::vector<int> input = {0, 0};
+    std::vector<int>       result{-1, -1, -1, -1}; // bigger than required
+    int const              default_value            = 1337;
+    const std::vector<int> default_values_on_rank_0 = {default_value, default_value};
+
+    comm.exscan(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        values_on_rank_0(default_values_on_rank_0),
+        recv_buf<no_resize>(result)
+    );
+
+    if (comm.rank() == 0) {
+        EXPECT_THAT(result, ElementsAre(default_value, default_value, -1, -1));
+    } else {
+        EXPECT_THAT(result, ElementsAre(0, 0, -1, -1));
+    }
 }
 
 int add_plus_42_function(int const& lhs, int const& rhs) {
@@ -286,5 +412,24 @@ TEST(ExscanTest, default_container_type) {
     OwnContainer<int> result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
 }
 
-/// @todo Once our helper macros support checking for KASSERTs which are thrown on some ranks only, write a test for
-/// and values_on_rank_0 size which is not 1 and not equal to the length of recv_buf.
+TEST(ExscanTest, given_values_on_rank_0_have_wrong_size) {
+    Communicator comm;
+
+    std::vector<int> input = {0, 0};
+    std::vector<int> result{-1, -1};
+
+    // test kassert that ensure that size of values_on_rank_0 buffer is either 1 or matches the send_recv_count
+    if (comm.rank() == 0) {
+        EXPECT_KASSERT_FAILS(
+            comm.exscan(
+                send_buf(input),
+                op(kamping::ops::plus<>{}),
+                values_on_rank_0({-1, -1, -1, -1}),
+                recv_buf<no_resize>(result)
+            ),
+            ""
+        );
+    } else {
+        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<no_resize>(result));
+    }
+}
