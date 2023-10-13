@@ -418,6 +418,7 @@ TEST(ExscanTest, given_values_on_rank_0_have_wrong_size) {
     std::vector<int> input = {0, 0};
     std::vector<int> result{-1, -1};
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     // test kassert that ensure that size of values_on_rank_0 buffer is either 1 or matches the send_recv_count
     if (comm.rank() == 0) {
         EXPECT_KASSERT_FAILS(
@@ -432,4 +433,5 @@ TEST(ExscanTest, given_values_on_rank_0_have_wrong_size) {
     } else {
         comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<no_resize>(result));
     }
+#endif
 }
