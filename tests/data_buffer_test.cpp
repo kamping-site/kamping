@@ -11,6 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "test_assertions.hpp"
+
 #include <array>
 #include <deque>
 #include <type_traits>
@@ -23,6 +25,7 @@
 #include "kamping/data_buffer.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "kamping/result.hpp"
 #include "legacy_parameter_objects.hpp"
 
 using namespace ::kamping;
@@ -31,7 +34,7 @@ using namespace ::kamping::internal;
 TEST(HasDataMemberTest, has_data_member_basics) {
     EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<int>>);
     EXPECT_TRUE(kamping::internal::has_data_member_v<std::vector<double>>);
-    EXPECT_TRUE((kamping::internal::has_data_member_v<std::vector<double, testing::CustomAllocator<double>>>));
+    EXPECT_TRUE((kamping::internal::has_data_member_v<std::vector<double, ::testing::CustomAllocator<double>>>));
     EXPECT_TRUE((kamping::internal::has_data_member_v<std::string>));
     EXPECT_TRUE((kamping::internal::has_data_member_v<std::array<int, 42>>));
 
@@ -47,11 +50,10 @@ TEST(IsSpecializationTest, is_specialization_basics) {
     EXPECT_TRUE((kamping::internal::is_specialization<std::vector<int>, std::vector>::value));
     EXPECT_TRUE((kamping::internal::is_specialization<std::vector<bool>, std::vector>::value));
     EXPECT_TRUE(
-        (kamping::internal::is_specialization<std::vector<int, testing::CustomAllocator<int>>, std::vector>::value)
+        (kamping::internal::is_specialization<std::vector<int, ::testing::CustomAllocator<int>>, std::vector>::value)
     );
-    EXPECT_TRUE((
-        kamping::internal::is_specialization<std::vector<double, testing::CustomAllocator<double>>, std::vector>::value
-    ));
+    EXPECT_TRUE((kamping::internal::
+                     is_specialization<std::vector<double, ::testing::CustomAllocator<double>>, std::vector>::value));
     EXPECT_TRUE((kamping::internal::is_specialization<std::deque<int>, std::deque>::value));
 
     EXPECT_FALSE((kamping::internal::is_specialization<std::array<int, 2>, std::vector>::value));
@@ -71,12 +73,12 @@ TEST(HasValueTypeTest, has_value_type_basics) {
 
 TEST(IsVectorBoolTest, is_vector_bool_basics) {
     EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>>);
-    EXPECT_TRUE((kamping::internal::is_vector_bool_v<std::vector<bool, testing::CustomAllocator<bool>>>));
-    EXPECT_TRUE(kamping::internal::is_vector_bool_v<const std::vector<bool>>);
+    EXPECT_TRUE((kamping::internal::is_vector_bool_v<std::vector<bool, ::testing::CustomAllocator<bool>>>));
+    EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool> const>);
     EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool>&>);
     EXPECT_TRUE(kamping::internal::is_vector_bool_v<std::vector<bool> const&>);
     EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>>);
-    EXPECT_FALSE((kamping::internal::is_vector_bool_v<std::vector<int, testing::CustomAllocator<int>>>));
+    EXPECT_FALSE((kamping::internal::is_vector_bool_v<std::vector<int, ::testing::CustomAllocator<int>>>));
     EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int>&>);
     EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<int> const&>);
     EXPECT_FALSE(kamping::internal::is_vector_bool_v<std::vector<kamping::kabool>>);
@@ -130,12 +132,12 @@ TEST(ContainerBasedConstBufferTest, get_basics) {
 }
 
 TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
-    std::string                                                         str = "I am underlying storage";
-    testing::OwnContainer<int>                                          own_container;
-    constexpr ParameterType                                             ptype = ParameterType::send_buf;
-    constexpr BufferType                                                btype = BufferType::in_buffer;
-    ContainerBasedConstBuffer<std::string, ptype, btype>                buffer_based_on_string(str);
-    ContainerBasedConstBuffer<testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container(own_container);
+    std::string                                                           str = "I am underlying storage";
+    ::testing::OwnContainer<int>                                          own_container;
+    constexpr ParameterType                                               ptype = ParameterType::send_buf;
+    constexpr BufferType                                                  btype = BufferType::in_buffer;
+    ContainerBasedConstBuffer<std::string, ptype, btype>                  buffer_based_on_string(str);
+    ContainerBasedConstBuffer<::testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container(own_container);
 
     EXPECT_EQ(buffer_based_on_string.get().size(), str.size());
     EXPECT_EQ(buffer_based_on_string.get().data(), str.data());
@@ -147,7 +149,7 @@ TEST(ContainerBasedConstBufferTest, get_containers_other_than_vector) {
 TEST(ContainerBasedConstBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType                                   ptype = ParameterType::send_counts;
     constexpr BufferType                                      btype = BufferType::in_buffer;
-    const std::vector<int>                                    container{1, 2, 3};
+    std::vector<int> const                                    container{1, 2, 3};
     ContainerBasedConstBuffer<std::vector<int>, ptype, btype> buffer1(container);
     ContainerBasedConstBuffer<std::vector<int>, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(buffer2.get().size(), container.size());
@@ -221,10 +223,10 @@ TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
         EXPECT_EQ(underlying_container, expected);
     }
     // own container
-    testing::OwnContainer<int> own_container{1, 2, 3};
+    ::testing::OwnContainer<int> own_container{1, 2, 3};
     EXPECT_EQ(own_container.copy_count(), 0);
 
-    ContainerBasedOwningBuffer<testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container(
+    ContainerBasedOwningBuffer<::testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container(
         std::move(own_container)
     );
     EXPECT_EQ(own_container.copy_count(), 0);
@@ -236,19 +238,19 @@ TEST(ContainerBasedOwningBufferTest, get_containers_other_than_vector) {
     EXPECT_EQ(buffer_based_on_own_container.get().data()[2], 3);
     {
         auto const& underlying_container = buffer_based_on_own_container.underlying();
-        EXPECT_EQ(underlying_container, (testing::OwnContainer<int>{1, 2, 3}));
+        EXPECT_EQ(underlying_container, (::testing::OwnContainer<int>{1, 2, 3}));
     }
 }
 
 TEST(ContainerBasedOwningBufferTest, move_constructor_is_enabled) {
     constexpr ParameterType                                    ptype = ParameterType::send_counts;
     constexpr BufferType                                       btype = BufferType::in_buffer;
-    const std::vector<int>                                     container{1, 2, 3};
+    std::vector<int> const                                     container{1, 2, 3};
     ContainerBasedOwningBuffer<std::vector<int>, ptype, btype> buffer1({1, 2, 3});
     ContainerBasedOwningBuffer<std::vector<int>, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(buffer2.get().size(), 3);
 
-    const std::vector<int> expected_container{1, 2, 3};
+    std::vector<int> const expected_container{1, 2, 3};
     EXPECT_TRUE(std::equal(expected_container.begin(), expected_container.end(), buffer2.get().data()));
 }
 
@@ -283,12 +285,12 @@ TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_basics) {
 }
 
 TEST(UserAllocatedContainerBasedBufferTest, resize_and_data_containers_other_than_vector) {
-    testing::OwnContainer<int> own_container;
+    ::testing::OwnContainer<int> own_container;
 
     constexpr ParameterType      ptype         = ParameterType::recv_counts;
     constexpr BufferType         btype         = BufferType::in_buffer;
     constexpr BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
-    UserAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype, resize_policy>
+    UserAllocatedContainerBasedBuffer<::testing::OwnContainer<int>, ptype, btype, resize_policy>
         buffer_based_on_own_container(own_container);
 
     auto resize_write_check = [&](size_t requested_size) {
@@ -337,7 +339,7 @@ TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
     };
     resize_write_check(10);
     resize_write_check(50);
-    const size_t last_resize = 9;
+    size_t const last_resize = 9;
     resize_write_check(last_resize);
 
     // The buffer will be in an invalid state after extraction; that's why we have to access these attributes
@@ -357,9 +359,9 @@ TEST(LibAllocatedContainerBasedBufferTest, resize_and_data_extract_basics) {
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, extract_containers_other_than_vector) {
-    constexpr ParameterType                                                    ptype = ParameterType::recv_counts;
-    constexpr BufferType                                                       btype = BufferType::in_buffer;
-    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container;
+    constexpr ParameterType                                                      ptype = ParameterType::recv_counts;
+    constexpr BufferType                                                         btype = BufferType::in_buffer;
+    LibAllocatedContainerBasedBuffer<::testing::OwnContainer<int>, ptype, btype> buffer_based_on_own_container;
 
     auto resize_write_check = [&](size_t requested_size) {
         buffer_based_on_own_container.resize(requested_size);
@@ -370,27 +372,27 @@ TEST(LibAllocatedContainerBasedBufferTest, extract_containers_other_than_vector)
     };
     resize_write_check(10);
     resize_write_check(50);
-    const size_t last_resize = 9;
+    size_t const last_resize = 9;
     resize_write_check(last_resize);
-    testing::OwnContainer<int> underlying_container = buffer_based_on_own_container.extract();
+    ::testing::OwnContainer<int> underlying_container = buffer_based_on_own_container.extract();
     for (size_t i = 0; i < last_resize; ++i) {
         EXPECT_EQ(underlying_container[i], static_cast<int>(last_resize - i));
     }
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, move_ctor_assignment_operator_is_enabled) {
-    constexpr ParameterType                                                    ptype = ParameterType::recv_counts;
-    constexpr BufferType                                                       btype = BufferType::in_buffer;
-    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer1;
-    const size_t                                                               size = 3;
+    constexpr ParameterType                                                      ptype = ParameterType::recv_counts;
+    constexpr BufferType                                                         btype = BufferType::in_buffer;
+    LibAllocatedContainerBasedBuffer<::testing::OwnContainer<int>, ptype, btype> buffer1;
+    size_t const                                                                 size = 3;
     buffer1.resize(size);
     buffer1.get().data()[0] = 0;
     buffer1.get().data()[1] = 1;
     buffer1.get().data()[2] = 2;
     EXPECT_EQ(decltype(buffer1)::parameter_type, ptype);
-    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer2(std::move(buffer1));
+    LibAllocatedContainerBasedBuffer<::testing::OwnContainer<int>, ptype, btype> buffer2(std::move(buffer1));
     EXPECT_EQ(decltype(buffer2)::parameter_type, ptype);
-    LibAllocatedContainerBasedBuffer<testing::OwnContainer<int>, ptype, btype> buffer3;
+    LibAllocatedContainerBasedBuffer<::testing::OwnContainer<int>, ptype, btype> buffer3;
     buffer3 = std::move(buffer2);
     EXPECT_EQ(buffer3.get().size(), 3);
     EXPECT_EQ(buffer3.get().data()[0], 0);
@@ -487,13 +489,13 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.size(), 1);
     int_buffer.resize(1);
     EXPECT_EQ(int_buffer.size(), 1);
-#if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
-    EXPECT_DEATH(
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KASSERT_FAILS(
         int_buffer.resize(0),
         "Cannot resize a single element buffer to hold zero or more than one element. Single "
         "element buffers always hold exactly one element."
     );
-    EXPECT_DEATH(
+    EXPECT_KASSERT_FAILS(
         int_buffer.resize(2),
         "Cannot resize a single element buffer to hold zero or more than one element. Single "
         "element buffers always hold exactly one element."
@@ -540,13 +542,14 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
     EXPECT_EQ(int_buffer.size(), 1);
     int_buffer.resize(1);
     EXPECT_EQ(int_buffer.size(), 1);
-#if KASSERT_ASSERTION_LEVEL >= KAMPING_ASSERTION_LEVEL_NORMAL
-    EXPECT_DEATH(
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KASSERT_FAILS(
         int_buffer.resize(0),
         "Cannot resize a single element buffer to hold zero or more than one element. Single "
         "element buffers always hold exactly one element."
     );
-    EXPECT_DEATH(
+    EXPECT_KASSERT_FAILS(
         int_buffer.resize(2),
         "Cannot resize a single element buffer to hold zero or more than one element. Single "
         "element buffers always hold exactly one element."
@@ -639,7 +642,7 @@ TEST(DataBufferTest, resize_if_requested_with_resize_to_fit) {
     constexpr ParameterType ptype = ParameterType::send_counts;
     constexpr BufferType    btype = BufferType::in_buffer;
 
-    const size_t required_size = 42;
+    size_t const required_size = 42;
     int          call_counter  = 0;
     auto         size_function = [&call_counter]() {
         ++call_counter;
@@ -669,7 +672,7 @@ TEST(DataBufferTest, resize_if_requested_with_grow_only) {
     constexpr ParameterType ptype = ParameterType::send_counts;
     constexpr BufferType    btype = BufferType::in_buffer;
 
-    const size_t required_size = 42;
+    size_t const required_size = 42;
     int          call_counter  = 0;
     auto         size_function = [&call_counter]() {
         ++call_counter;
@@ -697,7 +700,7 @@ TEST(DataBufferTest, resize_if_requested_with_no_resize) {
     constexpr ParameterType ptype = ParameterType::send_counts;
     constexpr BufferType    btype = BufferType::in_buffer;
 
-    const size_t required_size = 42;
+    size_t const required_size = 42;
     int          call_counter  = 0;
     auto         size_function = [&call_counter]() {
         ++call_counter;

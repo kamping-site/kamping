@@ -11,6 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "test_assertions.hpp"
+
 #include <chrono>
 #include <set>
 #include <thread>
@@ -34,7 +36,7 @@ int MPI_Type_free(MPI_Datatype* type) {
     return PMPI_Type_free(type);
 }
 
-struct EnvironmentTest : testing::Test {
+struct EnvironmentTest : ::testing::Test {
     void SetUp() override {
         int  flag;
         int* value;

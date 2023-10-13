@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -373,9 +375,9 @@ TEST_F(RecvTest, recv_vector_with_input_status) {
 }
 
 TEST_F(RecvTest, recv_default_custom_container_without_recv_buf) {
-    Communicator<testing::OwnContainer> comm;
-    std::vector                         v{1, 2, 3, 4, 5};
-    MPI_Request                         req = MPI_REQUEST_NULL;
+    Communicator<::testing::OwnContainer> comm;
+    std::vector                           v{1, 2, 3, 4, 5};
+    MPI_Request                           req = MPI_REQUEST_NULL;
     if (comm.is_root()) {
         auto other_rank = comm.rank_shifted_cyclic(1);
         MPI_Isend(
@@ -394,11 +396,11 @@ TEST_F(RecvTest, recv_default_custom_container_without_recv_buf) {
         EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
         EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result)>);
-        testing::OwnContainer<int> message = result.extract_recv_buffer();
+        ::testing::OwnContainer<int> message = result.extract_recv_buffer();
         // we should not probe for the message size inside of KaMPIng if we specify the recv count explicitly
         EXPECT_EQ(probe_counter, 1);
         EXPECT_EQ(result.extract_recv_counts(), 5);
-        EXPECT_EQ(message, testing::OwnContainer<int>({1, 2, 3, 4, 5}));
+        EXPECT_EQ(message, ::testing::OwnContainer<int>({1, 2, 3, 4, 5}));
     }
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
