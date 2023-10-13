@@ -21,15 +21,8 @@
 #include <cstdlib>
 #include <initializer_list>
 #include <memory>
-#include <vector>
 
-#include <gtest/gtest.h>
-#include <kassert/kassert.hpp>
-
-#include "kamping/assertion_levels.hpp"
-#include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_types.hpp"
-#include "kamping/result.hpp"
 
 namespace testing {
 /// @brief Simple Container type. Can be used to test library function with containers other than vector.
@@ -199,32 +192,6 @@ struct CustomAllocator {
         free(p);
     }
 };
-
-//
-// Makros to test for failed KASSERT() statements.
-// Note that these macros could already be defined if we included the header that turns assertions into exceptions.
-// In this case, we keep the current definition.
-//
-
-#ifndef EXPECT_KASSERT_FAILS
-    #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // EXPECT that a KASSERT assertion failed and that the error message contains a certain failure_message.
-        #define EXPECT_KASSERT_FAILS(code, failure_message) \
-            EXPECT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
-    #else // Otherwise, we do not test for failed assertions
-        #define EXPECT_KASSERT_FAILS(code, failure_message)
-    #endif
-#endif
-
-#ifndef ASSERT_KASSERT_FAILS
-    #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // ASSERT that a KASSERT assertion failed and that the error message contains a certain failure_message.
-        #define ASSERT_KASSERT_FAILS(code, failure_message) \
-            ASSERT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
-    #else // Otherwise, we do not test for failed assertions
-        #define ASSERT_KASSERT_FAILS(code, failure_message)
-    #endif
-#endif
 
 /// @}
 } // namespace testing

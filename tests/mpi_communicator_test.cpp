@@ -11,6 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "test_assertions.hpp"
+
 #include <limits>
 #include <numeric>
 #include <vector>
@@ -19,7 +21,6 @@
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
-#include "helpers_for_testing.hpp"
 #include "kamping/comm_helper/num_numa_nodes.hpp"
 #include "kamping/communicator.hpp"
 

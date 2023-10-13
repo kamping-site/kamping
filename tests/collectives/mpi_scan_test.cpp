@@ -14,9 +14,8 @@
 
 #include "../test_assertions.hpp"
 
-#include "gmock/gmock.h"
-
 #include <gtest/gtest.h>
+#include "gmock/gmock.h"
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/collectives/scan.hpp"
