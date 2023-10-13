@@ -60,7 +60,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf, op),
-        KAMPING_OPTIONAL_PARAMETERS(send_counts, recv_buf)
+        KAMPING_OPTIONAL_PARAMETERS(send_recv_count, recv_buf)
     );
 
     // Get the send buffer and deduce the send and recv value types.
@@ -79,16 +79,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
     );
 
     // Get the send_recv count
-    using default_send_recv_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
-    auto&& send_recv_count =
-        internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_recv_count_type>(
-            std::tuple(),
-            args...
-        );
-    static_assert(
-        std::remove_reference_t<decltype(send_recv_count)>::is_single_element,
-        "send_recv_count() parameter must be a single value."
-    );
+    using default_send_recv_count_type = decltype(kamping::send_recv_count_out());
+    auto&& send_recv_count             = internal::select_parameter_type_or_default<
+        internal::ParameterType::send_recv_count,
+        default_send_recv_count_type>(std::tuple(), args...);
+
     constexpr bool do_compute_send_recv_count = internal::has_to_be_computed<decltype(send_recv_count)>;
     if constexpr (do_compute_send_recv_count) {
         send_recv_count.underlying() = asserting_cast<int>(send_buf.size());
@@ -137,7 +132,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 /// i\f$ (inclusive).
 ///
 /// The following parameters are required:
-/// - kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be of
+/// - kamping::send_buf() containing the data for which to perform the scan. This buffer has to be of
 /// size 1 on each rank.
 /// - kamping::op() wrapping the operation to apply to the input.
 ///

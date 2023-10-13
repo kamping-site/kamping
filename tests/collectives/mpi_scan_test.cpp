@@ -65,7 +65,7 @@ TEST(ScanTest, scan_explicit_send_recv_count_smaller_than_send_buffer_size) {
 
     std::vector<int> input = {42, 1, 1, 1, 1};
 
-    auto result   = comm.scan(send_buf(input), send_counts(2), op(kamping::ops::plus<>{}));
+    auto result   = comm.scan(send_buf(input), send_recv_count(2), op(kamping::ops::plus<>{}));
     auto recv_buf = result.extract_recv_buffer();
     EXPECT_EQ(recv_buf.size(), 2);
     EXPECT_THAT(recv_buf, ElementsAre((comm.rank_signed() + 1) * 42, (comm.rank_signed() + 1)));
@@ -77,7 +77,7 @@ TEST(ScanTest, scan_explicit_send_recv_count_out_value_not_taken_into_account) {
     std::vector<int> input           = {42, 1};
     int              send_recv_count = -1;
 
-    auto result   = comm.scan(send_buf(input), send_counts_out(send_recv_count), op(kamping::ops::plus<>{}));
+    auto result   = comm.scan(send_buf(input), send_recv_count_out(send_recv_count), op(kamping::ops::plus<>{}));
     auto recv_buf = result.extract_recv_buffer();
     EXPECT_EQ(recv_buf.size(), 2);
     EXPECT_EQ(send_recv_count, 2);
@@ -89,7 +89,7 @@ TEST(ScanTest, scan_explicit_send_recv_count) {
 
     std::vector<int> input = {42, 1};
 
-    auto result   = comm.scan(send_buf(input), send_counts(2), op(kamping::ops::plus<>{}));
+    auto result   = comm.scan(send_buf(input), send_recv_count(2), op(kamping::ops::plus<>{}));
     auto recv_buf = result.extract_recv_buffer();
     EXPECT_THAT(recv_buf, ElementsAre((comm.rank_signed() + 1) * 42, (comm.rank_signed() + 1)));
 }
