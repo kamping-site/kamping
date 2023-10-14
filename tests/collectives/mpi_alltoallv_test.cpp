@@ -962,10 +962,12 @@ TEST(AlltoallvTest, send_recv_type_are_part_of_result_object) {
     const std::vector<int> counts(comm.size(), 1);
     std::vector<int>       recv_buffer(comm.size(), 0);
 
-    comm.alltoallv(send_buf(input), send_type_out(), send_counts(counts), recv_type_out(), recv_buf(recv_buffer));
-    // TODO
+    auto result =
+        comm.alltoallv(send_buf(input), send_type_out(), send_counts(counts), recv_type_out(), recv_buf(recv_buffer));
 
-    // EXPECT_TRUE(false);
+    EXPECT_EQ(result.extract_send_type(), MPI_INT);
+    EXPECT_EQ(result.extract_recv_type(), MPI_INT);
+
     std::vector<int> expected_result(comm.size(), comm.rank_signed());
     EXPECT_EQ(recv_buffer, expected_result);
 }

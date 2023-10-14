@@ -328,10 +328,12 @@ TEST(AlltoallTest, send_recv_type_are_part_of_result_object) {
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> recv_buffer(comm.size(), 0);
 
-    comm.alltoall(send_buf(input), send_type_out(), send_count(1), recv_type_out(), recv_buf(recv_buffer));
-    // TODO
+    auto result =
+        comm.alltoall(send_buf(input), send_type_out(), send_count(1), recv_type_out(), recv_buf(recv_buffer));
 
-    // EXPECT_TRUE(false);
+    EXPECT_EQ(result.extract_send_type(), MPI_INT);
+    EXPECT_EQ(result.extract_recv_type(), MPI_INT);
+
     std::vector<int> expected_result(comm.size(), comm.rank_signed());
     EXPECT_EQ(recv_buffer, expected_result);
 }
@@ -425,4 +427,3 @@ TEST(AlltoallTest, different_send_and_recv_counts_without_explicit_mpi_types) {
     }
     EXPECT_EQ(recv_buffer, expected_result);
 }
-

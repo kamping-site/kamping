@@ -66,7 +66,9 @@ template <
     class SendCounts,
     class SendCount,
     class SendDispls,
-    class SendRecvCount>
+    class SendRecvCount,
+    class SendType,
+    class RecvType>
 class MPIResult {
 private:
     /// @brief Helper for implementing \ref is_empty. Returns \c true if all template arguments passed are equal to \ref
@@ -85,7 +87,9 @@ public:
         SendCounts,
         SendCount,
         SendDispls,
-        SendRecvCount>;
+        SendRecvCount,
+        SendType,
+        RecvType>;
 
     /// @brief Constructor of MPIResult.
     ///
@@ -101,7 +105,9 @@ public:
         SendCounts&&    send_counts,
         SendCount&&     send_count,
         SendDispls&&    send_displs,
-        SendRecvCount&& send_recv_count
+        SendRecvCount&& send_recv_count,
+        SendType&&      send_type,
+        RecvType&&      recv_type
     )
         : _status(std::forward<StatusObject>(status)),
           _recv_buffer(std::forward<RecvBuf>(recv_buf)),
@@ -111,7 +117,9 @@ public:
           _send_counts(std::forward<SendCounts>(send_counts)),
           _send_count(std::forward<SendCount>(send_count)),
           _send_displs(std::forward<SendDispls>(send_displs)),
-          _send_recv_count(std::forward<SendRecvCount>(send_recv_count)) {}
+          _send_recv_count(std::forward<SendRecvCount>(send_recv_count)),
+          _send_type(std::forward<SendType>(send_type)),
+          _recv_type(std::forward<RecvType>(recv_type)) {}
 
     /// @brief Extracts the \c kamping::Status from the MPIResult object.
     ///
@@ -230,6 +238,28 @@ public:
         return _send_recv_count.extract();
     }
 
+    /// @brief Extracts the \c send_type from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam SendType_ Template parameter helper only needed to remove this function if SendType does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the send_type.
+    template <typename SendType_ = SendType, std::enable_if_t<kamping::internal::has_extract_v<SendType_>, bool> = true>
+    decltype(auto) extract_send_type() {
+        return _send_type.extract();
+    }
+
+    /// @brief Extracts the \c recv from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam RecvType_ Template parameter helper only needed to remove this function if RecvType does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the send_type.
+    template <typename RecvType_ = RecvType, std::enable_if_t<kamping::internal::has_extract_v<RecvType_>, bool> = true>
+    decltype(auto) extract_recv_type() {
+        return _recv_type.extract();
+    }
+
 private:
     StatusObject _status;    ///< The status object. May be empty if the status is owned by the caller of KaMPIng.
     RecvBuf _recv_buffer;    ///< Buffer object containing the received elements. May be empty if the received elements
@@ -247,7 +277,13 @@ private:
     SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if the send
                              ///< displacements have been written into storage owned by the caller of KaMPIng.
     SendRecvCount _send_recv_count; ///< Buffer object containing the combined send recv count (used by bcast,
-                                    ///< (ex)scan). May be empty if the send displacements have been written into
+                                    ///< (ex)scan). May be empty if the send recv count has been written into
+                                    ///< storage owned by the caller of KaMPIng.
+    SendType _send_type;            ///< Buffer object containing the send type.
+                                    ///< (ex)scan). May be empty if the send type has been written into
+                                    ///< storage owned by the caller of KaMPIng.
+    RecvType _recv_type;            ///< Buffer object containing the recv type.
+                                    ///< (ex)scan). May be empty if the recv type has been written into
                                     ///< storage owned by the caller of KaMPIng.
 };
 
@@ -311,6 +347,14 @@ auto make_mpi_result(Args... args) {
             std::tuple(),
             args...
         );
+    auto&& send_type = internal::select_parameter_type_or_default<internal::ParameterType::send_type, default_type>(
+        std::tuple(),
+        args...
+    );
+    auto&& recv_type = internal::select_parameter_type_or_default<internal::ParameterType::recv_type, default_type>(
+        std::tuple(),
+        args...
+    );
 
     auto&& status = internal::select_parameter_type_or_default<internal::ParameterType::status, default_type>(
         std::tuple(),
@@ -326,7 +370,9 @@ auto make_mpi_result(Args... args) {
         std::move(send_counts),
         std::move(send_count),
         std::move(send_displs),
-        std::move(send_recv_count)
+        std::move(send_recv_count),
+        std::move(send_type),
+        std::move(recv_type)
     );
 }
 

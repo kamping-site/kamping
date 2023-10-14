@@ -143,17 +143,23 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
     KASSERT(recv_buf.data() != nullptr, assert::light);
 
     [[maybe_unused]] int err = MPI_Alltoall(
-        send_buf.data(),
-        send_count.get_single_element(),
-        send_type.get_single_element(),
-        recv_buf.data(),
-        recv_count.get_single_element(),
-        recv_type.get_single_element(),
-        mpi_communicator()
+        send_buf.data(),                 // send_buf
+        send_count.get_single_element(), // send_count
+        send_type.get_single_element(),  // send_type
+        recv_buf.data(),                 // recv_buf
+        recv_count.get_single_element(), // recv_count
+        recv_type.get_single_element(),  // recv_type
+        mpi_communicator()               // comm
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Alltoall);
-    return make_mpi_result(std::move(recv_buf), std::move(send_count), std::move(recv_count));
+    return make_mpi_result(
+        std::move(recv_buf),   // recv_buf
+        std::move(send_count), // send_count
+        std::move(recv_count), // recv_count
+        std::move(send_type),  // send_type
+        std::move(recv_type)   // recv_type
+    );
 }
 
 /// @brief Wrapper for \c MPI_Alltoallv.
@@ -215,7 +221,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
             std::tuple(),
             args...
         );
-    using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
+    using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     // Get send/recv types
     auto&& [send_type, recv_type] =
@@ -338,14 +344,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
 
     // Do the actual alltoallv
     [[maybe_unused]] int err = MPI_Alltoallv(
-        send_buf.data(),                // sendbuf
-        send_counts.data(),             // sendcounts
-        send_displs.data(),             // sdispls
-        send_type.get_single_element(), // sendtype
-        recv_buf.data(),                // sendcounts
-        recv_counts.data(),             // recvcounts
-        recv_displs.data(),             // rdispls
-        recv_type.get_single_element(), // recvtype
+        send_buf.data(),                // send_buf
+        send_counts.data(),             // send_counts
+        send_displs.data(),             // send_displs
+        send_type.get_single_element(), // send_type
+        recv_buf.data(),                // send_counts
+        recv_counts.data(),             // recv_counts
+        recv_displs.data(),             // recv_displs
+        recv_type.get_single_element(), // recv_type
         mpi_communicator()              // comm
     );
 
@@ -355,6 +361,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         std::move(recv_buf),    // recv_buf
         std::move(recv_counts), // recv_counts
         std::move(recv_displs), // recv_displs
-        std::move(send_displs)  // send_displs
+        std::move(send_displs), // send_displs
+        std::move(send_type),   // send_type
+        std::move(recv_type)    // recv_type
     );
 }
