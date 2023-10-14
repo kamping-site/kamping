@@ -207,7 +207,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
-    MPI_Datatype mpi_send_type    = mpi_datatype<send_value_type>();
 
     // Get recv_buf
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
@@ -217,8 +216,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
             args...
         );
     using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
-    MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
 
+    // Get send/recv types
     auto&& [send_type, recv_type] =
         internal::determine_mpi_datatypes<send_value_type, recv_value_type, decltype(recv_buf)>(args...);
     [[maybe_unused]] constexpr bool send_type_has_to_be_deduced = internal::has_to_be_computed<decltype(send_type)>;
@@ -339,15 +338,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
 
     // Do the actual alltoallv
     [[maybe_unused]] int err = MPI_Alltoallv(
-        send_buf.data(),    // sendbuf
-        send_counts.data(), // sendcounts
-        send_displs.data(), // sdispls
-        mpi_send_type,      // sendtype
-        recv_buf.data(),    // sendcounts
-        recv_counts.data(), // recvcounts
-        recv_displs.data(), // rdispls
-        mpi_recv_type,      // recvtype
-        mpi_communicator()  // comm
+        send_buf.data(),                // sendbuf
+        send_counts.data(),             // sendcounts
+        send_displs.data(),             // sdispls
+        send_type.get_single_element(), // sendtype
+        recv_buf.data(),                // sendcounts
+        recv_counts.data(),             // recvcounts
+        recv_displs.data(),             // rdispls
+        recv_type.get_single_element(), // recvtype
+        mpi_communicator()              // comm
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Alltoallv);
