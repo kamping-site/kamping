@@ -46,6 +46,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_mpi_alltoallv
+    FILES collectives/mpi_alltoallv_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_mpi_scatter
     FILES collectives/mpi_scatter_test.cpp
     CORES 1 4
