@@ -557,7 +557,7 @@ public:
     /// @param compute_required_size Functor which is used to compute the required buffer size. compute_required_size()
     /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
     template <typename SizeFunc>
-    void resize_if_requested(SizeFunc&& /*compute_required_size*/) {}
+    void resize_if_requested(SizeFunc&& compute_required_size [[maybe_unused]]) {}
 };
 
 } // namespace internal
