@@ -6,6 +6,9 @@
 #include "kamping/status.hpp"
 
 namespace kamping {
+/// @addtogroup kamping_mpi_utility
+/// @{
+
 /// @brief Use the provided native \c MPI_Status as status parameter.
 /// @param mpi_status The status.
 inline auto status(MPI_Status& mpi_status) {
@@ -29,4 +32,5 @@ inline auto status(internal::ignore_t<void>) {
     return internal::StatusParam<internal::StatusParamType::ignore>{};
 }
 
+/// @}
 } // namespace kamping
