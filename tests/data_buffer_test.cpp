@@ -741,11 +741,12 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mpi_result) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf, BufferType::in_buffer>    recv_buffer;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::in_buffer> recv_counts;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::in_buffer> recv_count;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, BufferType::in_buffer> recv_displs;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, BufferType::in_buffer> send_counts;
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, BufferType::in_buffer> send_displs;
     // we use out_buffer here because extracting is only done from out buffers
+    LibAllocatedContainerBasedBuffer<int, ParameterType::recv_count, BufferType::in_buffer>       recv_count;
+    LibAllocatedContainerBasedBuffer<int, ParameterType::send_count, BufferType::in_buffer>       send_count;
     LibAllocatedContainerBasedBuffer<int, ParameterType::send_recv_count, BufferType::out_buffer> send_recv_count;
     StatusParam<StatusParamType::owning>                                                          status;
 
@@ -753,8 +754,10 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
         std::move(status),
         std::move(recv_buffer),
         std::move(recv_counts),
+        std::move(recv_count),
         std::move(recv_displs),
         std::move(send_counts),
+        std::move(send_count),
         std::move(send_displs),
         std::move(send_recv_count)
     );
@@ -776,6 +779,12 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
 
     std::ignore = result.extract_send_displs();
     EXPECT_KASSERT_FAILS(result.extract_send_displs(), "Cannot extract a buffer that has already been extracted.");
+
+    std::ignore = result.extract_recv_count();
+    EXPECT_KASSERT_FAILS(result.extract_recv_count(), "Cannot extract a buffer that has already been extracted.");
+
+    std::ignore = result.extract_send_count();
+    EXPECT_KASSERT_FAILS(result.extract_send_count(), "Cannot extract a buffer that has already been extracted.");
 
     std::ignore = result.extract_send_recv_count();
     EXPECT_KASSERT_FAILS(result.extract_send_recv_count(), "Cannot extract a buffer that has already been extracted.");

@@ -61,8 +61,10 @@ template <
     class StatusObject,
     class RecvBuf,
     class RecvCounts,
+    class RecvCount,
     class RecvDispls,
     class SendCounts,
+    class SendCount,
     class SendDispls,
     class SendRecvCount>
 class MPIResult {
@@ -74,8 +76,16 @@ private:
 
 public:
     /// @brief \c true, if the result does not encapsulate any data.
-    static constexpr bool is_empty =
-        is_empty_impl<StatusObject, RecvBuf, RecvCounts, RecvDispls, SendCounts, SendDispls, SendRecvCount>;
+    static constexpr bool is_empty = is_empty_impl<
+        StatusObject,
+        RecvBuf,
+        RecvCounts,
+        RecvCount,
+        RecvDispls,
+        SendCounts,
+        SendCount,
+        SendDispls,
+        SendRecvCount>;
 
     /// @brief Constructor of MPIResult.
     ///
@@ -86,16 +96,20 @@ public:
         StatusObject&&  status,
         RecvBuf&&       recv_buf,
         RecvCounts&&    recv_counts,
+        RecvCount&&     recv_count,
         RecvDispls&&    recv_displs,
         SendCounts&&    send_counts,
+        SendCount&&     send_count,
         SendDispls&&    send_displs,
         SendRecvCount&& send_recv_count
     )
         : _status(std::forward<StatusObject>(status)),
           _recv_buffer(std::forward<RecvBuf>(recv_buf)),
           _recv_counts(std::forward<RecvCounts>(recv_counts)),
+          _recv_count(std::forward<RecvCount>(recv_count)),
           _recv_displs(std::forward<RecvDispls>(recv_displs)),
           _send_counts(std::forward<SendCounts>(send_counts)),
+          _send_count(std::forward<SendCount>(send_count)),
           _send_displs(std::forward<SendDispls>(send_displs)),
           _send_recv_count(std::forward<SendRecvCount>(send_recv_count)) {}
 
@@ -138,6 +152,19 @@ public:
         return _recv_counts.extract();
     }
 
+    /// @brief Extracts the \c recv_count from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam RecvCount_ Template parameter helper only needed to remove this function if RecvCount does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the recv count.
+    template <
+        typename RecvCount_                                                  = RecvCount,
+        std::enable_if_t<kamping::internal::has_extract_v<RecvCount_>, bool> = true>
+    decltype(auto) extract_recv_count() {
+        return _recv_count.extract();
+    }
+
     /// @brief Extracts the \c recv_displs from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
@@ -164,6 +191,19 @@ public:
         return _send_counts.extract();
     }
 
+    /// @brief Extracts the \c send_count from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam SendCount_ Template parameter helper only needed to remove this function if SendCount does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the send count.
+    template <
+        typename SendCount_                                                  = SendCount,
+        std::enable_if_t<kamping::internal::has_extract_v<SendCount_>, bool> = true>
+    decltype(auto) extract_send_count() {
+        return _send_count.extract();
+    }
+
     /// @brief Extracts the \c send_displs from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
@@ -182,7 +222,7 @@ public:
     /// This function is only available if the underlying memory is owned by the MPIResult object.
     /// @tparam SendRecvCount_ Template parameter helper only needed to remove this function if SendRecvCount does not
     /// possess a member function \c extract().
-    /// @return Returns the underlying storage containing the send displacements.
+    /// @return Returns the underlying storage containing the send_recv_count.
     template <
         typename SendRecvCount_                                                  = SendRecvCount,
         std::enable_if_t<kamping::internal::has_extract_v<SendRecvCount_>, bool> = true>
@@ -196,15 +236,19 @@ private:
                              ///< have been written into storage owned by the caller of KaMPIng.
     RecvCounts _recv_counts; ///< Buffer object containing the receive counts. May be empty if the receive counts have
                              ///< been written into storage owned by the caller of KaMPIng.
+    RecvCount _recv_count;   ///< Buffer object containing the (single) receive count. May be empty if the receive count
+                             ///< has been written into storage owned by the caller of KaMPIng.
     RecvDispls _recv_displs; ///< Buffer object containing the receive displacements. May be empty if the receive
                              ///< displacements have been written into storage owned by the caller of KaMPIng.
     SendCounts _send_counts; ///< Buffer object containing the send counts. May be empty if the send counts have been
                              ///< written into storage owned by the caller of KaMPIng.
+    SendCount _send_count;   ///< Buffer object containing the (single) send count. May be empty if the send count has
+                             ///< been written into storage owned by the caller of KaMPIng.
     SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if the send
                              ///< displacements have been written into storage owned by the caller of KaMPIng.
-    SendRecvCount _send_recv_count; ///< Buffer object containing the the combined send recv count (only used by bcast).
-                                    ///< May be empty if the send displacements have been written into storage owned by
-                                    ///< the caller of KaMPIng.
+    SendRecvCount _send_recv_count; ///< Buffer object containing the combined send recv count (used by bcast,
+                                    ///< (ex)scan). May be empty if the send displacements have been written into
+                                    ///< storage owned by the caller of KaMPIng.
 };
 
 /// @brief Factory creating the MPIResult.
@@ -242,11 +286,19 @@ auto make_mpi_result(Args... args) {
         std::tuple(),
         args...
     );
+    auto&& recv_count = internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_type>(
+        std::tuple(),
+        args...
+    );
     auto&& recv_displs = internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_type>(
         std::tuple(),
         args...
     );
     auto&& send_counts = internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_type>(
+        std::tuple(),
+        args...
+    );
+    auto&& send_count = internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_type>(
         std::tuple(),
         args...
     );
@@ -269,8 +321,10 @@ auto make_mpi_result(Args... args) {
         std::move(status),
         std::move(recv_buf),
         std::move(recv_counts),
+        std::move(recv_count),
         std::move(recv_displs),
         std::move(send_counts),
+        std::move(send_count),
         std::move(send_displs),
         std::move(send_recv_count)
     );

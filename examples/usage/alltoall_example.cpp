@@ -41,13 +41,13 @@ int main() {
         output.clear();
     }
     {
-        // send and recv counts can also be explicitly given
-        comm.alltoall(send_buf(input), send_counts(2), recv_counts(2), recv_buf(output));
+        // send and recv count can also be explicitly given
+        comm.alltoall(send_buf(input), send_count(2), recv_count(2), recv_buf(output));
         print_result_on_root(output, comm);
         print_on_root("------", comm);
         output.clear();
 
-        comm.alltoall(send_buf(input), send_counts(1), recv_counts(1), recv_buf(output));
+        comm.alltoall(send_buf(input), send_count(1), recv_count(1), recv_buf(output));
         print_result_on_root(output, comm);
         print_on_root("------", comm);
         output.clear();
