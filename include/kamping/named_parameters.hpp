@@ -210,7 +210,7 @@ constexpr internal::ignore_t<T> ignore{};
 /// @return Object wrapping a \c nullptr as a send buffer.
 template <typename Data>
 auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
-    return internal::EmptyDataBuffer<Data, internal::ParameterType::send_buf>();
+    return internal::EmptyDataBuffer<Data, internal::ParameterType::send_buf, internal::BufferType::ignore>();
 }
 
 /// @brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
@@ -403,6 +403,11 @@ auto recv_counts(std::initializer_list<T> counts) {
         internal::BufferType::in_buffer,
         BufferResizePolicy::no_resize,
         int>(std::move(counts));
+}
+
+/// @brief Indicate that the recv counts are ignored.
+inline auto recv_counts(internal::ignore_t<void> ignore [[maybe_unused]]) {
+    return internal::EmptyDataBuffer<int, internal::ParameterType::recv_counts, internal::BufferType::ignore>();
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage

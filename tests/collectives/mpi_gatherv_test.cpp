@@ -11,6 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
 #include <cstddef>
 #include <numeric>
 
@@ -195,3 +197,19 @@ TEST(GathervTest, gather_mix_different_container_types) {
         }
     }
 }
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+TEST(GathervTest, recv_counts_ignore_should_fail_on_root) {
+    Communicator comm;
+    if (comm.is_root()) {
+        EXPECT_KASSERT_FAILS(
+            comm.gatherv(send_buf(comm.rank_signed()), recv_counts(ignore<>)),
+            "Recv counts buffer is smaller than the number of PEs at the root PE."
+        )
+        // cleanup
+        comm.gatherv(send_buf(comm.rank_signed()));
+    } else {
+        comm.gatherv(send_buf(comm.rank_signed()), recv_counts(ignore<>));
+    }
+}
+#endif

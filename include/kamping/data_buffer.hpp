@@ -203,7 +203,7 @@ enum class BufferOwnership { owning, referencing };
 enum class BufferAllocation { lib_allocated, user_allocated };
 /// @brief Enum to specify whether a buffer is an in buffer of an out
 /// buffer. Out buffer will be used to directly write the result to.
-enum class BufferType { in_buffer, out_buffer, in_out_buffer };
+enum class BufferType { in_buffer, out_buffer, in_out_buffer, ignore };
 } // namespace internal
 
 /// @brief Enum to specify in which cases a buffer is resized.
@@ -518,13 +518,20 @@ private:
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
-template <typename Data, ParameterType type>
+template <typename Data, ParameterType type, BufferType buffer_type_param>
 class EmptyDataBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
-        false;               ///< This pseudo buffer is not modifiable since it represents no actual buffer.
-    using value_type = Data; ///< Value type of the buffer.
+        false; ///< This pseudo buffer is not modifiable since it represents no actual buffer.
+    using value_type                        = Data;              ///< Value type of the buffer.
+    static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
+
+    static constexpr BufferResizePolicy resize_policy = no_resize; ///< The policy specifying in which cases the
+                                                                   ///< buffer shall be resized.
+    static constexpr bool is_out_buffer     = false;
+    static constexpr bool is_lib_allocated  = false;
+    static constexpr bool is_single_element = false;
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage (always 0).
@@ -543,6 +550,8 @@ public:
     Span<value_type> get() const {
         return {nullptr, 0};
     }
+    template <typename SizeFunc>
+    void resize_if_requested(SizeFunc&& /*compute_required_size*/) {}
 };
 
 } // namespace internal

@@ -94,8 +94,8 @@ TEST(IsVectorBoolTest, is_vector_bool_basics) {
 
 // Tests the basic functionality of EmptyBuffer
 TEST(EmptyBufferTest, get_basics) {
-    constexpr ParameterType                  ptype = ParameterType::send_counts;
-    EmptyDataBuffer<std::vector<int>, ptype> empty_buffer{};
+    constexpr ParameterType                                                         ptype = ParameterType::send_counts;
+    EmptyDataBuffer<std::vector<int>, ptype, kamping::internal::BufferType::ignore> empty_buffer{};
 
     EXPECT_EQ(empty_buffer.size(), 0);
     EXPECT_EQ(empty_buffer.get().size(), 0);
