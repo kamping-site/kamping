@@ -523,15 +523,15 @@ class EmptyDataBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
-        false; ///< This pseudo buffer is not modifiable since it represents no actual buffer.
-    using value_type                        = Data;              ///< Value type of the buffer.
-    static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
+        false;               ///< This pseudo buffer is not modifiable since it represents no actual buffer.
+    using value_type = Data; ///< Value type of the buffer.
+    static constexpr BufferType buffer_type =
+        buffer_type_param; ///< The type of the buffer, usually ignore for this special buffer.
 
-    static constexpr BufferResizePolicy resize_policy = no_resize; ///< The policy specifying in which cases the
-                                                                   ///< buffer shall be resized.
-    static constexpr bool is_out_buffer     = false;
-    static constexpr bool is_lib_allocated  = false;
-    static constexpr bool is_single_element = false;
+    static constexpr BufferResizePolicy resize_policy     = no_resize; ///< An empty buffer can not be resized.
+    static constexpr bool               is_out_buffer     = false;     ///< An empty buffer is never output.
+    static constexpr bool               is_lib_allocated  = false;     ///< An empty buffer is not allocated.
+    static constexpr bool               is_single_element = false;     ///< An empty contains no elements.
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage (always 0).
