@@ -550,6 +550,12 @@ public:
     Span<value_type> get() const {
         return {nullptr, 0};
     }
+    /// @brief Resizes the underlying container if the buffer the buffer's resize policy allows and resizing is
+    /// necessary. Does nothing for an empty buffer.
+    ///
+    /// @tparam SizeFunc Type of the functor which computes the required buffer size.
+    /// @param compute_required_size Functor which is used to compute the required buffer size. compute_required_size()
+    /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
     template <typename SizeFunc>
     void resize_if_requested(SizeFunc&& /*compute_required_size*/) {}
 };
