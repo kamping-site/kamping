@@ -32,7 +32,13 @@ public:
     Request(MPI_Request request = MPI_REQUEST_NULL) : _request(request) {}
 
     /// @brief Returns when the operation defined by the underlying request completes.
-    /// If the underlying request was initialized by a non-blocking communication call, it is set to \c MPI_REQUEST_NULL.
+    /// If the underlying request was initialized by a non-blocking communication call, it is set to \c
+    /// MPI_REQUEST_NULL.
+    ///
+    /// @param status A parameter created by \ref status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
+    ///
+    /// @return The status object, if \p status is \ref kamping::status_out(), otherwise nothing.
     template <typename StatusParamObjectType = decltype(status(ignore<>))>
     auto wait(StatusParamObjectType status = kamping::status(ignore<>)) {
         int err = MPI_Wait(&_request, status.native_ptr());
@@ -47,8 +53,14 @@ public:
         return _request == MPI_REQUEST_NULL;
     }
 
-    /// @return Returns \c true if the underlying request is complete. In that case and if the underlying request was
-    /// initialized by a non-blocking communication call, it is set to \c MPI_REQUEST_NULL.
+    /// @brief Tests for completion of the underlying request. If the underlying request was
+    /// initialized by a non-blocking communication call and completes, it is set to \c MPI_REQUEST_NULL.
+    ///
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
+    ///
+    /// @return Returns \c true if the underlying request is complete. If \p status is \ref kamping::status_out(),
+    /// returns an \c std::optional encapsulating the status in case of completion, \c std::nullopt otherwise.
     template <typename StatusParamObjectType = decltype(status(ignore<>))>
     [[nodiscard]] auto test(StatusParamObjectType status = kamping::status(ignore<>)) {
         int is_finished;
