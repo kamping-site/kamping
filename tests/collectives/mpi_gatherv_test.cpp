@@ -11,9 +11,12 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
 #include <cstddef>
 #include <numeric>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -195,3 +198,235 @@ TEST(GathervTest, gather_mix_different_container_types) {
         }
     }
 }
+
+TEST(GathervTest, resize_policy_all_buffers_are_large_enough) {
+    Communicator     comm;
+    std::vector<int> input(comm.rank(), comm.rank_signed());
+    std::vector<int> expected_recv_counts(comm.size());
+    std::iota(expected_recv_counts.begin(), expected_recv_counts.end(), 0);
+    std::vector<int> expected_recv_displs(comm.size());
+    std::exclusive_scan(expected_recv_counts.begin(), expected_recv_counts.end(), expected_recv_displs.begin(), 0);
+    std::vector<int> expected_result;
+    for (int i = 0; i < comm.size_signed(); i++) {
+        for (int j = 0; j < i; j++) {
+            expected_result.push_back(i);
+        }
+    }
+    { // default resize policy (no resize)
+        std::vector<int> output(expected_result.size() + 5, -1);
+        std::vector<int> recv_counts_output(comm.size() + 5, -1);
+        std::vector<int> recv_displs_output(comm.size() + 5, -1);
+        comm.gatherv(
+            send_buf(input),
+            recv_buf(output),
+            recv_counts_out(recv_counts_output),
+            recv_displs_out(recv_displs_output)
+        );
+        EXPECT_EQ(output.size(), expected_result.size() + 5);
+        EXPECT_EQ(recv_counts_output.size(), expected_recv_counts.size() + 5);
+        EXPECT_EQ(recv_displs_output.size(), expected_recv_displs.size() + 5);
+        if (comm.is_root()) {
+            EXPECT_THAT(Span(output.data(), expected_result.size()), ElementsAreArray(expected_result));
+            EXPECT_THAT(Span(output.data() + expected_result.size(), 5), Each(Eq(-1)));
+
+            EXPECT_THAT(
+                Span(recv_counts_output.data(), expected_recv_counts.size()),
+                ElementsAreArray(expected_recv_counts)
+            );
+            EXPECT_THAT(Span(recv_counts_output.data() + expected_recv_counts.size(), 5), Each(Eq(-1)));
+
+            EXPECT_THAT(
+                Span(recv_displs_output.data(), expected_recv_displs.size()),
+                ElementsAreArray(expected_recv_displs)
+            );
+            EXPECT_THAT(Span(recv_displs_output.data() + expected_recv_displs.size(), 5), Each(Eq(-1)));
+        } else {
+            // buffer will not be touched
+            EXPECT_THAT(output, Each(Eq(-1)));
+            EXPECT_THAT(recv_counts_output, Each(Eq(-1)));
+            EXPECT_THAT(recv_displs_output, Each(Eq(-1)));
+        }
+    }
+    { // no resize policy
+        std::vector<int> output(expected_result.size() + 5, -1);
+        std::vector<int> recv_counts_output(comm.size() + 5, -1);
+        std::vector<int> recv_displs_output(comm.size() + 5, -1);
+        comm.gatherv(
+            send_buf(input),
+            recv_buf<no_resize>(output),
+            recv_counts_out<no_resize>(recv_counts_output),
+            recv_displs_out<no_resize>(recv_displs_output)
+        );
+        EXPECT_EQ(output.size(), expected_result.size() + 5);
+        EXPECT_EQ(recv_counts_output.size(), expected_recv_counts.size() + 5);
+        EXPECT_EQ(recv_displs_output.size(), expected_recv_displs.size() + 5);
+        if (comm.is_root()) {
+            EXPECT_THAT(Span(output.data(), expected_result.size()), ElementsAreArray(expected_result));
+            EXPECT_THAT(Span(output.data() + expected_result.size(), 5), Each(Eq(-1)));
+
+            EXPECT_THAT(
+                Span(recv_counts_output.data(), expected_recv_counts.size()),
+                ElementsAreArray(expected_recv_counts)
+            );
+            EXPECT_THAT(Span(recv_counts_output.data() + expected_recv_counts.size(), 5), Each(Eq(-1)));
+
+            EXPECT_THAT(
+                Span(recv_displs_output.data(), expected_recv_displs.size()),
+                ElementsAreArray(expected_recv_displs)
+            );
+            EXPECT_THAT(Span(recv_displs_output.data() + expected_recv_displs.size(), 5), Each(Eq(-1)));
+        } else {
+            // buffer will not be touched
+            EXPECT_THAT(output, Each(Eq(-1)));
+            EXPECT_THAT(recv_counts_output, Each(Eq(-1)));
+            EXPECT_THAT(recv_displs_output, Each(Eq(-1)));
+        }
+    }
+    { // grow only
+        std::vector<int> output(expected_result.size() + 5, -1);
+        std::vector<int> recv_counts_output(comm.size() + 5, -1);
+        std::vector<int> recv_displs_output(comm.size() + 5, -1);
+        comm.gatherv(
+            send_buf(input),
+            recv_buf<grow_only>(output),
+            recv_counts_out<grow_only>(recv_counts_output),
+            recv_displs_out<grow_only>(recv_displs_output)
+        );
+        EXPECT_EQ(output.size(), expected_result.size() + 5);
+        EXPECT_EQ(recv_counts_output.size(), expected_recv_counts.size() + 5);
+        EXPECT_EQ(recv_displs_output.size(), expected_recv_displs.size() + 5);
+        if (comm.is_root()) {
+            EXPECT_THAT(Span(output.data(), expected_result.size()), ElementsAreArray(expected_result));
+            EXPECT_THAT(Span(output.data() + expected_result.size(), 5), Each(Eq(-1)));
+
+            EXPECT_THAT(
+                Span(recv_counts_output.data(), expected_recv_counts.size()),
+                ElementsAreArray(expected_recv_counts)
+            );
+            EXPECT_THAT(Span(recv_counts_output.data() + expected_recv_counts.size(), 5), Each(Eq(-1)));
+
+            EXPECT_THAT(
+                Span(recv_displs_output.data(), expected_recv_displs.size()),
+                ElementsAreArray(expected_recv_displs)
+            );
+            EXPECT_THAT(Span(recv_displs_output.data() + expected_recv_displs.size(), 5), Each(Eq(-1)));
+        } else {
+            // buffer will not be touched
+            EXPECT_THAT(output, Each(Eq(-1)));
+            EXPECT_THAT(recv_counts_output, Each(Eq(-1)));
+            EXPECT_THAT(recv_displs_output, Each(Eq(-1)));
+        }
+    }
+    { // resize to fit
+        std::vector<int> output(expected_result.size() + 5, -1);
+        std::vector<int> recv_counts_output(comm.size() + 5, -1);
+        std::vector<int> recv_displs_output(comm.size() + 5, -1);
+        comm.gatherv(
+            send_buf(input),
+            recv_buf<resize_to_fit>(output),
+            recv_counts_out<resize_to_fit>(recv_counts_output),
+            recv_displs_out<resize_to_fit>(recv_displs_output)
+        );
+        if (comm.is_root()) {
+            EXPECT_THAT(output, ElementsAreArray(expected_result));
+            EXPECT_THAT(recv_counts_output, ElementsAreArray(expected_recv_counts));
+            EXPECT_THAT(recv_displs_output, ElementsAreArray(expected_recv_displs));
+        } else {
+            // buffer will not be touched
+            EXPECT_EQ(output.size(), expected_result.size() + 5);
+            EXPECT_EQ(recv_counts_output.size(), expected_recv_counts.size() + 5);
+            EXPECT_EQ(recv_displs_output.size(), expected_recv_displs.size() + 5);
+            EXPECT_THAT(output, Each(Eq(-1)));
+            EXPECT_THAT(recv_counts_output, Each(Eq(-1)));
+            EXPECT_THAT(recv_displs_output, Each(Eq(-1)));
+        }
+    }
+}
+
+TEST(GathervTest, resize_policy_all_buffers_are_too_small) {
+    Communicator     comm;
+    std::vector<int> input(comm.rank(), comm.rank_signed());
+    std::vector<int> expected_recv_counts(comm.size());
+    std::iota(expected_recv_counts.begin(), expected_recv_counts.end(), 0);
+    std::vector<int> expected_recv_displs(comm.size());
+    std::exclusive_scan(expected_recv_counts.begin(), expected_recv_counts.end(), expected_recv_displs.begin(), 0);
+    std::vector<int> expected_result;
+    for (int i = 0; i < comm.size_signed(); i++) {
+        for (int j = 0; j < i; j++) {
+            expected_result.push_back(i);
+        }
+    }
+
+    // @todo tests for failed assertions in case of resize policy no_resize are
+    // ommitted here, because they would require excessive cleanup of dangling
+    // collective communication.
+
+    { // grow only
+        std::vector<int> output(0);
+        std::vector<int> recv_counts_output(0);
+        std::vector<int> recv_displs_output(0);
+        comm.gatherv(
+            send_buf(input),
+            recv_buf<grow_only>(output),
+            recv_counts_out<grow_only>(recv_counts_output),
+            recv_displs_out<grow_only>(recv_displs_output)
+        );
+        if (comm.is_root()) {
+            EXPECT_THAT(output, ElementsAreArray(expected_result));
+            EXPECT_THAT(recv_counts_output, ElementsAreArray(expected_recv_counts));
+            EXPECT_THAT(recv_displs_output, ElementsAreArray(expected_recv_displs));
+        } else {
+            // buffer will not be touched
+            EXPECT_EQ(output.size(), 0);
+            EXPECT_EQ(recv_counts_output.size(), 0);
+            EXPECT_EQ(recv_displs_output.size(), 0);
+        }
+    }
+    { // resize to fit
+        std::vector<int> output(0);
+        std::vector<int> recv_counts_output(0);
+        std::vector<int> recv_displs_output(0);
+        comm.gatherv(
+            send_buf(input),
+            recv_buf<resize_to_fit>(output),
+            recv_counts_out<resize_to_fit>(recv_counts_output),
+            recv_displs_out<resize_to_fit>(recv_displs_output)
+        );
+        if (comm.is_root()) {
+            EXPECT_THAT(output, ElementsAreArray(expected_result));
+            EXPECT_THAT(recv_counts_output, ElementsAreArray(expected_recv_counts));
+            EXPECT_THAT(recv_displs_output, ElementsAreArray(expected_recv_displs));
+        } else {
+            // buffer will not be touched
+            EXPECT_EQ(output.size(), 0);
+            EXPECT_EQ(recv_counts_output.size(), 0);
+            EXPECT_EQ(recv_displs_output.size(), 0);
+        }
+    }
+}
+TEST(GathervTest, recv_counts_ignore_on_non_root_works) {
+    Communicator comm;
+    if (comm.is_root()) {
+        auto computed_recv_counts = comm.gatherv(send_buf(comm.rank_signed())).extract_recv_counts();
+        EXPECT_EQ(computed_recv_counts.size(), comm.size());
+        EXPECT_THAT(computed_recv_counts, Each(Eq(1)));
+    } else {
+        comm.gatherv(send_buf(comm.rank_signed()), recv_counts(ignore<>));
+    }
+}
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+TEST(GathervTest, recv_counts_ignore_should_fail_on_root) {
+    Communicator comm;
+    if (comm.is_root()) {
+        EXPECT_KASSERT_FAILS(
+            comm.gatherv(send_buf(comm.rank_signed()), recv_counts(ignore<>)),
+            "Recv counts buffer is smaller than the number of PEs at the root PE."
+        )
+        // cleanup
+        comm.gatherv(send_buf(comm.rank_signed()));
+    } else {
+        comm.gatherv(send_buf(comm.rank_signed()), recv_counts(ignore<>));
+    }
+}
+#endif

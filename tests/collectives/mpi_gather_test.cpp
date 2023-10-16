@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021 The KaMPIng Authors
+// Copyright 2021-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -11,9 +11,12 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
 #include "gmock/gmock.h"
 #include <cstddef>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -67,6 +70,182 @@ TEST(GatherTest, gather_single_element_no_receive_buffer) {
             }
         } else {
             EXPECT_EQ(result.size(), 0);
+        }
+    }
+}
+
+TEST(GatherTest, default_count_deduction) {
+    Communicator     comm;
+    std::vector<int> input(3, comm.rank_signed());
+    { // send and recv count deduced
+        int send_count = -1;
+        int recv_count = -1;
+        // send_count is deduced from send_buf.size()
+        auto result = comm.gather(send_buf(input), send_counts_out(send_count), recv_counts_out(recv_count))
+                          .extract_recv_buffer();
+        EXPECT_EQ(send_count, 3);
+        if (comm.is_root()) {
+            EXPECT_EQ(recv_count, 3);
+            EXPECT_EQ(result.size(), 3 * comm.size());
+        } else {
+            // left untouched on non-root ranks
+            EXPECT_EQ(recv_count, -1);
+        }
+    }
+    { // only recv count deduced
+        int  recv_count = -1;
+        auto result = comm.gather(send_buf(input), send_counts(1), recv_counts_out(recv_count)).extract_recv_buffer();
+        if (comm.is_root()) {
+            // recv count is deduced from send_buf size on root, untouched on other ranks
+            EXPECT_EQ(recv_count, 1);
+            EXPECT_EQ(result.size(), comm.size());
+        } else {
+            // left untouched on non-root ranks
+            EXPECT_EQ(recv_count, -1);
+        }
+    }
+}
+
+TEST(GatherTest, explicit_send_count_works) {
+    Communicator     comm;
+    std::vector<int> input(3, comm.rank_signed());
+    auto             result = comm.gather(send_buf(input), send_counts(1)).extract_recv_buffer();
+    if (comm.is_root()) {
+        EXPECT_EQ(result.size(), comm.size());
+        std::vector<int> expected_result(comm.size());
+        std::iota(expected_result.begin(), expected_result.end(), 0);
+        EXPECT_THAT(result, ElementsAreArray(expected_result));
+    }
+}
+
+TEST(GatherTest, resize_policy_recv_buf_large_enough) {
+    Communicator     comm;
+    std::vector<int> output(comm.size() + 5, -1);
+    std::vector<int> expected_result(comm.size());
+    std::iota(expected_result.begin(), expected_result.end(), 0);
+    { // default resize policy (no resize)
+        comm.gather(send_buf(comm.rank_signed()), recv_buf(output));
+        if (comm.is_root()) {
+            // buffer will not be resized
+            EXPECT_EQ(output.size(), comm.size() + 5);
+            EXPECT_THAT(Span(output.data(), comm.size()), ElementsAreArray(expected_result));
+            EXPECT_THAT(Span(output.data() + comm.size(), output.size() - comm.size()), Each(Eq(-1)));
+        } else {
+            // buffer will not be touched
+            EXPECT_EQ(output.size(), comm.size() + 5);
+            EXPECT_THAT(output, Each(Eq(-1)));
+        }
+    }
+    { // no resize policy
+        comm.gather(send_buf(comm.rank_signed()), recv_buf<no_resize>(output));
+        if (comm.is_root()) {
+            // buffer will not be resized
+            EXPECT_EQ(output.size(), comm.size() + 5);
+            EXPECT_THAT(Span(output.data(), comm.size()), ElementsAreArray(expected_result));
+            EXPECT_THAT(Span(output.data() + comm.size(), output.size() - comm.size()), Each(Eq(-1)));
+        } else {
+            // buffer will not be touched
+            EXPECT_EQ(output.size(), comm.size() + 5);
+            EXPECT_THAT(output, Each(Eq(-1)));
+        }
+    }
+    { // grow only
+        comm.gather(send_buf(comm.rank_signed()), recv_buf<grow_only>(output));
+        if (comm.is_root()) {
+            // buffer will not be resized
+            EXPECT_EQ(output.size(), comm.size() + 5);
+            EXPECT_THAT(Span(output.data(), comm.size()), ElementsAreArray(expected_result));
+            EXPECT_THAT(Span(output.data() + comm.size(), output.size() - comm.size()), Each(Eq(-1)));
+        } else {
+            // buffer will not be touched
+            EXPECT_EQ(output.size(), comm.size() + 5);
+            EXPECT_THAT(output, Each(Eq(-1)));
+        }
+    }
+    { // resize to fit
+        comm.gather(send_buf(comm.rank_signed()), recv_buf<resize_to_fit>(output));
+        if (comm.is_root()) {
+            // buffer will be resized
+            EXPECT_THAT(output, ElementsAreArray(expected_result));
+        } else {
+            // buffer will not be touched
+            EXPECT_EQ(output.size(), comm.size() + 5);
+            EXPECT_THAT(output, Each(Eq(-1)));
+        }
+    }
+}
+
+TEST(GatherTest, resize_policy_recv_buf_too_small) {
+    Communicator     comm;
+    std::vector<int> output(0);
+    std::vector<int> expected_result(comm.size());
+    std::iota(expected_result.begin(), expected_result.end(), 0);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+    { // default resize policy (no resize)
+        if (comm.is_root()) {
+            EXPECT_KASSERT_FAILS(
+                comm.gather(send_buf(comm.rank_signed()), recv_buf(output)),
+                "Recv buffer is not large enough to hold all received elements."
+            );
+            std::vector<int> large_enough_output(comm.size());
+            // cleanup and do the actual gather
+            int rank = comm.rank_signed();
+            MPI_Gather(
+                &rank,
+                1,
+                MPI_INT,
+                large_enough_output.data(),
+                1,
+                MPI_INT,
+                comm.root_signed(),
+                comm.mpi_communicator()
+            );
+        } else {
+            comm.gather(send_buf(comm.rank_signed()), recv_buf(output));
+        }
+    }
+    { // no resize policy
+        if (comm.is_root()) {
+            EXPECT_KASSERT_FAILS(
+                comm.gather(send_buf(comm.rank_signed()), recv_buf<no_resize>(output)),
+                "Recv buffer is not large enough to hold all received elements."
+            );
+            std::vector<int> large_enough_output(comm.size());
+            // cleanup and do the actual gather
+            int rank = comm.rank_signed();
+            MPI_Gather(
+                &rank,
+                1,
+                MPI_INT,
+                large_enough_output.data(),
+                1,
+                MPI_INT,
+                comm.root_signed(),
+                comm.mpi_communicator()
+            );
+        } else {
+            comm.gather(send_buf(comm.rank_signed()), recv_buf(output));
+        }
+    }
+#endif
+    { // grow only
+        comm.gather(send_buf(comm.rank_signed()), recv_buf<grow_only>(output));
+        if (comm.is_root()) {
+            // buffer will grow to fit
+            EXPECT_THAT(output, ElementsAreArray(expected_result));
+        } else {
+            // buffer will not be touched
+            EXPECT_EQ(output.size(), 0);
+        }
+    }
+    { // resize to fit
+        comm.gather(send_buf(comm.rank_signed()), recv_buf<resize_to_fit>(output));
+        if (comm.is_root()) {
+            // buffer will be resized
+            EXPECT_THAT(output, ElementsAreArray(expected_result));
+        } else {
+            // buffer will not be touched
+            EXPECT_EQ(output.size(), 0);
         }
     }
 }
@@ -129,7 +308,7 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
     std::vector<decltype(value)> result(0);
 
     // Test default root of communicator
-    comm.gather(send_buf(value), recv_buf(result));
+    comm.gather(send_buf(value), recv_buf<resize_to_fit>(result));
     EXPECT_EQ(comm.root(), 0);
     if (comm.rank() == comm.root()) {
         ASSERT_EQ(result.size(), comm.size());
@@ -142,7 +321,8 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
 
     // Change default root and test with communicator's default root again
     comm.root(comm.size_signed() - 1);
-    comm.gather(send_buf(value), recv_buf(result));
+    result.resize(0);
+    comm.gather(send_buf(value), recv_buf<resize_to_fit>(result));
     EXPECT_EQ(comm.root(), comm.size() - 1);
     if (comm.rank() == comm.root()) {
         ASSERT_EQ(result.size(), comm.size());
@@ -155,7 +335,8 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
 
     // Pass any possible root to gather
     for (size_t i = 0; i < comm.size(); ++i) {
-        comm.gather(send_buf(value), recv_buf(result), root(i));
+        result.resize(0);
+        comm.gather(send_buf(value), recv_buf<resize_to_fit>(result), root(i));
         EXPECT_EQ(comm.root(), comm.size() - 1);
         if (comm.rank() == i) {
             ASSERT_EQ(result.size(), comm.size());
@@ -215,7 +396,7 @@ TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
     std::vector<int> values = {comm.rank_signed(), comm.rank_signed(), comm.rank_signed(), comm.rank_signed()};
     std::vector<int> result(0);
 
-    comm.gather(send_buf(values), recv_buf(result));
+    comm.gather(send_buf(values), recv_buf<resize_to_fit>(result));
 
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
@@ -229,7 +410,8 @@ TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
 
     // Change default root and test with communicator's default root again
     comm.root(comm.size() - 1);
-    comm.gather(send_buf(values), recv_buf(result));
+    result.resize(0);
+    comm.gather(send_buf(values), recv_buf<resize_to_fit>(result));
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), values.size() * comm.size());
         for (size_t i = 0; i < result.size(); ++i) {
@@ -241,7 +423,8 @@ TEST(GatherTest, gather_multiple_elements_with_receive_buffer) {
 
     // Pass any possible root to gather
     for (size_t i = 0; i < comm.size(); ++i) {
-        comm.gather(send_buf(values), root(i), recv_buf(result));
+        result.resize(0);
+        comm.gather(send_buf(values), root(i), recv_buf<resize_to_fit>(result));
         EXPECT_EQ(comm.root(), comm.size() - 1);
         if (comm.rank() == i) {
             EXPECT_EQ(result.size(), values.size() * comm.size());
@@ -259,7 +442,7 @@ TEST(GatherTest, gather_receive_custom_container) {
     std::vector<int>  values = {comm.rank_signed(), comm.rank_signed(), comm.rank_signed(), comm.rank_signed()};
     OwnContainer<int> result;
 
-    comm.gather(send_buf(values), recv_buf(result));
+    comm.gather(send_buf(values), recv_buf<resize_to_fit>(result));
 
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), values.size() * comm.size());
@@ -279,7 +462,7 @@ TEST(GatherTest, gather_send_custom_container) {
     }
     std::vector<int> result;
 
-    comm.gather(send_buf(values), recv_buf(result));
+    comm.gather(send_buf(values), recv_buf<resize_to_fit>(result));
 
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), values.size() * comm.size());
@@ -299,7 +482,7 @@ TEST(GatherTest, gather_send_and_receive_custom_container) {
     }
     OwnContainer<int> result;
 
-    comm.gather(send_buf(values), recv_buf(result));
+    comm.gather(send_buf(values), recv_buf<resize_to_fit>(result));
 
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), values.size() * comm.size());
@@ -363,7 +546,7 @@ TEST(GatherTest, gather_single_element_kabool_no_receive_buffer) {
 TEST(GatherTest, gather_single_element_bool_with_receive_buffer) {
     Communicator        comm;
     std::vector<kabool> result;
-    comm.gather(send_buf({false}), recv_buf(result));
+    comm.gather(send_buf({false}), recv_buf<resize_to_fit>(result));
 
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
@@ -380,7 +563,7 @@ TEST(GatherTest, gather_single_element_bool_with_receive_buffer) {
 TEST(GatherTest, gather_single_element_kabool_with_receive_buffer) {
     Communicator        comm;
     std::vector<kabool> result;
-    comm.gather(send_buf(kabool{false}), recv_buf(result));
+    comm.gather(send_buf(kabool{false}), recv_buf<resize_to_fit>(result));
 
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
@@ -415,7 +598,7 @@ TEST(GatherTest, gather_multiple_elements_kabool_with_receive_buffer) {
     Communicator        comm;
     std::vector<kabool> input = {false, true};
     std::vector<kabool> result;
-    comm.gather(send_buf(input), recv_buf(result));
+    comm.gather(send_buf(input), recv_buf<resize_to_fit>(result));
 
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
