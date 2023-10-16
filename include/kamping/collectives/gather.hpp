@@ -53,8 +53,6 @@
 /// ranks, this parameter is ignored. If not specified, defaults to the value of \ref kamping::send_counts() on the root
 /// PE. In total comm.size() * recv_counts elements will received into the receiver buffer.
 ///
-///
-///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
@@ -82,12 +80,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
     auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
     auto  send_buf        = send_buf_param.get();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
-    KASSERT(
-        is_same_on_all_ranks(send_buf.size()),
-        "All PEs have to send the same number of elements. Use gatherv, if you want to send a different number of "
-        "elements.",
-        assert::light_communication
-    );
+
     using default_send_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
     auto&& send_count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
