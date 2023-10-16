@@ -164,8 +164,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
 /// The following parameter is optional but results in communication overhead if omitted:
 /// - \ref kamping::recv_counts() containing the number of elements to receive from each rank. Only the root rank uses
 /// the content of this buffer, all other ranks ignore it. However, if provided on any rank it must be provided on all
-/// ranks (possibly empty on non-root ranks). On non-root ranks you can also pass \c recv_counts(kamping::ignore) to
-/// indicate that the counts should be communicated.
+/// ranks (possibly empty on non-root ranks). If each rank provides this parameter either as an output parameter or by
+/// passing \c recv_counts(kamping::ignore), then the \c recv_counts on root will be computed by a gather of all local
+/// send counts.
 ///
 /// The following buffers are optional:
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator
@@ -263,7 +264,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         internal::has_to_be_computed<decltype(recv_counts)> || recv_counts_is_ignore;
     KASSERT(
         is_same_on_all_ranks(do_calculate_recv_counts),
-        "Receive counts are given on some ranks and have to be computed on others",
+        "Receive counts are given on some ranks and are omitted on others",
         assert::light_communication
     );
 
