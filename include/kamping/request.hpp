@@ -35,7 +35,7 @@ public:
     /// If the underlying request was initialized by a non-blocking communication call, it is set to \c
     /// MPI_REQUEST_NULL.
     ///
-    /// @param status A parameter created by \ref status() or \ref kamping::status_out().
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
     /// Defaults to \c kamping::status(ignore<>).
     ///
     /// @return The status object, if \p status is \ref kamping::status_out(), otherwise nothing.
@@ -73,7 +73,7 @@ public:
                 return std::optional<Status>{};
             }
         } else {
-            return is_finished;
+            return static_cast<bool>(is_finished);
         }
     }
 
