@@ -22,20 +22,20 @@ namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
 
-/// @brief Output the return status of the operation to the native \c MPI_Status passed by reference.
+/// @brief Outputs the return status of the operation to the native \c MPI_Status passed by reference.
 /// @param mpi_status The status.
 inline auto status_out(MPI_Status& mpi_status) {
     return internal::StatusParam<internal::StatusParamType::native_ref>{mpi_status};
 }
 
-/// @brief Output the return status of the operation to the provided \ref kamping::Status passed by reference.
+/// @brief Outputs the return status of the operation to the provided \ref kamping::Status passed by reference.
 /// @brief Use the  provided \ref kamping::Status as status parameter.
 /// @param mpi_status The status.
 inline auto status_out(Status& mpi_status) {
     return internal::StatusParam<internal::StatusParamType::ref>(mpi_status);
 }
 
-/// @brief Construct a status object internally, which may then be retrieved from \c kamping::MPIResult returned by the
+/// @brief Constructs a status object internally, which may then be retrieved from \c kamping::MPIResult returned by the
 /// operation.
 inline auto status_out() {
     return internal::StatusParam<internal::StatusParamType::owning>{};
