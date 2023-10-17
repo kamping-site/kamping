@@ -50,7 +50,7 @@
 /// tag(tags::any).
 /// - \ref kamping::source() receive a message sent from this source rank. Defaults to probing for an arbitrary source,
 /// i.e. \c source(rank::any).
-/// - \c kamping::status(ignore<>) or \ref kamping::status_out. Returns info about the received message by setting the
+/// - \c kamping::status(ignore<>) or \ref kamping::status_out(). Returns info about the received message by setting the
 /// appropriate fields in the status object passed by the user. If \ref kamping::status_out() is passed, constructs a
 /// status object which may be retrieved by the user. The status can be ignored by passing \c
 /// kamping::status(kamping::ignore<>). This is the default.
