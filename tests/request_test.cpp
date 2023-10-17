@@ -57,7 +57,7 @@ TEST(RequestTest, wait_with_status_in) {
     MPI_Irecv(&result, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &mpi_recv_req);
     kamping::Request req{mpi_recv_req};
     kamping::Status  status;
-    req.wait(kamping::status(status));
+    req.wait(kamping::status_out(status));
     EXPECT_EQ(status.source(), comm.rank_shifted_cyclic(-1));
     EXPECT_EQ(status.tag(), 3);
 }
@@ -79,7 +79,7 @@ TEST(RequestTest, wait_with_native_status_in) {
     MPI_Irecv(&result, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &mpi_recv_req);
     kamping::Request req{mpi_recv_req};
     MPI_Status       status;
-    req.wait(kamping::status(status));
+    req.wait(kamping::status_out(status));
     EXPECT_EQ(status.MPI_SOURCE, comm.rank_shifted_cyclic(-1));
     EXPECT_EQ(status.MPI_TAG, 3);
 }
@@ -125,7 +125,7 @@ TEST(RequestTest, test_with_status_in) {
     MPI_Irecv(&result, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &mpi_recv_req);
     kamping::Request req{mpi_recv_req};
     kamping::Status  status;
-    while (!req.test(kamping::status(status))) {
+    while (!req.test(kamping::status_out(status))) {
     }
     EXPECT_EQ(status.source(), comm.rank_shifted_cyclic(-1));
     EXPECT_EQ(status.tag(), 3);
@@ -148,7 +148,7 @@ TEST(RequestTest, test_with_native_status_in) {
     MPI_Irecv(&result, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, comm.mpi_communicator(), &mpi_recv_req);
     kamping::Request req{mpi_recv_req};
     MPI_Status       status;
-    while (!req.test(kamping::status(status))) {
+    while (!req.test(kamping::status_out(status))) {
     }
     EXPECT_EQ(status.MPI_SOURCE, comm.rank_shifted_cyclic(-1));
     EXPECT_EQ(status.MPI_TAG, 3);

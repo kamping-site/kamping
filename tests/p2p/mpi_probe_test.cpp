@@ -68,7 +68,7 @@ TEST_F(ProbeTest, direct_probe) {
             {
                 // wrapped status
                 Status kmp_status;
-                auto   result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(kmp_status));
+                auto   result = comm.probe(source(other), tag(asserting_cast<int>(other)), status_out(kmp_status));
                 EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
                 EXPECT_EQ(kmp_status.source(), other);
                 EXPECT_EQ(kmp_status.tag(), other);
@@ -77,7 +77,7 @@ TEST_F(ProbeTest, direct_probe) {
             {
                 // native status
                 MPI_Status mpi_status;
-                auto       result = comm.probe(source(other), tag(asserting_cast<int>(other)), status(mpi_status));
+                auto       result = comm.probe(source(other), tag(asserting_cast<int>(other)), status_out(mpi_status));
                 EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
                 EXPECT_EQ(mpi_status.MPI_SOURCE, other);
                 EXPECT_EQ(mpi_status.MPI_TAG, other);
