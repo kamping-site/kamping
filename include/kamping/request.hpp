@@ -41,6 +41,10 @@ public:
     /// @return The status object, if \p status is \ref kamping::status_out(), otherwise nothing.
     template <typename StatusParamObjectType = decltype(status(ignore<>))>
     auto wait(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
         int err = MPI_Wait(&_request, status.native_ptr());
         THROW_IF_MPI_ERROR(err, MPI_Wait);
         if constexpr (StatusParamObjectType::type == internal::StatusParamType::owning) {
@@ -63,6 +67,10 @@ public:
     /// returns an \c std::optional encapsulating the status in case of completion, \c std::nullopt otherwise.
     template <typename StatusParamObjectType = decltype(status(ignore<>))>
     [[nodiscard]] auto test(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
         int is_finished;
         int err = MPI_Test(&_request, &is_finished, status.native_ptr());
         THROW_IF_MPI_ERROR(err, MPI_Test);
