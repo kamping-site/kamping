@@ -361,7 +361,7 @@ TEST_F(RecvTest, recv_vector_with_input_status) {
         std::vector<int> message;
         Status           recv_status;
         // pass status as input parameter
-        auto result = comm.recv(recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message), status(recv_status));
+        auto result = comm.recv(recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message), status_out(recv_status));
         EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
@@ -450,7 +450,7 @@ TEST_F(RecvTest, recv_single_int_from_arbitrary_source) {
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             Status recv_status;
-            int    received_message = comm.recv_single<int>(status(recv_status));
+            int    received_message = comm.recv_single<int>(status_out(recv_status));
             int    source           = recv_status.source_signed();
             EXPECT_EQ(recv_status.tag(), source);
             EXPECT_EQ(recv_status.count<int>(), 1);
@@ -479,7 +479,7 @@ TEST_F(RecvTest, recv_single_int_from_explicit_source) {
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             Status recv_status;
-            int    received_message = comm.recv_single<int>(source(other), status(recv_status));
+            int    received_message = comm.recv_single<int>(source(other), status_out(recv_status));
             int    source           = recv_status.source_signed();
             EXPECT_EQ(source, other);
             EXPECT_EQ(recv_status.tag(), source);
@@ -510,7 +510,7 @@ TEST_F(RecvTest, recv_single_int_from_explicit_source_and_explicit_tag) {
         for (size_t other = 0; other < comm.size(); other++) {
             Status recv_status;
             int    received_message =
-                comm.recv_single<int>(source(other), tag(static_cast<int>(other)), status(recv_status));
+                comm.recv_single<int>(source(other), tag(static_cast<int>(other)), status_out(recv_status));
             int source = recv_status.source_signed();
             EXPECT_EQ(source, other);
             EXPECT_EQ(recv_status.tag(), source);

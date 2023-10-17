@@ -13,10 +13,14 @@
 
 #pragma once
 
+#include <optional>
+
 #include <kamping/error_handling.hpp>
 #include <mpi.h>
 
 #include "kamping/data_buffer.hpp"
+#include "kamping/named_parameters_detail/status_parameters.hpp"
+#include "kamping/parameter_objects.hpp"
 
 namespace kamping {
 
@@ -30,9 +34,22 @@ public:
     /// @brief Returns when the operation defined by the underlying request completes.
     /// If the underlying request was initialized by a non-blocking communication call, it is set to \c
     /// MPI_REQUEST_NULL.
-    void wait() {
-        int err = MPI_Wait(&_request, MPI_STATUS_IGNORE);
+    ///
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
+    ///
+    /// @return The status object, if \p status is \ref kamping::status_out(), otherwise nothing.
+    template <typename StatusParamObjectType = decltype(status(ignore<>))>
+    auto wait(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
+        int err = MPI_Wait(&_request, status.native_ptr());
         THROW_IF_MPI_ERROR(err, MPI_Wait);
+        if constexpr (StatusParamObjectType::type == internal::StatusParamType::owning) {
+            return status.extract();
+        }
     }
 
     /// @return True if this request is equal to \c MPI_REQUEST_NULL.
@@ -40,13 +57,32 @@ public:
         return _request == MPI_REQUEST_NULL;
     }
 
-    /// @return Returns \c true if the underlying request is complete. In that case and if the underlying request was
-    /// initialized by a non-blocking communication call, it is set to \c MPI_REQUEST_NULL.
-    [[nodiscard]] bool test() {
+    /// @brief Tests for completion of the underlying request. If the underlying request was
+    /// initialized by a non-blocking communication call and completes, it is set to \c MPI_REQUEST_NULL.
+    ///
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
+    ///
+    /// @return Returns \c true if the underlying request is complete. If \p status is \ref kamping::status_out(),
+    /// returns an \c std::optional encapsulating the status in case of completion, \c std::nullopt otherwise.
+    template <typename StatusParamObjectType = decltype(status(ignore<>))>
+    [[nodiscard]] auto test(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
         int is_finished;
-        int err = MPI_Test(&_request, &is_finished, MPI_STATUS_IGNORE);
+        int err = MPI_Test(&_request, &is_finished, status.native_ptr());
         THROW_IF_MPI_ERROR(err, MPI_Test);
-        return is_finished;
+        if constexpr (StatusParamObjectType::type == internal::StatusParamType::owning) {
+            if (is_finished) {
+                return std::optional{status.extract()};
+            } else {
+                return std::optional<Status>{};
+            }
+        } else {
+            return static_cast<bool>(is_finished);
+        }
     }
 
     /// @return A reference to the underlying MPI_Request handle.

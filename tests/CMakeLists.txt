@@ -191,6 +191,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_request_overriding_test_and_wait
+    FILES request_test_overriding_test_and_wait.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_request
     FILES request_test.cpp
     CORES 1 4

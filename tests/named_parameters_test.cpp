@@ -1100,14 +1100,14 @@ TEST(ParameterFactoriesTest, status_basics) {
     }
     {
         MPI_Status native_status;
-        auto       status_obj = status(native_status);
+        auto       status_obj = status_out(native_status);
         EXPECT_EQ(status_obj.native_ptr(), &native_status);
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
         EXPECT_EQ(decltype(status_obj)::type, StatusParamType::native_ref);
     }
     {
         kamping::Status stat;
-        auto            status_obj = status(stat);
+        auto            status_obj = status_out(stat);
         EXPECT_EQ(status_obj.native_ptr(), &stat.native());
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
         EXPECT_EQ(decltype(status_obj)::type, StatusParamType::ref);
