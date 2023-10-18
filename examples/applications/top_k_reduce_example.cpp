@@ -63,7 +63,7 @@ std::ostream& operator<<(std::ostream& os, TopK<K, ValueType> const& top_k) {
 template <size_t K, typename ValueType>
 std::optional<TopK<K, ValueType>> mpi_top_k(TopK<K, ValueType> const& local_top_k, MPI_Comm comm) {
     // We first have to create a custom datatype:
-    MPI_Datatype topK_type;
+    MPI_Datatype top_k_type;
 
     // We rely on the automatic compile-time deduction of the datatype of the single elements (ValueType) via KaMPIng to
     // make this code as generic as possible without adding another 300+ lines of code here.
@@ -71,12 +71,12 @@ std::optional<TopK<K, ValueType>> mpi_top_k(TopK<K, ValueType> const& local_top_
     MPI_Type_contiguous(
         K,                                  // count
         kamping::mpi_datatype<ValueType>(), // oldtype
-        &topK_type                          // newtype
+        &top_k_type                         // newtype
     );
-    MPI_Type_commit(&topK_type);
+    MPI_Type_commit(&top_k_type);
 
     // Second, we have to register our custom reduce operation with MPI:
-    MPI_Op             topK_merge_op;
+    MPI_Op             top_k_merge_op;
     MPI_User_function* merge_op = [](void* invec, void* inoutvec, int* len, MPI_Datatype*) {
         TopK<K, ValueType>* invec_    = static_cast<TopK<K, ValueType>*>(invec);
         TopK<K, ValueType>* inoutvec_ = static_cast<TopK<K, ValueType>*>(inoutvec);
@@ -89,26 +89,26 @@ std::optional<TopK<K, ValueType>> mpi_top_k(TopK<K, ValueType> const& local_top_
         );
     };
     MPI_Op_create(
-        merge_op,      // function
-        true,          // commutative
-        &topK_merge_op // op
+        merge_op,       // function
+        true,           // commutative
+        &top_k_merge_op // op
     );
 
     // Next, perform the actual communication using plain MPI
     TopK<K, ValueType> global_top_k;
     MPI_Reduce(
-        &local_top_k,  // sendbuf
-        &global_top_k, // recvbuf
-        1,             // count
-        topK_type,     // datatype
-        topK_merge_op, // op
-        0,             // root,
+        &local_top_k,   // sendbuf
+        &global_top_k,  // recvbuf
+        1,              // count
+        top_k_type,     // datatype
+        top_k_merge_op, // op
+        0,              // root,
         comm
     );
 
     // Finally, clean up the custom datatype and reduce operation.
-    MPI_Op_free(&topK_merge_op);
-    MPI_Type_free(&topK_type);
+    MPI_Op_free(&top_k_merge_op);
+    MPI_Type_free(&top_k_type);
 
     int rank;
     MPI_Comm_rank(comm, &rank);
