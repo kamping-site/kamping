@@ -68,11 +68,7 @@ std::optional<TopK<K, ValueType>> mpi_top_k(TopK<K, ValueType> const& local_top_
     // We rely on the automatic compile-time deduction of the datatype of the single elements (ValueType) via KaMPIng to
     // make this code as generic as possible without adding another 300+ lines of code here.
     // See kamping/mpi_datatype.hpp for the implementation of kamping::mpi_datatype.
-    MPI_Type_contiguous(
-        K,                                  // count
-        kamping::mpi_datatype<ValueType>(), // oldtype
-        &top_k_type                         // newtype
-    );
+    MPI_Type_contiguous(K, kamping::mpi_datatype<ValueType>(), &top_k_type);
     MPI_Type_commit(&top_k_type);
 
     // Second, we have to register our custom reduce operation with MPI:
@@ -80,31 +76,13 @@ std::optional<TopK<K, ValueType>> mpi_top_k(TopK<K, ValueType> const& local_top_
     MPI_User_function* merge_op = [](void* invec, void* inoutvec, int* len, MPI_Datatype*) {
         TopK<K, ValueType>* invec_    = static_cast<TopK<K, ValueType>*>(invec);
         TopK<K, ValueType>* inoutvec_ = static_cast<TopK<K, ValueType>*>(inoutvec);
-        std::transform(
-            invec_,          // first1  (input)
-            invec_ + *len,   // last1   (input)
-            inoutvec_,       // first2  (input)
-            inoutvec_,       // d_first (output)
-            merge<K, size_t> // binary_op
-        );
+        std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, merge<K, size_t>);
     };
-    MPI_Op_create(
-        merge_op,       // function
-        true,           // commutative
-        &top_k_merge_op // op
-    );
+    MPI_Op_create(merge_op, true, &top_k_merge_op);
 
     // Next, perform the actual communication using plain MPI
     TopK<K, ValueType> global_top_k;
-    MPI_Reduce(
-        &local_top_k,   // sendbuf
-        &global_top_k,  // recvbuf
-        1,              // count
-        top_k_type,     // datatype
-        top_k_merge_op, // op
-        0,              // root,
-        comm
-    );
+    MPI_Reduce(&local_top_k, &global_top_k, 1, top_k_type, top_k_merge_op, 0, comm);
 
     // Finally, clean up the custom datatype and reduce operation.
     MPI_Op_free(&top_k_merge_op);
