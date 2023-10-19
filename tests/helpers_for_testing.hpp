@@ -199,6 +199,8 @@ struct CustomAllocator {
 ///@return created MPI_Datatype.
 inline MPI_Datatype MPI_INT_padding_MPI_INT() {
     MPI_Datatype new_type;
+    // create 2 blocks of length 1 (MPI_INT) with a stride (distance between the start of each block in number elems)
+    // of 2
     MPI_Type_vector(2, 1, 2, MPI_INT, &new_type);
     return new_type;
 }

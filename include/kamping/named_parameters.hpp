@@ -982,7 +982,7 @@ inline auto send_type(MPI_Datatype send_type) {
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
         BufferResizePolicy::no_resize,
-        MPI_Datatype>(std::forward<MPI_Datatype>(send_type));
+        MPI_Datatype>(std::move(send_type));
 }
 
 /// @brief Output parameter for the send type.
@@ -1018,7 +1018,7 @@ inline auto recv_type(MPI_Datatype recv_type) {
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
         BufferResizePolicy::no_resize,
-        MPI_Datatype>(std::forward<MPI_Datatype>(recv_type));
+        MPI_Datatype>(std::move(recv_type));
 }
 
 /// @brief Output parameter for the recv type.

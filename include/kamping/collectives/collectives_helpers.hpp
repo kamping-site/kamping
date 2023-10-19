@@ -70,25 +70,23 @@ template <typename send_value_type, typename recv_value_type, typename recv_buf,
 constexpr auto determine_mpi_datatypes(Args&... args) {
     // Some assertions:
     // If send/recv types are given, the corresponding count information has to be provided, too.
-    constexpr bool is_send_type_given_as_non_out_param =
-        is_parameter_given_as_non_out_buffer<ParameterType::send_type, Args...>;
-    constexpr bool is_recv_type_given_as_non_out_param =
-        is_parameter_given_as_non_out_buffer<ParameterType::recv_type, Args...>;
-    if constexpr (is_send_type_given_as_non_out_param) {
+    constexpr bool is_send_type_given_as_in_param = is_parameter_given_as_in_buffer<ParameterType::send_type, Args...>;
+    constexpr bool is_recv_type_given_as_in_param = is_parameter_given_as_in_buffer<ParameterType::recv_type, Args...>;
+    if constexpr (is_send_type_given_as_in_param) {
         constexpr bool is_send_count_info_given =
-            is_parameter_given_as_non_out_buffer<
+            is_parameter_given_as_in_buffer<
                 ParameterType::send_count,
-                Args...> || is_parameter_given_as_non_out_buffer<ParameterType::send_counts, Args...> || is_parameter_given_as_non_out_buffer<ParameterType::send_recv_count, Args...>;
+                Args...> || is_parameter_given_as_in_buffer<ParameterType::send_counts, Args...> || is_parameter_given_as_in_buffer<ParameterType::send_recv_count, Args...>;
         static_assert(
             is_send_count_info_given,
             "If a custom send type is provided, send count(s) have to be provided, too."
         );
     }
-    if constexpr (is_recv_type_given_as_non_out_param) {
+    if constexpr (is_recv_type_given_as_in_param) {
         constexpr bool is_recv_count_info_given =
-            is_parameter_given_as_non_out_buffer<
+            is_parameter_given_as_in_buffer<
                 ParameterType::recv_count,
-                Args...> || is_parameter_given_as_non_out_buffer<ParameterType::recv_counts, Args...> || is_parameter_given_as_non_out_buffer<ParameterType::send_recv_count, Args...>;
+                Args...> || is_parameter_given_as_in_buffer<ParameterType::recv_counts, Args...> || is_parameter_given_as_in_buffer<ParameterType::send_recv_count, Args...>;
         static_assert(
             is_recv_count_info_given,
             "If a custom recv type is provided, send count(s) have to be provided, too."
@@ -97,7 +95,7 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
     // Recv buffer resize policy assertion
     constexpr bool do_not_resize_recv_buf = std::remove_reference_t<recv_buf>::resize_policy == no_resize;
     static_assert(
-        !is_recv_type_given_as_non_out_param || do_not_resize_recv_buf,
+        !is_recv_type_given_as_in_param || do_not_resize_recv_buf,
         "If a custom recv type is given, kamping is not able to deduce the correct size of the recv buffer. "
         "Therefore, a sufficiently large recv buffer (with resize policy \"no_resize\") must be provided by the user."
     );
@@ -111,7 +109,7 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
             std::make_tuple(),
             args...
         );
-    if constexpr (!is_send_type_given_as_non_out_param) {
+    if constexpr (!is_send_type_given_as_in_param) {
         mpi_send_type.underlying() = mpi_datatype<send_value_type>();
     }
 
@@ -120,7 +118,7 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
             std::make_tuple(),
             args...
         );
-    if constexpr (!is_recv_type_given_as_non_out_param) {
+    if constexpr (!is_recv_type_given_as_in_param) {
         mpi_recv_type.underlying() = mpi_datatype<recv_value_type>();
     }
 

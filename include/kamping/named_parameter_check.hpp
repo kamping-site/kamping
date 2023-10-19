@@ -363,14 +363,15 @@ struct parameters_to_integral_constant {
     ));
 };
 
-/// @brief Checks if buffer with requested parameter type exists and that the buffer is not an output parameter.
+/// @brief Checks if a data buffer with requested parameter type exists and it is an input parameter (i.e. its content
+/// does not have to be computed/deduced by KaMPIng).
 ///
-/// @tparam parameter_type The parameter type with which a parameter should be found.
+/// @tparam parameter_type The parameter type for which a parameter should be found.
 /// @tparam Args All parameter types to be searched.
 /// @return \c true iff. `Args` contains a parameter of type `parameter_type` and this parameter is not an output
 /// buffer.
 template <ParameterType parameter_type, typename... Args>
-constexpr bool has_non_out_buffer_with_parameter_type() {
+static constexpr bool is_parameter_given_as_in_buffer = []() {
     constexpr size_t found_pos = find_pos<parameter_type, 0, Args...>();
     if constexpr (found_pos >= sizeof...(Args)) {
         return false;
@@ -378,13 +379,7 @@ constexpr bool has_non_out_buffer_with_parameter_type() {
         using FoundType = std::tuple_element_t<found_pos, std::tuple<Args...>>;
         return !FoundType::is_out_buffer;
     }
-}
-
-/// @brief Checks if the buffer has to be computed by kamping, i.e. if it is an output parameter.
-/// @tparam BufferType The buffer type to be checked.
-template <ParameterType parameter_type, typename... Args>
-static constexpr bool
-    is_parameter_given_as_non_out_buffer = has_non_out_buffer_with_parameter_type<parameter_type, Args...>();
+}();
 
 /// @brief Checks if the buffer has to be computed by kamping, i.e. if it is an output parameter or the buffer has been
 /// allocated by KaMPIng.
