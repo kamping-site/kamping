@@ -34,7 +34,7 @@ int main(int /*argc*/, char** /*argv*/) {
     comm.alltoallv(
         send_buf(input),
         recv_type(MPI_INT),
-        recv_counts(recv_count_valuess),
+        recv_counts(recv_count_values),
         recv_buf<resize_to_fit>(recv_buffer)
     );
 #elif defined(RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY)
