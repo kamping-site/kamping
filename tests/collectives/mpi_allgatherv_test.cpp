@@ -43,10 +43,10 @@ TEST(AllgathervTest, allgatherv_single_element_no_receive_buffer) {
 TEST(AllgathervTest, allgatherv_single_element_explicit_send_count) {
     Communicator        comm;
     std::vector<size_t> data(5, comm.rank());
-    int const           send_count = 1;
+    int const           send_count_value = 1;
     // although send_buffer contains 5 elements only one element is gathered (as set via the explicit send_count
     // parameter)
-    auto output = comm.allgatherv(send_buf(data), send_counts(send_count)).extract_recv_buffer();
+    auto output = comm.allgatherv(send_buf(data), send_count(send_count_value)).extract_recv_buffer();
 
     std::vector<size_t> expected_output(comm.size());
     std::iota(expected_output.begin(), expected_output.end(), 0u);
@@ -439,4 +439,134 @@ TEST(AllgathervTest, non_monotonically_increasing_recv_displacements) {
                 .extract_recv_buffer();
         EXPECT_EQ(recv_buf, expected_recv_buffer());
     }
+}
+
+TEST(AllgathervTest, send_recv_type_is_out_parameter) {
+    Communicator           comm;
+    const std::vector<int> data(1, comm.rank_signed());
+    MPI_Datatype           send_type;
+    MPI_Datatype           recv_type;
+    auto                   result = comm.allgatherv(send_buf(data), send_type_out(send_type), recv_type_out(recv_type));
+
+    EXPECT_EQ(send_type, MPI_INT);
+    EXPECT_EQ(recv_type, MPI_INT);
+    auto recv_buf = result.extract_recv_buffer();
+    for (size_t i = 0; i < comm.size(); ++i) {
+        EXPECT_EQ(recv_buf[i], i);
+    }
+}
+
+TEST(AllgathervTest, send_recv_type_part_of_result_object) {
+    Communicator           comm;
+    const std::vector<int> data(1, comm.rank_signed());
+    auto                   result = comm.allgatherv(send_buf(data), send_type_out(), recv_type_out());
+
+    EXPECT_EQ(result.extract_send_type(), MPI_INT);
+    EXPECT_EQ(result.extract_recv_type(), MPI_INT);
+    auto recv_buf = result.extract_recv_buffer();
+    for (size_t i = 0; i < comm.size(); ++i) {
+        EXPECT_EQ(recv_buf[i], i);
+    }
+}
+
+TEST(AllgathervTest, non_trivial_send_type) {
+    // Each rank sends its rank two times to each other rank and receives the ranks with padding padding.
+    Communicator     comm;
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    std::vector<int> input{comm.rank_signed(), -1, -1, comm.rank_signed(), -1, -1};
+    std::vector<int> recv_buffer(2 * comm.size(), 0);
+
+    MPI_Type_commit(&int_padding_padding);
+    auto res = comm.allgatherv(
+        send_buf(input),
+        send_type(int_padding_padding),
+        send_count(2),
+        recv_buf(recv_buffer),
+        recv_counts_out()
+    );
+    MPI_Type_free(&int_padding_padding);
+
+    EXPECT_EQ(res.extract_recv_counts(), std::vector<int>(comm.size(), 2));
+    std::vector<int> expected_result;
+    for (std::size_t i = 0; i < comm.size(); ++i) {
+        expected_result.push_back(static_cast<int>(i));
+        expected_result.push_back(static_cast<int>(i));
+    }
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(AllgathervTest, non_trivial_recv_type) {
+    // Each rank sends its rank two times (without padding) and receives the ranks with padding.
+    Communicator     comm;
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    std::vector<int> input{comm.rank_signed(), comm.rank_signed()};
+    std::vector<int> recv_buffer(6 * comm.size(), -1);
+    int              send_count_value = -1;
+    std::vector<int> recv_counts_buffer(comm.size(), 2);
+
+    MPI_Type_commit(&int_padding_padding);
+    comm.allgatherv(
+        send_buf(input),
+        send_count_out(send_count_value),
+        recv_buf(recv_buffer),
+        recv_type(int_padding_padding),
+        recv_counts(recv_counts_buffer)
+    );
+    MPI_Type_free(&int_padding_padding);
+
+    EXPECT_EQ(send_count_value, 2);
+    std::vector<int> expected_result(6 * comm.size(), -1); // {0,-,-,0,-,-,1,-,-,1,-,-,...}
+    for (std::size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 6]     = static_cast<int>(i);
+        expected_result[i * 6 + 3] = static_cast<int>(i);
+    }
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(AllgathervTest, different_send_and_recv_counts) {
+    // Each rank sends its rank two times (without padding) and receives two ranks at a time.
+    Communicator     comm;
+    std::vector<int> input{comm.rank_signed(), comm.rank_signed()};
+    std::vector<int> recv_buffer(3 * comm.size(), -1);
+    MPI_Datatype     int_padding_int = MPI_INT_padding_MPI_INT();
+    std::vector<int> recv_counts_buffer(comm.size(), 1);
+
+    MPI_Type_commit(&int_padding_int);
+    comm.allgatherv(
+        send_buf(input),
+        recv_buf(recv_buffer),
+        recv_type(int_padding_int),
+        recv_counts(recv_counts_buffer)
+    );
+    MPI_Type_free(&int_padding_int);
+
+    std::vector<int> expected_result(3 * comm.size(), -1); // {0,-,0,1,-,1,...}
+    for (std::size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 3]     = static_cast<int>(i);
+        expected_result[i * 3 + 2] = static_cast<int>(i);
+    }
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(AllgathervTest, different_send_and_recv_counts_without_explicit_mpi_types) {
+    Communicator comm;
+    struct CustomRecvStruct {
+        int  a;
+        int  b;
+        bool operator==(CustomRecvStruct const& other) const {
+            return std::tie(a, b) == std::tie(other.a, other.b);
+        }
+    };
+
+    std::vector<int>              input{comm.rank_signed(), comm.rank_signed()};
+    std::vector<CustomRecvStruct> recv_buffer(comm.size());
+    std::vector<int>              recv_counts_buffer(comm.size(), 1);
+
+    comm.allgatherv(send_buf(input), recv_counts(recv_counts_buffer), recv_buf(recv_buffer));
+
+    std::vector<CustomRecvStruct> expected_result(comm.size());
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i] = CustomRecvStruct{static_cast<int>(i), static_cast<int>(i)};
+    }
+    EXPECT_EQ(recv_buffer, expected_result);
 }

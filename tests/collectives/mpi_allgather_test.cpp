@@ -443,7 +443,7 @@ TEST(AllgatherTest, non_trivial_recv_type) {
     MPI_Type_free(&int_padding_padding);
 
     EXPECT_EQ(send_count_value, 2);
-    std::vector<int> expected_result(6*comm.size(),-1); // {0,-,-,0,-,-,1,-,-,1,-,-,...}
+    std::vector<int> expected_result(6 * comm.size(), -1); // {0,-,-,0,-,-,1,-,-,1,-,-,...}
     for (std::size_t i = 0; i < comm.size(); ++i) {
         expected_result[i * 6]     = static_cast<int>(i);
         expected_result[i * 6 + 3] = static_cast<int>(i);
@@ -462,7 +462,7 @@ TEST(AllgatherTest, different_send_and_recv_counts) {
     comm.allgather(send_buf(input), recv_buf(recv_buffer), recv_type(int_padding_int), recv_count(1));
     MPI_Type_free(&int_padding_int);
 
-    std::vector<int> expected_result(3*comm.size(), -1); // {0,-,0,1,-,1,...}
+    std::vector<int> expected_result(3 * comm.size(), -1); // {0,-,0,1,-,1,...}
     for (std::size_t i = 0; i < comm.size(); ++i) {
         expected_result[i * 3]     = static_cast<int>(i);
         expected_result[i * 3 + 2] = static_cast<int>(i);
@@ -480,7 +480,7 @@ TEST(AllgatherTest, different_send_and_recv_counts_without_explicit_mpi_types) {
         }
     };
 
-    std::vector<int> input{comm.rank_signed(), comm.rank_signed()};
+    std::vector<int>              input{comm.rank_signed(), comm.rank_signed()};
     std::vector<CustomRecvStruct> recv_buffer(comm.size());
     comm.allgather(send_buf(input), recv_count(1), recv_buf(recv_buffer));
 
