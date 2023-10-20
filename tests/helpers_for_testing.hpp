@@ -22,6 +22,8 @@
 #include <initializer_list>
 #include <memory>
 
+#include <mpi.h>
+
 #include "kamping/named_parameter_types.hpp"
 
 namespace testing {
@@ -192,6 +194,24 @@ struct CustomAllocator {
         free(p);
     }
 };
+
+///@brief Returns an uncommitted MPI_Datatype with type signature {int, sizeof(int)-padding, int}.
+///@return created MPI_Datatype.
+inline MPI_Datatype MPI_INT_padding_MPI_INT() {
+    MPI_Datatype new_type;
+    // create 2 blocks of length 1 (MPI_INT) with a stride (distance between the start of each block in number elems)
+    // of 2
+    MPI_Type_vector(2, 1, 2, MPI_INT, &new_type);
+    return new_type;
+}
+
+///@brief Returns an uncommitted MPI_Datatype with type signature {int, sizeof(int)-padding, sizeof(int)-padding}.
+///@return created MPI_Datatype.
+inline MPI_Datatype MPI_INT_padding_padding() {
+    MPI_Datatype new_type;
+    MPI_Type_create_resized(MPI_INT, 0, sizeof(int) * 3, &new_type);
+    return new_type;
+}
 
 /// @}
 } // namespace testing

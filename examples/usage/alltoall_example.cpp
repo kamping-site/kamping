@@ -35,19 +35,19 @@ int main() {
 
     {
         // send/recv counts are automatically deduced
-        comm.alltoall(send_buf(input), recv_buf(output));
+        comm.alltoall(send_buf(input), recv_buf<resize_to_fit>(output));
         print_result_on_root(output, comm);
         print_on_root("------", comm);
         output.clear();
     }
     {
         // send and recv count can also be explicitly given
-        comm.alltoall(send_buf(input), send_count(2), recv_count(2), recv_buf(output));
+        comm.alltoall(send_buf(input), send_count(2), recv_count(2), recv_buf<resize_to_fit>(output));
         print_result_on_root(output, comm);
         print_on_root("------", comm);
         output.clear();
 
-        comm.alltoall(send_buf(input), send_count(1), recv_count(1), recv_buf(output));
+        comm.alltoall(send_buf(input), send_count(1), recv_count(1), recv_buf<resize_to_fit>(output));
         print_result_on_root(output, comm);
         print_on_root("------", comm);
         output.clear();

@@ -52,4 +52,77 @@ size_t compute_required_recv_buf_size_in_vectorized_communication(
         return asserting_cast<size_t>(recv_buf_size);
     }
 }
+
+/// @brief Deduce the MPI_Datatype to use on the send and recv side.
+/// If \ref kamping::send_type() is given, the \c MPI_Dataype wrapped inside will be used as send_type. Otherwise, the
+/// \c MPI_datatype is derived automatically based on send_buf's underlying \c value_type.
+///
+/// If \ref kamping::recv_type()
+/// is given, the \c MPI_Dataype wrapped inside will be used as recv_type. Otherwise, the \c MPI_datatype is derived
+/// automatically based on recv_buf's underlying \c value_type.
+///
+/// @tparam send_value_type Value type of the send buffer.
+/// @tparam recv_value_type Value type of the recv buffer.
+/// @param args All arguments passed to a wrapped MPI call.
+/// @return Return a tuple containing the \c MPI send_type wrapped in a DataBuffer, the \c MPI recv_type wrapped in a
+/// DataBuffer.
+template <typename send_value_type, typename recv_value_type, typename recv_buf, typename... Args>
+constexpr auto determine_mpi_datatypes(Args&... args) {
+    // Some assertions:
+    // If send/recv types are given, the corresponding count information has to be provided, too.
+    constexpr bool is_send_type_given_as_in_param = is_parameter_given_as_in_buffer<ParameterType::send_type, Args...>;
+    constexpr bool is_recv_type_given_as_in_param = is_parameter_given_as_in_buffer<ParameterType::recv_type, Args...>;
+    if constexpr (is_send_type_given_as_in_param) {
+        constexpr bool is_send_count_info_given =
+            is_parameter_given_as_in_buffer<
+                ParameterType::send_count,
+                Args...> || is_parameter_given_as_in_buffer<ParameterType::send_counts, Args...> || is_parameter_given_as_in_buffer<ParameterType::send_recv_count, Args...>;
+        static_assert(
+            is_send_count_info_given,
+            "If a custom send type is provided, send count(s) have to be provided, too."
+        );
+    }
+    if constexpr (is_recv_type_given_as_in_param) {
+        constexpr bool is_recv_count_info_given =
+            is_parameter_given_as_in_buffer<
+                ParameterType::recv_count,
+                Args...> || is_parameter_given_as_in_buffer<ParameterType::recv_counts, Args...> || is_parameter_given_as_in_buffer<ParameterType::send_recv_count, Args...>;
+        static_assert(
+            is_recv_count_info_given,
+            "If a custom recv type is provided, send count(s) have to be provided, too."
+        );
+    }
+    // Recv buffer resize policy assertion
+    constexpr bool do_not_resize_recv_buf = std::remove_reference_t<recv_buf>::resize_policy == no_resize;
+    static_assert(
+        !is_recv_type_given_as_in_param || do_not_resize_recv_buf,
+        "If a custom recv type is given, kamping is not able to deduce the correct size of the recv buffer. "
+        "Therefore, a sufficiently large recv buffer (with resize policy \"no_resize\") must be provided by the user."
+    );
+
+    // Get the send/recv types
+    using default_mpi_send_type = decltype(kamping::send_type_out());
+    using default_mpi_recv_type = decltype(kamping::recv_type_out());
+
+    auto&& mpi_send_type =
+        internal::select_parameter_type_or_default<internal::ParameterType::send_type, default_mpi_send_type>(
+            std::make_tuple(),
+            args...
+        );
+    if constexpr (!is_send_type_given_as_in_param) {
+        mpi_send_type.underlying() = mpi_datatype<send_value_type>();
+    }
+
+    auto&& mpi_recv_type =
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_type, default_mpi_recv_type>(
+            std::make_tuple(),
+            args...
+        );
+    if constexpr (!is_recv_type_given_as_in_param) {
+        mpi_recv_type.underlying() = mpi_datatype<recv_value_type>();
+    }
+
+    return std::make_tuple(std::move(mpi_send_type), std::move(mpi_recv_type));
+}
+
 } // namespace kamping::internal
