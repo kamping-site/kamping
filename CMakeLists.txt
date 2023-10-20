@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.24)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
@@ -62,6 +62,11 @@ endif ()
 if (KAMPING_USE_CCACHE)
     include(CCache)
 endif ()
+
+# external dependencies
+include(FetchContent)
+
+FetchContent_Declare(kassert URL ${CMAKE_CURRENT_LIST_DIR}/extern/kassert OVERRIDE_FIND_PACKAGE SYSTEM)
 
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
 find_package(MPI REQUIRED)
@@ -189,9 +194,7 @@ string(
            $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy">:60>
            $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy">:60>
 )
-
-add_subdirectory(extern/kassert)
-target_include_directories(kamping_base INTERFACE extern/kassert/include)
+find_package(kassert REQUIRED)
 target_link_libraries(kamping_base INTERFACE kassert)
 
 add_library(kamping::kamping ALIAS kamping)
