@@ -119,7 +119,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
     }
 
     KASSERT(
-        (do_compute_send_count || send_buf.size() % size() == 0lu),
+        (!do_compute_send_count || send_buf.size() % size() == 0lu),
         "There are no send counts given and the number of elements in send_buf is not divisible by the number of "
         "ranks "
         "in the communicator.",
