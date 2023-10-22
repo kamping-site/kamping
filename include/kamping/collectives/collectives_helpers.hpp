@@ -54,7 +54,7 @@ size_t compute_required_recv_buf_size_in_vectorized_communication(
 }
 
 /// @brief If the given type T is an rvalue reference,i.e. T = U&&, the type alias refers to U. Otherwise the type alias
-/// refers to T (which possiblyl can be a lvalue reference).
+/// refers to T (which possibly can be an lvalue reference).
 /// @tparam T Type for which a possible rvalue reference is removed.
 template <typename T>
 using remove_rvalue_reference_t = std::conditional_t<std::is_rvalue_reference_v<T>, std::remove_reference_t<T>, T>;
@@ -130,8 +130,9 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
     }
 
     // If the send/recv types are user provided we can refer to the corresponding buffers contained in args and only
-    // need to store a (lvalue) reference in the return tuple. Otherwise the send/recv type buffers are constructed in
-    // this function and have to be returned by value (and therefore be non-reference members of the return tuple).
+    // need to store an lvalue reference bound to them in the return tuple. Otherwise the send/recv type buffers are
+    // constructed in this function and have to be returned by value (and therefore be non-reference members of the
+    // return tuple).
     using ForwardingTuple = std::
         tuple<remove_rvalue_reference_t<decltype(mpi_send_type)>, remove_rvalue_reference_t<decltype(mpi_recv_type)>>;
     return ForwardingTuple(
