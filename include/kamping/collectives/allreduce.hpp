@@ -30,20 +30,28 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/collectives/collectives_helpers.hpp"
 #include "kamping/result.hpp"
 
 /// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
 ///
 /// This wraps \c MPI_Allreduce. The operation combines the elements in the input buffer provided via \c
 /// kamping::send_buf() and returns the combined value on all ranks. The following parameters are required:
-/// - kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
+/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 /// each rank.
-/// - kamping::op() wrapping the operation to apply to the input.
+/// - \ref kamping::op() wrapping the operation to apply to the input.
 ///
 /// The following parameters are optional:
-/// - kamping::recv_buf() containing a buffer for the output.
-/// - kamping::send_counts() specifiying how many elements of the buffer take part in the reduction.
-/// This parameter has to be an integer. If ommited, the size of the send buffer is used as a default.
+/// - \ref kamping::recv_buf() containing a buffer for the output. The buffer will be resized according to the buffer's
+/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
+/// storage must be large enough to hold all received elements.
+///
+/// - \ref kamping::send_count() specifiying how many elements of the send buffer take part in the reduction. If
+/// omitted, the size of send buffer is used. This parameter is mandatory if \ref kamping::send_type() is given.
+///
+/// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
+/// derived automatically based on send_buf's underlying \c value_type.
+///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
@@ -54,7 +62,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf, op),
-        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_counts)
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_counts, send_type)
     );
 
     // Get the send buffer and deduce the send and recv value types.
@@ -71,6 +79,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
         std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
         "Types of send and receive buffers do not match."
     );
+
+    // Get the send type.
+    auto&& send_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
+    [[maybe_unused]] constexpr bool send_type_is_in_param = has_to_be_computed<decltype(send_type)>;
 
     // Get the operation used for the reduction. The signature of the provided function is checked while building.
     auto& operation_param = select_parameter_type<ParameterType::op>(args...);
