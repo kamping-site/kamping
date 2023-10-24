@@ -385,7 +385,9 @@ kamping_register_compilation_failure_test(
 kamping_register_compilation_failure_test(
     test_mpi_bcast_compilation_failure
     FILES collectives/mpi_bcast_compilation_failure_test.cpp
-    SECTIONS "RECV_COUNT_GIVEN"
+    SECTIONS "SEND_RECV_COUNT_GIVEN" "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
     LIBRARIES kamping_base
 )
 kamping_register_compilation_failure_test(
