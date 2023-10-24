@@ -63,7 +63,11 @@ enum class ParameterType {
     values_on_rank_0, ///< Tag used to represent the value of the exclusive scan
                       ///< operation on rank 0.
     send_type,        ///< Tag used to represent a send type in an \c MPI call.
-    recv_type         ///< Tag used to represent a recv type in an \c MPI call.
+    recv_type,        ///< Tag used to represent a recv type in an \c MPI call.
+    send_recv_type ///< Tag used to represent a send and/or recv type in an \c MPI call. This parameter type is used for
+                   ///< example in \c MPI collective operations like \c MPI_Bcast where the corresponding \c MPI
+                   ///< function expects only one \c MPI_Datatype parameter of type \c MPI_Datatype.
+                   ///<
 };
 /// @}
 } // namespace internal

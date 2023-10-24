@@ -750,7 +750,9 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
     LibAllocatedContainerBasedBuffer<int, ParameterType::send_recv_count, BufferType::out_buffer>    send_recv_count;
     LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_type, BufferType::out_buffer> send_type;
     LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::recv_type, BufferType::out_buffer> recv_type;
-    StatusParam<StatusParamType::owning>                                                             status;
+    LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_recv_type, BufferType::out_buffer>
+                                         send_recv_type;
+    StatusParam<StatusParamType::owning> status;
 
     MPIResult result(
         std::move(status),
@@ -763,7 +765,8 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
         std::move(send_displs),
         std::move(send_recv_count),
         std::move(send_type),
-        std::move(recv_type)
+        std::move(recv_type),
+        std::move(send_recv_type)
     );
 
     std::ignore = result.extract_status();
@@ -798,5 +801,8 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
 
     std::ignore = result.extract_recv_type();
     EXPECT_KASSERT_FAILS(result.extract_recv_type(), "Cannot extract a buffer that has already been extracted.");
+
+    std::ignore = result.extract_send_recv_type();
+    EXPECT_KASSERT_FAILS(result.extract_send_recv_type(), "Cannot extract a buffer that has already been extracted.");
 }
 #endif
