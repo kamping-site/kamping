@@ -78,7 +78,7 @@ TEST(ScatterTest, scatter_single_element_with_explicit_send_count_and_recv_buffe
     std::vector<int> result;
 
     // test that send_count parameter overwrites automatic deduction of send counts from the size of the send buffer
-    comm.scatter(send_buf(input), send_counts(1), recv_buf<resize_to_fit>(result));
+    comm.scatter(send_buf(input), send_count(1), recv_buf<resize_to_fit>(result));
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
 }
@@ -94,7 +94,7 @@ TEST(ScatterTest, scatter_single_element_with_explicit_send_count_only_at_root) 
     // test that send_count parameter overwrites automatic deduction of send counts from the size of the send buffer
     // even if this value is only given at the root.
     if (comm.is_root(root)) {
-        comm.scatter(send_buf(input), send_counts(1), kamping::root(root), recv_buf<resize_to_fit>(result));
+        comm.scatter(send_buf(input), send_count(1), kamping::root(root), recv_buf<resize_to_fit>(result));
     } else {
         comm.scatter(send_buf(input), kamping::root(root), recv_buf<resize_to_fit>(result));
     }
@@ -128,7 +128,7 @@ TEST(ScatterTest, scatter_single_element_with_recv_count) {
     Communicator comm;
 
     auto const input  = create_input_vector_on_root(comm, 1);
-    auto const result = comm.scatter(send_buf(input), recv_counts(1)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input), recv_count(1)).extract_recv_buffer();
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -139,10 +139,10 @@ TEST(ScatterTest, scatter_extract_recv_count) {
 
     auto const input = create_input_vector_on_root(comm, 1);
 
-    EXPECT_EQ(comm.scatter(send_buf(input)).extract_recv_counts(), 1);
+    EXPECT_EQ(comm.scatter(send_buf(input)).extract_recv_count(), 1);
 
     int recv_count_value;
-    comm.scatter(send_buf(input), recv_counts_out(recv_count_value));
+    comm.scatter(send_buf(input), recv_count_out(recv_count_value));
     EXPECT_EQ(recv_count_value, 1);
 }
 
@@ -237,7 +237,7 @@ TEST(ScatterTest, scatter_with_recv_count_out) {
 
     auto const input = create_input_vector_on_root(comm, 2);
     int        recv_count;
-    auto const result = comm.scatter(send_buf(input), recv_counts_out(recv_count)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input), recv_count_out(recv_count)).extract_recv_buffer();
 
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(recv_count, 2);

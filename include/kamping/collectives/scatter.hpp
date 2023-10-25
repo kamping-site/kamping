@@ -45,12 +45,12 @@
 /// buffer by passing `kamping::ignore<T>` as a parameter, or `T` as a template parameter to \ref kamping::send_buf().
 ///
 /// The following parameters are optional but incur communication overhead if omitted:
-/// - kamping::recv_counts() specifying the number of elements sent to each PE. If this parameter is omitted,
+/// - kamping::recv_count() specifying the number of elements sent to each PE. If this parameter is omitted,
 /// the number of elements sent to each PE is computed based on the size of the \ref kamping::send_buf() on the root
 /// PE and broadcasted to other PEs.
 ///
 /// The following parameters are optional:
-/// - kamping::send_counts() specifying how many elements are sent to each process. This parameter has to be an integer.
+/// - kamping::send_count() specifying how many elements are sent to each process.
 /// If omitted, the size of send buffer divided by communicator size is used.
 ///
 /// - kamping::root() specifying the rank of the root PE. If omitted, the default root PE of the communicator
@@ -71,7 +71,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(),
-        KAMPING_OPTIONAL_PARAMETERS(send_buf, send_counts, root, recv_buf, recv_counts)
+        KAMPING_OPTIONAL_PARAMETERS(send_buf, send_count, root, recv_buf, recv_count)
     );
 
     // Optional parameter: root()
@@ -96,16 +96,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     KASSERT(!is_root(int_root) || send_buf.data() != nullptr, "Send buffer must be specified on root.", assert::light);
 
     // Compute sendcount based on the size of the sendbuf
-    using default_send_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
+    using default_send_count_type = decltype(kamping::send_count_out());
     auto&& send_count =
-        internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
+        internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
         );
-    static_assert(
-        std::remove_reference_t<decltype(send_count)>::is_single_element,
-        "send_counts() parameter must be a single value."
-    );
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         KASSERT(
@@ -143,9 +139,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 
     // Optional parameter: recv_count()
     // Default: compute value based on send_buf.size on root
-    using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
+    using default_recv_count_type = decltype(kamping::recv_count_out());
     auto&& recv_count =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_count_type>(
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
             std::tuple(),
             args...
         );
@@ -158,10 +154,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     );
 
     // If it is an output parameter, broadcast send_count to get recv_count
-    static_assert(
-        std::remove_reference_t<decltype(recv_count)>::is_single_element,
-        "recv_counts() parameter must be a single value."
-    );
     if constexpr (do_compute_recv_count) {
         recv_count.underlying() = send_count.get_single_element();
         this->bcast_single(send_recv_buf(recv_count.underlying()), kamping::root(int_root));
@@ -216,7 +208,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 /// - kamping::send_counts() [on root PE] specifying the number of elements to send to each PE.
 ///
 /// The following parameter can be omitted at the cost of communication overhead (1x MPI_Scatter)
-/// - kamping::recv_counts() [on all PEs] specifying the number of elements sent to each PE. If this parameter is
+/// - kamping::recv_count() [on all PEs] specifying the number of elements sent to each PE. If this parameter is
 /// omitted, the number of elements sent to each PE is computed based on kamping::send_counts() provided on the
 /// root PE.
 ///
@@ -244,7 +236,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(),
-        KAMPING_OPTIONAL_PARAMETERS(send_buf, root, send_counts, send_displs, recv_buf, recv_counts)
+        KAMPING_OPTIONAL_PARAMETERS(send_buf, root, send_counts, send_displs, recv_buf, recv_count)
     );
 
     // Optional parameter: root()
@@ -331,16 +323,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     }
 
     // Get recv counts
-    using default_recv_counts_type = decltype(recv_counts_out(alloc_new<int>));
-    auto&& recv_counts =
-        select_parameter_type_or_default<ParameterType::recv_counts, default_recv_counts_type>(std::tuple(), args...);
-    static_assert(
-        std::remove_reference_t<decltype(recv_counts)>::is_single_element,
-        "recv_counts() parameter must be a single value."
-    );
+    using default_recv_count_type = decltype(recv_count_out());
+    auto&& recv_count =
+        select_parameter_type_or_default<ParameterType::recv_count, default_recv_count_type>(std::tuple(), args...);
 
     // Check that recv_counts() can be used to compute send_counts(); or send_counts() is given on the root PE
-    [[maybe_unused]] constexpr bool do_compute_recv_count = has_to_be_computed<decltype(recv_counts)>;
+    [[maybe_unused]] constexpr bool do_compute_recv_count = has_to_be_computed<decltype(recv_count)>;
     KASSERT(
         this->is_same_on_all_ranks(do_compute_recv_count),
         "recv_counts() must be given on all PEs or on no PEs",
@@ -351,13 +339,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         scatter(
             kamping::send_buf(send_counts.underlying()),
             kamping::root(root_val),
-            kamping::recv_counts(1),
-            kamping::recv_buf(recv_counts.underlying())
+            kamping::recv_count(1),
+            kamping::recv_buf(recv_count.underlying())
         );
     }
 
     auto compute_required_recv_buf_size = [&]() {
-        return static_cast<size_t>(recv_counts.get_single_element());
+        return static_cast<size_t>(recv_count.get_single_element());
     };
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
     KASSERT(
@@ -367,17 +355,17 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     );
 
     [[maybe_unused]] int const err = MPI_Scatterv(
-        send_buf_ptr,                     // send buffer
-        send_counts.data(),               // send counts
-        send_displs.data(),               // send displs
-        mpi_send_type,                    // send type
-        recv_buf.data(),                  // recv buffer
-        recv_counts.get_single_element(), // recv count
-        mpi_recv_type,                    // recv type
-        root_val,                         // root
-        mpi_communicator()                // communicator
+        send_buf_ptr,                    // send buffer
+        send_counts.data(),              // send counts
+        send_displs.data(),              // send displs
+        mpi_send_type,                   // send type
+        recv_buf.data(),                 // recv buffer
+        recv_count.get_single_element(), // recv count
+        mpi_recv_type,                   // recv type
+        root_val,                        // root
+        mpi_communicator()               // communicator
     );
     THROW_IF_MPI_ERROR(err, MPI_Scatterv);
 
-    return make_mpi_result(std::move(recv_buf), std::move(recv_counts), std::move(send_counts), std::move(send_displs));
+    return make_mpi_result(std::move(recv_buf), std::move(recv_count), std::move(send_counts), std::move(send_displs));
 }
