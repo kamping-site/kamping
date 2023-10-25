@@ -71,7 +71,7 @@ TEST(ScattervTest, scatterv_equiv_single_element_return_recv_buf) {
 
     auto const input  = create_equiv_sized_input_vector_on_root(comm, 1);
     auto const counts = create_equiv_counts_on_root(comm, 1);
-    auto const result = comm.scatterv(send_buf(input), send_counts(counts), recv_counts(1)).extract_recv_buffer();
+    auto const result = comm.scatterv(send_buf(input), send_counts(counts), recv_count(1)).extract_recv_buffer();
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -83,7 +83,7 @@ TEST(ScattervTest, scatterv_equiv_single_element_out_recv_buf) {
     auto const       input  = create_equiv_sized_input_vector_on_root(comm, 1);
     auto const       counts = create_equiv_counts_on_root(comm, 1);
     std::vector<int> result;
-    comm.scatterv(send_buf(input), send_counts(counts), recv_counts(1), recv_buf<resize_to_fit>(result));
+    comm.scatterv(send_buf(input), send_counts(counts), recv_count(1), recv_buf<resize_to_fit>(result));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -95,12 +95,12 @@ TEST(ScattervTest, scatterv_equiv_single_element_out_recv_buf_var) {
     auto const input  = create_equiv_sized_input_vector_on_root(comm, 1);
     auto const counts = create_equiv_counts_on_root(comm, 1);
     int        result;
-    comm.scatterv(send_buf(input), send_counts(counts), recv_counts(1), recv_buf(result));
+    comm.scatterv(send_buf(input), send_counts(counts), recv_count(1), recv_buf(result));
 
     EXPECT_EQ(result, comm.rank());
 }
 
-TEST(ScattervTest, scatterv_equiv_single_element_no_recv_counts) {
+TEST(ScattervTest, scatterv_equiv_single_element_no_recv_count) {
     Communicator comm;
 
     auto const input  = create_equiv_sized_input_vector_on_root(comm, 1);
@@ -111,14 +111,14 @@ TEST(ScattervTest, scatterv_equiv_single_element_no_recv_counts) {
     EXPECT_EQ(result.front(), comm.rank_signed());
 }
 
-TEST(ScattervTest, scatterv_equiv_single_element_out_recv_counts) {
+TEST(ScattervTest, scatterv_equiv_single_element_out_recv_count) {
     Communicator comm;
 
-    auto const input  = create_equiv_sized_input_vector_on_root(comm, 1);
-    auto const counts = create_equiv_counts_on_root(comm, 1);
-    int        recv_count;
+    auto const input      = create_equiv_sized_input_vector_on_root(comm, 1);
+    auto const counts     = create_equiv_counts_on_root(comm, 1);
+    int        recv_count = -1;
     int        result;
-    comm.scatterv(send_buf(input), send_counts(counts), recv_counts_out(recv_count), recv_buf<resize_to_fit>(result));
+    comm.scatterv(send_buf(input), send_counts(counts), recv_count_out(recv_count), recv_buf<resize_to_fit>(result));
 
     EXPECT_EQ(recv_count, 1);
     EXPECT_EQ(result, comm.rank_signed());
@@ -131,9 +131,13 @@ TEST(ScattervTest, scatterv_equiv_single_element_return_send_displs) {
     auto const send_counts = create_equiv_counts_on_root(comm, 1);
     int const  recv_count  = 1;
     int        result;
-    auto       send_displs =
-        comm.scatterv(send_buf(input), recv_counts(recv_count), kamping::send_counts(send_counts), recv_buf(result))
-            .extract_send_displs();
+    auto       send_displs = comm.scatterv(
+                               send_buf(input),
+                               kamping::recv_count(recv_count),
+                               kamping::send_counts(send_counts),
+                               recv_buf(result)
+    )
+                           .extract_send_displs();
 
     if (comm.is_root()) {
         EXPECT_EQ(send_displs.size(), comm.size());
@@ -177,7 +181,7 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements) {
                                 send_buf(input),
                                 send_counts(counts),
                                 send_displs_out<resize_to_fit>(displs),
-                                recv_counts_out(recv_count)
+                                recv_count_out(recv_count)
     )
                             .extract_recv_buffer();
 
@@ -209,12 +213,12 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements_send_buf_only_on_root_no_rec
                          send_buf(input),
                          send_counts(counts),
                          send_displs_out<resize_to_fit>(displs),
-                         recv_counts_out(recv_count)
+                         recv_count_out(recv_count)
         )
                      .extract_recv_buffer();
     } else {
         result =
-            comm.scatterv<int>(send_counts(counts), send_displs_out<resize_to_fit>(displs), recv_counts_out(recv_count))
+            comm.scatterv<int>(send_counts(counts), send_displs_out<resize_to_fit>(displs), recv_count_out(recv_count))
                 .extract_recv_buffer();
     }
 
@@ -246,7 +250,7 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements_send_buf_only_on_root_with_r
                          send_buf(input),
                          send_counts(counts),
                          send_displs_out<resize_to_fit>(displs),
-                         recv_counts_out(recv_count)
+                         recv_count_out(recv_count)
         )
                      .extract_recv_buffer();
     } else {
@@ -254,7 +258,7 @@ TEST(ScattervTest, scatterv_equiv_multiple_elements_send_buf_only_on_root_with_r
             recv_buf<resize_to_fit>(result),
             send_counts(counts),
             send_displs_out(displs),
-            recv_counts_out(recv_count)
+            recv_count_out(recv_count)
         );
     }
 
@@ -288,7 +292,7 @@ TEST(ScattervTest, scatterv_nonequiv) {
 
     int        recv_count;
     auto const result =
-        comm.scatterv(send_buf(input), send_counts(counts), recv_counts_out(recv_count)).extract_recv_buffer();
+        comm.scatterv(send_buf(input), send_counts(counts), recv_count_out(recv_count)).extract_recv_buffer();
 
     EXPECT_EQ(recv_count, comm.rank_signed() + 1);
     EXPECT_EQ(result.size(), comm.rank() + 1);
@@ -303,7 +307,7 @@ TEST(ScattervTest, scatterv_nonzero_root) {
     auto const counts = create_equiv_counts_on_root(comm, 1, root_val);
 
     auto const result =
-        comm.scatterv(send_buf(input), root(root_val), send_counts(counts), recv_counts(1)).extract_recv_buffer();
+        comm.scatterv(send_buf(input), root(root_val), send_counts(counts), recv_count(1)).extract_recv_buffer();
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank_signed());
@@ -314,7 +318,7 @@ TEST(ScattervTest, scatterv_default_container_type) {
 
     std::vector<int> const input  = create_equiv_sized_input_vector_on_root(comm, 1);
     std::vector<int> const counts = create_equiv_counts_on_root(comm, 1);
-    auto                   result = comm.scatterv(send_buf(input), send_counts(counts), recv_counts(1));
+    auto                   result = comm.scatterv(send_buf(input), send_counts(counts), recv_count(1));
 
     // This just has to compile
     OwnContainer<int> recv_buf    = result.extract_recv_buffer();
