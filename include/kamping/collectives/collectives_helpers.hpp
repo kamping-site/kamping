@@ -125,6 +125,8 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
     return std::make_tuple(std::move(mpi_send_type), std::move(mpi_recv_type));
 }
 
+template <typename>
+struct TD;
 /// @brief Deduce the MPI_Datatype to use as send_recv_type in a collective operation which accepts only one parameter
 /// of MPI_Datatype instead of (possibly) distinct send and recv types. If \ref kamping::send_recv_type() is given, the
 /// \c MPI_Dataype wrapped inside will be used as send_recv_type. Otherwise, the \c MPI_datatype is derived
@@ -135,20 +137,23 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
 /// @tparam recv_or_send_recv_buf Type of the (send_)recv buffer.
 /// @tparam Args Types of all arguments passed to the wrapped MPI call.
 /// @param args All arguments passed to a wrapped MPI call.
-/// @return Return the \c MPI send_type wrapped in a DataBuffer.
+/// @return Return the \c MPI send_type wrapped in a DataBuffer. This is either an lvalue reference to the
+/// send_recv_type DataBuffer if the send_recv_type is provided by the user or a newly created send_recv_type DataBuffer
+/// otherwise.
 template <typename send_or_send_recv_value_type, typename recv_or_send_recv_buf, typename... Args>
-constexpr decltype(auto) determine_mpi_send_recv_datatype(Args&... args) {
+constexpr auto determine_mpi_send_recv_datatype(Args&... args)
+    -> decltype(internal::select_parameter_type_or_default<
+                internal::ParameterType::send_recv_type,
+                decltype(kamping::send_recv_type_out())>(std::make_tuple(), args...)) {
     // Some assertions:
     // If a send_recv type is given, the corresponding count information has to be provided, too.
     constexpr bool is_send_recv_type_given_as_in_param =
         is_parameter_given_as_in_buffer<ParameterType::send_recv_type, Args...>;
-    // constexpr bool is_recv_type_given_as_in_param = is_parameter_given_as_in_buffer<ParameterType::recv_type,
-    // Args...>;
     if constexpr (is_send_recv_type_given_as_in_param) {
-        constexpr bool is_send_recv_count_info_given =
+        constexpr bool is_send_recv_count_given =
             is_parameter_given_as_in_buffer<ParameterType::send_recv_count, Args...>;
         static_assert(
-            is_send_recv_count_info_given,
+            is_send_recv_count_given,
             "If a custom send_recv type is provided, the send_recv count has to be provided, too."
         );
     }
@@ -164,24 +169,17 @@ constexpr decltype(auto) determine_mpi_send_recv_datatype(Args&... args) {
 
     // Get the send_recv type
     using default_mpi_send_recv_type = decltype(kamping::send_recv_type_out());
-    auto&& mpi_send_recv_type =
+    decltype(auto) mpi_send_recv_type =
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_type, default_mpi_send_recv_type>(
             std::make_tuple(),
             args...
         );
+
     if constexpr (!is_send_recv_type_given_as_in_param) {
         mpi_send_recv_type.underlying() = mpi_datatype<send_or_send_recv_value_type>();
     }
 
-    // return the send_recv type buffer object either by value (if not given by the user and therefore constructed in
-    // this function) or by (lvalue) reference.
-    if constexpr (!internal::has_parameter_type<internal::ParameterType::send_recv_type, Args...>()) {
-        // return send_recv_type buffer object constructed in this function by value
-        return std::decay_t<decltype(mpi_send_recv_type)>(std::move(mpi_send_recv_type));
-    } else {
-        // return reference to send_recv_type buffer as it is not constructed in this function
-        return mpi_send_recv_type;
-    }
+    return mpi_send_recv_type;
 }
 
 } // namespace kamping::internal

@@ -47,7 +47,7 @@
 /// on all or none of the ranks. If not specified, the count is set to the size of kamping::send_recv_buf() on
 /// root and broadcasted to all other ranks. This parameter is mandatory if \ref kamping::send_recv_type() is given.
 ///
-/// The following parameter is optional:
+/// The following parameter are optional:
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c
 /// Communicator is used, see root().
 ///
