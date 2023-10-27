@@ -125,8 +125,6 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
     return std::make_tuple(std::move(mpi_send_type), std::move(mpi_recv_type));
 }
 
-template <typename>
-struct TD;
 /// @brief Deduce the MPI_Datatype to use as send_recv_type in a collective operation which accepts only one parameter
 /// of MPI_Datatype instead of (possibly) distinct send and recv types. If \ref kamping::send_recv_type() is given, the
 /// \c MPI_Dataype wrapped inside will be used as send_recv_type. Otherwise, the \c MPI_datatype is derived
