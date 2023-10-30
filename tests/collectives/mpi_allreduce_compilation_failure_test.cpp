@@ -25,12 +25,17 @@ int main(int /*argc*/, char** /*argv*/) {
     std::vector<int>       recv_buffer(1);
 
 #if defined(SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT)
-    comm.allreduce(send_buf(input), send_type(MPI_INT), op(kamping::ops::plus<>{}), recv_buf<no_resize>(recv_buffer));
+    comm.allreduce(
+        send_buf(input),
+        send_recv_type(MPI_INT),
+        op(kamping::ops::plus<>{}),
+        recv_buf<no_resize>(recv_buffer)
+    );
 #elif defined(SEND_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT)
     comm.allreduce(
         send_buf(input),
-        send_type(MPI_INT),
-        send_count(1),
+        send_recv_type(MPI_INT),
+        send_recv_count(1),
         op(kamping::ops::plus<>{}),
         recv_buf<resize_to_fit>(recv_buffer)
     );
@@ -46,8 +51,8 @@ int main(int /*argc*/, char** /*argv*/) {
     // If none of the above sections is active, this file will compile successfully.
     comm.allreduce(
         send_buf(input),
-        send_type(MPI_INT),
-        send_count(1),
+        send_recv_type(MPI_INT),
+        send_recv_count(1),
         op(kamping::ops::plus<>{}),
         recv_buf<no_resize>(recv_buffer)
     );

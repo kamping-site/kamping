@@ -48,11 +48,11 @@
 /// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
 /// storage must be large enough to hold all received elements.
 ///
-/// - \ref kamping::send_count() specifiying how many elements of the send buffer take part in the reduction. If
-/// omitted, the size of send buffer is used. This parameter is mandatory if \ref kamping::send_type() is given.
+/// - \ref kamping::send_recv_count() specifiying how many elements of the send buffer take part in the reduction. If
+/// omitted, the size of send buffer is used. This parameter is mandatory if \ref kamping::send_recv_type() is given.
 ///
-/// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
-/// derived automatically based on send_buf's underlying \c value_type.
+/// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype
+/// is derived automatically based on send_buf's underlying \c value_type.
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
@@ -64,7 +64,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf, op),
-        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_count, send_type)
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_recv_count, send_recv_type)
     );
 
     // Get the send buffer and deduce the send and recv value types.
@@ -82,57 +82,55 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
         "Types of send and receive buffers do not match."
     );
 
-    // Get the send type.
-    auto&& send_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
-    [[maybe_unused]] constexpr bool send_type_is_in_param = !has_to_be_computed<decltype(send_type)>;
+    // Get the send_recv_type.
+    auto&& send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
+    [[maybe_unused]] constexpr bool send_recv_type_is_in_param = !has_to_be_computed<decltype(send_recv_type)>;
 
     // Get the operation used for the reduction. The signature of the provided function is checked while building.
     auto& operation_param = select_parameter_type<ParameterType::op>(args...);
     auto  operation       = operation_param.template build_operation<send_value_type>();
 
-    using default_send_count_type = decltype(kamping::send_count_out());
-    auto&& send_count =
-        internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
-            {},
-            args...
-        );
-    if constexpr (has_to_be_computed<decltype(send_count)>) {
-        send_count.underlying() = asserting_cast<int>(send_buf.size());
+    using default_send_recv_count_type = decltype(kamping::send_recv_count_out());
+    auto&& send_recv_count             = internal::select_parameter_type_or_default<
+        internal::ParameterType::send_recv_count,
+        default_send_recv_count_type>({}, args...);
+    if constexpr (has_to_be_computed<decltype(send_recv_count)>) {
+        send_recv_count.underlying() = asserting_cast<int>(send_buf.size());
     }
     // from the standard:
     // > The routine is called by all group members using the same arguments for count, datatype, op,
     // > root and comm.
     KASSERT(
-        this->is_same_on_all_ranks(send_count.get_single_element()),
+        this->is_same_on_all_ranks(send_recv_count.get_single_element()),
         "send_count() has to be the same on all ranks.",
         assert::light_communication
     );
 
     auto compute_required_recv_buf_size = [&] {
-        return asserting_cast<size_t>(send_count.get_single_element());
+        return asserting_cast<size_t>(send_recv_count.get_single_element());
     };
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
 
     KASSERT(
         // if the send type is user provided, kamping cannot make any assumptions about the required size of the recv
         // buffer
-        send_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
+        send_recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
         "Recv buffer is not large enough to hold all received elements.",
         assert::light
     );
 
     // Perform the MPI_Allreduce call and return.
     [[maybe_unused]] int err = MPI_Allreduce(
-        send_buf.data(),                 // sendbuf
-        recv_buf.data(),                 // recvbuf,
-        send_count.get_single_element(), // count
-        send_type.get_single_element(),  // datatype,
-        operation.op(),                  // op
-        mpi_communicator()               // communicator
+        send_buf.data(),                      // sendbuf
+        recv_buf.data(),                      // recvbuf,
+        send_recv_count.get_single_element(), // count
+        send_recv_type.get_single_element(),  // datatype,
+        operation.op(),                       // op
+        mpi_communicator()                    // communicator
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return make_mpi_result(std::move(recv_buf), std::move(send_count), std::move(send_type));
+    return make_mpi_result(std::move(recv_buf), std::move(send_recv_count), std::move(send_recv_type));
 }
 
 /// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
