@@ -1023,5 +1023,41 @@ inline auto recv_type_out(MPI_Datatype& recv_type) {
         BufferResizePolicy::no_resize,
         MPI_Datatype>(recv_type);
 }
+
+/// @brief The send_recv type to use in the respective \c MPI operation.
+/// @param send_recv_type MPI_Datatype to use in the wrapped \c MPI operation.
+/// @return The corresponding parameter object.
+inline auto send_recv_type(MPI_Datatype send_recv_type) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_recv_type,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_buffer,
+        BufferResizePolicy::no_resize,
+        MPI_Datatype>(std::move(send_recv_type));
+}
+
+/// @brief Output parameter for the send_recv type.
+/// @return The corresponding parameter object.
+inline auto send_recv_type_out() {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_recv_type,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        MPI_Datatype>(alloc_new<MPI_Datatype>);
+}
+
+/// @brief Output parameter for the send_recv type.
+/// The type will be stored at the location refered to by the provided reference.
+/// @param send_recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
+/// @return The corresponding parameter object.
+inline auto send_recv_type_out(MPI_Datatype& send_recv_type) {
+    return internal::make_data_buffer<
+        internal::ParameterType::send_recv_type,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        MPI_Datatype>(send_recv_type);
+}
 /// @}
 } // namespace kamping

@@ -350,6 +350,119 @@ TEST(BcastTest, send_recv_buf_parameter_required_on_root) {
 }
 #endif
 
+TEST(BcastTest, send_recv_type_is_out_parameter) {
+    Communicator     comm;
+    std::vector<int> data{-1, -1};
+    int const        root_rank = comm.size_signed() - 1;
+    if (comm.is_root(root_rank)) {
+        std::iota(data.begin(), data.end(), 0);
+    }
+    MPI_Datatype send_recv_type;
+    comm.bcast(send_recv_buf(data), send_recv_type_out(send_recv_type), root(root_rank));
+
+    EXPECT_EQ(send_recv_type, MPI_INT);
+    EXPECT_THAT(data, ElementsAre(0, 1));
+}
+
+TEST(BcastTest, send_recv_type_part_of_result_object) {
+    Communicator     comm;
+    std::vector<int> data{-1, -1};
+    int const        root_rank = comm.size_signed() - 1;
+    if (comm.is_root(root_rank)) {
+        std::iota(data.begin(), data.end(), 0);
+    }
+    auto result = comm.bcast(send_recv_buf(data), root(root_rank));
+    EXPECT_EQ(result.extract_send_recv_type(), MPI_INT);
+    EXPECT_THAT(data, ElementsAre(0, 1));
+}
+
+TEST(BcastTest, non_trivial_send_recv_type_on_root) {
+    // The root rank bcasts its rank two times to each other rank and all other ranks receive the message with padding
+    // padding.
+    // Additionally, the send_recv_buffer is resized on non-root ranks. This is valid since there is no custom datatype
+    // given on non root ranks.
+    Communicator     comm;
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    int const        root_rank           = comm.size_signed() - 1;
+    int const        default_init        = -1;
+    std::vector<int> input;
+    if (comm.is_root(root_rank)) {
+        input = std::vector<int>{root_rank, default_init, default_init, root_rank, default_init, default_init};
+    }
+
+    MPI_Type_commit(&int_padding_padding);
+    if (comm.is_root(root_rank)) {
+        comm.bcast(send_recv_buf(input), send_recv_count(2), root(root_rank), send_recv_type(int_padding_padding));
+    } else {
+        comm.bcast(send_recv_buf<resize_to_fit>(input), send_recv_count(2), root(root_rank));
+    }
+    MPI_Type_free(&int_padding_padding);
+
+    if (comm.is_root(root_rank)) {
+        EXPECT_THAT(input, ElementsAre(root_rank, default_init, default_init, root_rank, default_init, default_init));
+    } else {
+        EXPECT_EQ(input.size(), 2);
+        EXPECT_THAT(input, ElementsAre(root_rank, root_rank));
+    }
+}
+TEST(BcastTest, non_trivial_send_recv_type_on_non_root_ranks) {
+    // The root rank bcasts its rank two times to each other rank and all other ranks receive the message with padding
+    // padding.
+    Communicator     comm;
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    int const        root_rank           = comm.size_signed() - 1;
+    int const        default_init        = -1;
+    std::vector<int> input;
+    if (comm.is_root(root_rank)) {
+        input = std::vector<int>{root_rank, root_rank};
+    } else {
+        input = std::vector<int>(6, default_init);
+    }
+
+    MPI_Type_commit(&int_padding_padding);
+    if (comm.is_root(root_rank)) {
+        comm.bcast(send_recv_buf(input), send_recv_count(2), root(root_rank));
+    } else {
+        comm.bcast(send_recv_buf(input), root(root_rank), send_recv_count(2), send_recv_type(int_padding_padding));
+    }
+    MPI_Type_free(&int_padding_padding);
+
+    if (comm.is_root(root_rank)) {
+        EXPECT_THAT(input, ElementsAre(root_rank, root_rank));
+    } else {
+        EXPECT_THAT(input, ElementsAre(root_rank, default_init, default_init, root_rank, default_init, default_init));
+    }
+}
+
+TEST(BcastTest, different_send_and_recv_counts_on_root_non_root_ranks) {
+    // the root rank sends its rank two times (send_recv_count == 2); all other ranks receive the two ranks at once
+    // (i.e. their send_recv_count == 1).
+    Communicator     comm;
+    int const        root_rank    = comm.size_signed() - 1;
+    int const        default_init = -1;
+    std::vector<int> buffer;
+    if (comm.is_root(root_rank)) {
+        buffer = std::vector<int>{comm.rank_signed(), comm.rank_signed()};
+    } else {
+        buffer = std::vector<int>(3, default_init);
+    }
+    MPI_Datatype int_padding_int = MPI_INT_padding_MPI_INT();
+
+    MPI_Type_commit(&int_padding_int);
+    if (comm.is_root(root_rank)) {
+        comm.bcast(send_recv_buf(buffer), send_recv_count(2), root(root_rank));
+    } else {
+        comm.bcast(send_recv_buf(buffer), send_recv_type(int_padding_int), send_recv_count(1), root(root_rank));
+    }
+    MPI_Type_free(&int_padding_int);
+
+    if (comm.is_root(root_rank)) {
+        EXPECT_THAT(buffer, ElementsAre(root_rank, root_rank));
+    } else {
+        EXPECT_THAT(buffer, ElementsAre(root_rank, default_init, root_rank));
+    }
+}
+
 TEST(BcastTest, bcast_single) {
     // bcast_single is a wrapper around bcast, providing the send_recv_count(1).
     // There is not much we can test here, that's not already tested by the tests for bcast.

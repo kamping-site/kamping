@@ -125,4 +125,72 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
     return std::make_tuple(std::move(mpi_send_type), std::move(mpi_recv_type));
 }
 
+/// @brief Deduce the MPI_Datatype to use as send_recv_type in a collective operation which accepts only one parameter
+/// of MPI_Datatype instead of (possibly) distinct send and recv types. If \ref kamping::send_recv_type() is given, the
+/// \c MPI_Dataype wrapped inside will be used as send_recv_type. Otherwise, the \c MPI_datatype is derived
+/// automatically based on send_buf's underlying \c value_type.
+///
+/// @tparam send_or_send_recv_value_type Value type of the send(_recv) buffer.
+/// @tparam recv_buf Value type of the send buffer.
+/// @tparam recv_or_send_recv_buf Type of the (send_)recv buffer.
+/// @tparam Args Types of all arguments passed to the wrapped MPI call.
+/// @param args All arguments passed to a wrapped MPI call.
+/// @return Return the \c MPI send_type wrapped in a DataBuffer. This is either an lvalue reference to the
+/// send_recv_type DataBuffer if the send_recv_type is provided by the user or a newly created send_recv_type DataBuffer
+/// otherwise.
+template <typename send_or_send_recv_value_type, typename recv_or_send_recv_buf, typename... Args>
+constexpr auto determine_mpi_send_recv_datatype(Args&... args)
+    -> decltype(internal::select_parameter_type_or_default<
+                internal::ParameterType::send_recv_type,
+                decltype(kamping::send_recv_type_out())>(std::make_tuple(), args...)) {
+    // Some assertions:
+    // If a send_recv type is given, the corresponding count information has to be provided, too.
+    constexpr bool is_send_recv_type_given_as_in_param =
+        is_parameter_given_as_in_buffer<ParameterType::send_recv_type, Args...>;
+    if constexpr (is_send_recv_type_given_as_in_param) {
+        constexpr bool is_send_recv_count_given =
+            is_parameter_given_as_in_buffer<ParameterType::send_recv_count, Args...>;
+        static_assert(
+            is_send_recv_count_given,
+            "If a custom send_recv type is provided, the send_recv count has to be provided, too."
+        );
+    }
+    // Recv buffer resize policy assertion
+    constexpr bool do_not_resize_recv_buf = std::remove_reference_t<recv_or_send_recv_buf>::resize_policy == no_resize;
+    static_assert(
+        !is_send_recv_type_given_as_in_param || do_not_resize_recv_buf,
+        "If a custom send_recv type is given, kamping is not able to deduce the correct size of the "
+        "recv/send_recv buffer. "
+        "Therefore, a sufficiently large recv/send_recv buffer (with resize policy \"no_resize\") must be provided by "
+        "the user."
+    );
+
+    // Get the send_recv type
+    using default_mpi_send_recv_type = decltype(kamping::send_recv_type_out());
+
+    // decltype(auto) becomes an lvalue reference type if the initializer is an lvalue and a non-reference type if the
+    // the initializer is a pr-value (e.g. a function call returning by value). These are the only two value categories
+    // we accept for the return value of select_parameter_type_or_default.
+    decltype(auto) mpi_send_recv_type =
+        internal::select_parameter_type_or_default<internal::ParameterType::send_recv_type, default_mpi_send_recv_type>(
+            std::make_tuple(),
+            args...
+        );
+
+    // assure that our expectectation about the return value value category (lvalue or pr-value) is true. This ensures
+    // that the return value of the function does not become a dangling rvalue reference bound to a function-local
+    // object.
+    static_assert(
+        !std::is_rvalue_reference_v<decltype(mpi_send_recv_type)>,
+        "mpi_send_type is either a lvalue reference (in this case it returned by reference), or a non-referen type (in "
+        "this case it is returned by value)."
+    );
+
+    if constexpr (!is_send_recv_type_given_as_in_param) {
+        mpi_send_recv_type.underlying() = mpi_datatype<send_or_send_recv_value_type>();
+    }
+
+    return mpi_send_recv_type;
+}
+
 } // namespace kamping::internal

@@ -23,10 +23,17 @@ int main(int /*argc*/, char** /*argv*/) {
     Communicator comm;
     int          value = comm.rank_signed();
 
-#if defined(RECV_COUNT_GIVEN)
+#if defined(SEND_RECV_COUNT_GIVEN)
     comm.bcast_single(send_recv_buf(value), send_recv_count(1));
+#elif defined(SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT)
+    comm.bcast(send_recv_buf(value), send_recv_type(MPI_INT));
+#elif defined(SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT)
+    comm.bcast(send_recv_buf<resize_to_fit>(value), send_recv_type(MPI_INT), send_recv_count(1));
+#elif defined(SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY)
+    comm.bcast(send_recv_buf<grow_only>(value), send_recv_type(MPI_INT), send_recv_count(1));
 #else
     // If none of the above sections is active, this file will compile successfully.
     comm.bcast_single(send_recv_buf(value));
+    comm.bcast(send_recv_buf(value), send_recv_type(MPI_INT), send_recv_count(1));
 #endif
 }
