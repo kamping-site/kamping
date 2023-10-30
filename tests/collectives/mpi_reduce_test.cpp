@@ -179,7 +179,7 @@ TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool_no_resize) {
     comm.reduce(
         send_buf(input),
         recv_buf<kamping::BufferResizePolicy::no_resize>(result),
-        send_count(1),
+        send_recv_count(1),
         op(ops::logical_or<>{})
     );
 
@@ -250,7 +250,7 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     }
 }
 
-TEST(ReduceTest, reduce_with_receive_buffer_no_resize_and_explicit_send_count) {
+TEST(ReduceTest, reduce_with_receive_buffer_no_resize_and_explicit_send_recv_count) {
     Communicator comm;
 
     std::vector<int> input  = {1, 2, 3, 4};
@@ -260,7 +260,7 @@ TEST(ReduceTest, reduce_with_receive_buffer_no_resize_and_explicit_send_count) {
         send_buf(input),
         op(kamping::ops::plus<>{}),
         recv_buf<kamping::BufferResizePolicy::no_resize>(result),
-        send_count(1)
+        send_recv_count(1)
     );
 
     if (comm.rank() == comm.root()) {
@@ -270,7 +270,7 @@ TEST(ReduceTest, reduce_with_receive_buffer_no_resize_and_explicit_send_count) {
     }
 }
 
-TEST(ReduceTest, reduce_with_receive_buffer_resize_to_fit_and_explicit_send_count) {
+TEST(ReduceTest, reduce_with_receive_buffer_resize_to_fit_and_explicit_send_recv_count) {
     Communicator comm;
 
     std::vector<int> input  = {1, 2, 3, 4};
@@ -280,7 +280,7 @@ TEST(ReduceTest, reduce_with_receive_buffer_resize_to_fit_and_explicit_send_coun
         send_buf(input),
         op(kamping::ops::plus<>{}),
         recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result),
-        send_count(1)
+        send_recv_count(1)
     );
 
     if (comm.rank() == comm.root()) {
@@ -291,7 +291,7 @@ TEST(ReduceTest, reduce_with_receive_buffer_resize_to_fit_and_explicit_send_coun
     }
 }
 
-TEST(ReduceTest, reduce_with_receive_buffer_grow_only_and_explicit_send_count) {
+TEST(ReduceTest, reduce_with_receive_buffer_grow_only_and_explicit_send_recv_count) {
     Communicator comm;
 
     std::vector<int> input  = {1, 2, 3, 4};
@@ -301,7 +301,7 @@ TEST(ReduceTest, reduce_with_receive_buffer_grow_only_and_explicit_send_count) {
         send_buf(input),
         op(kamping::ops::plus<>{}),
         recv_buf<kamping::BufferResizePolicy::grow_only>(result),
-        send_count(1)
+        send_recv_count(1)
     );
 
     // not resized to 1 because big enough
@@ -612,8 +612,8 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_type) {
     MPI_Type_commit(&int_padding_int);
     comm.reduce(
         send_buf(input),
-        send_count(2),
-        send_type(int_padding_int),
+        send_recv_count(2),
+        send_recv_type(int_padding_int),
         op(my_op, kamping::ops::commutative),
         root(root_rank),
         recv_buf<no_resize>(recv_buffer)
@@ -652,8 +652,8 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_without_matching_cpp_type
     MPI_Type_commit(&int_padding_padding);
     comm.reduce(
         send_buf(input),
-        send_count(2),
-        send_type(int_padding_padding),
+        send_recv_count(2),
+        send_recv_type(int_padding_padding),
         op(user_defined_op),
         root(root_rank),
         recv_buf<no_resize>(recv_buffer)
@@ -665,12 +665,13 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_without_matching_cpp_type
         EXPECT_EQ(recv_buffer, expected_result);
     }
 }
-TEST(ReduceTest, send_type_is_out_parameter) {
+TEST(ReduceTest, send_recv_type_is_out_parameter) {
     Communicator           comm;
     const std::vector<int> data{1};
     MPI_Datatype           send_type;
     int const              root_rank = 0;
-    auto result = comm.reduce(send_buf(data), send_type_out(send_type), op(kamping::ops::plus<>{}), root(root_rank));
+    auto                   result =
+        comm.reduce(send_buf(data), send_recv_type_out(send_type), op(kamping::ops::plus<>{}), root(root_rank));
 
     EXPECT_EQ(send_type, MPI_INT);
     auto recv_buf = result.extract_recv_buffer();
@@ -686,9 +687,9 @@ TEST(AllreduceTest, send_type_part_of_result_object) {
     Communicator           comm;
     const std::vector<int> data{1};
     int const              root_rank = 0;
-    auto result = comm.reduce(send_buf(data), send_type_out(), op(kamping::ops::plus<>{}), root(root_rank));
+    auto result = comm.reduce(send_buf(data), send_recv_type_out(), op(kamping::ops::plus<>{}), root(root_rank));
 
-    EXPECT_EQ(result.extract_send_type(), MPI_INT);
+    EXPECT_EQ(result.extract_send_recv_type(), MPI_INT);
     auto recv_buf = result.extract_recv_buffer();
     if (comm.is_root(root_rank)) {
         EXPECT_EQ(recv_buf.size(), 1);
