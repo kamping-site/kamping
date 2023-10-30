@@ -167,11 +167,24 @@ constexpr auto determine_mpi_send_recv_datatype(Args&... args)
 
     // Get the send_recv type
     using default_mpi_send_recv_type = decltype(kamping::send_recv_type_out());
+
+    // decltype(auto) becomes an lvalue reference type if the initializer is an lvalue and a non-reference type if the
+    // the initializer is a pr-value (e.g. a function call returning by value). These are the only two value categories
+    // we accept for the return value of select_parameter_type_or_default.
     decltype(auto) mpi_send_recv_type =
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_type, default_mpi_send_recv_type>(
             std::make_tuple(),
             args...
         );
+
+    // assure that our expectectation about the return value value category (lvalue or pr-value) is true. This ensures
+    // that the return value of the function does not become a dangling rvalue reference bound to a function-local
+    // object.
+    static_assert(
+        !std::is_rvalue_reference_v<decltype(mpi_send_recv_type)>,
+        "mpi_send_type is either a lvalue reference (in this case it returned by reference), or a non-referen type (in "
+        "this case it is returned by value)."
+    );
 
     if constexpr (!is_send_recv_type_given_as_in_param) {
         mpi_send_recv_type.underlying() = mpi_datatype<send_or_send_recv_value_type>();
