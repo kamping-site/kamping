@@ -70,6 +70,7 @@ using remove_rvalue_reference_t = std::conditional_t<std::is_rvalue_reference_v<
 /// @tparam send_value_type Value type of the send buffer.
 /// @tparam recv_value_type Value type of the recv buffer.
 /// @tparam recv_buf Type of the recv buffer.
+/// @tparam Args Types of all arguments passed to the wrapped MPI call.
 /// @param args All arguments passed to a wrapped MPI call.
 /// @return Return a tuple containing the \c MPI send_type wrapped in a DataBuffer, the \c MPI recv_type wrapped in a
 /// DataBuffer.
