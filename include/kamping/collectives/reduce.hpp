@@ -21,6 +21,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/collectives_helpers.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
@@ -36,15 +37,27 @@
 ///
 /// This wraps \c MPI_Reduce. The operation combines the elements in the input buffer provided via \c
 /// kamping::send_buf() and returns the combined value on the root rank. The following parameters are required:
-/// -  kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
+/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 /// each rank.
-/// -  kamping::op() wrapping the operation to apply to the input.
+///
+/// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided
+/// explicitly, the compatibility of the type and operation has to be ensured by the user.
 ///
 /// The following parameters are optional:
-/// -  kamping::send_counts() specifiying how many elements of the buffer take part in the reduction.
-/// This parameter has to be an integer. If ommited, the size of the send buffer is used as a default.
-/// -  kamping::recv_buf() containing a buffer for the output.
-/// -  kamping::root() the root rank. If not set, the default root process of the communicator will be used.
+/// - \ref kamping::send_recv_count() specifiying how many elements of the buffer take part in the reduction.
+/// If ommited, the size of the send buffer is used as a default.
+///
+/// - \ref kamping::recv_buf() containing a buffer for the output. This parameter is only required on the root rank.
+/// The buffer will be resized according to the buffer's kamping::BufferResizePolicy. If this is
+/// \ref kamping::BufferResizePolicy::no_resize, the buffer's underlying storage must be large enough to hold all
+/// received elements. If the send_recv_type is user provided, the buffer's resize poliy has to be \ref
+/// kamping::BufferResizePolicy::no_resize.
+///
+/// - \ref kamping::root() the root rank. If not set, the default root process of the communicator will be used.
+///
+/// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send_recv type. If omitted, the \c MPI
+/// datatype is derived automatically based on send_buf's underlying \c value_type.
+///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
@@ -55,15 +68,16 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf, op),
-        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_counts, root)
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_recv_count, root, send_recv_type)
     );
 
-    // Get all parameters
+    // Get the root
     auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::RootDataBuffer>(
         std::tuple(this->root()),
         args...
     );
 
+    // Get the send buffer and deduce the send and recv value types.
     auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
@@ -74,69 +88,65 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
             std::tuple(),
             args...
         );
-    using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
+    // Get the send type.
+    auto&& send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
+    [[maybe_unused]] constexpr bool send_recv_type_is_in_param = !has_to_be_computed<decltype(send_recv_type)>;
+
+    // Get the operation used for the reduction. The signature of the provided function is checked while building.
     auto& operation_param = internal::select_parameter_type<internal::ParameterType::op>(args...);
     // If you want to understand the syntax of the following line, ignore the "template " ;-)
     auto operation = operation_param.template build_operation<send_value_type>();
 
-    using default_send_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
-    auto&& send_count =
-        internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
-            {},
-            args...
-        );
-    static_assert(
-        std::remove_reference_t<decltype(send_count)>::is_single_element,
-        "send_counts() parameter must be a single value."
-    );
-    if constexpr (has_to_be_computed<decltype(send_count)>) {
-        send_count.underlying() = asserting_cast<int>(send_buf.size());
+    using default_send_recv_count_type = decltype(kamping::send_recv_count_out());
+    auto&& send_recv_count             = internal::select_parameter_type_or_default<
+        internal::ParameterType::send_recv_count,
+        default_send_recv_count_type>({}, args...);
+    if constexpr (has_to_be_computed<decltype(send_recv_count)>) {
+        send_recv_count.underlying() = asserting_cast<int>(send_buf.size());
     }
 
     // Check parameters
-    static_assert(
-        std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
-        "Types of send and receive buffers do not match."
-    );
-    MPI_Datatype type = mpi_datatype<send_value_type>();
 
+    // from the standard:
+    // > The routine is called by all group members using the same arguments for count, datatype, op,
+    // > root and comm.
+    KASSERT(
+        this->is_same_on_all_ranks(send_recv_count.get_single_element()),
+        "send_recv_count() has to be the same on all ranks.",
+        assert::light_communication
+    );
     KASSERT(is_valid_rank(root.rank_signed()), "The provided root rank is invalid.", assert::light);
     KASSERT(
         this->is_same_on_all_ranks(root.rank_signed()),
         "Root has to be the same on all ranks.",
         assert::light_communication
     );
+
     if (is_root(root.rank_signed())) {
         auto compute_required_recv_buf_size = [&] {
-            return asserting_cast<size_t>(send_count.get_single_element());
+            return asserting_cast<size_t>(send_recv_count.get_single_element());
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
         KASSERT(
-            recv_buf.size() >= compute_required_recv_buf_size(),
+            // if the send type is user provided, kamping cannot make any assumptions about the required size of the
+            // recv buffer
+            send_recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
             "Recv buffer is not large enough to hold all received elements.",
             assert::light
         );
     }
-    // from the standard:
-    // > The routine is called by all group members using the same arguments for count, datatype, op,
-    // > root and comm.
-    KASSERT(
-        this->is_same_on_all_ranks(send_count.get_single_element()),
-        "send_count() has to be the same on all ranks.",
-        assert::light_communication
-    );
 
     [[maybe_unused]] int err = MPI_Reduce(
-        send_buf.data(),                 // send_buf
-        recv_buf.data(),                 // recv_buf
-        send_count.get_single_element(), // count
-        type,                            // type
-        operation.op(),                  // op
-        root.rank_signed(),              // root
-        mpi_communicator()               // comm
+        send_buf.data(),                      // send_buf
+        recv_buf.data(),                      // recv_buf
+        send_recv_count.get_single_element(), // count
+        send_recv_type.get_single_element(),  // type
+        operation.op(),                       // op
+        root.rank_signed(),                   // root
+        mpi_communicator()                    // comm
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return make_mpi_result(std::move(recv_buf), std::move(send_count));
+    return make_mpi_result(std::move(recv_buf), std::move(send_recv_count), std::move(send_recv_type));
 }
