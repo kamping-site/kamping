@@ -365,7 +365,7 @@ auto send_counts_out(AllocNewAutoT<Container>) {
 /// @brief Generates a wrapper for a send counts output parameter without any user input.
 /// @return Wrapper for the send counts that can be retrieved as structured binding.
 inline auto send_counts_out() {
-    return send_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<int>);
+    return send_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<std::vector<int>>);
 }
 
 /// @brief The number of elements to send.
@@ -496,7 +496,7 @@ auto recv_counts_out(AllocNewAutoT<Data> container) {
 /// @brief Generates a wrapper for a recv counts output parameter without any user input.
 /// @return Wrapper for the recv counts that can be retrieved as structured binding.
 inline auto recv_counts_out() {
-    return recv_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<int>);
+    return recv_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<std::vector<int>>);
 }
 
 /// @brief The number of elements to received.

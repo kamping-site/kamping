@@ -53,6 +53,12 @@ size_t compute_required_recv_buf_size_in_vectorized_communication(
     }
 }
 
+/// @brief If the given type T is an rvalue reference,i.e. T = U&&, the type alias refers to U. Otherwise the type alias
+/// refers to T (which possibly can be an lvalue reference).
+/// @tparam T Type for which a possible rvalue reference is removed.
+template <typename T>
+using remove_rvalue_reference_t = std::conditional_t<std::is_rvalue_reference_v<T>, std::remove_reference_t<T>, T>;
+
 /// @brief Deduce the MPI_Datatype to use on the send and recv side.
 /// If \ref kamping::send_type() is given, the \c MPI_Dataype wrapped inside will be used as send_type. Otherwise, the
 /// \c MPI_datatype is derived automatically based on send_buf's underlying \c value_type.
@@ -63,6 +69,7 @@ size_t compute_required_recv_buf_size_in_vectorized_communication(
 ///
 /// @tparam send_value_type Value type of the send buffer.
 /// @tparam recv_value_type Value type of the recv buffer.
+/// @tparam recv_buf Type of the recv buffer.
 /// @param args All arguments passed to a wrapped MPI call.
 /// @return Return a tuple containing the \c MPI send_type wrapped in a DataBuffer, the \c MPI recv_type wrapped in a
 /// DataBuffer.
@@ -122,7 +129,16 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
         mpi_recv_type.underlying() = mpi_datatype<recv_value_type>();
     }
 
-    return std::make_tuple(std::move(mpi_send_type), std::move(mpi_recv_type));
+    // If the send/recv types are user provided we can refer to the corresponding buffers contained in args and only
+    // need to store an lvalue reference bound to them in the return tuple. Otherwise the send/recv type buffers are
+    // constructed in this function and have to be returned by value (and therefore be non-reference members of the
+    // return tuple).
+    using ForwardingTuple = std::
+        tuple<remove_rvalue_reference_t<decltype(mpi_send_type)>, remove_rvalue_reference_t<decltype(mpi_recv_type)>>;
+    return ForwardingTuple(
+        std::forward<decltype(mpi_send_type)>(mpi_send_type),
+        std::forward<decltype(mpi_recv_type)>(mpi_recv_type)
+    );
 }
 
 /// @brief Deduce the MPI_Datatype to use as send_recv_type in a collective operation which accepts only one parameter
