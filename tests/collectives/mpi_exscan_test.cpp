@@ -618,6 +618,5 @@ TEST(
     );
     MPI_Type_free(&int_padding_padding);
     MPI_Op_free(&user_defined_op);
-
     EXPECT_EQ(recv_buffer, expected_result);
 }
