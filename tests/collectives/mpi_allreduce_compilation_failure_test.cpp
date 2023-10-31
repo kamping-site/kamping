@@ -24,14 +24,19 @@ int main(int /*argc*/, char** /*argv*/) {
     const std::vector<int> input{1};
     std::vector<int>       recv_buffer(1);
 
-#if defined(SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT)
+#if defined(OPERATION_TYPE_DOES_NOT_MATCH_BUFFER_TYPE)
+    auto my_op = [](std::string const& lhs, std::string const&) {
+        return lhs;
+    };
+    comm.allreduce(send_buf(input), op(my_op, kamping::ops::commutative));
+#elif defined(SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT)
     comm.allreduce(
         send_buf(input),
         send_recv_type(MPI_INT),
         op(kamping::ops::plus<>{}),
         recv_buf<no_resize>(recv_buffer)
     );
-#elif defined(SEND_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT)
+#elif defined(SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT)
     comm.allreduce(
         send_buf(input),
         send_recv_type(MPI_INT),
@@ -39,11 +44,11 @@ int main(int /*argc*/, char** /*argv*/) {
         op(kamping::ops::plus<>{}),
         recv_buf<resize_to_fit>(recv_buffer)
     );
-#elif defined(SEND_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY)
+#elif defined(SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY)
     comm.allreduce(
         send_buf(input),
-        send_type(MPI_INT),
-        send_count(1),
+        send_recv_type(MPI_INT),
+        send_recv_count(1),
         op(kamping::ops::plus<>{}),
         recv_buf<grow_only>(recv_buffer)
     );

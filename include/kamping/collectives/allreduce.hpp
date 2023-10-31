@@ -39,9 +39,8 @@
 /// kamping::send_buf() and returns the combined value on all ranks. The following parameters are required:
 /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 /// each rank.
-/// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_type() is given, the
-/// operation's datatype has to be compatible with send_type. If the type is provided explicitly, the compatibility of
-/// the type and operation has to be ensured by the user. ensured by the user.
+/// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided
+/// explicitly, the compatibility of the type and operation has to be ensured by the user.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::recv_buf() containing a buffer for the output. The buffer will be resized according to the buffer's
