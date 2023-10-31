@@ -40,7 +40,9 @@
 /// The following parameters are required:
 /// - \ref kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be the
 ///  same size at each rank.
-/// - \ref kamping::op() wrapping the operation to apply to the input.
+///
+/// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided
+/// explicitly, the compatibility of the type and operation has to be ensured by the user.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::recv_buf() containing a buffer for the output. The buffer will be resized according to the buffer's
@@ -51,9 +53,7 @@
 /// parameter has to be the same at each rank. If omitted, the size of the send buffer will be used as send_recv_count.
 ///
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as data type in this operation. If omitted,
-/// the \c MPI datatype is derived automatically based on send_buf's underlying \c value_type. The send_recv_type must
-/// be compatible with the datatype provided in the reduction operation op().
-///
+/// the \c MPI datatype is derived automatically based on send_buf's underlying \c value_type.///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
@@ -76,11 +76,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
     auto&& recv_buf =
         select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
-    using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
-    static_assert(
-        std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
-        "Types of send and receive buffers do not match."
-    );
 
     // get the send_recv_type
     auto&& send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
