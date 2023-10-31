@@ -399,7 +399,7 @@ TEST(AllgatherTest, send_recv_type_part_of_result_object) {
 }
 
 TEST(AllgatherTest, non_trivial_send_type) {
-    // Each rank sends its rank two times to each other rank and receives the ranks with padding padding.
+    // Each rank sends its rank two times to each other rank and receives the ranks without padding.
     Communicator     comm;
     MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
     std::vector<int> input{comm.rank_signed(), -1, -1, comm.rank_signed(), -1, -1};
