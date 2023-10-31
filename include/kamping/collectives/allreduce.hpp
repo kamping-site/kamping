@@ -40,7 +40,7 @@
 /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 /// each rank.
 /// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_type() is given, the
-/// operation's datatype has to be compatible with send_type. This is not checked by KaMPIng and has therefore to be
+/// operation's datatype has to be compatible with send_type. If the type is provided explicitly, the compatibility of the type and operation has to be ensured by the user.
 /// ensured by the user.
 ///
 /// The following parameters are optional:
