@@ -164,8 +164,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
 /// - kamping::send_buf() containing the data that is sent to all other ranks.
 ///
 /// The following parameters are optional but result in communication overhead if omitted:
-/// - \ref kamping::recv_counts() containing the number of elements to receive from each rank. This parameter is mandatory if
-/// \ref kamping::recv_type() is given.
+/// - \ref kamping::recv_counts() containing the number of elements to receive from each rank. This parameter is
+/// mandatory if \ref kamping::recv_type() is given.
 ///
 /// The following buffers are optional:
 /// - kamping::send_count() specifying how many elements are sent. If
