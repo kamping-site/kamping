@@ -47,9 +47,11 @@
 /// - \ref kamping::send_recv_count() specifiying how many elements of the buffer take part in the reduction.
 /// If ommited, the size of the send buffer is used as a default.
 ///
-/// - \ref kamping::recv_buf() containing a buffer for the output. The buffer will be resized according to the buffer's
-/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements.
+/// - \ref kamping::recv_buf() containing a buffer for the output. This parameter is only required on the root rank.
+/// The buffer will be resized according to the buffer's kamping::BufferResizePolicy. If this is
+/// \ref kamping::BufferResizePolicy::no_resize, the buffer's underlying storage must be large enough to hold all
+/// received elements. If the send_recv_type is user provided, the buffer's resize poliy has to be \ref
+/// kamping::BufferResizePolicy::no_resize.
 ///
 /// - \ref kamping::root() the root rank. If not set, the default root process of the communicator will be used.
 ///
