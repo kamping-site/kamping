@@ -683,7 +683,7 @@ TEST(ReduceTest, send_recv_type_is_out_parameter) {
     }
 }
 
-TEST(AllreduceTest, send_type_part_of_result_object) {
+TEST(ReduceTest, send_type_part_of_result_object) {
     Communicator           comm;
     const std::vector<int> data{1};
     int const              root_rank = 0;
