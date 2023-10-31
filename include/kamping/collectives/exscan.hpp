@@ -121,7 +121,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
     };
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
     KASSERT(
-        recv_buf.size() >= compute_required_recv_buf_size(),
+        // if the send_recv type is user provided, kamping cannot make any assumptions about the required size of
+        // the recv buffer
+        send_recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
         "Recv buffer is not large enough to hold all received elements.",
         assert::light
     );
@@ -149,7 +151,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
         if constexpr (has_values_on_rank_0_param) {
             auto const& values_on_rank_0_param = select_parameter_type<ParameterType::values_on_rank_0>(args...);
             KASSERT(
-                (values_on_rank_0_param.size() == 1
+                // if the send_recv type is user provided, kamping cannot make any assumptions about the required size
+                // of the recv buffer
+                (send_recv_type_is_in_param || values_on_rank_0_param.size() == 1
                  || values_on_rank_0_param.size() == asserting_cast<size_t>(send_recv_count.get_single_element())),
                 "on_rank_0 has to either be of size 1 or of the same size as the recv_buf.",
                 assert::light
