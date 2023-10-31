@@ -362,3 +362,211 @@ TEST(ScatterTest, scatter_single_element_with_given_recv_buf_smaller_than_requir
     }
 #endif
 }
+
+TEST(ScatterTest, scatter_send_recv_count_are_out_parameters) {
+    Communicator comm;
+
+    auto const       input      = create_input_vector_on_root(comm, 1);
+    int              send_count = -1;
+    int              recv_count = -1;
+    std::vector<int> result;
+    comm.scatter(
+        send_buf(input),
+        recv_buf<resize_to_fit>(result),
+        send_count_out(send_count),
+        recv_count_out(recv_count)
+    );
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+    if (comm.is_root()) {
+        EXPECT_EQ(send_count, 1);
+    } else {
+        // do not touche send_count on non-root parameters
+        send_count = -1;
+    }
+    EXPECT_EQ(recv_count, 1);
+}
+
+TEST(ScatterTest, scatter_send_recv_count_are_part_of_result_object) {
+    Communicator comm;
+
+    auto const       input = create_input_vector_on_root(comm, 1);
+    std::vector<int> result;
+    auto res = comm.scatter(send_buf(input), recv_buf<resize_to_fit>(result), send_count_out(), recv_count_out());
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+    if (comm.is_root()) {
+        EXPECT_EQ(res.extract_send_count(), 1);
+    }
+    EXPECT_EQ(res.extract_recv_count(), 1);
+}
+
+TEST(ScatterTest, scatter_send_recv_type_are_out_parameters) {
+    Communicator comm;
+
+    auto const       input     = create_input_vector_on_root(comm, 1);
+    MPI_Datatype     send_type = MPI_CHAR;
+    MPI_Datatype     recv_type = MPI_CHAR;
+    std::vector<int> result;
+    comm.scatter(send_buf(input), recv_buf<resize_to_fit>(result), send_type_out(send_type), recv_type_out(recv_type));
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+    EXPECT_EQ(send_type, MPI_INT);
+    EXPECT_EQ(recv_type, MPI_INT);
+}
+
+TEST(ScatterTest, scatter_send_recv_type_are_part_of_result_object) {
+    Communicator comm;
+
+    auto const       input = create_input_vector_on_root(comm, 1);
+    std::vector<int> result;
+    auto res = comm.scatter(send_buf(input), recv_buf<resize_to_fit>(result), send_type_out(), recv_type_out());
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+    EXPECT_EQ(res.extract_send_type(), MPI_INT);
+    EXPECT_EQ(res.extract_recv_type(), MPI_INT);
+}
+
+TEST(ScatterTest, non_trivial_send_type) {
+    // root rank sends sends each rank its rank two times with padding and all ranks receive the messages without
+    // padding.
+    Communicator     comm;
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    std::vector<int> input;
+    if (comm.is_root()) {
+        input.resize(6 * comm.size());
+        for (std::size_t i = 0; i < comm.size(); ++i) {
+            input[6 * i]     = static_cast<int>(i);
+            input[6 * i + 3] = static_cast<int>(i);
+        }
+    }
+    std::vector<int> recv_buffer(2, 0);
+
+    MPI_Type_commit(&int_padding_padding);
+    auto res = comm.scatter(
+        send_buf(input),
+        send_type(int_padding_padding),
+        send_count(2),
+        recv_buf(recv_buffer),
+        recv_count_out()
+    );
+    MPI_Type_free(&int_padding_padding);
+
+    EXPECT_EQ(res.extract_recv_count(), 2);
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank_signed(), comm.rank_signed()));
+}
+
+TEST(ScatterTest, non_trivial_recv_type) {
+    // root rank sends sends each rank its rank two times and all ranks receive the messages with padding.
+    Communicator comm;
+    MPI_Datatype int_padding_padding = MPI_INT_padding_padding();
+
+    std::vector<int> input;
+    if (comm.is_root()) {
+        input.resize(2 * comm.size());
+        for (std::size_t i = 0; i < comm.size(); ++i) {
+            input[2 * i]     = static_cast<int>(i);
+            input[2 * i + 1] = static_cast<int>(i);
+        }
+    }
+
+    int const        init_value = -1;
+    std::vector<int> recv_buffer(6, init_value);
+    int              send_count = -1;
+
+    MPI_Type_commit(&int_padding_padding);
+    comm.scatter(
+        send_buf(input),
+        send_count_out(send_count),
+        recv_buf(recv_buffer),
+        recv_type(int_padding_padding),
+        recv_count(2)
+    );
+    MPI_Type_free(&int_padding_padding);
+
+    if (comm.is_root()) {
+        EXPECT_EQ(send_count, 2);
+    } else {
+        // do not touch send_count on non-root ranks
+        EXPECT_EQ(send_count, -1);
+    }
+    EXPECT_THAT(
+        recv_buffer,
+        ElementsAre(comm.rank_signed(), init_value, init_value, comm.rank_signed(), init_value, init_value)
+    );
+}
+TEST(ScatterTest, different_send_and_recv_counts) {
+    // root rank sends sends each rank its rank two times and all ranks receive the two messages at once.
+    Communicator     comm;
+    MPI_Datatype     int_padding_int = MPI_INT_padding_MPI_INT();
+    std::vector<int> input;
+    if (comm.is_root()) {
+        input.resize(2 * comm.size());
+        for (std::size_t i = 0; i < comm.size(); ++i) {
+            input[2 * i]     = static_cast<int>(i);
+            input[2 * i + 1] = static_cast<int>(i);
+        }
+    }
+
+    int const        init_value = -1;
+    std::vector<int> recv_buffer(3, init_value);
+    int              send_count = -1;
+
+    MPI_Type_commit(&int_padding_int);
+    comm.scatter(
+        send_buf(input),
+        send_count_out(send_count),
+        recv_buf(recv_buffer),
+        recv_type(int_padding_int),
+        recv_count(1)
+    );
+    MPI_Type_free(&int_padding_int);
+
+    if (comm.is_root()) {
+        EXPECT_EQ(send_count, 2);
+    } else {
+        // do not touch send_count on non-root ranks
+        EXPECT_EQ(send_count, -1);
+    }
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank_signed(), init_value, comm.rank_signed()));
+}
+struct CustomRecvStruct {
+    int  a;
+    int  b;
+    bool operator==(CustomRecvStruct const& other) const {
+        return std::tie(a, b) == std::tie(other.a, other.b);
+    }
+    friend std::ostream& operator<<(std::ostream& out, CustomRecvStruct const& str) {
+        return out << "(" << str.a << ", " << str.b << ")";
+    }
+};
+
+TEST(ScatterTest, different_send_and_recv_counts_without_explicit_mpi_types) {
+    Communicator comm;
+
+    std::vector<int> input;
+    if (comm.is_root()) {
+        input.resize(2 * comm.size());
+        for (std::size_t i = 0; i < comm.size(); ++i) {
+            input[2 * i]     = static_cast<int>(i);
+            input[2 * i + 1] = static_cast<int>(i);
+        }
+    }
+    std::vector<CustomRecvStruct> recv_buffer(1);
+    int                           send_count = -1;
+
+    comm.scatter(send_buf(input), send_count_out(send_count), recv_count(1), recv_buf(recv_buffer));
+
+    CustomRecvStruct expected_result{comm.rank_signed(), comm.rank_signed()};
+    if (comm.is_root()) {
+        EXPECT_EQ(send_count, 2);
+    } else {
+        // do not touch send_count on non-root ranks
+        EXPECT_EQ(send_count, -1);
+    }
+    EXPECT_THAT(recv_buffer, ElementsAre(expected_result));
+}
