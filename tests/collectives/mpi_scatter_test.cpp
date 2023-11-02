@@ -382,7 +382,7 @@ TEST(ScatterTest, scatter_send_recv_count_are_out_parameters) {
     if (comm.is_root()) {
         EXPECT_EQ(send_count, 1);
     } else {
-        // do not touche send_count on non-root parameters
+        // do not touch send_count on non-root parameters
         send_count = -1;
     }
     EXPECT_EQ(recv_count, 1);
