@@ -420,6 +420,13 @@ kamping_register_compilation_failure_test(
     LIBRARIES kamping_base
 )
 kamping_register_compilation_failure_test(
+    test_mpi_exscan_compilation_failure
+    FILES collectives/mpi_exscan_compilation_failure_test.cpp
+    SECTIONS "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT" "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
     test_mpi_scan_compilation_failure
     FILES collectives/mpi_scan_compilation_failure_test.cpp
     SECTIONS "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT" "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
@@ -430,6 +437,13 @@ kamping_register_compilation_failure_test(
     test_mpi_scatterv_compilation_failure
     FILES collectives/mpi_scatterv_compilation_failure_test.cpp
     SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNTS" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNT"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_scatter_compilation_failure
+    FILES collectives/mpi_scatter_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNT"
              "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
     LIBRARIES kamping_base
 )
