@@ -525,3 +525,166 @@ TEST(ScattervTest, scatterv_single_element_with_given_send_displs_smaller_than_r
     // cannot test kassert for no_resize policy as this will lead to undefined MPI behaviour due to communication
     // attempts from non-root ranks when the kassert on the root has already failed.
 }
+
+TEST(ScattervTest, scatter_send_recv_type_are_out_parameters) {
+    Communicator comm;
+
+    auto const       input       = create_equiv_sized_input_vector_on_root(comm, 1);
+    auto const       send_counts = create_equiv_counts_on_root(comm, 1);
+    MPI_Datatype     send_type   = MPI_CHAR;
+    MPI_Datatype     recv_type   = MPI_CHAR;
+    std::vector<int> result;
+    comm.scatterv(
+        send_buf(input),
+        recv_buf<resize_to_fit>(result),
+        kamping::send_counts(send_counts),
+        send_type_out(send_type),
+        recv_type_out(recv_type)
+    );
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+    EXPECT_EQ(send_type, MPI_INT);
+    EXPECT_EQ(recv_type, MPI_INT);
+}
+
+TEST(ScattervTest, scatter_send_recv_type_are_part_of_result_object) {
+    Communicator comm;
+
+    auto const       input       = create_equiv_sized_input_vector_on_root(comm, 1);
+    auto const       send_counts = create_equiv_counts_on_root(comm, 1);
+    std::vector<int> result;
+    auto             res = comm.scatterv(
+        send_buf(input),
+        recv_buf<resize_to_fit>(result),
+        kamping::send_counts(send_counts),
+        send_type_out(),
+        recv_type_out()
+    );
+
+    ASSERT_EQ(result.size(), 1);
+    EXPECT_EQ(result.front(), comm.rank());
+    EXPECT_EQ(res.extract_send_type(), MPI_INT);
+    EXPECT_EQ(res.extract_recv_type(), MPI_INT);
+}
+
+TEST(ScattervTest, non_trivial_send_type) {
+    // root rank sends sends each rank its rank two times with padding and all ranks receive the messages without
+    // padding.
+    Communicator     comm;
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    std::vector<int> input;
+    if (comm.is_root()) {
+        input.resize(6 * comm.size());
+        for (std::size_t i = 0; i < comm.size(); ++i) {
+            input[6 * i]     = static_cast<int>(i);
+            input[6 * i + 3] = static_cast<int>(i);
+        }
+    }
+    auto const       send_counts_buf = create_equiv_counts_on_root(comm, 2);
+    std::vector<int> recv_buffer(2, 0);
+
+    MPI_Type_commit(&int_padding_padding);
+    auto res = comm.scatterv(
+        send_buf(input),
+        send_type(int_padding_padding),
+        send_counts(send_counts_buf),
+        recv_buf(recv_buffer),
+        recv_count_out()
+    );
+    MPI_Type_free(&int_padding_padding);
+
+    EXPECT_EQ(res.extract_recv_count(), 2);
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank_signed(), comm.rank_signed()));
+}
+
+TEST(ScattervTest, non_trivial_recv_type) {
+    // root rank sends sends each rank its rank two times and all ranks receive the messages with padding.
+    Communicator comm;
+    MPI_Datatype int_padding_padding = MPI_INT_padding_padding();
+    auto const   send_counts_buf     = create_equiv_counts_on_root(comm, 2);
+
+    std::vector<int> input;
+    if (comm.is_root()) {
+        input.resize(2 * comm.size());
+        for (std::size_t i = 0; i < comm.size(); ++i) {
+            input[2 * i]     = static_cast<int>(i);
+            input[2 * i + 1] = static_cast<int>(i);
+        }
+    }
+
+    int const        init_value = -1;
+    std::vector<int> recv_buffer(6, init_value);
+
+    MPI_Type_commit(&int_padding_padding);
+    comm.scatterv(
+        send_buf(input),
+        send_counts(send_counts_buf),
+        recv_buf(recv_buffer),
+        recv_type(int_padding_padding),
+        recv_count(2)
+    );
+    MPI_Type_free(&int_padding_padding);
+
+    EXPECT_THAT(
+        recv_buffer,
+        ElementsAre(comm.rank_signed(), init_value, init_value, comm.rank_signed(), init_value, init_value)
+    );
+}
+
+TEST(ScattervTest, different_send_and_recv_counts) {
+    // root rank sends sends each rank its rank two times and all ranks receive the two messages at once.
+    Communicator     comm;
+    MPI_Datatype     int_padding_int = MPI_INT_padding_MPI_INT();
+    std::vector<int> input;
+    if (comm.is_root()) {
+        input.resize(2 * comm.size());
+        for (std::size_t i = 0; i < comm.size(); ++i) {
+            input[2 * i]     = static_cast<int>(i);
+            input[2 * i + 1] = static_cast<int>(i);
+        }
+    }
+
+    int const        init_value = -1;
+    std::vector<int> recv_buffer(3, init_value);
+    auto const       send_counts_buf = create_equiv_counts_on_root(comm, 2);
+
+    MPI_Type_commit(&int_padding_int);
+    comm.scatterv(
+        send_buf(input),
+        send_counts(send_counts_buf),
+        recv_buf(recv_buffer),
+        recv_type(int_padding_int),
+        recv_count(1)
+    );
+    MPI_Type_free(&int_padding_int);
+
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank_signed(), init_value, comm.rank_signed()));
+}
+
+TEST(ScattervTest, different_send_and_recv_counts_without_explicit_mpi_types) {
+    Communicator comm;
+
+    struct CustomRecvStruct {
+        int  a;
+        int  b;
+        bool operator==(CustomRecvStruct const& other) const {
+            return std::tie(a, b) == std::tie(other.a, other.b);
+        }
+    };
+    std::vector<int> input;
+    if (comm.is_root()) {
+        input.resize(2 * comm.size());
+        for (std::size_t i = 0; i < comm.size(); ++i) {
+            input[2 * i]     = static_cast<int>(i);
+            input[2 * i + 1] = static_cast<int>(i);
+        }
+    }
+    std::vector<CustomRecvStruct> recv_buffer(1);
+    auto const                    send_counts_buf = create_equiv_counts_on_root(comm, 2);
+
+    comm.scatterv(send_buf(input), send_counts(send_counts_buf), recv_count(1), recv_buf(recv_buffer));
+
+    CustomRecvStruct expected_result{comm.rank_signed(), comm.rank_signed()};
+    EXPECT_THAT(recv_buffer, ElementsAre(expected_result));
+}

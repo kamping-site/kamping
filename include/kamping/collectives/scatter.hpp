@@ -203,25 +203,31 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 /// This wrapper for \c MPI_Scatterv distributes data on the root PE across all PEs in the current communicator.
 ///
 /// The following parameters are mandatory on the root rank:
-/// - kamping::send_buf() [on all PEs] containing the data to be distributed across all PEs. Non-root PEs can omit
+/// - \ref kamping::send_buf() [on all PEs] containing the data to be distributed across all PEs. Non-root PEs can omit
 /// a send buffer by passing `kamping::ignore<T>` as a parameter, or `T` as a template parameter to \ref
 /// kamping::send_buf().
 ///
-/// - kamping::send_counts() [on root PE] specifying the number of elements to send to each PE.
+/// - \ref kamping::send_counts() [on root PE] specifying the number of elements to send to each PE.
 ///
 /// The following parameter can be omitted at the cost of communication overhead (1x MPI_Scatter)
-/// - kamping::recv_count() [on all PEs] specifying the number of elements sent to each PE. If this parameter is
+/// - \ref kamping::recv_count() [on all PEs] specifying the number of elements sent to each PE. If this parameter is
 /// omitted, the number of elements sent to each PE is computed based on kamping::send_counts() provided on the
-/// root PE.
+/// root PE. This parameter is mandatory if \ref kamping::recv_type() is given.
 ///
 /// The following parameter can be omitted at the cost of computational overhead:
-/// - kamping::send_displs() [on root PE] specifying the data displacements in the send buffer. If omitted, an exclusive
-/// prefix sum of the send_counts is used.
+/// - \ref kamping::send_displs() [on root PE] specifying the data displacements in the send buffer. If omitted, an
+/// exclusive prefix sum of the send_counts is used.
 ///
 /// The following parameters are optional:
-/// - kamping::root() [on all PEs] specifying the rank of the root PE. If omitted, the default root PE of the
+/// - \ref kamping::root() [on all PEs] specifying the rank of the root PE. If omitted, the default root PE of the
 /// communicator is used instead.
-/// - kamping::recv_buf() [on all PEs] containing the received data. The buffer will be resized according to the
+/// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
+/// derived automatically based on send_buf's underlying \c value_type. This parameter is ignored on non-root ranks.
+///
+/// - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
+/// derived automatically based on recv_buf's underlying \c value_type.
+///
+/// - \ref kamping::recv_buf() [on all PEs] containing the received data. The buffer will be resized according to the
 /// buffer's kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
 /// storage must be large enough to hold all received elements.
 ///
@@ -238,7 +244,16 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(),
-        KAMPING_OPTIONAL_PARAMETERS(send_buf, root, send_counts, send_displs, recv_buf, recv_count)
+        KAMPING_OPTIONAL_PARAMETERS(
+            send_buf,
+            root,
+            send_counts,
+            send_displs,
+            send_type,
+            recv_buf,
+            recv_count,
+            recv_type
+        )
     );
 
     // Optional parameter: root()
@@ -258,9 +273,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
     auto send_buf =
         select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...).get();
-    using send_value_type      = typename std::remove_reference_t<decltype(send_buf)>::value_type;
-    MPI_Datatype mpi_send_type = mpi_datatype<send_value_type>();
-    auto const*  send_buf_ptr  = send_buf.data();
+    using send_value_type    = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+    auto const* send_buf_ptr = send_buf.data();
     KASSERT(!is_root(root_val) || send_buf_ptr != nullptr, "Send buffer must be specified on root.", assert::light);
 
     // Optional parameter: recv_buf()
@@ -271,8 +285,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
             std::tuple(),
             args...
         );
-    using recv_value_type      = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
-    MPI_Datatype mpi_recv_type = mpi_datatype<recv_value_type>();
+    using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     static_assert(
         !std::is_same_v<recv_value_type, internal::unused_tparam>,
@@ -280,11 +293,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         "required."
     );
 
-    // Make sure that send and recv buffers use the same type
-    static_assert(
-        std::is_same_v<send_value_type, recv_value_type> || std::is_same_v<send_value_type, internal::unused_tparam>,
-        "Mismatching send_buf() and recv_buf() value types."
-    );
+    // Get send_type and recv_type
+    auto&& [send_type, recv_type] =
+        internal::determine_mpi_datatypes<send_value_type, recv_value_type, decltype(recv_buf)>(args...);
+    [[maybe_unused]] constexpr bool recv_type_is_in_param = !has_to_be_computed<decltype(recv_type)>;
 
     // Get send counts
     using default_send_counts_type = decltype(send_counts_out(alloc_new<DefaultContainerType<int>>));
@@ -351,7 +363,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     };
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
     KASSERT(
-        recv_buf.size() >= compute_required_recv_buf_size(),
+        // if the recv type is user provided, kamping cannot make any assumptions about the required size of
+        // the recv buffer
+        recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
         "Recv buffer is not large enough to hold all received elements.",
         assert::light
     );
@@ -360,14 +374,21 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         send_buf_ptr,                    // send buffer
         send_counts.data(),              // send counts
         send_displs.data(),              // send displs
-        mpi_send_type,                   // send type
+        send_type.get_single_element(),  // send type
         recv_buf.data(),                 // recv buffer
         recv_count.get_single_element(), // recv count
-        mpi_recv_type,                   // recv type
+        recv_type.get_single_element(),  // recv type
         root_val,                        // root
         mpi_communicator()               // communicator
     );
     THROW_IF_MPI_ERROR(err, MPI_Scatterv);
 
-    return make_mpi_result(std::move(recv_buf), std::move(recv_count), std::move(send_counts), std::move(send_displs));
+    return make_mpi_result(
+        std::move(recv_buf),
+        std::move(recv_count),
+        std::move(send_counts),
+        std::move(send_displs),
+        std::move(send_type),
+        std::move(recv_type)
+    );
 }
