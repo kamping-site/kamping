@@ -166,15 +166,18 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
 /// the content of this buffer, all other ranks ignore it. However, if provided on any rank it must be provided on all
 /// ranks (possibly empty on non-root ranks). If each rank provides this parameter either as an output parameter or by
 /// passing \c recv_counts(kamping::ignore), then the \c recv_counts on root will be computed by a gather of all local
-/// send counts.
+/// send counts. This parameter is mandatory (as an in-parameter) if \ref kamping::recv_type() is given.
 ///
 /// The following buffers are optional:
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator
 /// is used, see root().
+///
 /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, at the root, this buffer will contain
 /// all data from all send buffers. At all other ranks, the buffer will have size 0.
-/// - \ref kamping::send_counts() [on all PEs] specifying the number of elements to send to each PE. If not given, the
-/// size of the kamping::send_buf() will be used.
+///
+/// - \ref kamping::send_count() [on all PEs] specifying the number of elements to send to the root rank. If not given,
+/// the size of the kamping::send_buf() will be used. This parameter is mandatory if \ref kamping::send_type() is given.
+///
 /// - \ref kamping::recv_displs() containing the offsets of the messages in recv_buf. The `recv_counts[i]` elements
 /// starting at `recv_buf[recv_displs[i]]` will be received from rank `i`. If omitted, this is calculated as the
 /// exclusive prefix-sum of `recv_counts`.
@@ -189,7 +192,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf),
-        KAMPING_OPTIONAL_PARAMETERS(recv_buf, root, send_counts, recv_counts, recv_displs)
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, root, send_count, recv_counts, recv_displs, send_type, recv_type)
     );
 
     // get send buffer
@@ -211,6 +214,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         std::tuple(this->root()),
         args...
     );
+
+    // get send and recv type
+    auto&& [send_type, recv_type] =
+        internal::determine_mpi_datatypes<send_value_type, recv_value_type, decltype(recv_buf)>(args...);
+    [[maybe_unused]] constexpr bool recv_type_is_in_param = !has_to_be_computed<decltype(recv_type)>;
 
     // get recv counts
     using default_recv_counts_type = decltype(kamping::recv_counts_out(alloc_new<DefaultContainerType<int>>));
@@ -234,16 +242,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         assert::light_communication
     );
 
-    using default_send_count_type = decltype(kamping::send_counts_out(alloc_new<int>));
+    using default_send_count_type = decltype(kamping::send_count_out());
     auto&& send_count =
-        internal::select_parameter_type_or_default<internal::ParameterType::send_counts, default_send_count_type>(
+        internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
         );
-    static_assert(
-        std::remove_reference_t<decltype(send_count)>::is_single_element,
-        "send_counts() parameter must be a single value."
-    );
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());
@@ -317,10 +321,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
             assert::light
         );
     }
-    auto mpi_send_type = mpi_datatype<send_value_type>();
-    auto mpi_recv_type = mpi_datatype<recv_value_type>();
-    // @todo remove once we allow more complex types
-    KASSERT(mpi_send_type == mpi_recv_type, "The specified receive type does not match the send type.");
 
     if (this->is_root(root.rank_signed())) {
         auto compute_required_recv_buf_size = [&] {
@@ -328,7 +328,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
         KASSERT(
-            recv_buf.size() >= compute_required_recv_buf_size(),
+            // if the recv type is user provided, kamping cannot make any assumptions about the required size of
+            // the recv buffer
+            recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
             "Recv buffer is not large enough to hold all received elements.",
             assert::light
         );
@@ -338,14 +340,21 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
     [[maybe_unused]] int err = MPI_Gatherv(
         send_buf.data(),                 // send buffer
         send_count.get_single_element(), // send count
-        mpi_send_type,                   // send type
+        send_type.get_single_element(),  // send type
         recv_buf.data(),                 // recv buffer
         recv_counts.data(),              // recv counts
         recv_displs.data(),              // recv displacmenets
-        mpi_recv_type,                   // recv type
+        recv_type.get_single_element(),  // recv type
         root.rank_signed(),              // root rank
         this->mpi_communicator()         // communicator
     );
     THROW_IF_MPI_ERROR(err, MPI_Gather);
-    return make_mpi_result(std::move(recv_buf), std::move(recv_counts), std::move(recv_displs), std::move(send_count));
+    return make_mpi_result(
+        std::move(recv_buf),
+        std::move(recv_counts),
+        std::move(recv_displs),
+        std::move(send_count),
+        std::move(send_type),
+        std::move(recv_type)
+    );
 }
