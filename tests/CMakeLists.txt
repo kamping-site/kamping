@@ -423,7 +423,7 @@ kamping_register_compilation_failure_test(
     test_mpi_exscan_compilation_failure
     FILES collectives/mpi_exscan_compilation_failure_test.cpp
     SECTIONS "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT" "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
-             "SEND_REC_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
     LIBRARIES kamping_base
 )
 kamping_register_compilation_failure_test(

@@ -34,7 +34,7 @@ int main(int /*argc*/, char** /*argv*/) {
         op(kamping::ops::plus<>{}),
         recv_buf<resize_to_fit>(recv_buffer)
     );
-#elif defined(SEND_REC_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY)
+#elif defined(SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY)
     comm.exscan(
         send_buf(input),
         send_recv_type(MPI_INT),
