@@ -448,6 +448,13 @@ kamping_register_compilation_failure_test(
     LIBRARIES kamping_base
 )
 kamping_register_compilation_failure_test(
+    test_mpi_gather_compilation_failure
+    FILES collectives/mpi_gather_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNT"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
     test_operation_builder_compilation_failure
     FILES operation_builder_compilation_failures_test.cpp
     SECTIONS "COPY_CONSTRUCT_OP_BUILDER_BUFFER" "COPY_ASSIGN_OP_BUILDER_BUFFER"
