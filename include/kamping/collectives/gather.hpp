@@ -50,8 +50,8 @@
 /// storage must be large enough to hold all received elements.
 /// At all other ranks, the buffer will not be modified and the parameter is ignored.
 ///
-/// - \ref kamping::send_count() [on all PEs] specifying the number of elements to send to each PE. If not given, the
-/// size of the kamping::send_buf() will be used. This parameter is mandatory if \ref kamping::send_type() is given.
+/// - \ref kamping::send_count() [on all PEs] specifying the number of elements to send to the root PE. If not given,
+/// the size of the kamping::send_buf() will be used. This parameter is mandatory if \ref kamping::send_type() is given.
 ///
 /// - \ref kamping::recv_count() [on root PE] specifying the number of elements to receive from each PE. On non-root
 /// ranks, this parameter is ignored. If not specified, defaults to the value of \ref kamping::send_count() on the
