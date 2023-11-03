@@ -55,7 +55,7 @@
 ///
 /// - \ref kamping::recv_count() [on root PE] specifying the number of elements to receive from each PE. On non-root
 /// ranks, this parameter is ignored. If not specified, defaults to the value of \ref kamping::send_count() on the
-/// root. PE. In total comm.size() * recv_counts elements will received into the receiver buffer.
+/// root. PE. In total, comm.size() * recv_counts elements will be received into the receiver buffer.
 /// This parameter is mandatory if \ref kamping::recv_type() is given.
 ///
 /// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
