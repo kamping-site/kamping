@@ -466,3 +466,19 @@ kamping_register_compilation_failure_test(
     SECTIONS "OWNING_STATUS" "PROC_NULL" "RECV_COUNT_GIVEN" "RECV_BUF_GIVEN"
     LIBRARIES kamping_base
 )
+kamping_register_compilation_failure_test(
+    test_mpi_send_compilation_failure
+    FILES p2p/mpi_send_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_STANDARD_MODE"
+             "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_SYNCHRONOUS_MODE"
+             "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_BUFFERED_MODE" "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_READY_MODE"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_isend_compilation_failure
+    FILES p2p/mpi_isend_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_STANDARD_MODE"
+             "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_SYNCHRONOUS_MODE"
+             "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_BUFFERED_MODE" "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_READY_MODE"
+    LIBRARIES kamping_base
+)
