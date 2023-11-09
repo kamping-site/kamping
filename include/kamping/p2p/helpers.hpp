@@ -54,7 +54,7 @@ constexpr auto determine_mpi_send_datatype(Args&... args)
             args...
         );
 
-    // assure that our expectectation about the return value value category (lvalue or pr-value) is true. This ensures
+    // assure that our expectation about the return value value category (lvalue or pr-value) is true. This ensures
     // that the return value of the function does not become a dangling rvalue reference bound to a function-local
     // object.
     static_assert(
