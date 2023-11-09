@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include "../helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/isend.hpp"
@@ -183,7 +184,7 @@ TEST_F(ISendTest, send_vector_with_explicit_send_count) {
     auto         other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
         std::vector<int> values{42, 3, 8, 7};
-        auto             req = comm.isend(send_buf(values), send_counts(2), destination(other_rank));
+        auto             req = comm.isend(send_buf(values), send_count(2), destination(other_rank));
         EXPECT_EQ(isend_counter, 1);
         EXPECT_EQ(ibsend_counter, 0);
         EXPECT_EQ(issend_counter, 0);
@@ -585,4 +586,148 @@ TEST_F(ISendTest, poor_mans_broadcast_with_test) {
         result = comm.recv<int>(source(comm.root())).extract_recv_buffer()[0];
     }
     EXPECT_EQ(result, 42);
+}
+
+TEST_F(ISendTest, non_trivial_send_type_isend) {
+    // a sender rank sends its rank two times with padding to a receiver rank; this rank receives the ranks without
+    // padding.
+    Communicator comm;
+    auto         other_rank          = (comm.root() + 1) % comm.size();
+    MPI_Datatype int_padding_padding = MPI_INT_padding_padding();
+    MPI_Type_commit(&int_padding_padding);
+    if (comm.is_root()) {
+        std::vector<int> values{comm.rank_signed(), -1, -1, comm.rank_signed(), -1, -1};
+        auto req = comm.isend(send_buf(values), send_type(int_padding_padding), send_count(2), destination(other_rank));
+        req.wait();
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(2);
+        MPI_Status       status;
+        MPI_Recv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &status
+        );
+        ASSERT_EQ(msg, (std::vector<int>{comm.root_signed(), comm.root_signed()}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
+    MPI_Type_free(&int_padding_padding);
+}
+
+TEST_F(ISendTest, non_trivial_send_type_issend) {
+    // a sender rank sends its rank two times with padding to a receiver rank; this rank receives the ranks without
+    // padding.
+    Communicator comm;
+    auto         other_rank          = (comm.root() + 1) % comm.size();
+    MPI_Datatype int_padding_padding = MPI_INT_padding_padding();
+    MPI_Type_commit(&int_padding_padding);
+    if (comm.is_root()) {
+        std::vector<int> values{comm.rank_signed(), -1, -1, comm.rank_signed(), -1, -1};
+        auto             req =
+            comm.issend(send_buf(values), send_type(int_padding_padding), send_count(2), destination(other_rank));
+        req.wait();
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(2);
+        MPI_Status       status;
+        MPI_Recv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &status
+        );
+        ASSERT_EQ(msg, (std::vector<int>{comm.root_signed(), comm.root_signed()}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
+    MPI_Type_free(&int_padding_padding);
+}
+
+TEST_F(ISendTest, non_trivial_send_type_ibsend) {
+    // a sender rank sends its rank two times with padding to a receiver rank; this rank receives the ranks without
+    // padding.
+    Communicator comm;
+    auto         other_rank          = (comm.root() + 1) % comm.size();
+    MPI_Datatype int_padding_padding = MPI_INT_padding_padding();
+    MPI_Type_commit(&int_padding_padding);
+
+    // allocate the minimum required buffer size and attach it
+    int pack_size;
+    MPI_Pack_size(2, int_padding_padding, MPI_COMM_WORLD, &pack_size);
+    auto buffer = std::make_unique<std::byte[]>(static_cast<size_t>(pack_size + MPI_BSEND_OVERHEAD));
+    MPI_Buffer_attach(buffer.get(), pack_size + MPI_BSEND_OVERHEAD);
+
+    if (comm.is_root()) {
+        std::vector<int> values{comm.rank_signed(), -1, -1, comm.rank_signed(), -1, -1};
+        auto             req =
+            comm.ibsend(send_buf(values), send_type(int_padding_padding), send_count(2), destination(other_rank));
+        req.wait();
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(2);
+        MPI_Status       status;
+        MPI_Recv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &status
+        );
+        ASSERT_EQ(msg, (std::vector<int>{comm.root_signed(), comm.root_signed()}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    }
+    MPI_Type_free(&int_padding_padding);
+
+    // detach the buffer
+    void* dummy;
+    int   dummy_size;
+    MPI_Buffer_detach(&dummy, &dummy_size);
+}
+
+TEST_F(ISendTest, non_trivial_send_type_irsend) {
+    // a sender rank sends its rank two times with padding to a receiver rank; this rank receives the ranks without
+    // padding.
+    Communicator comm;
+    auto         other_rank          = (comm.root() + 1) % comm.size();
+    MPI_Datatype int_padding_padding = MPI_INT_padding_padding();
+    MPI_Type_commit(&int_padding_padding);
+    if (comm.is_root()) {
+        // ensure that the receive is posted before the send is started
+        MPI_Barrier(comm.mpi_communicator());
+        std::vector<int> values{comm.rank_signed(), -1, -1, comm.rank_signed(), -1, -1};
+        auto             req =
+            comm.irsend(send_buf(values), send_type(int_padding_padding), send_count(2), destination(other_rank));
+        req.wait();
+    } else if (comm.rank() == other_rank) {
+        std::vector<int> msg(2);
+        MPI_Status       status;
+        MPI_Request      req;
+        // ensure that the receive is posted before the send is started
+        MPI_Irecv(
+            msg.data(),
+            static_cast<int>(msg.size()),
+            MPI_INT,
+            MPI_ANY_SOURCE,
+            MPI_ANY_TAG,
+            comm.mpi_communicator(),
+            &req
+        );
+        MPI_Barrier(comm.mpi_communicator());
+        MPI_Wait(&req, &status);
+        ASSERT_EQ(msg, (std::vector<int>{comm.root_signed(), comm.root_signed()}));
+        ASSERT_EQ(status.MPI_SOURCE, comm.root());
+        ASSERT_EQ(status.MPI_TAG, 0);
+    } else {
+        // all other ranks also have to participate in the barrier
+        MPI_Barrier(comm.mpi_communicator());
+    }
+    MPI_Type_free(&int_padding_padding);
 }
