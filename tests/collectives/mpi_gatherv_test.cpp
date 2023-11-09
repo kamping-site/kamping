@@ -431,7 +431,7 @@ TEST(GathervTest, recv_counts_ignore_should_fail_on_root) {
 }
 #endif
 
-TEST(GathervTest, send_recv_count_is_part_of_result_object) {
+TEST(GathervTest, send_recv_count_are_part_of_result_object) {
     Communicator     comm;
     std::vector<int> input(3, comm.rank_signed());
     auto             result = comm.gatherv(send_buf(input), send_count_out(), recv_counts_out());
