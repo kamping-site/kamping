@@ -448,7 +448,7 @@ TEST(GathervTest, send_recv_count_are_part_of_result_object) {
     }
 }
 
-TEST(GathervTest, send_recv_count_is_out_param) {
+TEST(GathervTest, send_recv_count_are_out_param) {
     Communicator           comm;
     std::vector<int>       input(3, comm.rank_signed());
     const std::vector<int> random_vector = {-1, 42, -2322};
