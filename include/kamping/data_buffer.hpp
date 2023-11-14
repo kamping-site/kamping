@@ -235,7 +235,7 @@ public:
     using value_type = T; ///< The value type of T.
 };
 
-// @brief tag type to indicate that the value_type should be inferred from the container
+/// @brief tag type to indicate that the value_type should be inferred from the container
 struct default_value_type_tag {};
 
 /// @brief Wrapper to get the value type of a container type.
@@ -246,6 +246,9 @@ public:
     using value_type = typename T::value_type; ///< The value type of T.
 };
 
+/// @brief for a given \param MemberType of a data buffer, defines the most viable resize policy.
+///
+/// For example, a single element buffer may not be resizable.
 template <typename MemberType>
 constexpr BufferResizePolicy maximum_viable_resize_policy = [] {
     auto is_single_element = !has_data_member_v<MemberType>;
