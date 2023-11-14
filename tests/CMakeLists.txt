@@ -471,6 +471,7 @@ kamping_register_compilation_failure_test(
     test_mpi_recv_compilation_failure
     FILES p2p/mpi_recv_compilation_failure_test.cpp
     SECTIONS "OWNING_STATUS" "PROC_NULL" "RECV_COUNT_GIVEN" "RECV_BUF_GIVEN"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
     LIBRARIES kamping_base
 )
 kamping_register_compilation_failure_test(

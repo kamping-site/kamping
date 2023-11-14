@@ -20,16 +20,19 @@
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/has_member.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/recv.hpp"
 
 using namespace kamping;
+using namespace ::testing;
 
-KAMPING_MAKE_HAS_MEMBER(extract_recv_counts)
+KAMPING_MAKE_HAS_MEMBER(extract_recv_count)
 KAMPING_MAKE_HAS_MEMBER(extract_status)
 KAMPING_MAKE_HAS_MEMBER(extract_recv_buffer)
+KAMPING_MAKE_HAS_MEMBER(extract_recv_type)
 
 static size_t call_hierarchy_level = 0;
 static size_t probe_counter        = 0;
@@ -80,16 +83,19 @@ TEST_F(RecvTest, recv_vector_from_arbitrary_source) {
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
-            auto result = comm.recv(recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message), status_out());
-            EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+            auto             result =
+                comm.recv(recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message), status_out(), recv_type_out());
+            EXPECT_TRUE(has_member_extract_recv_count_v<decltype(result)>);
             EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
             EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
+            EXPECT_TRUE(has_member_extract_recv_type_v<decltype(result)>);
             auto status = result.extract_status();
             auto source = status.source();
             EXPECT_EQ(status.tag(), source);
             EXPECT_EQ(status.count<int>(), source);
+            EXPECT_EQ(result.extract_recv_type(), MPI_INT);
             EXPECT_EQ(message.size(), source);
-            EXPECT_EQ(result.extract_recv_counts(), source);
+            EXPECT_EQ(result.extract_recv_count(), source);
             EXPECT_EQ(message, std::vector(source, 42));
         }
     }
@@ -117,7 +123,7 @@ TEST_F(RecvTest, recv_vector_from_explicit_source) {
             std::vector<int> message;
             auto             result =
                 comm.recv(source(other), recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message), status_out());
-            EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+            EXPECT_TRUE(has_member_extract_recv_count_v<decltype(result)>);
             EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
             EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
             auto status = result.extract_status();
@@ -126,7 +132,7 @@ TEST_F(RecvTest, recv_vector_from_explicit_source) {
             EXPECT_EQ(status.tag(), source);
             EXPECT_EQ(status.count<int>(), source);
             EXPECT_EQ(message.size(), source);
-            EXPECT_EQ(result.extract_recv_counts(), source);
+            EXPECT_EQ(result.extract_recv_count(), source);
             EXPECT_EQ(message, std::vector(source, 42));
         }
     }
@@ -158,7 +164,7 @@ TEST_F(RecvTest, recv_vector_from_explicit_source_and_explicit_tag) {
                 recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message),
                 status_out()
             );
-            EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+            EXPECT_TRUE(has_member_extract_recv_count_v<decltype(result)>);
             EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
             EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
             auto status = result.extract_status();
@@ -167,7 +173,7 @@ TEST_F(RecvTest, recv_vector_from_explicit_source_and_explicit_tag) {
             EXPECT_EQ(status.tag(), source);
             EXPECT_EQ(status.count<int>(), source);
             EXPECT_EQ(message.size(), source);
-            EXPECT_EQ(result.extract_recv_counts(), source);
+            EXPECT_EQ(result.extract_recv_count(), source);
             EXPECT_EQ(message, std::vector(source, 42));
         }
     }
@@ -194,8 +200,8 @@ TEST_F(RecvTest, recv_vector_with_explicit_size_resize_to_fit) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message;
         EXPECT_EQ(probe_counter, 0);
-        auto result = comm.recv(recv_buf<BufferResizePolicy::resize_to_fit>(message), recv_counts(5), status_out());
-        EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(result)>);
+        auto result = comm.recv(recv_buf<BufferResizePolicy::resize_to_fit>(message), recv_count(5), status_out());
+        EXPECT_FALSE(has_member_extract_recv_count_v<decltype(result)>);
         EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
         auto status = result.extract_status();
@@ -228,8 +234,8 @@ TEST_F(RecvTest, recv_vector_with_explicit_size_no_resize_big_enough) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message(8, -1);
         EXPECT_EQ(probe_counter, 0);
-        auto result = comm.recv(recv_buf<BufferResizePolicy::no_resize>(message), recv_counts(5), status_out());
-        EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(result)>);
+        auto result = comm.recv(recv_buf<BufferResizePolicy::no_resize>(message), recv_count(5), status_out());
+        EXPECT_FALSE(has_member_extract_recv_count_v<decltype(result)>);
         EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
         auto status = result.extract_status();
@@ -263,12 +269,12 @@ TEST_F(RecvTest, recv_vector_with_explicit_size_no_resize_too_small) {
         std::vector<int> message(1);
         EXPECT_EQ(probe_counter, 0);
         EXPECT_KASSERT_FAILS(
-            { comm.recv(recv_buf<BufferResizePolicy::no_resize>(message), recv_counts(5), status_out()); },
+            { comm.recv(recv_buf<BufferResizePolicy::no_resize>(message), recv_count(5), status_out()); },
             "Recv buffer is not large enough to hold all received elements."
         );
         // actually receive it to clean up.
         message.resize(5);
-        comm.recv(recv_buf<BufferResizePolicy::no_resize>(message), recv_counts(5), status_out());
+        comm.recv(recv_buf<BufferResizePolicy::no_resize>(message), recv_count(5), status_out());
     }
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
@@ -292,8 +298,8 @@ TEST_F(RecvTest, recv_vector_with_explicit_size_grow_only_big_enough) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message(8, -1);
         EXPECT_EQ(probe_counter, 0);
-        auto result = comm.recv(recv_buf<BufferResizePolicy::grow_only>(message), recv_counts(5), status_out());
-        EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(result)>);
+        auto result = comm.recv(recv_buf<BufferResizePolicy::grow_only>(message), recv_count(5), status_out());
+        EXPECT_FALSE(has_member_extract_recv_count_v<decltype(result)>);
         EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
         auto status = result.extract_status();
@@ -326,8 +332,8 @@ TEST_F(RecvTest, recv_vector_with_explicit_size_grow_only_too_small) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message(3, -1);
         EXPECT_EQ(probe_counter, 0);
-        auto result = comm.recv(recv_buf<BufferResizePolicy::grow_only>(message), recv_counts(5), status_out());
-        EXPECT_FALSE(has_member_extract_recv_counts_v<decltype(result)>);
+        auto result = comm.recv(recv_buf<BufferResizePolicy::grow_only>(message), recv_count(5), status_out());
+        EXPECT_FALSE(has_member_extract_recv_count_v<decltype(result)>);
         EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
         auto status = result.extract_status();
@@ -362,13 +368,13 @@ TEST_F(RecvTest, recv_vector_with_input_status) {
         Status           recv_status;
         // pass status as input parameter
         auto result = comm.recv(recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message), status_out(recv_status));
-        EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+        EXPECT_TRUE(has_member_extract_recv_count_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
         EXPECT_EQ(recv_status.source(), comm.root());
         EXPECT_EQ(recv_status.tag(), 0);
         EXPECT_EQ(recv_status.count<int>(), 5);
-        EXPECT_EQ(result.extract_recv_counts(), 5);
+        EXPECT_EQ(result.extract_recv_count(), 5);
         EXPECT_EQ(message, std::vector<int>({1, 2, 3, 4, 5}));
     }
     MPI_Wait(&req, MPI_STATUS_IGNORE);
@@ -393,13 +399,13 @@ TEST_F(RecvTest, recv_default_custom_container_without_recv_buf) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         EXPECT_EQ(probe_counter, 0);
         auto result = comm.recv<int>();
-        EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+        EXPECT_TRUE(has_member_extract_recv_count_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_status_v<decltype(result)>);
         EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result)>);
         ::testing::OwnContainer<int> message = result.extract_recv_buffer();
         // we should not probe for the message size inside of KaMPIng if we specify the recv count explicitly
         EXPECT_EQ(probe_counter, 1);
-        EXPECT_EQ(result.extract_recv_counts(), 5);
+        EXPECT_EQ(result.extract_recv_count(), 5);
         EXPECT_EQ(message, ::testing::OwnContainer<int>({1, 2, 3, 4, 5}));
     }
     MPI_Wait(&req, MPI_STATUS_IGNORE);
@@ -409,9 +415,9 @@ TEST_F(RecvTest, recv_from_proc_null) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     auto         result = comm.recv(source(rank::null), recv_buf(v), status_out());
-    EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result)>);
+    EXPECT_TRUE(has_member_extract_recv_count_v<decltype(result)>);
     auto   status     = result.extract_status();
-    size_t recv_count = static_cast<size_t>(result.extract_recv_counts());
+    size_t recv_count = static_cast<size_t>(result.extract_recv_count());
     // recv did not touch the buffer
     EXPECT_EQ(v.size(), 5);
     EXPECT_EQ(v, std::vector({1, 2, 3, 4, 5}));
@@ -430,7 +436,7 @@ TEST_F(RecvTest, recv_from_invalid_tag) {
 TEST_F(RecvTest, recv_from_invalid_tag_with_explicit_recv_count) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
-    EXPECT_KASSERT_FAILS({ comm.recv(recv_buf(v), status_out(), tag(-1), recv_counts(1)); }, "invalid tag");
+    EXPECT_KASSERT_FAILS({ comm.recv(recv_buf(v), status_out(), tag(-1), recv_count(1)); }, "invalid tag");
 }
 
 TEST_F(RecvTest, recv_single_int_from_arbitrary_source) {
@@ -551,4 +557,86 @@ TEST_F(RecvTest, recv_single_int_from_explicit_source_and_explicit_ignore_status
 TEST_F(RecvTest, recv_single_int_from_invalid_tag) {
     Communicator comm;
     EXPECT_KASSERT_FAILS({ comm.recv_single<int>(tag(-1)); }, "invalid tag");
+}
+
+TEST_F(RecvTest, recv_type_is_out_param) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+    MPI_Request      req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        MPI_Datatype recv_type;
+        for (size_t other = 0; other < comm.size(); other++) {
+            std::vector<int> message;
+            auto             result = comm.recv(
+                recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message),
+                status_out(),
+                recv_type_out(recv_type)
+            );
+            auto status = result.extract_status();
+            auto source = status.source();
+            EXPECT_EQ(status.tag(), source);
+            EXPECT_EQ(status.count<int>(), source);
+            EXPECT_EQ(recv_type, MPI_INT);
+            EXPECT_EQ(message.size(), source);
+            EXPECT_EQ(result.extract_recv_count(), source);
+            EXPECT_EQ(message, std::vector(source, 42));
+        }
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+}
+
+TEST_F(RecvTest, non_trivial_recv_type) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+    MPI_Request      req;
+    comm.barrier();
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        // ranks are received with padding
+        MPI_Datatype int_padding_padding = MPI_INT_padding_padding();
+        MPI_Type_commit(&int_padding_padding);
+        for (size_t other = 0; other < comm.size(); other++) {
+            int const        default_init = -1;
+            std::vector<int> message(3 * other, default_init);
+            auto             result =
+                comm.recv(recv_buf<no_resize>(message), status_out(), source(other), recv_type(int_padding_padding));
+            auto status = result.extract_status();
+            auto source = status.source();
+            EXPECT_EQ(status.tag(), source);
+            EXPECT_EQ(status.count<int>(), source);
+            EXPECT_EQ(message.size(), 3 * source);
+            // EXPECT_EQ(result.extract_recv_count(), source);
+            for (size_t i = 0; i < other; ++i) {
+                EXPECT_EQ(message[3 * i], 42);
+                EXPECT_EQ(message[3 * i + 1], default_init);
+                EXPECT_EQ(message[3 * i + 2], default_init);
+            }
+        }
+        MPI_Type_free(&int_padding_padding);
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+    comm.barrier();
 }
