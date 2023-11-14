@@ -610,7 +610,7 @@ TEST(DataBufferTest, has_extract) {
             BufferModifiability::modifiable,
             BufferOwnership::owning,
             BufferType::in_buffer,
-            BufferResizePolicy::resize_to_fit,
+            BufferResizePolicy::no_resize,
             BufferAllocation::lib_allocated>>,
         "Library allocated DataBuffers must have an extract() member function"
     );
@@ -621,20 +621,10 @@ TEST(DataBufferTest, has_extract) {
             BufferModifiability::modifiable,
             BufferOwnership::owning,
             BufferType::in_buffer,
-            BufferResizePolicy::resize_to_fit,
+            BufferResizePolicy::no_resize,
             BufferAllocation::user_allocated>>,
         "User allocated DataBuffers must not have an extract() member function"
     );
-}
-
-TEST(ParameterFactoriesTest, is_int_type) {
-    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_buf));
-    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::recv_buf));
-    EXPECT_FALSE(is_int_type(kamping::internal::ParameterType::send_recv_buf));
-    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_counts));
-    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::recv_displs));
-    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_counts));
-    EXPECT_TRUE(is_int_type(kamping::internal::ParameterType::send_displs));
 }
 
 TEST(DataBufferTest, resize_if_requested_with_resize_to_fit) {

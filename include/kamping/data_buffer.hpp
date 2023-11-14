@@ -235,7 +235,7 @@ public:
     using value_type = T; ///< The value type of T.
 };
 
-// @brief tag type to indicate that the value_type should be inferred from the container
+/// @brief tag type to indicate that the value_type should be inferred from the container
 struct default_value_type_tag {};
 
 /// @brief Wrapper to get the value type of a container type.
@@ -246,23 +246,18 @@ public:
     using value_type = typename T::value_type; ///< The value type of T.
 };
 
-/// @brief The set of parameter types that must be of type `int`
-constexpr std::array int_parameter_types{
-    ParameterType::recv_counts, ParameterType::send_counts, ParameterType::recv_displs, ParameterType::send_displs};
-
-/// @brief Checks whether buffers of a given type should have `value_type` `int`.
+/// @brief for a given \param MemberType of a data buffer, defines the most viable resize policy.
 ///
-/// @param parameter_type The parameter type to check.
-///
-/// @return `true` if parameter_type should be of type `int`, `false` otherwise.
-inline constexpr bool is_int_type(ParameterType parameter_type) {
-    for (ParameterType int_parameter_type: int_parameter_types) {
-        if (parameter_type == int_parameter_type) {
-            return true;
-        }
+/// For example, a single element buffer may not be resizable.
+template <typename MemberType>
+constexpr BufferResizePolicy maximum_viable_resize_policy = [] {
+    auto is_single_element = !has_data_member_v<MemberType>;
+    if (is_single_element) {
+        return no_resize;
+    } else {
+        return resize_to_fit;
     }
-    return false;
-}
+}();
 
 /// @brief Data buffer used for named parameters.
 ///
@@ -333,10 +328,6 @@ public:
 
     using value_type =
         typename ValueTypeWrapper<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
-    // Logical implication: is_int_type(type) => std::is_same_v<value_type, int>
-    static_assert(
-        !is_int_type(parameter_type_param) || std::is_same_v<value_type, int>, "The given data must be of type int"
-    );
     static_assert(
         std::is_same_v<ValueType, default_value_type_tag> || std::is_same_v<ValueType, value_type>,
         "The requested value type of the buffer does not match the value type of the underlying container"
@@ -344,6 +335,14 @@ public:
     using value_type_with_const =
         std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending
                                                                          ///< on modifiability
+    static_assert(
+        is_modifiable || resize_policy == BufferResizePolicy::no_resize,
+        "A constant data buffer requires the that the resize policy is no_resize."
+    );
+    static_assert(
+        !is_single_element || resize_policy == BufferResizePolicy::no_resize,
+        "A single element data buffer requires the that the resize policy is no_resize."
+    );
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.

@@ -1409,14 +1409,6 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
     }
 }
 
-TEST(ParameterFactoriesTest, recv_counts_out_single_value_lib_allocated_basics) {
-    auto recv_count_out_obj          = recv_counts_out(alloc_new<int>);
-    *recv_count_out_obj.get().data() = 42;
-    EXPECT_EQ(*recv_count_out_obj.get().data(), 42);
-    EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
-    EXPECT_TRUE(has_extract_v<decltype(recv_count_out_obj)>);
-}
-
 TEST(ParameterFactoriesTest, make_data_buffer) {
     {
         // Constant, container, referencing, user allocated

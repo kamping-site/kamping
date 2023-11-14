@@ -118,7 +118,7 @@ TEST(ScattervTest, scatterv_equiv_single_element_out_recv_count) {
     auto const counts     = create_equiv_counts_on_root(comm, 1);
     int        recv_count = -1;
     int        result;
-    comm.scatterv(send_buf(input), send_counts(counts), recv_count_out(recv_count), recv_buf<resize_to_fit>(result));
+    comm.scatterv(send_buf(input), send_counts(counts), recv_count_out(recv_count), recv_buf<no_resize>(result));
 
     EXPECT_EQ(recv_count, 1);
     EXPECT_EQ(result, comm.rank_signed());
