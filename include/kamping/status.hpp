@@ -59,12 +59,30 @@ public:
         return count;
     }
 
+    /// @param data_type The datatype.
+    /// @return The number of top-level elements received for the given type \c
+    /// DataType.
+    [[nodiscard]] int count_signed(MPI_Datatype data_type) const {
+        int count;
+        MPI_Get_count(&_status, data_type, &count);
+        return count;
+    }
+
     /// @tparam DataType The datatype.
     /// @return The number of top-level elements received for the given type \c
     /// DataType.
     template <typename DataType>
     [[nodiscard]] size_t count() const {
         return asserting_cast<size_t>(this->count_signed<DataType>());
+    }
+
+    /// @param data_type The datatype.
+    /// @return The number of top-level elements received for the given type \c
+    /// DataType.
+    [[nodiscard]] int count(MPI_Datatype data_type) const {
+        int count;
+        MPI_Get_count(&_status, data_type, &count);
+        return count;
     }
 
     /// @return A reference to the underlying native MPI_Status.
