@@ -89,7 +89,7 @@ using LibAllocatedContainerBasedBuffer = DataBuffer<
     BufferModifiability::modifiable,
     BufferOwnership::owning,
     buffer_type,
-    BufferResizePolicy::resize_to_fit,
+    maximum_viable_resize_policy<Container>,
     BufferAllocation::lib_allocated>;
 
 /// @brief Constant buffer for a single type, i.e., not a container.
