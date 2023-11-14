@@ -136,10 +136,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     int source = source_param.rank_signed();
     int tag    = tag_param.tag();
     if constexpr (internal::has_to_be_computed<decltype(recv_count_param)>) {
-        Status probe_status      = this->probe(source_param.clone(), tag_param.clone(), status_out()).extract_status();
-        source                   = probe_status.source_signed();
-        tag                      = probe_status.tag();
-        *recv_count_param.data() = asserting_cast<int>(probe_status.count(recv_type.get_single_element()));
+        Status probe_status = this->probe(source_param.clone(), tag_param.clone(), status_out()).extract_status();
+        source              = probe_status.source_signed();
+        tag                 = probe_status.tag();
+        recv_count_param.underlying() = asserting_cast<int>(probe_status.count(recv_type.get_single_element()));
     }
 
     // Ensure that we do not touch the recv buffer if MPI_PROC_NULL is passed,

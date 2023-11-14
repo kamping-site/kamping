@@ -59,7 +59,8 @@ constexpr auto determine_mpi_send_datatype(Args&... args)
     // object.
     static_assert(
         !std::is_rvalue_reference_v<decltype(mpi_send_type)>,
-        "mpi_send_type is either a lvalue reference (in this case it returned by reference), or a non-referen type (in "
+        "mpi_send_type is either a lvalue reference (in this case it returned by reference), or a non-reference type "
+        "(in "
         "this case it is returned by value)."
     );
 
@@ -103,7 +104,8 @@ constexpr auto determine_mpi_recv_datatype(Args&... args)
     // object.
     static_assert(
         !std::is_rvalue_reference_v<decltype(mpi_recv_type)>,
-        "mpi_send_type is either a lvalue reference (in this case it returned by reference), or a non-referen type (in "
+        "mpi_recv_type is either a lvalue reference (in this case it returned by reference), or a non-reference type "
+        "(in "
         "this case it is returned by value)."
     );
 

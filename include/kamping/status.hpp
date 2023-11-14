@@ -48,17 +48,6 @@ public:
         return _status.MPI_TAG;
     }
 
-    /// @tparam DataType The datatype.
-    /// @return The number of top-level elements received for the given type \c
-    /// DataType.
-    template <typename DataType>
-    [[nodiscard]] int count_signed() const {
-        auto data_type = mpi_datatype<DataType>();
-        int  count;
-        MPI_Get_count(&_status, data_type, &count);
-        return count;
-    }
-
     /// @param data_type The datatype.
     /// @return The number of top-level elements received for the given type \c
     /// DataType.
@@ -72,17 +61,23 @@ public:
     /// @return The number of top-level elements received for the given type \c
     /// DataType.
     template <typename DataType>
-    [[nodiscard]] size_t count() const {
-        return asserting_cast<size_t>(this->count_signed<DataType>());
+    [[nodiscard]] int count_signed() const {
+        return this->count_signed(mpi_datatype<DataType>());
     }
 
     /// @param data_type The datatype.
     /// @return The number of top-level elements received for the given type \c
     /// DataType.
-    [[nodiscard]] int count(MPI_Datatype data_type) const {
-        int count;
-        MPI_Get_count(&_status, data_type, &count);
-        return count;
+    [[nodiscard]] size_t count(MPI_Datatype data_type) const {
+        return asserting_cast<size_t>(this->count_signed(data_type));
+    }
+
+    /// @tparam DataType The datatype.
+    /// @return The number of top-level elements received for the given type \c
+    /// DataType.
+    template <typename DataType>
+    [[nodiscard]] size_t count() const {
+        return asserting_cast<size_t>(this->count_signed<DataType>());
     }
 
     /// @return A reference to the underlying native MPI_Status.
