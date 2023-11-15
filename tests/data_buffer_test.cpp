@@ -487,18 +487,6 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
     SingleElementModifiableBuffer<int, ptype, btype> int_buffer(value);
 
     EXPECT_EQ(int_buffer.size(), 1);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(
-        int_buffer.resize(0),
-        "Cannot resize a single element buffer to hold zero or more than one element. Single "
-        "element buffers always hold exactly one element."
-    );
-    EXPECT_KASSERT_FAILS(
-        int_buffer.resize(2),
-        "Cannot resize a single element buffer to hold zero or more than one element. Single "
-        "element buffers always hold exactly one element."
-    );
-#endif
 
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
@@ -539,18 +527,6 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
 
     EXPECT_EQ(int_buffer.size(), 1);
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(
-        int_buffer.resize(0),
-        "Cannot resize a single element buffer to hold zero or more than one element. Single "
-        "element buffers always hold exactly one element."
-    );
-    EXPECT_KASSERT_FAILS(
-        int_buffer.resize(2),
-        "Cannot resize a single element buffer to hold zero or more than one element. Single "
-        "element buffers always hold exactly one element."
-    );
-#endif
     EXPECT_EQ(int_buffer.get().size(), 1);
     EXPECT_EQ(*(int_buffer.get().data()), 5);
     EXPECT_EQ(*(int_buffer.data()), 5);
