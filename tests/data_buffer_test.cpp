@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPIng Authors
+// Copyright 2021-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -618,6 +618,7 @@ TEST(DataBufferTest, resize_if_requested_with_resize_to_fit) {
         UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::resize_to_fit> buffer(data
         );
         buffer.resize_if_requested(size_function);
+        EXPECT_TRUE((has_member_resize_v<decltype(buffer), size_t>));
         EXPECT_EQ(call_counter, 1);
         EXPECT_EQ(data.size(), required_size);
     }
@@ -628,6 +629,7 @@ TEST(DataBufferTest, resize_if_requested_with_resize_to_fit) {
         UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::resize_to_fit> buffer(data
         );
         buffer.resize_if_requested(size_function);
+        EXPECT_TRUE((has_member_resize_v<decltype(buffer), size_t>));
         EXPECT_EQ(call_counter, 1);
         EXPECT_EQ(data.size(), required_size);
     }
@@ -647,6 +649,7 @@ TEST(DataBufferTest, resize_if_requested_with_grow_only) {
     {
         UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::grow_only> buffer(data);
         buffer.resize_if_requested(size_function);
+        EXPECT_TRUE((has_member_resize_v<decltype(buffer), size_t>));
         EXPECT_EQ(call_counter, 1);
         EXPECT_EQ(data.size(), required_size);
     }
@@ -656,6 +659,7 @@ TEST(DataBufferTest, resize_if_requested_with_grow_only) {
         data.resize(2 * required_size);
         UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::grow_only> buffer(data);
         buffer.resize_if_requested(size_function);
+        EXPECT_TRUE((has_member_resize_v<decltype(buffer), size_t>));
         EXPECT_EQ(call_counter, 1);
         EXPECT_EQ(data.size(), 2 * required_size);
     }
@@ -675,6 +679,7 @@ TEST(DataBufferTest, resize_if_requested_with_no_resize) {
     {
         UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::no_resize> buffer(data);
         buffer.resize_if_requested(size_function);
+        EXPECT_FALSE((has_member_resize_v<decltype(buffer), size_t>));
         EXPECT_EQ(call_counter, 0);
         EXPECT_EQ(data.size(), 0);
     }
@@ -684,6 +689,7 @@ TEST(DataBufferTest, resize_if_requested_with_no_resize) {
         data.resize(2 * required_size);
         UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, BufferResizePolicy::no_resize> buffer(data);
         buffer.resize_if_requested(size_function);
+        EXPECT_FALSE((has_member_resize_v<decltype(buffer), size_t>));
         EXPECT_EQ(call_counter, 0);
         EXPECT_EQ(data.size(), 2 * required_size);
     }
