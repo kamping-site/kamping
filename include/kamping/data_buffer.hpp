@@ -383,7 +383,7 @@ public:
     ///
     /// This function calls \c resize on the underlying container.
     ///
-    /// This takes only part in overload resolution if the \ref resize_policy of the buffer is \ref resize_to_fit.
+    /// This takes only part in overload resolution if the \ref resize_policy of the buffer is \c resize_to_fit.
     ///
     /// @param size Size the container is resized to.
     template <
@@ -399,7 +399,7 @@ public:
     /// This function calls \c resize on the underlying container, but only if the requested \param size is larger than
     /// the current buffer size. Otherwise, the buffer is left unchanged.
     ///
-    /// This takes only part in overload resolution if the \ref resize_policy of the buffer is \ref grow_only.
+    /// This takes only part in overload resolution if the \ref resize_policy of the buffer is \c grow_only.
     ///
     template <
         BufferResizePolicy _resize_policy                            = resize_policy,
