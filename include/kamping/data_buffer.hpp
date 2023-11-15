@@ -401,7 +401,6 @@ public:
     ///
     /// This takes only part in overload resolution if the \ref resize_policy of the buffer is \ref grow_only.
     ///
-    /// @param size Size the container is resized to.
     template <
         BufferResizePolicy _resize_policy                            = resize_policy,
         typename std::enable_if_t<_resize_policy == grow_only, bool> = true>
