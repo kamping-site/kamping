@@ -487,8 +487,6 @@ TEST(SingleElementModifiableBufferTest, get_basics) {
     SingleElementModifiableBuffer<int, ptype, btype> int_buffer(value);
 
     EXPECT_EQ(int_buffer.size(), 1);
-    int_buffer.resize(1);
-    EXPECT_EQ(int_buffer.size(), 1);
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(
         int_buffer.resize(0),
@@ -540,8 +538,6 @@ TEST(LibAllocatedSingleElementBufferTest, get_basics) {
     *int_buffer.get().data() = value;
 
     EXPECT_EQ(int_buffer.size(), 1);
-    int_buffer.resize(1);
-    EXPECT_EQ(int_buffer.size(), 1);
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(
@@ -581,20 +577,24 @@ TEST(RootTest, move_constructor_assignment_operator_is_enabled) {
 }
 
 TEST(UserAllocatedContainerBasedBufferTest, resize_user_allocated_buffer) {
-    std::vector<int>             data(20, 0);
-    Span<int>                    container     = {data.data(), data.size()};
-    constexpr ParameterType      ptype         = ParameterType::send_counts;
-    constexpr BufferType         btype         = BufferType::in_buffer;
-    constexpr BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    std::vector<int>        data(20, 0);
+    Span<int>               container = {data.data(), data.size()};
+    constexpr ParameterType ptype     = ParameterType::send_counts;
+    constexpr BufferType    btype     = BufferType::in_buffer;
 
-    UserAllocatedContainerBasedBuffer<Span<int>, ptype, btype, resize_policy> span_buffer(container);
+    UserAllocatedContainerBasedBuffer<Span<int>, ptype, btype, no_resize> span_buffer(container);
 
     for (size_t i = 0; i <= 20; ++i) {
-        span_buffer.resize(i);
+        bool resize_called = false;
+        span_buffer.resize_if_requested([&] {
+            resize_called = true;
+            return i;
+        });
+        EXPECT_FALSE(resize_called);
         EXPECT_EQ(20, span_buffer.size());
     }
 
-    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, resize_policy> vec_buffer(data);
+    UserAllocatedContainerBasedBuffer<std::vector<int>, ptype, btype, resize_to_fit> vec_buffer(data);
 
     for (size_t i = 0; i <= 20; ++i) {
         vec_buffer.resize(i);

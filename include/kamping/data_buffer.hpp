@@ -36,6 +36,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/has_member.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/span.hpp"
@@ -149,6 +150,8 @@ static constexpr bool
         is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
             std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
 
+KAMPING_MAKE_HAS_MEMBER(resize)
+
 } // namespace internal
 
 /// @brief Type used for indicating that a buffer should be allocated by KaMPIng.
@@ -252,7 +255,7 @@ public:
 template <typename MemberType>
 constexpr BufferResizePolicy maximum_viable_resize_policy = [] {
     auto is_single_element = !has_data_member_v<MemberType>;
-    if (is_single_element) {
+    if (is_single_element || !has_member_resize_v<MemberType, size_t>) {
         return no_resize;
     } else {
         return resize_to_fit;
@@ -342,6 +345,11 @@ public:
     static_assert(
         !is_single_element || resize_policy == BufferResizePolicy::no_resize,
         "A single element data buffer requires the that the resize policy is no_resize."
+    );
+    static_assert(
+        !(resize_policy == BufferResizePolicy::grow_only || resize_policy == BufferResizePolicy::resize_to_fit)
+            || has_member_resize_v<MemberType, size_t>,
+        "The underlying container does not provide a resize function, which is required by the resize policy."
     );
 
     /// @brief Constructor for referencing ContainerBasedBuffer.

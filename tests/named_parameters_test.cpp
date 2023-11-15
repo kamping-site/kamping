@@ -133,12 +133,16 @@ void test_user_allocated_buffer(
     EXPECT_EQ(GeneratedBuffer::resize_policy, expected_resize_policy);
 
     auto resize_write_check = [&](size_t nb_elements) {
-        generated_buffer.resize(nb_elements);
-        ExpectedValueType* ptr = generated_buffer.data();
-        EXPECT_EQ(ptr, std::data(underlying_container));
-        for (size_t i = 0; i < nb_elements; ++i) {
-            ptr[i] = static_cast<ExpectedValueType>(nb_elements - i);
-            EXPECT_EQ(ptr[i], underlying_container[i]);
+        if constexpr (GeneratedBuffer::resize_policy != BufferResizePolicy::no_resize) {
+            generated_buffer.resize(nb_elements);
+        }
+        if (nb_elements <= generated_buffer.size()) {
+            ExpectedValueType* ptr = generated_buffer.data();
+            EXPECT_EQ(ptr, std::data(underlying_container));
+            for (size_t i = 0; i < nb_elements; ++i) {
+                ptr[i] = static_cast<ExpectedValueType>(nb_elements - i);
+                EXPECT_EQ(ptr[i], underlying_container[i]);
+            }
         }
     };
     resize_write_check(10);
