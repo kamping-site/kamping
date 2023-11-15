@@ -371,40 +371,43 @@ public:
         }
     }
 
-    /// @brief Resizes the underlying container such that it holds exactly \c size elements of \c value_type if the \c
-    /// MemberType is not a \c Span or a single elements.
+    /// @brief Resizes the underlying container such that it holds exactly \c size elements of \c value_type.
     ///
-    /// This function calls \c resize on the container if the container is not of type \c Span or a single value. If the
-    /// container is a \c Span,  KaMPIng assumes that the memory is managed by the user and that resizing is not wanted.
-    /// In this case it is \c KASSERTed that the memory provided by the span is sufficient. If the buffer stores only a
-    /// single value, it is KASSERTed that the requested size is exactly 1. Whether new memory is
-    /// allocated and/or data is copied depends in the implementation of the container.
+    /// This function calls \c resize on the underlying container.
     ///
-    /// @param size Size the container is resized to if it is not a \c Span.
+    /// This takes only part in overload resolution if the \ref resize_policy of the buffer is \ref resize_to_fit.
+    ///
+    /// @param size Size the container is resized to.
+    template <
+        BufferResizePolicy _resize_policy                                = resize_policy,
+        typename std::enable_if_t<_resize_policy == resize_to_fit, bool> = true>
     void resize(size_t size) {
-        // This works because in template classes, only functions that are actually called are instantiated
-        // Technically not needed here because _data is const in this case, so we can't call resize() anyways. But this
-        // gives a nicer error message.
-        static_assert(is_modifiable, "Trying to resize a constant DataBuffer");
-
-        // TODO use the following static_asserts once all wrapped MPI calls have been adapted.
-        // static_assert(
-        //    buffer_resize_policy != BufferResizePolicy::do_not_resize,
-        //    "Trying to resize a buffer which is marked as do_not_resize."
-        //);
         kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
-        if constexpr (is_single_element) {
-            KASSERT(
-                size == 1u,
-                "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                "element buffers always hold exactly one element."
-            );
-        } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
-            KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
-        } else {
+        underlying().resize(size);
+    }
+
+    /// @brief Resizes the underlying container such that it holds at least \c size elements of \c value_type.
+    ///
+    /// This function calls \c resize on the underlying container, but only if the requested \param size is larger than
+    /// the current buffer size. Otherwise, the buffer is left unchanged.
+    ///
+    /// This takes only part in overload resolution if the \ref resize_policy of the buffer is \ref grow_only.
+    ///
+    /// @param size Size the container is resized to.
+    template <
+        BufferResizePolicy _resize_policy                            = resize_policy,
+        typename std::enable_if_t<_resize_policy == grow_only, bool> = true>
+    void resize(size_t size) {
+        kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
+        if (this->size() < size) {
             underlying().resize(size);
         }
     }
+
+    template <
+        BufferResizePolicy _resize_policy                            = resize_policy,
+        typename std::enable_if_t<_resize_policy == no_resize, bool> = true>
+    void resize(size_t size) = delete;
 
     /// @brief Resizes the underlying container if the buffer the buffer's resize policy allows and resizing is
     /// necessary.
@@ -414,13 +417,8 @@ public:
     /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
     template <typename SizeFunc>
     void resize_if_requested(SizeFunc&& compute_required_size) {
-        if constexpr (resize_policy == BufferResizePolicy::resize_to_fit) {
+        if constexpr (resize_policy == BufferResizePolicy::resize_to_fit || resize_policy == BufferResizePolicy::grow_only) {
             resize(compute_required_size());
-        } else if constexpr (resize_policy == BufferResizePolicy::grow_only) {
-            auto const required_size = compute_required_size();
-            if (size() < required_size) {
-                resize(required_size);
-            }
         }
     }
 
