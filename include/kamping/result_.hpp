@@ -27,10 +27,20 @@
 #include "kamping/named_parameters.hpp"
 #include "named_parameter_selection.hpp"
 
-template <typename>
-class TD;
-
 namespace kamping {
+
+/// @brief MPIResult contains the result of a \c MPI call wrapped by KaMPIng.
+///
+/// A wrapped \c MPI call can have multiple different results such as the \c
+/// recv_buffer, \c recv_counts, \c recv_displs etc. If the buffers where these
+/// results have been written to by the library call has been allocated
+/// by/transferred to KaMPIng, the content of the buffers can be extracted using
+/// extract_<result>.
+/// Note that not all below-listed buffer categories needs to be used by every
+/// wrapped \c MPI call. If a specific call does not use a buffer category, you
+/// have to provide ResultCategoryNotUsed instead.
+///
+/// @tparam Args Types of return data buffers.
 template <typename... Args>
 class MPIResult_ {
 public:
