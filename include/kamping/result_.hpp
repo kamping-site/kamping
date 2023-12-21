@@ -40,8 +40,9 @@ public:
     ///
     /// This function is only available if the underlying status is owned by the
     /// MPIResult object.
-    /// @tparam StatusType_ Template parameter helper only needed to remove this
-    /// function if StatusType does not possess a member function \c extract().
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
     /// @return Returns the underlying status object.
     template <
         typename T = std::tuple<Args...>,
@@ -54,8 +55,9 @@ public:
     ///
     /// This function is only available if the underlying memory is owned by the
     /// MPIResult object.
-    /// @tparam RecvBuf_ Template parameter helper only needed to remove this
-    /// function if RecvBuf does not possess a member function \c extract().
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
     /// @return Returns the underlying storage containing the received elements.
     template <
         typename T = std::tuple<Args...>,
@@ -67,8 +69,9 @@ public:
     /// @brief Extracts the \c recv_counts from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam RecvCounts_ Template parameter helper only needed to remove this function if RecvCounts does not possess
-    /// a member function \c extract().
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
     /// @return Returns the underlying storage containing the receive counts.
     template <
         typename T = std::tuple<Args...>,
@@ -80,8 +83,9 @@ public:
     /// @brief Extracts the \c recv_count from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam RecvCount_ Template parameter helper only needed to remove this function if RecvCount does not
-    /// possess a member function \c extract().
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
     /// @return Returns the underlying storage containing the recv count.
     template <
         typename T = std::tuple<Args...>,
@@ -93,8 +97,9 @@ public:
     /// @brief Extracts the \c recv_displs from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam RecvDispls_ Template parameter helper only needed to remove this function if RecvDispls does not possess
-    /// a member function \c extract().
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
     /// @return Returns the underlying storage containing the receive displacements.
     template <
         typename T = std::tuple<Args...>,
@@ -103,115 +108,303 @@ public:
         return internal::select_parameter_type_tuple<internal::ParameterType::recv_displs>(_data).extract();
     }
 
-    // structured bindings getter
+    /// @brief Extracts the \c send_counts from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
+    /// @return Returns the underlying storage containing the send counts.
+    template <
+        typename T = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::send_counts, T>(), bool> = true>
+    decltype(auto) extract_send_counts() {
+        return internal::select_parameter_type_tuple<internal::ParameterType::send_counts>(_data).extract();
+    }
+
+    /// @brief Extracts the \c send_count from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
+    /// @return Returns the underlying storage containing the send counts.
+    template <
+        typename T = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::send_count, T>(), bool> = true>
+    decltype(auto) extract_send_count() {
+        return internal::select_parameter_type_tuple<internal::ParameterType::send_count>(_data).extract();
+    }
+
+    /// @brief Extracts the \c send_displs from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
+    /// @return Returns the underlying storage containing the send displacements.
+    template <
+        typename T = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::send_displs, T>(), bool> = true>
+    decltype(auto) extract_send_displs() {
+        return internal::select_parameter_type_tuple<internal::ParameterType::send_displs>(_data).extract();
+    }
+
+    /// @brief Extracts the \c send_type from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
+    /// @return Returns the underlying storage containing the send_type.
+    template <
+        typename T = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::send_type, T>(), bool> = true>
+    decltype(auto) extract_send_type() {
+        return internal::select_parameter_type_tuple<internal::ParameterType::send_type>(_data).extract();
+    }
+
+    /// @brief Extracts the \c recv_type from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
+    /// @return Returns the underlying storage containing the send_type.
+    template <
+        typename T = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::recv_type, T>(), bool> = true>
+    decltype(auto) extract_recv_type() {
+        return internal::select_parameter_type_tuple<internal::ParameterType::recv_type>(_data).extract();
+    }
+
+    /// @brief Extracts the \c send_recv_type from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam T Template parameter helper only needed to remove this
+    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
+    /// extract().
+    /// @return Returns the underlying storage containing the send_type.
+    template <
+        typename T = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::send_recv_type, T>(), bool> = true>
+    decltype(auto) extract_send_recv_type() {
+        return internal::select_parameter_type_tuple<internal::ParameterType::send_recv_type>(_data).extract();
+    }
+
+    /// @brief Extracts the underlying data from the i-th buffer in the result object. This method is part of the
+    /// structured binding enabling machinery.
+    ///
+    /// @param i Index of the data buffer to extract.
+    /// @return Returns the underlying data of the i-th data buffer.
     template <std::size_t i>
     auto get() {
         return std::get<i>(_data).extract();
     }
 
-    std::tuple<Args...> _data;
+private:
+    std::tuple<Args...> _data; ///< tuple storing the data buffers
 };
 
 } // namespace kamping
 
 namespace std {
+
+/// @brief Specialization of the std::tuple_size for \ref kamping::MPIResult_. Part of the structured binding machinery.
+///
+/// @tparam Args Automatically deducted template parameters.
 template <typename... Args>
 struct tuple_size<kamping::MPIResult_<Args...>> {
-    static constexpr size_t value = sizeof...(Args);
+    static constexpr size_t value = sizeof...(Args); ///< Number of data buffers in the \ref kamping::MPIResult_.
 };
 
+/// @brief Specialization of the std::tuple_element for \ref kamping::MPIResult_. Part of the structured binding
+/// machinery.
+///
+/// @param index Index of the entry of \ref kamping::MPIResult_ for which the underlying data type shall be deduced.
+/// @tparam Args Automatically deducted template parameters.
 template <size_t index, typename... Args>
 struct tuple_element<index, kamping::MPIResult_<Args...>> {
-    using type = decltype(declval<kamping::MPIResult_<Args...>>().template get<index>());
+    using type = decltype(declval<kamping::MPIResult_<Args...>>().template get<index>()
+    ); ///< Type of the underlying data of the i-th data buffer in the result object.
 };
 } // namespace std
 
 namespace kamping {
 namespace internal {
-// based on https://stackoverflow.com/a/18366475
+
+/// @brief Base template used to concatenate a type to a given std::tuple.
+/// based on https://stackoverflow.com/a/18366475
 template <typename, typename>
-struct Concat {};
+struct PrependType {};
 
-template <typename First, typename... Remainder>
-struct Concat<First, std::tuple<Remainder...>> {
-    using type = std::tuple<First, Remainder...>;
+/// @brief Specialization of a class template used to preprend a type to a given std::tuple.
+///
+/// @tparam Head Type to prepend to the std::tuple.
+/// @tparam Tail Types contained in the std::tuple.
+template <typename Head, typename... Tail>
+struct PrependType<Head, std::tuple<Tail...>> {
+    using type = std::tuple<Head, Tail...>; ///< tuple with prepended Head type.
 };
 
-template <ParameterType ptype_>
-struct Item {
-    static constexpr ParameterType ptype = ptype_;
+/// @brief Wrapper class to store an enum entry (\ref kamping::internal::ParameterType) in a separate type (so that it
+/// can be used in a compile time list)
+///
+/// @tparam ptype ParameterType to store as a type
+template <ParameterType ptype>
+struct ParameterTypeEntry {
+    static constexpr ParameterType value = ptype; ///< ParameterType to be stored in this type.
 };
 
+/// @brief Base template used to filter a list of types and only keep the those whose types meet specified criteria.
+/// See the following specialisations for more information.
 template <typename...>
 struct Filter;
+
+/// @brief Specialisation of template class used to filter a list of types and only keep the those whose types meet
+/// the specified criteria.
 template <>
 struct Filter<> {
-    using type = std::tuple<>;
+    using type = std::tuple<>; ///< Tuple of types meeting the specified criteria.
 };
 
-template <typename First, typename... Remainder>
-struct Filter<First, Remainder...> {
-    using non_ref_first             = std::remove_reference_t<First>;
-    static constexpr bool predicate = non_ref_first::is_owning && non_ref_first::is_out_buffer
-                                      && non_ref_first::parameter_type != ParameterType::recv_buf;
-    static constexpr ParameterType ptype = non_ref_first::parameter_type;
-    using type                           = std::conditional_t<
+/// @brief Specialisation of template class used to filter a list of types and only keep the those whose types meet
+/// certain criteria. The template is recursively instantiated to check one type after the other and "insert" it into a
+/// std::tuple if it meets the criteria.
+/// based on https://stackoverflow.com/a/18366475
+///
+/// @tparam Head Type for which it is checked whether it meets the predicate.
+/// @tparam Tail Types that are checked later on during the recursive instantiation.
+template <typename Head, typename... Tail>
+struct Filter<Head, Tail...> {
+    using non_ref_first = std::remove_reference_t<Head>; ///< Remove potential reference from Head.
+    static constexpr bool predicate =
+        non_ref_first::is_owning && non_ref_first::is_out_buffer
+        && non_ref_first::parameter_type
+               != ParameterType::recv_buf; ///< Predicate which Head has to fulfill to be kept.
+    static constexpr ParameterType ptype =
+        non_ref_first::parameter_type; ///< ParameterType stored as a static variable in Head.
+    using type = std::conditional_t<
         predicate,
-        typename Concat<Item<ptype>, typename Filter<Remainder...>::type>::type,
-        typename Filter<Remainder...>::type>;
+        typename PrependType<ParameterTypeEntry<ptype>, typename Filter<Tail...>::type>::type,
+        typename Filter<Tail...>::type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those types among Head,
+                                         ///< Tail... which fulfill the predicate.
 };
 
-template <typename First>
-struct PrependRecvBufferAndFilter {
-    using type = typename Concat<Item<ParameterType::recv_buf>, First>::type;
+/// @brief Specialisation of template class for types stored in a std::tuple<...> that is used to filter these types and
+/// only keep those which meet certain criteria.
+///
+/// @tparam Types Types to check.
+template <typename... Types>
+struct Filter<std::tuple<Types...>> {
+    using type = typename Filter<Types...>::type; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those types among
+                                                  ///< Types... which match the criteria.
 };
 
-template <ParameterType ptype, typename ForwardTuple>
-auto& retrieve_element(ForwardTuple&& forward_tuple) {
-    return select_parameter_type_tuple<ptype>(forward_tuple);
+/// @brief Template class to prepend the ParameterTypeEntry<ParameterType::recv_buf> (abbrev. as RecvBufType in the
+/// following) type to a given std::tuple.
+/// @tparam Tuple A std::tuple.
+template <typename Tuple>
+struct PrependRecvBuffer {
+    using type = typename PrependType<ParameterTypeEntry<ParameterType::recv_buf>, Tuple>::
+        type; ///< Concatenated tuple, i.e. type = std::tuple<RecvBufType, (Type contained in Tuple)... >.
+};
+
+/// @brief Retrieve the buffer with requested ParameterType from the std::tuple containg all buffer.
+///
+/// @tparam ptype ParameterType of the buffer to retrieve.
+/// @tparam Buffers Types of the data buffers.
+/// @param buffers Data buffers out of which the one with requested parameter type is retrieved.
+/// @return Reference to the buffer which the requested ParameterType.
+template <ParameterType ptype, typename... Buffers>
+auto& retrieve_buffer(std::tuple<Buffers...>& buffers) {
+    return select_parameter_type_tuple<ptype>(buffers);
 }
 
-template <typename outparameters, typename forwardtuple, std::size_t... i>
-auto construct_tuple_impl(forwardtuple&& forward_tuple, std::index_sequence<i...>) {
-    return std::make_tuple(std::move(retrieve_element<std::tuple_element_t<i, outparameters>::ptype>(forward_tuple))...
-    );
+/// @brief Retrieve the Buffer with given ParameterType from the tuple Buffers.
+///
+/// @tparam ParameterTypeTuple Tuple containing specialized ParameterTypeEntry types specifing the entries to be
+/// retrieved from the BufferTuple buffers.
+/// @tparam Buffers Types of the data buffers.
+/// @param i Integer sequence.
+/// @param buffers Data buffers out of which the ones with parameter types contained in ParameterTypeTuple are
+/// retrieved.
+/// @param  index_sequence Index sequence of of size |Buffers|.
+/// @return std::tuple containing all requested data buffers.
+template <typename ParameterTypeTuple, typename... Buffers, std::size_t... i>
+auto construct_output_buffer_tuple_impl(std::tuple<Buffers...>& buffers, std::index_sequence<i...> /*index_sequence*/) {
+    return std::make_tuple(std::move(retrieve_buffer<std::tuple_element_t<i, ParameterTypeTuple>::value>(buffers))...);
 }
 
-template <typename outparameters, typename forwardtuple>
-auto construct_tuple(forwardtuple&& forward_tuple) {
-    constexpr std::size_t num_output_parameters = std::tuple_size_v<outparameters>;
-    return construct_tuple_impl<outparameters>(
-        std::forward<forwardtuple>(forward_tuple),
+/// @brief Retrieve the Buffer with given ParameterType from the tuple Buffers.
+///
+/// @tparam ParameterTypeTuple Tuple containing specialized ParameterTypeEntry types specifing the entries to be
+/// retrieved from the BufferTuple buffers.
+/// @tparam Buffers Types of the data buffers.
+/// @param buffers Data buffers out of which the ones with parameter types contained in ParameterTypeTuple are
+/// retrieved.
+/// @return std::tuple containing all requested data buffers.
+template <typename ParameterTypeTuple, typename... Buffers>
+auto construct_output_buffer_tuple(std::tuple<Buffers...>& buffers) {
+    // number of buffers that will be contained in the result object (including the receive buffer if it is an out
+    // parameter)
+    constexpr std::size_t num_output_parameters = std::tuple_size_v<ParameterTypeTuple>;
+
+    return construct_output_buffer_tuple_impl<ParameterTypeTuple>(
+        buffers,
         std::make_index_sequence<num_output_parameters>{}
     );
 }
 
-template <typename OutputParameters, typename... Args>
-auto make_result(Args&&... args) {
-    static_assert(internal::has_parameter_type<internal::ParameterType::recv_buf, Args...>());
-    auto&          recv_buffer        = internal::select_parameter_type<internal::ParameterType::recv_buf>(args...);
+/// @brief Construct result object for a wrapped MPI call. Three different cases are handled:
+/// a) The recv_buffer owns its underlying data (i.e. the data has to be returned via the result object):
+///
+/// a.1) the recv_buffer is the only buffer to be returned:
+/// In this case, the recv_buffers's underlying data is extracted and returned directly (per value).
+/// a.2) there are more data buffers to be returned, e.g. recv_counts, etc.:
+/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return (buffers for which a
+/// *_out() named parameter was passed to the wrapped MPI call) in a std::tuple. This enables unpacking the object via a
+/// structured binding. The recv_buffer is always the first entry in the std::tuple followed by the other buffers
+/// respecting the order in which these buffers where provided to the wrapped MPI call.
+///
+/// b) The recv_buffer only reference its underlying data:
+/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return (buffers for which a
+/// *_out() named parameter was passed to the wrapped MPI call) in a std::tuple respecting the order in which these
+/// buffers where provided to the wrapped MPI call.
+///
+/// @tparam InitialArgs Arguments passed to the wrapped MPI call.
+/// @tparam Buffers Types of data buffers created/filled within the wrapped MPI call.
+/// @param buffers data buffers created/filled within the wrapped MPI call.
+/// @return result object as specified above.
+template <typename InitialArgs, typename... Buffers>
+auto make_result(Buffers&&... buffers) {
+    // filter named parameters provided to the wrapped MPI function and keep only those which are explicitly marked by
+    // the user to be returned, i.e. via *_out();
+    using FilteredOutParameterTuple = typename internal::Filter<InitialArgs>::type;
+
+    // receive buffer needs a special treatment, as it is the first entry in a structured binding (if it owns its
+    // underlying data)
+    static_assert(internal::has_parameter_type<internal::ParameterType::recv_buf, Buffers...>());
+    auto&          recv_buffer        = internal::select_parameter_type<internal::ParameterType::recv_buf>(buffers...);
     constexpr bool recv_buf_is_owning = std::remove_reference_t<decltype(recv_buffer)>::is_owning;
-    // constexpr bool output_params_contain_recv_buf = has_parameter_type<ParameterType::recv_buf, OutputParameters>;
+
     if constexpr (recv_buf_is_owning) {
-        using type = typename PrependRecvBufferAndFilter<OutputParameters>::type;
-        // TD<OutputParameters> td1;
-        // TD<type> td2;
-        if constexpr (std::tuple_size_v<type> == 1) {
+        // recv buffer owns its underlying data, therefore it is part of the result object (and returned as first entry
+        // in a structured binding)
+        if constexpr (std::tuple_size_v<FilteredOutParameterTuple> == 0) {
+            // if only the receive buffer shall be returned, its underlying data is returned directly instead of a
+            // wrapping result object
             return recv_buffer.extract();
         } else {
-            return MPIResult_(construct_tuple<type>(std::forward_as_tuple(args...)));
+            using OutParameterTuple = typename PrependRecvBuffer<FilteredOutParameterTuple>::type;
+            auto buffer_tuple       = std::forward_as_tuple(buffers...);
+            return MPIResult_(construct_output_buffer_tuple<OutParameterTuple>(buffer_tuple));
         }
     } else {
-        using type = typename Filter<OutputParameters>::type;
-        return MPIResult_(construct_tuple<type>(std::forward_as_tuple(args...)));
+        // recv buffer does not own its underlying data, therefore it is not part of the result object
+        auto buffer_tuple = std::forward_as_tuple(buffers...);
+        return MPIResult_(construct_output_buffer_tuple<FilteredOutParameterTuple>(buffer_tuple));
     }
-
-    // if OutputParameters has only recv_buffer
-    //  return recv buffer directly;
-    // else if OutputParameters contains recv buffer and others
-    //  reorder parameters such that recv buffer comes first
-    // else
-    //  do not reorder arguments
 }
 
 } // namespace internal

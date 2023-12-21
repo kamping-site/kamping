@@ -311,8 +311,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     );
     THROW_IF_MPI_ERROR(err, MPI_Allgatherv);
 
-    using output_params = typename internal::Filter<Args...>::type;
-    return make_result<output_params>(
+    return make_result<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(send_count),
         std::move(recv_counts),
