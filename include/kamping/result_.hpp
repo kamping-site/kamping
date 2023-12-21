@@ -34,7 +34,6 @@ namespace kamping {
 template <typename... Args>
 class MPIResult_ {
 public:
-
     /// @brief Constructor for MPIResult.
     ///
     /// @param data std::tuple containing all return data buffers.
