@@ -32,23 +32,37 @@ int main() {
     std::vector<int>      input(comm.rank(), comm.rank_signed());
     std::vector<int>      output;
 
-    comm.allgatherv(send_buf(input), recv_buf(output));
-    print_result(output, comm);
+    //comm.allgatherv(send_buf(input), recv_buf(output));
 
-    // additionally, receive counts and/or receive displacements can be provided
-    std::vector<int> recv_counts(comm.size());
-    std::iota(recv_counts.begin(), recv_counts.end(), 0);
-    std::vector<int> recv_displs(comm.size());
-    std::exclusive_scan(recv_counts.begin(), recv_counts.end(), recv_displs.begin(), 0);
-    output.clear();
+    {
+    auto recv_buffer = comm.allgatherv(send_buf(input));
+    print_result(recv_buffer, comm);
+    }
 
-    comm.allgatherv(
-        send_buf(input),
-        recv_buf(output),
-        kamping::recv_counts(recv_counts),
-        kamping::recv_displs(recv_displs)
-    );
-    print_result(output, comm);
+    {
+    auto [recv_buffer, recv_counts] = comm.allgatherv(send_buf(input), recv_counts_out());
+    print_result(recv_buffer, comm);
+    }
+
+    {
+    auto result_obj = comm.allgatherv(send_buf(input), recv_counts_out());
+    print_result(result_obj.extract_recv_buffer(), comm);
+    }
+
+    //// additionally, receive counts and/or receive displacements can be provided
+    //std::vector<int> recv_counts(comm.size());
+    //std::iota(recv_counts.begin(), recv_counts.end(), 0);
+    //std::vector<int> recv_displs(comm.size());
+    //std::exclusive_scan(recv_counts.begin(), recv_counts.end(), recv_displs.begin(), 0);
+    //output.clear();
+
+    //comm.allgatherv(
+    //    send_buf(input),
+    //    recv_buf(output),
+    //    kamping::recv_counts(recv_counts),
+    //    kamping::recv_displs(recv_displs)
+    //);
+    //print_result(output, comm);
 
     return 0;
 }

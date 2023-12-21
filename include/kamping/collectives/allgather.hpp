@@ -30,6 +30,7 @@
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 /// @brief Wrapper for \c MPI_Allgather.
 ///
@@ -310,7 +311,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     );
     THROW_IF_MPI_ERROR(err, MPI_Allgatherv);
 
-    return make_mpi_result(
+    using output_params = typename internal::Filter<Args...>::type;
+    return make_result<output_params>(
         std::move(recv_buf),
         std::move(send_count),
         std::move(recv_counts),
@@ -318,4 +320,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         std::move(send_type),
         std::move(recv_type)
     );
+    // return make_mpi_result(
+    //     std::move(recv_buf),
+    //     std::move(send_count),
+    //     std::move(recv_counts),
+    //     std::move(recv_displs),
+    //     std::move(send_type),
+    //     std::move(recv_type)
+    //);
 }

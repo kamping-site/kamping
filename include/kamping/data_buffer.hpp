@@ -303,6 +303,10 @@ public:
     static constexpr bool is_out_buffer =
         (buffer_type_param == BufferType::out_buffer || buffer_type_param == BufferType::in_out_buffer);
 
+    /// @brief \c true if the buffer owns the underlying data and \c false
+    /// otherwise.
+    static constexpr bool is_owning = (ownership == BufferOwnership::owning);
+
     /// @brief Indicates whether the buffer is allocated by KaMPIng.
     static constexpr bool is_lib_allocated = allocation == BufferAllocation::lib_allocated;
 

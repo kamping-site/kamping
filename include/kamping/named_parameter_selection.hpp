@@ -26,6 +26,40 @@ namespace kamping::internal {
 /// @addtogroup kamping_utility
 /// @{
 
+template <ParameterType parameter_type, size_t I, typename Tuple>
+constexpr size_t find_pos_tuple_impl() {
+    if constexpr (std::tuple_size_v<Tuple> <= I) {
+        return std::numeric_limits<size_t>::max();
+    } else {
+        if constexpr (std::remove_reference_t<std::tuple_element_t<I, Tuple>>::parameter_type == parameter_type) {
+            return I;
+        }
+        return find_pos_tuple_impl<parameter_type, I + 1, Tuple>();
+    }
+}
+
+template <ParameterType parameter_type, typename Tuple>
+constexpr size_t find_pos_tuple() {
+    return find_pos_tuple_impl<parameter_type, 0, Tuple>();
+}
+
+template <ParameterType parameter_type, typename Tuple>
+constexpr bool has_parameter_tuple() {
+    return (find_pos_tuple<parameter_type, Tuple>() < std::tuple_size_v<Tuple>);
+}
+
+template <ParameterType parameter_type, typename Tuple>
+struct helper {
+  static constexpr bool value = has_parameter_tuple<parameter_type, Tuple>();
+};
+
+template <ParameterType parameter_type, typename Tuple>
+auto& select_parameter_type_tuple(Tuple& tuple) {
+    constexpr size_t selected_index = find_pos_tuple<parameter_type, Tuple>();
+    static_assert(has_parameter_tuple<parameter_type, Tuple>(), "Could not find the requested parameter type.");
+    return std::get<selected_index>(tuple);
+}
+
 /// @brief Base case if there are no parameters: always returns max index indicating that the parameter was not found.
 /// @tparam parameter_type The parameter type which to be searched for.
 /// @tparam Index Index of current argument to evaluate (ignored).
