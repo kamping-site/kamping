@@ -34,6 +34,10 @@ namespace kamping {
 template <typename... Args>
 class MPIResult_ {
 public:
+
+    /// @brief Constructor for MPIResult.
+    ///
+    /// @param data std::tuple containing all return data buffers.
     MPIResult_(std::tuple<Args...> data) : _data(std::move(data)) {}
 
     /// @brief Extracts the \c kamping::Status from the MPIResult object.
@@ -46,9 +50,9 @@ public:
     /// @return Returns the underlying status object.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::status, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::status, T>(), bool> = true>
     decltype(auto) extract_status() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::status>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::status>(_data).extract();
     }
 
     /// @brief Extracts the \c recv_buffer from the MPIResult object.
@@ -61,9 +65,9 @@ public:
     /// @return Returns the underlying storage containing the received elements.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::recv_buf, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::recv_buf, T>(), bool> = true>
     decltype(auto) extract_recv_buffer() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::recv_buf>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_buf>(_data).extract();
     }
 
     /// @brief Extracts the \c recv_counts from the MPIResult object.
@@ -75,9 +79,9 @@ public:
     /// @return Returns the underlying storage containing the receive counts.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::recv_counts, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::recv_counts, T>(), bool> = true>
     decltype(auto) extract_recv_counts() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::recv_counts>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_counts>(_data).extract();
     }
 
     /// @brief Extracts the \c recv_count from the MPIResult object.
@@ -89,9 +93,9 @@ public:
     /// @return Returns the underlying storage containing the recv count.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::recv_count, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::recv_count, T>(), bool> = true>
     decltype(auto) extract_recv_count() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::recv_count>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_count>(_data).extract();
     }
 
     /// @brief Extracts the \c recv_displs from the MPIResult object.
@@ -103,9 +107,9 @@ public:
     /// @return Returns the underlying storage containing the receive displacements.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::recv_displs, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::recv_displs, T>(), bool> = true>
     decltype(auto) extract_recv_displs() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::recv_displs>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_displs>(_data).extract();
     }
 
     /// @brief Extracts the \c send_counts from the MPIResult object.
@@ -117,9 +121,9 @@ public:
     /// @return Returns the underlying storage containing the send counts.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::send_counts, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_counts, T>(), bool> = true>
     decltype(auto) extract_send_counts() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::send_counts>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::send_counts>(_data).extract();
     }
 
     /// @brief Extracts the \c send_count from the MPIResult object.
@@ -131,9 +135,9 @@ public:
     /// @return Returns the underlying storage containing the send counts.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::send_count, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_count, T>(), bool> = true>
     decltype(auto) extract_send_count() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::send_count>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::send_count>(_data).extract();
     }
 
     /// @brief Extracts the \c send_displs from the MPIResult object.
@@ -145,9 +149,9 @@ public:
     /// @return Returns the underlying storage containing the send displacements.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::send_displs, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_displs, T>(), bool> = true>
     decltype(auto) extract_send_displs() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::send_displs>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::send_displs>(_data).extract();
     }
 
     /// @brief Extracts the \c send_type from the MPIResult object.
@@ -159,9 +163,9 @@ public:
     /// @return Returns the underlying storage containing the send_type.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::send_type, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_type, T>(), bool> = true>
     decltype(auto) extract_send_type() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::send_type>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::send_type>(_data).extract();
     }
 
     /// @brief Extracts the \c recv_type from the MPIResult object.
@@ -173,9 +177,9 @@ public:
     /// @return Returns the underlying storage containing the send_type.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::recv_type, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::recv_type, T>(), bool> = true>
     decltype(auto) extract_recv_type() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::recv_type>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_type>(_data).extract();
     }
 
     /// @brief Extracts the \c send_recv_type from the MPIResult object.
@@ -187,15 +191,16 @@ public:
     /// @return Returns the underlying storage containing the send_type.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_tuple<internal::ParameterType::send_recv_type, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_recv_type, T>(), bool> =
+            true>
     decltype(auto) extract_send_recv_type() {
-        return internal::select_parameter_type_tuple<internal::ParameterType::send_recv_type>(_data).extract();
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::send_recv_type>(_data).extract();
     }
 
     /// @brief Extracts the underlying data from the i-th buffer in the result object. This method is part of the
     /// structured binding enabling machinery.
     ///
-    /// @param i Index of the data buffer to extract.
+    /// @tparam i Index of the data buffer to extract.
     /// @return Returns the underlying data of the i-th data buffer.
     template <std::size_t i>
     auto get() {
@@ -318,7 +323,7 @@ struct PrependRecvBuffer {
 /// @return Reference to the buffer which the requested ParameterType.
 template <ParameterType ptype, typename... Buffers>
 auto& retrieve_buffer(std::tuple<Buffers...>& buffers) {
-    return select_parameter_type_tuple<ptype>(buffers);
+    return select_parameter_type_in_tuple<ptype>(buffers);
 }
 
 /// @brief Retrieve the Buffer with given ParameterType from the tuple Buffers.
@@ -326,10 +331,9 @@ auto& retrieve_buffer(std::tuple<Buffers...>& buffers) {
 /// @tparam ParameterTypeTuple Tuple containing specialized ParameterTypeEntry types specifing the entries to be
 /// retrieved from the BufferTuple buffers.
 /// @tparam Buffers Types of the data buffers.
-/// @param i Integer sequence.
+/// @tparam i Integer sequence.
 /// @param buffers Data buffers out of which the ones with parameter types contained in ParameterTypeTuple are
 /// retrieved.
-/// @param  index_sequence Index sequence of of size |Buffers|.
 /// @return std::tuple containing all requested data buffers.
 template <typename ParameterTypeTuple, typename... Buffers, std::size_t... i>
 auto construct_output_buffer_tuple_impl(std::tuple<Buffers...>& buffers, std::index_sequence<i...> /*index_sequence*/) {

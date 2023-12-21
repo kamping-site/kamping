@@ -26,40 +26,6 @@ namespace kamping::internal {
 /// @addtogroup kamping_utility
 /// @{
 
-template <ParameterType parameter_type, size_t I, typename Tuple>
-constexpr size_t find_pos_tuple_impl() {
-    if constexpr (std::tuple_size_v<Tuple> <= I) {
-        return std::numeric_limits<size_t>::max();
-    } else {
-        if constexpr (std::remove_reference_t<std::tuple_element_t<I, Tuple>>::parameter_type == parameter_type) {
-            return I;
-        }
-        return find_pos_tuple_impl<parameter_type, I + 1, Tuple>();
-    }
-}
-
-template <ParameterType parameter_type, typename Tuple>
-constexpr size_t find_pos_tuple() {
-    return find_pos_tuple_impl<parameter_type, 0, Tuple>();
-}
-
-template <ParameterType parameter_type, typename Tuple>
-constexpr bool has_parameter_tuple() {
-    return (find_pos_tuple<parameter_type, Tuple>() < std::tuple_size_v<Tuple>);
-}
-
-template <ParameterType parameter_type, typename Tuple>
-struct helper {
-  static constexpr bool value = has_parameter_tuple<parameter_type, Tuple>();
-};
-
-template <ParameterType parameter_type, typename Tuple>
-auto& select_parameter_type_tuple(Tuple& tuple) {
-    constexpr size_t selected_index = find_pos_tuple<parameter_type, Tuple>();
-    static_assert(has_parameter_tuple<parameter_type, Tuple>(), "Could not find the requested parameter type.");
-    return std::get<selected_index>(tuple);
-}
-
 /// @brief Base case if there are no parameters: always returns max index indicating that the parameter was not found.
 /// @tparam parameter_type The parameter type which to be searched for.
 /// @tparam Index Index of current argument to evaluate (ignored).
@@ -120,6 +86,19 @@ auto& select_parameter_type(Args&... args) {
     return std::get<selected_index>(std::forward_as_tuple(args...));
 }
 
+/// @brief Returns parameter with requested parameter type.
+///
+/// @tparam parameter_type The parameter type with which a parameter should be found.
+/// @tparam Args All parameter types to be searched for type `parameter_type`.
+/// @param tuple std::tuple with containing all parameters from which a parameter with the correct type is selected.
+/// @returns The first parameter whose type has the requested parameter type.
+template <ParameterType parameter_type, typename... Args>
+auto& select_parameter_type_in_tuple(std::tuple<Args...>& tuple) {
+    constexpr size_t selected_index = find_pos<parameter_type, 0, Args...>();
+    static_assert(selected_index < sizeof...(Args), "Could not find the requested parameter type.");
+    return std::get<selected_index>(tuple);
+}
+
 /// @brief Checks if parameter with requested parameter type exists.
 ///
 /// @tparam parameter_type The parameter type with which a parameter should be found.
@@ -139,6 +118,33 @@ bool has_parameter_type(Args const&... args) {
 template <ParameterType parameter_type, typename... Args>
 constexpr bool has_parameter_type() {
     return find_pos<parameter_type, 0, Args...>() < sizeof...(Args);
+}
+
+/// @brief Helper struct needed to retrieve the types stored in a std::tuple for the has_parameter_type check.
+///
+/// @tparam T any template arguments.
+template <typename... T>
+struct has_parameter_helper {};
+
+/// @brief Checks if parameter with requested parameter type exists. Wrapper using the functionality from \ref
+/// kamping::internal::has_parameter_type() disassembling a std::tuple passed as parameter.
+///
+/// @tparam parameter_type The parameter type with which a parameter should be found.
+/// @tparam Args All parameter types to be searched.
+/// @return \c true iff. `Args` contains a parameter of type `parameter_type`.
+template <ParameterType parameter_type, typename... Args>
+bool has_parameter_type_in_tuple_impl(has_parameter_helper<std::tuple<Args...>> /*args*/) {
+    return has_parameter_type<parameter_type, Args...>;
+}
+
+/// @brief Checks if parameter with requested parameter type exists.
+///
+/// @tparam parameter_type The parameter type with which a parameter should be found.
+/// @tparam Tuple Intended: std::tuple<Args...> containing all types to be searched.
+/// @return \c true iff. `Args` contains a parameter of type `parameter_type`.
+template <ParameterType parameter_type, typename Tuple>
+bool has_parameter_type_in_tuple() {
+    return has_parameter_type_in_tuple_impl<parameter_type>(has_parameter_helper<Tuple>{});
 }
 
 /// @brief Checks if parameter with requested parameter type exists, if not constructs a default value.
