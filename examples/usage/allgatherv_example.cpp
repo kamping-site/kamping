@@ -30,45 +30,54 @@ int main() {
     kamping::Environment  e;
     kamping::Communicator comm;
     std::vector<int>      input(comm.rank(), comm.rank_signed());
-    std::vector<int>      output;
 
-    // comm.allgatherv(send_buf(input), recv_buf(output));
-
-    //{
-    // auto recv_buffer = comm.allgatherv(send_buf(input));
-    // print_result(recv_buffer, comm);
-    //}
-
+    // case 1: If no additional output parameters are requested only recv_buffer will be returned
     {
-        auto [recv_counts, send_counts] =
-            comm.allgatherv(send_buf(input), recv_buf<resize_to_fit>(output), recv_counts_out(), send_count_out());
-        print_result(output, comm);
-        std::cout << "---" << std::endl;
-        print_result(send_counts, comm);
-        std::cout << "---" << std::endl;
-        print_result(recv_counts, comm);
-        std::cout << "---" << std::endl;
+        std::vector<int> recv_buffer = comm.allgatherv(send_buf(input));
+        print_result(recv_buffer, comm);
     }
 
-    //{
-    //  auto result_obj = comm.allgatherv(send_buf(input), recv_counts_out(), send_count_out());
-    //  print_result(result_obj.extract_recv_buffer(), comm);
-    //}
+    // If additional output parameters are requested allgatherv return a result object containing all buffers that are
+    // marked as output-buffers (via *_out suffix). Note that the recv_buffer is marked as output buffer implicitly. If
+    // the recv_buffer does not own its underlying storage it is not an output buffer and therefore not part of the
+    // result object.
 
-    //// additionally, receive counts and/or receive displacements can be provided
-    // std::vector<int> recv_counts(comm.size());
-    // std::iota(recv_counts.begin(), recv_counts.end(), 0);
-    // std::vector<int> recv_displs(comm.size());
-    // std::exclusive_scan(recv_counts.begin(), recv_counts.end(), recv_displs.begin(), 0);
-    // output.clear();
+    // case 2a.a: the result object can be decomposed with a structured binding (in the order defined in
+    // the call, the implicit recv_buffer always comes first).
+    {
+        auto [recv_buffer, recv_counts, recv_displs] =
+            comm.allgatherv(send_buf(input), recv_counts_out(), recv_displs_out());
+        print_result(recv_buffer, comm);
+    }
+    // case 2a.b: recv_buffer is still an output buffer (as it owns its underlying storage)
+    {
+        std::vector<int> preallocated_storage(10);
+        auto [recv_buffer, recv_counts, recv_displs] = comm.allgatherv(
+            send_buf(input),
+            recv_counts_out(),
+            recv_buf<resize_to_fit>(std::move(preallocated_storage)),
+            recv_displs_out()
+        );
+        print_result(recv_buffer, comm);
+    }
+    // case 2a.c: recv_buffer is not an output buffer
+    {
+        std::vector<int> recv_buffer;
+        auto [recv_counts, recv_displs] = comm.allgatherv(
+            send_buf(input),
+            recv_counts_out(),
+            recv_buf<resize_to_fit>(recv_buffer),
+            recv_displs_out()
+        );
+        print_result(recv_buffer, comm);
+    }
 
-    // comm.allgatherv(
-    //     send_buf(input),
-    //     recv_buf(output),
-    //     kamping::recv_counts(recv_counts),
-    //     kamping::recv_displs(recv_displs)
-    //);
-    // print_result(output, comm);
+    // case 2b: the buffers within the result object can be retrieved as before
+    {
+        auto result_obj = comm.allgatherv(send_buf(input), recv_counts_out());
+        print_result(result_obj.extract_recv_buffer(), comm);
+        print_result(result_obj.extract_recv_counts(), comm);
+    }
 
     return 0;
 }
