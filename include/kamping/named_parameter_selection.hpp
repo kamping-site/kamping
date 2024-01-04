@@ -133,8 +133,8 @@ struct has_parameter_helper {};
 /// @tparam Args All parameter types to be searched.
 /// @return \c true iff. `Args` contains a parameter of type `parameter_type`.
 template <ParameterType parameter_type, typename... Args>
-bool has_parameter_type_in_tuple_impl(has_parameter_helper<std::tuple<Args...>> /*args*/) {
-    return has_parameter_type<parameter_type, Args...>;
+constexpr bool has_parameter_type_in_tuple_impl(has_parameter_helper<std::tuple<Args...>> /*args*/) {
+    return has_parameter_type<parameter_type, Args...>();
 }
 
 /// @brief Checks if parameter with requested parameter type exists.
@@ -143,7 +143,7 @@ bool has_parameter_type_in_tuple_impl(has_parameter_helper<std::tuple<Args...>> 
 /// @tparam Tuple Intended: std::tuple<Args...> containing all types to be searched.
 /// @return \c true iff. `Args` contains a parameter of type `parameter_type`.
 template <ParameterType parameter_type, typename Tuple>
-bool has_parameter_type_in_tuple() {
+constexpr bool has_parameter_type_in_tuple() {
     return has_parameter_type_in_tuple_impl<parameter_type>(has_parameter_helper<Tuple>{});
 }
 

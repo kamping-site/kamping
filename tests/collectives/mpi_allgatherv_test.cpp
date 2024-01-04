@@ -33,7 +33,7 @@ using namespace ::testing;
 TEST(AllgathervTest, allgatherv_single_element_no_receive_buffer) {
     Communicator comm;
     auto         value  = comm.rank();
-    auto         output = comm.allgatherv(send_buf(value)).extract_recv_buffer();
+    auto         output = comm.allgatherv(send_buf(value));
 
     std::vector<decltype(value)> expected_output(comm.size());
     std::iota(expected_output.begin(), expected_output.end(), 0u);
@@ -46,7 +46,7 @@ TEST(AllgathervTest, allgatherv_single_element_explicit_send_count) {
     int const           send_count_value = 1;
     // although send_buffer contains 5 elements only one element is gathered (as set via the explicit send_count
     // parameter)
-    auto output = comm.allgatherv(send_buf(data), send_count(send_count_value)).extract_recv_buffer();
+    auto output = comm.allgatherv(send_buf(data), send_count(send_count_value));
 
     std::vector<size_t> expected_output(comm.size());
     std::iota(expected_output.begin(), expected_output.end(), 0u);
@@ -58,7 +58,7 @@ TEST(AllgathervTest, allgatherv_and_allgather_have_same_result_for_single_elemen
     auto         value = comm.rank();
 
     auto output   = comm.allgather(send_buf(value)).extract_recv_buffer();
-    auto output_v = comm.allgatherv(send_buf(value)).extract_recv_buffer();
+    auto output_v = comm.allgatherv(send_buf(value));
     EXPECT_EQ(output_v, output);
 }
 
@@ -111,7 +111,7 @@ TEST(AllgathervTest, allgatherv_check_recv_counts_and_recv_displs) {
     Communicator     comm;
     std::vector<int> input(comm.rank(), static_cast<int>(comm.rank()));
 
-    auto result = comm.allgatherv(send_buf(input));
+    auto result = comm.allgatherv(send_buf(input), recv_counts_out(), recv_displs_out());
     EXPECT_EQ(
         result.extract_recv_buffer(),
         ExpectedBuffersForRankTimesRankGathering::recv_buffer_on_receiving_ranks<int>(comm)
@@ -165,7 +165,7 @@ TEST(AllgathervTest, allgatherv_all_empty_but_rank_in_the_middle) {
     expected_recv_counts[non_empty_rank] = static_cast<int>(non_empty_rank);
     std::exclusive_scan(expected_recv_counts.begin(), expected_recv_counts.end(), expected_recv_displs.begin(), 0);
 
-    auto result = comm.allgatherv(send_buf(input));
+    auto result = comm.allgatherv(send_buf(input), recv_counts_out(), recv_displs_out());
     EXPECT_EQ(result.extract_recv_buffer(), expected_output);
     EXPECT_EQ(result.extract_recv_counts(), expected_recv_counts);
     EXPECT_EQ(result.extract_recv_displs(), expected_recv_displs);
@@ -429,14 +429,13 @@ TEST(AllgathervTest, non_monotonically_increasing_recv_displacements) {
 
     {
         // do the allgatherv without recv_counts
-        auto recv_buf = comm.allgatherv(send_buf(input), kamping::recv_displs(recv_displs)).extract_recv_buffer();
+        auto recv_buf = comm.allgatherv(send_buf(input), kamping::recv_displs(recv_displs));
         EXPECT_EQ(recv_buf, expected_recv_buffer());
     }
     {
         // do the allgatherv with recv_counts
         auto recv_buf =
-            comm.allgatherv(send_buf(input), kamping::recv_counts(recv_counts), kamping::recv_displs(recv_displs))
-                .extract_recv_buffer();
+            comm.allgatherv(send_buf(input), kamping::recv_counts(recv_counts), kamping::recv_displs(recv_displs));
         EXPECT_EQ(recv_buf, expected_recv_buffer());
     }
 }
@@ -446,11 +445,9 @@ TEST(AllgathervTest, send_recv_type_is_out_parameter) {
     const std::vector<int> data(1, comm.rank_signed());
     MPI_Datatype           send_type;
     MPI_Datatype           recv_type;
-    auto                   result = comm.allgatherv(send_buf(data), send_type_out(send_type), recv_type_out(recv_type));
-
+    auto recv_buf = comm.allgatherv(send_buf(data), send_type_out(send_type), recv_type_out(recv_type));
     EXPECT_EQ(send_type, MPI_INT);
     EXPECT_EQ(recv_type, MPI_INT);
-    auto recv_buf = result.extract_recv_buffer();
     for (size_t i = 0; i < comm.size(); ++i) {
         EXPECT_EQ(recv_buf[i], i);
     }
@@ -459,11 +456,10 @@ TEST(AllgathervTest, send_recv_type_is_out_parameter) {
 TEST(AllgathervTest, send_recv_type_part_of_result_object) {
     Communicator           comm;
     const std::vector<int> data(1, comm.rank_signed());
-    auto                   result = comm.allgatherv(send_buf(data), send_type_out(), recv_type_out());
+    auto [recv_buf, send_type, recv_type] = comm.allgatherv(send_buf(data), send_type_out(), recv_type_out());
 
-    EXPECT_EQ(result.extract_send_type(), MPI_INT);
-    EXPECT_EQ(result.extract_recv_type(), MPI_INT);
-    auto recv_buf = result.extract_recv_buffer();
+    EXPECT_EQ(send_type, MPI_INT);
+    EXPECT_EQ(recv_type, MPI_INT);
     for (size_t i = 0; i < comm.size(); ++i) {
         EXPECT_EQ(recv_buf[i], i);
     }
