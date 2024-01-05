@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2023 The KaMPIng Authors
+// Copyright 2021-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -38,12 +38,12 @@ inline constexpr bool has_extract_v = has_member_extract_v<T>;
 struct ResultCategoryNotUsed {};
 } // namespace internal
 
-/// @brief Helper for implementing the extract_* functions. Is \c true if the passed buffer type owns its
-/// underlying storage and is an output buffer.
+/// @brief Helper for implementing the extract_* functions in \ref MPIResult. Is \c true if the passed buffer type owns
+/// its underlying storage and is an output buffer.
 template <typename Buffer>
 inline constexpr bool is_extractable = Buffer::is_owning& Buffer::is_out_buffer;
 
-/// @brief Specialization of helper for implementing the extract_* functions. Is always \c false;
+/// @brief Specialization of helper for implementing the extract_* functions in \ref MPIResult. Is always \c false;
 template <>
 inline constexpr bool is_extractable<internal::ResultCategoryNotUsed> = false;
 
@@ -138,7 +138,7 @@ public:
     ///
     /// This function is only available if the underlying status is owned by the
     /// MPIResult object.
-    /// @tparam StatusType_ Template parameter helper only needed to remove this
+    /// @tparam StatusObject_ Template parameter helper only needed to remove this
     /// function if StatusType does not possess a member function \c extract().
     /// @return Returns the underlying status object.
     template <
@@ -153,7 +153,7 @@ public:
     /// This function is only available if the underlying memory is owned by the
     /// MPIResult object.
     /// @tparam RecvBuf_ Template parameter helper only needed to remove this
-    /// function if RecvBuf does not possess a member function \c extract().
+    /// function if RecvBuf should not be extracted (it does not own its underlying memory or is not an out-buffer).
     /// @return Returns the underlying storage containing the received elements.
     template <typename RecvBuf_ = RecvBuf, std::enable_if_t<is_extractable<RecvBuf_>, bool> = true>
     decltype(auto) extract_recv_buffer() {
