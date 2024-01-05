@@ -38,6 +38,15 @@ inline constexpr bool has_extract_v = has_member_extract_v<T>;
 struct ResultCategoryNotUsed {};
 } // namespace internal
 
+/// @brief Helper for implementing the extract_* functions. Is \c true if the passed buffer type owns its
+/// underlying storage and is an output buffer.
+template <typename Buffer>
+inline constexpr bool is_extractable = Buffer::is_owning& Buffer::is_out_buffer;
+
+/// @brief Specialization of helper for implementing the extract_* functions. Is always \c false;
+template <>
+inline constexpr bool is_extractable<internal::ResultCategoryNotUsed> = false;
+
 /// @brief MPIResult contains the result of a \c MPI call wrapped by KaMPIng.
 ///
 /// A wrapped \c MPI call can have multiple different results such as the \c
@@ -146,7 +155,7 @@ public:
     /// @tparam RecvBuf_ Template parameter helper only needed to remove this
     /// function if RecvBuf does not possess a member function \c extract().
     /// @return Returns the underlying storage containing the received elements.
-    template <typename RecvBuf_ = RecvBuf, std::enable_if_t<kamping::internal::has_extract_v<RecvBuf_>, bool> = true>
+    template <typename RecvBuf_ = RecvBuf, std::enable_if_t<is_extractable<RecvBuf_>, bool> = true>
     decltype(auto) extract_recv_buffer() {
         return _recv_buffer.extract();
     }
@@ -157,9 +166,7 @@ public:
     /// @tparam RecvCounts_ Template parameter helper only needed to remove this function if RecvCounts does not possess
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the receive counts.
-    template <
-        typename RecvCounts_                                                  = RecvCounts,
-        std::enable_if_t<kamping::internal::has_extract_v<RecvCounts_>, bool> = true>
+    template <typename RecvCounts_ = RecvCounts, std::enable_if_t<is_extractable<RecvCounts_>, bool> = true>
     decltype(auto) extract_recv_counts() {
         return _recv_counts.extract();
     }
@@ -170,9 +177,7 @@ public:
     /// @tparam RecvCount_ Template parameter helper only needed to remove this function if RecvCount does not
     /// possess a member function \c extract().
     /// @return Returns the underlying storage containing the recv count.
-    template <
-        typename RecvCount_                                                  = RecvCount,
-        std::enable_if_t<kamping::internal::has_extract_v<RecvCount_>, bool> = true>
+    template <typename RecvCount_ = RecvCount, std::enable_if_t<is_extractable<RecvCount_>, bool> = true>
     decltype(auto) extract_recv_count() {
         return _recv_count.extract();
     }
@@ -183,9 +188,7 @@ public:
     /// @tparam RecvDispls_ Template parameter helper only needed to remove this function if RecvDispls does not possess
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the receive displacements.
-    template <
-        typename RecvDispls_                                                  = RecvDispls,
-        std::enable_if_t<kamping::internal::has_extract_v<RecvDispls_>, bool> = true>
+    template <typename RecvDispls_ = RecvDispls, std::enable_if_t<is_extractable<RecvDispls_>, bool> = true>
     decltype(auto) extract_recv_displs() {
         return _recv_displs.extract();
     }
@@ -196,9 +199,7 @@ public:
     /// @tparam SendCounts_ Template parameter helper only needed to remove this function if SendCounts does not possess
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the send counts.
-    template <
-        typename SendCounts_                                                  = SendCounts,
-        std::enable_if_t<kamping::internal::has_extract_v<SendCounts_>, bool> = true>
+    template <typename SendCounts_ = SendCounts, std::enable_if_t<is_extractable<SendCounts_>, bool> = true>
     decltype(auto) extract_send_counts() {
         return _send_counts.extract();
     }
@@ -209,9 +210,7 @@ public:
     /// @tparam SendCount_ Template parameter helper only needed to remove this function if SendCount does not
     /// possess a member function \c extract().
     /// @return Returns the underlying storage containing the send count.
-    template <
-        typename SendCount_                                                  = SendCount,
-        std::enable_if_t<kamping::internal::has_extract_v<SendCount_>, bool> = true>
+    template <typename SendCount_ = SendCount, std::enable_if_t<is_extractable<SendCount_>, bool> = true>
     decltype(auto) extract_send_count() {
         return _send_count.extract();
     }
@@ -222,9 +221,7 @@ public:
     /// @tparam SendDispls_ Template parameter helper only needed to remove this function if SendDispls does not possess
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the send displacements.
-    template <
-        typename SendDispls_                                                  = SendDispls,
-        std::enable_if_t<kamping::internal::has_extract_v<SendDispls_>, bool> = true>
+    template <typename SendDispls_ = SendDispls, std::enable_if_t<is_extractable<SendDispls_>, bool> = true>
     decltype(auto) extract_send_displs() {
         return _send_displs.extract();
     }
@@ -235,9 +232,7 @@ public:
     /// @tparam SendRecvCount_ Template parameter helper only needed to remove this function if SendRecvCount does not
     /// possess a member function \c extract().
     /// @return Returns the underlying storage containing the send_recv_count.
-    template <
-        typename SendRecvCount_                                                  = SendRecvCount,
-        std::enable_if_t<kamping::internal::has_extract_v<SendRecvCount_>, bool> = true>
+    template <typename SendRecvCount_ = SendRecvCount, std::enable_if_t<is_extractable<SendRecvCount_>, bool> = true>
     decltype(auto) extract_send_recv_count() {
         return _send_recv_count.extract();
     }
@@ -248,7 +243,7 @@ public:
     /// @tparam SendType_ Template parameter helper only needed to remove this function if SendType does not
     /// possess a member function \c extract().
     /// @return Returns the underlying storage containing the send_type.
-    template <typename SendType_ = SendType, std::enable_if_t<kamping::internal::has_extract_v<SendType_>, bool> = true>
+    template <typename SendType_ = SendType, std::enable_if_t<is_extractable<SendType_>, bool> = true>
     decltype(auto) extract_send_type() {
         return _send_type.extract();
     }
@@ -259,7 +254,7 @@ public:
     /// @tparam RecvType_ Template parameter helper only needed to remove this function if RecvType does not
     /// possess a member function \c extract().
     /// @return Returns the underlying storage containing the send_type.
-    template <typename RecvType_ = RecvType, std::enable_if_t<kamping::internal::has_extract_v<RecvType_>, bool> = true>
+    template <typename RecvType_ = RecvType, std::enable_if_t<is_extractable<RecvType_>, bool> = true>
     decltype(auto) extract_recv_type() {
         return _recv_type.extract();
     }
@@ -269,9 +264,7 @@ public:
     /// @tparam SendRecvType_ Template parameter helper only needed to remove this function if RecvType does not
     /// possess a member function \c extract().
     /// @return Returns the underlying storage containing the send_type.
-    template <
-        typename SendRecvType_                                                  = SendRecvType,
-        std::enable_if_t<kamping::internal::has_extract_v<SendRecvType_>, bool> = true>
+    template <typename SendRecvType_ = SendRecvType, std::enable_if_t<is_extractable<SendRecvType_>, bool> = true>
     decltype(auto) extract_send_recv_type() {
         return _send_recv_type.extract();
     }

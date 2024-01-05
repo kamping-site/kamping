@@ -306,6 +306,9 @@ public:
     /// @brief Indicates whether the buffer is allocated by KaMPIng.
     static constexpr bool is_lib_allocated = allocation == BufferAllocation::lib_allocated;
 
+    static constexpr bool is_owning =
+        ownership == BufferOwnership::owning; ///< Indicates whether the buffer owns its underlying storage.
+
     static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
     static constexpr bool is_single_element =
@@ -502,7 +505,7 @@ public:
     /// state.
     ///
     /// @return Moves the underlying container out of the DataBuffer.
-    template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>
+    template <bool enabled = is_owning, std::enable_if_t<enabled, bool> = true>
     MemberTypeWithConst extract() {
         static_assert(
             ownership == BufferOwnership::owning,
