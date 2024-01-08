@@ -591,7 +591,7 @@ TEST(DataBufferTest, has_extract) {
         "Library allocated DataBuffers must have an extract() member function"
     );
     static_assert(
-        !has_extract_v<DataBuffer<
+        has_extract_v<DataBuffer<
             int,
             ParameterType::send_buf,
             BufferModifiability::modifiable,
@@ -599,7 +599,18 @@ TEST(DataBufferTest, has_extract) {
             BufferType::in_buffer,
             BufferResizePolicy::no_resize,
             BufferAllocation::user_allocated>>,
-        "User allocated DataBuffers must not have an extract() member function"
+        "User allocated owning DataBuffers must have an extract() member function"
+    );
+    static_assert(
+        !has_extract_v<DataBuffer<
+            int,
+            ParameterType::send_buf,
+            BufferModifiability::modifiable,
+            BufferOwnership::referencing,
+            BufferType::in_buffer,
+            BufferResizePolicy::no_resize,
+            BufferAllocation::user_allocated>>,
+        "User allocated referencing DataBuffers must not have an extract() member function"
     );
 }
 
@@ -711,14 +722,14 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mpi_result) {
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf, BufferType::in_buffer>    recv_buffer;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::in_buffer> recv_counts;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, BufferType::in_buffer> recv_displs;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, BufferType::in_buffer> send_counts;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, BufferType::in_buffer> send_displs;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf, BufferType::out_buffer>    recv_buffer;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::out_buffer> recv_counts;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, BufferType::out_buffer> recv_displs;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, BufferType::out_buffer> send_counts;
+    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, BufferType::out_buffer> send_displs;
     // we use out_buffer here because extracting is only done from out buffers
-    LibAllocatedContainerBasedBuffer<int, ParameterType::recv_count, BufferType::in_buffer>          recv_count;
-    LibAllocatedContainerBasedBuffer<int, ParameterType::send_count, BufferType::in_buffer>          send_count;
+    LibAllocatedContainerBasedBuffer<int, ParameterType::recv_count, BufferType::out_buffer>         recv_count;
+    LibAllocatedContainerBasedBuffer<int, ParameterType::send_count, BufferType::out_buffer>         send_count;
     LibAllocatedContainerBasedBuffer<int, ParameterType::send_recv_count, BufferType::out_buffer>    send_recv_count;
     LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_type, BufferType::out_buffer> send_type;
     LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::recv_type, BufferType::out_buffer> recv_type;

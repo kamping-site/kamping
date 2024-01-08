@@ -101,7 +101,7 @@ void test_recv_count_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
 
-    LibAllocatedSingleElementBuffer<int, ParameterType::recv_count, BufferType::in_buffer> recv_count_wrapper{};
+    LibAllocatedSingleElementBuffer<int, ParameterType::recv_count, BufferType::out_buffer> recv_count_wrapper{};
     recv_count_wrapper.underlying() = 42;
     MPIResult mpi_result{
         ResultCategoryNotUsed{},
@@ -415,7 +415,7 @@ KAMPING_MAKE_HAS_MEMBER(extract_send_recv_type)
 TEST(MpiResultTest, removed_extract_functions) {
     using namespace ::kamping;
     using namespace ::kamping::internal;
-    constexpr BufferType btype = BufferType::in_buffer;
+    constexpr BufferType btype = BufferType::out_buffer;
     {
         // All of these should be extractable (used to make sure that the above macros work correctly)
         StatusParam<StatusParamType::owning>                                                  status_sanity_check;
@@ -642,7 +642,7 @@ TEST(MpiResultTest, removed_extract_functions) {
 
 TEST(MakeMpiResultTest, pass_random_order_buffer) {
     {
-        constexpr BufferType btype = BufferType::in_buffer;
+        constexpr BufferType btype = BufferType::out_buffer;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts;
         LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs;
@@ -663,7 +663,7 @@ TEST(MakeMpiResultTest, pass_random_order_buffer) {
         ASSERT_EQ(result_status.tag(), 42);
     }
     {
-        constexpr BufferType btype = BufferType::in_buffer;
+        constexpr BufferType btype = BufferType::out_buffer;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts;
         LibAllocatedContainerBasedBuffer<std::vector<double>, ParameterType::recv_buf, btype> recv_buf;
 
@@ -686,7 +686,7 @@ TEST(MakeMpiResultTest, pass_send_recv_buf) {
 }
 
 TEST(MakeMpiResultTest, check_content) {
-    constexpr BufferType btype = BufferType::in_buffer;
+    constexpr BufferType btype = BufferType::out_buffer;
 
     std::vector<int> recv_buf_data(20);
     std::iota(recv_buf_data.begin(), recv_buf_data.end(), 0);

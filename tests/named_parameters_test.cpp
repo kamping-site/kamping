@@ -1495,7 +1495,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
             "Owning buffers must hold their data directly."
         );
         // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
 
     {
@@ -1552,7 +1552,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
             "Owning buffers must hold their data directly."
         );
         // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
     {
         // Constant, container, owning, user_allocated with initializer_list
@@ -1570,7 +1570,7 @@ TEST(ParameterFactoriesTest, make_data_buffer) {
             "Owning buffers must hold their data directly."
         );
         // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
 }
 
@@ -1656,7 +1656,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
             "Owning buffers must hold their data directly."
         );
         // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
 
     {
@@ -1714,7 +1714,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
             "Initializer lists of type bool have to be converted to std::vector<kabool>."
         );
         // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
     {
         // Constant, container, owning, user_allocated with initializer_list
@@ -1733,7 +1733,7 @@ TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
             "Initializer lists of type bool have to be converted to std::vector<kabool>."
         );
         // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
+        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
 }
 
