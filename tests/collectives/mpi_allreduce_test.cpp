@@ -81,6 +81,7 @@ TEST(AllreduceTest, allreduce_with_receive_buffer_grow_only_and_explicit_send_re
     EXPECT_THAT(result, ElementsAre(comm.size(), 42));
 }
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
 TEST(AllreduceTest, allreduce_with_receive_buffer_no_resize_too_small) {
     Communicator comm;
 
@@ -99,6 +100,7 @@ TEST(AllreduceTest, allreduce_with_receive_buffer_no_resize_too_small) {
         ""
     );
 }
+#endif
 
 TEST(AllreduceTest, allreduce_builtin_op_on_non_builtin_type) {
     Communicator comm;

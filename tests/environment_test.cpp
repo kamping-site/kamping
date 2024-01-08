@@ -65,7 +65,7 @@ struct EnvironmentTest : ::testing::Test {
 };
 
 TEST_F(EnvironmentTest, wtime) {
-    const std::chrono::milliseconds::rep milliseconds_to_sleep = 10;
+    std::chrono::milliseconds::rep const milliseconds_to_sleep = 10;
     double const                         seconds_to_sleep      = static_cast<double>(milliseconds_to_sleep) / 1000.0;
     // Get the first time from an object
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
@@ -96,12 +96,14 @@ TEST_F(EnvironmentTest, init) {
     env.init();
 }
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(EnvironmentTest, init_unchecked) {
     // MPI_Init was already called by our custom test main().
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
     EXPECT_TRUE(env.initialized());
     EXPECT_KASSERT_FAILS(env.init_unchecked(), "Trying to call MPI_Init twice");
 }
+#endif
 
 TEST_F(EnvironmentTest, tag_upper_bound) {
     EXPECT_EQ(mpi_env.tag_upper_bound(), mpi_tag_ub);
@@ -219,7 +221,9 @@ TEST_F(EnvironmentTest, buffer_attach_and_detach_with_other_type_not_matching) {
     EXPECT_EQ(attached_buffer_ptr, buffer.data());
     EXPECT_EQ(attached_buffer_size, 13 * sizeof(attach_type));
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(env.buffer_detach<detach_type>(), "The buffer size is not a multiple of the size of T.");
+#endif
 }
 
 TEST_F(EnvironmentTest, buffer_attach_multiple_fails) {
@@ -232,16 +236,20 @@ TEST_F(EnvironmentTest, buffer_attach_multiple_fails) {
     EXPECT_EQ(attached_buffer_ptr, buffer1.data());
     EXPECT_EQ(attached_buffer_size, 42 * sizeof(int));
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(
         env.buffer_attach(kamping::Span<int>{buffer2.begin(), buffer2.end()}),
         "You may only attach one buffer at a time."
     );
+#endif
 }
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(EnvironmentTest, buffer_detach_none_fails) {
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
     EXPECT_KASSERT_FAILS(env.buffer_detach<int>(), "There is currently no buffer attached.");
 }
+#endif
 
 TEST_F(EnvironmentTest, buffer_detach_multiple_fails) {
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
@@ -257,5 +265,7 @@ TEST_F(EnvironmentTest, buffer_detach_multiple_fails) {
     EXPECT_EQ(detached_buffer.data(), buffer.data());
     EXPECT_EQ(detached_buffer.size(), buffer.size());
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(env.buffer_detach<int>(), "There is currently no buffer attached.");
+#endif
 }

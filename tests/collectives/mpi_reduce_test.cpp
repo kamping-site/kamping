@@ -458,6 +458,7 @@ TEST(ReduceTest, reduce_builtin_native_operation) {
     }
 }
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(ReduceTest, reduce_builtin_native_operation_with_incompatible_type) {
     struct MyInt {
         MyInt() noexcept : _value(0) {}
@@ -479,6 +480,7 @@ TEST(ReduceTest, reduce_builtin_native_operation_with_incompatible_type) {
         "The provided builtin operation is not compatible with datatype T."
     )
 }
+#endif
 
 void select_left_op_func(void* invec, void* inoutvec, int* len, MPI_Datatype* datatype) {
     EXPECT_EQ(*datatype, MPI_INT);

@@ -59,18 +59,13 @@
     } while (false)
 
 // Makros to test for failed KASSERTs
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-    // EXPECT that any KASSERT assertion failed. The failure message is ignored since EXPECT_THROW does not support one.
-    #define EXPECT_KASSERT_FAILS(code, failure_message) \
-        EXPECT_THROW({ code; }, ::kamping::testing::KassertTestingException);
+// EXPECT that any KASSERT assertion failed. The failure message is ignored since EXPECT_THROW does not support one.
+#define EXPECT_KASSERT_FAILS(code, failure_message) \
+    EXPECT_THROW({ code; }, ::kamping::testing::KassertTestingException);
 
-    // ASSERT that any KASSERT assertion failed. The failure message is ignored since ASSERT_THROW does not support one.
-    #define ASSERT_KASSERT_FAILS(code, failure_message) \
-        ASSERT_THROW({ code; }, ::kamping::testing::KassertTestingException);
-#else // Otherwise, we do not test for failed assertions
-    #define EXPECT_KASSERT_FAILS(code, failure_message)
-    #define ASSERT_KASSERT_FAILS(code, failure_message)
-#endif
+// ASSERT that any KASSERT assertion failed. The failure message is ignored since ASSERT_THROW does not support one.
+#define ASSERT_KASSERT_FAILS(code, failure_message) \
+    ASSERT_THROW({ code; }, ::kamping::testing::KassertTestingException);
 
 // Dummy exception class used for remapping assertions to throwing exceptions.
 namespace kamping::testing {
