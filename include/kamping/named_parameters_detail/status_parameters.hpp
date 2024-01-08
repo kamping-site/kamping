@@ -22,7 +22,9 @@ namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
 
-/// @brief Outputs the return status of the operation to the native \c MPI_Status passed by reference.
+/// @brief Outputs the return status of the operation to the provided status object. The status object may be passed as
+/// lvalue-reference or rvalue.
+/// @tparam StatusObject type of the status object, may either be \c MPI_Status or \ref kamping::Status
 /// @param mpi_status The status.
 template <typename StatusObject>
 inline auto status_out(StatusObject&& status) {
@@ -34,13 +36,6 @@ inline auto status_out(StatusObject&& status) {
         internal::BufferType::out_buffer,
         no_resize>(std::forward<StatusObject>(status));
 }
-
-// /// @brief Outputs the return status of the operation to the provided \ref kamping::Status passed by reference.
-// /// @brief Use the  provided \ref kamping::Status as status parameter.
-// /// @param mpi_status The status.
-// inline auto status_out(Status& mpi_status) {
-//     return internal::StatusParam<internal::StatusParamType::ref>(mpi_status);
-// }
 
 /// @brief Constructs a status object internally, which may then be retrieved from \c kamping::MPIResult returned by the
 /// operation.

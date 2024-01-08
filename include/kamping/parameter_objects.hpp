@@ -187,6 +187,10 @@ struct SendModeParameter : private ParameterObjectBase {
     using send_mode                               = SendModeTag;              ///< The send mode.
 };
 
+// @brief returns a pointer to the \c MPI_Status encapsulated by the provided status parameter object.
+// @tparam StatusParam The type of the status parameter object.
+// @param param The status parameter object.
+// @returns A pointer to the encapsulated \c MPI_Status or \c MPI_STATUS_IGNORE.
 template <typename StatusParam>
 static inline MPI_Status* status_param_to_native_ptr(StatusParam& param) {
     static_assert(StatusParam::parameter_type == ParameterType::status);
