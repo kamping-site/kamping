@@ -36,7 +36,6 @@ inline constexpr bool has_extract_v = has_member_extract_v<T>;
 
 /// @brief Use this type if one of the template parameters of MPIResult is not used for a specific wrapped \c MPI call.
 struct ResultCategoryNotUsed {};
-} // namespace internal
 
 /// @brief Helper for implementing the extract_* functions in \ref MPIResult. Is \c true if the passed buffer type owns
 /// its underlying storage and is an output buffer.
@@ -46,6 +45,7 @@ inline constexpr bool is_extractable = Buffer::is_owning&& Buffer::is_out_buffer
 /// @brief Specialization of helper for implementing the extract_* functions in \ref MPIResult. Is always \c false;
 template <>
 inline constexpr bool is_extractable<internal::ResultCategoryNotUsed> = false;
+} // namespace internal
 
 /// @brief MPIResult contains the result of a \c MPI call wrapped by KaMPIng.
 ///
