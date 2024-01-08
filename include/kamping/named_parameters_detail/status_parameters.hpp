@@ -25,7 +25,7 @@ namespace kamping {
 /// @brief Outputs the return status of the operation to the provided status object. The status object may be passed as
 /// lvalue-reference or rvalue.
 /// @tparam StatusObject type of the status object, may either be \c MPI_Status or \ref kamping::Status
-/// @param mpi_status The status.
+/// @param status The status object.
 template <typename StatusObject>
 inline auto status_out(StatusObject&& status) {
     using status_type = std::remove_cv_t<std::remove_reference_t<StatusObject>>;
