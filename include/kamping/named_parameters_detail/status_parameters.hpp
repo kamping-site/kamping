@@ -24,26 +24,37 @@ namespace kamping {
 
 /// @brief Outputs the return status of the operation to the native \c MPI_Status passed by reference.
 /// @param mpi_status The status.
-inline auto status_out(MPI_Status& mpi_status) {
-    return internal::StatusParam<internal::StatusParamType::native_ref>{mpi_status};
+template <typename StatusObject>
+inline auto status_out(StatusObject&& status) {
+    using status_type = std::remove_cv_t<std::remove_reference_t<StatusObject>>;
+    static_assert(std::is_same_v<status_type, MPI_Status> || std::is_same_v<status_type, Status>);
+    return internal::make_data_buffer<
+        internal::ParameterType::status,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        no_resize>(std::forward<StatusObject>(status));
 }
 
-/// @brief Outputs the return status of the operation to the provided \ref kamping::Status passed by reference.
-/// @brief Use the  provided \ref kamping::Status as status parameter.
-/// @param mpi_status The status.
-inline auto status_out(Status& mpi_status) {
-    return internal::StatusParam<internal::StatusParamType::ref>(mpi_status);
-}
+// /// @brief Outputs the return status of the operation to the provided \ref kamping::Status passed by reference.
+// /// @brief Use the  provided \ref kamping::Status as status parameter.
+// /// @param mpi_status The status.
+// inline auto status_out(Status& mpi_status) {
+//     return internal::StatusParam<internal::StatusParamType::ref>(mpi_status);
+// }
 
 /// @brief Constructs a status object internally, which may then be retrieved from \c kamping::MPIResult returned by the
 /// operation.
 inline auto status_out() {
-    return internal::StatusParam<internal::StatusParamType::owning>{};
+    return internal::make_data_buffer<
+        internal::ParameterType::status,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        no_resize>(alloc_new<Status>);
 }
 
 /// @brief pass \c MPI_STATUS_IGNORE to the underlying MPI call.
 inline auto status(internal::ignore_t<void>) {
-    return internal::StatusParam<internal::StatusParamType::ignore>{};
+    return internal::EmptyDataBuffer<Status, internal::ParameterType::status, internal::BufferType::ignore>{};
 }
 
 /// @}

@@ -22,7 +22,6 @@
 #include "kamping/has_member.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
-#include "kamping/named_parameters.hpp"
 
 namespace kamping {
 namespace internal {

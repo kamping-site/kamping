@@ -159,13 +159,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     }
 
     [[maybe_unused]] int err = MPI_Recv(
-        recv_buf.data(),                       // buf
-        recv_count_param.get_single_element(), // count
-        recv_type.get_single_element(),        // datatype
-        source,                                // source
-        tag,                                   // tag
-        this->mpi_communicator(),              // comm
-        status.native_ptr()                    // status
+        recv_buf.data(),                             // buf
+        recv_count_param.get_single_element(),       // count
+        recv_type.get_single_element(),              // datatype
+        source,                                      // source
+        tag,                                         // tag
+        this->mpi_communicator(),                    // comm
+        internal::status_param_to_native_ptr(status) // status
     );
     THROW_IF_MPI_ERROR(err, MPI_Recv);
 
@@ -209,7 +209,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args..
                                                                internal::ParameterType::status,
                                                                default_status_param_type>({}, args...))>;
     static_assert(
-        status_param_type::type != internal::StatusParamType::owning,
+        !internal::is_extractable<status_param_type>,
         "KaMPIng cannot allocate a status object for you here, because we have no way of returning it. Pass a "
         "reference to a status object instead."
     );

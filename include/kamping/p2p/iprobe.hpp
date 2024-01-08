@@ -88,18 +88,18 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
 
     int                  flag;
     [[maybe_unused]] int err = MPI_Iprobe(
-        source.rank_signed(),     // source
-        tag,                      // tag
-        this->mpi_communicator(), // comm
-        &flag,                    // flag
-        status.native_ptr()       // status
+        source.rank_signed(),                        // source
+        tag,                                         // tag
+        this->mpi_communicator(),                    // comm
+        &flag,                                       // flag
+        internal::status_param_to_native_ptr(status) // status
     );
     THROW_IF_MPI_ERROR(err, MPI_Iprobe);
 
     // if KaMPIng owns the status (i.e. when the user passed status_out()) we
     // return an optional, containing the status, otherwise just a bool
     // indicating probe success.
-    if constexpr (std::remove_reference_t<decltype(status)>::type == internal::StatusParamType::owning) {
+    if constexpr (internal::is_extractable<std::remove_reference_t<decltype(status)>>) {
         if (flag) {
             return std::optional{make_mpi_result(std::move(status))};
         } else {
