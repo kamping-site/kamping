@@ -148,7 +148,7 @@ TEST(BcastTest, vector_send_recv_count_deduction) {
         EXPECT_THAT(values, Each(Eq(comm.root())));
     }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION)
     if (comm.size() > 1) {
         { // Some ranks provide a send_recv_count, some don't. This is not allowed
             size_t const num_values = 4;
@@ -202,17 +202,13 @@ TEST(BcastTest, vector_default_resize_policy_should_be_no_resize) {
         if (comm.is_root()) {
             values.resize(100);
             std::fill(values.begin(), values.end(), comm.rank());
+            comm.bcast(send_recv_buf(values));
         } else {
             values.resize(0);
-        }
-
-        if (!comm.is_root()) {
             EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf(values)), "");
             // now join the bcast posted on root so we don't interfere with other tests
             values.resize(100);
             MPI_Bcast(values.data(), 100, MPI_INT, comm.root_signed(), comm.mpi_communicator());
-        } else {
-            comm.bcast(send_recv_buf(values));
         }
     }
 #endif
@@ -238,17 +234,13 @@ TEST(BcastTest, vector_resize_policy_no_resize) {
         if (comm.is_root()) {
             values.resize(100);
             std::fill(values.begin(), values.end(), comm.rank());
+            comm.bcast(send_recv_buf<no_resize>(values));
         } else {
             values.resize(0);
-        }
-
-        if (!comm.is_root()) {
             EXPECT_KASSERT_FAILS(comm.bcast(send_recv_buf<no_resize>(values)), "");
             // now join the bcast posted on root so we don't interfere with other tests
             values.resize(100);
             MPI_Bcast(values.data(), 100, MPI_INT, comm.root_signed(), comm.mpi_communicator());
-        } else {
-            comm.bcast(send_recv_buf<no_resize>(values));
         }
     }
 #endif
@@ -477,11 +469,19 @@ TEST(BcastTest, bcast_single) {
     EXPECT_NO_THROW(comm.bcast_single(send_recv_buf(value_vector)));
     EXPECT_EQ(value_vector[0], 0);
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
     value_vector.resize(2);
-    EXPECT_KASSERT_FAILS(comm.bcast_single(send_recv_buf(value_vector)), "");
+    EXPECT_KASSERT_FAILS(
+        comm.bcast_single(send_recv_buf(value_vector)),
+        "The send/receive buffer has to be of size 1 on all ranks."
+    );
 
     value_vector.resize(0);
-    EXPECT_KASSERT_FAILS(comm.bcast_single(send_recv_buf(value_vector)), "");
+    EXPECT_KASSERT_FAILS(
+        comm.bcast_single(send_recv_buf(value_vector)),
+        "The send/receive buffer has to be of size 1 on all ranks."
+    );
+#endif
 }
 
 TEST(BcastTest, bcast_single_send_recv_buf_parameter_only_on_root) {
@@ -507,6 +507,7 @@ TEST(BcastTest, bcast_single_send_recv_buf_parameter_required_on_root) {
 }
 #endif
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
 TEST(BcastTest, bcast_single_invalid_parameters) {
     Communicator comm;
 
@@ -517,3 +518,4 @@ TEST(BcastTest, bcast_single_invalid_parameters) {
         "The send/receive buffer has to be of size 1 on all ranks."
     );
 }
+#endif
