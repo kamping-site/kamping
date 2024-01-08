@@ -29,21 +29,13 @@
 //
 
 #ifndef EXPECT_KASSERT_FAILS_WITH_DEATH
-    #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // EXPECT that a KASSERT assertion failed and that the error message contains a certain failure_message.
-        #define EXPECT_KASSERT_FAILS_WITH_DEATH(code, failure_message) \
-            EXPECT_EXIT({ code; }, ::testing::KilledBySignal(SIGABRT), failure_message);
-    #else // Otherwise, we do not test for failed assertions
-        #define EXPECT_KASSERT_FAILS_WITH_DEATH(code, failure_message)
-    #endif
+    // EXPECT that a KASSERT assertion failed and that the error message contains a certain failure_message.
+    #define EXPECT_KASSERT_FAILS_WITH_DEATH(code, failure_message) \
+        EXPECT_EXIT({ code; }, ::testing::KilledBySignal(SIGABRT), failure_message);
 #endif
 
 #ifndef ASSERT_KASSERT_FAILS_WITH_DEATH
-    #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // ASSERT that a KASSERT assertion failed and that the error message contains a certain failure_message.
-        #define ASSERT_KASSERT_FAILS_WITH_DEATH(code, failure_message) \
-            ASSERT_EXIT({ code; }, ::testing::KilledBySignal(SIGABRT), failure_message);
-    #else // Otherwise, we do not test for failed assertions
-        #define ASSERT_KASSERT_FAILS_WITH_DEATH(code, failure_message)
-    #endif
+    // ASSERT that a KASSERT assertion failed and that the error message contains a certain failure_message.
+    #define ASSERT_KASSERT_FAILS_WITH_DEATH(code, failure_message) \
+        ASSERT_EXIT({ code; }, ::testing::KilledBySignal(SIGABRT), failure_message);
 #endif
