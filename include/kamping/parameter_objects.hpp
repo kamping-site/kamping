@@ -194,7 +194,7 @@ struct SendModeParameter : private ParameterObjectBase {
 template <typename StatusParam>
 static inline MPI_Status* status_param_to_native_ptr(StatusParam& param) {
     static_assert(StatusParam::parameter_type == ParameterType::status);
-    static_assert(std::is_same_v<typename StatusParam::value_type, MPI_Status> || std::is_same_v<typename StatusParam::value_type, Status>);
+    static_assert(type_list<MPI_Status, Status>::contains<typename StatusParam::value_type>);
     if constexpr (StatusParam::buffer_type == BufferType::ignore) {
         return MPI_STATUS_IGNORE;
     } else if constexpr (std::is_same_v<typename StatusParam::value_type, MPI_Status>) {

@@ -29,7 +29,7 @@ namespace kamping {
 template <typename StatusObject>
 inline auto status_out(StatusObject&& status) {
     using status_type = std::remove_cv_t<std::remove_reference_t<StatusObject>>;
-    static_assert(std::is_same_v<status_type, MPI_Status> || std::is_same_v<status_type, Status>);
+    static_assert(internal::type_list<MPI_Status, Status>::contains<status_type>);
     return internal::make_data_buffer<
         internal::ParameterType::status,
         internal::BufferModifiability::modifiable,
