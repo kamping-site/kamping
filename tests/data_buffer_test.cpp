@@ -734,8 +734,8 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
     LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_type, BufferType::out_buffer> send_type;
     LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::recv_type, BufferType::out_buffer> recv_type;
     LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_recv_type, BufferType::out_buffer>
-                                         send_recv_type;
-    StatusParam<StatusParamType::owning> status;
+                                                                                            send_recv_type;
+    LibAllocatedContainerBasedBuffer<Status, ParameterType::status, BufferType::out_buffer> status;
 
     MPIResult result(
         std::move(status),
@@ -943,7 +943,7 @@ TEST(DataBufferTest, make_data_buffer) {
         EXPECT_FALSE(data_buf.is_single_element);
         EXPECT_EQ(data_buf.resize_policy, resize_policy);
         static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<int>>,
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const>,
             "Owning buffers must hold their data directly."
         );
         // extract() as proxy for lib allocated DataBuffers
@@ -1106,7 +1106,7 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         EXPECT_FALSE(data_buf.is_single_element);
         EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<kabool>>,
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<kabool> const>,
             "Initializer lists of type bool have to be converted to std::vector<kabool>."
         );
         // extract() as proxy for lib allocated DataBuffers
