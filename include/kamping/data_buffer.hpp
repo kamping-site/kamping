@@ -147,8 +147,8 @@ static constexpr bool is_vector_bool_v<
 template <typename T>
 static constexpr bool
     is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
-        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value
-        && std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
+        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
+            std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
 
 KAMPING_MAKE_HAS_MEMBER(resize)
 
@@ -302,10 +302,6 @@ public:
     /// otherwise.
     static constexpr bool is_out_buffer =
         (buffer_type_param == BufferType::out_buffer || buffer_type_param == BufferType::in_out_buffer);
-
-    /// @brief \c true if the buffer owns the underlying data and \c false
-    /// otherwise.
-    static constexpr bool is_owning = (ownership == BufferOwnership::owning);
 
     /// @brief Indicates whether the buffer is allocated by KaMPIng.
     static constexpr bool is_lib_allocated = allocation == BufferAllocation::lib_allocated;
