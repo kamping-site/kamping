@@ -1095,31 +1095,34 @@ TEST(ParameterFactoriesTest, tag_enum_class) {
 TEST(ParameterFactoriesTest, status_basics) {
     {
         auto status_obj = status(kamping::ignore<>);
-        EXPECT_EQ(status_obj.native_ptr(), MPI_STATUS_IGNORE);
+        EXPECT_EQ(status_param_to_native_ptr(status_obj), MPI_STATUS_IGNORE);
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
-        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::ignore);
+        EXPECT_EQ(decltype(status_obj)::buffer_type, BufferType::ignore);
     }
     {
         MPI_Status native_status;
         auto       status_obj = status_out(native_status);
-        EXPECT_EQ(status_obj.native_ptr(), &native_status);
+        EXPECT_EQ(status_param_to_native_ptr(status_obj), &native_status);
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
-        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::native_ref);
+        EXPECT_TRUE((std::is_same_v<decltype(status_obj)::value_type, MPI_Status>));
+        EXPECT_FALSE(decltype(status_obj)::is_owning);
     }
     {
         kamping::Status stat;
         auto            status_obj = status_out(stat);
-        EXPECT_EQ(status_obj.native_ptr(), &stat.native());
+        EXPECT_EQ(status_param_to_native_ptr(status_obj), &stat.native());
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
-        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::ref);
+        EXPECT_TRUE((std::is_same_v<decltype(status_obj)::value_type, Status>));
+        EXPECT_FALSE(decltype(status_obj)::is_owning);
     }
     {
         auto status_obj = status_out();
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
-        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::owning);
+        EXPECT_TRUE(decltype(status_obj)::is_owning);
+        EXPECT_TRUE((std::is_same_v<decltype(status_obj)::value_type, Status>));
         // directly modify the owned status object
-        status_obj.native_ptr()->MPI_TAG = 42;
-        auto stat                        = status_obj.extract();
+        status_param_to_native_ptr(status_obj)->MPI_TAG = 42;
+        auto stat                                       = status_obj.extract();
         EXPECT_EQ(stat.tag(), 42);
     }
 }

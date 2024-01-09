@@ -538,7 +538,8 @@ public:
     static constexpr BufferResizePolicy resize_policy     = no_resize; ///< An empty buffer can not be resized.
     static constexpr bool               is_out_buffer     = false;     ///< An empty buffer is never output.
     static constexpr bool               is_lib_allocated  = false;     ///< An empty buffer is not allocated.
-    static constexpr bool               is_single_element = false;     ///< An empty contains no elements.
+    static constexpr bool               is_single_element = false;     ///< An empty buffer contains no elements.
+    static constexpr bool               is_owning         = false;     ///< An empty buffer does not own anything.
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage (always 0).

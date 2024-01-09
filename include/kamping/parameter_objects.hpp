@@ -187,109 +187,23 @@ struct SendModeParameter : private ParameterObjectBase {
     using send_mode                               = SendModeTag;              ///< The send mode.
 };
 
-/// @brief Indicator for the type of status object a status parameter is wrapping.
-enum class StatusParamType {
-    ref,        ///< Holds a reference to a \ref kamping::Status.
-    owning,     ///< Owns a \ref kamping::Status.
-    native_ref, ///< Holds a reference to \c MPI_Status.
-    ignore      ///< Represents \c MPI_STATUS_IGNORE.
-};
-
-/// @brief Parameter object for encapsulating an \c MPI_Status.
-/// This is the base template which is never initialized, see the specializations for details.
-/// @tparam param_type The type of status object this wraps.
-template <StatusParamType param_type>
-class StatusParam {
-private:
-    StatusParam() {}
-};
-
-/// @brief Parameter object for encapsulating an \c MPI_Status.
-/// Template specialization for a parameter holding a reference to \ref kamping::Status.
-template <>
-class StatusParam<StatusParamType::ref> : private ParameterObjectBase {
-public:
-    ///@param status The status.
-    StatusParam(Status& status) : _status(status) {}
-    static constexpr ParameterType   parameter_type = ParameterType::status; ///< The parameter type.
-    static constexpr StatusParamType type           = StatusParamType::ref;  ///< The status type.
-
-    /// @return A pointer to the native \c MPI_Status object.
-    inline MPI_Status* native_ptr() {
-        return &_status.native();
-    }
-
-private:
-    Status& _status; ///< The wrapped status;
-};
-
-/// @brief Parameter object for encapsulating an \c MPI_Status.
-/// Template specialization for a parameter owning a \ref kamping::Status.
-template <>
-class StatusParam<StatusParamType::owning> : private ParameterObjectBase {
-public:
-    ///@param status The status.
-    StatusParam(Status status) : _status(std::move(status)) {}
-    StatusParam() : _status() {}
-
-    static constexpr ParameterType   parameter_type = ParameterType::status;   ///< The parameter type.
-    static constexpr StatusParamType type           = StatusParamType::owning; ///< The status type.
-
-    /// @return A pointer to the native \c MPI_Status object.
-    inline MPI_Status* native_ptr() {
-        kassert_not_extracted("Cannot get a status that has already been extracted.");
-        return &_status.native();
-    }
-
-    /// @brief Moves the wrapped status object out of the parameter.
-    /// @return The wrapped status object.
-    inline Status extract() {
-        kassert_not_extracted("Cannot extract a status that has already been extracted.");
-        auto extracted = std::move(_status);
-        // we set is_extracted here because otherwise the call to underlying() would fail
-        set_extracted();
-        return extracted;
-    }
-
-private:
-    Status _status; ///< The wrapped status.
-};
-
-/// @brief Parameter object for encapsulating an \c MPI_Status.
-/// Template specialization for a parameter holding a reference to a native \c MPI_STATUS.
-template <>
-class StatusParam<StatusParamType::native_ref> : private ParameterObjectBase {
-public:
-    ///@param mpi_status The status.
-    StatusParam(MPI_Status& mpi_status) : _mpi_status(mpi_status) {}
-
-    static constexpr ParameterType   parameter_type = ParameterType::status;       ///< The parameter type.
-    static constexpr StatusParamType type           = StatusParamType::native_ref; ///< The status type.
-
-    /// @return A pointer to the native \c MPI_Status object.
-    inline MPI_Status* native_ptr() {
-        return &_mpi_status;
-    }
-
-private:
-    MPI_Status& _mpi_status; ///< The wrapped status.
-};
-
-/// @brief Parameter object for encapsulating an \c MPI_Status.
-/// Template specialization for a parameter representing \c MPI_STATUS_IGNORE.
-template <>
-class StatusParam<StatusParamType::ignore> : private ParameterObjectBase {
-public:
-    StatusParam() {}
-
-    static constexpr ParameterType   parameter_type = ParameterType::status;   ///< The parameter type.
-    static constexpr StatusParamType type           = StatusParamType::ignore; ///< The status type.
-
-    /// @return A pointer to the native \c MPI_Status object.
-    inline MPI_Status* native_ptr() {
+/// @brief returns a pointer to the \c MPI_Status encapsulated by the provided status parameter object.
+/// @tparam StatusParam The type of the status parameter object.
+/// @param param The status parameter object.
+/// @returns A pointer to the encapsulated \c MPI_Status or \c MPI_STATUS_IGNORE.
+template <typename StatusParam>
+static inline MPI_Status* status_param_to_native_ptr(StatusParam& param) {
+    static_assert(StatusParam::parameter_type == ParameterType::status);
+    static_assert(type_list<MPI_Status, Status>::contains<typename StatusParam::value_type>);
+    if constexpr (StatusParam::buffer_type == BufferType::ignore) {
         return MPI_STATUS_IGNORE;
+    } else if constexpr (std::is_same_v<typename StatusParam::value_type, MPI_Status>) {
+        return param.data();
+    } else {
+        // value_type == kamping::Status
+        return &param.underlying().native();
     }
-};
+}
 
 struct any_tag_t {}; ///< tag struct for message tag
 

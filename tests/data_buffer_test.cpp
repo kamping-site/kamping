@@ -734,8 +734,8 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
     LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_type, BufferType::out_buffer> send_type;
     LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::recv_type, BufferType::out_buffer> recv_type;
     LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_recv_type, BufferType::out_buffer>
-                                         send_recv_type;
-    StatusParam<StatusParamType::owning> status;
+                                                                                            send_recv_type;
+    LibAllocatedContainerBasedBuffer<Status, ParameterType::status, BufferType::out_buffer> status;
 
     MPIResult result(
         std::move(status),

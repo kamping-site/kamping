@@ -84,10 +84,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
     KASSERT(internal::is_valid_rank_in_comm(source, *this, true, true), "Invalid source rank.");
 
     [[maybe_unused]] int err = MPI_Probe(
-        source.rank_signed(),     // source
-        tag,                      // tag
-        this->mpi_communicator(), // comm
-        status.native_ptr()       // status
+        source.rank_signed(),                        // source
+        tag,                                         // tag
+        this->mpi_communicator(),                    // comm
+        internal::status_param_to_native_ptr(status) // status
     );
     THROW_IF_MPI_ERROR(err, MPI_Probe);
 

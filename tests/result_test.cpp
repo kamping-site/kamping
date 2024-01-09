@@ -381,7 +381,7 @@ TEST(MpiResultTest, extract_status_basics) {
     using namespace kamping::internal;
     auto status = status_out();
 
-    status.native_ptr()->MPI_TAG = 42;
+    status_param_to_native_ptr(status)->MPI_TAG = 42;
     MPIResult mpi_result{
         std::move(status),
         ResultCategoryNotUsed{},
@@ -418,7 +418,7 @@ TEST(MpiResultTest, removed_extract_functions) {
     constexpr BufferType btype = BufferType::out_buffer;
     {
         // All of these should be extractable (used to make sure that the above macros work correctly)
-        StatusParam<StatusParamType::owning>                                                  status_sanity_check;
+        LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>                 status_sanity_check;
         LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_sanity_check;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_sanity_check;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_sanity_check;
@@ -530,7 +530,7 @@ TEST(MpiResultTest, removed_extract_functions) {
     }
 
     {
-        StatusParam<StatusParamType::owning>                                                  status_recv_buf;
+        LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>                 status_recv_buf;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_recv_buf;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_recv_buf;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_recv_buf;
@@ -552,7 +552,7 @@ TEST(MpiResultTest, removed_extract_functions) {
     }
 
     {
-        StatusParam<StatusParamType::owning>                                                  status_recv_counts;
+        LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>                 status_recv_counts;
         LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_recv_counts;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_recv_counts;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_recv_counts;
@@ -574,7 +574,7 @@ TEST(MpiResultTest, removed_extract_functions) {
     }
 
     {
-        StatusParam<StatusParamType::owning>                                                  status_recv_displs;
+        LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>                 status_recv_displs;
         LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_recv_displs;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_recv_displs;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_recv_displs;
@@ -596,7 +596,7 @@ TEST(MpiResultTest, removed_extract_functions) {
     }
 
     {
-        StatusParam<StatusParamType::owning>                                                  status_send_counts;
+        LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>                 status_send_counts;
         LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_send_counts;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_send_counts;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_send_counts;
@@ -618,7 +618,7 @@ TEST(MpiResultTest, removed_extract_functions) {
     }
 
     {
-        StatusParam<StatusParamType::owning>                                                  status_send_displs;
+        LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>                 status_send_displs;
         LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_send_displs;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_send_displs;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_send_displs;
@@ -646,8 +646,8 @@ TEST(MakeMpiResultTest, pass_random_order_buffer) {
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts;
         LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs;
-        StatusParam<StatusParamType::owning>                                                  status;
-        status.native_ptr()->MPI_TAG = 42;
+        LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>                 status;
+        status_param_to_native_ptr(status)->MPI_TAG = 42;
 
         auto result =
             make_mpi_result(std::move(recv_counts), std::move(status), std::move(recv_buf), std::move(recv_displs));

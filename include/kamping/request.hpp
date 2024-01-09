@@ -21,6 +21,7 @@
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameters_detail/status_parameters.hpp"
 #include "kamping/parameter_objects.hpp"
+#include "kamping/result.hpp"
 
 namespace kamping {
 
@@ -45,9 +46,9 @@ public:
             StatusParamObjectType::parameter_type == internal::ParameterType::status,
             "Only status parameters are allowed."
         );
-        int err = MPI_Wait(&_request, status.native_ptr());
+        int err = MPI_Wait(&_request, internal::status_param_to_native_ptr(status));
         THROW_IF_MPI_ERROR(err, MPI_Wait);
-        if constexpr (StatusParamObjectType::type == internal::StatusParamType::owning) {
+        if constexpr (internal::is_extractable<StatusParamObjectType>) {
             return status.extract();
         }
     }
@@ -72,9 +73,9 @@ public:
             "Only status parameters are allowed."
         );
         int is_finished;
-        int err = MPI_Test(&_request, &is_finished, status.native_ptr());
+        int err = MPI_Test(&_request, &is_finished, internal::status_param_to_native_ptr(status));
         THROW_IF_MPI_ERROR(err, MPI_Test);
-        if constexpr (StatusParamObjectType::type == internal::StatusParamType::owning) {
+        if constexpr (internal::is_extractable<StatusParamObjectType>) {
             if (is_finished) {
                 return std::optional{status.extract()};
             } else {
