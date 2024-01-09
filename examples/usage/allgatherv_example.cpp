@@ -34,9 +34,10 @@ int main() {
     // case 1: If no additional output parameters are requested only recv_buffer will be returned
     {
         std::vector<int> recv_buffer = comm.allgatherv(send_buf(input));
-        print_result(recv_buffer, comm);
+        if (comm.is_root())
+            print_result(recv_buffer, comm);
     }
-
+    print_on_root("---------------------------", comm);
     // If additional output parameters are requested allgatherv return a result object containing all buffers that are
     // marked as output-buffers (via *_out suffix). Note that the recv_buffer is marked as output buffer implicitly. If
     // the recv_buffer does not own its underlying storage it is not an output buffer and therefore not part of the
@@ -47,18 +48,21 @@ int main() {
     {
         auto [recv_buffer, recv_counts, recv_displs] =
             comm.allgatherv(send_buf(input), recv_counts_out(), recv_displs_out());
-        print_result(recv_buffer, comm);
+        if (comm.is_root())
+            print_result(recv_buffer, comm);
     }
+    print_on_root("---------------------------", comm);
     // case 2a.b: recv_buffer is still an output buffer (as it owns its underlying storage)
     {
         std::vector<int> preallocated_storage(10);
-        auto [recv_buffer, recv_counts, recv_displs] = comm.allgatherv(
+        auto [recv_counts, recv_buffer, recv_displs] = comm.allgatherv(
             send_buf(input),
             recv_counts_out(),
             recv_buf<resize_to_fit>(std::move(preallocated_storage)),
             recv_displs_out()
         );
-        print_result(recv_buffer, comm);
+        if (comm.is_root())
+            print_result(recv_buffer, comm);
     }
     // case 2a.c: recv_buffer is not an output buffer
     {
@@ -69,14 +73,14 @@ int main() {
             recv_buf<resize_to_fit>(recv_buffer),
             recv_displs_out()
         );
-        print_result(recv_buffer, comm);
+        // print_result(recv_buffer, comm);
     }
 
     // case 2b: the buffers within the result object can be retrieved as before
     {
         auto result_obj = comm.allgatherv(send_buf(input), recv_counts_out());
-        print_result(result_obj.extract_recv_buffer(), comm);
-        print_result(result_obj.extract_recv_counts(), comm);
+        // print_result(result_obj.extract_recv_buffer(), comm);
+        // print_result(result_obj.extract_recv_counts(), comm);
     }
 
     return 0;
