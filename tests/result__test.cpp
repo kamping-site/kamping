@@ -510,7 +510,7 @@ TEST(MpiResult_Test, removed_extract_functions) {
     }
 }
 
-TEST(MpiResult_Test, structured_bindings_basics) {
+TEST(MakeMpiResult_Test, structured_bindings_basics) {
     constexpr BufferType btype = BufferType::out_buffer;
     {
         using OutParameters = std::tuple<

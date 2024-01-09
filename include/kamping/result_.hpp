@@ -236,6 +236,11 @@ public:
         return std::get<i>(_data).underlying();
     }
 
+    /// @brief Get the underlying data from the i-th buffer in the result object. This method is part of the
+    /// structured binding enabling machinery.
+    ///
+    /// @tparam i Index of the data buffer to extract.
+    /// @return Returns the underlying data of the i-th data buffer.
     template <std::size_t i>
     decltype(auto) get() const {
         return std::get<i>(_data).underlying();
