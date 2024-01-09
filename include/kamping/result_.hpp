@@ -28,6 +28,8 @@
 #include "named_parameter_selection.hpp"
 
 namespace kamping {
+template <typename>
+class TD;
 
 /// @brief MPIResult contains the result of a \c MPI call wrapped by KaMPIng.
 ///
@@ -224,14 +226,19 @@ public:
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_recv_type>(_data).extract();
     }
 
-    /// @brief Extracts the underlying data from the i-th buffer in the result object. This method is part of the
+    /// @brief Get the underlying data from the i-th buffer in the result object. This method is part of the
     /// structured binding enabling machinery.
     ///
     /// @tparam i Index of the data buffer to extract.
     /// @return Returns the underlying data of the i-th data buffer.
     template <std::size_t i>
-    auto get() {
-        return std::get<i>(_data).extract();
+    decltype(auto) get() {
+        return std::get<i>(_data).underlying();
+    }
+
+    template <std::size_t i>
+    decltype(auto) get() const {
+        return std::get<i>(_data).underlying();
     }
 
 private:
@@ -258,6 +265,12 @@ struct tuple_size<kamping::MPIResult_<Args...>> {
 template <size_t index, typename... Args>
 struct tuple_element<index, kamping::MPIResult_<Args...>> {
     using type = decltype(declval<kamping::MPIResult_<Args...>>().template get<index>()
+    ); ///< Type of the underlying data of the i-th data buffer in the result object.
+};
+
+template <size_t index, typename... Args>
+struct tuple_element<index, const kamping::MPIResult_<Args...>> {
+    using type = decltype(declval<const kamping::MPIResult_<Args...>>().template get<index>()
     ); ///< Type of the underlying data of the i-th data buffer in the result object.
 };
 } // namespace std

@@ -172,51 +172,51 @@ TEST(MpiResult_Test, has_extract_v_basics) {
     );
 }
 
-TEST(MpiResultTest, extract_recv_buffer_basics) {
+TEST(MpiResult_Test, extract_recv_buffer_basics) {
     ::testing::test_recv_buffer_in_MPIResult<std::vector<int>>();
 }
 
-TEST(MpiResultTest, extract_recv_buffer_basics_own_container) {
+TEST(MpiResult_Test, extract_recv_buffer_basics_own_container) {
     ::testing::test_recv_buffer_in_MPIResult<::testing::OwnContainer<int>>();
 }
 
-TEST(MpiResultTest, extract_recv_counts_basics) {
+TEST(MpiResult_Test, extract_recv_counts_basics) {
     ::testing::test_recv_counts_in_MPIResult<std::vector<int>>();
 }
 
-TEST(MpiResultTest, extract_recv_counts_basics_own_container) {
+TEST(MpiResult_Test, extract_recv_counts_basics_own_container) {
     ::testing::test_recv_counts_in_MPIResult<::testing::OwnContainer<int>>();
 }
 
-TEST(MpiResultTest, extract_recv_count_basics) {
+TEST(MpiResult_Test, extract_recv_count_basics) {
     ::testing::test_recv_count_in_MPIResult();
 }
 
-TEST(MpiResultTest, extract_recv_displs_basics) {
+TEST(MpiResult_Test, extract_recv_displs_basics) {
     ::testing::test_recv_displs_in_MPIResult<std::vector<int>>();
 }
 
-TEST(MpiResultTest, extract_recv_displs_basics_own_container) {
+TEST(MpiResult_Test, extract_recv_displs_basics_own_container) {
     ::testing::test_recv_displs_in_MPIResult<::testing::OwnContainer<int>>();
 }
 
-TEST(MpiResultTest, extract_send_counts_basics) {
+TEST(MpiResult_Test, extract_send_counts_basics) {
     ::testing::test_send_counts_in_MPIResult<std::vector<int>>();
 }
 
-TEST(MpiResultTest, extract_send_counts_basics_own_container) {
+TEST(MpiResult_Test, extract_send_counts_basics_own_container) {
     ::testing::test_send_counts_in_MPIResult<::testing::OwnContainer<int>>();
 }
 
-TEST(MpiResultTest, extract_send_displs_basics) {
+TEST(MpiResult_Test, extract_send_displs_basics) {
     ::testing::test_send_displs_in_MPIResult<std::vector<int>>();
 }
 
-TEST(MpiResultTest, extract_send_displs_basics_own_container) {
+TEST(MpiResult_Test, extract_send_displs_basics_own_container) {
     ::testing::test_send_displs_in_MPIResult<::testing::OwnContainer<int>>();
 }
 
-TEST(MpiResultTest, extract_send_recv_count) {
+TEST(MpiResult_Test, extract_send_recv_count) {
     using namespace kamping;
     using namespace kamping::internal;
     auto send_recv_count         = kamping::send_recv_count_out();
@@ -225,7 +225,7 @@ TEST(MpiResultTest, extract_send_recv_count) {
     EXPECT_EQ(mpi_result.extract_send_recv_count(), 42);
 }
 
-TEST(MpiResultTest, extract_send_type) {
+TEST(MpiResult_Test, extract_send_type) {
     using namespace kamping;
     using namespace kamping::internal;
     auto send_type         = kamping::send_type_out();
@@ -234,7 +234,7 @@ TEST(MpiResultTest, extract_send_type) {
     EXPECT_EQ(mpi_result.extract_send_type(), MPI_DOUBLE);
 }
 
-TEST(MpiResultTest, extract_recv_type) {
+TEST(MpiResult_Test, extract_recv_type) {
     using namespace kamping;
     using namespace kamping::internal;
     auto recv_type         = kamping::recv_type_out();
@@ -243,7 +243,7 @@ TEST(MpiResultTest, extract_recv_type) {
     EXPECT_EQ(mpi_result.extract_recv_type(), MPI_CHAR);
 }
 
-TEST(MpiResultTest, extract_send_recv_type) {
+TEST(MpiResult_Test, extract_send_recv_type) {
     using namespace kamping;
     using namespace kamping::internal;
     auto send_recv_type         = kamping::send_recv_type_out();
@@ -252,12 +252,12 @@ TEST(MpiResultTest, extract_send_recv_type) {
     EXPECT_EQ(mpi_result.extract_send_recv_type(), MPI_CHAR);
 }
 
-TEST(MpiResultTest, extract_status_basics) {
+TEST(MpiResult_Test, extract_status_basics) {
     using namespace kamping;
     using namespace kamping::internal;
     auto status = status_out();
 
-    status.native_ptr()->MPI_TAG = 42;
+    status_param_to_native_ptr(status)->MPI_TAG = 42;
     MPIResult_ mpi_result{std::make_tuple(std::move(status))};
     auto       underlying_status = mpi_result.extract_status();
     EXPECT_EQ(underlying_status.tag(), 42);
@@ -276,13 +276,13 @@ KAMPING_MAKE_HAS_MEMBER(extract_send_type)
 KAMPING_MAKE_HAS_MEMBER(extract_recv_type)
 KAMPING_MAKE_HAS_MEMBER(extract_send_recv_type)
 
-TEST(MpiResultTest, removed_extract_functions) {
+TEST(MpiResult_Test, removed_extract_functions) {
     using namespace ::kamping;
     using namespace ::kamping::internal;
     constexpr BufferType btype = BufferType::out_buffer;
     {
         // All of these should be extractable (used to make sure that the above macros work correctly)
-        StatusParam<StatusParamType::owning>                                                  status_sanity_check;
+        LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>                 status_sanity_check;
         LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_sanity_check;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_sanity_check;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_sanity_check;
@@ -343,18 +343,31 @@ TEST(MpiResultTest, removed_extract_functions) {
     }
 
     {
-        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf_status;
-        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts_status;
-        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs_status;
-        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype> send_counts_status;
-        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype> send_displs_status;
-        LibAllocatedContainerBasedBuffer<int, ParameterType::send_count, btype>               send_count;
-        LibAllocatedContainerBasedBuffer<int, ParameterType::recv_count, btype>               recv_count;
-        LibAllocatedContainerBasedBuffer<int, ParameterType::send_recv_count, btype>          send_recv_count;
-        LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_type, btype>       send_type;
-        LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::recv_type, btype>       recv_type;
-        LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_recv_type, btype>  send_recv_type;
-        auto result_status = make_mpi_result_(std::make_tuple(
+        using OutParameters = std::tuple<
+            LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype>,
+            LibAllocatedContainerBasedBuffer<int, ParameterType::send_count, btype>,
+            LibAllocatedContainerBasedBuffer<int, ParameterType::recv_count, btype>,
+            LibAllocatedContainerBasedBuffer<int, ParameterType::send_recv_count, btype>,
+            LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_type, btype>,
+            LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::recv_type, btype>,
+            LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_recv_type, btype>>;
+
+        std::tuple_element_t<0, OutParameters>  recv_buf_status;
+        std::tuple_element_t<1, OutParameters>  recv_counts_status;
+        std::tuple_element_t<2, OutParameters>  recv_displs_status;
+        std::tuple_element_t<3, OutParameters>  send_counts_status;
+        std::tuple_element_t<4, OutParameters>  send_displs_status;
+        std::tuple_element_t<5, OutParameters>  send_count;
+        std::tuple_element_t<6, OutParameters>  recv_count;
+        std::tuple_element_t<7, OutParameters>  send_recv_count;
+        std::tuple_element_t<8, OutParameters>  send_type;
+        std::tuple_element_t<9, OutParameters>  recv_type;
+        std::tuple_element_t<10, OutParameters> send_recv_type;
+        auto                                    result_status = make_mpi_result_<OutParameters>(
             std::move(recv_counts_status),
             std::move(recv_count),
             std::move(recv_displs_status),
@@ -366,7 +379,7 @@ TEST(MpiResultTest, removed_extract_functions) {
             std::move(send_type),
             std::move(recv_type),
             std::move(send_recv_type)
-        ));
+        );
         EXPECT_FALSE(has_member_extract_status_v<decltype(result_status)>);
         EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result_status)>);
         EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result_status)>);
@@ -384,35 +397,7 @@ TEST(MpiResultTest, removed_extract_functions) {
 
     {
         using OutParameters = std::tuple<
-            StatusParam<StatusParamType::owning>,
-            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>,
-            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype>,
-            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype>,
-            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, btype>>;
-        std::tuple_element_t<0, OutParameters> status_recv_buf;
-        std::tuple_element_t<1, OutParameters> recv_counts_recv_buf;
-        std::tuple_element_t<2, OutParameters> recv_displs_recv_buf;
-        std::tuple_element_t<3, OutParameters> send_counts_recv_buf;
-        std::tuple_element_t<4, OutParameters> send_displs_recv_buf;
-        auto                                   result_recv_buf = make_mpi_result_<OutParameters>(
-            std::move(status_recv_buf),
-            std::move(recv_counts_recv_buf),
-            std::move(recv_displs_recv_buf),
-            std::move(send_displs_recv_buf),
-            std::move(send_counts_recv_buf)
-        );
-        EXPECT_TRUE(has_member_extract_status_v<decltype(result_recv_buf)>);
-        EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result_recv_buf)>);
-        EXPECT_TRUE(has_member_extract_recv_counts_v<decltype(result_recv_buf)>);
-        EXPECT_TRUE(has_member_extract_recv_displs_v<decltype(result_recv_buf)>);
-        EXPECT_TRUE(has_member_extract_send_counts_v<decltype(result_recv_buf)>);
-        EXPECT_TRUE(has_member_extract_send_displs_v<decltype(result_recv_buf)>);
-        EXPECT_FALSE(decltype(result_recv_buf)::is_empty);
-    }
-
-    {
-        using OutParameters = std::tuple<
-            StatusParam<StatusParamType::owning>,
+            LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype>,
@@ -440,7 +425,7 @@ TEST(MpiResultTest, removed_extract_functions) {
 
     {
         using OutParameters = std::tuple<
-            StatusParam<StatusParamType::owning>,
+            LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, btype>,
@@ -469,7 +454,7 @@ TEST(MpiResultTest, removed_extract_functions) {
 
     {
         using OutParameters = std::tuple<
-            StatusParam<StatusParamType::owning>,
+            LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype>,
@@ -480,7 +465,7 @@ TEST(MpiResultTest, removed_extract_functions) {
         std::tuple_element_t<2, OutParameters> recv_counts_send_counts;
         std::tuple_element_t<3, OutParameters> recv_displs_send_counts;
         std::tuple_element_t<4, OutParameters> send_displs_send_counts;
-        auto                                   result_send_counts = make_mpi_result<OutParameters>(
+        auto                                   result_send_counts = make_mpi_result_<OutParameters>(
             std::move(status_send_counts),
             std::move(recv_buf_send_counts),
             std::move(recv_counts_send_counts),
@@ -498,7 +483,7 @@ TEST(MpiResultTest, removed_extract_functions) {
 
     {
         using OutParameters = std::tuple<
-            StatusParam<StatusParamType::owning>,
+            LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype>,
@@ -525,14 +510,102 @@ TEST(MpiResultTest, removed_extract_functions) {
     }
 }
 
-TEST(MakeMpiResultTest, pass_random_order_buffer) {
+TEST(MpiResult_Test, structured_bindings_basics) {
+    constexpr BufferType btype = BufferType::out_buffer;
+    {
+        using OutParameters = std::tuple<
+            LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_buf, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int16_t>, ParameterType::recv_counts, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int32_t>, ParameterType::recv_displs, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int64_t>, ParameterType::send_counts, btype>>;
+        std::tuple_element_t<0, OutParameters> recv_buf;
+        std::tuple_element_t<1, OutParameters> recv_counts_buf;
+        std::tuple_element_t<2, OutParameters> recv_displs_buf;
+        std::tuple_element_t<3, OutParameters> send_counts_buf;
+        auto [recv_buffer, recv_counts, recv_displs, send_counts] = make_mpi_result_<OutParameters>(
+            std::move(recv_buf),
+            std::move(recv_counts_buf),
+            std::move(recv_displs_buf),
+            std::move(send_counts_buf)
+        );
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, std::vector<std::int8_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, std::vector<std::int16_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, std::vector<std::int32_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, std::vector<std::int64_t>>);
+    }
+    {
+        using OutParameters = std::tuple<
+            LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_buf, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int16_t>, ParameterType::recv_counts, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int32_t>, ParameterType::recv_displs, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int64_t>, ParameterType::send_counts, btype>>;
+        std::tuple_element_t<0, OutParameters> recv_buf;
+        std::tuple_element_t<1, OutParameters> recv_counts_buf;
+        std::tuple_element_t<2, OutParameters> recv_displs_buf;
+        std::tuple_element_t<3, OutParameters> send_counts_buf;
+        auto&& [recv_buffer, recv_counts, recv_displs, send_counts] = make_mpi_result_<OutParameters>(
+            std::move(recv_buf),
+            std::move(recv_counts_buf),
+            std::move(recv_displs_buf),
+            std::move(send_counts_buf)
+        );
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, std::vector<std::int8_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, std::vector<std::int16_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, std::vector<std::int32_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, std::vector<std::int64_t>>);
+    }
+    {
+        using OutParameters = std::tuple<
+            LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_buf, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int16_t>, ParameterType::recv_counts, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int32_t>, ParameterType::recv_displs, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int64_t>, ParameterType::send_counts, btype>>;
+        std::tuple_element_t<0, OutParameters> recv_buf;
+        std::tuple_element_t<1, OutParameters> recv_counts_buf;
+        std::tuple_element_t<2, OutParameters> recv_displs_buf;
+        std::tuple_element_t<3, OutParameters> send_counts_buf;
+        auto const [recv_buffer, recv_counts, recv_displs, send_counts] = make_mpi_result_<OutParameters>(
+            std::move(recv_buf),
+            std::move(recv_counts_buf),
+            std::move(recv_displs_buf),
+            std::move(send_counts_buf)
+        );
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, const std::vector<std::int8_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, const std::vector<std::int16_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, const std::vector<std::int32_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, const std::vector<std::int64_t>>);
+    }
+    {
+        using OutParameters = std::tuple<
+            LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_buf, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int16_t>, ParameterType::recv_counts, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int32_t>, ParameterType::recv_displs, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int64_t>, ParameterType::send_counts, btype>>;
+        std::tuple_element_t<0, OutParameters> recv_buf;
+        std::tuple_element_t<1, OutParameters> recv_counts_buf;
+        std::tuple_element_t<2, OutParameters> recv_displs_buf;
+        std::tuple_element_t<3, OutParameters> send_counts_buf;
+        auto const& [recv_buffer, recv_counts, recv_displs, send_counts] = make_mpi_result_<OutParameters>(
+            std::move(recv_buf),
+            std::move(recv_counts_buf),
+            std::move(recv_displs_buf),
+            std::move(send_counts_buf)
+        );
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, const std::vector<std::int8_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, const std::vector<std::int16_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, const std::vector<std::int32_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, const std::vector<std::int64_t>>);
+    }
+}
+
+TEST(MakeMpiResult_Test, pass_random_order_buffer) {
     {
         constexpr BufferType btype = BufferType::out_buffer;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts;
         LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf;
         LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs;
-        StatusParam<StatusParamType::owning>                                                  status;
-        status.native_ptr()->MPI_TAG = 42;
+        LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>                 status;
+        status_param_to_native_ptr(status)->MPI_TAG = 42;
 
         auto result =
             make_mpi_result(std::move(recv_counts), std::move(status), std::move(recv_buf), std::move(recv_displs));
@@ -562,7 +635,7 @@ TEST(MakeMpiResultTest, pass_random_order_buffer) {
     }
 }
 
-TEST(MakeMpiResultTest, pass_send_recv_buf) {
+TEST(MakeMpiResult_Test, pass_send_recv_buf) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_recv_buf, BufferType::in_out_buffer>
          send_recv_buf;
     auto result          = make_mpi_result(std::move(send_recv_buf));
@@ -570,7 +643,7 @@ TEST(MakeMpiResultTest, pass_send_recv_buf) {
     static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, int>);
 }
 
-TEST(MakeMpiResultTest, check_content) {
+TEST(MakeMpiResult_Test, check_content) {
     constexpr BufferType btype = BufferType::out_buffer;
 
     std::vector<int> recv_buf_data(20);

@@ -25,11 +25,17 @@
 #include "kamping/environment.hpp"
 #include "kamping/named_parameters.hpp"
 
+
+template<typename>
+class TD;
+
 int main() {
     using namespace kamping;
     kamping::Environment  e;
     kamping::Communicator comm;
     std::vector<int>      input(comm.rank(), comm.rank_signed());
+
+
 
     // case 1: If no additional output parameters are requested only recv_buffer will be returned
     {
@@ -37,10 +43,10 @@ int main() {
         if (comm.is_root())
             print_result(recv_buffer, comm);
     }
-    print_on_root("---------------------------", comm);
+     print_on_root("---------------------------", comm);
     // If additional output parameters are requested allgatherv return a result object containing all buffers that are
-    // marked as output-buffers (via *_out suffix). Note that the recv_buffer is marked as output buffer implicitly. If
-    // the recv_buffer does not own its underlying storage it is not an output buffer and therefore not part of the
+    // marked as output-buffers (via *_out suffix). Note that the recv_buffer is marked as output buffer implicitly.
+    // If the recv_buffer does not own its underlying storage it is not an output buffer and therefore not part of the
     // result object.
 
     // case 2a.a: the result object can be decomposed with a structured binding (in the order defined in
@@ -51,7 +57,7 @@ int main() {
         if (comm.is_root())
             print_result(recv_buffer, comm);
     }
-    print_on_root("---------------------------", comm);
+     print_on_root("---------------------------", comm);
     // case 2a.b: recv_buffer is still an output buffer (as it owns its underlying storage)
     {
         std::vector<int> preallocated_storage(10);
