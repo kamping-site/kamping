@@ -273,6 +273,12 @@ struct tuple_element<index, kamping::MPIResult_<Args...>> {
     ); ///< Type of the underlying data of the i-th data buffer in the result object.
 };
 
+/// @brief Specialization of the std::tuple_element for \c const \ref kamping::MPIResult_. Part of the structured
+/// binding machinery.
+///
+/// @param index Index of the entry of \c const \ref kamping::MPIResult_ for which the underlying data type shall be
+/// deduced.
+/// @tparam Args Automatically deducted template parameters.
 template <size_t index, typename... Args>
 struct tuple_element<index, const kamping::MPIResult_<Args...>> {
     using type = decltype(declval<const kamping::MPIResult_<Args...>>().template get<index>()
