@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2023 The KaMPIng Authors
+// Copyright 2021-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -566,6 +566,166 @@ public:
     template <typename SizeFunc>
     void resize_if_requested(SizeFunc&& compute_required_size [[maybe_unused]]) {}
 };
+
+///
+/// @brief Creates a user allocated DataBuffer containing the supplied data (a container or a single element)
+///
+/// Creates a user allocated DataBuffer with the given template parameters and ownership based on whether an rvalue or
+/// lvalue reference is passed.
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+/// @tparam Data Container or data type on which this buffer is based.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam ValueType Requested value type for the the data buffer. If not specified, it will be deduced from the
+/// underlying container and no checking is performed.
+/// @param data Universal reference to a container or single element holding the data for the buffer.
+///
+/// @return A user allocated DataBuffer with the given template parameters and matching ownership.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    typename Data>
+auto make_data_buffer(Data&& data) {
+    constexpr BufferOwnership ownership =
+        std::is_rvalue_reference_v<Data&&> ? BufferOwnership::owning : BufferOwnership::referencing;
+
+    // Make sure that Data is const, the buffer created is constant (so we don't really remove constness in the return
+    // statement below).
+    constexpr bool is_const_data_type = std::is_const_v<std::remove_reference_t<Data>>;
+    constexpr bool is_const_buffer    = modifiability == BufferModifiability::constant;
+    // Implication: is_const_data_type => is_const_buffer.
+    static_assert(!is_const_data_type || is_const_buffer);
+    return DataBuffer<
+        std::remove_const_t<std::remove_reference_t<Data>>,
+        parameter_type,
+        modifiability,
+        ownership,
+        buffer_type,
+        buffer_resize_policy,
+        BufferAllocation::user_allocated,
+        ValueType>(std::forward<Data>(data));
+}
+
+/// @brief Creates a library allocated DataBuffer with the given container or single data type.
+///
+/// Creates a library allocated DataBuffer with the given template parameters.
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam ValueType Requested value type for the the data buffer. If not specified, it will be deduced from the
+/// underlying container and no checking is performed.
+/// @tparam Data Container or data type on which this buffer is based.
+///
+/// @return A library allocated DataBuffer with the given template parameters.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    typename Data>
+auto make_data_buffer(AllocNewT<Data>) {
+    return DataBuffer<
+        Data,
+        parameter_type,
+        BufferModifiability::modifiable, // something library allocated is always modifiable
+        BufferOwnership::owning,
+        buffer_type,
+        buffer_resize_policy,
+        BufferAllocation::lib_allocated,
+        ValueType>();
+}
+
+/// @brief Creates a library allocated DataBuffer by instantiating the given container template with the given value
+/// type.
+///
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam ValueType The value type to initialize the \c Data template with. If not specified, this will fail.
+/// @tparam Data Container template this buffer is based on. The first template parameter is initialized with \c
+/// ValueType
+///
+/// @return A library allocated DataBuffer with the given template parameters.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    template <typename...>
+    typename Data>
+auto make_data_buffer(AllocNewAutoT<Data>) {
+    // this check prevents that this factory function is used, when the value type is not known
+    static_assert(
+        !std::is_same_v<ValueType, default_value_type_tag>,
+        "Value type for new library allocated container can not be deduced."
+    );
+    return DataBuffer<
+        Data<ValueType>,
+        parameter_type,
+        BufferModifiability::modifiable, // something library allocated is always modifiable
+        BufferOwnership::owning,
+        buffer_type,
+        buffer_resize_policy,
+        BufferAllocation::lib_allocated,
+        ValueType>();
+}
+
+/// @brief Creates an owning DataBuffer containing the supplied data in a std::vector.
+///
+/// Creates an owning DataBuffer with the given template parameters.
+///
+/// An initializer list of type \c bool will be converted to a \c std::vector<kamping::kabool>.
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam Data Container or data type on which this buffer is based.
+/// @param data std::initializer_list holding the data for the buffer.
+///
+/// @return A library allocated DataBuffer with the given template parameters.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename Data>
+auto make_data_buffer(std::initializer_list<Data> data) {
+    auto data_vec = [&]() {
+        if constexpr (std::is_same_v<Data, bool>) {
+            return std::vector<kabool>(data.begin(), data.end());
+            // We only use automatic conversion of bool to kabool for initializer lists, but not for single elements of
+            // type bool. The reason for that is, that sometimes single element conversion may not be desired.
+            // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
+            // send_recv_buf = bool&
+        } else {
+            return std::vector<Data>{data};
+        }
+    }();
+    return DataBuffer<
+        decltype(data_vec),
+        parameter_type,
+        modifiability,
+        BufferOwnership::owning,
+        buffer_type,
+        buffer_resize_policy,
+        BufferAllocation::user_allocated>(std::move(data_vec));
+}
 
 } // namespace internal
 
