@@ -943,7 +943,7 @@ TEST(DataBufferTest, make_data_buffer) {
         EXPECT_FALSE(data_buf.is_single_element);
         EXPECT_EQ(data_buf.resize_policy, resize_policy);
         static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const>,
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<int>>,
             "Owning buffers must hold their data directly."
         );
         // extract() as proxy for lib allocated DataBuffers
@@ -1106,7 +1106,7 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         EXPECT_FALSE(data_buf.is_single_element);
         EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<kabool> const>,
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<kabool>>,
             "Initializer lists of type bool have to be converted to std::vector<kabool>."
         );
         // extract() as proxy for lib allocated DataBuffers
