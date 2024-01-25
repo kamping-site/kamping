@@ -56,6 +56,7 @@ enum class ParameterType {
     source,           ///< Tag used to represent the sending PE in a \c MPI call.
     destination,      ///< Tag used to represent the receiving PE in a \c MPI call.
     status,           ///< Tag used to represent the status in a \c MPI call.
+    statuses,         ///< Tag used to represent a container of statuses in a \c MPI call.
     request,          ///< Tag used to represent an \c MPI_Request.
     root,             ///< Tag used to represent the root PE in a \c MPI collectives call.
     tag,              ///< Tag used to represent the message tag in a \c MPI call.

@@ -729,6 +729,15 @@ inline auto request(Request& request) {
         BufferResizePolicy::no_resize>(request);
 }
 
+template <typename IndexType>
+inline auto request(PooledRequest<IndexType> request) {
+    return internal::make_data_buffer<
+        internal::ParameterType::request,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize>(request);
+}
+
 /// @brief Internally allocate a request object and return it to the user.
 inline auto request() {
     return internal::make_data_buffer<

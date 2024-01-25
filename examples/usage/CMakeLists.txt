@@ -41,3 +41,7 @@ target_compile_options(example_bcast PRIVATE ${KAMPING_WARNING_FLAGS})
 add_executable(example_timer timer_example.cpp)
 target_link_libraries(example_timer kamping)
 target_compile_options(example_timer PRIVATE ${KAMPING_WARNING_FLAGS})
+
+add_executable(example_request_pool request_pool_example.cpp)
+target_link_libraries(example_request_pool kamping)
+target_compile_options(example_timer PRIVATE ${KAMPING_WARNING_FLAGS})

@@ -15,23 +15,27 @@
 
 #include <optional>
 
-#include <kamping/error_handling.hpp>
 #include <mpi.h>
 
 #include "kamping/data_buffer.hpp"
+#include "kamping/error_handling.hpp"
 #include "kamping/named_parameters_detail/status_parameters.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/result.hpp"
 
 namespace kamping {
 
-/// @brief Wrapper for MPI request handles (aka. \c MPI_Request).
-class Request {
-public:
-    /// @brief Constructs a request handle from an \c MPI_Request.
-    /// @param request The request to encapsulate. Defaults to \c MPI_REQUEST_NULL.
-    Request(MPI_Request request = MPI_REQUEST_NULL) : _request(request) {}
+template <typename RequestType>
+class RequestBase {
+private:
+    MPI_Request* request_ptr() {
+        return static_cast<RequestType&>(*this).request_ptr();
+    }
+    MPI_Request const* request_ptr() const {
+        return static_cast<RequestType const&>(*this).request_ptr();
+    }
 
+public:
     /// @brief Returns when the operation defined by the underlying request completes.
     /// If the underlying request was initialized by a non-blocking communication call, it is set to \c
     /// MPI_REQUEST_NULL.
@@ -46,7 +50,7 @@ public:
             StatusParamObjectType::parameter_type == internal::ParameterType::status,
             "Only status parameters are allowed."
         );
-        int err = MPI_Wait(&_request, internal::status_param_to_native_ptr(status));
+        int err = MPI_Wait(request_ptr(), internal::status_param_to_native_ptr(status));
         THROW_IF_MPI_ERROR(err, MPI_Wait);
         if constexpr (internal::is_extractable<StatusParamObjectType>) {
             return status.extract();
@@ -55,7 +59,7 @@ public:
 
     /// @return True if this request is equal to \c MPI_REQUEST_NULL.
     [[nodiscard]] bool is_null() const {
-        return _request == MPI_REQUEST_NULL;
+        return *request_ptr() == MPI_REQUEST_NULL;
     }
 
     /// @brief Tests for completion of the underlying request. If the underlying request was
@@ -73,7 +77,7 @@ public:
             "Only status parameters are allowed."
         );
         int is_finished;
-        int err = MPI_Test(&_request, &is_finished, internal::status_param_to_native_ptr(status));
+        int err = MPI_Test(request_ptr(), &is_finished, internal::status_param_to_native_ptr(status));
         THROW_IF_MPI_ERROR(err, MPI_Test);
         if constexpr (internal::is_extractable<StatusParamObjectType>) {
             if (is_finished) {
@@ -88,28 +92,61 @@ public:
 
     /// @return A reference to the underlying MPI_Request handle.
     [[nodiscard]] MPI_Request& mpi_request() {
-        return _request;
+        return *request_ptr();
     }
 
     /// @return A reference to the underlying MPI_Request handle.
     [[nodiscard]] MPI_Request const& mpi_request() const {
-        return _request;
+        return *request_ptr();
     }
 
     // TODO: request cancellation and querying of cancellation status
 
     /// @return Returns \c true if the other request wrapper points to the same request.
-    bool operator==(Request const& other) const {
-        return _request == other._request;
+    template <typename T>
+    bool operator==(RequestBase<T> const& other) const {
+        return *request_ptr() == *other.request_ptr();
     }
 
     /// @return Returns \c true if the other request wrapper points to a different request.
-    bool operator!=(Request const& other) const {
+    template <typename T>
+    bool operator!=(RequestBase<T> const& other) const {
         return !(*this == other);
+    }
+};
+
+/// @brief Wrapper for MPI request handles (aka. \c MPI_Request).
+class Request : public RequestBase<Request> {
+public:
+    /// @brief Constructs a request handle from an \c MPI_Request.
+    /// @param request The request to encapsulate. Defaults to \c MPI_REQUEST_NULL.
+    Request(MPI_Request request = MPI_REQUEST_NULL) : _request(request) {}
+
+    MPI_Request* request_ptr() {
+        return &_request;
+    }
+
+    MPI_Request const* request_ptr() const {
+        return &_request;
     }
 
 private:
     MPI_Request _request; ///< the encapsulated MPI_Request
+};
+
+template <typename IndexType>
+struct PooledRequest : public RequestBase<PooledRequest<IndexType>> {
+    PooledRequest(IndexType idx, MPI_Request& request) : index(idx), _request(request) {}
+    IndexType    index;
+    MPI_Request& _request;
+
+    MPI_Request* request_ptr() {
+        return &_request;
+    }
+
+    MPI_Request const* request_ptr() const {
+        return &_request;
+    }
 };
 
 namespace requests {
