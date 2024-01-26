@@ -174,7 +174,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::irecv(Args... args
     return make_nonblocking_result(
         std::move(recv_buf),
         std::move(recv_count_param),
-        std::move(status),
         std::move(recv_type),
         std::move(request_param)
     );
