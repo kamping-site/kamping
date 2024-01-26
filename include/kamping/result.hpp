@@ -423,7 +423,7 @@ public:
     /// If this result owns the underlying request, returns a \c std::pair containing the \ref Request and \ref
     /// MPIResult. If the request is owned by the user, just return the underlying \ref MPIResult.
     ///
-    /// Note that the result may be in an undefined state because the assOciated operations is still underway and it is
+    /// Note that the result may be in an undefined state because the associated operations is still underway and it is
     /// the user's responsibilty to ensure that the corresponding request has been completed before accessing the
     /// result.
     auto extract() {
