@@ -420,7 +420,7 @@ public:
 
     /// @brief Extracts the components of this results, leaving the user responsible.
     ///
-    /// If this result owns the underlying request, returns a \c std::tuple containing the \ref Request and \ref
+    /// If this result owns the underlying request, returns a \c std::pair containing the \ref Request and \ref
     /// MPIResult. If the request is owned by the user, just return the underlying \ref MPIResult.
     ///
     /// Note that the result may be in an undefined state because the associated operations is still underway and it is
@@ -429,7 +429,7 @@ public:
     auto extract() {
         if constexpr (owns_request) {
             auto result = extract_result(); // we try to extract the result first, so that we get a nice error message
-            return std::make_tuple(_request.extract(), std::move(result));
+            return std::pair(_request.extract(), std::move(result));
         } else {
             return extract_result();
         }
