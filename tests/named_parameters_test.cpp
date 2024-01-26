@@ -1153,7 +1153,7 @@ TEST(ParameterFactoriesTest, request_basics) {
             req_obj,
             ParameterType::request,
             BufferType::out_buffer,
-            my_request,
+            std::move(my_request),
             true /*should_be_modifiable*/
         );
     }

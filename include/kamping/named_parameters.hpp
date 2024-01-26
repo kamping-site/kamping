@@ -735,7 +735,7 @@ inline auto request(PooledRequest<IndexType> request) {
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        BufferResizePolicy::no_resize>(request);
+        BufferResizePolicy::no_resize>(std::move(request));
 }
 
 /// @brief Internally allocate a request object and return it to the user.

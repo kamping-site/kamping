@@ -16,22 +16,14 @@
 #include "kamping/p2p/recv.hpp"
 #include "kamping/request_pool.hpp"
 
-int MPI_Isend(
-    void const* buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request* request
-) {
-    std::cout << request << std::endl;
-    return PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
-}
-
 int main() {
     using namespace kamping;
     Environment  env;
     Communicator comm;
     RequestPool  pool;
     if (comm.rank() == 0) {
-        auto req = pool.get_request();
-        std::cout << req._request << std::endl;
-        auto result = comm.isend(send_buf(42), destination(0), request(pool.get_request()));
+        auto req    = pool.get_request();
+        auto result = comm.isend(send_buf(42), destination(0), request(std::move(req)));
         std::cout << comm.recv_single<int>() << std::endl;
     }
     auto statuses = pool.wait_all(statuses_out());

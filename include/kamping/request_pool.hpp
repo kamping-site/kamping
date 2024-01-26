@@ -29,7 +29,6 @@ public:
 
     inline PooledRequest<index_type> get_request() {
         MPI_Request& req = _requests.emplace_back(MPI_REQUEST_NULL);
-        std::cout << &req << std::endl;
         return PooledRequest<index_type>{_requests.size() - 1, req};
     }
 

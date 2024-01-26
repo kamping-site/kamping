@@ -27,6 +27,15 @@ namespace kamping {
 
 template <typename RequestType>
 class RequestBase {
+public:
+    constexpr RequestBase() = default;
+    ~RequestBase()          = default;
+
+    RequestBase(RequestBase const&)            = delete;
+    RequestBase& operator=(RequestBase const&) = delete;
+    RequestBase(RequestBase&&)                 = default;
+    RequestBase& operator=(RequestBase&&)      = default;
+
 private:
     MPI_Request* request_ptr() {
         return static_cast<RequestType&>(*this).request_ptr();
@@ -219,7 +228,7 @@ template <
         std::enable_if_t<std::conjunction_v<std::is_convertible<std::remove_reference_t<RequestType>, Request>...>>>
 void wait_all(RequestType&&... args) {
     constexpr size_t req_size       = sizeof...(args);
-    MPI_Request      reqs[req_size] = {Request{args}.mpi_request()...};
+    MPI_Request      reqs[req_size] = {Request{std::move(args)}.mpi_request()...};
     wait_all(Span<MPI_Request>(reqs, req_size));
 }
 
