@@ -22,6 +22,8 @@
 #include "kamping/has_member.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
+#include "kamping/named_parameters_detail/status_parameters.hpp"
+#include "kamping/parameter_objects.hpp"
 
 namespace kamping {
 namespace internal {
@@ -459,19 +461,30 @@ public:
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
     /// manually test the request that they own and manually obtain the result via \ref extract().
+    ///
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
+    ///
+    /// @return Returns \c true if the underlying request is complete. If \p status is \ref kamping::status_out(),
+    /// returns an \c std::optional encapsulating the status in case of completion, \c std::nullopt otherwise.
     template <
+        typename StatusParamObjectType = decltype(status(ignore<>)),
         typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
         typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
-    auto test() {
+    auto test(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
         kassert_not_extracted("The result of this request has already been extracted.");
         if constexpr (!MPIResultType::is_empty) {
-            if (_request.underlying().test()) {
+            if (_request.underlying().test(std::move(status))) {
                 return std::optional{extract_result()};
             } else {
                 return std::optional<MPIResultType>{};
             }
         } else {
-            return _request.underlying().test();
+            return _request.underlying().test(std::move(status));
         }
     }
 
