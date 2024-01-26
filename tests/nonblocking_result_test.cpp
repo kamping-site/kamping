@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2023 The KaMPIng Authors
+// Copyright 2023-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -21,20 +21,27 @@
 
 using namespace kamping;
 
-static bool   test_succeed   = false;
-static size_t num_wait_calls = 0;
+static bool   test_succeed        = false;
+static size_t num_wait_calls      = 0;
+int const     TOUCHED_BY_MOCK_TAG = 42;
 
 KAMPING_MAKE_HAS_MEMBER(wait)
 KAMPING_MAKE_HAS_MEMBER(test)
 
-int MPI_Wait(MPI_Request*, MPI_Status*) {
+int MPI_Wait(MPI_Request*, MPI_Status* status) {
     // we have to do something useful here, because else clang wants us to make this function const, which fails the
     // build.
+    if (status != MPI_STATUS_IGNORE) {
+        status->MPI_TAG = TOUCHED_BY_MOCK_TAG;
+    }
     num_wait_calls++;
     return MPI_SUCCESS;
 }
 
-int MPI_Test(MPI_Request*, int* flag, MPI_Status*) {
+int MPI_Test(MPI_Request*, int* flag, MPI_Status* status) {
+    if (status != MPI_STATUS_IGNORE) {
+        status->MPI_TAG = TOUCHED_BY_MOCK_TAG;
+    }
     *flag = test_succeed;
     return MPI_SUCCESS;
 }
@@ -69,13 +76,44 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_types_match) {
     auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
 
     EXPECT_TRUE(has_member_test_v<decltype(result)>);
-    using test_return_type = decltype(result.test());
-    EXPECT_TRUE((internal::is_specialization<test_return_type, std::optional>::value));
-    EXPECT_TRUE((std::is_same_v<test_return_type::value_type, expected_result_type>));
-
     EXPECT_TRUE(has_member_wait_v<decltype(result)>);
-    using wait_return_type = decltype(result.wait());
-    EXPECT_TRUE((std::is_same_v<wait_return_type, expected_result_type>));
+    {
+        // ignore status -> return result only
+        using test_return_type = decltype(result.test());
+        EXPECT_TRUE((internal::is_specialization<test_return_type, std::optional>::value));
+        EXPECT_TRUE((std::is_same_v<test_return_type::value_type, expected_result_type>));
+    }
+    {
+        // also return status -> optional<pair<result, status>>
+        using test_return_type = decltype(result.test(status_out()));
+        EXPECT_TRUE((internal::is_specialization<test_return_type, std::optional>::value));
+        EXPECT_TRUE((std::is_same_v<test_return_type::value_type::first_type, expected_result_type>));
+        EXPECT_TRUE((std::is_same_v<test_return_type::value_type::second_type, Status>));
+    }
+    {
+        // also return status, but as out parameter -> optional<result>
+        Status status;
+        using test_return_type = decltype(result.test(status_out(status)));
+        EXPECT_TRUE((internal::is_specialization<test_return_type, std::optional>::value));
+        EXPECT_TRUE((std::is_same_v<test_return_type::value_type, expected_result_type>));
+    }
+    {
+        // ignore status -> return result only
+        using wait_return_type = decltype(result.wait());
+        EXPECT_TRUE((std::is_same_v<wait_return_type, expected_result_type>));
+    }
+    {
+        // also return status -> pair<result, status>
+        using wait_return_type = decltype(result.wait(status_out()));
+        EXPECT_TRUE((std::is_same_v<wait_return_type::first_type, expected_result_type>));
+        EXPECT_TRUE((std::is_same_v<wait_return_type::second_type, Status>));
+    }
+    {
+        // also return status, but as out parameter -> result
+        Status status;
+        using wait_return_type = decltype(result.wait(status_out(status)));
+        EXPECT_TRUE((std::is_same_v<wait_return_type, expected_result_type>));
+    }
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works) {
@@ -88,6 +126,44 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works) {
     EXPECT_EQ(num_wait_calls, 0);
     auto data = result.wait().extract_recv_buffer();
     EXPECT_EQ(num_wait_calls, 1);
+    auto expected_data = std::vector{42, 43, 44};
+    EXPECT_EQ(data, expected_data);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KASSERT_FAILS(result.extract(), "The result of this request has already been extracted.");
+#endif
+}
+
+TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works_with_status_out) {
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>);
+    recv_buf_obj.underlying().push_back(42);
+    recv_buf_obj.underlying().push_back(43);
+    recv_buf_obj.underlying().push_back(44);
+    auto request_obj        = request();
+    auto nonblocking_result = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    EXPECT_EQ(num_wait_calls, 0);
+    auto [result, status] = nonblocking_result.wait(status_out());
+    auto data             = result.extract_recv_buffer();
+    EXPECT_EQ(num_wait_calls, 1);
+    EXPECT_EQ(status.tag(), TOUCHED_BY_MOCK_TAG);
+    auto expected_data = std::vector{42, 43, 44};
+    EXPECT_EQ(data, expected_data);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#endif
+}
+
+TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works_with_status_in) {
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>);
+    recv_buf_obj.underlying().push_back(42);
+    recv_buf_obj.underlying().push_back(43);
+    recv_buf_obj.underlying().push_back(44);
+    auto request_obj = request();
+    auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    EXPECT_EQ(num_wait_calls, 0);
+    Status status;
+    auto   data = result.wait(status_out(status)).extract_recv_buffer();
+    EXPECT_EQ(num_wait_calls, 1);
+    EXPECT_EQ(status.tag(), TOUCHED_BY_MOCK_TAG);
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data, expected_data);
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
@@ -109,6 +185,41 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works) {
     EXPECT_TRUE(data.has_value());
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data.value().extract_recv_buffer(), expected_data);
+}
+
+TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_out) {
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>);
+    recv_buf_obj.underlying().push_back(42);
+    recv_buf_obj.underlying().push_back(43);
+    recv_buf_obj.underlying().push_back(44);
+    auto request_obj = request();
+    auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    test_succeed     = false;
+    EXPECT_FALSE(result.test(status_out()).has_value());
+    test_succeed = true;
+    auto data    = result.test(status_out());
+    EXPECT_TRUE(data.has_value());
+    auto expected_data = std::vector{42, 43, 44};
+    EXPECT_EQ(data.value().first.extract_recv_buffer(), expected_data);
+    EXPECT_EQ(data.value().second.tag(), TOUCHED_BY_MOCK_TAG);
+}
+
+TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_in) {
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>);
+    recv_buf_obj.underlying().push_back(42);
+    recv_buf_obj.underlying().push_back(43);
+    recv_buf_obj.underlying().push_back(44);
+    auto request_obj = request();
+    auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    test_succeed     = false;
+    Status status;
+    EXPECT_FALSE(result.test(status_out(status)).has_value());
+    test_succeed = true;
+    auto data    = result.test(status_out(status));
+    EXPECT_TRUE(data.has_value());
+    auto expected_data = std::vector{42, 43, 44};
+    EXPECT_EQ(data.value().extract_recv_buffer(), expected_data);
+    EXPECT_EQ(status.tag(), TOUCHED_BY_MOCK_TAG);
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_extract_works) {
@@ -145,12 +256,51 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_extract_works) {
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_types_match) {
     auto request_obj = request();
     auto result      = kamping::make_nonblocking_result(std::move(request_obj));
+    // EXPECT_TRUE(has_member_test_v<decltype(result)>);
+    // EXPECT_TRUE(has_member_test_v<decltype(result)>);
+    // {
+    //     using test_return_type = decltype(result.test());
+    //     EXPECT_TRUE((std::is_same_v<test_return_type, bool>));
+    //     EXPECT_TRUE(has_member_wait_v<decltype(result)>);
+    // }
+    // using wait_return_type = decltype(result.wait());
+    // EXPECT_TRUE((std::is_same_v<wait_return_type, void>));
+
     EXPECT_TRUE(has_member_test_v<decltype(result)>);
-    using test_return_type = decltype(result.test());
-    EXPECT_TRUE((std::is_same_v<test_return_type, bool>));
     EXPECT_TRUE(has_member_wait_v<decltype(result)>);
-    using wait_return_type = decltype(result.wait());
-    EXPECT_TRUE((std::is_same_v<wait_return_type, void>));
+    {
+        // ignore status -> return bool, because we have no result
+        using test_return_type = decltype(result.test());
+        EXPECT_TRUE((std::is_same_v<test_return_type, bool>));
+    }
+    {
+        // also return status -> optional<status>
+        using test_return_type = decltype(result.test(status_out()));
+        EXPECT_TRUE((internal::is_specialization<test_return_type, std::optional>::value));
+        EXPECT_TRUE((std::is_same_v<test_return_type::value_type, Status>));
+    }
+    {
+        // also return status, but as out parameter -> bool
+        Status status;
+        using test_return_type = decltype(result.test(status_out(status)));
+        EXPECT_TRUE((std::is_same_v<test_return_type, bool>));
+    }
+    {
+        // ignore status -> return nothing, because we have no result
+        using wait_return_type = decltype(result.wait());
+        EXPECT_TRUE((std::is_same_v<wait_return_type, void>));
+    }
+    {
+        // also return status -> status
+        using wait_return_type = decltype(result.wait(status_out()));
+        EXPECT_TRUE((std::is_same_v<wait_return_type, Status>));
+    }
+    {
+        // also return status, but as out parameter -> return nothing
+        Status status;
+        using wait_return_type = decltype(result.wait(status_out(status)));
+        EXPECT_TRUE((std::is_same_v<wait_return_type, void>));
+    }
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works) {
@@ -160,6 +310,37 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works) {
     EXPECT_FALSE(result.test());
     test_succeed = true;
     EXPECT_TRUE(result.test());
+}
+
+TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works_status_out) {
+    auto request_obj = request();
+    auto result      = kamping::make_nonblocking_result(std::move(request_obj));
+    test_succeed     = false;
+    EXPECT_FALSE(result.test(status_out()));
+    test_succeed                 = true;
+    std::optional<Status> status = result.test(status_out());
+    EXPECT_TRUE(status.has_value());
+    EXPECT_EQ(status.value().tag(), TOUCHED_BY_MOCK_TAG);
+}
+
+TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works_status_in) {
+    auto request_obj = request();
+    auto result      = kamping::make_nonblocking_result(std::move(request_obj));
+    test_succeed     = false;
+    Status status;
+    EXPECT_FALSE(result.test(status_out(status)));
+    test_succeed = true;
+    EXPECT_TRUE(result.test(status_out(status)));
+    EXPECT_EQ(status.tag(), TOUCHED_BY_MOCK_TAG);
+}
+
+TEST_F(NonBlockingResultTest, owning_request_and_empty_result_wait_works) {
+    auto request_obj = request();
+    auto result      = kamping::make_nonblocking_result(std::move(request_obj));
+    EXPECT_EQ(num_wait_calls, 0);
+    static_assert(std::is_same_v<decltype(result.wait()), void>);
+    result.wait();
+    EXPECT_EQ(num_wait_calls, 1);
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_extract_works) {
