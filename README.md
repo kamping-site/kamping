@@ -34,15 +34,18 @@ std::vector<T> v_glob(v_global_size);
 MPI_Allgatherv(v.data(), v_size, MPI_TYPE, v_glob.data(), rc.data(), rd.data(), MPI_TYPE, comm);
 
 ```
+
 In contrast, KaMPIng introduces a streamlined syntax with inspiration from Python's named parameters. For example, the `allgatherv` operation becomes more intuitive and concise:
 
 ```c++
 std::vector<T> v_glob = comm.allgatherv(send_buf(v));
 ```
+
 Empowered by named parameters, KaMPIng allows users to name and pass parameters in arbitrary order, computing default values only for the missing ones. This not only improves readability but also streamlines the code, providing a user-friendly and efficient way of writing MPI applications.
 
 ### Controlling memory allocation :floppy_disk:
 KaMPIng's *resize policies* allow for fine-grained control over when allocation happens.
+
 ``` c++
 // easy to use with sane defaults
 std::vector<int> v = comm.recv<int>(source(kamping::rank::any));
@@ -102,8 +105,9 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
     std::sort(data.begin(), data.end());
 }
 ```
-It is a lot more concise than the [(verbose) plain MPI implementation](./examples/applications/sample-sort/mpi.hpp), but also introduces no additional overhead to achieve this.
+It is a lot more concise than the [(verbose) plain MPI implementation](./examples/applications/sample-sort/mpi.hpp), but also introduces no additional overhead to achieve this, as can be seen the following experiment. There we compare the sorting implementation in KaMPIng to other MPI bindings.
 
+![](./plot.svg)
 ## Platform :desktop_computer:
 - intensively tested with GCC and Clang and OpenMPI
 - requires a C++17 ready compiler
