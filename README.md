@@ -120,8 +120,8 @@ It is a lot more concise than the [(verbose) plain MPI implementation](./example
 | computation of defaults via additional communication | :x:                               | :x:                                                                  | :white_check_mark:                             | :x:                                   | :white_check_mark: |
 | custom reduce operations via lambdas                 | :x:                               | :white_check_mark:                                                   | :x:                                            | :heavy_check_mark:[^4]                | :white_check_mark: |
 | containers can be resized automatically              | :x:                               | :heavy_check_mark:[^1]                                               | :heavy_check_mark:[^3]                         | :x:                                   | :white_check_mark: |
-| error handling                                       | :white_check_mark:                | :white_check_mark:                                                   | :white_check_mark:                                               | :x:                                      | :white_check_mark: |
-| actively maintained                                  | :white_check_mark:                | :x:                                                                  | :heavy_check_mark:                             |         :white_check_mark:                              |                :white_check_mark:    |
+| error handling                                       | :white_check_mark:                | :white_check_mark:                                                   | :white_check_mark:                             | :x:                                   | :white_check_mark: |
+| actively maintained                                  | :white_check_mark:                | :x:                                                                  | :heavy_check_mark:                             | :white_check_mark:                    | :white_check_mark: |
 
 [^1]: partial 
 
