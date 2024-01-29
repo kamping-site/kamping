@@ -1,4 +1,4 @@
-# :camping: KaMPIng: Karlsruhe MPI next generation
+# KaMPIng: Karlsruhe MPI next generation :camping:
 
 ![KaMPIng logo](./docs/images/logo.svg)
 
@@ -37,7 +37,7 @@ MPI_Allgatherv(v.data(), v_size, MPI_TYPE, v_glob.data(), rc.data(), rd.data(), 
 ```
 In contrast, KaMPIng introduces a streamlined syntax with inspiration from Python's named parameters. For example, the `allgatherv` operation becomes more intuitive and concise:
 
-``` c++
+```c++
 std::vector<T> v_glob = comm.allgatherv(send_buf(v));
 ```
 Empowered by named parameters, KaMPIng allows users to name and pass parameters in arbitrary order, computing default values only for the missing ones. This not only improves readability but also streamlines the code, providing a user-friendly and efficient way of writing MPI applications.
@@ -77,29 +77,33 @@ Using template-metaprogramming, KaMPIng only generates the code paths required f
 The following shows a complete implementation of distributed sample sort with KaMPIng. 
 
 ```c++
-void sort(std::vector<T>& data, MPI_Comm comm_) {
-  Communicator comm(comm_);
-  const size_t num_samples = 16 * std::log2(comm.size()) + 1;
-  std::vector<T> local_samples(num_samples);
-  std::sample(data.begin(), data.end(), local_samples.begin(), num_samples, std::mt19937{std::random_device{}()});
-  auto global_samples = comm.allgather(send_buf(local_samples));
-  std::sort(global_samples.begin(), global_samples.end());
-  for (size_t i = 0; i < comm.size() - 1; i++) {
-    global_samples[i] = global_samples[num_samples * (i + 1)];
-  }
-  global_samples.resize(comm.size() - 1);
-  std::vector<std::vector<T>> buckets = build_buckets(data, global_samples);
-  data.clear();
-  std::vector<int> scounts;
-  for (auto &bucket : buckets) {
-    data.insert(data.end(), bucket.begin(), bucket.end());
-    scounts.push_back(bucket.size());
-  }
-  data = comm.alltoallv(send_buf(data), send_counts(scounts));
-  std::sort(data.begin(), data.end());
+void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
+    Communicator<> comm(comm_);
+    size_t const   oversampling_ratio = 16 * static_cast<size_t>(std::log2(comm.size())) + 1;
+    std::vector<T> local_samples(oversampling_ratio);
+    std::sample(data.begin(), data.end(), local_samples.begin(), oversampling_ratio, std::mt19937{seed});
+    auto global_samples = comm.allgather(send_buf(local_samples)).extract_recv_buffer();
+    std::sort(global_samples.begin(), global_samples.end());
+    for (size_t i = 0; i < comm.size() - 1; i++) {
+        global_samples[i] = global_samples[oversampling_ratio * (i + 1)];
+    }
+    global_samples.resize(num_splitters);
+    std::vector<std::vector<T>> buckets(global_samples.size() + 1);
+    for (auto& element: data) {
+        auto const bound = std::upper_bound(global_samples.begin(), global_samples.end(), element);
+        buckets[static_cast<size_t>(bound - global_samples.begin())].push_back(element);
+    }
+    data.clear();
+    std::vector<int> scounts;
+    for (auto& bucket: buckets) {
+        data.insert(data.end(), bucket.begin(), bucket.end());
+        scounts.push_back(static_cast<int>(bucket.size()));
+    }
+    data = comm.alltoallv(send_buf(data), send_counts(scounts)).extract_recv_buffer();
+    std::sort(data.begin(), data.end());
 }
 ```
-While a lot more concise than the plain MPI implementation, it introduces no additional run time overhead.
+While a lot more concise than the [./examples/applications/sample-sort/mpi.hpp]((verbose) plain MPI implementation), it introduces no additional run time overhead.
 
 ## Platform :desktop_computer:
 - intensively tested with GCC and Clang and OpenMPI
