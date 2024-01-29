@@ -44,7 +44,7 @@ PROJECT_NUMBER         = 0.0.1
 # for a project that appears at the top of each page and should give viewer a
 # quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          = "An MPI wrapper which makes using MPI feel like real C++"
+PROJECT_BRIEF          = "(Near) zero-overhead C++ MPI bindings."
 
 # With the PROJECT_LOGO tag one can specify a logo or an icon that is included
 # in the documentation. The maximum height of the logo should not exceed 55
@@ -1187,7 +1187,7 @@ HTML_HEADER            = docs/custom_doxygen/header.html
 # that doxygen normally uses.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_FOOTER            = docs/custom_doxygen/footer.html
+# HTML_FOOTER            = docs/custom_doxygen/footer.html
 
 # The HTML_STYLESHEET tag can be used to specify a user-defined cascading style
 # sheet that is used by each HTML page. It can be used to fine-tune the look of
@@ -1237,6 +1237,8 @@ HTML_EXTRA_FILES       = extern/doxygen-awesome-css/doxygen-awesome-darkmode-tog
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
 HTML_COLORSTYLE_HUE    = 220
+
+HTML_COLORSTYLE    = LIGHT
 
 # The HTML_COLORSTYLE_SAT tag controls the purity (or saturation) of the colors
 # in the HTML output. For a value of 0 the output will use gray-scales only. A
