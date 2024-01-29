@@ -23,8 +23,7 @@ Technology.
 Using plain MPI, operations like `MPI_Allgatherv` often lead to verbose and error-prone boilerplate code:
 
 ``` c++
-std::vector<T> v = ...; // Fill with data
-int size;
+std::vector<T> v = ...; // Fill with data int size;
 MPI_Comm_size(comm, &size);
 int n = static_cast<int>(v.size());
 std::vector<int> rc(size), rd(size);
@@ -103,7 +102,7 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
     std::sort(data.begin(), data.end());
 }
 ```
-While a lot more concise than the [./examples/applications/sample-sort/mpi.hpp]((verbose) plain MPI implementation), it introduces no additional run time overhead.
+While a lot more concise than the (verbose) [./examples/applications/sample-sort/mpi.hpp](plain MPI implementation), it introduces no additional run time overhead.
 
 ## Platform :desktop_computer:
 - intensively tested with GCC and Clang and OpenMPI
