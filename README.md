@@ -1,27 +1,110 @@
-# KaMPIng: Karlsruhe MPI next generation
+# :camping: KaMPIng: Karlsruhe MPI next generation
 
 ![KaMPIng logo](./docs/images/logo.svg)
 
-This is KaMPIng [kampɪŋ], an MPI wrapper which makes using MPI feel like real C++
+This is KaMPIng [kampɪŋ], a (near) zero-overhead MPI wrapper for modern C++.
 
-KaMPIng is developed at the [Algorithm Engineering Group](https://algo2.iti.kit.edu/english/index.php) at Karlsruhe Institute of Technology.
+It covers the whole range of abstraction levels from low-level MPI calls to
+convenient STL-style bindings, where most parameters are inferred from a small
+subset of the full parameter set. This allows for both rapid prototyping and
+fine-tuning of distributed code with predictable runtime behavior and memory
+management.
 
-## Goals
-   - ban `man MPI_*` from your command line history
-   - zero-overhead whenever possible
-     - if not possible this must be clear to the user
-   - easy to use when simple communication is required, but powerful enough for finely tuned behavior
-     - useful defaults
-     - compile-time checks for incorrect usage
-   - accumulate knowledge/algorithms of our group in a single place
-   - ensure that the library outlives multiple generations of our group
+Using template-metaprogramming, only code paths required for computing missing
+parameters are generated at compile time, which results in (near) zero-overhead
+bindings.
 
-## Platform
-   - compiles with GCC, Clang and ICC on SuperMUC-NG, bwUniCluster, HoreKa
-   - C++17
-     - we do not want to rely on C++20 features, because Intel does not support it yet
-   - easy inclusion into other projects by using modern CMake
+KaMPIng is developed at the [Algorithm Engineering
+Group](https://algo2.iti.kit.edu/english/index.php) at Karlsruhe Institute of
+Technology.
+
+## Features :sparkles:
+### Named Parameters :speech_balloon:
+Using plain MPI, operations like `MPI_Allgatherv` often lead to verbose and error-prone boilerplate code:
+
+``` c++
+std::vector<T> v = ...; // Fill with data
+int size;
+MPI_Comm_size(comm, &size);
+int n = static_cast<int>(v.size());
+std::vector<int> rc(size), rd(size);
+MPI_Allgather(&n, 1, MPI_INT, rc.data(), 1, MPI_INT, comm);
+std::exclusive_scan(rc.begin(), rc.end(), rd.begin(), 0);
+int n_glob = rc.back() + rd.back();
+std::vector<T> v_glob(v_global_size);
+MPI_Allgatherv(v.data(), v_size, MPI_TYPE, v_glob.data(), rc.data(), rd.data(), MPI_TYPE, comm);
+
+```
+In contrast, KaMPIng introduces a streamlined syntax with inspiration from Python's named parameters. For example, the `allgatherv` operation becomes more intuitive and concise:
+
+``` c++
+std::vector<T> v_glob = comm.allgatherv(send_buf(v));
+```
+Empowered by named parameters, KaMPIng allows users to name and pass parameters in arbitrary order, computing default values only for the missing ones. This not only improves readability but also streamlines the code, providing a user-friendly and efficient way of writing MPI applications.
+
+### Controlling memory allocation :floppy_disk:
+KaMPIng's *resize policies* allow for fine-grained control over when allocation happens.
+``` c++
+// easy to use with sane defaults
+std::vector<int> v = comm.recv<int>(source(kamping::rank::any));
+
+// flexible memory control
+std::vector<int> v_out;
+v_out.resize(enough_memory_to_fit);
+comm.recv<int>(recv_buf<kamping::no_resize>(v_out), recv_count(i_know_already_know_that), source(kamping::rank::any));
+```
+
+### STL support :books:
+- KaMPIng works with everything that is a `std::contiguous_range`, everywhere.
+- Builtin C++ types are automatically mapped to their corresponding MPI types. 
+- All internally used containers can be altered via template parameters.
+### Expandability :jigsaw:
+- Don't like the performance of your MPI implementation's reduce algorithm? Just override it using our plugin architecture.
+- Add additional functionality to communicator objects, without altering any application code.
+- Easy to integrate with existing MPI code.
+- Flexible core library for a new toolbox :toolbox: of distributed datastructures and algorithms
+
+### And much more ... :arrow_upper_right:
+- Easy non-blocking communication via request pools.
+- Compile time and runtime error checking (which can be completely deactivated).
+- Collective hierarchical timers to speed up your evaluation workflow.
+- ...
+
+Dive into the documentation or tests to find out more ...
+
+### (Near) zero overhead - for development and performance :chart_with_upwards_trend:
+Using template-metaprogramming, KaMPIng only generates the code paths required for computing missing parameters. 
+The following shows a complete implementation of distributed sample sort with KaMPIng. 
+
+```c++
+void sort(std::vector<T>& data, MPI_Comm comm_) {
+  Communicator comm(comm_);
+  const size_t num_samples = 16 * std::log2(comm.size()) + 1;
+  std::vector<T> local_samples(num_samples);
+  std::sample(data.begin(), data.end(), local_samples.begin(), num_samples, std::mt19937{std::random_device{}()});
+  auto global_samples = comm.allgather(send_buf(local_samples));
+  std::sort(global_samples.begin(), global_samples.end());
+  for (size_t i = 0; i < comm.size() - 1; i++) {
+    global_samples[i] = global_samples[num_samples * (i + 1)];
+  }
+  global_samples.resize(comm.size() - 1);
+  std::vector<std::vector<T>> buckets = build_buckets(data, global_samples);
+  data.clear();
+  std::vector<int> scounts;
+  for (auto &bucket : buckets) {
+    data.insert(data.end(), bucket.begin(), bucket.end());
+    scounts.push_back(bucket.size());
+  }
+  data = comm.alltoallv(send_buf(data), send_counts(scounts));
+  std::sort(data.begin(), data.end());
+}
+```
+While a lot more concise than the plain MPI implementation, it introduces no additional run time overhead.
+
+## Platform :desktop_computer:
+- intensively tested with GCC and Clang and OpenMPI
+- requires a C++17 ready compiler
+- easy integration into other projects using modern CMake
    
 ## LICENSE
-
 KaMPIng is released under the GNU Lesser General Public License. See [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER) for details
