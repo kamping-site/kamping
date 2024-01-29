@@ -38,11 +38,11 @@ void sort(MPI_Comm comm, std::vector<T>& data, size_t seed) {
     pick_splitters(static_cast<size_t>(size) - 1, oversampling_ratio, global_samples);
     auto             buckets = build_buckets(data, global_samples);
     std::vector<int> sCounts, sDispls, rCounts(static_cast<size_t>(size)), rDispls(static_cast<size_t>(size));
-    int              send_pos = 0;
+    size_t           send_pos = 0;
     for (auto& bucket: buckets) {
         data.insert(data.end(), bucket.begin(), bucket.end());
         sCounts.push_back(static_cast<int>(bucket.size()));
-        sDispls.push_back(send_pos);
+        sDispls.push_back(static_cast<int>(send_pos));
         send_pos += bucket.size();
     }
     MPI_Alltoall(sCounts.data(), 1, MPI_INT, rCounts.data(), 1, MPI_INT, comm);
