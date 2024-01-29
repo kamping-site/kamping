@@ -102,7 +102,7 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
     std::sort(data.begin(), data.end());
 }
 ```
-While a lot more concise than the (verbose) [./examples/applications/sample-sort/mpi.hpp](plain MPI implementation), it introduces no additional run time overhead.
+It is a lot more concise than the [(verbose) plain MPI implementation](./examples/applications/sample-sort/mpi.hpp), but also introduces no additional overhead to achieve this.
 
 ## Platform :desktop_computer:
 - intensively tested with GCC and Clang and OpenMPI
