@@ -21,7 +21,6 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/recv.hpp"
 #include "kamping/request_pool.hpp"
-#include "kamping/status_vector.hpp"
 
 using namespace kamping;
 
