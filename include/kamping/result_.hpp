@@ -432,21 +432,26 @@ constexpr bool return_recv_buffer_only() {
     }
 }
 
-/// @brief Construct result object for a wrapped MPI call. Three different cases are handled:
-/// a) The recv_buffer owns its underlying data (i.e. the data has to be returned via the result object):
+/// @brief Construct result object for a wrapped MPI call. Four different cases are handled:
+/// a) The recv_buffer owns its underlying data (i.e. the received data has to be returned via the result object):
 ///
 /// a.1) the recv_buffer is the only buffer to be returned:
 /// In this case, the recv_buffers's underlying data is extracted and returned directly (per value).
-/// a.2) there are more data buffers to be returned, e.g. recv_counts, etc.:
-/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return (buffers for which a
-/// *_out() named parameter was passed to the wrapped MPI call) in a std::tuple. This enables unpacking the object via a
-/// structured binding. The recv_buffer is always the first entry in the std::tuple followed by the other buffers
-/// respecting the order in which these buffers where provided to the wrapped MPI call.
 ///
-/// b) The recv_buffer only reference its underlying data:
-/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return (buffers for which a
-/// *_out() named parameter was passed to the wrapped MPI call) in a std::tuple respecting the order in which these
-/// buffers where provided to the wrapped MPI call.
+/// a.2) there are more multiple buffers to be returned and recv_buffer is explicitly given by the caller:
+/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return (owning buffers for
+/// which a *_out() named parameter was passed to the wrapped MPI call) in a std::tuple respecting the order in which
+/// these buffers where provided to the wrapped MPI call. This enables unpacking the object via structured binding.
+///
+/// a.3) there are more data buffers to be returned and recv_buffer is *not* explicitly given by the caller:
+/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return in a std::tuple. The
+/// recv_buffer is always the first entry in the std::tuple followed by the other buffers respecting the order in which
+/// these buffers where provided to the wrapped MPI call.
+///
+/// b) The recv_buffer only references its underlying data:
+/// In this case recv_buffer is not part of the result object. The \ref kamping::MPIResult_ object stores the buffer to
+/// return (owning buffers for which a *_out() named parameter was passed to the wrapped MPI call) in a std::tuple
+/// respecting the order in which these buffers where provided to the wrapped MPI call.
 ///
 /// @tparam InitialArgs Arguments passed to the wrapped MPI call.
 /// @tparam Buffers Types of data buffers created/filled within the wrapped MPI call.
