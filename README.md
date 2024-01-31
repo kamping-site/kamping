@@ -1,4 +1,4 @@
-# KaMPIng: Karlsruhe MPI next generation :camping:
+# KaMPIng: Karlsruhe MPI next generation :rocket:
 
 ![KaMPIng logo](./docs/images/logo.svg)
 
@@ -50,7 +50,7 @@ KaMPIng's *resize policies* allow for fine-grained control over when allocation 
 
 | resize policy            |                                                                         |
 |--------------------------|-------------------------------------------------------------------------|
-| `kamping::resize_to_fit` | resize the container to exactly accomodate the data                     |
+| `kamping::resize_to_fit` | resize the container to exactly accommodate the data                    |
 | `kamping::no_resize`     | assume that the container has enough memory available to store the data |
 | `kamping::grow_only`     | only resize the container if it not large enough                        |
 
@@ -124,14 +124,14 @@ It is a lot more concise than the [(verbose) plain MPI implementation](./example
 - easy integration into other projects using modern CMake
    
 ## Other MPI bindings
-|                                                      | [MPI](https://www.mpi-forum.org/) | [Boost.MPI](https://www.boost.org/doc/libs/1_84_0/doc/html/mpi.html) | [RWTH MPI](https://github.com/VRGroupRWTH/mpi) | [MPL](https://github.com/rabauke/mpl) | :camping: KaMPIng  |
-|------------------------------------------------------|:---------------------------------:|:--------------------------------------------------------------------:|:----------------------------------------------:|:-------------------------------------:|:------------------:|
-| STL support                                          | :x:                               | :heavy_check_mark:[^2]                                               | :heavy_check_mark:[^3]                         | :heavy_check_mark:[^2]                | :white_check_mark: |
-| computation of defaults via additional communication | :x:                               | :x:                                                                  | :white_check_mark:                             | :x:                                   | :white_check_mark: |
-| custom reduce operations via lambdas                 | :x:                               | :white_check_mark:                                                   | :x:                                            | :heavy_check_mark:[^4]                | :white_check_mark: |
-| containers can be resized automatically              | :x:                               | :heavy_check_mark:[^1]                                               | :heavy_check_mark:[^3]                         | :x:                                   | :white_check_mark: |
-| error handling                                       | :white_check_mark:                | :white_check_mark:                                                   | :white_check_mark:                             | :x:                                   | :white_check_mark: |
-| actively maintained                                  | :white_check_mark:                | :x:                                                                  | :heavy_check_mark:                             | :white_check_mark:                    | :white_check_mark: |
+|                                                      | [MPI](https://www.mpi-forum.org/) | [Boost.MPI](https://www.boost.org/doc/libs/1_84_0/doc/html/mpi.html) | [RWTH MPI](https://github.com/VRGroupRWTH/mpi) | [MPL](https://github.com/rabauke/mpl) | ![KaMPIng](./docs/images/icon.svg) |
+|------------------------------------------------------|:---------------------------------:|:--------------------------------------------------------------------:|:----------------------------------------------:|:-------------------------------------:|:-----------------------------------------------:|
+| STL support                                          | :x:                               | :heavy_check_mark:[^2]                                               | :heavy_check_mark:[^3]                         | :heavy_check_mark:[^2]                | :white_check_mark:                              |
+| computation of defaults via additional communication | :x:                               | :x:                                                                  | :white_check_mark:                             | :x:                                   | :white_check_mark:                              |
+| custom reduce operations via lambdas                 | :x:                               | :white_check_mark:                                                   | :x:                                            | :heavy_check_mark:[^4]                | :white_check_mark:                              |
+| containers can be resized automatically              | :x:                               | :heavy_check_mark:[^1]                                               | :heavy_check_mark:[^3]                         | :x:                                   | :white_check_mark:                              |
+| error handling                                       | :white_check_mark:                | :white_check_mark:                                                   | :white_check_mark:                             | :x:                                   | :white_check_mark:                              |
+| actively maintained                                  | :white_check_mark:                | :x:                                                                  | :heavy_check_mark:                             | :white_check_mark:                    | :white_check_mark:                              |
 
 [^1]: partial 
 
