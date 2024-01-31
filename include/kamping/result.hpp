@@ -429,6 +429,7 @@ public:
     auto extract() {
         if constexpr (owns_request) {
             auto result = extract_result(); // we try to extract the result first, so that we get a nice error message
+            // TODO: return a named struct
             return std::pair(_request.extract(), std::move(result));
         } else {
             return extract_result();
@@ -436,13 +437,16 @@ public:
     }
 
     /// @brief Waits for the underlying \ref Request to complete by calling \ref Request::wait() and upon completion
-    /// returns an \c std::pair containing an \ref MPIResult and the status if \ref kamping::status_out() is passend.
+    /// returns:
     ///
-    /// If the result is empty (see \ref MPIResult::is_empty), only the status is returned.
+    /// If \p status is an out-parameter:
+    /// - If the result is not empty (see \ref MPIResult::is_empty), an \c std::pair containing an \ref MPIResult and
+    /// the status.
+    /// - If the result is empty, only the status is returned.
     ///
-    /// If \c kamping::status(ignore<>) is passed as a parameter or the status
-    /// parameter is omited, only the result is returned (or nothing if the
-    /// result is empty).
+    /// If \p is \c kamping::status(ignore<>), or not an out-paramter:
+    /// - If the result is not empty (see \ref MPIResult::is_empty), only the result is returned.
+    /// - If the result is empty, nothing is returned.
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
     /// manually wait on the request that they own and manually obtain the result via \ref extract().
@@ -473,13 +477,15 @@ public:
         }
     }
 
-    /// @brief Tests the underlying \ref Request for completion by calling \ref Request::test() and returns an \c
-    /// std::optional containing the underlying \ref MPIResult on success. If \ref kamping::status_out() is passed as a
-    /// parameter, also returns the status. If the associated operation has not completed yet, returns \c std::nullopt.
+    /// @brief Tests the underlying \ref Request for completion by calling \ref
+    /// Request::test() and returns a value convertible to \c bool indicating if the request is complete.
     ///
-    /// The return value depends on the encapsulated result and the status parameter: See \ref wait() for details.
+    /// The type of the return value depends on the encapsulated result and the \p status parameter and follows the same
+    /// semantics as \ref wait(), but its return value is wrapped in an \c std::optional.
+    /// The optional only contains a value if the request is complete, i.e. \c test() succeeded.
     ///
-    /// If both the result is empty and no status is requested, returns \c true if the underlying request is complete.
+    /// If both the result is empty and no status returned, returns a \c bool indicating completion instead of an \c
+    /// std::optional.
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
     /// manually test the request that they own and manually obtain the result via \ref extract().

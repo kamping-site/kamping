@@ -256,15 +256,6 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_extract_works) {
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_types_match) {
     auto request_obj = request();
     auto result      = kamping::make_nonblocking_result(std::move(request_obj));
-    // EXPECT_TRUE(has_member_test_v<decltype(result)>);
-    // EXPECT_TRUE(has_member_test_v<decltype(result)>);
-    // {
-    //     using test_return_type = decltype(result.test());
-    //     EXPECT_TRUE((std::is_same_v<test_return_type, bool>));
-    //     EXPECT_TRUE(has_member_wait_v<decltype(result)>);
-    // }
-    // using wait_return_type = decltype(result.wait());
-    // EXPECT_TRUE((std::is_same_v<wait_return_type, void>));
 
     EXPECT_TRUE(has_member_test_v<decltype(result)>);
     EXPECT_TRUE(has_member_wait_v<decltype(result)>);
