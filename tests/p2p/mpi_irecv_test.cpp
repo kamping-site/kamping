@@ -119,9 +119,8 @@ TEST_F(IrecvTest, recv_vector_from_explicit_source) {
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
             // TODO this should not have to be extracted
-            auto [handle, result] =
-                comm.irecv(source(other), recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message)).extract();
-            auto status = handle.wait(status_out());
+            auto [handle, result] = comm.irecv(source(other), recv_buf<resize_to_fit>(message)).extract();
+            auto status           = handle.wait(status_out());
             EXPECT_TRUE(has_member_extract_recv_count_v<decltype(result)>);
             EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
             auto source = status.source();
@@ -155,12 +154,8 @@ TEST_F(IrecvTest, recv_vector_from_explicit_source_and_explicit_tag) {
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
-            auto [handle, result] = comm.irecv(
-                                            source(other),
-                                            tag(asserting_cast<int>(other)),
-                                            recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message)
-            )
-                                        .extract();
+            auto [handle, result] =
+                comm.irecv(source(other), tag(asserting_cast<int>(other)), recv_buf<resize_to_fit>(message)).extract();
             auto status = handle.wait(status_out());
             EXPECT_TRUE(has_member_extract_recv_count_v<decltype(result)>);
             EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
@@ -196,9 +191,8 @@ TEST_F(IrecvTest, recv_vector_with_explicit_size_resize_to_fit) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message;
         EXPECT_EQ(probe_counter, 0);
-        auto [handle, result] =
-            comm.irecv(recv_buf<BufferResizePolicy::resize_to_fit>(message), recv_count(5)).extract();
-        auto status = handle.wait(status_out());
+        auto [handle, result] = comm.irecv(recv_buf<resize_to_fit>(message), recv_count(5)).extract();
+        auto status           = handle.wait(status_out());
         EXPECT_FALSE(has_member_extract_recv_count_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
         // we should not probe for the message size inside of KaMPIng if we specify the recv count explicitly
@@ -230,7 +224,7 @@ TEST_F(IrecvTest, recv_vector_with_explicit_size_no_resize_big_enough) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message(8, -1);
         EXPECT_EQ(probe_counter, 0);
-        auto [handle, result] = comm.irecv(recv_buf<BufferResizePolicy::no_resize>(message), recv_count(5)).extract();
+        auto [handle, result] = comm.irecv(recv_buf<no_resize>(message), recv_count(5)).extract();
         auto status           = handle.wait(status_out());
         // we should not probe for the message size inside of KaMPIng if we specify the recv count explicitly
         EXPECT_EQ(probe_counter, 0);
@@ -263,12 +257,12 @@ TEST_F(IrecvTest, recv_vector_with_explicit_size_no_resize_too_small) {
         std::vector<int> message(1);
         EXPECT_EQ(probe_counter, 0);
         EXPECT_KASSERT_FAILS(
-            { comm.irecv(recv_buf<BufferResizePolicy::no_resize>(message), recv_count(5)); },
+            { comm.irecv(recv_buf<no_resize>(message), recv_count(5)); },
             "Recv buffer is not large enough to hold all received elements."
         );
         // actually receive it to clean up.
         message.resize(5);
-        comm.irecv(recv_buf<BufferResizePolicy::no_resize>(message), recv_count(5)).wait();
+        comm.irecv(recv_buf<no_resize>(message), recv_count(5)).wait();
     }
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
@@ -293,7 +287,7 @@ TEST_F(IrecvTest, recv_vector_with_explicit_size_grow_only_big_enough) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message(8, -1);
         EXPECT_EQ(probe_counter, 0);
-        auto [handle, result] = comm.irecv(recv_buf<BufferResizePolicy::grow_only>(message), recv_count(5)).extract();
+        auto [handle, result] = comm.irecv(recv_buf<grow_only>(message), recv_count(5)).extract();
         EXPECT_FALSE(has_member_extract_recv_count_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
         auto status = handle.wait(status_out());
@@ -326,7 +320,7 @@ TEST_F(IrecvTest, recv_vector_with_explicit_size_grow_only_too_small) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message(3, -1);
         EXPECT_EQ(probe_counter, 0);
-        auto [handle, result] = comm.irecv(recv_buf<BufferResizePolicy::grow_only>(message), recv_count(5)).extract();
+        auto [handle, result] = comm.irecv(recv_buf<grow_only>(message), recv_count(5)).extract();
         EXPECT_FALSE(has_member_extract_recv_count_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
         auto status = handle.wait(status_out());
@@ -360,7 +354,7 @@ TEST_F(IrecvTest, recv_vector_with_input_status) {
         std::vector<int> message;
         Status           recv_status;
         // pass status as input parameter
-        auto [handle, result] = comm.irecv(recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message)).extract();
+        auto [handle, result] = comm.irecv(recv_buf<resize_to_fit>(message)).extract();
         handle.wait(status_out(recv_status));
         EXPECT_TRUE(has_member_extract_recv_count_v<decltype(result)>);
         EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
@@ -455,11 +449,9 @@ TEST_F(IrecvTest, recv_type_is_out_param) {
         MPI_Datatype recv_type;
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
-            auto [handle, result] =
-                comm.irecv(recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message), recv_type_out(recv_type))
-                    .extract();
-            auto status = handle.wait(status_out());
-            auto source = status.source();
+            auto [handle, result] = comm.irecv(recv_buf<resize_to_fit>(message), recv_type_out(recv_type)).extract();
+            auto status           = handle.wait(status_out());
+            auto source           = status.source();
             EXPECT_EQ(status.tag(), source);
             EXPECT_EQ(status.count<int>(), source);
             EXPECT_EQ(recv_type, MPI_INT);
