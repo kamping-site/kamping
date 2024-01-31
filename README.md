@@ -46,7 +46,14 @@ std::vector<T> v_glob = comm.allgatherv(send_buf(v));
 Empowered by named parameters, KaMPIng allows users to name and pass parameters in arbitrary order, computing default values only for the missing ones. This not only improves readability but also streamlines the code, providing a user-friendly and efficient way of writing MPI applications.
 
 ### Controlling memory allocation :floppy_disk:
-KaMPIng's *resize policies* allow for fine-grained control over when allocation happens.
+KaMPIng's *resize policies* allow for fine-grained control over when allocation happens:
+
+| resize policy            |                                                                         |
+|--------------------------|-------------------------------------------------------------------------|
+| `kamping::resize_to_fit` | resize the container to exactly accomodate the data                     |
+| `kamping::no_resize`     | assume that the container has enough memory available to store the data |
+| `kamping::grow_only`     | only resize the container if it not large enough                        |
+
 
 ``` c++
 // easy to use with sane defaults
@@ -55,6 +62,7 @@ std::vector<int> v = comm.recv<int>(source(kamping::rank::any));
 // flexible memory control
 std::vector<int> v_out;
 v_out.resize(enough_memory_to_fit);
+// already_known_counts are the recv_counts that may have been computed already earlier and thus do not need to be computed again
 comm.recv<int>(recv_buf<kamping::no_resize>(v_out), recv_count(i_know_already_know_that), source(kamping::rank::any));
 ```
 
