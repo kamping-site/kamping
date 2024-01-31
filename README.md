@@ -23,7 +23,8 @@ Technology.
 Using plain MPI, operations like `MPI_Allgatherv` often lead to verbose and error-prone boilerplate code:
 
 ``` c++
-std::vector<T> v = ...; // Fill with data int size;
+std::vector<T> v = ...; // Fill with data
+int size;
 MPI_Comm_size(comm, &size);
 int n = static_cast<int>(v.size());
 std::vector<int> rc(size), rd(size);
@@ -38,6 +39,7 @@ MPI_Allgatherv(v.data(), v_size, MPI_TYPE, v_glob.data(), rc.data(), rd.data(), 
 In contrast, KaMPIng introduces a streamlined syntax inspired by Python's named parameters. For example, the `allgatherv` operation becomes more intuitive and concise:
 
 ```c++
+std::vector<T> v = ...; // Fill with data
 std::vector<T> v_glob = comm.allgatherv(send_buf(v));
 ```
 
