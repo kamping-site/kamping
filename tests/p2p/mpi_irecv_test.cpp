@@ -82,9 +82,8 @@ TEST_F(IrecvTest, recv_vector_from_arbitrary_source) {
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
             std::vector<int> message;
-            auto [handle, result] =
-                comm.irecv(recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message), recv_type_out()).extract();
-            auto status = handle.wait(status_out());
+            auto [handle, result] = comm.irecv(recv_buf<resize_to_fit>(message), recv_type_out()).extract();
+            auto status           = handle.wait(status_out());
             EXPECT_TRUE(has_member_extract_recv_count_v<decltype(result)>);
             EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
             EXPECT_TRUE(has_member_extract_recv_type_v<decltype(result)>);
