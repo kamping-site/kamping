@@ -21,9 +21,9 @@
 
 using namespace kamping;
 
-static bool   test_succeed        = false;
-static size_t num_wait_calls      = 0;
-int const     TOUCHED_BY_MOCK_TAG = 42;
+static bool   let_mpi_test_succeed = false;
+static size_t num_wait_calls       = 0;
+int const     TOUCHED_BY_MOCK_TAG  = 42;
 
 KAMPING_MAKE_HAS_MEMBER(wait)
 KAMPING_MAKE_HAS_MEMBER(test)
@@ -42,18 +42,18 @@ int MPI_Test(MPI_Request*, int* flag, MPI_Status* status) {
     if (status != MPI_STATUS_IGNORE) {
         status->MPI_TAG = TOUCHED_BY_MOCK_TAG;
     }
-    *flag = test_succeed;
+    *flag = let_mpi_test_succeed;
     return MPI_SUCCESS;
 }
 
 class NonBlockingResultTest : public ::testing::Test {
     void SetUp() override {
-        test_succeed   = false;
-        num_wait_calls = 0;
+        let_mpi_test_succeed = false;
+        num_wait_calls       = 0;
     }
     void TearDown() override {
-        test_succeed   = false;
-        num_wait_calls = 0;
+        let_mpi_test_succeed = false;
+        num_wait_calls       = 0;
     }
 };
 
@@ -176,12 +176,12 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works) {
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
-    auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
-    test_succeed     = false;
+    auto request_obj     = request();
+    auto result          = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    let_mpi_test_succeed = false;
     EXPECT_FALSE(result.test().has_value());
-    test_succeed = true;
-    auto data    = result.test();
+    let_mpi_test_succeed = true;
+    auto data            = result.test();
     EXPECT_TRUE(data.has_value());
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data.value().extract_recv_buffer(), expected_data);
@@ -192,12 +192,12 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_out) {
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
-    auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
-    test_succeed     = false;
+    auto request_obj     = request();
+    auto result          = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    let_mpi_test_succeed = false;
     EXPECT_FALSE(result.test(status_out()).has_value());
-    test_succeed = true;
-    auto data    = result.test(status_out());
+    let_mpi_test_succeed = true;
+    auto data            = result.test(status_out());
     EXPECT_TRUE(data.has_value());
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data.value().first.extract_recv_buffer(), expected_data);
@@ -209,13 +209,13 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_in) {
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
-    auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
-    test_succeed     = false;
+    auto request_obj     = request();
+    auto result          = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    let_mpi_test_succeed = false;
     Status status;
     EXPECT_FALSE(result.test(status_out(status)).has_value());
-    test_succeed = true;
-    auto data    = result.test(status_out(status));
+    let_mpi_test_succeed = true;
+    auto data            = result.test(status_out(status));
     EXPECT_TRUE(data.has_value());
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data.value().extract_recv_buffer(), expected_data);
@@ -304,32 +304,32 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_types_match) {
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works) {
-    auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(request_obj));
-    test_succeed     = false;
+    auto request_obj     = request();
+    auto result          = kamping::make_nonblocking_result(std::move(request_obj));
+    let_mpi_test_succeed = false;
     EXPECT_FALSE(result.test());
-    test_succeed = true;
+    let_mpi_test_succeed = true;
     EXPECT_TRUE(result.test());
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works_status_out) {
-    auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(request_obj));
-    test_succeed     = false;
+    auto request_obj     = request();
+    auto result          = kamping::make_nonblocking_result(std::move(request_obj));
+    let_mpi_test_succeed = false;
     EXPECT_FALSE(result.test(status_out()));
-    test_succeed                 = true;
+    let_mpi_test_succeed         = true;
     std::optional<Status> status = result.test(status_out());
     EXPECT_TRUE(status.has_value());
     EXPECT_EQ(status.value().tag(), TOUCHED_BY_MOCK_TAG);
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works_status_in) {
-    auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(request_obj));
-    test_succeed     = false;
+    auto request_obj     = request();
+    auto result          = kamping::make_nonblocking_result(std::move(request_obj));
+    let_mpi_test_succeed = false;
     Status status;
     EXPECT_FALSE(result.test(status_out(status)));
-    test_succeed = true;
+    let_mpi_test_succeed = true;
     EXPECT_TRUE(result.test(status_out(status)));
     EXPECT_EQ(status.tag(), TOUCHED_BY_MOCK_TAG);
 }
