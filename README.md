@@ -10,8 +10,8 @@ subset of the full parameter set. This allows for both rapid prototyping and
 fine-tuning of distributed code with predictable runtime behavior and memory
 management.
 
-Using template-metaprogramming, only code paths required for computing missing
-parameters are generated at compile time, which results in (near) zero-overhead
+Using template-metaprogramming, only code paths required for computing
+parameters not provided by the user are generated at compile time, which results in (near) zero-overhead
 bindings.
 
 KaMPIng is developed at the [Algorithm Engineering
