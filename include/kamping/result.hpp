@@ -22,6 +22,8 @@
 #include "kamping/has_member.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
+#include "kamping/named_parameters_detail/status_parameters.hpp"
+#include "kamping/parameter_objects.hpp"
 
 namespace kamping {
 namespace internal {
@@ -418,7 +420,7 @@ public:
 
     /// @brief Extracts the components of this results, leaving the user responsible.
     ///
-    /// If this result owns the underlying request, returns a \c std::tuple containing the \ref Request and \ref
+    /// If this result owns the underlying request, returns a \c std::pair containing the \ref Request and \ref
     /// MPIResult. If the request is owned by the user, just return the underlying \ref MPIResult.
     ///
     /// Note that the result may be in an undefined state because the associated operations is still underway and it is
@@ -427,51 +429,97 @@ public:
     auto extract() {
         if constexpr (owns_request) {
             auto result = extract_result(); // we try to extract the result first, so that we get a nice error message
-            return std::make_tuple(_request.extract(), std::move(result));
+            // TODO: return a named struct
+            return std::pair(_request.extract(), std::move(result));
         } else {
             return extract_result();
         }
     }
 
-    /// @brief Waits for the underlying \ref Request to complete by calling \ref Request::wait() and returns an \ref
-    /// MPIResult upon completion or nothing if the result is empty (see \ref MPIResult::is_empty).
+    /// @brief Waits for the underlying \ref Request to complete by calling \ref Request::wait() and upon completion
+    /// returns:
+    ///
+    /// If \p status is an out-parameter:
+    /// - If the result is not empty (see \ref MPIResult::is_empty), an \c std::pair containing an \ref MPIResult and
+    /// the status.
+    /// - If the result is empty, only the status is returned.
+    ///
+    /// If \p is \c kamping::status(ignore<>), or not an out-paramter:
+    /// - If the result is not empty (see \ref MPIResult::is_empty), only the result is returned.
+    /// - If the result is empty, nothing is returned.
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
     /// manually wait on the request that they own and manually obtain the result via \ref extract().
+    ///
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
     template <
+        typename StatusParamObjectType = decltype(status(ignore<>)),
         typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
         typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
-    [[nodiscard]] std::conditional_t<!MPIResultType::is_empty, MPIResultType, void> wait() {
+    auto wait(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
         kassert_not_extracted("The result of this request has already been extracted.");
-        _request.underlying().wait();
+        constexpr bool return_status = internal::is_extractable<StatusParamObjectType>;
         if constexpr (!MPIResultType::is_empty) {
-            return extract_result();
+            if constexpr (return_status) {
+                auto status_return = _request.underlying().wait(std::move(status));
+                return std::make_pair(extract_result(), std::move(status_return));
+            } else {
+                _request.underlying().wait(std::move(status));
+                return extract_result();
+            }
         } else {
-            return;
+            return _request.underlying().wait(std::move(status));
         }
     }
 
-    /// @brief Tests the underlying \ref Request for completion by calling \ref Request::test() and returns an optional
-    /// containing the underlying \ref MPIResult on success. If the associated operation has not completed yet, returns
-    /// \c std::nullopt.
+    /// @brief Tests the underlying \ref Request for completion by calling \ref
+    /// Request::test() and returns a value convertible to \c bool indicating if the request is complete.
     ///
-    /// Returns a \c bool indicated if the test succeeded in case the result is empty (see \ref MPIResult::is_empty).
+    /// The type of the return value depends on the encapsulated result and the \p status parameter and follows the same
+    /// semantics as \ref wait(), but its return value is wrapped in an \c std::optional.
+    /// The optional only contains a value if the request is complete, i.e. \c test() succeeded.
+    ///
+    /// If both the result is empty and no status returned, returns a \c bool indicating completion instead of an \c
+    /// std::optional.
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
     /// manually test the request that they own and manually obtain the result via \ref extract().
+    ///
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
     template <
+        typename StatusParamObjectType = decltype(status(ignore<>)),
         typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
         typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
-    auto test() {
+    auto test(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
         kassert_not_extracted("The result of this request has already been extracted.");
+        constexpr bool return_status = internal::is_extractable<StatusParamObjectType>;
         if constexpr (!MPIResultType::is_empty) {
-            if (_request.underlying().test()) {
-                return std::optional{extract_result()};
+            if constexpr (return_status) {
+                auto status_return = _request.underlying().test(std::move(status));
+                if (status_return) {
+                    return std::optional{std::pair{extract_result(), std::move(*status_return)}};
+                } else {
+                    return std::optional<std::pair<MPIResultType, typename decltype(status_return)::value_type>>{};
+                }
             } else {
-                return std::optional<MPIResultType>{};
+                if (_request.underlying().test(std::move(status))) {
+                    return std::optional{extract_result()};
+                } else {
+                    return std::optional<MPIResultType>{};
+                }
             }
         } else {
-            return _request.underlying().test();
+            return _request.underlying().test(std::move(status));
         }
     }
 
