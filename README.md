@@ -35,7 +35,7 @@ MPI_Allgatherv(v.data(), v_size, MPI_TYPE, v_glob.data(), rc.data(), rd.data(), 
 
 ```
 
-In contrast, KaMPIng introduces a streamlined syntax with inspiration from Python's named parameters. For example, the `allgatherv` operation becomes more intuitive and concise:
+In contrast, KaMPIng introduces a streamlined syntax inspired by Python's named parameters. For example, the `allgatherv` operation becomes more intuitive and concise:
 
 ```c++
 std::vector<T> v_glob = comm.allgatherv(send_buf(v));
