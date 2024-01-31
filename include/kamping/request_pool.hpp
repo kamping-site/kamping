@@ -60,6 +60,42 @@ public:
         }
     }
 
+    template <typename StatusesParamObjectType = decltype(kamping::statuses(ignore<>))>
+    auto test_all(StatusesParamObjectType statuses = kamping::statuses(ignore<>)) {
+        static_assert(
+            StatusesParamObjectType::parameter_type == internal::ParameterType::statuses,
+            "Only statuses parameters are allowed."
+        );
+        MPI_Status* statuses_ptr;
+        if constexpr (decltype(statuses)::buffer_type == internal::BufferType::ignore) {
+            statuses_ptr = MPI_STATUS_IGNORE;
+        } else {
+            auto compute_requested_size = [&] {
+                return num_requests();
+            };
+            statuses.resize_if_requested(compute_requested_size);
+            KASSERT(
+                statuses.size() >= compute_requested_size(),
+                "statuses buffer is not large enough to hold all status information.",
+                assert::light
+            );
+            statuses_ptr = statuses.data();
+        }
+        int                  succeeded = false;
+        [[maybe_unused]] int err =
+            MPI_Testall(asserting_cast<int>(num_requests()), request_ptr(), &succeeded, statuses_ptr);
+        THROW_IF_MPI_ERROR(err, MPI_Testall);
+        if constexpr (internal::is_extractable<decltype(statuses)>) {
+            if (succeeded) {
+                return std::optional{statuses.extract()};
+            } else {
+                return std::optional<decltype(statuses.extract())>{};
+            }
+        } else {
+            return static_cast<bool>(succeeded);
+        }
+    }
+
 private:
     std::vector<MPI_Request> _requests;
 };

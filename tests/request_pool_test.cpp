@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include "./helpers_for_testing.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameters.hpp"
@@ -24,88 +25,15 @@
 
 using namespace kamping;
 
-struct DummyNonBlockingOperations {
-    template <typename... Args>
-    auto start_op(Args... args) {
-        using namespace kamping::internal;
-        KAMPING_CHECK_PARAMETERS(
-            Args,
-            KAMPING_REQUIRED_PARAMETERS(),
-            KAMPING_OPTIONAL_PARAMETERS(tag, request, recv_buf)
-        );
-        using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<std::vector<int>>));
-        auto&& recv_buf =
-            internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
-                std::tuple(),
-                args...
-            );
-        using recv_buf_type       = typename std::remove_reference_t<decltype(recv_buf)>;
-        using recv_buf_value_type = typename recv_buf_type::value_type;
-        static_assert(std::is_same_v<recv_buf_value_type, int>);
-        auto compute_required_recv_buf_size = [&] {
-            return size_t{1};
-        };
-        recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
-            recv_buf.size() >= compute_required_recv_buf_size(),
-            "Recv buffer is not large enough to hold all received elements.",
-            assert::light
-        );
-
-        using default_request_param = decltype(kamping::request());
-        auto&& request_param =
-            internal::select_parameter_type_or_default<internal::ParameterType::request, default_request_param>(
-                std::tuple{},
-                args...
-            );
-
-        using default_tag_buf_type = decltype(kamping::tag(0));
-
-        auto&& tag_param =
-            internal::select_parameter_type_or_default<internal::ParameterType::tag, default_tag_buf_type>(
-                std::tuple(0),
-                args...
-            );
-        int tag     = tag_param.tag();
-        this->state = new int(tag);
-        this->data  = recv_buf.get().data();
-        MPI_Grequest_start(
-            [](void* extra_state [[maybe_unused]], MPI_Status* status [[maybe_unused]]) {
-                MPI_Status_set_elements(status, MPI_INT, 1);
-                MPI_Status_set_cancelled(status, 0);
-                MPI_Comm_rank(MPI_COMM_WORLD, &status->MPI_SOURCE);
-                status->MPI_TAG = *static_cast<int*>(extra_state);
-                return MPI_SUCCESS;
-            },
-            [](void* extra_state [[maybe_unused]]) {
-                delete static_cast<int*>(extra_state);
-                return MPI_SUCCESS;
-            },
-            [](void* extra_state [[maybe_unused]], int complete [[maybe_unused]]) { return MPI_SUCCESS; },
-            this->state,
-            &request_param.underlying().mpi_request()
-        );
-        this->req = request_param.underlying().mpi_request();
-        return make_nonblocking_result(std::move(recv_buf), std::move(request_param));
-    }
-    void finish_op() {
-        *this->data = *state;
-        MPI_Grequest_complete(this->req);
-    }
-    int*        state;
-    int*        data;
-    MPI_Request req;
-};
-
 TEST(RequestPoolTest, empty_pool) {
     kamping::RequestPool pool;
     pool.wait_all();
 }
 
 TEST(RequestPoolTest, wait_all) {
-    kamping::RequestPool                    pool;
-    std::vector<DummyNonBlockingOperations> ops(5);
-    std::vector<int>                        values;
+    kamping::RequestPool                            pool;
+    std::vector<testing::DummyNonBlockingOperation> ops(5);
+    std::vector<int>                                values;
     values.reserve(5);
     int i = 0;
     for (auto& op: ops) {
@@ -120,9 +48,9 @@ TEST(RequestPoolTest, wait_all) {
 
 TEST(RequestPoolTest, wait_all_statuses_out) {
     using namespace ::testing;
-    kamping::RequestPool                    pool;
-    std::vector<DummyNonBlockingOperations> ops(5);
-    std::vector<int>                        values;
+    kamping::RequestPool                   pool;
+    std::vector<DummyNonBlockingOperation> ops(5);
+    std::vector<int>                       values;
     values.reserve(5);
     int i = 0;
     for (auto& op: ops) {
@@ -147,9 +75,9 @@ TEST(RequestPoolTest, wait_all_statuses_out) {
 
 TEST(RequestPoolTest, wait_all_statuses_out_reference) {
     using namespace ::testing;
-    kamping::RequestPool                    pool;
-    std::vector<DummyNonBlockingOperations> ops(5);
-    std::vector<int>                        values;
+    kamping::RequestPool                   pool;
+    std::vector<DummyNonBlockingOperation> ops(5);
+    std::vector<int>                       values;
     values.reserve(5);
     int i = 0;
     for (auto& op: ops) {
@@ -158,18 +86,76 @@ TEST(RequestPoolTest, wait_all_statuses_out_reference) {
         i++;
     }
     std::for_each(ops.begin(), ops.end(), [](auto& op) { op.finish_op(); });
-    kamping::status_vector statuses;
-    // std::vector<MPI_Status> statuses;
+    std::vector<MPI_Status> statuses;
     pool.wait_all(statuses_out<resize_to_fit>(statuses));
     EXPECT_THAT(values, ElementsAre(42, 43, 44, 45, 46));
     EXPECT_THAT(
         statuses,
         ElementsAre(
-            Property(&Status::tag, 42),
-            Property(&Status::tag, 43),
-            Property(&Status::tag, 44),
-            Property(&Status::tag, 45),
-            Property(&Status::tag, 46)
+            Field(&MPI_Status::MPI_TAG, 42),
+            Field(&MPI_Status::MPI_TAG, 43),
+            Field(&MPI_Status::MPI_TAG, 44),
+            Field(&MPI_Status::MPI_TAG, 45),
+            Field(&MPI_Status::MPI_TAG, 46)
         )
     );
+}
+
+TEST(RequestPoolTest, test_all) {
+    using namespace ::testing;
+    kamping::RequestPool      pool;
+    DummyNonBlockingOperation op1;
+    DummyNonBlockingOperation op2;
+    int                       val1;
+    int                       val2;
+    op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
+    op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
+    EXPECT_THAT(pool.test_all(), A<bool>());
+    EXPECT_FALSE(pool.test_all());
+    op2.finish_op();
+    EXPECT_FALSE(pool.test_all());
+    op1.finish_op();
+    EXPECT_TRUE(pool.test_all());
+    EXPECT_EQ(val1, 42);
+    EXPECT_EQ(val2, 43);
+}
+
+TEST(RequestPoolTest, test_all_statuses_out) {
+    using namespace ::testing;
+    kamping::RequestPool      pool;
+    DummyNonBlockingOperation op1;
+    DummyNonBlockingOperation op2;
+    int                       val1;
+    int                       val2;
+    op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
+    op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
+    EXPECT_EQ(pool.test_all(statuses_out()), std::nullopt);
+    op2.finish_op();
+    EXPECT_EQ(pool.test_all(statuses_out()), std::nullopt);
+    op1.finish_op();
+    auto statuses = pool.test_all(statuses_out());
+    EXPECT_THAT(statuses, Optional(ElementsAre(Field(&MPI_Status::MPI_TAG, 42), Field(&MPI_Status::MPI_TAG, 43))));
+    EXPECT_EQ(val1, 42);
+    EXPECT_EQ(val2, 43);
+}
+
+TEST(RequestPoolTest, test_all_statuses_out_reference) {
+    using namespace ::testing;
+    kamping::RequestPool      pool;
+    DummyNonBlockingOperation op1;
+    DummyNonBlockingOperation op2;
+    int                       val1;
+    int                       val2;
+    op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
+    op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
+    std::vector<MPI_Status> statuses;
+    EXPECT_THAT(pool.test_all(statuses_out<resize_to_fit>(statuses)), A<bool>());
+    EXPECT_FALSE(pool.test_all(statuses_out<resize_to_fit>(statuses)));
+    op2.finish_op();
+    EXPECT_FALSE(pool.test_all(statuses_out<resize_to_fit>(statuses)));
+    op1.finish_op();
+    EXPECT_TRUE(pool.test_all(statuses_out<resize_to_fit>(statuses)));
+    EXPECT_THAT(statuses, ElementsAre(Field(&MPI_Status::MPI_TAG, 42), Field(&MPI_Status::MPI_TAG, 43)));
+    EXPECT_EQ(val1, 42);
+    EXPECT_EQ(val2, 43);
 }
