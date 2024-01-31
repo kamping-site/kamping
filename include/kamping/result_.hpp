@@ -455,34 +455,44 @@ constexpr bool return_recv_buffer_only() {
 template <typename InitialArgs, typename... Buffers>
 auto make_mpi_result_(Buffers&&... buffers) {
     // filter named parameters provided to the wrapped MPI function and keep only those which are explicitly marked by
-    // the user to be returned, i.e. via *_out();
-    using FilteredOutParameterTuple = typename internal::Filter<InitialArgs>::type;
+    // the user to be returned (and own their underlying data, such that they appear in the result object), i.e. via
+    // *_out();
+    using UserRequestedOwningOutParameters = typename internal::Filter<InitialArgs>::type;
 
-    // receive buffer needs a special treatment, as it is the first entry in a structured binding (if it owns its
-    // underlying data)
+    // receive buffer needs (potentially) a special treatment, as it is the first entry in a structured binding (if it
+    // owns its underlying data)
     static_assert(internal::has_parameter_type<internal::ParameterType::recv_buf, Buffers...>());
     auto&          recv_buffer        = internal::select_parameter_type<internal::ParameterType::recv_buf>(buffers...);
     constexpr bool recv_buf_is_owning = std::remove_reference_t<decltype(recv_buffer)>::is_owning;
+    constexpr bool recv_buffer_is_explicitly_given_as_owning_output_parameter =
+        has_parameter_type_in_tuple<ParameterType::recv_buf, UserRequestedOwningOutParameters>();
 
+    // special case 1: recv buffer is not owning
     if constexpr (!recv_buf_is_owning) {
-        // no potentially special treatement of recv buffer is needed
+        // no potentially special treatement of recv buffer is needed as the recv_buffer is not part of the result
+        // object anyway.
         auto buffer_tuple = std::forward_as_tuple(buffers...);
-        return MPIResult_(construct_output_buffer_tuple<FilteredOutParameterTuple>(buffer_tuple));
-    } else {
-        if constexpr (return_recv_buffer_only<FilteredOutParameterTuple>()) {
-            // if only the receive buffer shall be returned, its underlying data is returned directly instead of a
-            // wrapping result object
-            return recv_buffer.extract();
-        } else {
-            if constexpr (has_parameter_type_in_tuple<ParameterType::recv_buf, FilteredOutParameterTuple>()) {
-                auto buffer_tuple = std::forward_as_tuple(buffers...);
-                return MPIResult_(construct_output_buffer_tuple<FilteredOutParameterTuple>(buffer_tuple));
-            } else {
-                using OutParameterTuple = typename PrependRecvBuffer<FilteredOutParameterTuple>::type;
-                auto buffer_tuple       = std::forward_as_tuple(buffers...);
-                return MPIResult_(construct_output_buffer_tuple<OutParameterTuple>(buffer_tuple));
-            }
-        }
+        return MPIResult_(construct_output_buffer_tuple<UserRequestedOwningOutParameters>(buffer_tuple));
+    }
+    // specialcase 2: recv is owning but the only parameter which should be returned via the result object
+    else if constexpr (return_recv_buffer_only<UserRequestedOwningOutParameters>()) {
+        // if only the receive buffer shall be returned, its underlying data is returned directly instead of a
+        // wrapping result object
+        return recv_buffer.extract();
+    }
+
+    // case A: recv buffer is owning and explicitly listed by user
+    else if constexpr (recv_buffer_is_explicitly_given_as_owning_output_parameter) {
+        // user explicitly listed recv_buffer in parameter list to the wrapped MPI call and recv_buffer owns its data
+        auto buffer_tuple = std::forward_as_tuple(buffers...);
+        return MPIResult_(construct_output_buffer_tuple<UserRequestedOwningOutParameters>(buffer_tuple));
+    }
+    // case B: recv buffer is owning but not explicitly listed by user -> recv buffer will be stored as first entry in
+    // underlying result object
+    else {
+        using OutParameterTuple = typename PrependRecvBuffer<UserRequestedOwningOutParameters>::type;
+        auto buffer_tuple       = std::forward_as_tuple(buffers...);
+        return MPIResult_(construct_output_buffer_tuple<OutParameterTuple>(buffer_tuple));
     }
 }
 
