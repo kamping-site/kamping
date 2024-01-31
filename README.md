@@ -15,7 +15,7 @@ parameters not provided by the user are generated at compile time, which results
 bindings.
 
 KaMPIng is developed at the [Algorithm Engineering
-Group](https://algo2.iti.kit.edu/english/index.php) at Karlsruhe Institute of
+Group](https://ae.iti.kit.edu/english/index.php) at Karlsruhe Institute of
 Technology.
 
 ## Features :sparkles:
