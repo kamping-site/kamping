@@ -20,7 +20,7 @@ public:
 };
 
 template <typename Comm>
-void FaultTolerancePlugin<Comm>::handle_mpi_error(int const error_code, std::string const&) const {
+void FaultTolerancePlugin<Comm>::handle_mpi_error(int const, std::string const&) const {
     // std::cout << "Calling the fault tolerant error handler" << std::endl;
     throw "I don't like faults, but I am very tolerant to faults";
 }
