@@ -25,21 +25,36 @@
 
 namespace kamping {
 
+/// @brief Base class for request wrappers.
+///
+/// This class provides the common interface for all request wrappers. It is
+/// not intended to be used directly. Instead, use \ref kamping::Request or
+/// \ref kamping::PooledRequest or define your own request type, which must
+/// implement \c request_ptr().
+///
+/// @tparam RequestType The derived type.
 template <typename RequestType>
 class RequestBase {
 public:
     constexpr RequestBase() = default;
     ~RequestBase()          = default;
 
-    RequestBase(RequestBase const&)            = delete;
+    /// @brief Copy constructor is deleted because requests should only be moved.
+    RequestBase(RequestBase const&) = delete;
+    /// @brief Copy assignment operator is deleted because requests should only be moved.
     RequestBase& operator=(RequestBase const&) = delete;
-    RequestBase(RequestBase&&)                 = default;
-    RequestBase& operator=(RequestBase&&)      = default;
+    /// @brief Move constructor.
+    RequestBase(RequestBase&&) = default;
+    /// @brief Move assignment operator.
+    RequestBase& operator=(RequestBase&&) = default;
 
 private:
+    ///@brief returns a pointer to the wrapped MPI_Request by calling \c request_ptr() on \ref RequestType using CRTP.
     MPI_Request* request_ptr() {
         return static_cast<RequestType&>(*this).request_ptr();
     }
+    ///@brief returns a const pointer to the wrapped MPI_Request by calling \c request_ptr() on \ref RequestType using
+    /// CRTP.
     MPI_Request const* request_ptr() const {
         return static_cast<RequestType const&>(*this).request_ptr();
     }
@@ -131,10 +146,12 @@ public:
     /// @param request The request to encapsulate. Defaults to \c MPI_REQUEST_NULL.
     Request(MPI_Request request = MPI_REQUEST_NULL) : _request(request) {}
 
+    /// @brief returns a pointer to the wrapped MPI_Request.
     MPI_Request* request_ptr() {
         return &_request;
     }
 
+    /// @brief returns a const pointer to the wrapped MPI_Request.
     MPI_Request const* request_ptr() const {
         return &_request;
     }
@@ -143,19 +160,33 @@ private:
     MPI_Request _request; ///< the encapsulated MPI_Request
 };
 
+/// @brief Wrapper for MPI requests owned by a \ref RequestPool.
+///
+/// @tparam IndexType type of the index of this request in the pool.
 template <typename IndexType>
-struct PooledRequest : public RequestBase<PooledRequest<IndexType>> {
-    PooledRequest(IndexType idx, MPI_Request& request) : index(idx), _request(request) {}
-    IndexType    index;
-    MPI_Request& _request;
+class PooledRequest : public RequestBase<PooledRequest<IndexType>> {
+public:
+    /// @brief constructs a \ref PooledRequest with the given index \p idx and \p request.
+    PooledRequest(IndexType idx, MPI_Request& request) : _index(idx), _request(request) {}
 
+    /// @brief returns a pointer to the wrapped MPI_Request.
     MPI_Request* request_ptr() {
         return &_request;
     }
 
+    /// @brief returns a const pointer to the wrapped MPI_Request.
     MPI_Request const* request_ptr() const {
         return &_request;
     }
+
+    /// @brief provides access to this request's index in the pool.
+    IndexType index() const {
+        return _index;
+    }
+
+private:
+    IndexType    _index;   ///< the index
+    MPI_Request& _request; ///< the encapsulated requets
 };
 
 namespace requests {
