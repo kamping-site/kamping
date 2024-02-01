@@ -41,8 +41,8 @@ public:
     }
 
     /// @brief Waits for all requests in the pool to complete by calling \c MPI_Waitall.
-    /// @param statuses A \ref statuses parameter object to which the status information is written. Defaults to \c
-    /// kamping::statuses(ignore<>).
+    /// @param statuses A \c statuses parameter object to which the status information is written. Defaults
+    /// to \c kamping::statuses(ignore<>).
     /// @return If \p statuses is an owning out parameter, returns the status information, otherwise returns nothing.
     template <typename StatusesParamObjectType = decltype(kamping::statuses(ignore<>))>
     auto wait_all(StatusesParamObjectType statuses = kamping::statuses(ignore<>)) {
@@ -73,13 +73,13 @@ public:
     }
 
     /// @brief Tests whether all requests in the pool have completed by calling \c MPI_Testall.
-    /// @param statuses A \ref kamping::statuses parameter object to which the status information is written. Defaults
+    /// @param statuses A \c statuses parameter object to which the status information is written. Defaults
     /// to \c kamping::statuses(ignore<>).
     /// @return A thruthful value if all requests have completed, a falsy value otherwise.
     /// @note By default, returns a \c bool indicated completion, but if \p statuses is an owning out parameter, returns
     /// a \c std::optional containing the status information.
     /// @warning If the status parameter is provided, the underlying buffer is always resized to fit all requests
-    /// according to its \ref kamping::BufferResizePolicy, even not all requests have completed yet. This is because MPI
+    /// according to its \c resize_policy, even if not all requests have completed yet. This is because MPI
     /// does not allow retrieving statuses after a test succeeded.
     template <typename StatusesParamObjectType = decltype(kamping::statuses(ignore<>))>
     auto test_all(StatusesParamObjectType statuses = kamping::statuses(ignore<>)) {
