@@ -121,7 +121,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
             tag,                             // tag
             this->mpi_communicator()
         );
-        THROW_IF_MPI_ERROR(err, MPI_Send);
+        // THROW_IF_MPI_ERROR(err, MPI_Send);
+        this->handle_mpi_error(err, "MPI_Send");
     } else if constexpr (std::is_same_v<send_mode, internal::buffered_mode_t>) {
         [[maybe_unused]] int err = MPI_Bsend(
             send_buf.data(),                 // send_buf
@@ -131,7 +132,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
             tag,                             // tag
             this->mpi_communicator()
         );
-        THROW_IF_MPI_ERROR(err, MPI_Bsend);
+        // THROW_IF_MPI_ERROR(err, MPI_Bsend);
+        this->handle_mpi_error(err, "MPI_Bsend");
     } else if constexpr (std::is_same_v<send_mode, internal::synchronous_mode_t>) {
         [[maybe_unused]] int err = MPI_Ssend(
             send_buf.data(),                 // send_buf
@@ -141,7 +143,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
             tag,                             // tag
             this->mpi_communicator()
         );
-        THROW_IF_MPI_ERROR(err, MPI_Ssend);
+        // THROW_IF_MPI_ERROR(err, MPI_Ssend);
+        this->handle_mpi_error(err, "MPI_Ssend");
     } else if constexpr (std::is_same_v<send_mode, internal::ready_mode_t>) {
         [[maybe_unused]] int err = MPI_Rsend(
             send_buf.data(),                 // send_buf
@@ -151,7 +154,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
             tag,                             // tag
             this->mpi_communicator()
         );
-        THROW_IF_MPI_ERROR(err, MPI_Rsend);
+        // THROW_IF_MPI_ERROR(err, MPI_Rsend);
+        this->handle_mpi_error(err, "MPI_Rsend");
     }
 }
 

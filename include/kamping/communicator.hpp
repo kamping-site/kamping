@@ -36,6 +36,8 @@ namespace internal {
 struct unused_tparam {};
 } // namespace internal
 
+KAMPING_MAKE_HAS_MEMBER(handle_mpi_error)
+
 /// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
 /// @tparam DefaultContainerType The default container type to use for containers created by KaMPIng. Defaults to
@@ -46,6 +48,36 @@ struct unused_tparam {};
 template <template <typename...> typename DefaultContainerType = std::vector, template <typename> typename... Plugins>
 class Communicator : public Plugins<Communicator<DefaultContainerType, Plugins...>>... {
 public:
+    void handle_mpi_error(int const error_code, std::string const& function_name) const {
+        handle_mpi_error_impl<Plugins...>(error_code, function_name);
+    }
+
+    template <
+        template <typename>
+        typename Plugin1,
+        template <typename>
+        typename Plugin2,
+        template <typename>
+        typename... RemainingPlugins>
+    void handle_mpi_error_impl(int const error_code, std::string const& function_name) const {
+        using PluginType = Plugin1<Communicator<DefaultContainerType, Plugins...>>;
+        if constexpr (has_member_handle_mpi_error_v<PluginType, int, std::string const&>) {
+            static_cast<PluginType const&>(*this).handle_mpi_error(error_code, function_name);
+        } else {
+            handle_mpi_error_impl<RemainingPlugins...>(error_code, function_name);
+        }
+    }
+
+    template <template <typename> typename Plugin>
+    void handle_mpi_error_impl(int const error_code, std::string const& function_name) const {
+        using PluginType = Plugin<Communicator<DefaultContainerType, Plugins...>>;
+        if constexpr (has_member_handle_mpi_error_v<PluginType, int, std::string const&>) {
+            static_cast<PluginType const&>(*this).handle_mpi_error(error_code, function_name);
+        } else {
+            THROW_IF_MPI_ERROR(error_code, function_name);
+        }
+    }
+
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
     Communicator() : Communicator(MPI_COMM_WORLD) {}
 
