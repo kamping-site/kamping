@@ -96,3 +96,15 @@ Resize policies are only important for out parameters. They control if/how the u
 - `resize-to-fit`: KaMPIng will resize the underlying container to have exactly the size required to hold all data.
 
 The default resize policy is `no-resize` (except for empty named parameters).
+For `grow-only` or `resize-to-fit` KaMPIng requires the container to posess a member function `resize(unsigned integer)` taking an (unsigned) integer specify the requested size.
+Note that KaMPIng can resize `recv_buf` only if the corresponding `recv_type` matches a `C++` type.
+
+```cpp
+  std::vector<T>    recv_buffer;                // will be resized by KaMPIng
+  std::vector<int>  recv_counts(comm.size());   // has to be large enough to hold all recv counts
+  comm.alltoallv(send_buf(data), send_counts(counts),
+                 recv_buf_out<grow-only>(recv_buffer),
+                 recv_counts_out<no-resize>(recv_counts));
+```
+
+
