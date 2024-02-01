@@ -75,7 +75,7 @@ public:
     /// @brief Tests whether all requests in the pool have completed by calling \c MPI_Testall.
     /// @param statuses A \c statuses parameter object to which the status information is written. Defaults
     /// to \c kamping::statuses(ignore<>).
-    /// @return A thruthful value if all requests have completed, a falsy value otherwise.
+    /// @return A truthful value if all requests have completed, a falsy value otherwise.
     /// @note By default, returns a \c bool indicated completion, but if \p statuses is an owning out parameter, returns
     /// a \c std::optional containing the status information.
     /// @warning If the status parameter is provided, the underlying buffer is always resized to fit all requests
