@@ -1,10 +1,15 @@
-# Passing Parameters to Wrapped MPI Functions
+# Passing Parameters in KaMPIng
 
-A central concept of KaMPIng is the DataBuffer. It encapsulates all data (or raw memory) which is passed to the underlying MPI call such as ...
-A call to a named parameter instantiates a DataBuffer.
-Let us examine DataBuffers in action. In the following we see the type signature of `MPI_Alltoallv` as defined in MPI-4.0 which takes a `sendbuf` of variable
+A central concept of KaMPIng is the named parameters approach allowing the caller to name and pass parameters in arbitrary order and even omit certain parameters.
+KaMPIng allows the user a fine-grained control over the parameter set which will be explained in greater detail in this document.
+
+Internally, this functionality is empowered by the DataBuffer class, which encapsulates all data (or raw memory) which is passed via a named parameter to KaMPIng.
+A call to a named parameter instantiates a DataBuffer object.
+In this document we will have a closer look on the relevant properties of the DataBuffer and how it can be used to control the wrapped MPI call in conjuction with named parameters.
+
+To illustrate the named parameter approach, we first look at the function signature of `MPI_Alltoallv` as defined in MPI-4.0 which takes a `sendbuf` of variable
 size on each PE i and sends messages of size sendcounts[j] from PE i to PE j where the messages are received into `recvbuf`.
-MPI requires us to provide additional information such as the number of elements to receive (`recvcounts[]`) or a possible displacements (`sdispls`, `rdispls`) etc.
+Apart from these three parameters, MPI requires additional information such as the number of elements to receive (`recvcounts[]`) or a possible displacements (`sdispls`, `rdispls`) etc.
 ```cpp
 MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
               const int sdispls[], MPI_Datatype sendtype, void *recvbuf,
@@ -12,31 +17,48 @@ MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
               MPI_Datatype recvtype, MPI_Comm comm)
 ```
 
-In KaMPIng all such information is encapsulated into a DataBuffer. Furthermore, the user does not need to provide all information required by the MPI function signature.
-Instead KaMPIng can compute information not provided by the user in many cases. For `Alltoallv` for example, the user is free to omit the `recvcounts` parameter as these can be deduced from the `sendcounts` given on each PE at the cost of additional communication (one call to `MPI_Alltoall`) provided that `sendtype` and `recvtype` refer to the same type.
+In KaMPIng all these parameters to an MPI function are represented by ***named parameters***:
+- send_buf(...), send_counts(...)/send_counts_out(...), recv_counts()/recv_counts_out(), ... TODO refer to complet list
+
+These named parameters either serve as *input (in)* or *output (out)* parameters.
+Via a named in parameter the caller can provide input data to the wrapped MPI call such as `send_buf(buf)` or `send_counts(counts)` with buf and counts accomodating the data to be sent and send counts, respectively.
+Using named out parameter the caller ask KaMPIng to internally compute/infer this parameter and output its value. Named output parameters are created via the respective `*_out()` suffix.
+The data requested via out parameters is then either directly written to a memory location passed within the named parameter call or returned in a `std::tuple`-like *result* object.
+
+One special case it the receive buffer. Although being an out parameter, it does not need to be explicityl given as KaMPIng assumes that a always wants to obtain this buffer.
+
+```cpp
+  std::vector<T> data = ...;          // initialize data to send
+  std::vector<int> send_counts = ...; // initialize send counts
+  
+  auto recv_buf = comm.alltoallv(send_buf(data), send_counts(counts));
+```
+
+MPI parameters are encapsulated into a DataBuffer. Furthermore, the user does not need to provide all information required by the MPI function signature.
+Instead KaMPIng can compute information not provided by the user in many cases. For example, for `Alltoallv`, the user is free to omit all parameters apart from `sendbuf` and `sendcounts` as all other parameters can be infered at the cost of additional local computation or communication (one call to `MPI_Alltoall`) provided that `sendtype` and `recvtype` refer to the same type.
 
 Hence, the call to `MPI_Alltoallv` may look like:
 ```cpp
-  std::vector<double> send_buffer(comm.size(), 42);
-  std::vector<int> counts(comm.size(), 1);
-  std::vector<int> recv_buffer;
-  std::vector<int> recv_counts;
-  {
-    // case A: received data is stored in recv_buffer
-    recv_buffer.reserve(\*sufficiently large size*\);
-    comm.alltoallv(send_buf(data), send_counts(counts), recv_buf_out(recv_buffer), recv_counts_out();
-  }
-  {
-    // case B: received data (and the associated recv_counts) are stored in a std::tuple like result object and be retrieved from there.
-    recv_counts.reserve(comm.size());
-    auto result = comm.alltoallv(send_buf(data),
-                                 send_counts(counts),
-                                 recv_buf_out(),
-                                 recv_counts_out());
-  }
+  std::vector<T> data = ...;          // initialize data to send
+  std::vector<int> send_counts = ...; // initialize send counts
+  
+  auto recv_buf = comm.alltoallv(send_buf(data), send_counts(counts));
 ```
 
-Here, `send_buf(data)`, `send_counts(counts)`, `recv_buf_out(...)`, `recv_counts_out()` construct DataBuffers encapsulating the send buffer, send counts, recv buffer and receive counts, respectively.
+Here, `send_buf(data)` and `send_counts(counts)` construct DataBuffers encapsulating the data to send and the send counts. The received values are returned by value.
+
+However, the user might be interested in the `recv counts` parameter and wants KaMPIng to also output these values resulting in:
+```cpp
+  std::vector<T> data = ...;          // initialize data to send
+  std::vector<int> send_counts = ...; // initialize send counts
+  
+  auto result = comm.alltoallv(send_buf(data), send_counts(counts), recv_counts_out());
+  std::vector<T>   recv_buf    = result.extract_recv_counts();
+  std::vector<int> recv_counts = result.extract_recv_buf();
+  // or via structured bindings as auto [recv_buf, recv_counts] = comm.alltoallv(...);
+```
+Now, KaMPIng returns a `std::tuple` like result object containing the received elements and the recv counts.
+The actual data can be explicitly extracted
 After having established the general usage of DataBuffers, we now have a closer look on their internals and how they determine the behaviour of wrapped MPI calls.
 
 A DataBuffer has multiple (orthogonal) properties with which the caller can control the behaviour of this specific parameter inside the wrapped MPI call:
