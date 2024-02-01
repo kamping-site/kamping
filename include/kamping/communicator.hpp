@@ -52,30 +52,28 @@ public:
         handle_mpi_error_impl<Plugins...>(error_code, function_name);
     }
 
-    template <
-        template <typename>
-        typename Plugin1,
-        template <typename>
-        typename Plugin2,
-        template <typename>
-        typename... RemainingPlugins>
-    void handle_mpi_error_impl(int const error_code, std::string const& function_name) const {
-        using PluginType = Plugin1<Communicator<DefaultContainerType, Plugins...>>;
-        if constexpr (has_member_handle_mpi_error_v<PluginType, int, std::string const&>) {
-            static_cast<PluginType const&>(*this).handle_mpi_error(error_code, function_name);
-        } else {
-            handle_mpi_error_impl<RemainingPlugins...>(error_code, function_name);
-        }
-    }
-
-    template <template <typename> typename Plugin>
+    template <template <typename> typename Plugin, template <typename> typename... RemainingPlugins>
     void handle_mpi_error_impl(int const error_code, std::string const& function_name) const {
         using PluginType = Plugin<Communicator<DefaultContainerType, Plugins...>>;
         if constexpr (has_member_handle_mpi_error_v<PluginType, int, std::string const&>) {
             static_cast<PluginType const&>(*this).handle_mpi_error(error_code, function_name);
         } else {
-            THROW_IF_MPI_ERROR(error_code, function_name);
+            if constexpr (sizeof...(RemainingPlugins) == 0) {
+                handle_mpi_error_impl<void>(error_code, function_name);
+            } else {
+                handle_mpi_error_impl<RemainingPlugins...>(error_code, function_name);
+            }
         }
+    }
+
+    template <typename = void>
+    void handle_mpi_error_impl(int const error_code, std::string const& function_name) const {
+        THROWING_KASSERT_SPECIFIED(
+            error_code == MPI_SUCCESS,
+            function_name << " failed!",
+            kamping::MpiErrorException,
+            error_code
+        );
     }
 
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
@@ -280,7 +278,7 @@ public:
     /// @brief Check if this rank is the root rank.
     /// @return Return \c true if this rank is the root rank.
     /// @param root The custom root's rank.
-    [[nodiscard]] bool is_root(const size_t root) const {
+    [[nodiscard]] bool is_root(size_t const root) const {
         return rank() == root;
     }
 
@@ -603,7 +601,7 @@ using BasicCommunicator = Communicator<>;
 /// @return A \c const reference to a \ref BasicCommunicator for \c MPI_COMM_WORLD.
 inline BasicCommunicator const& comm_world() {
     // By using a static variable in a function here, this gets constructed on first use.
-    static const BasicCommunicator comm_world;
+    static BasicCommunicator const comm_world;
     return comm_world;
 }
 
