@@ -729,6 +729,18 @@ inline auto request(Request& request) {
         BufferResizePolicy::no_resize>(request);
 }
 
+/// @brief Pass a request from a \ref RequestPool to the underlying MPI call.
+/// @param request The request handle.
+/// @tparam IndexType The type of the index used by the \ref RequestPool for requests.
+template <typename IndexType>
+inline auto request(PooledRequest<IndexType> request) {
+    return internal::make_data_buffer<
+        internal::ParameterType::request,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize>(std::move(request));
+}
+
 /// @brief Internally allocate a request object and return it to the user.
 inline auto request() {
     return internal::make_data_buffer<

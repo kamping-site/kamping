@@ -15,6 +15,7 @@
 
 #include <mpi.h>
 
+#include "kamping/data_buffer.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/status.hpp"
 
@@ -50,6 +51,53 @@ inline auto status_out() {
 /// @brief pass \c MPI_STATUS_IGNORE to the underlying MPI call.
 inline auto status(internal::ignore_t<void>) {
     return internal::EmptyDataBuffer<Status, internal::ParameterType::status, internal::BufferType::ignore>{};
+}
+
+/// @brief pass \c MPI_STATUSES_IGNORE to the underlying MPI call.
+inline auto statuses(internal::ignore_t<void>) {
+    return internal::EmptyDataBuffer<MPI_Status, internal::ParameterType::statuses, internal::BufferType::ignore>();
+}
+
+/// @brief Pass a \p Container of \c MPI_Status to the underlying MPI call in which the statuses are stored upon
+/// completion. The container may be resized according the provided \p resize_policy.
+///
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
+/// @tparam Container the container type to use for the statuses.
+template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
+inline auto statuses_out(Container&& container) {
+    return internal::make_data_buffer<
+        internal::ParameterType::statuses,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_policy,
+        MPI_Status>(std::forward<Container>(container));
+}
+
+/// @brief Internally contruct a new \p Container of \c MPI_Status, which will hold the returned statuses.
+template <typename Container>
+inline auto statuses_out(AllocNewT<Container>) {
+    return internal::make_data_buffer<
+        internal::ParameterType::statuses,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit,
+        MPI_Status>(alloc_new<Container>);
+}
+
+/// @brief Internally contruct a new \p Container<MPI_Status> which will hold the returned statuses.
+template <template <typename...> typename Container>
+inline auto statuses_out(AllocNewAutoT<Container>) {
+    return internal::make_data_buffer<
+        internal::ParameterType::statuses,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit,
+        MPI_Status>(alloc_new_auto<Container>);
+}
+
+/// @brief Internally contruct an \c std::vector<MPI_Status>, which will hold the returned statuses.
+inline auto statuses_out() {
+    return statuses_out(alloc_new_auto<std::vector>);
 }
 
 /// @}

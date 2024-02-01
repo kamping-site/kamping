@@ -211,6 +211,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_request_pool
+    FILES request_pool_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_measurement_utils_with_communication
     FILES measurements/mpi_measurement_utils_test.cpp
     CORES 1 4
@@ -218,6 +223,11 @@ kamping_register_mpi_test(
 kamping_register_mpi_test(
     test_timer
     FILES measurements/mpi_timer_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
+    test_mpi_helpers_for_testing
+    FILES helpers_for_testing_mpi_test.cpp
     CORES 1 4
 )
 

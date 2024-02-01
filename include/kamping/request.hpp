@@ -15,23 +15,51 @@
 
 #include <optional>
 
-#include <kamping/error_handling.hpp>
 #include <mpi.h>
 
 #include "kamping/data_buffer.hpp"
+#include "kamping/error_handling.hpp"
 #include "kamping/named_parameters_detail/status_parameters.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/result.hpp"
 
 namespace kamping {
 
-/// @brief Wrapper for MPI request handles (aka. \c MPI_Request).
-class Request {
+/// @brief Base class for request wrappers.
+///
+/// This class provides the common interface for all request wrappers. It is
+/// not intended to be used directly. Instead, use \ref kamping::Request or
+/// \ref kamping::PooledRequest or define your own request type, which must
+/// implement \c request_ptr().
+///
+/// @tparam RequestType The derived type.
+template <typename RequestType>
+class RequestBase {
 public:
-    /// @brief Constructs a request handle from an \c MPI_Request.
-    /// @param request The request to encapsulate. Defaults to \c MPI_REQUEST_NULL.
-    Request(MPI_Request request = MPI_REQUEST_NULL) : _request(request) {}
+    constexpr RequestBase() = default;
+    ~RequestBase()          = default;
 
+    /// @brief Copy constructor is deleted because requests should only be moved.
+    RequestBase(RequestBase const&) = delete;
+    /// @brief Copy assignment operator is deleted because requests should only be moved.
+    RequestBase& operator=(RequestBase const&) = delete;
+    /// @brief Move constructor.
+    RequestBase(RequestBase&&) = default;
+    /// @brief Move assignment operator.
+    RequestBase& operator=(RequestBase&&) = default;
+
+private:
+    ///@brief returns a pointer to the wrapped MPI_Request by calling \c request_ptr() on \ref RequestType using CRTP.
+    MPI_Request* request_ptr() {
+        return static_cast<RequestType&>(*this).request_ptr();
+    }
+    ///@brief returns a const pointer to the wrapped MPI_Request by calling \c request_ptr() on \ref RequestType using
+    /// CRTP.
+    MPI_Request const* request_ptr() const {
+        return static_cast<RequestType const&>(*this).request_ptr();
+    }
+
+public:
     /// @brief Returns when the operation defined by the underlying request completes.
     /// If the underlying request was initialized by a non-blocking communication call, it is set to \c
     /// MPI_REQUEST_NULL.
@@ -46,7 +74,7 @@ public:
             StatusParamObjectType::parameter_type == internal::ParameterType::status,
             "Only status parameters are allowed."
         );
-        int err = MPI_Wait(&_request, internal::status_param_to_native_ptr(status));
+        int err = MPI_Wait(request_ptr(), internal::status_param_to_native_ptr(status));
         THROW_IF_MPI_ERROR(err, MPI_Wait);
         if constexpr (internal::is_extractable<StatusParamObjectType>) {
             return status.extract();
@@ -55,7 +83,7 @@ public:
 
     /// @return True if this request is equal to \c MPI_REQUEST_NULL.
     [[nodiscard]] bool is_null() const {
-        return _request == MPI_REQUEST_NULL;
+        return *request_ptr() == MPI_REQUEST_NULL;
     }
 
     /// @brief Tests for completion of the underlying request. If the underlying request was
@@ -73,7 +101,7 @@ public:
             "Only status parameters are allowed."
         );
         int is_finished;
-        int err = MPI_Test(&_request, &is_finished, internal::status_param_to_native_ptr(status));
+        int err = MPI_Test(request_ptr(), &is_finished, internal::status_param_to_native_ptr(status));
         THROW_IF_MPI_ERROR(err, MPI_Test);
         if constexpr (internal::is_extractable<StatusParamObjectType>) {
             if (is_finished) {
@@ -88,28 +116,77 @@ public:
 
     /// @return A reference to the underlying MPI_Request handle.
     [[nodiscard]] MPI_Request& mpi_request() {
-        return _request;
+        return *request_ptr();
     }
 
     /// @return A reference to the underlying MPI_Request handle.
     [[nodiscard]] MPI_Request const& mpi_request() const {
-        return _request;
+        return *request_ptr();
     }
 
     // TODO: request cancellation and querying of cancellation status
 
     /// @return Returns \c true if the other request wrapper points to the same request.
-    bool operator==(Request const& other) const {
-        return _request == other._request;
+    template <typename T>
+    bool operator==(RequestBase<T> const& other) const {
+        return *request_ptr() == *other.request_ptr();
     }
 
     /// @return Returns \c true if the other request wrapper points to a different request.
-    bool operator!=(Request const& other) const {
+    template <typename T>
+    bool operator!=(RequestBase<T> const& other) const {
         return !(*this == other);
+    }
+};
+
+/// @brief Wrapper for MPI request handles (aka. \c MPI_Request).
+class Request : public RequestBase<Request> {
+public:
+    /// @brief Constructs a request handle from an \c MPI_Request.
+    /// @param request The request to encapsulate. Defaults to \c MPI_REQUEST_NULL.
+    Request(MPI_Request request = MPI_REQUEST_NULL) : _request(request) {}
+
+    /// @brief returns a pointer to the wrapped MPI_Request.
+    MPI_Request* request_ptr() {
+        return &_request;
+    }
+
+    /// @brief returns a const pointer to the wrapped MPI_Request.
+    MPI_Request const* request_ptr() const {
+        return &_request;
     }
 
 private:
     MPI_Request _request; ///< the encapsulated MPI_Request
+};
+
+/// @brief Wrapper for MPI requests owned by a \ref RequestPool.
+///
+/// @tparam IndexType type of the index of this request in the pool.
+template <typename IndexType>
+class PooledRequest : public RequestBase<PooledRequest<IndexType>> {
+public:
+    /// @brief constructs a \ref PooledRequest with the given index \p idx and \p request.
+    PooledRequest(IndexType idx, MPI_Request& request) : _index(idx), _request(request) {}
+
+    /// @brief returns a pointer to the wrapped MPI_Request.
+    MPI_Request* request_ptr() {
+        return &_request;
+    }
+
+    /// @brief returns a const pointer to the wrapped MPI_Request.
+    MPI_Request const* request_ptr() const {
+        return &_request;
+    }
+
+    /// @brief provides access to this request's index in the pool.
+    IndexType index() const {
+        return _index;
+    }
+
+private:
+    IndexType    _index;   ///< the index
+    MPI_Request& _request; ///< the encapsulated requets
 };
 
 namespace requests {
@@ -182,7 +259,7 @@ template <
         std::enable_if_t<std::conjunction_v<std::is_convertible<std::remove_reference_t<RequestType>, Request>...>>>
 void wait_all(RequestType&&... args) {
     constexpr size_t req_size       = sizeof...(args);
-    MPI_Request      reqs[req_size] = {Request{args}.mpi_request()...};
+    MPI_Request      reqs[req_size] = {Request{std::move(args)}.mpi_request()...};
     wait_all(Span<MPI_Request>(reqs, req_size));
 }
 
