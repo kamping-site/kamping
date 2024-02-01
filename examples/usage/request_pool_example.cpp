@@ -12,8 +12,8 @@
 // <https://www.gnu.org/licenses/>.
 
 #include "kamping/communicator.hpp"
+#include "kamping/p2p/irecv.hpp"
 #include "kamping/p2p/isend.hpp"
-#include "kamping/p2p/recv.hpp"
 #include "kamping/request_pool.hpp"
 
 int main() {
@@ -22,9 +22,20 @@ int main() {
     Communicator comm;
     RequestPool  pool;
     if (comm.rank() == 0) {
-        auto req    = pool.get_request();
-        auto result = comm.isend(send_buf(42), destination(0), request(std::move(req)));
-        std::cout << comm.recv_single<int>() << std::endl;
+        for (int i = 0; i < comm.size(); ++i) {
+            comm.isend(send_buf(i), destination(i), tag(i), request(pool.get_request()));
+        }
     }
+    int val;
+    comm.irecv(recv_buf(val), request(pool.get_request()));
     auto statuses = pool.wait_all(statuses_out());
+    for (MPI_Status& native_status: statuses) {
+        Status status(native_status);
+        std::cout << "[R" << comm.rank() << "] "
+                  << "Status(source="
+                  << (status.source_signed() == MPI_PROC_NULL ? "MPI_PROC_NULL" : std::to_string(status.source_signed())
+                     )
+                  << ", tag=" << (status.tag() == MPI_ANY_TAG ? "MPI_ANY_TAG" : std::to_string(status.tag()))
+                  << ", count=" << status.count<int>() << ")" << std::endl;
+    }
 }
