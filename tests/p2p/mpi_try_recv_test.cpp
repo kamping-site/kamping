@@ -68,7 +68,7 @@ TEST_F(TryRecvTest, try_recv_vector_from_arbitrary_source) {
             std::vector<int> message;
 
             while (true) {
-                auto result_opt = comm.try_recv(recv_buf(message));
+                auto result_opt = comm.try_recv(recv_buf(message), status_out());
                 // The message from this rank might not yet be delivered.
                 if (result_opt.has_value()) {
                     auto& result = result_opt.value();
