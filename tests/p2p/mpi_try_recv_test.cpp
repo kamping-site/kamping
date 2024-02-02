@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2023 The KaMPIng Authors
+// Copyright 2023-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -356,14 +356,18 @@ TEST_F(TryRecvTest, try_recv_from_proc_null) {
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(TryRecvTest, try_recv_from_invalid_tag) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     EXPECT_KASSERT_FAILS({ comm.try_recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
 }
+#endif
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(TryRecvTest, try_recv_from_invalid_tag_with_explicit_recv_count) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     EXPECT_KASSERT_FAILS({ comm.try_recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
 }
+#endif
