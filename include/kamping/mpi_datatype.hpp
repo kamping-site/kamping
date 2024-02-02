@@ -41,6 +41,7 @@ inline MPI_Datatype construct_custom_continuous_type(size_t const num_bytes_unsi
     int const    num_bytes = asserting_cast<int>(num_bytes_unsigned);
     MPI_Datatype type      = MPI_DATATYPE_NULL;
     MPI_Type_contiguous(num_bytes, MPI_CHAR, &type);
+    std::cout << "Committing custom continuous type of " << num_bytes << " bytes." << std::endl;
     MPI_Type_commit(&type);
     KASSERT(type != MPI_DATATYPE_NULL);
     mpi_env.register_mpi_type(type);
@@ -87,7 +88,7 @@ template <size_t NumBytes>
 
 /// @brief the members specify which group the datatype belongs to according to the type groups specified in
 /// Section 5.9.2 of the MPI 3.1 standard.
-enum class TypeCategory { integer, floating, complex, logical, byte, undefined };
+enum class TypeCategory { integer, floating, complex, logical, byte, kamping_provided, user_provided, undefined };
 
 #ifdef KAMPING_DOXYGEN_ONLY
 /// @brief maps C++ types to builtin \c MPI_Datatypes
@@ -282,9 +283,19 @@ struct mpi_type_traits_impl<std::complex<long double>> : is_builtin_mpi_type_tru
 };
 
 /// @brief wrapper for \c mpi_type_traits_impl which removes const and volatile qualifiers
-template <typename T>
+template <typename T, typename Enable = void>
 struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
 #endif
+
+template <typename T>
+inline MPI_Datatype construct_and_commit_type() {
+    MPI_Datatype type = mpi_type_traits<T>::data_type();
+    std::cout << "Committing custom static type of " << typeid(T).name() << std::endl;
+    MPI_Type_commit(&type);
+    KASSERT(type != MPI_DATATYPE_NULL);
+    mpi_env.register_mpi_type(type);
+    return type;
+}
 
 /// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
 /// new custom continuous type.
@@ -298,6 +309,9 @@ template <typename T>
 [[nodiscard]] MPI_Datatype mpi_datatype() KAMPING_NOEXCEPT {
     if constexpr (mpi_type_traits<T>::is_builtin) {
         return mpi_type_traits<T>::data_type();
+    } else if constexpr (mpi_type_traits<T>::category == TypeCategory::kamping_provided || mpi_type_traits<T>::category == TypeCategory::user_provided) {
+        static MPI_Datatype type = construct_and_commit_type<T>();
+        return type;
     }
 
     // Remove const and volatile qualifiers.
@@ -348,6 +362,69 @@ inline int mpi_datatype_size(MPI_Datatype mpi_datatype) {
     THROW_IF_MPI_ERROR(err, MPI_Type_size);
     return result;
 }
+
+template <typename T>
+static constexpr bool has_static_type =
+    mpi_type_traits<T>::is_builtin || mpi_type_traits<T>::category == TypeCategory::kamping_provided
+    || mpi_type_traits<T>::category == TypeCategory::user_provided;
+
+template <typename T1, typename T2>
+struct mpi_type_traits<std::pair<T1, T2>, std::enable_if_t<has_static_type<T1> && has_static_type<T2>>>
+    : is_builtin_mpi_type_false {
+    static constexpr TypeCategory category = TypeCategory::kamping_provided;
+    static MPI_Datatype           data_type() {
+                  std::pair<T1, T2> t;
+                  MPI_Datatype      types[2]     = {mpi_datatype<T1>(), mpi_datatype<T2>()};
+                  int               blocklens[2] = {1, 1};
+                  MPI_Aint          base;
+                  MPI_Get_address(&t, &base);
+                  MPI_Aint disp[2];
+                  MPI_Get_address(&t.first, &disp[0]);
+                  MPI_Get_address(&t.second, &disp[1]);
+                  disp[0] = MPI_Aint_diff(disp[0], base);
+                  disp[1] = MPI_Aint_diff(disp[1], base);
+                  MPI_Datatype type;
+                  MPI_Type_create_struct(2, blocklens, disp, types, &type);
+                  return type;
+    }
+};
+
+template <typename... Ts>
+struct mpi_type_traits<std::tuple<Ts...>, std::enable_if_t<(sizeof...(Ts) > 0 && (has_static_type<Ts> && ...))>>
+    : is_builtin_mpi_type_false {
+    static constexpr TypeCategory category = TypeCategory::kamping_provided;
+    static MPI_Datatype           data_type() {
+                  std::tuple<Ts...>     t;
+                  constexpr std::size_t tuple_size = sizeof...(Ts);
+
+                  MPI_Datatype types[tuple_size] = {mpi_datatype<Ts>()...};
+                  int          blocklens[tuple_size];
+                  MPI_Aint     disp[tuple_size];
+                  MPI_Aint     base;
+                  MPI_Get_address(&t, &base);
+
+                  // Calculate displacements for each tuple element using std::apply and fold expressions
+                  size_t i = 0;
+                  std::apply(
+            [&](auto&... elem) {
+                (
+                    [&] {
+                        MPI_Get_address(&elem, &disp[i]);
+                        disp[i]      = MPI_Aint_diff(disp[i], base);
+                        blocklens[i] = 1;
+                        i++;
+                    }(),
+                    ...
+                );
+            },
+            t
+        );
+
+                  MPI_Datatype type;
+                  MPI_Type_create_struct(tuple_size, blocklens, disp, types, &type);
+                  return type;
+    }
+};
 
 /// @}
 
