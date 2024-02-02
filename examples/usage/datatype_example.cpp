@@ -37,21 +37,12 @@ void printdatatype(MPI_Datatype datatype) {
         }
         case MPI_COMBINER_CONTIGUOUS: {
             std::cout << "MPI_COMBINER_CONTIGUOUS: " << std::endl;
-            int count;
+            int          count;
             MPI_Datatype t;
-            MPI_Type_get_contents(
-                datatype,
-                num_integers,
-                num_addresses,
-                num_datatypes,
-                &count,
-                nullptr,
-                &t
-            );
+            MPI_Type_get_contents(datatype, num_integers, num_addresses, num_datatypes, &count, nullptr, &t);
             std::cout << "count=" << count << " ";
             printdatatype(t);
             break;
-
         }
         default:
             std::cout << "Unknown combiner" << std::endl;
@@ -70,20 +61,20 @@ int MPI_Type_free(MPI_Datatype* type) {
 }
 
 struct Foo {
-    int    a;
-    double b;
+    int                     a;
+    double                  b;
     std::pair<float, float> p;
 };
 
 int main() {
     using namespace kamping;
 
-    kamping::Environment           e;
-    Communicator                   comm;
+    kamping::Environment e;
+    Communicator         comm;
     std::cout << std::boolalpha;
-    std::pair<double, bool>        p  = {1.0, true};
+    std::pair<double, bool> p = {1.0, true};
     comm.send(destination(rank::null), send_buf(p));
-    std::tuple<int, float, double> t  = {1, 2.0f, 3.0};
+    std::tuple<int, float, double> t = {1, 2.0f, 3.0};
     comm.send(destination(rank::null), send_buf(t));
     // std::pair<double, bool>        p2 = {2.0, false};
     // comm.send(destination(rank::null), send_buf(p2));
