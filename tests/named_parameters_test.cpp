@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPIng Authors
+// Copyright 2021-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -12,7 +12,6 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <type_traits>
-#include <variant>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -20,11 +19,9 @@
 
 #include "helpers_for_testing.hpp"
 #include "kamping/data_buffer.hpp"
-#include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/parameter_objects.hpp"
-#include "kamping/result.hpp"
 #include "legacy_parameter_objects.hpp"
 
 using namespace ::kamping;
@@ -121,6 +118,7 @@ void test_user_allocated_buffer(
     GeneratedBuffer&                 generated_buffer,
     kamping::internal::ParameterType expected_parameter_type,
     kamping::internal::BufferType    expected_buffer_type,
+    kamping::BufferResizePolicy      expected_resize_policy,
     UnderlyingContainer&             underlying_container
 ) {
     // value_type of a buffer should be the same as the value_type of the underlying container
@@ -129,14 +127,19 @@ void test_user_allocated_buffer(
     EXPECT_TRUE(GeneratedBuffer::is_modifiable);
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
     EXPECT_EQ(GeneratedBuffer::buffer_type, expected_buffer_type);
+    EXPECT_EQ(GeneratedBuffer::resize_policy, expected_resize_policy);
 
     auto resize_write_check = [&](size_t nb_elements) {
-        generated_buffer.resize(nb_elements);
-        ExpectedValueType* ptr = generated_buffer.data();
-        EXPECT_EQ(ptr, std::data(underlying_container));
-        for (size_t i = 0; i < nb_elements; ++i) {
-            ptr[i] = static_cast<ExpectedValueType>(nb_elements - i);
-            EXPECT_EQ(ptr[i], underlying_container[i]);
+        if constexpr (GeneratedBuffer::resize_policy != BufferResizePolicy::no_resize) {
+            generated_buffer.resize(nb_elements);
+        }
+        if (nb_elements <= generated_buffer.size()) {
+            ExpectedValueType* ptr = generated_buffer.data();
+            EXPECT_EQ(ptr, std::data(underlying_container));
+            for (size_t i = 0; i < nb_elements; ++i) {
+                ptr[i] = static_cast<ExpectedValueType>(nb_elements - i);
+                EXPECT_EQ(ptr[i], underlying_container[i]);
+            }
         }
     };
     resize_write_check(10);
@@ -156,6 +159,7 @@ void test_library_allocated_buffer(
     EXPECT_TRUE(GeneratedBuffer::is_modifiable);
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
     EXPECT_EQ(GeneratedBuffer::buffer_type, expected_buffer_type);
+    EXPECT_EQ(GeneratedBuffer::resize_policy, BufferResizePolicy::resize_to_fit);
 
     // TODO How can we test if the underlying storage resizes correctly to x elements when calling
     // generated_buffer.resize(x)?
@@ -592,6 +596,33 @@ TEST(ParameterFactoriesTest, recv_buf_basics_user_alloc) {
         buffer_on_user_alloc_vector,
         ParameterType::recv_buf,
         internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_recv_buf_basics_user_alloc) {
+    std::vector<int> int_vec;
+    auto             buffer_on_user_alloc_vector = recv_buf<BufferResizePolicy::resize_to_fit>(int_vec);
+    using ExpectedValueType                      = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_on_user_alloc_vector,
+        ParameterType::recv_buf,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::resize_to_fit,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_if_required_recv_buf_basics_user_alloc) {
+    std::vector<int> int_vec;
+    auto             buffer_on_user_alloc_vector = recv_buf<BufferResizePolicy::grow_only>(int_vec);
+    using ExpectedValueType                      = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_on_user_alloc_vector,
+        ParameterType::recv_buf,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::grow_only,
         int_vec
     );
 }
@@ -615,6 +646,35 @@ TEST(ParameterFactoriesTest, send_counts_out_basics_user_alloc) {
         buffer_based_on_user_alloc_vector,
         ParameterType::send_counts,
         internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, always_resizing_send_counts_out_basics_user_alloc) {
+    std::vector<int>         int_vec;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
+    auto                     buffer_based_on_user_alloc_vector = send_counts_out<resize_policy>(int_vec);
+    using ExpectedValueType                                    = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_user_alloc_vector,
+        ParameterType::send_counts,
+        internal::BufferType::out_buffer,
+        resize_policy,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_if_required_send_counts_out_basics_user_alloc) {
+    std::vector<int>         int_vec;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
+    auto                     buffer_based_on_user_alloc_vector = send_counts_out<resize_policy>(int_vec);
+    using ExpectedValueType                                    = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_user_alloc_vector,
+        ParameterType::send_counts,
+        internal::BufferType::out_buffer,
+        resize_policy,
         int_vec
     );
 }
@@ -648,6 +708,35 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
         buffer_based_on_user_alloc_vector,
         ParameterType::send_displs,
         internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_send_displs_out_basics_user_alloc) {
+    std::vector<int>         int_vec;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
+    auto                     buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec);
+    using ExpectedValueType                                    = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_user_alloc_vector,
+        ParameterType::send_displs,
+        internal::BufferType::out_buffer,
+        resize_policy,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_if_required_send_displs_out_basics_user_alloc) {
+    std::vector<int>         int_vec;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
+    auto                     buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec);
+    using ExpectedValueType                                    = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_user_alloc_vector,
+        ParameterType::send_displs,
+        internal::BufferType::out_buffer,
+        resize_policy,
         int_vec
     );
 }
@@ -681,6 +770,35 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_user_alloc) {
         buffer_based_on_user_alloc_buffer,
         ParameterType::recv_counts,
         internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_recv_counts_out_basics_user_alloc) {
+    std::vector<int>         int_vec;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
+    auto                     buffer_based_on_user_alloc_buffer = recv_counts_out<resize_policy>(int_vec);
+    using ExpectedValueType                                    = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_user_alloc_buffer,
+        ParameterType::recv_counts,
+        internal::BufferType::out_buffer,
+        resize_policy,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_if_required_recv_counts_out_basics_user_alloc) {
+    std::vector<int>         int_vec;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
+    auto                     buffer_based_on_user_alloc_buffer = recv_counts_out<resize_policy>(int_vec);
+    using ExpectedValueType                                    = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_user_alloc_buffer,
+        ParameterType::recv_counts,
+        internal::BufferType::out_buffer,
+        resize_policy,
         int_vec
     );
 }
@@ -714,6 +832,35 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
         buffer_based_on_user_alloc_vector,
         ParameterType::recv_displs,
         internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_recv_displs_out_basics_user_alloc) {
+    std::vector<int>         int_vec;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
+    auto                     buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec);
+    using ExpectedValueType                                    = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_user_alloc_vector,
+        ParameterType::recv_displs,
+        internal::BufferType::out_buffer,
+        resize_policy,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_if_required_recv_displs_out_basics_user_alloc) {
+    std::vector<int>         int_vec;
+    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
+    auto                     buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec);
+    using ExpectedValueType                                    = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_user_alloc_vector,
+        ParameterType::recv_displs,
+        internal::BufferType::out_buffer,
+        resize_policy,
         int_vec
     );
 }
@@ -736,6 +883,120 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc_without_explic
         ParameterType::recv_displs,
         internal::BufferType::out_buffer
     );
+}
+
+TEST(ParameterFactoriesTest, send_count_in) {
+    auto param       = send_count(42);
+    using param_type = std::remove_reference_t<decltype(param)>;
+    EXPECT_EQ(param.size(), 1);
+    EXPECT_EQ(param.underlying(), 42);
+    EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+    EXPECT_EQ(param_type::parameter_type, ParameterType::send_count);
+    EXPECT_EQ(param_type::buffer_type, BufferType::in_buffer);
+    EXPECT_FALSE(param_type::is_modifiable);
+}
+
+TEST(ParameterFactoriesTest, send_count_out) {
+    { // lib-allocated memory
+        auto param       = send_count_out();
+        using param_type = std::remove_reference_t<decltype(param)>;
+        EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+        EXPECT_EQ(param_type::parameter_type, ParameterType::send_count);
+        EXPECT_EQ(param_type::buffer_type, BufferType::out_buffer);
+        EXPECT_TRUE(param_type::is_modifiable);
+        param.underlying() = 42;
+        EXPECT_EQ(param.get_single_element(), 42);
+        EXPECT_EQ(param.extract(), 42);
+    }
+    { // user-allocated memory
+        int  count       = -1;
+        auto param       = send_count_out(count);
+        using param_type = std::remove_reference_t<decltype(param)>;
+        EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+        EXPECT_EQ(param_type::parameter_type, ParameterType::send_count);
+        EXPECT_EQ(param_type::buffer_type, BufferType::out_buffer);
+        EXPECT_TRUE(param_type::is_modifiable);
+        EXPECT_EQ(param.get_single_element(), -1);
+        param.underlying() = 42;
+        EXPECT_EQ(param.get_single_element(), 42);
+        EXPECT_EQ(count, 42);
+    }
+}
+
+TEST(ParameterFactoriesTest, recv_count_in) {
+    auto param       = recv_count(42);
+    using param_type = std::remove_reference_t<decltype(param)>;
+    EXPECT_EQ(param.size(), 1);
+    EXPECT_EQ(param.underlying(), 42);
+    EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+    EXPECT_EQ(param_type::parameter_type, ParameterType::recv_count);
+    EXPECT_EQ(param_type::buffer_type, BufferType::in_buffer);
+    EXPECT_FALSE(param_type::is_modifiable);
+}
+
+TEST(ParameterFactoriesTest, recv_count_out) {
+    { // lib-allocated memory
+        auto param       = recv_count_out();
+        using param_type = std::remove_reference_t<decltype(param)>;
+        EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+        EXPECT_EQ(param_type::parameter_type, ParameterType::recv_count);
+        EXPECT_EQ(param_type::buffer_type, BufferType::out_buffer);
+        EXPECT_TRUE(param_type::is_modifiable);
+        param.underlying() = 42;
+        EXPECT_EQ(param.get_single_element(), 42);
+        EXPECT_EQ(param.extract(), 42);
+    }
+    { // user-allocated memory
+        int  count       = -1;
+        auto param       = recv_count_out(count);
+        using param_type = std::remove_reference_t<decltype(param)>;
+        EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+        EXPECT_EQ(param_type::parameter_type, ParameterType::recv_count);
+        EXPECT_EQ(param_type::buffer_type, BufferType::out_buffer);
+        EXPECT_TRUE(param_type::is_modifiable);
+        EXPECT_EQ(param.get_single_element(), -1);
+        param.underlying() = 42;
+        EXPECT_EQ(param.get_single_element(), 42);
+        EXPECT_EQ(count, 42);
+    }
+}
+
+TEST(ParameterFactoriesTest, send_recv_count_in) {
+    auto param       = send_recv_count(42);
+    using param_type = std::remove_reference_t<decltype(param)>;
+    EXPECT_EQ(param.size(), 1);
+    EXPECT_EQ(param.underlying(), 42);
+    EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+    EXPECT_EQ(param_type::parameter_type, ParameterType::send_recv_count);
+    EXPECT_EQ(param_type::buffer_type, BufferType::in_buffer);
+    EXPECT_FALSE(param_type::is_modifiable);
+}
+
+TEST(ParameterFactoriesTest, send_recv_count_out) {
+    { // lib-allocated memory
+        auto param       = send_recv_count_out();
+        using param_type = std::remove_reference_t<decltype(param)>;
+        EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+        EXPECT_EQ(param_type::parameter_type, ParameterType::send_recv_count);
+        EXPECT_EQ(param_type::buffer_type, BufferType::out_buffer);
+        EXPECT_TRUE(param_type::is_modifiable);
+        param.underlying() = 42;
+        EXPECT_EQ(param.get_single_element(), 42);
+        EXPECT_EQ(param.extract(), 42);
+    }
+    { // user-allocated memory
+        int  count       = -1;
+        auto param       = send_recv_count_out(count);
+        using param_type = std::remove_reference_t<decltype(param)>;
+        EXPECT_TRUE((std::is_same_v<param_type::value_type, int>));
+        EXPECT_EQ(param_type::parameter_type, ParameterType::send_recv_count);
+        EXPECT_EQ(param_type::buffer_type, BufferType::out_buffer);
+        EXPECT_TRUE(param_type::is_modifiable);
+        EXPECT_EQ(param.get_single_element(), -1);
+        param.underlying() = 42;
+        EXPECT_EQ(param.get_single_element(), 42);
+        EXPECT_EQ(count, 42);
+    }
 }
 
 TEST(ParameterFactoriesTest, root_basics) {
@@ -834,31 +1095,34 @@ TEST(ParameterFactoriesTest, tag_enum_class) {
 TEST(ParameterFactoriesTest, status_basics) {
     {
         auto status_obj = status(kamping::ignore<>);
-        EXPECT_EQ(status_obj.native_ptr(), MPI_STATUS_IGNORE);
+        EXPECT_EQ(status_param_to_native_ptr(status_obj), MPI_STATUS_IGNORE);
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
-        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::ignore);
+        EXPECT_EQ(decltype(status_obj)::buffer_type, BufferType::ignore);
     }
     {
         MPI_Status native_status;
-        auto       status_obj = status(native_status);
-        EXPECT_EQ(status_obj.native_ptr(), &native_status);
+        auto       status_obj = status_out(native_status);
+        EXPECT_EQ(status_param_to_native_ptr(status_obj), &native_status);
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
-        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::native_ref);
+        EXPECT_TRUE((std::is_same_v<decltype(status_obj)::value_type, MPI_Status>));
+        EXPECT_FALSE(decltype(status_obj)::is_owning);
     }
     {
         kamping::Status stat;
-        auto            status_obj = status(stat);
-        EXPECT_EQ(status_obj.native_ptr(), &stat.native());
+        auto            status_obj = status_out(stat);
+        EXPECT_EQ(status_param_to_native_ptr(status_obj), &stat.native());
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
-        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::ref);
+        EXPECT_TRUE((std::is_same_v<decltype(status_obj)::value_type, Status>));
+        EXPECT_FALSE(decltype(status_obj)::is_owning);
     }
     {
         auto status_obj = status_out();
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
-        EXPECT_EQ(decltype(status_obj)::type, StatusParamType::owning);
+        EXPECT_TRUE(decltype(status_obj)::is_owning);
+        EXPECT_TRUE((std::is_same_v<decltype(status_obj)::value_type, Status>));
         // directly modify the owned status object
-        status_obj.native_ptr()->MPI_TAG = 42;
-        auto stat                        = status_obj.extract();
+        status_param_to_native_ptr(status_obj)->MPI_TAG = 42;
+        auto stat                                       = status_obj.extract();
         EXPECT_EQ(stat.tag(), 42);
     }
 }
@@ -889,7 +1153,7 @@ TEST(ParameterFactoriesTest, request_basics) {
             req_obj,
             ParameterType::request,
             BufferType::out_buffer,
-            my_request,
+            std::move(my_request),
             true /*should_be_modifiable*/
         );
     }
@@ -1029,7 +1293,8 @@ TEST(ParameterFactoriesTest, single_and_multiple_element_modifiable_send_recv_bu
         UserAllocatedContainerBasedBuffer<
             std::vector<uint8_t>,
             ParameterType::send_recv_buf,
-            BufferType::in_out_buffer>>;
+            BufferType::in_out_buffer,
+            BufferResizePolicy::no_resize>>;
     EXPECT_TRUE(vec_result);
 }
 
@@ -1042,6 +1307,35 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_user_alloc) {
         buffer_on_user_alloc_vector,
         ParameterType::send_recv_buf,
         internal::BufferType::in_out_buffer,
+        BufferResizePolicy::no_resize,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_send_recv_buf_basics_user_alloc) {
+    std::vector<int>         int_vec;
+    const BufferResizePolicy resize_policy               = BufferResizePolicy::resize_to_fit;
+    auto                     buffer_on_user_alloc_vector = send_recv_buf<resize_policy>(int_vec);
+    using ExpectedValueType                              = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_on_user_alloc_vector,
+        ParameterType::send_recv_buf,
+        internal::BufferType::in_out_buffer,
+        resize_policy,
+        int_vec
+    );
+}
+
+TEST(ParameterFactoriesTest, resizing_if_required_send_recv_buf_basics_user_alloc) {
+    std::vector<int>         int_vec;
+    const BufferResizePolicy resize_policy               = BufferResizePolicy::grow_only;
+    auto                     buffer_on_user_alloc_vector = send_recv_buf<resize_policy>(int_vec);
+    using ExpectedValueType                              = int;
+    testing::test_user_allocated_buffer<ExpectedValueType>(
+        buffer_on_user_alloc_vector,
+        ParameterType::send_recv_buf,
+        internal::BufferType::in_out_buffer,
+        resize_policy,
         int_vec
     );
 }
@@ -1116,286 +1410,6 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
         auto recv_count_out_obj = recv_counts_out();
         EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
         EXPECT_EQ(decltype(recv_count_out_obj)::buffer_type, internal::BufferType::out_buffer);
-    }
-}
-
-TEST(ParameterFactoriesTest, recv_counts_out_single_value_lib_allocated_basics) {
-    auto recv_count_out_obj          = recv_counts_out(alloc_new<int>);
-    *recv_count_out_obj.get().data() = 42;
-    EXPECT_EQ(*recv_count_out_obj.get().data(), 42);
-    EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
-    EXPECT_TRUE(has_extract_v<decltype(recv_count_out_obj)>);
-}
-
-TEST(ParameterFactoriesTest, make_data_buffer) {
-    {
-        // Constant, container, referencing, user allocated
-        std::vector<int>                  vec;
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::constant, btype>(vec);
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_FALSE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
-        EXPECT_EQ(&vec, &data_buf.underlying());
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const&>,
-            "Referencing buffers must hold a reference to their data."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Modifiable, container, referencing, user allocated
-        std::vector<int>                  vec;
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(vec);
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_TRUE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
-        EXPECT_EQ(&vec, &data_buf.underlying());
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>&>,
-            "Referencing buffers must hold a reference to their data."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Constant, single element, referencing, user allocated
-        int                               single_int;
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::constant, btype>(single_int);
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_FALSE(data_buf.is_modifiable);
-        EXPECT_TRUE(data_buf.is_single_element);
-        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
-        EXPECT_EQ(&single_int, &data_buf.underlying());
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, int const&>,
-            "Referencing buffers must hold a reference to their data."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Constant, container, owning, user allocated
-        std::vector<int>                  vec;
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::constant, btype>(std::move(vec));
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_FALSE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const>,
-            "Owning buffers must hold their data directly."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-
-    {
-        // modifiable, container, owning, library allocated
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(alloc_new<std::vector<int>>);
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_TRUE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>>,
-            "Owning buffers must hold their data directly."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Modifiable, single element, owning, lib_allocated
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(alloc_new<int>);
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_TRUE(data_buf.is_modifiable);
-        EXPECT_TRUE(data_buf.is_single_element);
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, int>,
-            "Owning buffers must hold their data directly."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Modifiable, container, owning, user_allocated with initializer_list
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>({1, 2, 3});
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_TRUE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int>>,
-            "Owning buffers must hold their data directly."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Constant, container, owning, user_allocated with initializer_list
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::constant, btype>({1, 2, 3});
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_FALSE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<int>>,
-            "Owning buffers must hold their data directly."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-}
-
-TEST(ParameterFactoriesTest, make_data_buffer_boolean_value) {
-    // use a custom container, because std::vector<bool> is not supported (see compilation failure tests)
-    {
-        // Constant, container, referencing, user allocated
-        testing::OwnContainer<bool>       vec   = {true, false};
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::constant, btype>(vec);
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_FALSE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
-        EXPECT_EQ(&vec, &data_buf.underlying());
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool> const&>,
-            "Referencing buffers must hold a reference to their data."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Modifiable, container, referencing, user allocated
-        testing::OwnContainer<bool>       vec   = {true, false};
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(vec);
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_TRUE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
-        EXPECT_EQ(&vec, &data_buf.underlying());
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool>&>,
-            "Referencing buffers must hold a reference to their data."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Constant, single element, referencing, user allocated
-        bool                              single_bool;
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::constant, btype>(single_bool);
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_FALSE(data_buf.is_modifiable);
-        EXPECT_TRUE(data_buf.is_single_element);
-        // As this buffer is referencing, the addresses of vec ad data_buf.underlying() should be the same.
-        EXPECT_EQ(&single_bool, &data_buf.underlying());
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, bool const&>,
-            "Referencing buffers must hold a reference to their data."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Constant, container, owning, user allocated
-        testing::OwnContainer<bool>       vec   = {true, false};
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::constant, btype>(std::move(vec));
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_FALSE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool> const>,
-            "Owning buffers must hold their data directly."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-
-    {
-        // modifiable, container, owning, library allocated
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(alloc_new<
-                                                                                      testing::OwnContainer<bool>>);
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_TRUE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, testing::OwnContainer<bool>>,
-            "Owning buffers must hold their data directly."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Modifiable, single element, owning, lib_allocated
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>(alloc_new<bool>);
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_TRUE(data_buf.is_modifiable);
-        EXPECT_TRUE(data_buf.is_single_element);
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, bool>,
-            "Owning buffers must hold their data directly."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Modifiable, container, owning, user_allocated with initializer_list
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype>({true, false, true});
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_TRUE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<kabool>>,
-            "Initializer lists of type bool have to be converted to std::vector<kabool>."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
-    }
-    {
-        // Constant, container, owning, user_allocated with initializer_list
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::constant, btype>({true, false, true});
-        EXPECT_EQ(data_buf.parameter_type, ptype);
-        EXPECT_FALSE(data_buf.is_modifiable);
-        EXPECT_FALSE(data_buf.is_single_element);
-        static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<kabool>>,
-            "Initializer lists of type bool have to be converted to std::vector<kabool>."
-        );
-        // extract() as proxy for lib allocated DataBuffers
-        EXPECT_FALSE(has_extract_v<decltype(data_buf)>);
     }
 }
 

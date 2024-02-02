@@ -101,7 +101,7 @@ TEST_F(IProbeTest, direct_probe_with_wrapped_status) {
         for (size_t other = 0; other < comm.size(); other++) {
             // wrapped status
             Status kmp_status;
-            while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(kmp_status))) {
+            while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status_out(kmp_status))) {
             }
             EXPECT_EQ(kmp_status.source(), other);
             EXPECT_EQ(kmp_status.tag(), other);
@@ -141,7 +141,7 @@ TEST_F(IProbeTest, direct_probe_with_native_status) {
         for (size_t other = 0; other < comm.size(); other++) {
             // native status
             MPI_Status mpi_status;
-            while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status(mpi_status))) {
+            while (!comm.iprobe(source(other), tag(asserting_cast<int>(other)), status_out(mpi_status))) {
             }
             EXPECT_EQ(mpi_status.MPI_SOURCE, other);
             EXPECT_EQ(mpi_status.MPI_TAG, other);

@@ -34,6 +34,7 @@ kamping_register_test(test_helpers_for_testing FILES helpers_for_testing_test.cp
 kamping_register_test(test_operation_builder FILES operation_builder_test.cpp)
 kamping_register_test(test_has_member FILES has_member_test.cpp)
 kamping_register_test(test_rank_ranges FILES rank_ranges_test.cpp)
+kamping_register_test(test_measurement_utils FILES measurements/measurement_utils_test.cpp)
 
 # Registering tests with MPI:
 
@@ -42,6 +43,11 @@ kamping_register_test(test_rank_ranges FILES rank_ranges_test.cpp)
 kamping_register_mpi_test(
     test_mpi_alltoall
     FILES collectives/mpi_alltoall_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
+    test_mpi_alltoallv
+    FILES collectives/mpi_alltoallv_test.cpp
     CORES 1 4
 )
 kamping_register_mpi_test(
@@ -120,6 +126,11 @@ kamping_register_mpi_test(
     CORES 1 2 4
 )
 kamping_register_mpi_test(
+    test_mpi_irecv
+    FILES p2p/mpi_irecv_test.cpp
+    CORES 1 2 4
+)
+kamping_register_mpi_test(
     test_mpi_allgather
     FILES collectives/mpi_allgather_test.cpp
     CORES 1 4
@@ -195,8 +206,33 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_request_overriding_test_and_wait
+    FILES request_test_overriding_test_and_wait.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_request
     FILES request_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
+    test_request_pool
+    FILES request_pool_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
+    test_measurement_utils_with_communication
+    FILES measurements/mpi_measurement_utils_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
+    test_timer
+    FILES measurements/mpi_timer_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
+    test_mpi_helpers_for_testing
+    FILES helpers_for_testing_mpi_test.cpp
     CORES 1 4
 )
 
@@ -230,6 +266,39 @@ target_compile_definitions(
 target_compile_definitions(test_environment_init_finalize_manual PRIVATE -D_GLIBCXX_DEBUG)
 target_compile_definitions(test_environment_init_finalize_manual PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
 katestrophe_add_mpi_test(test_environment_init_finalize_manual CORES 1 4)
+
+# Test InitMPIMode::InitFinalizeIfNecessary: autoamtically decides if it needs to call MPI_Init() and MPI_Finalize()
+
+# Not necessary, with argc and argv
+add_executable(test_environment_init_finalize_if_necessary_0 environment_init_finalize_if_necessary_test.cpp)
+target_link_libraries(test_environment_init_finalize_if_necessary_0 PRIVATE kamping_base MPI::MPI_CXX)
+target_compile_definitions(test_environment_init_finalize_if_necessary_0 PRIVATE -DKAMPING_ENVIRONMENT_TEST_WITH_PARAM)
+target_compile_definitions(test_environment_init_finalize_if_necessary_0 PRIVATE -D_GLIBCXX_DEBUG)
+target_compile_definitions(test_environment_init_finalize_if_necessary_0 PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
+# Necessary, with argc and argv
+add_executable(test_environment_init_finalize_if_necessary_1 environment_init_finalize_if_necessary_test.cpp)
+target_link_libraries(test_environment_init_finalize_if_necessary_1 PRIVATE kamping_base MPI::MPI_CXX)
+target_compile_definitions(
+    test_environment_init_finalize_if_necessary_1 PRIVATE -DKAMPING_ENVIRONMENT_TEST_WITH_PARAM
+                                                          -DKAMPING_ENVIRONMENT_TEST_INIT_FINALIZE_NECESSARY
+)
+target_compile_definitions(test_environment_init_finalize_if_necessary_1 PRIVATE -D_GLIBCXX_DEBUG)
+target_compile_definitions(test_environment_init_finalize_if_necessary_1 PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
+# Not necessary, no argc and argv
+add_executable(test_environment_init_finalize_if_necessary_2 environment_init_finalize_if_necessary_test.cpp)
+target_link_libraries(test_environment_init_finalize_if_necessary_2 PRIVATE kamping_base MPI::MPI_CXX)
+target_compile_definitions(test_environment_init_finalize_if_necessary_2 PRIVATE -DKAMPING_ENVIRONMENT_TEST_NO_PARAM)
+target_compile_definitions(test_environment_init_finalize_if_necessary_2 PRIVATE -D_GLIBCXX_DEBUG)
+target_compile_definitions(test_environment_init_finalize_if_necessary_2 PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
+# Necessary, no argc and argv
+add_executable(test_environment_init_finalize_if_necessary_3 environment_init_finalize_if_necessary_test.cpp)
+target_link_libraries(test_environment_init_finalize_if_necessary_3 PRIVATE kamping_base MPI::MPI_CXX)
+target_compile_definitions(
+    test_environment_init_finalize_if_necessary_3 PRIVATE -DKAMPING_ENVIRONMENT_TEST_NO_PARAM
+                                                          -DKAMPING_ENVIRONMENT_TEST_INIT_FINALIZE_NECESSARY
+)
+target_compile_definitions(test_environment_init_finalize_if_necessary_3 PRIVATE -D_GLIBCXX_DEBUG)
+target_compile_definitions(test_environment_init_finalize_if_necessary_3 PRIVATE -D_GLIBCXX_DEBUG_PEDANTIC)
 
 kamping_register_compilation_failure_test(
     test_mpi_datatype_unsupported_types
@@ -320,9 +389,96 @@ kamping_register_compilation_failure_test(
 )
 
 kamping_register_compilation_failure_test(
+    test_mpi_alltoall_compilation_failure
+    FILES collectives/mpi_alltoall_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNT"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_alltoallv_compilation_failure
+    FILES collectives/mpi_alltoallv_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNTS" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNTS"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_allgather_compilation_failure
+    FILES collectives/mpi_allgather_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNT"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_allgatherv_compilation_failure
+    FILES collectives/mpi_allgatherv_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNT"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_allreduce_compilation_failure
+    FILES collectives/mpi_allreduce_compilation_failure_test.cpp
+    SECTIONS "OPERATION_TYPE_DOES_NOT_MATCH_BUFFER_TYPE" "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_reduce_compilation_failure
+    FILES collectives/mpi_reduce_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT" "SEND_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
+             "SEND_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
     test_mpi_bcast_compilation_failure
     FILES collectives/mpi_bcast_compilation_failure_test.cpp
-    SECTIONS "RECV_COUNT_GIVEN"
+    SECTIONS "SEND_RECV_COUNT_GIVEN" "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_gatherv_compilation_failure
+    FILES collectives/mpi_gatherv_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNTS"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_exscan_compilation_failure
+    FILES collectives/mpi_exscan_compilation_failure_test.cpp
+    SECTIONS "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT" "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_scan_compilation_failure
+    FILES collectives/mpi_scan_compilation_failure_test.cpp
+    SECTIONS "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT" "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
+             "SEND_REC_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_scatterv_compilation_failure
+    FILES collectives/mpi_scatterv_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNTS" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNT"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_scatter_compilation_failure
+    FILES collectives/mpi_scatter_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNT"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_gather_compilation_failure
+    FILES collectives/mpi_gather_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT" "RECV_TYPE_GIVEN_BUT_NO_RECV_COUNT"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
     LIBRARIES kamping_base
 )
 kamping_register_compilation_failure_test(
@@ -335,5 +491,22 @@ kamping_register_compilation_failure_test(
     test_mpi_recv_compilation_failure
     FILES p2p/mpi_recv_compilation_failure_test.cpp
     SECTIONS "OWNING_STATUS" "PROC_NULL" "RECV_COUNT_GIVEN" "RECV_BUF_GIVEN"
+             "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT" "RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_send_compilation_failure
+    FILES p2p/mpi_send_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_STANDARD_MODE"
+             "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_SYNCHRONOUS_MODE"
+             "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_BUFFERED_MODE" "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_READY_MODE"
+    LIBRARIES kamping_base
+)
+kamping_register_compilation_failure_test(
+    test_mpi_isend_compilation_failure
+    FILES p2p/mpi_isend_compilation_failure_test.cpp
+    SECTIONS "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_STANDARD_MODE"
+             "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_SYNCHRONOUS_MODE"
+             "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_BUFFERED_MODE" "SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT_IN_READY_MODE"
     LIBRARIES kamping_base
 )

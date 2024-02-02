@@ -23,13 +23,13 @@
 #include <memory>
 #include <vector>
 
-#include <gtest/gtest.h>
-#include <kassert/kassert.hpp>
+#include <mpi.h>
 
-#include "kamping/assertion_levels.hpp"
 #include "kamping/data_buffer.hpp"
+#include "kamping/named_parameter_check.hpp"
+#include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
-#include "kamping/result.hpp"
+#include "kamping/named_parameters.hpp"
 
 namespace testing {
 /// @brief Simple Container type. Can be used to test library function with containers other than vector.
@@ -200,31 +200,101 @@ struct CustomAllocator {
     }
 };
 
-//
-// Makros to test for failed KASSERT() statements.
-// Note that these macros could already be defined if we included the header that turns assertions into exceptions.
-// In this case, we keep the current definition.
-//
+///@brief Returns an uncommitted MPI_Datatype with type signature {int, sizeof(int)-padding, int}.
+///@return created MPI_Datatype.
+inline MPI_Datatype MPI_INT_padding_MPI_INT() {
+    MPI_Datatype new_type;
+    // create 2 blocks of length 1 (MPI_INT) with a stride (distance between the start of each block in number elems)
+    // of 2
+    MPI_Type_vector(2, 1, 2, MPI_INT, &new_type);
+    return new_type;
+}
 
-#ifndef EXPECT_KASSERT_FAILS
-    #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // EXPECT that a KASSERT assertion failed and that the error message contains a certain failure_message.
-        #define EXPECT_KASSERT_FAILS(code, failure_message) \
-            EXPECT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
-    #else // Otherwise, we do not test for failed assertions
-        #define EXPECT_KASSERT_FAILS(code, failure_message)
-    #endif
-#endif
+///@brief Returns an uncommitted MPI_Datatype with type signature {int, sizeof(int)-padding, sizeof(int)-padding}.
+///@return created MPI_Datatype.
+inline MPI_Datatype MPI_INT_padding_padding() {
+    MPI_Datatype new_type;
+    MPI_Type_create_resized(MPI_INT, 0, sizeof(int) * 3, &new_type);
+    return new_type;
+}
 
-#ifndef ASSERT_KASSERT_FAILS
-    #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
-        // ASSERT that a KASSERT assertion failed and that the error message contains a certain failure_message.
-        #define ASSERT_KASSERT_FAILS(code, failure_message) \
-            ASSERT_EXIT({ code; }, testing::KilledBySignal(SIGABRT), failure_message);
-    #else // Otherwise, we do not test for failed assertions
-        #define ASSERT_KASSERT_FAILS(code, failure_message)
-    #endif
-#endif
+///@ This allows to start a dummy non-blocking operation, which can be manually marked as completed.
+struct DummyNonBlockingOperation {
+    template <typename... Args>
+    ///@brief Starts a dummy non-blocking operation using MPI's generalized requests.
+    /// The value of the tag is stored in the receive buffer and as tag in the status returned after completion.
+    ///
+    /// Optional parameters:
+    ///- \c tag: The tag of the operation. Defaults to 0.
+    ///- \c request: The request object to use. Defaults to internally constructed \c kamping::request() which is return
+    /// to the user.
+    ///- \c recv_buf: The receive buffer to use. Defaults to \c kamping::recv_buf(alloc_new<std::vector<int>>).
+    ///@param args Arguments to the operation.
+    auto start_op(Args... args) {
+        using namespace kamping::internal;
+        using namespace kamping;
+        KAMPING_CHECK_PARAMETERS(
+            Args,
+            KAMPING_REQUIRED_PARAMETERS(),
+            KAMPING_OPTIONAL_PARAMETERS(tag, request, recv_buf)
+        );
+        using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<std::vector<int>>));
+        auto&& recv_buf =
+            select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
+        using recv_buf_type       = typename std::remove_reference_t<decltype(recv_buf)>;
+        using recv_buf_value_type = typename recv_buf_type::value_type;
+        static_assert(std::is_same_v<recv_buf_value_type, int>);
+        auto compute_required_recv_buf_size = [&] {
+            return size_t{1};
+        };
+        recv_buf.resize_if_requested(compute_required_recv_buf_size);
+        KASSERT(
+            recv_buf.size() >= compute_required_recv_buf_size(),
+            "Recv buffer is not large enough to hold all received elements.",
+            assert::light
+        );
+
+        using default_request_param = decltype(kamping::request());
+        auto&& request_param =
+            select_parameter_type_or_default<ParameterType::request, default_request_param>(std::tuple{}, args...);
+
+        using default_tag_buf_type = decltype(kamping::tag(0));
+
+        auto&& tag_param =
+            select_parameter_type_or_default<ParameterType::tag, default_tag_buf_type>(std::tuple(0), args...);
+        int tag     = tag_param.tag();
+        this->state = new int(tag);
+        this->data  = recv_buf.get().data();
+        MPI_Grequest_start(
+            [](void* extra_state [[maybe_unused]], MPI_Status* status [[maybe_unused]]) {
+                MPI_Status_set_elements(status, MPI_INT, 1);
+                MPI_Status_set_cancelled(status, 0);
+                MPI_Comm_rank(MPI_COMM_WORLD, &status->MPI_SOURCE);
+                status->MPI_TAG = *static_cast<int*>(extra_state);
+                return MPI_SUCCESS;
+            },
+            [](void* extra_state [[maybe_unused]]) {
+                delete static_cast<int*>(extra_state);
+                return MPI_SUCCESS;
+            },
+            [](void* extra_state [[maybe_unused]], int complete [[maybe_unused]]) { return MPI_SUCCESS; },
+            this->state,
+            &request_param.underlying().mpi_request()
+        );
+        this->req = request_param.underlying().mpi_request();
+        return make_nonblocking_result(std::move(recv_buf), std::move(request_param));
+    }
+
+    ///@brief Manually marks the operation as completed.
+    void finish_op() {
+        *this->data = *state;
+        MPI_Grequest_complete(this->req);
+    }
+
+    int*        state;
+    int*        data;
+    MPI_Request req;
+};
 
 /// @}
 } // namespace testing

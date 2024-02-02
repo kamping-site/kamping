@@ -31,8 +31,13 @@ int main(int /*argc*/, char** /*argv*/) {
     comm.recv_single<int>(recv_counts(1));
 #elif defined(RECV_BUF_GIVEN)
     comm.recv_single<int>(recv_buf(value));
+#elif defined(RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT)
+    ccomm.recv(recv_buf<resize_to_fit>(value), recv_type(MPI_INT));
+#elif defined(RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY)
+    ccomm.recv(recv_buf<grow_only>(value), recv_type(MPI_INT));
 #else
-    comm.recv_single<int>();
     // If none of the above sections is active, this file will compile successfully.
+    comm.recv_single<int>();
+    comm.recv(recv_buf<no_resize>(value), recv_type(MPI_INT));
 #endif
 }

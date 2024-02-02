@@ -1,7 +1,7 @@
 
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -11,6 +11,10 @@
 //
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
+
+#include "../test_assertions.hpp"
+
+#include "gmock/gmock.h"
 
 #include <gtest/gtest.h>
 
@@ -48,10 +52,46 @@ TEST(ScanTest, scan_single_vector_of_size_2) {
 
     std::vector<int> input = {42, 1};
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(
         (comm.scan_single(send_buf(input), op(kamping::ops::plus<>{}))),
         "The send buffer has to be of size 1 on all ranks."
     );
+#endif
+}
+
+TEST(ScanTest, scan_explicit_send_recv_count_smaller_than_send_buffer_size) {
+    Communicator comm;
+
+    std::vector<int> input = {42, 1, 1, 1, 1};
+
+    auto result   = comm.scan(send_buf(input), send_recv_count(2), op(kamping::ops::plus<>{}));
+    auto recv_buf = result.extract_recv_buffer();
+    EXPECT_EQ(recv_buf.size(), 2);
+    EXPECT_THAT(recv_buf, ElementsAre((comm.rank_signed() + 1) * 42, (comm.rank_signed() + 1)));
+}
+
+TEST(ScanTest, scan_explicit_send_recv_count_out_value_not_taken_into_account) {
+    Communicator comm;
+
+    std::vector<int> input           = {42, 1};
+    int              send_recv_count = -1;
+
+    auto result   = comm.scan(send_buf(input), send_recv_count_out(send_recv_count), op(kamping::ops::plus<>{}));
+    auto recv_buf = result.extract_recv_buffer();
+    EXPECT_EQ(recv_buf.size(), 2);
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(recv_buf, ElementsAre((comm.rank_signed() + 1) * 42, (comm.rank_signed() + 1)));
+}
+
+TEST(ScanTest, scan_explicit_send_recv_count) {
+    Communicator comm;
+
+    std::vector<int> input = {42, 1};
+
+    auto result   = comm.scan(send_buf(input), send_recv_count(2), op(kamping::ops::plus<>{}));
+    auto recv_buf = result.extract_recv_buffer();
+    EXPECT_THAT(recv_buf, ElementsAre((comm.rank_signed() + 1) * 42, (comm.rank_signed() + 1)));
 }
 
 TEST(ScanTest, scan_no_receive_buffer) {
@@ -74,7 +114,7 @@ TEST(ScanTest, scan_with_receive_buffer) {
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    comm.scan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.scan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result));
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {
@@ -237,4 +277,196 @@ TEST(ScanTest, scan_default_container_type) {
 
     // This just has to compile
     OwnContainer<int> result = comm.scan(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+}
+
+TEST(ScanTest, single_element_with_given_recv_buf_bigger_than_required) {
+    Communicator     comm;
+    std::vector<int> input               = {1};
+    int              expected_recv_value = comm.rank_signed() + 1;
+
+    {
+        // recv buffer will be resized as policy is resize_to_fit
+        std::vector<int> recv_buffer(2, -1);
+        comm.scan(send_buf(input), recv_buf<resize_to_fit>(recv_buffer), op(kamping::ops::plus<>{}));
+        EXPECT_EQ(recv_buffer.front(), expected_recv_value);
+    }
+    {
+        // recv buffer will not be resized as it is large enough and policy is grow_only
+        std::vector<int> recv_buffer(2, -1);
+        comm.scan(send_buf(input), recv_buf<grow_only>(recv_buffer), op(kamping::ops::plus<>{}));
+        EXPECT_THAT(recv_buffer, ElementsAre(expected_recv_value, -1));
+    }
+    {
+        // recv buffer will not be resized as the policy is no_resize
+        std::vector<int> recv_buffer(2, -1);
+        comm.scan(send_buf(input), recv_buf<no_resize>(recv_buffer), op(kamping::ops::plus<>{}));
+        EXPECT_THAT(recv_buffer, ElementsAre(expected_recv_value, -1));
+    }
+    {
+        // recv buffer will not be resized as the policy is no_resize (default)
+        std::vector<int> recv_buffer(2, -1);
+        comm.scan(send_buf(input), recv_buf(recv_buffer), op(kamping::ops::plus<>{}));
+        EXPECT_THAT(recv_buffer, ElementsAre(expected_recv_value, -1));
+    }
+}
+
+TEST(ScanTest, single_element_with_given_recv_buf_smaller_than_required) {
+    Communicator     comm;
+    std::vector<int> input = {1};
+    std::vector<int> expected_recv_buffer{comm.rank_signed() + 1};
+
+    {
+        // recv buffer will be resized as policy is resize_to_fit
+        std::vector<int> recv_buffer;
+        comm.scan(send_buf(input), recv_buf<resize_to_fit>(recv_buffer), op(kamping::ops::plus<>{}));
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+    }
+    {
+        // recv buffer will be resized as policy is grow_only and buffer is too small
+        std::vector<int> recv_buffer;
+        comm.scan(send_buf(input), recv_buf<grow_only>(recv_buffer), op(kamping::ops::plus<>{}));
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+    }
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    {
+        // recv buffer will not be resized as the policy is no_resize
+        std::vector<int> recv_buffer;
+        EXPECT_KASSERT_FAILS(
+            comm.scan(send_buf(input), recv_buf<no_resize>(recv_buffer), op(kamping::ops::plus<>{})),
+            ""
+        );
+    }
+    {
+        // recv buffer will not be resized as the policy is no_resize (default)
+        std::vector<int> recv_buffer;
+        EXPECT_KASSERT_FAILS(
+            comm.scan(send_buf(input), recv_buf<no_resize>(recv_buffer), op(kamping::ops::plus<>{})),
+            ""
+        );
+    }
+#endif
+}
+
+TEST(ScanTest, send_recv_count_is_out_parameter) {
+    Communicator     comm;
+    std::vector<int> data{0, 1};
+    int              send_recv_count = -1;
+    auto result = comm.scan(send_buf(data), send_recv_count_out(send_recv_count), op(kamping::ops::plus<>{}));
+
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(result.extract_recv_buffer(), ElementsAre(0, comm.rank() + 1));
+}
+
+TEST(ScanTest, send_recv_count_is_part_of_result_object) {
+    Communicator     comm;
+    std::vector<int> data{0, 1};
+    auto             result = comm.scan(send_buf(data), send_recv_count_out(), op(kamping::ops::plus<>{}));
+
+    EXPECT_EQ(result.extract_send_recv_count(), 2);
+    EXPECT_THAT(result.extract_recv_buffer(), ElementsAre(0, comm.rank() + 1));
+}
+
+TEST(ScanTest, send_recv_type_is_out_parameter) {
+    Communicator     comm;
+    std::vector<int> data{0, 1};
+    MPI_Datatype     send_recv_type;
+    auto             result =
+        comm.scan(send_buf(data), send_recv_count(2), op(kamping::ops::plus<>{}), send_recv_type_out(send_recv_type));
+
+    EXPECT_EQ(send_recv_type, MPI_INT);
+    EXPECT_THAT(result.extract_recv_buffer(), ElementsAre(0, comm.rank() + 1));
+}
+
+TEST(ScanTest, send_recv_type_is_part_of_result_object) {
+    Communicator     comm;
+    std::vector<int> data{0, 1};
+    auto result = comm.scan(send_buf(data), send_recv_count(2), op(kamping::ops::plus<>{}), send_recv_type_out());
+
+    EXPECT_EQ(result.extract_send_recv_type(), MPI_INT);
+    EXPECT_THAT(result.extract_recv_buffer(), ElementsAre(0, comm.rank() + 1));
+}
+
+TEST(ScanTest, custom_operation_on_custom_mpi_type) {
+    Communicator comm;
+    int const    dont_care = -1;
+
+    struct Aggregate {
+        int min;
+        int padding = dont_care;
+        int max;
+
+        bool operator==(Aggregate const& rhs) const {
+            return this->min == rhs.min && this->max == rhs.max;
+        }
+    };
+    MPI_Datatype int_padding_int = MPI_INT_padding_MPI_INT();
+    auto         my_op           = [](Aggregate const& lhs, Aggregate const& rhs) {
+        Aggregate agg;
+        agg.min = std::min(lhs.min, rhs.min);
+        agg.max = std::max(lhs.max, rhs.max);
+        return agg;
+    };
+
+    Aggregate              agg1  = {comm.rank_signed(), dont_care, comm.rank_signed()};
+    Aggregate              agg2  = {comm.rank_signed() + 42, dont_care, comm.rank_signed() + 42};
+    std::vector<Aggregate> input = {agg1, agg2};
+
+    Aggregate              agg1_expected   = {0, dont_care, comm.rank_signed()};
+    Aggregate              agg2_expected   = {42, dont_care, comm.rank_signed() + 42};
+    std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
+    std::vector<Aggregate> recv_buffer(2);
+
+    MPI_Type_commit(&int_padding_int);
+    comm.scan(
+        send_buf(input),
+        send_recv_count(2),
+        send_recv_type(int_padding_int),
+        op(my_op, kamping::ops::commutative),
+        recv_buf<no_resize>(recv_buffer)
+    );
+    MPI_Type_free(&int_padding_int);
+
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
+void sum_for_int_padding_padding_type(void* in_buf, void* inout_buf, int* len, MPI_Datatype*) {
+    kamping::Communicator<> comm;
+    int*                    in_buffer    = reinterpret_cast<int*>(in_buf);
+    int*                    inout_buffer = reinterpret_cast<int*>(inout_buf);
+    for (size_t i = 0; i < static_cast<size_t>(*len); ++i) {
+        inout_buffer[3 * i] = in_buffer[3 * i] + inout_buffer[3 * i];
+    }
+}
+
+TEST(ScanTest, custom_operation_on_custom_mpi_without_matching_cpp_type) {
+    Communicator comm;
+    int const    dont_care = -1;
+
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    std::vector<int> input = {comm.rank_signed(), dont_care, dont_care, comm.rank_signed() + 42, dont_care, dont_care};
+
+    int const        sum_of_smaller_ranks_inclusive = comm.rank_signed() * (comm.rank_signed() + 1) / 2;
+    std::vector<int> expected_result                = {
+                       sum_of_smaller_ranks_inclusive,
+                       dont_care,
+                       dont_care,
+                       sum_of_smaller_ranks_inclusive + (comm.rank_signed() + 1) * 42,
+                       dont_care,
+                       dont_care};
+    std::vector<int> recv_buffer(6, dont_care);
+
+    MPI_Op user_defined_op;
+    MPI_Op_create(sum_for_int_padding_padding_type, 1, &user_defined_op);
+    MPI_Type_commit(&int_padding_padding);
+    comm.scan(
+        send_buf(input),
+        send_recv_count(2),
+        send_recv_type(int_padding_padding),
+        op(user_defined_op),
+        recv_buf<no_resize>(recv_buffer)
+    );
+    MPI_Type_free(&int_padding_padding);
+    MPI_Op_free(&user_defined_op);
+
+    EXPECT_EQ(recv_buffer, expected_result);
 }

@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -18,6 +18,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/collectives_helpers.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
@@ -45,8 +46,18 @@
 ///  same size at each rank.
 ///  - \ref kamping::op() the operation to apply to the input.
 ///
-///  The following parameters are optional:
-///  - \ref kamping::recv_buf() containing a buffer for the output.
+/// The following parameters are optional:
+///  - \ref kamping::recv_buf() containing a buffer for the output. The buffer will be resized according to the buffer's
+/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
+/// storage must be large enough to hold all received elements. This requires a size of at least `send_recv_count`.
+///
+///  - \ref kamping::send_recv_count() containing the number of elements to be processed in this operation. This
+/// parameter has to be the same at each rank. If omitted, the size of the send buffer will be used as send_recv_count.
+///
+///  - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as data type in this operation. If omitted,
+/// the \c MPI datatype is derived automatically based on send_buf's underlying \c value_type. If the type is provided
+/// explicitly, the compatibility of the type and operation has to be ensured by the user.
+///
 ///  - \ref kamping::values_on_rank_0() containing the value(s) that is/are returned in the \c recv_buf of rank 0. \c
 ///  values_on_rank_0 must be a container of the same size as \c recv_buf or a single value (which will be reused for
 ///  all elements of the \c recv_buf).
@@ -61,7 +72,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf, op),
-        KAMPING_OPTIONAL_PARAMETERS(recv_buf, values_on_rank_0)
+        KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_recv_count, send_recv_type, values_on_rank_0)
     );
 
     // Get the send buffer and deduce the send and recv value types.
@@ -78,10 +89,26 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
     auto&& recv_buf =
         select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
-    using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
-    static_assert(
-        std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
-        "Types of send and receive buffers do not match."
+
+    // Get the send_recv_type.
+    auto&& send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
+    [[maybe_unused]] constexpr bool send_recv_type_is_in_param = !has_to_be_computed<decltype(send_recv_type)>;
+
+    // Get the send_recv count
+    using default_send_recv_count_type = decltype(kamping::send_recv_count_out());
+    auto&& send_recv_count             = internal::select_parameter_type_or_default<
+        internal::ParameterType::send_recv_count,
+        default_send_recv_count_type>(std::tuple(), args...);
+
+    constexpr bool do_compute_send_recv_count = internal::has_to_be_computed<decltype(send_recv_count)>;
+    if constexpr (do_compute_send_recv_count) {
+        send_recv_count.underlying() = asserting_cast<int>(send_buf.size());
+    }
+
+    KASSERT(
+        is_same_on_all_ranks(send_recv_count.get_single_element()),
+        "The send_recv_count has to be the same on all ranks.",
+        assert::light_communication
     );
 
     // Get the operation used for the reduction. The signature of the provided function is checked while building.
@@ -89,18 +116,24 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
     auto  operation       = operation_param.template build_operation<send_value_type>();
 
     // Resize the recv buffer to the same size as the send buffer; get the pointer needed for the MPI call.
-    recv_buf.resize(send_buf.size());
-    recv_value_type* recv_buf_ptr = recv_buf.data();
-    KASSERT(recv_buf_ptr != nullptr, assert::light);
-    KASSERT(recv_buf.size() == send_buf.size(), assert::light);
-    // send_buf.size() is equal on all ranks, as checked above.
+    auto compute_required_recv_buf_size = [&]() {
+        return asserting_cast<size_t>(send_recv_count.get_single_element());
+    };
+    recv_buf.resize_if_requested(compute_required_recv_buf_size);
+    KASSERT(
+        // if the send_recv type is user provided, kamping cannot make any assumptions about the required size of
+        // the recv buffer
+        send_recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
+        "Recv buffer is not large enough to hold all received elements.",
+        assert::light
+    );
 
     // Perform the MPI_Allreduce call and return.
     [[maybe_unused]] int err = MPI_Exscan(
         send_buf.data(),                      // sendbuf
-        recv_buf_ptr,                         // recvbuf,
-        asserting_cast<int>(send_buf.size()), // count
-        mpi_datatype<send_value_type>(),      // datatype,
+        recv_buf.data(),                      // recvbuf,
+        send_recv_count.get_single_element(), // count
+        send_recv_type.get_single_element(),  // datatype,
         operation.op(),                       // op
         mpi_communicator()                    // communicator
     );
@@ -118,21 +151,32 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
         if constexpr (has_values_on_rank_0_param) {
             auto const& values_on_rank_0_param = select_parameter_type<ParameterType::values_on_rank_0>(args...);
             KASSERT(
-                (values_on_rank_0_param.size() == 1 || values_on_rank_0_param.size() == recv_buf.size()),
+                // if the send_recv type is user provided, kamping cannot make any assumptions about the required size
+                // of the recv buffer
+                (send_recv_type_is_in_param || values_on_rank_0_param.size() == 1
+                 || values_on_rank_0_param.size() == asserting_cast<size_t>(send_recv_count.get_single_element())),
                 "on_rank_0 has to either be of size 1 or of the same size as the recv_buf.",
                 assert::light
             );
             if (values_on_rank_0_param.size() == 1) {
-                std::fill_n(recv_buf.data(), recv_buf.size(), *values_on_rank_0_param.data());
+                std::fill_n(
+                    recv_buf.data(),
+                    asserting_cast<size_t>(send_recv_count.get_single_element()),
+                    *values_on_rank_0_param.data()
+                );
             } else {
                 std::copy_n(values_on_rank_0_param.data(), values_on_rank_0_param.size(), recv_buf.data());
             }
         } else if constexpr (operation.is_builtin) {
-            std::fill_n(recv_buf.data(), recv_buf.size(), operation.identity());
+            std::fill_n(
+                recv_buf.data(),
+                asserting_cast<size_t>(send_recv_count.get_single_element()),
+                operation.identity()
+            );
         }
     }
 
-    return make_mpi_result(std::move(recv_buf));
+    return make_mpi_result(std::move(recv_buf), std::move(send_recv_count), std::move(send_recv_type));
 }
 
 /// @brief Wrapper for \c MPI_exscan for single elements.

@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -266,7 +268,7 @@ TEST_F(TryRecvTest, try_recv_vector_with_input_status) {
         Status           recv_status;
         // pass status as input parameter
         while (true) {
-            auto result_opt = comm.try_recv(recv_buf(message), status(recv_status));
+            auto result_opt = comm.try_recv(recv_buf(message), status_out(recv_status));
             if (result_opt.has_value()) {
                 EXPECT_EQ(recv_status.source(), comm.root());
                 EXPECT_EQ(recv_status.tag(), 0);
@@ -285,9 +287,9 @@ TEST_F(TryRecvTest, try_recv_vector_with_input_status) {
 }
 
 TEST_F(TryRecvTest, try_recv_default_custom_container_without_recv_buf) {
-    Communicator<testing::OwnContainer> comm;
-    std::vector                         v{1, 2, 3, 4, 5};
-    MPI_Request                         req = MPI_REQUEST_NULL;
+    Communicator<::testing::OwnContainer> comm;
+    std::vector                           v{1, 2, 3, 4, 5};
+    MPI_Request                           req = MPI_REQUEST_NULL;
 
     // No messages have been sent yet, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
@@ -311,8 +313,8 @@ TEST_F(TryRecvTest, try_recv_default_custom_container_without_recv_buf) {
             if (result_opt.has_value()) {
                 auto& result = result_opt.value();
                 EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result)>);
-                testing::OwnContainer<int> message = result.extract_recv_buffer();
-                EXPECT_EQ(message, testing::OwnContainer<int>({1, 2, 3, 4, 5}));
+                ::testing::OwnContainer<int> message = result.extract_recv_buffer();
+                EXPECT_EQ(message, ::testing::OwnContainer<int>({1, 2, 3, 4, 5}));
                 break;
             }
         }

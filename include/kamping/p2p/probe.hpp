@@ -37,7 +37,7 @@
 /// for an arbitrary tag, i.e. \c tag(tags::any).
 /// - \ref kamping::source() probe for messages sent from this source rank.
 /// Defaults to probing for an arbitrary source, i.e. \c source(rank::any).
-/// - \ref kamping::status() or \ref kamping::status_out(). Returns info about
+/// - \c kamping::status(ignore<>) or \ref kamping::status_out(). Returns info about
 /// the probed message by setting the appropriate fields in the status object
 /// passed by the user. If \ref kamping::status_out() is passed, constructs a
 /// status object which may be retrieved by the user.
@@ -84,10 +84,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
     KASSERT(internal::is_valid_rank_in_comm(source, *this, true, true), "Invalid source rank.");
 
     [[maybe_unused]] int err = MPI_Probe(
-        source.rank_signed(),     // source
-        tag,                      // tag
-        this->mpi_communicator(), // comm
-        status.native_ptr()       // status
+        source.rank_signed(),                        // source
+        tag,                                         // tag
+        this->mpi_communicator(),                    // comm
+        internal::status_param_to_native_ptr(status) // status
     );
     THROW_IF_MPI_ERROR(err, MPI_Probe);
 

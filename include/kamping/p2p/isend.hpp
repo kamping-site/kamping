@@ -28,6 +28,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/p2p/helpers.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/request.hpp"
 #include "kamping/result.hpp"
@@ -41,12 +42,22 @@
 ///
 /// The following parameters are required:
 /// - \ref kamping::send_buf() containing the data that is sent.
+///
 /// - \ref kamping::destination() the receiving rank.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref
 /// Communicator::default_tag()) if not present.
+///
+/// - \ref kamping::send_count() specifiying how many elements of the buffer are sent.
+/// If ommited, the size of the send buffer is used as a default. This parameter is mandatory if \ref
+/// kamping::send_type() is given.
+///
+///  - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
+/// derived automatically based on send_buf's underlying \c value_type.
+///
 /// - \ref kamping::send_mode() the send mode to use. Defaults to standard MPI_Send.
+///
 /// - \ref kamping::request() The request object to associate this operation with. Defaults to a library allocated
 /// request object, which can be access via the returned result.
 /// @tparam Args Automatically deducted template parameters.
@@ -58,12 +69,24 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(send_buf, destination),
-        KAMPING_OPTIONAL_PARAMETERS(tag, send_mode, request)
+        KAMPING_OPTIONAL_PARAMETERS(send_count, tag, send_mode, request, send_type)
     );
 
     auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
     auto  send_buf        = send_buf_param.get();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
+
+    auto&& send_type = internal::determine_mpi_send_datatype<send_value_type>(args...);
+
+    using default_send_count_type = decltype(kamping::send_count_out());
+    auto&& send_count =
+        internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
+            {},
+            args...
+        );
+    if constexpr (has_to_be_computed<decltype(send_count)>) {
+        send_count.underlying() = asserting_cast<int>(send_buf.size());
+    }
 
     auto const&    destination = internal::select_parameter_type<internal::ParameterType::destination>(args...);
     constexpr auto rank_type   = std::remove_reference_t<decltype(destination)>::rank_type;
@@ -101,16 +124,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
                                         internal::SendModeParameter<internal::standard_mode_t>>(std::tuple(), args...));
     using send_mode          = typename std::remove_reference_t<send_mode_obj_type>::send_mode;
 
-    auto mpi_send_type = mpi_datatype<send_value_type>();
-
     // RankType::null is valid, RankType::any is not.
     KASSERT(is_valid_rank_in_comm(destination, *this, true, false), "Invalid destination rank.");
 
     if constexpr (std::is_same_v<send_mode, internal::standard_mode_t>) {
         [[maybe_unused]] int err = MPI_Isend(
             send_buf.data(),                          // send_buf
-            asserting_cast<int>(send_buf.size()),     // send_count
-            mpi_send_type,                            // send_type
+            send_count.get_single_element(),          // send_count
+            send_type.get_single_element(),           // send_type
             destination.rank_signed(),                // destination
             tag,                                      // tag
             this->mpi_communicator(),                 // comm
@@ -120,8 +141,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
     } else if constexpr (std::is_same_v<send_mode, internal::buffered_mode_t>) {
         [[maybe_unused]] int err = MPI_Ibsend(
             send_buf.data(),                          // send_buf
-            asserting_cast<int>(send_buf.size()),     // send_count
-            mpi_send_type,                            // send_type
+            send_count.get_single_element(),          // send_count
+            send_type.get_single_element(),           // send_type
             destination.rank_signed(),                // destination
             tag,                                      // tag
             this->mpi_communicator(),                 // comm
@@ -131,8 +152,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
     } else if constexpr (std::is_same_v<send_mode, internal::synchronous_mode_t>) {
         [[maybe_unused]] int err = MPI_Issend(
             send_buf.data(),                          // send_buf
-            asserting_cast<int>(send_buf.size()),     // send_count
-            mpi_send_type,                            // send_type
+            send_count.get_single_element(),          // send_count
+            send_type.get_single_element(),           // send_type
             destination.rank_signed(),                // destination
             tag,                                      // tag
             this->mpi_communicator(),                 // comm
@@ -142,8 +163,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
     } else if constexpr (std::is_same_v<send_mode, internal::ready_mode_t>) {
         [[maybe_unused]] int err = MPI_Irsend(
             send_buf.data(),                          // send_buf
-            asserting_cast<int>(send_buf.size()),     // send_count
-            mpi_send_type,                            // send_type
+            send_count.get_single_element(),          // send_count
+            send_type.get_single_element(),           // send_type
             destination.rank_signed(),                // destination
             tag,                                      // tag
             this->mpi_communicator(),                 // comm

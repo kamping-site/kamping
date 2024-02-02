@@ -1,14 +1,14 @@
-// This file is part of KaMPI.ng.
+// This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPI.ng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
-// KaMPI.ng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPI.ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 // for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License along with KaMPI.ng.  If not, see
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
 #pragma once
@@ -20,6 +20,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/collectives_helpers.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
@@ -37,17 +38,22 @@
 /// The following buffer is required on the root rank:
 /// - \ref kamping::send_recv_buf() containing the data that is sent to the other ranks. Non-root ranks must allocate
 /// and provide this buffer or provide the receive type as a template parameter to \c bcast() as
-/// it's used for deducing the value type. The container will be resized on
-/// non-root ranks to fit exactly the received data.
+/// it's used for deducing the value type. The buffer will be resized on non-root ranks according to the buffer's
+/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
+/// storage must be large enough to hold all received element
 ///
 /// The following parameter is optional but causes additional communication if not present.
-/// - \ref kamping::recv_counts() specifying how many elements are broadcasted. If not specified, will be
-/// communicated through an additional bcast. If not specified, we broadcast the whole send_recv_buf. If specified,
-/// has to be the same on all ranks (including the root). Has to either be specified or not specified on all ranks.
+/// - \ref kamping::send_recv_count() specifying how many elements are broadcasted. This parameter must be given either
+/// on all or none of the ranks. If not specified, the count is set to the size of kamping::send_recv_buf() on
+/// root and broadcasted to all other ranks. This parameter is mandatory if \ref kamping::send_recv_type() is given.
 ///
-/// The following parameter is optional:
+/// The following parameter are optional:
 /// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c
 /// Communicator is used, see root().
+///
+/// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send type on the root PE and recv type on
+/// all non-root PEs. If omitted, the \c MPI datatype is derived automatically based on send_recv_buf's underlying \c
+/// value_type.
 ///
 /// @todo Add support for unnamed first parameter send_recv_buf.
 ///
@@ -63,7 +69,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(),
-        KAMPING_OPTIONAL_PARAMETERS(send_recv_buf, root, recv_counts)
+        KAMPING_OPTIONAL_PARAMETERS(send_recv_buf, root, send_recv_count, send_recv_type)
     );
 
     // Get the root PE
@@ -72,14 +78,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         args...
     );
     KASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.", assert::light);
-
-    if (this->is_root(root.rank_signed())) {
-        KASSERT(
-            has_parameter_type<internal::ParameterType::send_recv_buf>(args...),
-            "send_recv_buf must be provided on the root rank.",
-            assert::light
-        );
-    }
+    KASSERT(
+        is_same_on_all_ranks(root.rank_signed()),
+        "root() parameter must be the same on all ranks.",
+        assert::light_communication
+    );
 
     using default_send_recv_buf_type =
         decltype(kamping::send_recv_buf(alloc_new<DefaultContainerType<recv_value_type_tparam>>));
@@ -90,83 +93,104 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         );
 
     using value_type = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
-    static_assert(!std::is_const_v<decltype(send_recv_buf)>, "Const send_recv_buffers are not allowed.");
     static_assert(
         !std::is_same_v<value_type, internal::unused_tparam>,
         "No send_recv_buf parameter provided and no receive value given as template parameter. One of these is "
         "required."
     );
 
-    auto mpi_value_type = mpi_datatype<value_type>();
+    constexpr bool buffer_is_modifiable = std::remove_reference_t<decltype(send_recv_buf)>::is_modifiable;
+
+    auto&& send_recv_type = determine_mpi_send_recv_datatype<value_type, decltype(send_recv_buf)>(args...);
+    [[maybe_unused]] constexpr bool send_recv_type_is_in_param = !has_to_be_computed<decltype(send_recv_type)>;
+
+    KASSERT(
+        this->is_root(root.rank_signed()) || buffer_is_modifiable,
+        "send_recv_buf must be modifiable on all non-root ranks.",
+        assert::light
+    );
 
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
-    using default_recv_count_type = decltype(kamping::recv_counts_out(alloc_new<int>));
-    auto&& recv_count_param =
-        internal::select_parameter_type_or_default<ParameterType::recv_counts, default_recv_count_type>(
-            std::tuple(),
-            args...
-        );
+    using default_count_type = decltype(kamping::send_recv_count_out());
+    auto&& count_param = internal::select_parameter_type_or_default<ParameterType::send_recv_count, default_count_type>(
+        std::tuple(),
+        args...
+    );
 
-    constexpr bool recv_count_is_output_parameter = has_to_be_computed<decltype(recv_count_param)>;
+    constexpr bool count_has_to_be_computed = has_to_be_computed<decltype(count_param)>;
     KASSERT(
-        is_same_on_all_ranks(recv_count_is_output_parameter),
-        "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.",
+        is_same_on_all_ranks(count_has_to_be_computed),
+        "send_recv_count() parameter is either deduced on all ranks or must be explicitely provided on all ranks.",
         assert::light_communication
     );
-
-    // If it is not user provided, broadcast the size of send_recv_buf from the root to all ranks.
-    static_assert(
-        std::remove_reference_t<decltype(recv_count_param)>::is_single_element,
-        "recv_counts() parameter must be a single value."
-    );
-    int recv_count = recv_count_param.get_single_element();
-    if constexpr (recv_count_is_output_parameter) {
+    if constexpr (count_has_to_be_computed) {
+        int       count;
+        int const NO_BUF_ON_ROOT = -1;
         if (this->is_root(root.rank_signed())) {
-            recv_count = asserting_cast<int>(send_recv_buf.size());
+            count_param.underlying() = asserting_cast<int>(send_recv_buf.size());
+            count                    = count_param.get_single_element();
+
+            if constexpr (!has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
+                // if no send_recv_buf is provided on the root rank, we abuse the recv_count parameter to signal that
+                // there is no buffer on the root rank to all other ranks.
+                // This allows us to fail on all ranks if the root rank does not provide a buffer.
+                count = NO_BUF_ON_ROOT;
+            };
         }
         // Transfer the recv_count
         // This error code is unused if KTHROW is removed at compile time.
         /// @todo Use bcast_single for this.
         [[maybe_unused]] int err = MPI_Bcast(
-            &recv_count,                          // buffer
-            1,                                    // count
-            mpi_datatype<decltype(recv_count)>(), // datatype
-            root.rank_signed(),                   // root
-            this->mpi_communicator()              // comm
+            &count,                          // buffer
+            1,                               // count
+            mpi_datatype<decltype(count)>(), // datatype
+            root.rank_signed(),              // root
+            this->mpi_communicator()         // comm
         );
         THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
+        // it is valid to do this check here, because if no send_recv_buf is provided on the root rank, we have
+        // always have deduce counts and get into this branch.
+        KASSERT(count != NO_BUF_ON_ROOT, "send_recv_buf must be provided on the root rank.", assert::light);
+
         // Output the recv count via the output_parameter
-        *recv_count_param.data() = recv_count;
-    }
-    if (this->is_root(root.rank_signed())) {
+        count_param.underlying() = count;
+    } else {
         KASSERT(
-            asserting_cast<size_t>(recv_count) == send_recv_buf.size(),
-            "If a recv_count() is provided on the root rank, it has to be equal to the number of elements in the "
-            "send_recv_buf. For partial transfers, use a kamping::Span."
+            (!this->is_root(root.rank_signed()) || has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()
+            ),
+            "send_recv_buf must be provided on the root rank.",
+            assert::light
         );
     }
-    KASSERT(
-        this->is_same_on_all_ranks(recv_count),
-        "The recv_count must be equal on all ranks.",
-        assert::light_communication
-    );
 
-    // Resize my send_recv_buf to be able to hold all received data.
+    // Resize my send_recv_buf to be able to hold all received data on all non_root ranks.
     // Trying to resize a single element buffer to something other than 1 will throw an error.
-    send_recv_buf.resize(asserting_cast<size_t>(recv_count));
+    if (!this->is_root(root.rank_signed())) {
+        auto compute_recv_buffer_size = [&] {
+            return asserting_cast<size_t>(count_param.get_single_element());
+        };
+        send_recv_buf.resize_if_requested(compute_recv_buffer_size);
+        KASSERT(
+            // if the send_recv type is user provided, kamping cannot make any assumptions about the required size of
+            // the send_recv buffer
+            send_recv_type_is_in_param || send_recv_buf.size() >= compute_recv_buffer_size(),
+            "send/receive buffer is not large enough to hold all received elements on a non-root rank.",
+            assert::light
+        );
+    }
 
     // Perform the broadcast. The error code is unused if KTHROW is removed at compile time.
     [[maybe_unused]] int err = MPI_Bcast(
-        send_recv_buf.data(),                      // buffer
-        asserting_cast<int>(send_recv_buf.size()), // count
-        mpi_value_type,                            // datatype
-        root.rank_signed(),                        // root
-        this->mpi_communicator()                   // comm
+        send_recv_buf.data(),                // buffer
+        count_param.get_single_element(),    // count
+        send_recv_type.get_single_element(), // datatype
+        root.rank_signed(),                  // root
+        this->mpi_communicator()             // comm
     );
     THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
-    return make_mpi_result(std::move(send_recv_buf), std::move(recv_count_param));
+    return make_mpi_result(std::move(send_recv_buf), std::move(count_param), std::move(send_recv_type));
 } // namespace kamping::internal
 
 /// @brief Wrapper for \c MPI_Bcast
@@ -198,23 +222,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
 
     using namespace kamping::internal;
 
-    // In contrast to bcast(...), the recv_counts is not a possible parameter.
+    // In contrast to bcast(...), send_recv_count is not a possible parameter.
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(send_recv_buf, root));
-
-    // Get the root PE
-    auto&& root = select_parameter_type_or_default<ParameterType::root, internal::RootDataBuffer>(
-        std::tuple(this->root()),
-        args...
-    );
-    KASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.", assert::light);
-
-    if (this->is_root(root.rank_signed())) {
-        KASSERT(
-            has_parameter_type<internal::ParameterType::send_recv_buf>(args...),
-            "send_recv_buf must be provided on the root rank.",
-            assert::light
-        );
-    }
 
     if constexpr (has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
         KASSERT(
@@ -223,11 +232,24 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
             assert::light
         );
     }
+    // Get the root PE
+    auto&& root = select_parameter_type_or_default<ParameterType::root, internal::RootDataBuffer>(
+        std::tuple(this->root()),
+        args...
+    );
+    // we have to do this check with communication, because otherwise the other ranks would already start with the
+    // broadcast and indefinitely wait for the root
+    if constexpr (kassert::internal::assertion_enabled(assert::light_communication)) {
+        bool root_has_buffer = has_parameter_type<internal::ParameterType::send_recv_buf, Args...>();
+        int  err = MPI_Bcast(&root_has_buffer, 1, MPI_CXX_BOOL, root.rank_signed(), this->mpi_communicator());
+        THROW_IF_MPI_ERROR(err, MPI_Bcast);
+        KASSERT(root_has_buffer, "send_recv_buf must be provided on the root rank.", assert::light_communication);
+    }
 
     if constexpr (has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
-        return this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., recv_counts(1));
+        return this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1));
     } else {
-        return this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., recv_counts(1))
+        return this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1))
             .extract_recv_buffer()[0];
     }
 }

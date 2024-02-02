@@ -30,13 +30,28 @@ int main() {
 
     kamping::Environment e;
     Communicator         comm;
-    std::vector<int>     input(comm.size());
-    std::iota(input.begin(), input.end(), 0);
-    std::vector<int> output;
+    std::vector<int>     input(2u * comm.size(), comm.rank_signed());
+    std::vector<int>     output;
 
-    comm.alltoall(send_buf(input), recv_buf(output));
+    {
+        // send/recv counts are automatically deduced
+        comm.alltoall(send_buf(input), recv_buf<resize_to_fit>(output));
+        print_result_on_root(output, comm);
+        print_on_root("------", comm);
+        output.clear();
+    }
+    {
+        // send and recv count can also be explicitly given
+        comm.alltoall(send_buf(input), send_count(2), recv_count(2), recv_buf<resize_to_fit>(output));
+        print_result_on_root(output, comm);
+        print_on_root("------", comm);
+        output.clear();
 
-    print_result_on_root(output, comm);
+        comm.alltoall(send_buf(input), send_count(1), recv_count(1), recv_buf<resize_to_fit>(output));
+        print_result_on_root(output, comm);
+        print_on_root("------", comm);
+        output.clear();
+    }
 
     return 0;
 }

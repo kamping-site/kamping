@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2023 The KaMPIng Authors
+// Copyright 2021-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -22,7 +22,8 @@
 #include "kamping/has_member.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
-#include "kamping/named_parameters.hpp"
+#include "kamping/named_parameters_detail/status_parameters.hpp"
+#include "kamping/parameter_objects.hpp"
 
 namespace kamping {
 namespace internal {
@@ -36,6 +37,15 @@ inline constexpr bool has_extract_v = has_member_extract_v<T>;
 
 /// @brief Use this type if one of the template parameters of MPIResult is not used for a specific wrapped \c MPI call.
 struct ResultCategoryNotUsed {};
+
+/// @brief Helper for implementing the extract_* functions in \ref MPIResult. Is \c true if the passed buffer type owns
+/// its underlying storage and is an output buffer.
+template <typename Buffer>
+inline constexpr bool is_extractable = Buffer::is_owning&& Buffer::is_out_buffer;
+
+/// @brief Specialization of helper for implementing the extract_* functions in \ref MPIResult. Is always \c false;
+template <>
+inline constexpr bool is_extractable<internal::ResultCategoryNotUsed> = false;
 } // namespace internal
 
 /// @brief MPIResult contains the result of a \c MPI call wrapped by KaMPIng.
@@ -56,7 +66,20 @@ struct ResultCategoryNotUsed {};
 /// elements.
 /// @tparam SendDispls Buffer type containing the displacements of the sent
 /// elements.
-template <class StatusObject, class RecvBuf, class RecvCounts, class RecvDispls, class SendCounts, class SendDispls>
+/// @tparam SendRecvCount Buffer type containing the send recv count (only used by bcast).
+template <
+    class StatusObject,
+    class RecvBuf,
+    class RecvCounts,
+    class RecvCount,
+    class RecvDispls,
+    class SendCounts,
+    class SendCount,
+    class SendDispls,
+    class SendRecvCount,
+    class SendType,
+    class RecvType,
+    class SendRecvType>
 class MPIResult {
 private:
     /// @brief Helper for implementing \ref is_empty. Returns \c true if all template arguments passed are equal to \ref
@@ -66,8 +89,19 @@ private:
 
 public:
     /// @brief \c true, if the result does not encapsulate any data.
-    static constexpr bool is_empty =
-        is_empty_impl<StatusObject, RecvBuf, RecvCounts, RecvDispls, SendCounts, SendDispls>;
+    static constexpr bool is_empty = is_empty_impl<
+        StatusObject,
+        RecvBuf,
+        RecvCounts,
+        RecvCount,
+        RecvDispls,
+        SendCounts,
+        SendCount,
+        SendDispls,
+        SendRecvCount,
+        SendType,
+        RecvType,
+        SendRecvType>;
 
     /// @brief Constructor of MPIResult.
     ///
@@ -75,25 +109,37 @@ public:
     /// owns) the memory for the associated results, the empty placeholder type ResultCategoryNotUsed must be passed to
     /// the constructor instead of an actual buffer object.
     MPIResult(
-        StatusObject&& status,
-        RecvBuf&&      recv_buf,
-        RecvCounts&&   recv_counts,
-        RecvDispls&&   recv_displs,
-        SendCounts&&   send_counts,
-        SendDispls&&   send_displs
+        StatusObject&&  status,
+        RecvBuf&&       recv_buf,
+        RecvCounts&&    recv_counts,
+        RecvCount&&     recv_count,
+        RecvDispls&&    recv_displs,
+        SendCounts&&    send_counts,
+        SendCount&&     send_count,
+        SendDispls&&    send_displs,
+        SendRecvCount&& send_recv_count,
+        SendType&&      send_type,
+        RecvType&&      recv_type,
+        SendRecvType&&  send_recv_type
     )
         : _status(std::forward<StatusObject>(status)),
           _recv_buffer(std::forward<RecvBuf>(recv_buf)),
           _recv_counts(std::forward<RecvCounts>(recv_counts)),
+          _recv_count(std::forward<RecvCount>(recv_count)),
           _recv_displs(std::forward<RecvDispls>(recv_displs)),
           _send_counts(std::forward<SendCounts>(send_counts)),
-          _send_displs(std::forward<SendDispls>(send_displs)) {}
+          _send_count(std::forward<SendCount>(send_count)),
+          _send_displs(std::forward<SendDispls>(send_displs)),
+          _send_recv_count(std::forward<SendRecvCount>(send_recv_count)),
+          _send_type(std::forward<SendType>(send_type)),
+          _recv_type(std::forward<RecvType>(recv_type)),
+          _send_recv_type(std::forward<SendRecvType>(send_recv_type)) {}
 
     /// @brief Extracts the \c kamping::Status from the MPIResult object.
     ///
     /// This function is only available if the underlying status is owned by the
     /// MPIResult object.
-    /// @tparam StatusType_ Template parameter helper only needed to remove this
+    /// @tparam StatusObject_ Template parameter helper only needed to remove this
     /// function if StatusType does not possess a member function \c extract().
     /// @return Returns the underlying status object.
     template <
@@ -108,9 +154,9 @@ public:
     /// This function is only available if the underlying memory is owned by the
     /// MPIResult object.
     /// @tparam RecvBuf_ Template parameter helper only needed to remove this
-    /// function if RecvBuf does not possess a member function \c extract().
+    /// function if RecvBuf should not be extracted (it does not own its underlying memory or is not an out-buffer).
     /// @return Returns the underlying storage containing the received elements.
-    template <typename RecvBuf_ = RecvBuf, std::enable_if_t<kamping::internal::has_extract_v<RecvBuf_>, bool> = true>
+    template <typename RecvBuf_ = RecvBuf, std::enable_if_t<internal::is_extractable<RecvBuf_>, bool> = true>
     decltype(auto) extract_recv_buffer() {
         return _recv_buffer.extract();
     }
@@ -121,11 +167,20 @@ public:
     /// @tparam RecvCounts_ Template parameter helper only needed to remove this function if RecvCounts does not possess
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the receive counts.
-    template <
-        typename RecvCounts_                                                  = RecvCounts,
-        std::enable_if_t<kamping::internal::has_extract_v<RecvCounts_>, bool> = true>
+    template <typename RecvCounts_ = RecvCounts, std::enable_if_t<internal::is_extractable<RecvCounts_>, bool> = true>
     decltype(auto) extract_recv_counts() {
         return _recv_counts.extract();
+    }
+
+    /// @brief Extracts the \c recv_count from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam RecvCount_ Template parameter helper only needed to remove this function if RecvCount does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the recv count.
+    template <typename RecvCount_ = RecvCount, std::enable_if_t<internal::is_extractable<RecvCount_>, bool> = true>
+    decltype(auto) extract_recv_count() {
+        return _recv_count.extract();
     }
 
     /// @brief Extracts the \c recv_displs from the MPIResult object.
@@ -134,9 +189,7 @@ public:
     /// @tparam RecvDispls_ Template parameter helper only needed to remove this function if RecvDispls does not possess
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the receive displacements.
-    template <
-        typename RecvDispls_                                                  = RecvDispls,
-        std::enable_if_t<kamping::internal::has_extract_v<RecvDispls_>, bool> = true>
+    template <typename RecvDispls_ = RecvDispls, std::enable_if_t<internal::is_extractable<RecvDispls_>, bool> = true>
     decltype(auto) extract_recv_displs() {
         return _recv_displs.extract();
     }
@@ -147,11 +200,20 @@ public:
     /// @tparam SendCounts_ Template parameter helper only needed to remove this function if SendCounts does not possess
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the send counts.
-    template <
-        typename SendCounts_                                                  = SendCounts,
-        std::enable_if_t<kamping::internal::has_extract_v<SendCounts_>, bool> = true>
+    template <typename SendCounts_ = SendCounts, std::enable_if_t<internal::is_extractable<SendCounts_>, bool> = true>
     decltype(auto) extract_send_counts() {
         return _send_counts.extract();
+    }
+
+    /// @brief Extracts the \c send_count from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam SendCount_ Template parameter helper only needed to remove this function if SendCount does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the send count.
+    template <typename SendCount_ = SendCount, std::enable_if_t<internal::is_extractable<SendCount_>, bool> = true>
+    decltype(auto) extract_send_count() {
+        return _send_count.extract();
     }
 
     /// @brief Extracts the \c send_displs from the MPIResult object.
@@ -160,11 +222,56 @@ public:
     /// @tparam SendDispls_ Template parameter helper only needed to remove this function if SendDispls does not possess
     /// a member function \c extract().
     /// @return Returns the underlying storage containing the send displacements.
-    template <
-        typename SendDispls_                                                  = SendDispls,
-        std::enable_if_t<kamping::internal::has_extract_v<SendDispls_>, bool> = true>
+    template <typename SendDispls_ = SendDispls, std::enable_if_t<internal::is_extractable<SendDispls_>, bool> = true>
     decltype(auto) extract_send_displs() {
         return _send_displs.extract();
+    }
+
+    /// @brief Extracts the \c send_recv_count from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam SendRecvCount_ Template parameter helper only needed to remove this function if SendRecvCount does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the send_recv_count.
+    template <
+        typename SendRecvCount_                                          = SendRecvCount,
+        std::enable_if_t<internal::is_extractable<SendRecvCount_>, bool> = true>
+    decltype(auto) extract_send_recv_count() {
+        return _send_recv_count.extract();
+    }
+
+    /// @brief Extracts the \c send_type from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam SendType_ Template parameter helper only needed to remove this function if SendType does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the send_type.
+    template <typename SendType_ = SendType, std::enable_if_t<internal::is_extractable<SendType_>, bool> = true>
+    decltype(auto) extract_send_type() {
+        return _send_type.extract();
+    }
+
+    /// @brief Extracts the \c recv_type from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam RecvType_ Template parameter helper only needed to remove this function if RecvType does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the send_type.
+    template <typename RecvType_ = RecvType, std::enable_if_t<internal::is_extractable<RecvType_>, bool> = true>
+    decltype(auto) extract_recv_type() {
+        return _recv_type.extract();
+    }
+    /// @brief Extracts the \c send_recv_type from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the MPIResult object.
+    /// @tparam SendRecvType_ Template parameter helper only needed to remove this function if RecvType does not
+    /// possess a member function \c extract().
+    /// @return Returns the underlying storage containing the send_type.
+    template <
+        typename SendRecvType_                                          = SendRecvType,
+        std::enable_if_t<internal::is_extractable<SendRecvType_>, bool> = true>
+    decltype(auto) extract_send_recv_type() {
+        return _send_recv_type.extract();
     }
 
 private:
@@ -173,12 +280,28 @@ private:
                              ///< have been written into storage owned by the caller of KaMPIng.
     RecvCounts _recv_counts; ///< Buffer object containing the receive counts. May be empty if the receive counts have
                              ///< been written into storage owned by the caller of KaMPIng.
+    RecvCount _recv_count;   ///< Buffer object containing the (single) receive count. May be empty if the receive count
+                             ///< has been written into storage owned by the caller of KaMPIng.
     RecvDispls _recv_displs; ///< Buffer object containing the receive displacements. May be empty if the receive
                              ///< displacements have been written into storage owned by the caller of KaMPIng.
     SendCounts _send_counts; ///< Buffer object containing the send counts. May be empty if the send counts have been
                              ///< written into storage owned by the caller of KaMPIng.
+    SendCount _send_count;   ///< Buffer object containing the (single) send count. May be empty if the send count has
+                             ///< been written into storage owned by the caller of KaMPIng.
     SendDispls _send_displs; ///< Buffer object containing the send displacements. May be empty if the send
                              ///< displacements have been written into storage owned by the caller of KaMPIng.
+    SendRecvCount _send_recv_count; ///< Buffer object containing the combined send recv count (used by bcast,
+                                    ///< (ex)scan, ...). May be empty if the send recv count has been written into
+                                    ///< storage owned by the caller of KaMPIng.
+    SendType _send_type;            ///< Buffer object containing the send type.
+                                    ///< May be empty if the send type has been written into
+                                    ///< storage owned by the caller of KaMPIng.
+    RecvType _recv_type;            ///< Buffer object containing the recv type.
+                                    ///< May be empty if the recv type has been written into
+                                    ///< storage owned by the caller of KaMPIng.
+    SendRecvType _send_recv_type;   ///< Buffer object containing the send_recv_type (used by bcast, (ex)scan, ...).
+                                    ///< May be empty if the recv type has been written into
+                                    ///< storage owned by the caller of KaMPIng.
 };
 
 /// @brief Factory creating the MPIResult.
@@ -201,18 +324,22 @@ auto make_mpi_result(Args... args) {
     auto&& recv_buf = [&]() {
         // I'm not sure why return value optimization doesn't apply here, but the moves seem to be necessary.
         if constexpr (internal::has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
-            return std::move(internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...));
+            auto& param = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
+            return std::move(param);
         } else {
-            return std::move(
-                internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(
-                    std::tuple(),
-                    args...
-                )
+            auto&& param = internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_type>(
+                std::tuple(),
+                args...
             );
+            return std::move(param);
         }
     }();
 
     auto&& recv_counts = internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_type>(
+        std::tuple(),
+        args...
+    );
+    auto&& recv_count = internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_type>(
         std::tuple(),
         args...
     );
@@ -224,10 +351,32 @@ auto make_mpi_result(Args... args) {
         std::tuple(),
         args...
     );
+    auto&& send_count = internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_type>(
+        std::tuple(),
+        args...
+    );
     auto&& send_displs = internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_type>(
         std::tuple(),
         args...
     );
+    auto&& send_recv_count =
+        internal::select_parameter_type_or_default<internal::ParameterType::send_recv_count, default_type>(
+            std::tuple(),
+            args...
+        );
+    auto&& send_type = internal::select_parameter_type_or_default<internal::ParameterType::send_type, default_type>(
+        std::tuple(),
+        args...
+    );
+    auto&& recv_type = internal::select_parameter_type_or_default<internal::ParameterType::recv_type, default_type>(
+        std::tuple(),
+        args...
+    );
+    auto&& send_recv_type =
+        internal::select_parameter_type_or_default<internal::ParameterType::send_recv_type, default_type>(
+            std::tuple(),
+            args...
+        );
 
     auto&& status = internal::select_parameter_type_or_default<internal::ParameterType::status, default_type>(
         std::tuple(),
@@ -238,9 +387,15 @@ auto make_mpi_result(Args... args) {
         std::move(status),
         std::move(recv_buf),
         std::move(recv_counts),
+        std::move(recv_count),
         std::move(recv_displs),
         std::move(send_counts),
-        std::move(send_displs)
+        std::move(send_count),
+        std::move(send_displs),
+        std::move(send_recv_count),
+        std::move(send_type),
+        std::move(recv_type),
+        std::move(send_recv_type)
     );
 }
 
@@ -265,7 +420,7 @@ public:
 
     /// @brief Extracts the components of this results, leaving the user responsible.
     ///
-    /// If this result owns the underlying request, returns a \c std::tuple containing the \ref Request and \ref
+    /// If this result owns the underlying request, returns a \c std::pair containing the \ref Request and \ref
     /// MPIResult. If the request is owned by the user, just return the underlying \ref MPIResult.
     ///
     /// Note that the result may be in an undefined state because the associated operations is still underway and it is
@@ -274,51 +429,97 @@ public:
     auto extract() {
         if constexpr (owns_request) {
             auto result = extract_result(); // we try to extract the result first, so that we get a nice error message
-            return std::make_tuple(_request.extract(), std::move(result));
+            // TODO: return a named struct
+            return std::pair(_request.extract(), std::move(result));
         } else {
             return extract_result();
         }
     }
 
-    /// @brief Waits for the underlying \ref Request to complete by calling \ref Request::wait() and returns an \ref
-    /// MPIResult upon completion or nothing if the result is empty (see \ref MPIResult::is_empty).
+    /// @brief Waits for the underlying \ref Request to complete by calling \ref Request::wait() and upon completion
+    /// returns:
+    ///
+    /// If \p status is an out-parameter:
+    /// - If the result is not empty (see \ref MPIResult::is_empty), an \c std::pair containing an \ref MPIResult and
+    /// the status.
+    /// - If the result is empty, only the status is returned.
+    ///
+    /// If \p is \c kamping::status(ignore<>), or not an out-paramter:
+    /// - If the result is not empty (see \ref MPIResult::is_empty), only the result is returned.
+    /// - If the result is empty, nothing is returned.
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
     /// manually wait on the request that they own and manually obtain the result via \ref extract().
+    ///
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
     template <
+        typename StatusParamObjectType = decltype(status(ignore<>)),
         typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
         typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
-    [[nodiscard]] std::conditional_t<!MPIResultType::is_empty, MPIResultType, void> wait() {
+    auto wait(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
         kassert_not_extracted("The result of this request has already been extracted.");
-        _request.underlying().wait();
+        constexpr bool return_status = internal::is_extractable<StatusParamObjectType>;
         if constexpr (!MPIResultType::is_empty) {
-            return extract_result();
+            if constexpr (return_status) {
+                auto status_return = _request.underlying().wait(std::move(status));
+                return std::make_pair(extract_result(), std::move(status_return));
+            } else {
+                _request.underlying().wait(std::move(status));
+                return extract_result();
+            }
         } else {
-            return;
+            return _request.underlying().wait(std::move(status));
         }
     }
 
-    /// @brief Tests the underlying \ref Request for completion by calling \ref Request::test() and returns an optional
-    /// containing the underlying \ref MPIResult on success. If the associated operation has not completed yet, returns
-    /// \c std::nullopt.
+    /// @brief Tests the underlying \ref Request for completion by calling \ref
+    /// Request::test() and returns a value convertible to \c bool indicating if the request is complete.
     ///
-    /// Returns a \c bool indicated if the test succeeded in case the result is empty (see \ref MPIResult::is_empty).
+    /// The type of the return value depends on the encapsulated result and the \p status parameter and follows the same
+    /// semantics as \ref wait(), but its return value is wrapped in an \c std::optional.
+    /// The optional only contains a value if the request is complete, i.e. \c test() succeeded.
+    ///
+    /// If both the result is empty and no status returned, returns a \c bool indicating completion instead of an \c
+    /// std::optional.
     ///
     /// This method is only available if this result owns the underlying request. If this is not the case, the user must
     /// manually test the request that they own and manually obtain the result via \ref extract().
+    ///
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
     template <
+        typename StatusParamObjectType = decltype(status(ignore<>)),
         typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
         typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
-    auto test() {
+    auto test(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
         kassert_not_extracted("The result of this request has already been extracted.");
+        constexpr bool return_status = internal::is_extractable<StatusParamObjectType>;
         if constexpr (!MPIResultType::is_empty) {
-            if (_request.underlying().test()) {
-                return std::optional{extract_result()};
+            if constexpr (return_status) {
+                auto status_return = _request.underlying().test(std::move(status));
+                if (status_return) {
+                    return std::optional{std::pair{extract_result(), std::move(*status_return)}};
+                } else {
+                    return std::optional<std::pair<MPIResultType, typename decltype(status_return)::value_type>>{};
+                }
             } else {
-                return std::optional<MPIResultType>{};
+                if (_request.underlying().test(std::move(status))) {
+                    return std::optional{extract_result()};
+                } else {
+                    return std::optional<MPIResultType>{};
+                }
             }
         } else {
-            return _request.underlying().test();
+            return _request.underlying().test(std::move(status));
         }
     }
 

@@ -45,7 +45,8 @@
 /// accommodate the number of elements to receive. Use \c kamping::Span with enough space if you do not want the buffer
 /// to be resized. If no \ref kamping::recv_buf() is provided, the type that should be received has to be passed as a
 /// template parameter to \c try_recv().
-/// - \ref kamping::tag() the tag of the received message. Defaults to receiving for an arbitrary tag, i.e. \c tag(tags::any).
+/// - \ref kamping::tag() the tag of the received message. Defaults to receiving for an arbitrary tag, i.e. \c
+/// tag(tags::any).
 /// - \ref kamping::source() the source rank of the message to receive. Defaults to probing for an arbitrary source,
 /// i.e. \c source(rank::any).
 /// - \ref kamping::status() or \ref kamping::status_out(). Returns info about the received message by setting the
@@ -113,12 +114,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
             {},
             args...
         );
-    auto& status = status_param.status();
 
     // Use a matched probe to check if a message with the given source and tag is available for receiving.
     int         msg_avail;
     MPI_Message message;
 
+    Status               status;
     [[maybe_unused]] int err = MPI_Improbe(source, tag, _comm, &msg_avail, &message, &status.native());
     THROW_IF_MPI_ERROR(err, MPI_Improbe);
 
@@ -136,16 +137,19 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         // Ensure that we do not touch the recv buffer if MPI_PROC_NULL is passed, because this is what the standard
         // guarantees.
         if constexpr (std::remove_reference_t<decltype(source_param)>::rank_type != internal::RankType::null) {
-            recv_buf.resize(asserting_cast<size_t>(count));
+            auto compute_required_recv_buf_size = [&] {
+                return asserting_cast<size_t>(count);
+            };
+            recv_buf.resize_if_requested(compute_required_recv_buf_size);
         }
 
         // Use a matched receive to receive exactly the message we probed. This ensures this method is thread-safe.
         err = MPI_Mrecv(
-            recv_buf.data(),                 // buf
-            count,                           // count
-            mpi_datatype<recv_value_type>(), // datatype
-            &message,                        // message
-            &status.native()                 // status
+            recv_buf.data(),                                   // buf
+            count,                                             // count
+            mpi_datatype<recv_value_type>(),                   // datatype
+            &message,                                          // message
+            internal::status_param_to_native_ptr(status_param) // status
         );
         THROW_IF_MPI_ERROR(err, MPI_Recv);
 

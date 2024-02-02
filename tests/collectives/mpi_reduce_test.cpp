@@ -11,6 +11,9 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
+#include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
@@ -153,7 +156,7 @@ TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
         input = true;
     }
 
-    comm.reduce(send_buf(input), recv_buf(result), op(ops::logical_or<>{}));
+    comm.reduce(send_buf(input), recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result), op(ops::logical_or<>{}));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
@@ -164,13 +167,44 @@ TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool) {
     }
 }
 
+TEST(ReduceTest, reduce_single_element_explicit_receive_buffer_bool_no_resize) {
+    Communicator comm;
+
+    bool               input = false;
+    OwnContainer<bool> result(3, false);
+    if (comm.rank() == 1 % comm.size()) {
+        input = true;
+    }
+
+    comm.reduce(
+        send_buf(input),
+        recv_buf<kamping::BufferResizePolicy::no_resize>(result),
+        send_recv_count(1),
+        op(ops::logical_or<>{})
+    );
+
+    if (comm.is_root()) {
+        EXPECT_EQ(result.size(), 3);
+        OwnContainer<bool> expected_result = {true, false, false};
+        EXPECT_EQ(result, expected_result);
+    } else {
+        EXPECT_EQ(result.size(), 3);
+        OwnContainer<bool> expected_result = {false, false, false};
+        EXPECT_EQ(result, expected_result);
+    }
+}
+
 TEST(ReduceTest, reduce_with_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+    );
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
 
@@ -184,7 +218,11 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     // Change default root and test with communicator's default root again
     result = {};
     comm.root(comm.size() - 1);
-    comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+    );
     if (comm.is_root()) {
         EXPECT_EQ(comm.root(), comm.size() - 1);
         EXPECT_EQ(result.size(), 2);
@@ -196,7 +234,12 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     // Pass any possible root to reduce
     for (size_t i = 0; i < comm.size(); ++i) {
         result = {};
-        comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result), root(i));
+        comm.reduce(
+            send_buf(input),
+            op(kamping::ops::plus<>{}),
+            recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result),
+            root(i)
+        );
         if (comm.rank() == i) {
             EXPECT_EQ(comm.root(), comm.size() - 1);
             EXPECT_EQ(result.size(), 2);
@@ -207,13 +250,79 @@ TEST(ReduceTest, reduce_with_receive_buffer) {
     }
 }
 
+TEST(ReduceTest, reduce_with_receive_buffer_no_resize_and_explicit_send_recv_count) {
+    Communicator comm;
+
+    std::vector<int> input  = {1, 2, 3, 4};
+    std::vector<int> result = {42, 42};
+
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::no_resize>(result),
+        send_recv_count(1)
+    );
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_THAT(result, ElementsAre(comm.size(), 42));
+    } else {
+        EXPECT_THAT(result, ElementsAre(42, 42));
+    }
+}
+
+TEST(ReduceTest, reduce_with_receive_buffer_resize_to_fit_and_explicit_send_recv_count) {
+    Communicator comm;
+
+    std::vector<int> input  = {1, 2, 3, 4};
+    std::vector<int> result = {42, 42};
+
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result),
+        send_recv_count(1)
+    );
+
+    if (comm.rank() == comm.root()) {
+        EXPECT_THAT(result, ElementsAre(comm.size()));
+    } else {
+        // do not touch the buffer on non root rank
+        EXPECT_THAT(result, ElementsAre(42, 42));
+    }
+}
+
+TEST(ReduceTest, reduce_with_receive_buffer_grow_only_and_explicit_send_recv_count) {
+    Communicator comm;
+
+    std::vector<int> input  = {1, 2, 3, 4};
+    std::vector<int> result = {42, 42};
+
+    comm.reduce(
+        send_buf(input),
+        op(kamping::ops::plus<>{}),
+        recv_buf<kamping::BufferResizePolicy::grow_only>(result),
+        send_recv_count(1)
+    );
+
+    // not resized to 1 because big enough
+    if (comm.rank() == comm.root()) {
+        EXPECT_THAT(result, ElementsAre(comm.size(), 42));
+    } else {
+        EXPECT_THAT(result, ElementsAre(42, 42));
+    }
+}
+
 TEST(ReduceTest, reduce_with_receive_buffer_on_root) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
     if (comm.is_root()) {
         std::vector<int> result;
-        comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+        comm.reduce(
+            send_buf(input),
+            op(kamping::ops::plus<>{}),
+            recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
+        );
         EXPECT_EQ(result.size(), 2);
         std::vector<int> expected_result = {
             (comm.size_signed() * (comm.size_signed() - 1)) / 2,
@@ -349,6 +458,7 @@ TEST(ReduceTest, reduce_builtin_native_operation) {
     }
 }
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(ReduceTest, reduce_builtin_native_operation_with_incompatible_type) {
     struct MyInt {
         MyInt() noexcept : _value(0) {}
@@ -370,6 +480,7 @@ TEST(ReduceTest, reduce_builtin_native_operation_with_incompatible_type) {
         "The provided builtin operation is not compatible with datatype T."
     )
 }
+#endif
 
 void select_left_op_func(void* invec, void* inoutvec, int* len, MPI_Datatype* datatype) {
     EXPECT_EQ(*datatype, MPI_INT);
@@ -467,6 +578,127 @@ TEST(ReduceTest, reduce_default_container_type) {
     std::vector<int> input = {comm.rank_signed(), 42};
 
     OwnContainer<int> result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+}
+
+TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_type) {
+    Communicator comm;
+    int const    dont_care = -1;
+
+    struct Aggregate {
+        int min;
+        int padding = dont_care;
+        int max;
+
+        bool operator==(Aggregate const& rhs) const {
+            return this->min == rhs.min && this->max == rhs.max;
+        }
+    };
+    MPI_Datatype int_padding_int = MPI_INT_padding_MPI_INT();
+    auto         my_op           = [](Aggregate const& lhs, Aggregate const& rhs) {
+        Aggregate agg;
+        agg.min = std::min(lhs.min, rhs.min);
+        agg.max = std::max(lhs.max, rhs.max);
+        return agg;
+    };
+
+    Aggregate              agg1  = {comm.rank_signed(), dont_care, comm.rank_signed()};
+    Aggregate              agg2  = {comm.rank_signed() + 42, dont_care, comm.rank_signed() + 42};
+    std::vector<Aggregate> input = {agg1, agg2};
+
+    Aggregate                    agg1_expected   = {0, dont_care, comm.size_signed() - 1};
+    Aggregate                    agg2_expected   = {42, dont_care, comm.size_signed() - 1 + 42};
+    const std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
+    std::vector<Aggregate>       recv_buffer(2);
+    int const                    root_rank = 0;
+
+    MPI_Type_commit(&int_padding_int);
+    comm.reduce(
+        send_buf(input),
+        send_recv_count(2),
+        send_recv_type(int_padding_int),
+        op(my_op, kamping::ops::commutative),
+        root(root_rank),
+        recv_buf<no_resize>(recv_buffer)
+    );
+    MPI_Type_free(&int_padding_int);
+
+    if (comm.is_root(root_rank)) {
+        EXPECT_EQ(recv_buffer, expected_result);
+    }
+}
+
+void sum_for_int_padding_padding_type(void* in_buf, void* inout_buf, int* len, MPI_Datatype*) {
+    kamping::Communicator<> comm;
+    int*                    in_buffer    = reinterpret_cast<int*>(in_buf);
+    int*                    inout_buffer = reinterpret_cast<int*>(inout_buf);
+    for (size_t i = 0; i < static_cast<size_t>(*len); ++i) {
+        inout_buffer[3 * i] = in_buffer[3 * i] + inout_buffer[3 * i];
+    }
+}
+
+TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_without_matching_cpp_type) {
+    Communicator comm;
+    int const    dont_care = -1;
+
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    std::vector<int> input = {comm.rank_signed(), dont_care, dont_care, comm.rank_signed() + 42, dont_care, dont_care};
+
+    int const              sum_of_ranks = comm.size_signed() * (comm.size_signed() - 1) / 2;
+    const std::vector<int> expected_result =
+        {sum_of_ranks, dont_care, dont_care, sum_of_ranks + comm.size_signed() * 42, dont_care, dont_care};
+    std::vector<int> recv_buffer(6, dont_care);
+    int const        root_rank = 0;
+
+    MPI_Op user_defined_op;
+    MPI_Op_create(sum_for_int_padding_padding_type, 1, &user_defined_op);
+    MPI_Type_commit(&int_padding_padding);
+    comm.reduce(
+        send_buf(input),
+        send_recv_count(2),
+        send_recv_type(int_padding_padding),
+        op(user_defined_op),
+        root(root_rank),
+        recv_buf<no_resize>(recv_buffer)
+    );
+    MPI_Type_free(&int_padding_padding);
+    MPI_Op_free(&user_defined_op);
+
+    if (comm.is_root(root_rank)) {
+        EXPECT_EQ(recv_buffer, expected_result);
+    }
+}
+TEST(ReduceTest, send_recv_type_is_out_parameter) {
+    Communicator           comm;
+    const std::vector<int> data{1};
+    MPI_Datatype           send_type;
+    int const              root_rank = 0;
+    auto                   result =
+        comm.reduce(send_buf(data), send_recv_type_out(send_type), op(kamping::ops::plus<>{}), root(root_rank));
+
+    EXPECT_EQ(send_type, MPI_INT);
+    auto recv_buf = result.extract_recv_buffer();
+    if (comm.is_root(root_rank)) {
+        EXPECT_EQ(recv_buf.size(), 1);
+        EXPECT_EQ(recv_buf.front(), comm.size());
+    } else {
+        EXPECT_EQ(recv_buf.size(), 0);
+    }
+}
+
+TEST(ReduceTest, send_type_part_of_result_object) {
+    Communicator           comm;
+    const std::vector<int> data{1};
+    int const              root_rank = 0;
+    auto result = comm.reduce(send_buf(data), send_recv_type_out(), op(kamping::ops::plus<>{}), root(root_rank));
+
+    EXPECT_EQ(result.extract_send_recv_type(), MPI_INT);
+    auto recv_buf = result.extract_recv_buffer();
+    if (comm.is_root(root_rank)) {
+        EXPECT_EQ(recv_buf.size(), 1);
+        EXPECT_EQ(recv_buf.front(), comm.size());
+    } else {
+        EXPECT_EQ(recv_buf.size(), 0);
+    }
 }
 
 // Death test do not work with MPI.

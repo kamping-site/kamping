@@ -1,7 +1,6 @@
-
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2023 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -12,6 +11,9 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "../test_assertions.hpp"
+
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "../helpers_for_testing.hpp"
@@ -39,12 +41,66 @@ TEST(AllreduceTest, allreduce_with_receive_buffer) {
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf(result));
+    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result));
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
     EXPECT_EQ(result, expected_result);
 }
+
+TEST(AllreduceTest, allreduce_with_receive_buffer_resize_too_big) {
+    Communicator comm;
+
+    std::vector<int> input = {comm.rank_signed(), 42};
+    std::vector<int> result(10, -1);
+
+    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result));
+    EXPECT_EQ(result.size(), 2);
+
+    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+    EXPECT_EQ(result, expected_result);
+}
+
+TEST(AllreduceTest, allreduce_with_receive_buffer_no_resize_and_explicit_send_recv_count) {
+    Communicator comm;
+
+    std::vector<int> input  = {1, 2, 3, 4};
+    std::vector<int> result = {42, 42};
+
+    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<no_resize>(result), send_recv_count(1));
+    EXPECT_THAT(result, ElementsAre(comm.size(), 42));
+}
+
+TEST(AllreduceTest, allreduce_with_receive_buffer_grow_only_and_explicit_send_recv_count) {
+    Communicator comm;
+
+    std::vector<int> input  = {1, 2, 3, 4};
+    std::vector<int> result = {42, 42};
+
+    comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<grow_only>(result), send_recv_count(1));
+    EXPECT_THAT(result, ElementsAre(comm.size(), 42));
+}
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+TEST(AllreduceTest, allreduce_with_receive_buffer_no_resize_too_small) {
+    Communicator comm;
+
+    std::vector<int> input = {1, 2, 3, 4};
+    std::vector<int> result;
+
+    EXPECT_KASSERT_FAILS(
+        {
+            comm.allreduce(
+                send_buf(input),
+                op(kamping::ops::plus<>{}),
+                recv_buf<kamping::BufferResizePolicy::no_resize>(result),
+                send_recv_count(1)
+            );
+        },
+        ""
+    );
+}
+#endif
 
 TEST(AllreduceTest, allreduce_builtin_op_on_non_builtin_type) {
     Communicator comm;
@@ -192,6 +248,86 @@ TEST(AllreduceTest, allreduce_custom_operation_on_custom_type) {
     EXPECT_EQ(result, expected_result);
 }
 
+TEST(AllreduceTest, allreduce_custom_operation_on_custom_mpi_type) {
+    Communicator comm;
+    int const    dont_care = -1;
+
+    struct Aggregate {
+        int min;
+        int padding = dont_care;
+        int max;
+
+        bool operator==(Aggregate const& rhs) const {
+            return this->min == rhs.min && this->max == rhs.max;
+        }
+    };
+    MPI_Datatype int_padding_int = MPI_INT_padding_MPI_INT();
+    auto         my_op           = [](Aggregate const& lhs, Aggregate const& rhs) {
+        Aggregate agg;
+        agg.min = std::min(lhs.min, rhs.min);
+        agg.max = std::max(lhs.max, rhs.max);
+        return agg;
+    };
+
+    Aggregate              agg1  = {comm.rank_signed(), dont_care, comm.rank_signed()};
+    Aggregate              agg2  = {comm.rank_signed() + 42, dont_care, comm.rank_signed() + 42};
+    std::vector<Aggregate> input = {agg1, agg2};
+
+    Aggregate              agg1_expected   = {0, dont_care, comm.size_signed() - 1};
+    Aggregate              agg2_expected   = {42, dont_care, comm.size_signed() - 1 + 42};
+    std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
+    std::vector<Aggregate> recv_buffer(2);
+
+    MPI_Type_commit(&int_padding_int);
+    comm.allreduce(
+        send_buf(input),
+        send_recv_count(2),
+        send_recv_type(int_padding_int),
+        op(my_op, kamping::ops::commutative),
+        recv_buf<no_resize>(recv_buffer)
+    );
+    MPI_Type_free(&int_padding_int);
+
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
+void sum_for_int_padding_padding_type(void* in_buf, void* inout_buf, int* len, MPI_Datatype*) {
+    kamping::Communicator<> comm;
+    int*                    in_buffer    = reinterpret_cast<int*>(in_buf);
+    int*                    inout_buffer = reinterpret_cast<int*>(inout_buf);
+    for (size_t i = 0; i < static_cast<size_t>(*len); ++i) {
+        inout_buffer[3 * i] = in_buffer[3 * i] + inout_buffer[3 * i];
+    }
+}
+
+TEST(AllreduceTest, allreduce_custom_operation_on_custom_mpi_without_matching_cpp_type) {
+    Communicator comm;
+    int const    dont_care = -1;
+
+    MPI_Datatype     int_padding_padding = MPI_INT_padding_padding();
+    std::vector<int> input = {comm.rank_signed(), dont_care, dont_care, comm.rank_signed() + 42, dont_care, dont_care};
+
+    int const        sum_of_ranks = comm.size_signed() * (comm.size_signed() - 1) / 2;
+    std::vector<int> expected_result =
+        {sum_of_ranks, dont_care, dont_care, sum_of_ranks + comm.size_signed() * 42, dont_care, dont_care};
+    std::vector<int> recv_buffer(6, dont_care);
+
+    MPI_Op user_defined_op;
+    MPI_Op_create(sum_for_int_padding_padding_type, 1, &user_defined_op);
+    MPI_Type_commit(&int_padding_padding);
+    comm.allreduce(
+        send_buf(input),
+        send_recv_count(2),
+        send_recv_type(int_padding_padding),
+        op(user_defined_op),
+        recv_buf<no_resize>(recv_buffer)
+    );
+    MPI_Type_free(&int_padding_padding);
+    MPI_Op_free(&user_defined_op);
+
+    EXPECT_EQ(recv_buffer, expected_result);
+}
+
 TEST(AllreduceTest, allreduce_default_container_type) {
     Communicator<OwnContainer> comm;
     std::vector<int>           input = {comm.rank_signed(), 42};
@@ -200,8 +336,31 @@ TEST(AllreduceTest, allreduce_default_container_type) {
     OwnContainer<int> result = comm.allreduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
 }
 
+TEST(AllreduceTest, send_recv_type_is_out_parameter) {
+    Communicator           comm;
+    const std::vector<int> data{1};
+    MPI_Datatype           send_recv_type;
+    auto result = comm.allreduce(send_buf(data), send_recv_type_out(send_recv_type), op(kamping::ops::plus<>{}));
+
+    EXPECT_EQ(send_recv_type, MPI_INT);
+    auto recv_buf = result.extract_recv_buffer();
+    EXPECT_EQ(recv_buf.size(), 1);
+    EXPECT_EQ(recv_buf.front(), comm.size());
+}
+
+TEST(AllreduceTest, send_recv_type_part_of_result_object) {
+    Communicator           comm;
+    const std::vector<int> data{1};
+    auto                   result = comm.allreduce(send_buf(data), send_recv_type_out(), op(kamping::ops::plus<>{}));
+
+    EXPECT_EQ(result.extract_send_recv_type(), MPI_INT);
+    auto recv_buf = result.extract_recv_buffer();
+    EXPECT_EQ(recv_buf.size(), 1);
+    EXPECT_EQ(recv_buf.front(), comm.size());
+}
+
 // Death test + MPI does not work
-/// @todo Add a prober test for the input validation.
+/// @todo Add a proper test for the input validation.
 // TEST(AllreduceTest, different_send_buf_sizes_fails) {
 //     Communicator comm;
 //

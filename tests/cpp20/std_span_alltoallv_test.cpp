@@ -32,7 +32,7 @@ TEST(CPP20Tests, alltoall_std_span) {
     std::vector<int> input_vec(comm.size());
     std::iota(input_vec.begin(), input_vec.end(), 0);
 
-    auto result = comm.alltoall(send_buf(std::span<int>(input_vec.begin(), input_vec.size()))).extract_recv_buffer();
+    auto result = comm.alltoall(send_buf(std::span<int>(input_vec))).extract_recv_buffer();
 
     EXPECT_EQ(result.size(), comm.size());
 

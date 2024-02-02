@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPIng Authors
+// Copyright 2021-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -36,6 +36,7 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/has_member.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/span.hpp"
@@ -149,6 +150,8 @@ static constexpr bool
         is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
             std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
 
+KAMPING_MAKE_HAS_MEMBER(resize)
+
 } // namespace internal
 
 /// @brief Type used for indicating that a buffer should be allocated by KaMPIng.
@@ -203,8 +206,29 @@ enum class BufferOwnership { owning, referencing };
 enum class BufferAllocation { lib_allocated, user_allocated };
 /// @brief Enum to specify whether a buffer is an in buffer of an out
 /// buffer. Out buffer will be used to directly write the result to.
-enum class BufferType { in_buffer, out_buffer, in_out_buffer };
+enum class BufferType { in_buffer, out_buffer, in_out_buffer, ignore };
+} // namespace internal
 
+/// @brief Enum to specify in which cases a buffer is resized.
+enum class BufferResizePolicy {
+    no_resize,    ///< Policy indicating that the underlying buffer shall never be resized.
+    grow_only,    ///< Policy indicating that the underlying buffer shall only be resized if the current size
+                  ///< of the buffer is too small.
+    resize_to_fit ///< Policy indicating that the underlying buffer is resized such that it has exactly the required
+                  ///< size.
+};
+
+constexpr BufferResizePolicy no_resize =
+    BufferResizePolicy::no_resize; ///< Constant storing a BufferResizePolicy::no_resize enum member. It can be used to
+                                   ///< declare a buffer's resize policy in more concise manner.
+constexpr BufferResizePolicy grow_only =
+    BufferResizePolicy::grow_only; ///< Constant storing a BufferResizePolicy::grow_only enum member. It can be used to
+                                   ///< declare a buffer's resize policy in more concise manner.
+constexpr BufferResizePolicy resize_to_fit =
+    BufferResizePolicy::resize_to_fit; ///< Constant storing a BufferResizePolicy::resize_to_fit enum member. It can be
+                                       ///< used to declare a buffer's resize policy in more concise manner.
+
+namespace internal {
 /// @brief Wrapper to get the value type of a non-container type (aka the type itself).
 /// @tparam has_value_type_member Whether `T` has a value_type member
 /// @tparam T The type to get the value_type of
@@ -214,7 +238,7 @@ public:
     using value_type = T; ///< The value type of T.
 };
 
-// @brief tag type to indicate that the value_type should be inferred from the container
+/// @brief tag type to indicate that the value_type should be inferred from the container
 struct default_value_type_tag {};
 
 /// @brief Wrapper to get the value type of a container type.
@@ -225,23 +249,18 @@ public:
     using value_type = typename T::value_type; ///< The value type of T.
 };
 
-/// @brief The set of parameter types that must be of type `int`
-constexpr std::array int_parameter_types{
-    ParameterType::recv_counts, ParameterType::send_counts, ParameterType::recv_displs, ParameterType::send_displs};
-
-/// @brief Checks whether buffers of a given type should have `value_type` `int`.
+/// @brief for a given \param MemberType of a data buffer, defines the most viable resize policy.
 ///
-/// @param parameter_type The parameter type to check.
-///
-/// @return `true` if parameter_type should be of type `int`, `false` otherwise.
-inline constexpr bool is_int_type(ParameterType parameter_type) {
-    for (ParameterType int_parameter_type: int_parameter_types) {
-        if (parameter_type == int_parameter_type) {
-            return true;
-        }
+/// For example, a single element buffer may not be resizable.
+template <typename MemberType>
+constexpr BufferResizePolicy maximum_viable_resize_policy = [] {
+    auto is_single_element = !has_data_member_v<MemberType>;
+    if (is_single_element || !has_member_resize_v<MemberType, size_t>) {
+        return no_resize;
+    } else {
+        return resize_to_fit;
     }
-    return false;
-}
+}();
 
 /// @brief Data buffer used for named parameters.
 ///
@@ -254,6 +273,8 @@ inline constexpr bool is_int_type(ParameterType parameter_type) {
 /// @tparam ownership `owning` if the buffer should hold the actual container.
 /// `referencing` if only a reference to an existing container should be held.
 /// @tparam buffer_type_param Type of buffer, i.e., \c in_buffer, \c out_buffer, or \c in_out_buffer.
+/// @tparam buffer_resize_policy_param Policy specifying whether (and if so, how) the underlying buffer shall be
+/// resized.
 /// @tparam allocation `lib_allocated` if the buffer was allocated by the library,
 /// @tparam ValueType requested value_type for the buffer. If it does not match the containers value type, compilation
 /// fails. By default, this is set to \c default_value_type_tag and the value_type is inferred from the underlying
@@ -264,6 +285,7 @@ template <
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param,
+    BufferResizePolicy  buffer_resize_policy_param,
     BufferAllocation    allocation = BufferAllocation::user_allocated,
     typename ValueType             = default_value_type_tag>
 class DataBuffer : private ParameterObjectBase {
@@ -273,6 +295,9 @@ public:
 
     static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
 
+    static constexpr BufferResizePolicy resize_policy =
+        buffer_resize_policy_param; ///< The policy specifying in which cases the buffer shall be resized.
+
     /// @brief \c true if the buffer is an out or in/out buffer that results will be written to and \c false
     /// otherwise.
     static constexpr bool is_out_buffer =
@@ -280,6 +305,9 @@ public:
 
     /// @brief Indicates whether the buffer is allocated by KaMPIng.
     static constexpr bool is_lib_allocated = allocation == BufferAllocation::lib_allocated;
+
+    static constexpr bool is_owning =
+        ownership == BufferOwnership::owning; ///< Indicates whether the buffer owns its underlying storage.
 
     static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
@@ -306,10 +334,6 @@ public:
 
     using value_type =
         typename ValueTypeWrapper<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
-    // Logical implication: is_int_type(type) => std::is_same_v<value_type, int>
-    static_assert(
-        !is_int_type(parameter_type_param) || std::is_same_v<value_type, int>, "The given data must be of type int"
-    );
     static_assert(
         std::is_same_v<ValueType, default_value_type_tag> || std::is_same_v<ValueType, value_type>,
         "The requested value type of the buffer does not match the value type of the underlying container"
@@ -317,6 +341,19 @@ public:
     using value_type_with_const =
         std::conditional_t<is_modifiable, value_type, value_type const>; ///< Value type as const or non-const depending
                                                                          ///< on modifiability
+    static_assert(
+        is_modifiable || resize_policy == BufferResizePolicy::no_resize,
+        "A constant data buffer requires the that the resize policy is no_resize."
+    );
+    static_assert(
+        !is_single_element || resize_policy == BufferResizePolicy::no_resize,
+        "A single element data buffer requires the that the resize policy is no_resize."
+    );
+    static_assert(
+        !(resize_policy == BufferResizePolicy::grow_only || resize_policy == BufferResizePolicy::resize_to_fit)
+            || has_member_resize_v<MemberType, size_t>,
+        "The underlying container does not provide a resize function, which is required by the resize policy."
+    );
 
     /// @brief Constructor for referencing ContainerBasedBuffer.
     /// @param container Container holding the actual data.
@@ -345,32 +382,53 @@ public:
         }
     }
 
-    /// @brief Resizes the underlying container such that it holds exactly \c size elements of \c value_type if the \c
-    /// MemberType is not a \c Span or a single elements.
+    /// @brief Resizes the underlying container such that it holds exactly \c size elements of \c value_type.
     ///
-    /// This function calls \c resize on the container if the container is not of type \c Span or a single value. If the
-    /// container is a \c Span,  KaMPIng assumes that the memory is managed by the user and that resizing is not wanted.
-    /// In this case it is \c KASSERTed that the memory provided by the span is sufficient. If the buffer stores only a
-    /// single value, it is KASSERTed that the requested size is exactly 1. Whether new memory is
-    /// allocated and/or data is copied depends in the implementation of the container.
+    /// This function calls \c resize on the underlying container.
     ///
-    /// @param size Size the container is resized to if it is not a \c Span.
+    /// This takes only part in overload resolution if the \ref resize_policy of the buffer is \c resize_to_fit.
+    ///
+    /// @param size Size the container is resized to.
+    template <
+        BufferResizePolicy _resize_policy                                = resize_policy,
+        typename std::enable_if_t<_resize_policy == resize_to_fit, bool> = true>
     void resize(size_t size) {
-        // This works because in template classes, only functions that are actually called are instantiated
-        // Technically not needed here because _data is const in this case, so we can't call resize() anyways. But this
-        // gives a nicer error message.
-        static_assert(is_modifiable, "Trying to resize a constant DataBuffer");
         kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
-        if constexpr (is_single_element) {
-            KASSERT(
-                size == 1u,
-                "Cannot resize a single element buffer to hold zero or more than one element. Single "
-                "element buffers always hold exactly one element."
-            );
-        } else if constexpr (std::is_same_v<MemberType, Span<value_type>>) {
-            KASSERT(this->size() >= size, "Span cannot be resized and is smaller than the requested size.");
-        } else {
+        underlying().resize(size);
+    }
+
+    /// @brief Resizes the underlying container such that it holds at least \c size elements of \c value_type.
+    ///
+    /// This function calls \c resize on the underlying container, but only if the requested \param size is larger than
+    /// the current buffer size. Otherwise, the buffer is left unchanged.
+    ///
+    /// This takes only part in overload resolution if the \ref resize_policy of the buffer is \c grow_only.
+    ///
+    template <
+        BufferResizePolicy _resize_policy                            = resize_policy,
+        typename std::enable_if_t<_resize_policy == grow_only, bool> = true>
+    void resize(size_t size) {
+        kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
+        if (this->size() < size) {
             underlying().resize(size);
+        }
+    }
+
+    template <
+        BufferResizePolicy _resize_policy                            = resize_policy,
+        typename std::enable_if_t<_resize_policy == no_resize, bool> = true>
+    void resize(size_t size) = delete;
+
+    /// @brief Resizes the underlying container if the buffer the buffer's resize policy allows and resizing is
+    /// necessary.
+    ///
+    /// @tparam SizeFunc Type of the functor which computes the required buffer size.
+    /// @param compute_required_size Functor which is used to compute the required buffer size. compute_required_size()
+    /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
+    template <typename SizeFunc>
+    void resize_if_requested(SizeFunc&& compute_required_size) {
+        if constexpr (resize_policy == BufferResizePolicy::resize_to_fit || resize_policy == BufferResizePolicy::grow_only) {
+            resize(compute_required_size());
         }
     }
 
@@ -447,7 +505,7 @@ public:
     /// state.
     ///
     /// @return Moves the underlying container out of the DataBuffer.
-    template <bool enabled = allocation == BufferAllocation::lib_allocated, std::enable_if_t<enabled, bool> = true>
+    template <bool enabled = is_owning, std::enable_if_t<enabled, bool> = true>
     MemberTypeWithConst extract() {
         static_assert(
             ownership == BufferOwnership::owning,
@@ -467,13 +525,21 @@ private:
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
-template <typename Data, ParameterType type>
+template <typename Data, ParameterType type, BufferType buffer_type_param>
 class EmptyDataBuffer {
 public:
     static constexpr ParameterType parameter_type = type; ///< The type of parameter this buffer represents.
     static constexpr bool          is_modifiable =
         false;               ///< This pseudo buffer is not modifiable since it represents no actual buffer.
     using value_type = Data; ///< Value type of the buffer.
+    static constexpr BufferType buffer_type =
+        buffer_type_param; ///< The type of the buffer, usually ignore for this special buffer.
+
+    static constexpr BufferResizePolicy resize_policy     = no_resize; ///< An empty buffer can not be resized.
+    static constexpr bool               is_out_buffer     = false;     ///< An empty buffer is never output.
+    static constexpr bool               is_lib_allocated  = false;     ///< An empty buffer is not allocated.
+    static constexpr bool               is_single_element = false;     ///< An empty buffer contains no elements.
+    static constexpr bool               is_owning         = false;     ///< An empty buffer does not own anything.
 
     /// @brief Get the number of elements in the underlying storage.
     /// @return Number of elements in the underlying storage (always 0).
@@ -492,7 +558,175 @@ public:
     Span<value_type> get() const {
         return {nullptr, 0};
     }
+    /// @brief Resizes the underlying container if the buffer the buffer's resize policy allows and resizing is
+    /// necessary. Does nothing for an empty buffer.
+    ///
+    /// @tparam SizeFunc Type of the functor which computes the required buffer size.
+    /// @param compute_required_size Functor which is used to compute the required buffer size. compute_required_size()
+    /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
+    template <typename SizeFunc>
+    void resize_if_requested(SizeFunc&& compute_required_size [[maybe_unused]]) {}
 };
+
+///
+/// @brief Creates a user allocated DataBuffer containing the supplied data (a container or a single element)
+///
+/// Creates a user allocated DataBuffer with the given template parameters and ownership based on whether an rvalue or
+/// lvalue reference is passed.
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+/// @tparam Data Container or data type on which this buffer is based.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam ValueType Requested value type for the the data buffer. If not specified, it will be deduced from the
+/// underlying container and no checking is performed.
+/// @param data Universal reference to a container or single element holding the data for the buffer.
+///
+/// @return A user allocated DataBuffer with the given template parameters and matching ownership.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    typename Data>
+auto make_data_buffer(Data&& data) {
+    constexpr BufferOwnership ownership =
+        std::is_rvalue_reference_v<Data&&> ? BufferOwnership::owning : BufferOwnership::referencing;
+
+    // Make sure that Data is const, the buffer created is constant (so we don't really remove constness in the return
+    // statement below).
+    constexpr bool is_const_data_type = std::is_const_v<std::remove_reference_t<Data>>;
+    constexpr bool is_const_buffer    = modifiability == BufferModifiability::constant;
+    // Implication: is_const_data_type => is_const_buffer.
+    static_assert(!is_const_data_type || is_const_buffer);
+    return DataBuffer<
+        std::remove_const_t<std::remove_reference_t<Data>>,
+        parameter_type,
+        modifiability,
+        ownership,
+        buffer_type,
+        buffer_resize_policy,
+        BufferAllocation::user_allocated,
+        ValueType>(std::forward<Data>(data));
+}
+
+/// @brief Creates a library allocated DataBuffer with the given container or single data type.
+///
+/// Creates a library allocated DataBuffer with the given template parameters.
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam ValueType Requested value type for the the data buffer. If not specified, it will be deduced from the
+/// underlying container and no checking is performed.
+/// @tparam Data Container or data type on which this buffer is based.
+///
+/// @return A library allocated DataBuffer with the given template parameters.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    typename Data>
+auto make_data_buffer(AllocNewT<Data>) {
+    return DataBuffer<
+        Data,
+        parameter_type,
+        BufferModifiability::modifiable, // something library allocated is always modifiable
+        BufferOwnership::owning,
+        buffer_type,
+        buffer_resize_policy,
+        BufferAllocation::lib_allocated,
+        ValueType>();
+}
+
+/// @brief Creates a library allocated DataBuffer by instantiating the given container template with the given value
+/// type.
+///
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam ValueType The value type to initialize the \c Data template with. If not specified, this will fail.
+/// @tparam Data Container template this buffer is based on. The first template parameter is initialized with \c
+/// ValueType
+///
+/// @return A library allocated DataBuffer with the given template parameters.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    template <typename...>
+    typename Data>
+auto make_data_buffer(AllocNewAutoT<Data>) {
+    // this check prevents that this factory function is used, when the value type is not known
+    static_assert(
+        !std::is_same_v<ValueType, default_value_type_tag>,
+        "Value type for new library allocated container can not be deduced."
+    );
+    return DataBuffer<
+        Data<ValueType>,
+        parameter_type,
+        BufferModifiability::modifiable, // something library allocated is always modifiable
+        BufferOwnership::owning,
+        buffer_type,
+        buffer_resize_policy,
+        BufferAllocation::lib_allocated,
+        ValueType>();
+}
+
+/// @brief Creates an owning DataBuffer containing the supplied data in a std::vector.
+///
+/// Creates an owning DataBuffer with the given template parameters.
+///
+/// An initializer list of type \c bool will be converted to a \c std::vector<kamping::kabool>.
+///
+/// @tparam parameter_type parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam Data Container or data type on which this buffer is based.
+/// @param data std::initializer_list holding the data for the buffer.
+///
+/// @return A library allocated DataBuffer with the given template parameters.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename Data>
+auto make_data_buffer(std::initializer_list<Data> data) {
+    auto data_vec = [&]() {
+        if constexpr (std::is_same_v<Data, bool>) {
+            return std::vector<kabool>(data.begin(), data.end());
+            // We only use automatic conversion of bool to kabool for initializer lists, but not for single elements of
+            // type bool. The reason for that is, that sometimes single element conversion may not be desired.
+            // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
+            // send_recv_buf = bool&
+        } else {
+            return std::vector<Data>{data};
+        }
+    }();
+    return DataBuffer<
+        decltype(data_vec),
+        parameter_type,
+        modifiability,
+        BufferOwnership::owning,
+        buffer_type,
+        buffer_resize_policy,
+        BufferAllocation::user_allocated>(std::move(data_vec));
+}
 
 } // namespace internal
 
