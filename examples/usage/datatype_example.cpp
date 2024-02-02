@@ -16,7 +16,7 @@ void printdatatype(MPI_Datatype datatype) {
             break;
         }
         case MPI_COMBINER_STRUCT: {
-            std::cout << "MPI_COMBINER_STRUCT" << std::endl;
+            std::cout << "MPI_COMBINER_STRUCT: " << std::endl;
             std::vector<int>          integers(num_integers);
             std::vector<MPI_Aint>     addresses(num_addresses);
             std::vector<MPI_Datatype> datatypes(num_datatypes);
@@ -35,6 +35,24 @@ void printdatatype(MPI_Datatype datatype) {
             }
             break;
         }
+        case MPI_COMBINER_CONTIGUOUS: {
+            std::cout << "MPI_COMBINER_CONTIGUOUS: " << std::endl;
+            int count;
+            MPI_Datatype t;
+            MPI_Type_get_contents(
+                datatype,
+                num_integers,
+                num_addresses,
+                num_datatypes,
+                &count,
+                nullptr,
+                &t
+            );
+            std::cout << "count=" << count << " ";
+            printdatatype(t);
+            break;
+
+        }
         default:
             std::cout << "Unknown combiner" << std::endl;
     }
@@ -47,19 +65,28 @@ int MPI_Type_commit(MPI_Datatype* type) {
 }
 int MPI_Type_free(MPI_Datatype* type) {
     std::cout << "MPI_Type_free" << std::endl;
-    printdatatype(*type);
+    // printdatatype(*type);
     return PMPI_Type_free(type);
 }
+
+struct Foo {
+    int    a;
+    double b;
+    std::pair<float, float> p;
+};
 
 int main() {
     using namespace kamping;
 
     kamping::Environment           e;
     Communicator                   comm;
+    std::cout << std::boolalpha;
     std::pair<double, bool>        p  = {1.0, true};
-    std::pair<double, bool>        p2 = {2.0, false};
-    std::tuple<int, float, double> t  = {1, 2.0f, 3.0};
     comm.send(destination(rank::null), send_buf(p));
+    std::tuple<int, float, double> t  = {1, 2.0f, 3.0};
     comm.send(destination(rank::null), send_buf(t));
-    comm.send(destination(rank::null), send_buf(p2));
+    // std::pair<double, bool>        p2 = {2.0, false};
+    // comm.send(destination(rank::null), send_buf(p2));
+    Foo f = {1, 2.0};
+    comm.send(destination(rank::null), send_buf(f));
 }
