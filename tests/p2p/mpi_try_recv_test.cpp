@@ -90,9 +90,6 @@ TEST_F(TryRecvTest, try_recv_vector_from_arbitrary_source) {
     }
     // ensure that we have received all inflight messages
     MPI_Wait(&req, MPI_STATUS_IGNORE);
-
-    // No more messages are inflight, so this should return std::nullopt
-    comm.barrier();
     EXPECT_EQ(comm.try_recv<long>(), std::nullopt);
 }
 
@@ -140,9 +137,6 @@ TEST_F(TryRecvTest, try_recv_vector_from_explicit_source) {
 
     // Ensure that we have received all inflight messages.
     MPI_Wait(&req, MPI_STATUS_IGNORE);
-
-    // No more messages are inflight, so the try_recv() should return std::nullopt
-    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -189,9 +183,6 @@ TEST_F(TryRecvTest, try_recv_vector_from_explicit_source_and_explicit_tag) {
 
     // Ensure that we have received all inflight messages.
     MPI_Wait(&req, MPI_STATUS_IGNORE);
-
-    // No more messages are inflight, so the try_recv() should return std::nullopt
-    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -238,9 +229,6 @@ TEST_F(TryRecvTest, try_recv_vector_no_resize) {
     }
 
     MPI_Wait(&req, MPI_STATUS_IGNORE);
-
-    // No more messages are inflight, so the try_recv() should return std::nullopt
-    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -282,9 +270,7 @@ TEST_F(TryRecvTest, try_recv_vector_with_status_out) {
     }
 
     MPI_Wait(&req, MPI_STATUS_IGNORE);
-
     // No more messages are inflight, so the try_recv() should return std::nullopt
-    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -323,9 +309,7 @@ TEST_F(TryRecvTest, try_recv_default_custom_container_without_recv_buf) {
     }
 
     MPI_Wait(&req, MPI_STATUS_IGNORE);
-
     // No more messages are inflight, so the try_recv() should return std::nullopt
-    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -351,8 +335,7 @@ TEST_F(TryRecvTest, try_recv_from_proc_null) {
         }
     }
 
-    // No more messages are inflight, so the try_recv() should return std::nullopt
-    comm.barrier();
+    // No messages are inflight, so the try_recv() should return std::nullopt
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -401,7 +384,6 @@ TEST_F(TryRecvTest, recv_type_is_out_param) {
     }
     // ensure that we have received all inflight messages
     MPI_Wait(&req, MPI_STATUS_IGNORE);
-    comm.barrier();
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
@@ -461,7 +443,6 @@ TEST_F(TryRecvTest, non_trivial_recv_type) {
     }
     // ensure that we have received all inflight messages
     MPI_Wait(&req, MPI_STATUS_IGNORE);
-    comm.barrier();
     EXPECT_EQ(comm.try_recv(recv_buf<no_resize>(message), recv_type(MPI_INT_padding_padding())), std::nullopt);
 }
 
