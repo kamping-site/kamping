@@ -15,6 +15,7 @@
 
 #include "../test_assertions.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -27,6 +28,7 @@
 #include "kamping/p2p/try_recv.hpp"
 
 using namespace kamping;
+using namespace ::testing;
 
 KAMPING_MAKE_HAS_MEMBER(extract_status)
 KAMPING_MAKE_HAS_MEMBER(extract_recv_buffer)
@@ -65,21 +67,19 @@ TEST_F(TryRecvTest, try_recv_vector_from_arbitrary_source) {
 
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
-            std::vector<int> message;
-
             while (true) {
-                auto result_opt = comm.try_recv(recv_buf(message), status_out());
+                auto result_opt = comm.try_recv<int>(status_out());
                 // The message from this rank might not yet be delivered.
                 if (result_opt.has_value()) {
                     auto& result = result_opt.value();
 
                     EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
-                    EXPECT_FALSE(has_member_extract_recv_buffer_v<decltype(result)>);
-
-                    auto const status = result.extract_status();
-                    auto const source = status.source();
+                    auto const status  = result.extract_status();
+                    auto const source  = status.source();
+                    auto       message = result.extract_recv_buffer();
 
                     EXPECT_EQ(status.tag(), source);
+                    EXPECT_EQ(status.count<int>(), source);
                     EXPECT_EQ(message.size(), source);
                     EXPECT_EQ(message, std::vector(source, 42));
 
@@ -118,18 +118,18 @@ TEST_F(TryRecvTest, try_recv_vector_from_explicit_source) {
     );
 
     if (comm.rank() == 0) {
-        std::vector<int> message;
-
         for (size_t other = 0; other < comm.size(); other++) {
             while (true) {
-                auto result_opt = comm.try_recv(source(other), recv_buf(message), status_out());
+                auto result_opt = comm.try_recv<int>(source(other), status_out());
                 if (result_opt.has_value()) {
                     auto& result = result_opt.value();
                     EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
-                    auto status = result.extract_status();
-                    auto source = status.source();
+                    auto status  = result.extract_status();
+                    auto source  = status.source();
+                    auto message = result.extract_recv_buffer();
                     EXPECT_EQ(source, other);
                     EXPECT_EQ(status.tag(), source);
+                    EXPECT_EQ(status.count<int>(), source);
                     EXPECT_EQ(message.size(), source);
                     EXPECT_EQ(message, std::vector(source, 42));
                     break;
@@ -168,18 +168,17 @@ TEST_F(TryRecvTest, try_recv_vector_from_explicit_source_and_explicit_tag) {
     );
     if (comm.rank() == 0) {
         for (size_t other = 0; other < comm.size(); other++) {
-            std::vector<int> message;
-
             while (true) {
-                auto result_opt =
-                    comm.try_recv(source(other), tag(asserting_cast<int>(other)), recv_buf(message), status_out());
+                auto result_opt = comm.try_recv<int>(source(other), tag(asserting_cast<int>(other)), status_out());
                 if (result_opt.has_value()) {
                     auto& result = result_opt.value();
                     EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
-                    auto status = result.extract_status();
-                    auto source = status.source();
+                    auto status  = result.extract_status();
+                    auto source  = status.source();
+                    auto message = result.extract_recv_buffer();
                     EXPECT_EQ(source, other);
                     EXPECT_EQ(status.tag(), source);
+                    EXPECT_EQ(status.count<int>(), source);
                     EXPECT_EQ(message.size(), source);
                     EXPECT_EQ(message, std::vector(source, 42));
                     break;
@@ -196,7 +195,7 @@ TEST_F(TryRecvTest, try_recv_vector_from_explicit_source_and_explicit_tag) {
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(TryRecvTest, try_recv_vector_with_explicit_size) {
+TEST_F(TryRecvTest, try_recv_vector_no_resize) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     MPI_Request  req = MPI_REQUEST_NULL;
@@ -219,7 +218,7 @@ TEST_F(TryRecvTest, try_recv_vector_with_explicit_size) {
     }
 
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
-        std::vector<int> message;
+        std::vector<int> message(42, std::numeric_limits<int>::max());
 
         while (true) {
             auto result_opt = comm.try_recv(recv_buf(message), status_out());
@@ -228,8 +227,11 @@ TEST_F(TryRecvTest, try_recv_vector_with_explicit_size) {
                 EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
                 auto status = result.extract_status();
                 EXPECT_EQ(status.source(), comm.root());
+                EXPECT_EQ(status.count<int>(), 5);
                 EXPECT_EQ(status.tag(), 0);
-                EXPECT_EQ(message, std::vector<int>({1, 2, 3, 4, 5}));
+                EXPECT_EQ(message.size(), 42);
+                EXPECT_THAT(Span(message.data(), 5), ElementsAre(1, 2, 3, 4, 5));
+                EXPECT_THAT(Span(message.data() + 5, 42 - 5), Each(std::numeric_limits<int>::max()));
                 break;
             }
         }
@@ -242,7 +244,7 @@ TEST_F(TryRecvTest, try_recv_vector_with_explicit_size) {
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
-TEST_F(TryRecvTest, try_recv_vector_with_input_status) {
+TEST_F(TryRecvTest, try_recv_vector_with_status_out) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     MPI_Request  req = MPI_REQUEST_NULL;
@@ -268,7 +270,7 @@ TEST_F(TryRecvTest, try_recv_vector_with_input_status) {
         Status           recv_status;
         // pass status as input parameter
         while (true) {
-            auto result_opt = comm.try_recv(recv_buf(message), status_out(recv_status));
+            auto result_opt = comm.try_recv(recv_buf<resize_to_fit>(message), status_out(recv_status));
             if (result_opt.has_value()) {
                 EXPECT_EQ(recv_status.source(), comm.root());
                 EXPECT_EQ(recv_status.tag(), 0);
