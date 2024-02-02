@@ -356,6 +356,115 @@ TEST_F(TryRecvTest, try_recv_from_proc_null) {
     EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
 }
 
+TEST_F(TryRecvTest, recv_type_is_out_param) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+
+    // No messages have been sent yet, so the try_recv() should return std::nullopt
+    EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+    comm.barrier();
+
+    MPI_Request req;
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        MPI_Datatype recv_type;
+        for (size_t other = 0; other < comm.size(); other++) {
+            while (true) {
+                std::vector<int> message;
+                auto             result = comm.try_recv(
+                    recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message),
+                    status_out(),
+                    recv_type_out(recv_type)
+                );
+                if (result) {
+                    auto status = result->extract_status();
+                    auto source = status.source();
+                    EXPECT_EQ(status.tag(), source);
+                    EXPECT_EQ(status.count<int>(), source);
+                    EXPECT_EQ(recv_type, MPI_INT);
+                    EXPECT_EQ(message.size(), source);
+                    EXPECT_EQ(message, std::vector(source, 42));
+                    break;
+                }
+            }
+        }
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+    comm.barrier();
+    EXPECT_EQ(comm.try_recv<int>(), std::nullopt);
+}
+
+TEST_F(TryRecvTest, non_trivial_recv_type) {
+    Communicator     comm;
+    std::vector<int> v(comm.rank(), 42);
+
+    int const        default_init = -1;
+    std::vector<int> message;
+
+    EXPECT_EQ(comm.try_recv(recv_buf<no_resize>(message), recv_type(MPI_INT_padding_padding())), std::nullopt);
+    comm.barrier();
+
+    MPI_Request req;
+    comm.barrier();
+    // Each rank sends a message with its rank as tag to rank 0.
+    // The message has comm.rank() elements.
+    MPI_Issend(
+        v.data(),                      // send_buf
+        asserting_cast<int>(v.size()), // send_count
+        MPI_INT,                       // send_type
+        0,                             // destination
+        comm.rank_signed(),            // tag
+        comm.mpi_communicator(),       // comm
+        &req                           // request
+    );
+    if (comm.rank() == 0) {
+        // ranks are received with padding
+        MPI_Datatype int_padding_padding = MPI_INT_padding_padding();
+        MPI_Type_commit(&int_padding_padding);
+        for (size_t other = 0; other < comm.size(); other++) {
+            message.resize(3 * other, default_init);
+            while (true) {
+                auto result = comm.try_recv(
+                    recv_buf<no_resize>(message),
+                    status_out(),
+                    source(other),
+                    recv_type(int_padding_padding)
+                );
+                if (result) {
+                    auto status = result->extract_status();
+                    auto source = status.source();
+                    EXPECT_EQ(status.tag(), source);
+                    EXPECT_EQ(status.count<int>(), source);
+                    EXPECT_EQ(message.size(), 3 * source);
+                    // EXPECT_EQ(result.extract_recv_count(), source);
+                    for (size_t i = 0; i < other; ++i) {
+                        EXPECT_EQ(message[3 * i], 42);
+                        EXPECT_EQ(message[3 * i + 1], default_init);
+                        EXPECT_EQ(message[3 * i + 2], default_init);
+                    }
+                    break;
+                }
+            }
+        }
+        MPI_Type_free(&int_padding_padding);
+    }
+    // ensure that we have received all inflight messages
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+    comm.barrier();
+    EXPECT_EQ(comm.try_recv(recv_buf<no_resize>(message), recv_type(MPI_INT_padding_padding())), std::nullopt);
+}
+
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(TryRecvTest, try_recv_from_invalid_tag) {
     Communicator comm;
