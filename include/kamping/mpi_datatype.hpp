@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPIng Authors
+// Copyright 2021-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -374,19 +374,19 @@ struct mpi_type_traits<std::pair<T1, T2>, std::enable_if_t<has_static_type<T1> &
     : is_builtin_mpi_type_false {
     static constexpr TypeCategory category = TypeCategory::kamping_provided;
     static MPI_Datatype           data_type() {
-                  std::pair<T1, T2> t;
-                  MPI_Datatype      types[2]     = {mpi_datatype<T1>(), mpi_datatype<T2>()};
-                  int               blocklens[2] = {1, 1};
-                  MPI_Aint          base;
-                  MPI_Get_address(&t, &base);
-                  MPI_Aint disp[2];
-                  MPI_Get_address(&t.first, &disp[0]);
-                  MPI_Get_address(&t.second, &disp[1]);
-                  disp[0] = MPI_Aint_diff(disp[0], base);
-                  disp[1] = MPI_Aint_diff(disp[1], base);
-                  MPI_Datatype type;
-                  MPI_Type_create_struct(2, blocklens, disp, types, &type);
-                  return type;
+        std::pair<T1, T2> t;
+        MPI_Datatype      types[2]     = {mpi_datatype<T1>(), mpi_datatype<T2>()};
+        int               blocklens[2] = {1, 1};
+        MPI_Aint          base;
+        MPI_Get_address(&t, &base);
+        MPI_Aint disp[2];
+        MPI_Get_address(&t.first, &disp[0]);
+        MPI_Get_address(&t.second, &disp[1]);
+        disp[0] = MPI_Aint_diff(disp[0], base);
+        disp[1] = MPI_Aint_diff(disp[1], base);
+        MPI_Datatype type;
+        MPI_Type_create_struct(2, blocklens, disp, types, &type);
+        return type;
     }
 };
 
@@ -395,18 +395,18 @@ struct mpi_type_traits<std::tuple<Ts...>, std::enable_if_t<(sizeof...(Ts) > 0 &&
     : is_builtin_mpi_type_false {
     static constexpr TypeCategory category = TypeCategory::kamping_provided;
     static MPI_Datatype           data_type() {
-                  std::tuple<Ts...>     t;
-                  constexpr std::size_t tuple_size = sizeof...(Ts);
+        std::tuple<Ts...>     t;
+        constexpr std::size_t tuple_size = sizeof...(Ts);
 
-                  MPI_Datatype types[tuple_size] = {mpi_datatype<Ts>()...};
-                  int          blocklens[tuple_size];
-                  MPI_Aint     disp[tuple_size];
-                  MPI_Aint     base;
-                  MPI_Get_address(&t, &base);
+        MPI_Datatype types[tuple_size] = {mpi_datatype<Ts>()...};
+        int          blocklens[tuple_size];
+        MPI_Aint     disp[tuple_size];
+        MPI_Aint     base;
+        MPI_Get_address(&t, &base);
 
-                  // Calculate displacements for each tuple element using std::apply and fold expressions
-                  size_t i = 0;
-                  std::apply(
+        // Calculate displacements for each tuple element using std::apply and fold expressions
+        size_t i = 0;
+        std::apply(
             [&](auto&... elem) {
                 (
                     [&] {
@@ -421,12 +421,20 @@ struct mpi_type_traits<std::tuple<Ts...>, std::enable_if_t<(sizeof...(Ts) > 0 &&
             t
         );
 
-                  MPI_Datatype type;
-                  MPI_Type_create_struct(tuple_size, blocklens, disp, types, &type);
-                  return type;
+        MPI_Datatype type;
+        MPI_Type_create_struct(tuple_size, blocklens, disp, types, &type);
+        return type;
     }
 };
+
+template <typename E>
+struct mpi_type_traits<E, std::enable_if_t<std::is_enum_v<E> && has_static_type<std::underlying_type_t<E>>>>
+    : mpi_type_traits<std::underlying_type_t<E>> {};
+
 struct kamping_tag {};
+
+template <typename T>
+using member_types = decltype(pfr::structure_to_tuple(std::declval<T>()));
 
 // TODO: only enable if each member has a static type
 template <typename T>
@@ -434,26 +442,26 @@ struct mpi_type_traits<T, std::enable_if_t<pfr::is_implicitly_reflectable<T, kam
     : is_builtin_mpi_type_false {
     static constexpr TypeCategory category = TypeCategory::kamping_provided;
     static MPI_Datatype           data_type() {
-                  T                     t;
-                  constexpr std::size_t tuple_size = pfr::tuple_size_v<T>;
+        T                     t;
+        constexpr std::size_t tuple_size = pfr::tuple_size_v<T>;
 
-                  MPI_Datatype types[tuple_size];
-                  int          blocklens[tuple_size];
-                  MPI_Aint     disp[tuple_size];
-                  MPI_Aint     base;
-                  MPI_Get_address(&t, &base);
+        MPI_Datatype types[tuple_size];
+        int          blocklens[tuple_size];
+        MPI_Aint     disp[tuple_size];
+        MPI_Aint     base;
+        MPI_Get_address(&t, &base);
 
-                  // Calculate displacements for each tuple element using std::apply and fold expressions
-                  pfr::for_each_field(t, [&](auto&& elem, size_t i) {
+        // Calculate displacements for each tuple element using std::apply and fold expressions
+        pfr::for_each_field(t, [&](auto&& elem, size_t i) {
             MPI_Get_address(&elem, &disp[i]);
             types[i]     = mpi_datatype<std::remove_cv_t<std::remove_reference_t<decltype(elem)>>>();
             disp[i]      = MPI_Aint_diff(disp[i], base);
             blocklens[i] = 1;
         });
 
-                  MPI_Datatype type;
-                  MPI_Type_create_struct(tuple_size, blocklens, disp, types, &type);
-                  return type;
+        MPI_Datatype type;
+        MPI_Type_create_struct(tuple_size, blocklens, disp, types, &type);
+        return type;
     }
 };
 

@@ -17,9 +17,9 @@ void printdatatype(MPI_Datatype datatype) {
         }
         case MPI_COMBINER_STRUCT: {
             std::cout << "MPI_COMBINER_STRUCT: " << std::endl;
-            std::vector<int>          integers(num_integers);
-            std::vector<MPI_Aint>     addresses(num_addresses);
-            std::vector<MPI_Datatype> datatypes(num_datatypes);
+            std::vector<int>          integers(static_cast<size_t>(num_integers));
+            std::vector<MPI_Aint>     addresses(static_cast<size_t>(num_addresses));
+            std::vector<MPI_Datatype> datatypes(static_cast<size_t>(num_datatypes));
             MPI_Type_get_contents(
                 datatype,
                 num_integers,
@@ -29,7 +29,7 @@ void printdatatype(MPI_Datatype datatype) {
                 addresses.data(),
                 datatypes.data()
             );
-            for (int i = 0; i < integers[0]; i++) {
+            for (size_t i = 0; i < static_cast<size_t>(integers[0]); i++) {
                 std::cout << "blocklength=" << integers[i + 1] << ", displacement=" << addresses[i];
                 printdatatype(datatypes[i]);
             }
@@ -78,6 +78,6 @@ int main() {
     comm.send(destination(rank::null), send_buf(t));
     // std::pair<double, bool>        p2 = {2.0, false};
     // comm.send(destination(rank::null), send_buf(p2));
-    Foo f = {1, 2.0};
+    Foo f = {1, 2.0, {3.0, 4.0}};
     comm.send(destination(rank::null), send_buf(f));
 }

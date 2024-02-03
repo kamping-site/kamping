@@ -24,7 +24,13 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
     Communicator<> comm(comm_);
     size_t const   oversampling_ratio = 16 * static_cast<size_t>(std::log2(comm.size())) + 1;
     std::vector<T> local_samples(oversampling_ratio);
-    std::sample(data.begin(), data.end(), local_samples.begin(), oversampling_ratio, std::mt19937{seed});
+    std::sample(
+        data.begin(),
+        data.end(),
+        local_samples.begin(),
+        oversampling_ratio,
+        std::mt19937{static_cast<std::mt19937::result_type>(seed)}
+    );
     auto global_samples = comm.allgather(send_buf(local_samples)).extract_recv_buffer();
     pick_splitters(comm.size() - 1, oversampling_ratio, global_samples);
     auto             buckets = build_buckets(data, global_samples);

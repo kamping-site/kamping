@@ -41,20 +41,21 @@ bool Communicator<DefaultContainerType, Plugins...>::is_same_on_all_ranks(Value 
     /// @todo replace this with something more general
     static_assert(!std::is_pointer_v<Value>, "Comparing pointers from different machines does not make sense.");
 
-    struct ValueEqual {
-        Value value; // The value to compare, init on each rank with the local value.
-        bool  equal; // Have we seen only equal values in the reduction so far?
-    };
-    ValueEqual value_equal = {value, true};
+    // struct ValueEqual {
+    //     Value value; // The value to compare, init on each rank with the local value.
+    //     bool  equal; // Have we seen only equal values in the reduction so far?
+    // };
+    using ValueEqual = std::pair<Value, bool>;
+    std::pair<Value, bool> value_equal = {value, true};
     auto const datatype    = mpi_datatype<ValueEqual>();
 
     // Build the operation for the reduction.
     auto operation_param = kamping::op(
         [](auto a, auto b) {
-            if (a.equal && b.equal && a.value == b.value) {
-                return ValueEqual{a.value, true};
+            if (a.second && b.second && a.first == b.first) {
+                return ValueEqual{a.first, true};
             } else {
-                return ValueEqual{a.value, false};
+                return ValueEqual{a.first, false};
             }
         },
         kamping::ops::commutative
@@ -71,7 +72,7 @@ bool Communicator<DefaultContainerType, Plugins...>::is_same_on_all_ranks(Value 
         this->mpi_communicator() // communicator
     );
 
-    return value_equal.equal;
+    return value_equal.second;
 }
 
 } // namespace kamping
