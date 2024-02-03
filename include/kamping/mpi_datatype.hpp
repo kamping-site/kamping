@@ -316,6 +316,8 @@ template <typename T>
     }
 
     // Remove const and volatile qualifiers.
+    // TODO: it is not clear if we should remove volatile here, because MPI does not support volatile pointers and
+    // removing volatile from a pointer is undefined behavior.
     using T_no_cv = std::remove_cv_t<T>;
 
     // Check if we got a pointer type -> error
