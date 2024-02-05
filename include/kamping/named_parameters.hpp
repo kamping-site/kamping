@@ -21,7 +21,6 @@
 #include <utility>
 
 #include "kamping/data_buffer.hpp"
-#include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters_detail/status_parameters.hpp"
@@ -30,6 +29,12 @@
 #include "kamping/request.hpp"
 
 namespace kamping {
+
+namespace internal {
+/// @brief An unused template parameter
+struct unused_tparam {};
+} // namespace internal
+
 /// @addtogroup kamping_mpi_utility
 /// @{
 

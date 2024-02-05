@@ -18,8 +18,8 @@
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/collectives/reduce.hpp"
-#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameters.hpp"
 
@@ -338,24 +338,22 @@ TEST(ReduceTest, reduce_builtin_op_on_non_builtin_type) {
     Communicator comm;
 
     struct MyInt {
-        MyInt() noexcept : _value(0) {}
-        MyInt(int value) noexcept : _value(value) {}
-        int _value;
-        int operator+(MyInt const& rhs) const noexcept {
-            return this->_value + rhs._value;
+        int   value;
+        MyInt operator+(MyInt const& rhs) const noexcept {
+            return {this->value + rhs.value};
         }
         bool operator==(MyInt const& rhs) const noexcept {
-            return this->_value == rhs._value;
+            return this->value == rhs.value;
         }
     };
-    std::vector<MyInt> input = {comm.rank_signed(), 42};
+    std::vector<MyInt> input = {MyInt{comm.rank_signed()}, MyInt{42}};
     auto               result =
         comm.reduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 2);
         std::vector<MyInt> expected_result = {
-            (comm.size_signed() * (comm.size_signed() - 1)) / 2,
-            comm.size_signed() * 42};
+            MyInt{(comm.size_signed() * (comm.size_signed() - 1)) / 2},
+            MyInt{comm.size_signed() * 42}};
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
@@ -461,8 +459,6 @@ TEST(ReduceTest, reduce_builtin_native_operation) {
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(ReduceTest, reduce_builtin_native_operation_with_incompatible_type) {
     struct MyInt {
-        MyInt() noexcept : _value(0) {}
-        MyInt(int value) noexcept : _value(value) {}
         int _value;
         int operator+(MyInt const& rhs) const noexcept {
             return this->_value + rhs._value;
@@ -473,7 +469,7 @@ TEST(ReduceTest, reduce_builtin_native_operation_with_incompatible_type) {
     };
     Communicator comm;
 
-    std::vector<MyInt> input = {1, 2, 3};
+    std::vector<MyInt> input = {MyInt{1}, MyInt{2}, MyInt{3}};
 
     EXPECT_KASSERT_FAILS(
         auto result = comm.reduce(send_buf(input), op(MPI_SUM)).extract_recv_buffer(),
@@ -607,7 +603,7 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_type) {
 
     Aggregate                    agg1_expected   = {0, dont_care, comm.size_signed() - 1};
     Aggregate                    agg2_expected   = {42, dont_care, comm.size_signed() - 1 + 42};
-    const std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
+    std::vector<Aggregate> const expected_result = {agg1_expected, agg2_expected};
     std::vector<Aggregate>       recv_buffer(2);
     int const                    root_rank = 0;
 
@@ -644,7 +640,7 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_without_matching_cpp_type
     std::vector<int> input = {comm.rank_signed(), dont_care, dont_care, comm.rank_signed() + 42, dont_care, dont_care};
 
     int const              sum_of_ranks = comm.size_signed() * (comm.size_signed() - 1) / 2;
-    const std::vector<int> expected_result =
+    std::vector<int> const expected_result =
         {sum_of_ranks, dont_care, dont_care, sum_of_ranks + comm.size_signed() * 42, dont_care, dont_care};
     std::vector<int> recv_buffer(6, dont_care);
     int const        root_rank = 0;
@@ -669,7 +665,7 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_without_matching_cpp_type
 }
 TEST(ReduceTest, send_recv_type_is_out_parameter) {
     Communicator           comm;
-    const std::vector<int> data{1};
+    std::vector<int> const data{1};
     MPI_Datatype           send_type;
     int const              root_rank = 0;
     auto                   result =
@@ -687,7 +683,7 @@ TEST(ReduceTest, send_recv_type_is_out_parameter) {
 
 TEST(ReduceTest, send_type_part_of_result_object) {
     Communicator           comm;
-    const std::vector<int> data{1};
+    std::vector<int> const data{1};
     int const              root_rank = 0;
     auto result = comm.reduce(send_buf(data), send_recv_type_out(), op(kamping::ops::plus<>{}), root(root_rank));
 

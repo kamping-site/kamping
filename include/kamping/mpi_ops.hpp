@@ -452,7 +452,7 @@ public:
     ///  this has to be a binary function applicable to two arguments of type \c T which return a result of type  \c
     ///  T
     UserOperationWrapper(Op&& op [[maybe_unused]]) {
-        static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
+        static_assert(std::is_invocable_r_v<T, Op, T const&, T const&>, "Type of custom operation does not match.");
         MPI_Op_create(UserOperationWrapper<is_commutative, T, Op>::execute, is_commutative, &_mpi_op);
     }
 

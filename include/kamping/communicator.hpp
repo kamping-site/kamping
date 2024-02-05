@@ -31,11 +31,6 @@
 
 namespace kamping {
 
-namespace internal {
-/// @brief An unused template parameter
-struct unused_tparam {};
-} // namespace internal
-
 /// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
 /// @tparam DefaultContainerType The default container type to use for containers created by KaMPIng. Defaults to

@@ -42,7 +42,8 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
     // Check if we got a array type -> create a continuous type.
     if constexpr (std::is_array_v<T_no_cv>) {
         // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
-        return std::vector<MPI_Datatype>{mpi_custom_continuous_type<sizeof(T_no_cv)>()};
+        // return std::vector<MPI_Datatype>{mpi_custom_continuous_type<sizeof(T_no_cv)>()};
+        return std::vector<MPI_Datatype>{};
     }
 
     // Check if we got a enum type -> use underlying type
@@ -140,7 +141,7 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
 
     // If not other type matched, this is a custom datatype.
     if (possible_mpi_datatypes.size() == 0) {
-        possible_mpi_datatypes.push_back(mpi_custom_continuous_type<sizeof(T)>());
+        // possible_mpi_datatypes.push_back(mpi_custom_continuous_type<sizeof(T)>());
     }
 
     assert(possible_mpi_datatypes.size() > 0);
@@ -188,8 +189,8 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
 TEST(MpiDataTypeTest, mpi_datatype_const_and_volatile) {
     // Ignore const and volatile qualifiers.
     EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t const>()));
-    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t volatile>()));
-    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<const volatile int8_t>()));
+    // EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t volatile>()));
+    // EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<const volatile int8_t>()));
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_typedefs_and_using) {

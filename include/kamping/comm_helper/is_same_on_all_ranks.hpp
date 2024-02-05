@@ -19,6 +19,7 @@
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameters.hpp"
 
@@ -45,13 +46,13 @@ bool Communicator<DefaultContainerType, Plugins...>::is_same_on_all_ranks(Value 
     //     Value value; // The value to compare, init on each rank with the local value.
     //     bool  equal; // Have we seen only equal values in the reduction so far?
     // };
-    using ValueEqual = std::pair<Value, bool>;
-    std::pair<Value, bool> value_equal = {value, true};
+    using ValueEqual       = std::pair<Value, bool>;
+    ValueEqual value_equal = {value, true};
     auto const datatype    = mpi_datatype<ValueEqual>();
 
     // Build the operation for the reduction.
     auto operation_param = kamping::op(
-        [](auto a, auto b) {
+        [](ValueEqual const& a, ValueEqual const& b) {
             if (a.second && b.second && a.first == b.first) {
                 return ValueEqual{a.first, true};
             } else {

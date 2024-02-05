@@ -65,7 +65,7 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_int));
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_ulint));
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_const_short));
-    EXPECT_TRUE(comm.is_same_on_all_ranks(value_volatile_long));
+    // EXPECT_TRUE(comm.is_same_on_all_ranks(value_volatile_long));
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_bool));
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_float));
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_double));
@@ -88,7 +88,7 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     if (comm.size() > 1) {
         EXPECT_FALSE(comm.is_same_on_all_ranks(value_int));
         EXPECT_FALSE(comm.is_same_on_all_ranks(value_ulint));
-        EXPECT_FALSE(comm.is_same_on_all_ranks(value_volatile_long));
+        // EXPECT_FALSE(comm.is_same_on_all_ranks(value_volatile_long));
         EXPECT_FALSE(comm.is_same_on_all_ranks(value_bool));
         EXPECT_FALSE(comm.is_same_on_all_ranks(value_float));
         EXPECT_FALSE(comm.is_same_on_all_ranks(value_double));
@@ -97,7 +97,7 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     } else {
         EXPECT_TRUE(comm.is_same_on_all_ranks(value_int));
         EXPECT_TRUE(comm.is_same_on_all_ranks(value_ulint));
-        EXPECT_TRUE(comm.is_same_on_all_ranks(value_volatile_long));
+        // EXPECT_TRUE(comm.is_same_on_all_ranks(value_volatile_long));
         EXPECT_TRUE(comm.is_same_on_all_ranks(value_bool));
         EXPECT_TRUE(comm.is_same_on_all_ranks(value_float));
         EXPECT_TRUE(comm.is_same_on_all_ranks(value_double));

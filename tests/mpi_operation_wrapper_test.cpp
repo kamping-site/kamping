@@ -48,7 +48,7 @@ TEST(UserOperationWrapperTest, test_local_reduction_stl_operation) {
 
 TEST(UserOperationWrapperTest, test_local_reduction_function_object) {
     struct MyOperation {
-        int operator()(int& a, int& b) {
+        int operator()(int const& a, int const& b) {
             return a + b;
         }
     };
