@@ -21,7 +21,7 @@ KaMPIng realizes named parameters as factory functions which construct parameter
 The named parameters either serve as *in(put)* or *out(put)* parameters.
 Via a named *in* parameter the caller can provide input data to the wrapped MPI call such as for `send_buf(buf)` or `send_counts(counts)` with `buf` and `counts` accomodating the data to be sent and send counts, respectively.
 Using named out parameter the caller asks KaMPIng to internally compute/infer this parameter and output its value. Named output parameters are created via the respective `*_out()` suffix.
-The data requested via out parameters is then either directly written to a memory location passed within the named parameter call or returned in a `std::tuple`-like *result* object (depending on the ownership property, see Section Ownership).
+The data requested via out parameters is then either directly written to a memory location passed within the named parameter call or returned in a `std::tuple`-like *result* object (depending on the ownership property, [see](#sec:ownership)).
 
 One special case it the receive buffer. Although being an out parameter, it does not need to be explicitly given as KaMPIng assumes that a caller always wants to obtain this buffer.
 
@@ -94,13 +94,13 @@ They do not contain meaningful data yet and will be filled with values during th
 
 DataBuffers with type *inout* correspond to named parameters like `sendrecv_buf(...)` used in `MPI_Bcast` where data is sent on one root rank (in parameter) and received (out parameter) on all other ranks.
 
-### Ownership
+### Ownership {#sec:ownership}
 This property simply determines whether a DataBuffer owns its underlying data following the corresponding C++ ownership concept and is most important for out parameters.
 A DataBuffer *references* (*non*-owns) its container if the latter has been passed to the named parameter as an lvalue as in `send_buf(data)` or `recv_buf_out(recv_buffer)`.
 Otherwise a DataBuffer is *owning*, e.g. for `recv_buf_out()`, `recv_buf_out(std::move(recv_buffer))`.
 
 Note that a named (out) parameter without associated underlying container (such as `recv_buf_out()`) implies that the caller asks KaMPIng to allocate the memory to hold the computed/infered values.
-This results in owning container, which is allocated by KaMPIng and ownership transfered to the caller upon return.
+This results in an owning container, which is allocated by KaMPIng and ownership is transferred to the caller upon return.
 
 Furthermore, the ownership of an out parameter is important as it specifies how the computed data will be returned to the caller.
 Owning out parameters are moved to a result object which is returned by value.
