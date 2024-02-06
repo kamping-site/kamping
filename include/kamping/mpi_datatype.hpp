@@ -60,48 +60,49 @@ template <typename T>
         static MPI_Datatype type = construct_and_commit_type<T>();
         return type;
     } else {
+        static_assert(mpi_type_traits<T>::is_builtin, "Type not supported");
         return mpi_type_traits<T>::data_type();
     }
 
-    // Remove const qualifiers.
-    // Previously, we also removed volatile qualifiers here. MPI does not support volatile pointers and
-    // removing volatile from a pointer is undefined behavior.
-    using T_no_const = std::remove_const_t<T>;
+    // // Remove const qualifiers.
+    // // Previously, we also removed volatile qualifiers here. MPI does not support volatile pointers and
+    // // removing volatile from a pointer is undefined behavior.
+    // using T_no_const = std::remove_const_t<T>;
 
-    // Check if we got a pointer type -> error
-    static_assert(
-        !std::is_pointer_v<T_no_const>,
-        "MPI does not support pointer types. Why do you want to transfer a pointer over MPI?"
-    );
+    // // Check if we got a pointer type -> error
+    // static_assert(
+    //     !std::is_pointer_v<T_no_const>,
+    //     "MPI does not support pointer types. Why do you want to transfer a pointer over MPI?"
+    // );
 
-    // Check if we got a function type -> error
-    static_assert(!std::is_function_v<T_no_const>, "MPI does not support function types.");
+    // // Check if we got a function type -> error
+    // static_assert(!std::is_function_v<T_no_const>, "MPI does not support function types.");
 
-    // Check if we got a union type -> error
-    static_assert(!std::is_union_v<T_no_const>, "MPI does not support union types.");
+    // // Check if we got a union type -> error
+    // static_assert(!std::is_union_v<T_no_const>, "MPI does not support union types.");
 
-    // Check if we got void -> error
-    static_assert(!std::is_void_v<T_no_const>, "There is no MPI datatype corresponding to void.");
+    // // Check if we got void -> error
+    // static_assert(!std::is_void_v<T_no_const>, "There is no MPI datatype corresponding to void.");
 
-    // // Check if we got an array type -> create a continuous type.
-    // if constexpr (std::is_array_v<T_no_cv>) {
-    //     // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
-    //     return mpi_custom_continuous_type<sizeof(T_no_cv)>();
-    // }
+    // // // Check if we got an array type -> create a continuous type.
+    // // if constexpr (std::is_array_v<T_no_cv>) {
+    // //     // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
+    // //     return mpi_custom_continuous_type<sizeof(T_no_cv)>();
+    // // }
 
-    // // // Check if we got an enum type -> use underlying type
-    MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
-    // if constexpr (std::is_enum_v<T_no_cv>) {
-    //     return mpi_datatype<std::underlying_type_t<T_no_cv>>();
-    // } else {
-    //     static_assert(expression, );
-    //     mpi_type = mpi_custom_continuous_type<sizeof(T)>();
-    // }
-    // static_assert(std::is_enum_v<T_no_const>, "Type not supported");
+    // // // // Check if we got an enum type -> use underlying type
+    // MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
+    // // if constexpr (std::is_enum_v<T_no_cv>) {
+    // //     return mpi_datatype<std::underlying_type_t<T_no_cv>>();
+    // // } else {
+    // //     static_assert(expression, );
+    // //     mpi_type = mpi_custom_continuous_type<sizeof(T)>();
+    // // }
+    // // static_assert(std::is_enum_v<T_no_const>, "Type not supported");
 
-    KASSERT(mpi_type != MPI_DATATYPE_NULL);
+    // KASSERT(mpi_type != MPI_DATATYPE_NULL);
 
-    return mpi_type;
+    // return mpi_type;
 }
 /// @}
 

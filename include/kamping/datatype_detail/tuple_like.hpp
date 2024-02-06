@@ -156,10 +156,4 @@ struct mpi_type_traits<
         return type;
     }
 };
-// TODO: remove
-inline size_t mpi_datatype_size(MPI_Datatype type) {
-    int size;
-    MPI_Type_size(type, &size);
-    return static_cast<size_t>(size);
-}
 } // namespace kamping

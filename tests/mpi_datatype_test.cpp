@@ -279,7 +279,6 @@ TEST(MpiDataTypeTest, mpi_datatype_continuous_type) {
     EXPECT_NE(MPI_CXX_FLOAT_COMPLEX, mpi_datatype<TestStruct>());
     EXPECT_NE(MPI_CXX_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
     EXPECT_NE(MPI_CXX_LONG_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
-    EXPECT_EQ(mpi_datatype_size(mpi_datatype<TestStruct>()), 2 * sizeof(int));
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_c_array) {
@@ -317,7 +316,6 @@ TEST(MpiDataTypeTest, mpi_datatype_c_array) {
     EXPECT_NE(MPI_CXX_FLOAT_COMPLEX, mpi_datatype<decltype(c_array)>());
     EXPECT_NE(MPI_CXX_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
     EXPECT_NE(MPI_CXX_LONG_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
-    EXPECT_EQ(mpi_datatype_size(mpi_datatype<decltype(c_array)>()), 3 * sizeof(int));
 }
 
 TEST(MPIDataTypeTest, test_type_groups) {
@@ -363,36 +361,7 @@ TEST(MPIDataTypeTest, test_type_groups) {
 
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<int>>::category, kamping::TypeCategory::undefined);
     EXPECT_EQ(kamping::mpi_type_traits<char>::category, kamping::TypeCategory::undefined);
-    EXPECT_EQ(kamping::mpi_type_traits<DummyType>::category, kamping::TypeCategory::undefined);
-}
-
-TEST(MpiDataTypeTest, mpi_datatype_size) {
-    EXPECT_EQ(mpi_datatype_size(MPI_INT), sizeof(int));
-    EXPECT_EQ(mpi_datatype_size(MPI_CHAR), sizeof(char));
-    EXPECT_EQ(mpi_datatype_size(MPI_INT16_T), 2);
-
-    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
-    MPI_Datatype null_type = MPI_DATATYPE_NULL;
-    EXPECT_THROW(mpi_datatype_size(null_type), kamping::MpiErrorException);
-
-    bool has_thrown = false;
-    try {
-        mpi_datatype_size(null_type);
-    } catch (kamping::MpiErrorException& e) {
-        has_thrown = true;
-
-        // The error code is implementation dependent, so we get the error class and test that.
-        int error_code = e.mpi_error_code();
-        int error_class;
-        MPI_Error_class(error_code, &error_class);
-        EXPECT_EQ(error_class, MPI_ERR_TYPE);
-
-        EXPECT_EQ(e.mpi_error_class(), MPI_ERR_TYPE);
-
-        EXPECT_THAT(e.what(), HasSubstr("Failed with the following error message:"));
-        EXPECT_THAT(e.what(), HasSubstr("MPI_Type_size failed"));
-    }
-    EXPECT_TRUE(has_thrown);
+    EXPECT_EQ(kamping::mpi_type_traits<DummyType>::category, kamping::TypeCategory::kamping_provided);
 }
 
 TEST(MpiDataTypeTest, kabool_basics) {
