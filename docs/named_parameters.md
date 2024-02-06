@@ -3,8 +3,7 @@
 A core feature of KaMPIng is the named parameters concept allowing the caller to name and pass parameters in arbitrary order and even omit certain parameters.
 With this approach, KaMPIng allows the user a fine-grained control over the parameter set which will be explained in greater detail in this document.
 
-
-To illustrate named parameters, we first look at the function signature of `MPI_Alltoallv` as defined in MPI-4.0 which takes a `sendbuf` of variable
+To illustrate the concept, we first look at the function signature of `MPI_Alltoallv` as defined in MPI-4.0 which takes a `sendbuf` of variable
 size on each PE i and sends messages of size `sendcounts[j]` from PE i to PE j where the messages are received into `recvbuf`.
 Apart from these three parameters, MPI requires additional information such as the number of elements to receive (`recvcounts[]`) or a possible displacements (`sdispls`, `rdispls`) etc.
 ```cpp
@@ -17,10 +16,12 @@ MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
 In KaMPIng all these parameters to an MPI function are represented by ***named parameters***:
 - send_buf(...), send_counts(...)/send_counts_out(...), recv_counts()/recv_counts_out(), ... TODO refer to complet list
 
-These named parameters either serve as *in(put)* or *out(put)* parameters.
+KaMPIng realizes named parameters as factory functions which construct parameter objects inplace, but it's easier to think of this concept in terms of `name(buffer)`.
+
+The named parameters either serve as *in(put)* or *out(put)* parameters.
 Via a named *in* parameter the caller can provide input data to the wrapped MPI call such as for `send_buf(buf)` or `send_counts(counts)` with `buf` and `counts` accomodating the data to be sent and send counts, respectively.
 Using named out parameter the caller asks KaMPIng to internally compute/infer this parameter and output its value. Named output parameters are created via the respective `*_out()` suffix.
-The data requested via out parameters is then either directly written to a memory location passed within the named parameter call or returned in a `std::tuple`-like *result* object.
+The data requested via out parameters is then either directly written to a memory location passed within the named parameter call or returned in a `std::tuple`-like *result* object (depending on the ownership property, see Section Ownership).
 
 One special case it the receive buffer. Although being an out parameter, it does not need to be explicitly given as KaMPIng assumes that a caller always wants to obtain this buffer.
 
@@ -68,6 +69,7 @@ To summarize, there are three ways to pass parameters to KaMPIng:
 3. **omitted** parameter: the caller does not know the parameter, asks KaMPIng to internally compute/infer the parameter but is not interested in its value. Therefore it is discared once the wrapped MPI call has completed.
 
 **Note**: Depending on the wrapped MPI call some parameters have to be provided by the user (as **in** parameters) such as `send_buf` in almost all MPI functions or `send_counts` in `MPI_Alltoallv` as KaMPIng cannot infer these values.
+KaMPIng will show an error at compile time if any required parameter is missing.
 
 
 Internally, a call to a named parameter factory function (`send_buf(...), send_counts(...), ...`) instantiates an object of the *DataBuffer* class encapsulating
@@ -88,17 +90,17 @@ Let us start with the type property. Named parameters like `send_counts(...)`, `
 This signals that they wrap a container with meaningful *input* data which can be used by the MPI call directly, e.g. the send counts wrapped by `send_counts(...)`.
 
 The corresponding `*_out` named parameters instantiates DataBuffer objects with type property *out*.
-They do not contain meaningful data yet and will be initialized during the wrapped MPI call itself as for `recv_buf_out()` or beforehand by KaMPIng for parameters such as `recv_counts_out()` etc.
+They do not contain meaningful data yet and will be filled with values during the wrapped MPI call.
 
 DataBuffers with type *inout* correspond to named parameters like `sendrecv_buf(...)` used in `MPI_Bcast` where data is sent on one root rank (in parameter) and received (out parameter) on all other ranks.
 
 ### Ownership
 This property simply determines whether a DataBuffer owns its underlying data following the corresponding C++ ownership concept and is most important for out parameters.
-A DataBuffer *owns* its container if its has been passed to the named parameter as an lvalue as in `send_buf(data)` or `recv_buf_out(recv_buffer)`.
-Otherwise a DataBuffer is *non-owning*, e.g. for `recv_buf_out()`, `recv_buf_out(std::move(recv_buffer))`.
+A DataBuffer *references* (*non*-owns) its container if the latter has been passed to the named parameter as an lvalue as in `send_buf(data)` or `recv_buf_out(recv_buffer)`.
+Otherwise a DataBuffer is *owning*, e.g. for `recv_buf_out()`, `recv_buf_out(std::move(recv_buffer))`.
 
-Note that a named (out) parameter without associated underlying container (such as `recv_buf_out()`) signifies that the caller asks KaMPIng to allocate the memory to hold the computed/infered values.
-The user can further specify the container/allocator to use for the memory allocation. TODO add reference
+Note that a named (out) parameter without associated underlying container (such as `recv_buf_out()`) implies that the caller asks KaMPIng to allocate the memory to hold the computed/infered values.
+This results in owning container, which is allocated by KaMPIng and ownership transfered to the caller upon return.
 
 Furthermore, the ownership of an out parameter is important as it specifies how the computed data will be returned to the caller.
 Owning out parameters are moved to a result object which is returned by value.
@@ -108,25 +110,37 @@ The following code provides some example for owning and non-owning out parameter
 
 ```cpp
   // owning out parameters:
-  auto result = comm.alltoallv(send_buf(data),
-                               send_counts(counts),
-                               recv_buf_out(),
-                               recv_counts_out());
-                               
-  auto recv_buffer = result.extract_recv_buffer();
-  auto recv_counts = result.extract_recv_counts();
-  // or via structured bindings, i.e. auto [recv_buffer, recv_counts ] = comm.alltoallv(...);
+  {
+    auto result = comm.alltoallv(send_buf(data),
+                                 send_counts(counts),
+                                 recv_buf_out(),
+                                 recv_counts_out());
+    auto recv_buffer = result.extract_recv_buffer();
+    auto recv_counts = result.extract_recv_counts();
+    // auto send_counts = result.extract_send_counts() // compilation error: this cannot be extracted
+                                                       // since it is not specified as an out parameter.
+  }
+  
+  // owning out parameters with structured bindings:
+  {
+    auto [recv_buffer, recv_counts] = comm.alltoallv(send_buf(data),
+                                                     send_counts(counts),
+                                                     recv_buf_out(),
+                                                     recv_counts_out());
+  }
 
   // non-owning out parameters:
-  std::vector<T> recv_buffer = ...; // allocate sufficient memory
-  std::vector<int> recv_counts;     // allocate sufficient memory
-  comm.alltoallv(send_buf(data),
-                 send_counts(counts),
-                 recv_buf_out(recv_buffer),
-                 recv_counts_out(recv_counts));
+  {
+    std::vector<T> recv_buffer = ...; // allocate sufficient memory
+    std::vector<int> recv_counts;     // allocate sufficient memory
+    comm.alltoallv(send_buf(data),
+                   send_counts(counts),
+                   recv_buf_out(recv_buffer),
+                   recv_counts_out(recv_counts));
+  }
 ```
 
-TODO refer to documentation about Result object (or write here?)
+TODO refer to documentation about Result object.
 
 ### Resize Policy
 Resize policies are only important for out parameters. They control if/how the underlying memory/container are resized if the provided memory is not large enough to hold the computed values.
