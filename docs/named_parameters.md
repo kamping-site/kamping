@@ -5,7 +5,7 @@ With this approach, KaMPIng allows the user a fine-grained control over the para
 
 
 To illustrate named parameters, we first look at the function signature of `MPI_Alltoallv` as defined in MPI-4.0 which takes a `sendbuf` of variable
-size on each PE i and sends messages of size sendcounts[j] from PE i to PE j where the messages are received into `recvbuf`.
+size on each PE i and sends messages of size `sendcounts[j]` from PE i to PE j where the messages are received into `recvbuf`.
 Apart from these three parameters, MPI requires additional information such as the number of elements to receive (`recvcounts[]`) or a possible displacements (`sdispls`, `rdispls`) etc.
 ```cpp
 MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
