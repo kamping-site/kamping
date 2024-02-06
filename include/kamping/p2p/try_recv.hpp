@@ -53,9 +53,9 @@
 /// - \ref kamping::source() receive a message sent from the given source rank. Defaults to probing for an arbitrary
 /// source, i.e. \c source(rank::any).
 ///
-/// - \c kamping::status(ignore<>) or \ref kamping::status_out. Returns info about the received message by setting the
-/// appropriate fields in the status object. The status can be ignored by passing \ref kamping::ignore<>. This is the
-/// default.
+/// - \ref kamping::status(). Returns info about the received message by setting the
+/// appropriate fields in the status object. The status can be obtained by using \c kamping::status_out and ignored by
+/// passing \c kamping::ignore<>. This is the default.
 ///
 //  - \ref kamping::recv_type() specifying the \c MPI datatype to use as the recv type. If omitted, the \c MPI datatype
 //  is
