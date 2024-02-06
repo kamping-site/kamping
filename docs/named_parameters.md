@@ -18,7 +18,7 @@ In KaMPIng all these parameters to an MPI function are represented by ***named p
 - send_buf(...), send_counts(...)/send_counts_out(...), recv_counts()/recv_counts_out(), ... TODO refer to complet list
 
 These named parameters either serve as *in(put)* or *out(put)* parameters.
-Via a named *in* parameter the caller can provide input data to the wrapped MPI call such as for `send_buf(buf)` or `send_counts(counts)` with buf and counts accomodating the data to be sent and send counts, respectively.
+Via a named *in* parameter the caller can provide input data to the wrapped MPI call such as for `send_buf(buf)` or `send_counts(counts)` with `buf` and `counts` accomodating the data to be sent and send counts, respectively.
 Using named out parameter the caller asks KaMPIng to internally compute/infer this parameter and output its value. Named output parameters are created via the respective `*_out()` suffix.
 The data requested via out parameters is then either directly written to a memory location passed within the named parameter call or returned in a `std::tuple`-like *result* object.
 
