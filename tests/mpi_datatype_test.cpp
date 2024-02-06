@@ -15,7 +15,7 @@
 #include <type_traits>
 #include <vector>
 
-#include <gmock/gmock-matchers.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -32,116 +32,129 @@ int MPI_Type_free(MPI_Datatype* type) {
     return PMPI_Type_free(type);
 }
 
+MATCHER_P2(ContiguousType, type, n, "") {
+    int num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(arg, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    if (combiner != MPI_COMBINER_CONTIGUOUS) {
+        *result_listener << "not a contiguous type";
+        return false;
+    }
+    int          count;
+    MPI_Datatype underlying_type;
+    MPI_Type_get_contents(arg, num_integers, num_addresses, num_datatypes, &count, nullptr, &underlying_type);
+    if (count != n) {
+        *result_listener << "wrong count";
+        return false;
+    }
+    PrintToString(type);
+    return underlying_type == type;
+}
+
 // Returns a std::vector containing all MPI_Datatypes equivalent to the given C++ datatype on this machine.
 // Removes the topmost level of const and volatile qualifiers.
 template <typename T>
 std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
-    // Remove const and volatile qualifiers.
-    using T_no_cv = std::remove_cv_t<T>;
+    // Remove const qualifiers.
+    using T_no_const = std::remove_const_t<T>;
 
     // Check if we got a array type -> create a continuous type.
-    if constexpr (std::is_array_v<T_no_cv>) {
+    if constexpr (std::is_array_v<T_no_const>) {
         // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
         // return std::vector<MPI_Datatype>{mpi_custom_continuous_type<sizeof(T_no_cv)>()};
         return std::vector<MPI_Datatype>{};
     }
 
     // Check if we got a enum type -> use underlying type
-    if constexpr (std::is_enum_v<T_no_cv>) {
-        return possible_mpi_datatypes<std::underlying_type_t<T_no_cv>>();
+    if constexpr (std::is_enum_v<T_no_const>) {
+        return possible_mpi_datatypes<std::underlying_type_t<T_no_const>>();
     }
 
     // For each supported C++ datatype, check if it is equivalent to the T_no_cv and if so, add the corresponding MPI
     // datatype to the list of possible types.
     std::vector<MPI_Datatype> possible_mpi_datatypes;
-    if constexpr (std::is_same_v<T_no_cv, char>) {
+    if constexpr (std::is_same_v<T_no_const, char>) {
         possible_mpi_datatypes.push_back(MPI_CHAR);
     }
-    if constexpr (std::is_same_v<T_no_cv, signed char>) {
+    if constexpr (std::is_same_v<T_no_const, signed char>) {
         possible_mpi_datatypes.push_back(MPI_SIGNED_CHAR);
     }
-    if constexpr (std::is_same_v<T_no_cv, unsigned char>) {
+    if constexpr (std::is_same_v<T_no_const, unsigned char>) {
         possible_mpi_datatypes.push_back(MPI_UNSIGNED_CHAR);
     }
-    if constexpr (std::is_same_v<T_no_cv, wchar_t>) {
+    if constexpr (std::is_same_v<T_no_const, wchar_t>) {
         possible_mpi_datatypes.push_back(MPI_WCHAR);
     }
-    if constexpr (std::is_same_v<T_no_cv, signed short>) {
+    if constexpr (std::is_same_v<T_no_const, signed short>) {
         possible_mpi_datatypes.push_back(MPI_SHORT);
     }
-    if constexpr (std::is_same_v<T_no_cv, unsigned short>) {
+    if constexpr (std::is_same_v<T_no_const, unsigned short>) {
         possible_mpi_datatypes.push_back(MPI_UNSIGNED_SHORT);
     }
-    if constexpr (std::is_same_v<T_no_cv, signed int>) {
+    if constexpr (std::is_same_v<T_no_const, signed int>) {
         possible_mpi_datatypes.push_back(MPI_INT);
     }
-    if constexpr (std::is_same_v<T_no_cv, unsigned int>) {
+    if constexpr (std::is_same_v<T_no_const, unsigned int>) {
         possible_mpi_datatypes.push_back(MPI_UNSIGNED);
     }
-    if constexpr (std::is_same_v<T_no_cv, signed long int>) {
+    if constexpr (std::is_same_v<T_no_const, signed long int>) {
         possible_mpi_datatypes.push_back(MPI_LONG);
     }
-    if constexpr (std::is_same_v<T_no_cv, unsigned long int>) {
+    if constexpr (std::is_same_v<T_no_const, unsigned long int>) {
         possible_mpi_datatypes.push_back(MPI_UNSIGNED_LONG);
     }
-    if constexpr (std::is_same_v<T_no_cv, signed long long int>) {
+    if constexpr (std::is_same_v<T_no_const, signed long long int>) {
         possible_mpi_datatypes.push_back(MPI_LONG_LONG);
     }
-    if constexpr (std::is_same_v<T_no_cv, unsigned long long int>) {
+    if constexpr (std::is_same_v<T_no_const, unsigned long long int>) {
         possible_mpi_datatypes.push_back(MPI_UNSIGNED_LONG_LONG);
     }
-    if constexpr (std::is_same_v<T_no_cv, float>) {
+    if constexpr (std::is_same_v<T_no_const, float>) {
         possible_mpi_datatypes.push_back(MPI_FLOAT);
     }
-    if constexpr (std::is_same_v<T_no_cv, double>) {
+    if constexpr (std::is_same_v<T_no_const, double>) {
         possible_mpi_datatypes.push_back(MPI_DOUBLE);
     }
-    if constexpr (std::is_same_v<T_no_cv, long double>) {
+    if constexpr (std::is_same_v<T_no_const, long double>) {
         possible_mpi_datatypes.push_back(MPI_LONG_DOUBLE);
     }
-    if constexpr (std::is_same_v<T_no_cv, int8_t>) {
+    if constexpr (std::is_same_v<T_no_const, int8_t>) {
         possible_mpi_datatypes.push_back(MPI_INT8_T);
     }
-    if constexpr (std::is_same_v<T_no_cv, int16_t>) {
+    if constexpr (std::is_same_v<T_no_const, int16_t>) {
         possible_mpi_datatypes.push_back(MPI_INT16_T);
     }
-    if constexpr (std::is_same_v<T_no_cv, int32_t>) {
+    if constexpr (std::is_same_v<T_no_const, int32_t>) {
         possible_mpi_datatypes.push_back(MPI_INT32_T);
     }
-    if constexpr (std::is_same_v<T_no_cv, int64_t>) {
+    if constexpr (std::is_same_v<T_no_const, int64_t>) {
         possible_mpi_datatypes.push_back(MPI_INT64_T);
     }
-    if constexpr (std::is_same_v<T_no_cv, uint8_t>) {
+    if constexpr (std::is_same_v<T_no_const, uint8_t>) {
         possible_mpi_datatypes.push_back(MPI_UINT8_T);
     }
-    if constexpr (std::is_same_v<T_no_cv, uint16_t>) {
+    if constexpr (std::is_same_v<T_no_const, uint16_t>) {
         possible_mpi_datatypes.push_back(MPI_UINT16_T);
     }
-    if constexpr (std::is_same_v<T_no_cv, uint32_t>) {
+    if constexpr (std::is_same_v<T_no_const, uint32_t>) {
         possible_mpi_datatypes.push_back(MPI_UINT32_T);
     }
-    if constexpr (std::is_same_v<T_no_cv, uint64_t>) {
+    if constexpr (std::is_same_v<T_no_const, uint64_t>) {
         possible_mpi_datatypes.push_back(MPI_UINT64_T);
     }
-    if constexpr (std::is_same_v<T_no_cv, bool>) {
+    if constexpr (std::is_same_v<T_no_const, bool>) {
         possible_mpi_datatypes.push_back(MPI_CXX_BOOL);
     }
-    if constexpr (std::is_same_v<T_no_cv, kamping::kabool>) {
+    if constexpr (std::is_same_v<T_no_const, kamping::kabool>) {
         possible_mpi_datatypes.push_back(MPI_CXX_BOOL);
     }
-    if constexpr (std::is_same_v<T_no_cv, std::complex<float>>) {
+    if constexpr (std::is_same_v<T_no_const, std::complex<float>>) {
         possible_mpi_datatypes.push_back(MPI_CXX_FLOAT_COMPLEX);
     }
-    if constexpr (std::is_same_v<T_no_cv, std::complex<double>>) {
+    if constexpr (std::is_same_v<T_no_const, std::complex<double>>) {
         possible_mpi_datatypes.push_back(MPI_CXX_DOUBLE_COMPLEX);
     }
-    if constexpr (std::is_same_v<T_no_cv, std::complex<long double>>) {
+    if constexpr (std::is_same_v<T_no_const, std::complex<long double>>) {
         possible_mpi_datatypes.push_back(MPI_CXX_LONG_DOUBLE_COMPLEX);
-    }
-
-    // If not other type matched, this is a custom datatype.
-    if (possible_mpi_datatypes.size() == 0) {
-        // possible_mpi_datatypes.push_back(mpi_custom_continuous_type<sizeof(T)>());
     }
 
     assert(possible_mpi_datatypes.size() > 0);
@@ -283,42 +296,26 @@ TEST(MpiDataTypeTest, mpi_datatype_continuous_type) {
 
 TEST(MpiDataTypeTest, mpi_datatype_c_array) {
     // Calling mpi_datatype with an array should return a continuous datatype.
-    int c_array[3];
+    {
+        int c_array[3];
+        EXPECT_THAT(mpi_datatype<decltype(c_array)>(), ContiguousType(MPI_INT, 3));
+    }
+    {
+        int* ptr;
+        EXPECT_EQ(mpi_type_traits<decltype(ptr)>::category, TypeCategory::undefined);
+    }
+    {
+        std::array<int, 3> cpp_array;
+        EXPECT_THAT(mpi_datatype<decltype(cpp_array)>(), ContiguousType(MPI_INT, 3));
+    }
 
-    // There seems to be no way to check if a given datatype in MPI is a custom type, we therefore rule out that it's
-    // equal to any of the other types, including the NULL type.
-    EXPECT_NE(MPI_DATATYPE_NULL, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_CHAR, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_CHAR, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_SIGNED_CHAR, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_UNSIGNED_CHAR, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_WCHAR, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_SHORT, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_UNSIGNED_SHORT, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_INT, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_UNSIGNED, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_LONG, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_UNSIGNED_LONG, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_LONG_LONG, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_UNSIGNED_LONG_LONG, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_FLOAT, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_DOUBLE, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_LONG_DOUBLE, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_INT8_T, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_INT16_T, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_INT32_T, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_INT64_T, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_UINT8_T, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_UINT16_T, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_UINT32_T, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_UINT64_T, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_CXX_BOOL, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_CXX_FLOAT_COMPLEX, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_CXX_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
-    EXPECT_NE(MPI_CXX_LONG_DOUBLE_COMPLEX, mpi_datatype<decltype(c_array)>());
+    {
+        std::array<double, 3> cpp_array;
+        EXPECT_THAT(mpi_datatype<decltype(cpp_array)>(), ContiguousType(MPI_DOUBLE, 3));
+    }
 }
 
-TEST(MPIDataTypeTest, test_type_groups) {
+TEST(MpiDataTypeTest, test_type_groups) {
     struct DummyType {
         int  a;
         char b;
@@ -360,7 +357,7 @@ TEST(MPIDataTypeTest, test_type_groups) {
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<long double>>::category, kamping::TypeCategory::complex);
 
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<int>>::category, kamping::TypeCategory::undefined);
-    EXPECT_EQ(kamping::mpi_type_traits<char>::category, kamping::TypeCategory::undefined);
+    EXPECT_EQ(kamping::mpi_type_traits<char>::category, kamping::TypeCategory::character);
     EXPECT_EQ(kamping::mpi_type_traits<DummyType>::category, kamping::TypeCategory::kamping_provided);
 }
 
@@ -391,6 +388,9 @@ TEST(MpiDataTypeTest, register_types_with_environment) {
         int b;
     };
     MPI_Datatype struct_type = mpi_datatype<TestStruct>();
+    // should not register the type again
+    MPI_Datatype other_struct_type = mpi_datatype<TestStruct>();
+    (void)other_struct_type;
 
     freed_types.clear();
     mpi_env.free_registered_mpi_types();

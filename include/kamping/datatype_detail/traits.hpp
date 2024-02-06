@@ -26,7 +26,17 @@ namespace kamping {
 // };
 /// @brief the members specify which group the datatype belongs to according to the type groups specified in
 /// Section 5.9.2 of the MPI 3.1 standard.
-enum class TypeCategory { integer, floating, complex, logical, byte, kamping_provided, user_provided, undefined };
+enum class TypeCategory {
+    integer,
+    floating,
+    complex,
+    logical,
+    byte,
+    character,
+    kamping_provided,
+    user_provided,
+    undefined
+};
 
 struct is_builtin_mpi_type_false {
     static constexpr bool         is_builtin  = false;

@@ -39,7 +39,7 @@ struct mpi_type_traits<std::pair<T1, T2>, std::enable_if_t<has_static_type<T1> &
     : is_builtin_mpi_type_false {
     static constexpr TypeCategory category = TypeCategory::kamping_provided;
     static MPI_Datatype           data_type() {
-                  std::pair<T1, T2> t;
+                  std::pair<T1, T2> t{};
                   MPI_Datatype      types[2]     = {mpi_type_traits<T1>::data_type(), mpi_type_traits<T2>::data_type()};
                   int               blocklens[2] = {1, 1};
                   MPI_Aint          base;
@@ -65,7 +65,7 @@ struct mpi_type_traits<std::tuple<Ts...>, std::enable_if_t<all_have_static_types
     static constexpr TypeCategory category = TypeCategory::kamping_provided;
 
     static MPI_Datatype data_type() {
-        std::tuple<Ts...>     t;
+        std::tuple<Ts...>     t{};
         constexpr std::size_t tuple_size = sizeof...(Ts);
 
         MPI_Datatype types[tuple_size] = {mpi_type_traits<Ts>::data_type()...};
@@ -134,7 +134,7 @@ struct mpi_type_traits<
     static constexpr TypeCategory category = TypeCategory::kamping_provided;
 
     static MPI_Datatype data_type() {
-        T                     t;
+        T                     t{};
         constexpr std::size_t tuple_size = pfr::tuple_size_v<T>;
 
         MPI_Datatype types[tuple_size];

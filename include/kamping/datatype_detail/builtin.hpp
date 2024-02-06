@@ -11,6 +11,7 @@ struct mpi_type_traits<char> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_CHAR;
     }
+    static constexpr TypeCategory category = TypeCategory::character;
 };
 
 template <>
@@ -34,6 +35,7 @@ struct mpi_type_traits<wchar_t> : is_builtin_mpi_type_true {
     static MPI_Datatype data_type() {
         return MPI_WCHAR;
     }
+    static constexpr TypeCategory category = TypeCategory::character;
 };
 
 template <>
