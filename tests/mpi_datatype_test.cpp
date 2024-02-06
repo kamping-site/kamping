@@ -50,6 +50,55 @@ MATCHER_P2(ContiguousType, type, n, "") {
     return underlying_type == type;
 }
 
+class StructTypeMatcher {
+public:
+    StructTypeMatcher(std::initializer_list<MPI_Datatype> types) : expected_types(types) {}
+    using is_gtest_matcher = void;
+    std::vector<MPI_Datatype> expected_types;
+
+    bool MatchAndExplain(MPI_Datatype type, MatchResultListener* listener) const {
+        int num_integers, num_addresses, num_datatypes, combiner;
+        MPI_Type_get_envelope(type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+        if (combiner != MPI_COMBINER_STRUCT) {
+            *listener << "is not a struct type";
+            return false;
+        }
+        std::vector<int>          integers(static_cast<size_t>(num_integers));
+        std::vector<MPI_Aint>     addresses(static_cast<size_t>(num_addresses));
+        std::vector<MPI_Datatype> datatypes(static_cast<size_t>(num_datatypes));
+        MPI_Type_get_contents(
+            type,
+            num_integers,
+            num_addresses,
+            num_datatypes,
+            integers.data(),
+            addresses.data(),
+            datatypes.data()
+        );
+        size_t count = static_cast<size_t>(integers[0]);
+        for (size_t i = 0; i < count; i++) {
+            if (integers[i + 1] != 1) {
+                *listener << "blocksize should be 1 for type " << i;
+                return false;
+            }
+            if (datatypes[i] != expected_types[i]) {
+                *listener << "type " << i << " does not match expected type";
+                return false;
+            }
+        }
+        return true;
+    }
+    void DescribeTo(std::ostream* os) const {
+        *os << "is a struct type of the provided types";
+    }
+    void DescribeNegationTo(std::ostream* os) const {
+        *os << "is not a struct type of the provided types";
+    }
+};
+Matcher<MPI_Datatype> StructType(std::initializer_list<MPI_Datatype> types) {
+    return StructTypeMatcher(types);
+}
+
 // Returns a std::vector containing all MPI_Datatypes equivalent to the given C++ datatype on this machine.
 // Removes the topmost level of const and volatile qualifiers.
 template <typename T>
@@ -163,69 +212,79 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
 
 TEST(MpiDataTypeTest, mpi_datatype_basics) {
     // Check using the equivalent_mpi_datatypes() helper.
-    EXPECT_THAT(possible_mpi_datatypes<char>(), Contains(mpi_datatype<char>()));
-    EXPECT_THAT(possible_mpi_datatypes<unsigned char>(), Contains(mpi_datatype<unsigned char>()));
-    EXPECT_THAT(possible_mpi_datatypes<signed char>(), Contains(mpi_datatype<signed char>()));
-    EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(mpi_datatype<uint8_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<wchar_t>(), Contains(mpi_datatype<wchar_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<short>(), Contains(mpi_datatype<short>()));
-    EXPECT_THAT(possible_mpi_datatypes<unsigned short>(), Contains(mpi_datatype<unsigned short>()));
-    EXPECT_THAT(possible_mpi_datatypes<signed short>(), Contains(mpi_datatype<signed short>()));
-    EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(mpi_datatype<int>()));
-    EXPECT_THAT(possible_mpi_datatypes<unsigned>(), Contains(mpi_datatype<unsigned>()));
-    EXPECT_THAT(possible_mpi_datatypes<long>(), Contains(mpi_datatype<long>()));
-    EXPECT_THAT(possible_mpi_datatypes<unsigned long>(), Contains(mpi_datatype<unsigned long>()));
-    EXPECT_THAT(possible_mpi_datatypes<signed long long int>(), Contains(mpi_datatype<signed long long int>()));
-    EXPECT_THAT(possible_mpi_datatypes<unsigned long long int>(), Contains(mpi_datatype<unsigned long long int>()));
-    EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(mpi_datatype<float>()));
-    EXPECT_THAT(possible_mpi_datatypes<double>(), Contains(mpi_datatype<double>()));
-    EXPECT_THAT(possible_mpi_datatypes<long double>(), Contains(mpi_datatype<long double>()));
-    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<int16_t>(), Contains(mpi_datatype<int16_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<int32_t>(), Contains(mpi_datatype<int32_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<int64_t>(), Contains(mpi_datatype<int64_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(mpi_datatype<uint8_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<uint16_t>(), Contains(mpi_datatype<uint16_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<uint32_t>(), Contains(mpi_datatype<uint32_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(mpi_datatype<uint64_t>()));
-    EXPECT_THAT(possible_mpi_datatypes<bool>(), Contains(mpi_datatype<bool>()));
-    EXPECT_THAT(possible_mpi_datatypes<kamping::kabool>(), Contains(mpi_datatype<kamping::kabool>()));
-    EXPECT_THAT(possible_mpi_datatypes<std::complex<double>>(), Contains(mpi_datatype<std::complex<double>>()));
-    EXPECT_THAT(possible_mpi_datatypes<std::complex<float>>(), Contains(mpi_datatype<std::complex<float>>()));
+    EXPECT_THAT(possible_mpi_datatypes<char>(), Contains(mpi_type_traits<char>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<unsigned char>(), Contains(mpi_type_traits<unsigned char>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<signed char>(), Contains(mpi_type_traits<signed char>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(mpi_type_traits<uint8_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_type_traits<int8_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<wchar_t>(), Contains(mpi_type_traits<wchar_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<short>(), Contains(mpi_type_traits<short>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<unsigned short>(), Contains(mpi_type_traits<unsigned short>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<signed short>(), Contains(mpi_type_traits<signed short>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(mpi_type_traits<int>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<unsigned>(), Contains(mpi_type_traits<unsigned>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<long>(), Contains(mpi_type_traits<long>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<unsigned long>(), Contains(mpi_type_traits<unsigned long>::data_type()));
+    EXPECT_THAT(
+        possible_mpi_datatypes<signed long long int>(),
+        Contains(mpi_type_traits<signed long long int>::data_type())
+    );
+    EXPECT_THAT(
+        possible_mpi_datatypes<unsigned long long int>(),
+        Contains(mpi_type_traits<unsigned long long int>::data_type())
+    );
+    EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(mpi_type_traits<float>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<double>(), Contains(mpi_type_traits<double>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<long double>(), Contains(mpi_type_traits<long double>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_type_traits<int8_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<int16_t>(), Contains(mpi_type_traits<int16_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<int32_t>(), Contains(mpi_type_traits<int32_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<int64_t>(), Contains(mpi_type_traits<int64_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(mpi_type_traits<uint8_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<uint16_t>(), Contains(mpi_type_traits<uint16_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<uint32_t>(), Contains(mpi_type_traits<uint32_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(mpi_type_traits<uint64_t>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<bool>(), Contains(mpi_type_traits<bool>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<kamping::kabool>(), Contains(mpi_type_traits<kamping::kabool>::data_type()));
+    EXPECT_THAT(
+        possible_mpi_datatypes<std::complex<double>>(),
+        Contains(mpi_type_traits<std::complex<double>>::data_type())
+    );
+    EXPECT_THAT(
+        possible_mpi_datatypes<std::complex<float>>(),
+        Contains(mpi_type_traits<std::complex<float>>::data_type())
+    );
     EXPECT_THAT(
         possible_mpi_datatypes<std::complex<long double>>(),
-        Contains(mpi_datatype<std::complex<long double>>())
+        Contains(mpi_type_traits<std::complex<long double>>::data_type())
     );
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_const_and_volatile) {
-    // Ignore const and volatile qualifiers.
-    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t const>()));
-    // EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<int8_t volatile>()));
-    // EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_datatype<const volatile int8_t>()));
+    // Ignore const qualifiers.
+    EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_type_traits<int8_t const>::data_type()));
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_typedefs_and_using) {
     // typedefs and using directives.
     typedef int myInt;
-    EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(mpi_datatype<myInt>()));
+    EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(mpi_type_traits<myInt>::data_type()));
 
     using myFloat = float;
-    EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(mpi_datatype<myFloat>()));
+    EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(mpi_type_traits<myFloat>::data_type()));
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_size_t) {
     // size_t, which should be one of the unsigned integer types with at least 16 bits (as of C++11).
     EXPECT_THAT(
         (std::array{MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG}),
-        Contains(mpi_datatype<size_t>())
+        Contains(mpi_type_traits<size_t>::data_type())
     );
 
     // As should std::size_t, which should be one of the unsigned integer types with at least 16 bits (as of C++11).
     EXPECT_THAT(
         (std::array{MPI_UNSIGNED_SHORT, MPI_UNSIGNED, MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG}),
-        Contains(mpi_datatype<std::size_t>())
+        Contains(mpi_type_traits<std::size_t>::data_type())
     );
 }
 
@@ -235,70 +294,63 @@ TEST(MpiDataTypeTest, mpi_datatype_enum) {
     // Unscoped enum
     enum unscopedEnum { valueA = 0, valueB = 1 };
     auto unscopedEnum_types = possible_mpi_datatypes<std::underlying_type_t<unscopedEnum>>();
-    EXPECT_THAT(unscopedEnum_types, Contains(mpi_datatype<unscopedEnum>()));
+    EXPECT_THAT(unscopedEnum_types, Contains(mpi_type_traits<unscopedEnum>::data_type()));
 
     // Unscoped enum with explicit underlying type
     enum unscopedEnumInt : int { valueA2 = 0, valueB2 = 1 };
     auto unscopedEnumInt_types = possible_mpi_datatypes<std::underlying_type_t<unscopedEnumInt>>();
-    EXPECT_THAT(unscopedEnumInt_types, Contains(mpi_datatype<unscopedEnumInt>()));
+    EXPECT_THAT(unscopedEnumInt_types, Contains(mpi_type_traits<unscopedEnumInt>::data_type()));
 
     // Scoped enum
     enum class scopedEnum { valueA = 0, valueB = 1 };
     auto scopedEnum_types = possible_mpi_datatypes<std::underlying_type_t<scopedEnum>>();
-    EXPECT_THAT(scopedEnum_types, Contains(mpi_datatype<scopedEnum>()));
+    EXPECT_THAT(scopedEnum_types, Contains(mpi_type_traits<scopedEnum>::data_type()));
 
     // Scope enum with explicit underlying type
     enum class scopedEnumUint8_t : uint8_t { valueA = 0, valueB = 1 };
-    EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(mpi_datatype<scopedEnumUint8_t>()));
+    EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(mpi_type_traits<scopedEnumUint8_t>::data_type()));
 
     enum class scopedEnumInt64_t : int64_t { valueA = 0, valueB = 1 };
-    EXPECT_THAT(possible_mpi_datatypes<int64_t>(), Contains(mpi_datatype<scopedEnumInt64_t>()));
+    EXPECT_THAT(possible_mpi_datatypes<int64_t>(), Contains(mpi_type_traits<scopedEnumInt64_t>::data_type()));
 }
 
-TEST(MpiDataTypeTest, mpi_datatype_continuous_type) {
-    struct TestStruct {
-        int a;
-        int b;
-    };
+template <typename T1, typename T2>
+struct TestStruct {
+    T1 a;
+    T2 b;
+};
+struct Empty {};
+TEST(MpiDataTypeTest, mpi_datatype_struct) {
+    EXPECT_THAT((mpi_type_traits<TestStruct<int, int>>::data_type()), StructType({MPI_INT, MPI_INT}));
+    EXPECT_EQ((mpi_type_traits<TestStruct<int, int>>::category), TypeCategory::kamping_provided);
 
-    // There seems to be no way to check if a given datatype in MPI is a custom type, we therefore rule out that it's
-    // equal to any of the other types, including the NULL type.
-    EXPECT_NE(MPI_DATATYPE_NULL, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_CHAR, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_CHAR, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_SIGNED_CHAR, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_UNSIGNED_CHAR, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_WCHAR, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_SHORT, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_UNSIGNED_SHORT, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_INT, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_UNSIGNED, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_LONG, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_UNSIGNED_LONG, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_LONG_LONG, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_UNSIGNED_LONG_LONG, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_FLOAT, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_DOUBLE, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_LONG_DOUBLE, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_INT8_T, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_INT16_T, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_INT32_T, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_INT64_T, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_UINT8_T, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_UINT16_T, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_UINT32_T, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_UINT64_T, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_CXX_BOOL, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_CXX_FLOAT_COMPLEX, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_CXX_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
-    EXPECT_NE(MPI_CXX_LONG_DOUBLE_COMPLEX, mpi_datatype<TestStruct>());
+    EXPECT_THAT((mpi_type_traits<TestStruct<double, int>>::data_type()), StructType({MPI_DOUBLE, MPI_INT}));
+    EXPECT_EQ((mpi_type_traits<TestStruct<double, int>>::category), TypeCategory::kamping_provided);
+
+    EXPECT_THAT((mpi_type_traits<TestStruct<int, double>>::data_type()), StructType({MPI_INT, MPI_DOUBLE}));
+    EXPECT_EQ((mpi_type_traits<TestStruct<int, double>>::category), TypeCategory::kamping_provided);
+
+    EXPECT_EQ((mpi_type_traits<TestStruct<int, Empty>>::category), TypeCategory::undefined);
+
+    EXPECT_THAT((mpi_type_traits<std::pair<int, double>>::data_type()), StructType({MPI_INT, MPI_DOUBLE}));
+    EXPECT_EQ((mpi_type_traits<std::pair<int, double>>::category), TypeCategory::kamping_provided);
+
+    EXPECT_THAT(
+        (mpi_type_traits<std::tuple<int, double, std::complex<float>>>::data_type()),
+        StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX})
+    );
+    EXPECT_EQ(
+        (mpi_type_traits<std::tuple<int, double, std::complex<float>>>::category),
+        TypeCategory::kamping_provided
+    );
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_c_array) {
     // Calling mpi_datatype with an array should return a continuous datatype.
     {
         int c_array[3];
-        EXPECT_THAT(mpi_datatype<decltype(c_array)>(), ContiguousType(MPI_INT, 3));
+        EXPECT_THAT(mpi_type_traits<decltype(c_array)>::data_type(), ContiguousType(MPI_INT, 3));
+        EXPECT_EQ(mpi_type_traits<decltype(c_array)>::category, TypeCategory::kamping_provided);
     }
     {
         int* ptr;
@@ -306,12 +358,14 @@ TEST(MpiDataTypeTest, mpi_datatype_c_array) {
     }
     {
         std::array<int, 3> cpp_array;
-        EXPECT_THAT(mpi_datatype<decltype(cpp_array)>(), ContiguousType(MPI_INT, 3));
+        EXPECT_THAT(mpi_type_traits<decltype(cpp_array)>::data_type(), ContiguousType(MPI_INT, 3));
+        EXPECT_EQ(mpi_type_traits<decltype(cpp_array)>::category, TypeCategory::kamping_provided);
     }
 
     {
         std::array<double, 3> cpp_array;
-        EXPECT_THAT(mpi_datatype<decltype(cpp_array)>(), ContiguousType(MPI_DOUBLE, 3));
+        EXPECT_THAT(mpi_type_traits<decltype(cpp_array)>::data_type(), ContiguousType(MPI_DOUBLE, 3));
+        EXPECT_EQ(mpi_type_traits<decltype(cpp_array)>::category, TypeCategory::kamping_provided);
     }
 }
 
@@ -380,6 +434,10 @@ TEST(MpiDataTypeTest, kabool_basics) {
 }
 
 TEST(MpiDataTypeTest, register_types_with_environment) {
+    // Setup
+    mpi_env.free_registered_mpi_types();
+    freed_types.clear();
+
     int          c_array[3];
     MPI_Datatype array_type = mpi_datatype<decltype(c_array)>();
 
