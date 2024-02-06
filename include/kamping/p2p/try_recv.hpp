@@ -47,25 +47,24 @@
 /// has to be BufferResizePolicy::no_resize. If no \ref kamping::recv_buf() is provided, the \c value_type of the recv
 /// buffer has to be passed as a template parameter to \c recv().
 ///
-/// - \ref kamping::tag() receive message with this tag. Defaults to receiving for an arbitrary tag, i.e. \c
+/// - \ref kamping::tag() receive message with the given tag. Defaults to receiving for an arbitrary tag, i.e. \c
 /// tag(tags::any).
 ///
-/// - \ref kamping::source() receive a message sent from this source rank. Defaults to probing for an arbitrary source,
-/// i.e. \c source(rank::any).
+/// - \ref kamping::source() receive a message sent from the given source rank. Defaults to probing for an arbitrary
+/// source, i.e. \c source(rank::any).
 ///
-/// - \c kamping::status(ignore<>) or \ref kamping::status_out(). Returns info about the received message by setting the
-/// appropriate fields in the status object passed by the user. If \ref kamping::status_out() is passed, constructs a
-/// status object which may be retrieved by the user. The status can be ignored by passing \c
-/// kamping::status(kamping::ignore<>). This is the default.
+/// - \c kamping::status(ignore<>) or \ref kamping::status_out. Returns info about the received message by setting the
+/// appropriate fields in the status object. The status can be ignored by passing \ref kamping::ignore<>. This is the
+/// default.
 ///
-//  - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
-/// derived automatically based on recv_buf's underlying \c value_type.
+//  - \ref kamping::recv_type() specifying the \c MPI datatype to use as the recv type. If omitted, the \c MPI datatype
+//  is
+/// derived automatically based on <code>recv_buf</code>'s underlying \c value_type.
 ///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::recv_buf() is given.
 /// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described
-/// above.
-/// @return If no message is available return a \c nullopt, else return a \c std::optional wrapping an \ref
+/// @param args All required and any number of the optional buffers described above.
+/// @return If no message is available return \c std::nullopt, else return a \c std::optional wrapping an \ref
 /// kamping::MPIResult
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
@@ -136,7 +135,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         return make_mpi_result(std::move(recv_buf), std::move(status_param), std::move(recv_type));
     };
     using result_type = decltype(construct_result());
-    // If a message is available, receive it using a matched receive
+    // If a message is available, receive it using a matched receive.
     if (msg_avail) {
         size_t const count = status.count(recv_type.get_single_element());
 
@@ -145,8 +144,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         if constexpr (std::remove_reference_t<decltype(source_param)>::rank_type != internal::RankType::null) {
             recv_buf.resize_if_requested([&] { return count; });
             KASSERT(
-                // if the recv type is user provided, kamping cannot make any assumptions about the required size of the
-                // recv buffer
+                // If the recv type is user provided, kamping cannot make any assumptions about the required size of the
+                // recv buffer.
                 recv_type_is_in_param || recv_buf.size() >= count,
                 "Recv buffer is not large enough to hold all received elements.",
                 assert::light
@@ -163,10 +162,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         );
         THROW_IF_MPI_ERROR(err, MPI_Mrecv);
 
-        // Build the result object and return.
+        // Build the result object from the parameters and return.
         return std::optional{construct_result()};
     } else {
-        // There was to mesage to receive, thus return std::nullopt.
+        // There was no message to receive, thus return std::nullopt.
         return std::optional<result_type>{};
     }
 }

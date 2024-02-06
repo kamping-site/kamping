@@ -35,11 +35,11 @@ KAMPING_MAKE_HAS_MEMBER(extract_recv_buffer)
 
 class TryRecvTest : public ::testing::Test {
     void SetUp() override {
-        // this makes sure that messages don't spill from other tests
+        // This makes sure that messages don't spill from other tests.
         MPI_Barrier(MPI_COMM_WORLD);
     }
     void TearDown() override {
-        // this makes sure that messages don't spill to other tests
+        // This makes sure that messages don't spill to other tests.
         MPI_Barrier(MPI_COMM_WORLD);
     }
 };
@@ -69,7 +69,7 @@ TEST_F(TryRecvTest, try_recv_vector_from_arbitrary_source) {
         for (size_t other = 0; other < comm.size(); other++) {
             while (true) {
                 auto result_opt = comm.try_recv<int>(status_out());
-                // The message from this rank might not yet be delivered.
+                // The messages might not yet be delivered.
                 if (result_opt.has_value()) {
                     auto& result = result_opt.value();
 
@@ -212,7 +212,7 @@ TEST_F(TryRecvTest, try_recv_vector_no_resize) {
         std::vector<int> message(42, std::numeric_limits<int>::max());
 
         while (true) {
-            auto result_opt = comm.try_recv(recv_buf(message), status_out());
+            auto result_opt = comm.try_recv(recv_buf<no_resize>(message), status_out());
             if (result_opt.has_value()) {
                 auto& result = result_opt.value();
                 EXPECT_TRUE(has_member_extract_status_v<decltype(result)>);
@@ -448,14 +448,6 @@ TEST_F(TryRecvTest, non_trivial_recv_type) {
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(TryRecvTest, try_recv_from_invalid_tag) {
-    Communicator comm;
-    std::vector  v{1, 2, 3, 4, 5};
-    EXPECT_KASSERT_FAILS({ comm.try_recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
-}
-#endif
-
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-TEST_F(TryRecvTest, try_recv_from_invalid_tag_with_explicit_recv_count) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
     EXPECT_KASSERT_FAILS({ comm.try_recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
