@@ -249,7 +249,7 @@ public:
     using value_type = typename T::value_type; ///< The value type of T.
 };
 
-/// @brief for a given \param MemberType of a data buffer, defines the most viable resize policy.
+/// @brief for a given \tparam MemberType of a data buffer, defines the most viable resize policy.
 ///
 /// For example, a single element buffer may not be resizable.
 template <typename MemberType>
