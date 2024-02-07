@@ -368,7 +368,7 @@ struct PrependRecvBuffer {
         type; ///< Concatenated tuple, i.e. type = std::tuple<RecvBufType, (Type contained in Tuple)... >.
 };
 
-/// @brief Retrieve the buffer with requested ParameterType from the std::tuple containg all buffer.
+/// @brief Retrieve the buffer with requested ParameterType from the std::tuple containg all buffers.
 ///
 /// @tparam ptype ParameterType of the buffer to retrieve.
 /// @tparam Buffers Types of the data buffers.
@@ -389,7 +389,9 @@ auto& retrieve_buffer(std::tuple<Buffers...>& buffers) {
 /// retrieved.
 /// @return std::tuple containing all requested data buffers.
 template <typename ParameterTypeTuple, typename... Buffers, std::size_t... i>
-auto construct_output_buffer_tuple_impl(std::tuple<Buffers...>& buffers, std::index_sequence<i...> /*index_sequence*/) {
+auto construct_buffer_tuple_for_result_object_impl(
+    std::tuple<Buffers...>& buffers, std::index_sequence<i...> /*index_sequence*/
+) {
     return std::make_tuple(
         std::move(retrieve_buffer<std::tuple_element_t<i, ParameterTypeTuple>::parameter_type>(buffers))...
     );
@@ -404,13 +406,14 @@ auto construct_output_buffer_tuple_impl(std::tuple<Buffers...>& buffers, std::in
 /// retrieved.
 /// @return std::tuple containing all requested data buffers.
 template <typename ParameterTypeTuple, typename... Buffers>
-auto construct_output_buffer_tuple(std::tuple<Buffers...>& buffers) {
+auto construct_buffer_tuple_for_result_object(Buffers&&... buffers) {
     // number of buffers that will be contained in the result object (including the receive buffer if it is an out
     // parameter)
     constexpr std::size_t num_output_parameters = std::tuple_size_v<ParameterTypeTuple>;
+    auto                  buffers_tuple         = std::tie(buffers...);
 
-    return construct_output_buffer_tuple_impl<ParameterTypeTuple>(
-        buffers,
+    return construct_buffer_tuple_for_result_object_impl<ParameterTypeTuple>(
+        buffers_tuple,
         std::make_index_sequence<num_output_parameters>{}
     );
 }
@@ -453,53 +456,48 @@ constexpr bool return_recv_buffer_only() {
 /// return (owning buffers for which a *_out() named parameter was passed to the wrapped MPI call) in a std::tuple
 /// respecting the order in which these buffers where provided to the wrapped MPI call.
 ///
-/// @tparam InitialArgs Arguments passed to the wrapped MPI call.
+/// @tparam CallerProvidedArgs Types of arguments passed to the wrapped MPI call.
 /// @tparam Buffers Types of data buffers created/filled within the wrapped MPI call.
 /// @param buffers data buffers created/filled within the wrapped MPI call.
 /// @return result object as specified above.
 ///
 /// @see \ref docs/named_parameters.md
-template <typename InitialArgs, typename... Buffers>
+template <typename CallerProvidedArgs, typename... Buffers>
 auto make_mpi_result_(Buffers&&... buffers) {
-    // filter named parameters provided to the wrapped MPI function and keep only those which are explicitly marked by
-    // the user to be returned (and own their underlying data, such that they appear in the result object), i.e. via
-    // *_out();
-    using UserRequestedOwningOutParameters = typename internal::Filter<InitialArgs>::type;
+    // filter named parameters provided to the wrapped MPI function and keep only owning out parameters (=owning out
+    // buffers)
+    using CallerProvidedOwningOutParameters = typename internal::Filter<CallerProvidedArgs>::type;
 
-    // receive buffer needs (potentially) a special treatment, as it is the first entry in a structured binding (if it
-    // owns its underlying data)
+    // receive buffer needs (potentially) a special treatment (if it is an owning (out) buffer and provided by the
+    // caller)
     static_assert(internal::has_parameter_type<internal::ParameterType::recv_buf, Buffers...>());
     auto&          recv_buffer        = internal::select_parameter_type<internal::ParameterType::recv_buf>(buffers...);
     constexpr bool recv_buf_is_owning = std::remove_reference_t<decltype(recv_buffer)>::is_owning;
-    constexpr bool recv_buffer_is_explicitly_given_as_owning_output_parameter =
-        has_parameter_type_in_tuple<ParameterType::recv_buf, UserRequestedOwningOutParameters>();
+    constexpr bool recv_buffer_is_owning_and_provided_by_caller =
+        has_parameter_type_in_tuple<ParameterType::recv_buf, CallerProvidedOwningOutParameters>();
 
     // special case 1: recv buffer is not owning
     if constexpr (!recv_buf_is_owning) {
-        // no potentially special treatement of recv buffer is needed as the recv_buffer is not part of the result
+        // no special treatement of recv buffer is needed as the recv_buffer is not part of the result
         // object anyway.
-        auto buffer_tuple = std::forward_as_tuple(buffers...);
-        return MPIResult_(construct_output_buffer_tuple<UserRequestedOwningOutParameters>(buffer_tuple));
+        return MPIResult_(construct_buffer_tuple_for_result_object<CallerProvidedOwningOutParameters>(buffers...));
     }
-    // specialcase 2: recv is owning but the only parameter which should be returned via the result object
-    else if constexpr (return_recv_buffer_only<UserRequestedOwningOutParameters>()) {
+    // specialcase 2: recv buffer is the only owning out parameter
+    else if constexpr (return_recv_buffer_only<CallerProvidedOwningOutParameters>()) {
         // if only the receive buffer shall be returned, its underlying data is returned directly instead of a
         // wrapping result object
         return recv_buffer.extract();
     }
 
-    // case A: recv buffer is owning and explicitly listed by user
-    else if constexpr (recv_buffer_is_explicitly_given_as_owning_output_parameter) {
-        // user explicitly listed recv_buffer in parameter list to the wrapped MPI call and recv_buffer owns its data
-        auto buffer_tuple = std::forward_as_tuple(buffers...);
-        return MPIResult_(construct_output_buffer_tuple<UserRequestedOwningOutParameters>(buffer_tuple));
+    // case A: recv buffer is provided by caller (and owning)
+    else if constexpr (recv_buffer_is_owning_and_provided_by_caller) {
+        return MPIResult_(construct_buffer_tuple_for_result_object<CallerProvidedOwningOutParameters>(buffers...));
     }
-    // case B: recv buffer is owning but not explicitly listed by user -> recv buffer will be stored as first entry in
+    // case B: recv buffer is not provided by caller -> recv buffer will be stored as first entry in
     // underlying result object
     else {
-        using OutParameterTuple = typename PrependRecvBuffer<UserRequestedOwningOutParameters>::type;
-        auto buffer_tuple       = std::forward_as_tuple(buffers...);
-        return MPIResult_(construct_output_buffer_tuple<OutParameterTuple>(buffer_tuple));
+        using ParametersToReturn = typename PrependRecvBuffer<CallerProvidedOwningOutParameters>::type;
+        return MPIResult_(construct_buffer_tuple_for_result_object<ParametersToReturn>(buffers...));
     }
 }
 
