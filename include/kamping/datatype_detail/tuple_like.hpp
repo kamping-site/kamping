@@ -33,9 +33,15 @@ struct pfr::is_reflectable<ArrayType, std::enable_if_t<std::is_array_v<ArrayType
 
 namespace kamping {
 
+template <typename T, typename Enable = void>
+struct mpi_type_struct : is_builtin_mpi_type_false {
+    static constexpr TypeCategory category    = TypeCategory::undefined;
+    static MPI_Datatype           data_type() = delete;
+};
+
 /// @brief MPI type traits for std::pair.
 template <typename T1, typename T2>
-struct mpi_type_traits<std::pair<T1, T2>, std::enable_if_t<has_static_type<T1> && has_static_type<T2>>>
+struct mpi_type_struct<std::pair<T1, T2>, std::enable_if_t<has_static_type<T1> && has_static_type<T2>>>
     : is_builtin_mpi_type_false {
     static constexpr TypeCategory category = TypeCategory::kamping_provided;
     static MPI_Datatype           data_type() {
@@ -61,7 +67,7 @@ struct pfr::is_reflectable<std::pair<T1, T2>, kamping::kamping_tag> : std::false
 namespace kamping {
 /// @brief MPI type traits for std::tuple.
 template <typename... Ts>
-struct mpi_type_traits<std::tuple<Ts...>, std::enable_if_t<all_have_static_types<Ts...>>> : is_builtin_mpi_type_false {
+struct mpi_type_struct<std::tuple<Ts...>, std::enable_if_t<all_have_static_types<Ts...>>> : is_builtin_mpi_type_false {
     static constexpr TypeCategory category = TypeCategory::kamping_provided;
 
     static MPI_Datatype data_type() {
@@ -105,7 +111,9 @@ namespace kamping {
 
 /// @brief MPI type traits for enums.
 template <typename E>
-struct mpi_type_traits<E, std::enable_if_t<std::is_enum_v<E> && has_static_type<std::underlying_type_t<E>>>>
+struct mpi_type_traits<
+    E,
+    std::enable_if_t<std::is_enum_v<E> && has_static_type<std::underlying_type_t<E>> && !std::is_array_v<E>>>
     : mpi_type_traits<std::underlying_type_t<E>> {};
 } // namespace kamping
 
@@ -124,7 +132,7 @@ struct reflectable<T, std::enable_if_t<pfr::is_implicitly_reflectable_v<T, kampi
 };
 
 template <typename T>
-struct mpi_type_traits<
+struct mpi_type_struct<
     T,
     std::enable_if_t<
         pfr::is_implicitly_reflectable<T, kamping_tag>::value
@@ -156,4 +164,16 @@ struct mpi_type_traits<
         return type;
     }
 };
+
+template <typename T>
+struct mpi_type_contiguous_byte : is_builtin_mpi_type_false {
+    static constexpr TypeCategory category = TypeCategory::kamping_provided;
+
+    static MPI_Datatype data_type() {
+        MPI_Datatype type;
+        MPI_Type_contiguous(sizeof(T), MPI_BYTE, &type);
+        return type;
+    }
+};
+
 } // namespace kamping

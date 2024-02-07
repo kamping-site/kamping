@@ -60,11 +60,21 @@ int MPI_Type_free(MPI_Datatype* type) {
     return PMPI_Type_free(type);
 }
 
-struct Foo {
-    int                     a;
-    double                  b;
-    std::pair<float, float> p;
+template <typename T1, typename T2>
+struct MyPair {
+    T1 first;
+    T2 second;
 };
+struct Foo {
+    int                  a;
+    double               b;
+    MyPair<float, float> p;
+};
+namespace kamping {
+
+template <>
+struct mpi_type_traits<std::tuple<int, float, double>> : mpi_type_struct<std::tuple<int, float, double>> {};
+} // namespace kamping
 
 int main() {
     using namespace kamping;
@@ -72,7 +82,7 @@ int main() {
     kamping::Environment e;
     Communicator         comm;
     std::cout << std::boolalpha;
-    std::pair<double, bool> p = {1.0, true};
+    MyPair<double, bool> p = {1.0, true};
     comm.send(destination(rank::null), send_buf(p));
     std::tuple<int, float, double> t = {1, 2.0f, 3.0};
     comm.send(destination(rank::null), send_buf(t));

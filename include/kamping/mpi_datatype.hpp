@@ -36,6 +36,20 @@
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
+///
+template <typename>
+struct is_std_array : std::false_type {};
+template <typename T, size_t N>
+struct is_std_array<std::array<T, N>> : std::true_type {};
+
+template <typename T>
+constexpr bool no_special_case =
+    !std::is_const_v<T> && !std::is_enum_v<T> && !std::is_array_v<T> && !is_std_array<T>::value
+    && !std::is_pointer_v<T>;
+
+template <typename T>
+struct mpi_type_traits<T, std::enable_if_t<std::is_trivially_copyable_v<T> && no_special_case<T>>>
+    : mpi_type_contiguous_byte<T> {};
 
 template <typename T>
 inline MPI_Datatype construct_and_commit_type() {
@@ -47,7 +61,7 @@ inline MPI_Datatype construct_and_commit_type() {
 }
 
 /// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
-/// new custom continuous type.
+/// new  continuous type.
 ///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
 /// To check if type \c T maps to a builtin \c MPI_Datatype at compile-time, use \c mpi_type_traits.
 /// @tparam T The type to translate into an MPI_Datatype.
@@ -60,14 +74,14 @@ template <typename T>
         static MPI_Datatype type = construct_and_commit_type<T>();
         return type;
     } else {
+        using T_no_const = std::remove_const_t<T>;
+        static_assert(!std::is_pointer_v<T_no_const>, "MPI does not support pointer types.");
+        static_assert(!std::is_function_v<T_no_const>, "MPI does not support function types.");
+        static_assert(!std::is_void_v<T_no_const>, "There is no MPI datatype corresponding to void.");
+        static_assert(!std::is_union_v<T_no_const>, "MPI does not support union types.");
         static_assert(mpi_type_traits<T>::is_builtin, "Type not supported");
         return mpi_type_traits<T>::data_type();
     }
-
-    // // Remove const qualifiers.
-    // // Previously, we also removed volatile qualifiers here. MPI does not support volatile pointers and
-    // // removing volatile from a pointer is undefined behavior.
-    // using T_no_const = std::remove_const_t<T>;
 
     // // Check if we got a pointer type -> error
     // static_assert(

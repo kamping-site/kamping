@@ -42,11 +42,10 @@ MATCHER_P2(ContiguousType, type, n, "") {
     int          count;
     MPI_Datatype underlying_type;
     MPI_Type_get_contents(arg, num_integers, num_addresses, num_datatypes, &count, nullptr, &underlying_type);
-    if (count != n) {
+    if (count != static_cast<int>(n)) {
         *result_listener << "wrong count";
         return false;
     }
-    PrintToString(type);
     return underlying_type == type;
 }
 
@@ -320,19 +319,44 @@ struct TestStruct {
     T2 b;
 };
 struct Empty {};
+
+namespace kamping {
+template <>
+struct mpi_type_traits<std::tuple<int, double, std::complex<float>>>
+    : mpi_type_struct<std::tuple<int, double, std::complex<float>>> {};
+template <>
+struct mpi_type_traits<std::pair<int, double>> : mpi_type_contiguous_byte<std::pair<int, double>> {};
+} // namespace kamping
+
 TEST(MpiDataTypeTest, mpi_datatype_struct) {
-    EXPECT_THAT((mpi_type_traits<TestStruct<int, int>>::data_type()), StructType({MPI_INT, MPI_INT}));
+    EXPECT_THAT(
+        (mpi_type_traits<TestStruct<int, int>>::data_type()),
+        ContiguousType(MPI_BYTE, sizeof(TestStruct<int, int>))
+    );
     EXPECT_EQ((mpi_type_traits<TestStruct<int, int>>::category), TypeCategory::kamping_provided);
 
-    EXPECT_THAT((mpi_type_traits<TestStruct<double, int>>::data_type()), StructType({MPI_DOUBLE, MPI_INT}));
+    EXPECT_THAT(
+        (mpi_type_traits<TestStruct<double, int>>::data_type()),
+        ContiguousType(MPI_BYTE, sizeof(TestStruct<double, int>))
+    );
     EXPECT_EQ((mpi_type_traits<TestStruct<double, int>>::category), TypeCategory::kamping_provided);
 
-    EXPECT_THAT((mpi_type_traits<TestStruct<int, double>>::data_type()), StructType({MPI_INT, MPI_DOUBLE}));
+    EXPECT_THAT(
+        (mpi_type_traits<TestStruct<int, double>>::data_type()),
+        ContiguousType(MPI_BYTE, sizeof(TestStruct<int, double>))
+    );
     EXPECT_EQ((mpi_type_traits<TestStruct<int, double>>::category), TypeCategory::kamping_provided);
 
-    EXPECT_EQ((mpi_type_traits<TestStruct<int, Empty>>::category), TypeCategory::undefined);
+    EXPECT_THAT(
+        (mpi_type_traits<TestStruct<int, Empty>>::data_type()),
+        ContiguousType(MPI_BYTE, sizeof(TestStruct<int, Empty>))
+    );
+    EXPECT_EQ((mpi_type_traits<TestStruct<int, Empty>>::category), TypeCategory::kamping_provided);
 
-    EXPECT_THAT((mpi_type_traits<std::pair<int, double>>::data_type()), StructType({MPI_INT, MPI_DOUBLE}));
+    EXPECT_THAT(
+        (mpi_type_traits<std::pair<int, double>>::data_type()),
+        ContiguousType(MPI_BYTE, sizeof(std::pair<int, double>))
+    );
     EXPECT_EQ((mpi_type_traits<std::pair<int, double>>::category), TypeCategory::kamping_provided);
 
     EXPECT_THAT(
@@ -410,7 +434,7 @@ TEST(MpiDataTypeTest, test_type_groups) {
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<double>>::category, kamping::TypeCategory::complex);
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<long double>>::category, kamping::TypeCategory::complex);
 
-    EXPECT_EQ(kamping::mpi_type_traits<std::complex<int>>::category, kamping::TypeCategory::undefined);
+    EXPECT_EQ(kamping::mpi_type_traits<std::complex<int>>::category, kamping::TypeCategory::kamping_provided);
     EXPECT_EQ(kamping::mpi_type_traits<char>::category, kamping::TypeCategory::character);
     EXPECT_EQ(kamping::mpi_type_traits<DummyType>::category, kamping::TypeCategory::kamping_provided);
 }
