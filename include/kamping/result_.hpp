@@ -416,16 +416,16 @@ auto construct_output_buffer_tuple(std::tuple<Buffers...>& buffers) {
 }
 
 /// @brief Determines whether only the recv buffer or multiple different buffers will be returned.
-/// @tparam OwningExplicitOutBuffersAsTuple An std::tuple containing the types of the owning, out buffers explicitly
+/// @tparam CallerProvidedOwningOutBuffers An std::tuple containing the types of the owning, out buffers explicitly
 /// requested by the caller of the wrapped MPI call.
 /// @returns \c True if the recv buffer is either not mentioned explicitly and no other (owning) out buffers are
 /// requested or the only explicitly requested owning out buffer is the recv_buf. \c False otherwise.
-template <typename OwningExplicitOutBuffersAsTuple>
+template <typename CallerProvidedOwningOutBuffers>
 constexpr bool return_recv_buffer_only() {
-    constexpr std::size_t num_explicit_owning_out_buffers = std::tuple_size_v<OwningExplicitOutBuffersAsTuple>;
-    if constexpr (num_explicit_owning_out_buffers == 0) {
+    constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutBuffers>;
+    if constexpr (num_caller_provided_owning_out_buffers == 0) {
         return true;
-    } else if constexpr (num_explicit_owning_out_buffers == 1 && std::tuple_element_t<0, OwningExplicitOutBuffersAsTuple>::parameter_type == ParameterType::recv_buf) {
+    } else if constexpr (num_caller_provided_owning_out_buffers == 1 && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::parameter_type == ParameterType::recv_buf) {
         return true;
     } else {
         return false;
@@ -435,20 +435,20 @@ constexpr bool return_recv_buffer_only() {
 /// @brief Construct result object for a wrapped MPI call. Four different cases are handled:
 /// a) The recv_buffer owns its underlying data (i.e. the received data has to be returned via the result object):
 ///
-/// a.1) the recv_buffer is the only buffer to be returned:
+/// a.1) The recv_buffer is the only buffer to be returned, i.e. the only caller provided owning out buffer:
 /// In this case, the recv_buffers's underlying data is extracted and returned directly (per value).
 ///
-/// a.2) there are more multiple buffers to be returned and recv_buffer is explicitly given by the caller:
-/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return (owning buffers for
-/// which a *_out() named parameter was passed to the wrapped MPI call) in a std::tuple respecting the order in which
-/// these buffers where provided to the wrapped MPI call. This enables unpacking the object via structured binding.
+/// a.2) There are more multiple buffers to be returned and recv_buffer is explicitly provided by the caller:
+/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return (owning out buffers) in
+/// a std::tuple respecting the order in which these buffers where provided to the wrapped MPI call. This enables
+/// unpacking the object via structured binding.
 ///
-/// a.3) there are more data buffers to be returned and recv_buffer is *not* explicitly given by the caller:
+/// a.3) There are more data buffers to be returned and recv_buffer is *not* explicitly provided by the caller:
 /// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return in a std::tuple. The
 /// recv_buffer is always the first entry in the std::tuple followed by the other buffers respecting the order in which
 /// these buffers where provided to the wrapped MPI call.
 ///
-/// b) The recv_buffer only references its underlying data:
+/// b) The recv_buffer only references its underlying data (i.e. it is a non-owinig out buffer):
 /// In this case recv_buffer is not part of the result object. The \ref kamping::MPIResult_ object stores the buffer to
 /// return (owning buffers for which a *_out() named parameter was passed to the wrapped MPI call) in a std::tuple
 /// respecting the order in which these buffers where provided to the wrapped MPI call.
@@ -457,6 +457,8 @@ constexpr bool return_recv_buffer_only() {
 /// @tparam Buffers Types of data buffers created/filled within the wrapped MPI call.
 /// @param buffers data buffers created/filled within the wrapped MPI call.
 /// @return result object as specified above.
+///
+/// @see \ref docs/named_parameters.md
 template <typename InitialArgs, typename... Buffers>
 auto make_mpi_result_(Buffers&&... buffers) {
     // filter named parameters provided to the wrapped MPI function and keep only those which are explicitly marked by
