@@ -57,7 +57,7 @@ TEST(AllgathervTest, allgatherv_and_allgather_have_same_result_for_single_elemen
     Communicator comm;
     auto         value = comm.rank();
 
-    auto output   = comm.allgather(send_buf(value)).extract_recv_buffer();
+    auto output   = comm.allgather(send_buf(value));
     auto output_v = comm.allgatherv(send_buf(value));
     EXPECT_EQ(output_v, output);
 }

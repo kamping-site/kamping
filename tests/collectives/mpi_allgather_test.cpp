@@ -34,7 +34,7 @@ TEST(AllgatherTest, allgather_single_element_no_receive_buffer) {
     Communicator comm;
     auto         value = comm.rank();
 
-    auto result = comm.allgather(send_buf(value)).extract_recv_buffer();
+    auto result = comm.allgather(send_buf(value));
     EXPECT_EQ(comm.root(), 0);
     ASSERT_EQ(result.size(), comm.size());
     for (size_t i = 0; i < comm.size(); ++i) {
@@ -43,7 +43,7 @@ TEST(AllgatherTest, allgather_single_element_no_receive_buffer) {
 
     // Change default root and test with communicator's default root again, this should not change anything.
     comm.root(comm.size_signed() - 1);
-    result = comm.allgather(send_buf(value)).extract_recv_buffer();
+    result = comm.allgather(send_buf(value));
     EXPECT_EQ(comm.root(), comm.size() - 1);
     ASSERT_EQ(result.size(), comm.size());
     for (size_t i = 0; i < comm.size(); ++i) {
@@ -60,7 +60,7 @@ TEST(AllgatherTest, allgather_single_custom_element_no_receive_buffer) {
 
     CustomDataType value = {comm.rank_signed(), comm.size_signed() - comm.rank_signed()};
 
-    auto result = comm.allgather(send_buf(value)).extract_recv_buffer();
+    auto result = comm.allgather(send_buf(value));
     ASSERT_EQ(result.size(), comm.size());
     for (size_t i = 0; i < comm.size(); ++i) {
         EXPECT_EQ(result[i].rank, i);
@@ -88,8 +88,7 @@ TEST(AllgatherTest, allgather_single_element_with_explicit_send_and_recv_count) 
 
     {
         // test that send_count parameter overwrites automatic deduction of send counts from the size of the send buffer
-        auto result   = comm.allgather(send_buf(data), send_count(send_count_value));
-        auto recv_buf = result.extract_recv_buffer();
+        auto recv_buf   = comm.allgather(send_buf(data), send_count(send_count_value));
         for (size_t i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(recv_buf[i], i);
         }
@@ -99,8 +98,7 @@ TEST(AllgatherTest, allgather_single_element_with_explicit_send_and_recv_count) 
         // counts. Currently these two values must be identical, as we do not yet support custom mpi datatypes where
         // send and recv counts may differ due to different send/recv types. // TODO adapt comment once custom mpi
         // datatypes are supported.
-        auto result   = comm.allgather(send_buf(data), send_count(send_count_value), recv_count(recv_count_value));
-        auto recv_buf = result.extract_recv_buffer();
+        auto recv_buf   = comm.allgather(send_buf(data), send_count(send_count_value), recv_count(recv_count_value));
         for (size_t i = 0; i < comm.size(); ++i) {
             EXPECT_EQ(recv_buf[i], i);
         }
@@ -130,7 +128,7 @@ TEST(AllgatherTest, allgather_single_element_with_l_values_in_send_and_recv_coun
         int  send_count = -1;
         int  recv_count = -1;
         auto result     = comm.allgather(send_buf(data), send_count_out(send_count), recv_count_out(recv_count));
-        auto recv_buf   = result.extract_recv_buffer();
+        auto recv_buf   = result;
         EXPECT_EQ(send_count, 1);
         EXPECT_EQ(recv_count, 1);
         for (size_t i = 0; i < comm.size(); ++i) {
@@ -213,7 +211,7 @@ TEST(AllgatherTest, given_recv_buffer_smaller_than_required_with_policy_no_resiz
 TEST(AllgatherTest, allgather_multiple_elements_no_receive_buffer) {
     Communicator     comm;
     std::vector<int> values = {comm.rank_signed(), comm.rank_signed(), comm.rank_signed(), comm.rank_signed()};
-    auto             result = comm.allgather(send_buf(values)).extract_recv_buffer();
+    auto             result = comm.allgather(send_buf(values));
 
     EXPECT_EQ(result.size(), values.size() * comm.size());
     for (size_t i = 0; i < result.size(); ++i) {
@@ -283,7 +281,7 @@ TEST(AllgatherTest, allgather_single_element_initializer_list_bool_no_receive_bu
     Communicator comm;
     // gather does not support single element bool when specifying no recv_buffer, because the default receive buffer is
     // std::vector<bool>, which is not supported
-    auto result = comm.allgather(send_buf({false})).extract_recv_buffer();
+    auto result = comm.allgather(send_buf({false}));
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), comm.size());
     for (auto elem: result) {
@@ -293,7 +291,7 @@ TEST(AllgatherTest, allgather_single_element_initializer_list_bool_no_receive_bu
 
 TEST(AllgatherTest, allgather_initializer_list_bool_no_receive_buffer) {
     Communicator comm;
-    auto         result = comm.allgather(send_buf({false, false})).extract_recv_buffer();
+    auto         result = comm.allgather(send_buf({false, false}));
 
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), 2 * comm.size());
@@ -304,7 +302,7 @@ TEST(AllgatherTest, allgather_initializer_list_bool_no_receive_buffer) {
 
 TEST(AllgatherTest, allgather_single_element_kabool_no_receive_buffer) {
     Communicator comm;
-    auto         result = comm.allgather(send_buf(kabool{false})).extract_recv_buffer();
+    auto         result = comm.allgather(send_buf(kabool{false}));
 
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), comm.size());
@@ -340,7 +338,7 @@ TEST(AllgatherTest, allgather_single_element_kabool_with_receive_buffer) {
 TEST(AllgatherTest, allgather_multiple_elements_kabool_no_receive_buffer) {
     Communicator        comm;
     std::vector<kabool> input  = {false, true};
-    auto                result = comm.allgather(send_buf(input)).extract_recv_buffer();
+    auto                result = comm.allgather(send_buf(input));
 
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), 2 * comm.size());
@@ -367,7 +365,7 @@ TEST(AllgatherTest, allgather_default_container_type) {
     size_t                     value = comm.rank();
 
     // This just has to compile
-    OwnContainer<size_t> result = comm.allgather(send_buf(value)).extract_recv_buffer();
+    OwnContainer<size_t> result = comm.allgather(send_buf(value));
 }
 
 TEST(AllgatherTest, send_recv_type_is_out_parameter) {
@@ -375,11 +373,10 @@ TEST(AllgatherTest, send_recv_type_is_out_parameter) {
     const std::vector<int> data(1, comm.rank_signed());
     MPI_Datatype           send_type;
     MPI_Datatype           recv_type;
-    auto                   result = comm.allgather(send_buf(data), send_type_out(send_type), recv_type_out(recv_type));
+    auto                   recv_buf = comm.allgather(send_buf(data), send_type_out(send_type), recv_type_out(recv_type));
 
     EXPECT_EQ(send_type, MPI_INT);
     EXPECT_EQ(recv_type, MPI_INT);
-    auto recv_buf = result.extract_recv_buffer();
     for (size_t i = 0; i < comm.size(); ++i) {
         EXPECT_EQ(recv_buf[i], i);
     }
