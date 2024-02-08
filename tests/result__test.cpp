@@ -808,3 +808,176 @@ TEST(MakeMpiResult_Test, check_content_structured_binding) {
         EXPECT_EQ(result_send_displs.data()[i], i + 60);
     }
 }
+
+TEST(MakeMpiResult_Test, check_handling_of_recv_buffer) {
+    constexpr BufferType btype = BufferType::out_buffer;
+
+    using OwningOutRecvBuf    = LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>;
+    using OwningOutRecvCounts = LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>;
+    using NonOwningOutRecvCounts =
+        UserAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype, no_resize>;
+
+    OwningOutRecvBuf       recv_buf;
+    OwningOutRecvCounts    recv_counts;
+    std::vector<int>       non_owning_recv_counts_storage;
+    NonOwningOutRecvCounts non_owning_recv_counts(non_owning_recv_counts_storage);
+
+    {
+        // no caller provided owning out buffers
+        auto result_recv_buf = make_mpi_result_<std::tuple<>>(std::move(recv_buf), std::move(recv_counts));
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+    }
+    {
+        // no caller provided owning recv buffer with non-owning other out parameter
+        auto result_recv_buf = make_mpi_result_<std::tuple<NonOwningOutRecvCounts>>(
+            std::move(recv_buf),
+            std::move(non_owning_recv_counts)
+        );
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+    }
+    { // no caller provided recv buffer with other owning out parameter
+        auto result = make_mpi_result_<std::tuple<OwningOutRecvCounts>>(std::move(recv_buf), std::move(recv_counts));
+        static_assert(std::
+                          is_same_v<std::remove_reference_t<decltype(result.extract_recv_buffer())>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result.extract_recv_counts())>::value_type, int>);
+    }
+    {
+        // no caller provided recv buffer without other owning out parameters
+        auto result_recv_buf = make_mpi_result_<std::tuple<NonOwningOutRecvCounts>>(
+            std::move(recv_buf),
+            std::move(non_owning_recv_counts)
+        );
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+    }
+    { // caller provided owning recv counts and recv buf - changed order!
+
+        auto result = make_mpi_result_<std::tuple<OwningOutRecvCounts, OwningOutRecvBuf>>(
+            std::move(recv_buf),
+            std::move(recv_counts)
+        );
+        static_assert(std::
+                          is_same_v<std::remove_reference_t<decltype(result.extract_recv_buffer())>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result.extract_recv_counts())>::value_type, int>);
+    }
+    {
+        // caller provided owning recv counts and recv buf - changed order!
+
+        auto result = make_mpi_result_<std::tuple<OwningOutRecvCounts, OwningOutRecvBuf>>(
+            std::move(recv_buf),
+            std::move(recv_counts)
+        );
+
+        static_assert(std::
+                          is_same_v<std::remove_reference_t<decltype(result.extract_recv_buffer())>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result.extract_recv_counts())>::value_type, int>);
+    }
+}
+
+TEST(MakeMpiResult_Test, check_order_of_handling_of_recv_buffer) {
+    constexpr BufferType btype = BufferType::out_buffer;
+
+    using OwningOutRecvBuf    = LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>;
+    using OwningOutRecvCounts = LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>;
+    using NonOwningOutRecvCounts =
+        UserAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype, no_resize>;
+
+    OwningOutRecvBuf       recv_buf;
+    OwningOutRecvCounts    recv_counts;
+    std::vector<int>       non_owning_recv_counts_storage;
+    NonOwningOutRecvCounts non_owning_recv_counts(non_owning_recv_counts_storage);
+
+    { // no caller provided recv buffer with other owning out parameter
+        auto [result_recv_buf, result_recv_counts] =
+            make_mpi_result_<std::tuple<OwningOutRecvCounts>>(std::move(recv_buf), std::move(recv_counts));
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_counts)>::value_type, int>);
+    }
+    { // caller provided owning recv counts and recv buf - changed order!
+        auto [result_recv_counts, result_recv_buf] =
+            make_mpi_result_<std::tuple<OwningOutRecvCounts, OwningOutRecvBuf>>(
+                std::move(recv_buf),
+                std::move(recv_counts)
+            );
+
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_counts)>::value_type, int>);
+    }
+    {
+        // caller provided owning recv counts and recv buf - changed order!
+
+        auto [result_recv_counts, result_recv_buf] =
+            make_mpi_result_<std::tuple<OwningOutRecvCounts, OwningOutRecvBuf>>(
+                std::move(recv_buf),
+                std::move(recv_counts)
+            );
+
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_counts)>::value_type, int>);
+    }
+}
+
+TEST(MakeMpiResult_Test, check_order_of_handling_of_send_recv_buffer) {
+    constexpr BufferType btype = BufferType::out_buffer;
+
+    using OwningOutSendRecvBuf =
+        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::send_recv_buf, btype>;
+    using OwningOutRecvCounts = LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>;
+    using NonOwningOutRecvCounts =
+        UserAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype, no_resize>;
+
+    OwningOutSendRecvBuf   send_recv_buf;
+    OwningOutRecvCounts    recv_counts;
+    std::vector<int>       non_owning_recv_counts_storage;
+    NonOwningOutRecvCounts non_owning_recv_counts(non_owning_recv_counts_storage);
+
+    {
+        // no caller provided owning out buffers
+        auto result_recv_buf = make_mpi_result_<std::tuple<>>(std::move(send_recv_buf), std::move(recv_counts));
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+    }
+    {
+        // no caller provided owning send_recv buffer with non-owning other out parameter
+        auto result_recv_buf = make_mpi_result_<std::tuple<NonOwningOutRecvCounts>>(
+            std::move(send_recv_buf),
+            std::move(non_owning_recv_counts)
+        );
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+    }
+    {
+        // no caller provided send_recv buffer with other owning out parameter
+        auto [result_recv_buf, result_recv_counts] =
+            make_mpi_result_<std::tuple<OwningOutRecvCounts>>(std::move(send_recv_buf), std::move(recv_counts));
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_counts)>::value_type, int>);
+    }
+    {
+        // no caller provided send_recv buffer without other owning out parameters
+        auto result_recv_buf = make_mpi_result_<std::tuple<NonOwningOutRecvCounts>>(
+            std::move(send_recv_buf),
+            std::move(non_owning_recv_counts)
+        );
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+    }
+    {
+        // caller provided owning send_recv counts and recv buf - changed order!
+        auto [result_recv_counts, result_recv_buf] =
+            make_mpi_result_<std::tuple<OwningOutRecvCounts, OwningOutSendRecvBuf>>(
+                std::move(send_recv_buf),
+                std::move(recv_counts)
+            );
+
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_counts)>::value_type, int>);
+    }
+    {
+        // caller provided owning send_recv counts and recv buf - changed order!
+        auto [result_recv_counts, result_recv_buf] =
+            make_mpi_result_<std::tuple<OwningOutRecvCounts, OwningOutSendRecvBuf>>(
+                std::move(send_recv_buf),
+                std::move(recv_counts)
+            );
+
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_counts)>::value_type, int>);
+    }
+}
