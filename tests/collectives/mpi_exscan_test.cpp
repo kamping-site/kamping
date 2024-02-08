@@ -154,7 +154,7 @@ TEST(ExscanTest, recv_buffer_is_given_and_larger_than_required) {
 TEST(ExscanTest, recv_buffer_is_given_and_smaller_than_required) {
     Communicator comm;
 
-    std::vector<int> const input = {1};
+    const std::vector<int> input = {1};
 
     {
         std::vector<int> result;
@@ -181,23 +181,23 @@ TEST(ExscanTest, builtin_op_on_non_builtin_type) {
     Communicator comm;
 
     struct MyInt {
-        int   _value;
-        MyInt operator+(MyInt const& rhs) const noexcept {
-            return {this->_value + rhs._value};
+        MyInt() noexcept : _value(0) {}
+        MyInt(int value) noexcept : _value(value) {}
+        int _value;
+        int operator+(MyInt const& rhs) const noexcept {
+            return this->_value + rhs._value;
         }
         bool operator==(MyInt const& rhs) const noexcept {
             return this->_value == rhs._value;
         }
     };
-    std::vector<MyInt> input = {MyInt{comm.rank_signed()}, MyInt{42}};
+    std::vector<MyInt> input = {comm.rank_signed(), 42};
 
     auto result =
         comm.exscan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative), values_on_rank_0(MyInt{0}))
             .extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
-    std::vector<MyInt> expected_result = {
-        {((comm.rank_signed() - 1) * comm.rank_signed()) / 2},
-        {comm.rank_signed() * 42}};
+    std::vector<MyInt> expected_result = {((comm.rank_signed() - 1) * comm.rank_signed()) / 2, comm.rank_signed() * 42};
     EXPECT_EQ(result, expected_result);
 }
 
@@ -205,22 +205,22 @@ TEST(ExscanTest, identity_not_auto_deducible_and_no_values_on_rank_0_provided) {
     Communicator comm;
 
     struct MyInt {
-        int   _value;
-        MyInt operator+(MyInt const& rhs) const noexcept {
-            return {this->_value + rhs._value};
+        MyInt() noexcept : _value(0) {}
+        MyInt(int value) noexcept : _value(value) {}
+        int _value;
+        int operator+(MyInt const& rhs) const noexcept {
+            return this->_value + rhs._value;
         }
         bool operator==(MyInt const& rhs) const noexcept {
             return this->_value == rhs._value;
         }
     };
-    std::vector<MyInt> input = {{comm.rank_signed()}, {42}};
+    std::vector<MyInt> input = {comm.rank_signed(), 42};
 
     auto result =
         comm.exscan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
-    std::vector<MyInt> expected_result = {
-        {((comm.rank_signed() - 1) * comm.rank_signed()) / 2},
-        {comm.rank_signed() * 42}};
+    std::vector<MyInt> expected_result = {((comm.rank_signed() - 1) * comm.rank_signed()) / 2, comm.rank_signed() * 42};
     if (comm.rank() != 0) { // The result of this exscan() is not defined on rank 0.
         EXPECT_EQ(result, expected_result);
     }
@@ -271,10 +271,10 @@ TEST(ExscanTest, non_identity_values_on_rank_0_with_given_recv_buffer_bigger_tha
     // send_recv_count
     Communicator comm;
 
-    std::vector<int> const input = {0, 0};
+    const std::vector<int> input = {0, 0};
     std::vector<int>       result{-1, -1, -1, -1}; // bigger than required
     int const              default_value            = 1337;
-    std::vector<int> const default_values_on_rank_0 = {default_value, default_value};
+    const std::vector<int> default_values_on_rank_0 = {default_value, default_value};
 
     comm.exscan(
         send_buf(input),
@@ -588,8 +588,8 @@ TEST(
     int const    dont_care = -1;
 
     struct ThreeInts {
-        int                value;
-        std::array<int, 2> padding;
+        int value;
+        int padding[2];
     };
 
     MPI_Datatype           int_padding_padding = MPI_INT_padding_padding();

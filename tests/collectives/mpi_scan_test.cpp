@@ -127,22 +127,24 @@ TEST(ScanTest, scan_builtin_op_on_non_builtin_type) {
     Communicator comm;
 
     struct MyInt {
-        int   _value;
-        MyInt operator+(MyInt const& rhs) const noexcept {
-            return {this->_value + rhs._value};
+        MyInt() noexcept : _value(0) {}
+        MyInt(int value) noexcept : _value(value) {}
+        int _value;
+        int operator+(MyInt const& rhs) const noexcept {
+            return this->_value + rhs._value;
         }
         bool operator==(MyInt const& rhs) const noexcept {
             return this->_value == rhs._value;
         }
     };
-    std::vector<MyInt> input = {MyInt{comm.rank_signed()}, MyInt{42}};
+    std::vector<MyInt> input = {comm.rank_signed(), 42};
 
     auto result =
         comm.scan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {
-        {((comm.rank_signed() + 1) * comm.rank_signed()) / 2},
-        {(comm.rank_signed() + 1) * 42}};
+        ((comm.rank_signed() + 1) * comm.rank_signed()) / 2,
+        (comm.rank_signed() + 1) * 42};
     EXPECT_EQ(result, expected_result);
 }
 

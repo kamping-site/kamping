@@ -106,22 +106,22 @@ TEST(AllreduceTest, allreduce_builtin_op_on_non_builtin_type) {
     Communicator comm;
 
     struct MyInt {
-        int   _value;
-        MyInt operator+(MyInt const& rhs) const noexcept {
-            return {this->_value + rhs._value};
+        MyInt() noexcept : _value(0) {}
+        MyInt(int value) noexcept : _value(value) {}
+        int _value;
+        int operator+(MyInt const& rhs) const noexcept {
+            return this->_value + rhs._value;
         }
         bool operator==(MyInt const& rhs) const noexcept {
             return this->_value == rhs._value;
         }
     };
-    std::vector<MyInt> input = {MyInt{comm.rank_signed()}, MyInt{42}};
+    std::vector<MyInt> input = {comm.rank_signed(), 42};
 
     auto result =
         comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
     EXPECT_EQ(result.size(), 2);
-    std::vector<MyInt> expected_result = {
-        MyInt{(comm.size_signed() * (comm.size_signed() - 1)) / 2},
-        MyInt{comm.size_signed() * 42}};
+    std::vector<MyInt> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
     EXPECT_EQ(result, expected_result);
 }
 
@@ -338,7 +338,7 @@ TEST(AllreduceTest, allreduce_default_container_type) {
 
 TEST(AllreduceTest, send_recv_type_is_out_parameter) {
     Communicator           comm;
-    std::vector<int> const data{1};
+    const std::vector<int> data{1};
     MPI_Datatype           send_recv_type;
     auto result = comm.allreduce(send_buf(data), send_recv_type_out(send_recv_type), op(kamping::ops::plus<>{}));
 
@@ -350,7 +350,7 @@ TEST(AllreduceTest, send_recv_type_is_out_parameter) {
 
 TEST(AllreduceTest, send_recv_type_part_of_result_object) {
     Communicator           comm;
-    std::vector<int> const data{1};
+    const std::vector<int> data{1};
     auto                   result = comm.allreduce(send_buf(data), send_recv_type_out(), op(kamping::ops::plus<>{}));
 
     EXPECT_EQ(result.extract_send_recv_type(), MPI_INT);
