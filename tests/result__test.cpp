@@ -601,14 +601,23 @@ TEST(MakeMpiResult_Test, structured_bindings_basics) {
 TEST(MakeMpiResult_Test, pass_random_order_buffer) {
     {
         constexpr BufferType btype = BufferType::out_buffer;
-        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts;
-        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>   recv_buf;
-        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, btype> recv_displs;
-        LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>                 status;
+        using OutParameters        = std::tuple<
+            LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_counts, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int32_t>, ParameterType::recv_displs, btype>,
+            LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>>;
+        std::tuple_element_t<0, OutParameters> recv_counts;
+        std::tuple_element_t<1, OutParameters> recv_buf;
+        std::tuple_element_t<2, OutParameters> recv_displs;
+        std::tuple_element_t<3, OutParameters> status;
         status_param_to_native_ptr(status)->MPI_TAG = 42;
 
-        auto result =
-            make_mpi_result(std::move(recv_counts), std::move(status), std::move(recv_buf), std::move(recv_displs));
+        auto result = make_mpi_result_<OutParameters>(
+            std::move(recv_counts),
+            std::move(status),
+            std::move(recv_buf),
+            std::move(recv_displs)
+        );
 
         auto result_recv_buf    = result.extract_recv_buffer();
         auto result_recv_counts = result.extract_recv_counts();
@@ -616,16 +625,20 @@ TEST(MakeMpiResult_Test, pass_random_order_buffer) {
         auto result_status      = result.extract_status();
 
         static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, char>);
-        static_assert(std::is_same_v<decltype(result_recv_counts)::value_type, int>);
-        static_assert(std::is_same_v<decltype(result_recv_displs)::value_type, int>);
+        static_assert(std::is_same_v<decltype(result_recv_counts)::value_type, int8_t>);
+        static_assert(std::is_same_v<decltype(result_recv_displs)::value_type, int32_t>);
         ASSERT_EQ(result_status.tag(), 42);
     }
     {
         constexpr BufferType btype = BufferType::out_buffer;
-        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype> recv_counts;
-        LibAllocatedContainerBasedBuffer<std::vector<double>, ParameterType::recv_buf, btype> recv_buf;
+        using OutParameters        = std::tuple<
+            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<double>, ParameterType::recv_buf, btype>>;
 
-        auto result = make_mpi_result(std::move(recv_counts), std::move(recv_buf));
+        std::tuple_element_t<0, OutParameters> recv_counts;
+        std::tuple_element_t<1, OutParameters> recv_buf;
+
+        auto result = make_mpi_result_<OutParameters>(std::move(recv_counts), std::move(recv_buf));
 
         auto result_recv_buf    = result.extract_recv_buffer();
         auto result_recv_counts = result.extract_recv_counts();
@@ -636,11 +649,59 @@ TEST(MakeMpiResult_Test, pass_random_order_buffer) {
 }
 
 TEST(MakeMpiResult_Test, pass_send_recv_buf) {
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_recv_buf, BufferType::in_out_buffer>
-         send_recv_buf;
-    auto result          = make_mpi_result(std::move(send_recv_buf));
-    auto result_recv_buf = result.extract_recv_buffer();
-    static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, int>);
+    {
+        using T =
+            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_recv_buf, BufferType::in_out_buffer>;
+        T    send_recv_buf;
+        auto result_recv_buf = make_mpi_result_<T>(std::move(send_recv_buf));
+        static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, int>);
+    }
+}
+
+TEST(MakeMpiResult_Test, pass_send_recv_buf_and_other_out_parameters) {
+    {
+        using OutParameters = std::tuple<
+            LibAllocatedContainerBasedBuffer<
+                std::vector<char>,
+                ParameterType::send_recv_buf,
+                BufferType::in_out_buffer>,
+            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, BufferType::out_buffer>>;
+
+        std::tuple_element_t<0, OutParameters> send_recv_buf;
+        std::tuple_element_t<1, OutParameters> send_counts;
+        auto result = make_mpi_result_<OutParameters>(std::move(send_recv_buf), std::move(send_counts));
+
+        auto result_recv_buf    = result.extract_recv_buffer();
+        auto result_send_counts = result.extract_send_counts();
+        static_assert(std::is_same_v<decltype(result_recv_buf)::value_type, char>);
+        static_assert(std::is_same_v<decltype(result_send_counts)::value_type, int>);
+    }
+}
+
+TEST(MakeMpiResult_Test, pass_send_recv_buf_and_other_out_parameters_as_structured_bindings) {
+    using OutParameters = std::tuple<
+        LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::send_recv_buf, BufferType::in_out_buffer>,
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, BufferType::out_buffer>>;
+
+    std::tuple_element_t<0, OutParameters> send_recv_buf;
+    std::tuple_element_t<1, OutParameters> send_counts;
+
+    {
+        auto [result_recv_buf, result_send_counts] =
+            make_mpi_result_<OutParameters>(std::move(send_counts), std::move(send_recv_buf));
+
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_send_counts)>::value_type, int>);
+    }
+    {
+        // send_recv_buf not given
+        using ImplicitSendRecvBuf = std::tuple<std::tuple_element_t<1, OutParameters>>;
+        auto [result_recv_buf, result_send_counts] =
+            make_mpi_result_<ImplicitSendRecvBuf>(std::move(send_counts), std::move(send_recv_buf));
+
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(result_send_counts)>::value_type, int>);
+    }
 }
 
 TEST(MakeMpiResult_Test, check_content) {
