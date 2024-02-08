@@ -84,7 +84,7 @@ public:
         return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_buf>(_data).extract();
     }
 
-    /// @brief Extracts the \c send_recv_buffer from the MPIResult object. \TODO discuss this
+    /// @brief Extracts the \c send_recv_buffer from the MPIResult object. @todo discuss this
     ///
     /// This function is only available if the underlying memory is owned by the
     /// MPIResult object.
@@ -94,7 +94,8 @@ public:
     /// @return Returns the underlying storage containing the received elements.
     template <
         typename T = std::tuple<Args...>,
-        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_recv_buf, T>(), bool> = true>
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_recv_buf, T>(), bool> =
+            true>
     decltype(auto) extract_recv_buffer() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_recv_buf>(_data).extract();
     }
@@ -482,9 +483,9 @@ constexpr ParameterType determine_recv_buffer_type() {
         internal::has_parameter_type<internal::ParameterType::send_recv_buf, Buffers...>();
     static_assert(has_recv_buffer ^ has_send_recv_buffer, "either a recv or a send_recv buffer must be present");
     if constexpr (has_recv_buffer) {
-      return ParameterType::recv_buf;
+        return ParameterType::recv_buf;
     } else {
-      return ParameterType::send_recv_buf;
+        return ParameterType::send_recv_buf;
     }
 }
 
@@ -530,8 +531,9 @@ auto make_mpi_result_(Buffers&&... buffers) {
         internal::has_parameter_type<internal::ParameterType::send_recv_buf, Buffers...>();
     static_assert(has_recv_buffer ^ has_send_recv_buffer, "either a recv or a send_recv buffer must be present");
     constexpr internal::ParameterType recv_parameter_type = determine_recv_buffer_type<Buffers...>();
-    auto&          recv_or_send_recv_buffer        = internal::select_parameter_type<recv_parameter_type>(buffers...);
-    constexpr bool recv_or_send_recv_buf_is_owning = std::remove_reference_t<decltype(recv_or_send_recv_buffer)>::is_owning;
+    auto&          recv_or_send_recv_buffer = internal::select_parameter_type<recv_parameter_type>(buffers...);
+    constexpr bool recv_or_send_recv_buf_is_owning =
+        std::remove_reference_t<decltype(recv_or_send_recv_buffer)>::is_owning;
     constexpr bool recv_or_send_recv_buffer_is_owning_and_provided_by_caller =
         has_parameter_type_in_tuple<recv_parameter_type, CallerProvidedOwningOutParameters>();
 
@@ -560,7 +562,8 @@ auto make_mpi_result_(Buffers&&... buffers) {
     // case B: recv buffer is not provided by caller -> recv buffer will be stored as first entry in
     // underlying result object
     else {
-        using ParametersToReturn = typename PrependParameterType<recv_parameter_type, CallerProvidedOwningOutParameters>::type;
+        using ParametersToReturn =
+            typename PrependParameterType<recv_parameter_type, CallerProvidedOwningOutParameters>::type;
         return MPIResult_(construct_buffer_tuple_for_result_object<ParametersToReturn>(buffers...));
     }
 }

@@ -707,28 +707,38 @@ TEST(MakeMpiResult_Test, pass_send_recv_buf_and_other_out_parameters_as_structur
 TEST(MakeMpiResult_Test, check_content) {
     constexpr BufferType btype = BufferType::out_buffer;
 
+    using OutParameters = std::tuple<
+        LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::recv_buf, btype>,
+        LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::recv_counts, btype>,
+        LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::recv_displs, btype>,
+        LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::send_displs, btype>>;
+
     std::vector<int> recv_buf_data(20);
     std::iota(recv_buf_data.begin(), recv_buf_data.end(), 0);
-    Span<int> recv_buf_container = {recv_buf_data.data(), recv_buf_data.size()};
-    LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::recv_buf, btype> recv_buf(recv_buf_container);
+    Span<int>                              recv_buf_container = {recv_buf_data.data(), recv_buf_data.size()};
+    std::tuple_element_t<0, OutParameters> recv_buf(recv_buf_container);
 
     std::vector<int> recv_counts_data(20);
     std::iota(recv_counts_data.begin(), recv_counts_data.end(), 20);
-    Span<int> recv_counts_container = {recv_counts_data.data(), recv_counts_data.size()};
-    LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::recv_counts, btype> recv_counts(recv_counts_container);
+    Span<int>                              recv_counts_container = {recv_counts_data.data(), recv_counts_data.size()};
+    std::tuple_element_t<1, OutParameters> recv_counts(recv_counts_container);
 
     std::vector<int> recv_displs_data(20);
     std::iota(recv_displs_data.begin(), recv_displs_data.end(), 40);
-    Span<int> recv_displs_container = {recv_displs_data.data(), recv_displs_data.size()};
-    LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::recv_displs, btype> recv_displs(recv_displs_container);
+    Span<int>                              recv_displs_container = {recv_displs_data.data(), recv_displs_data.size()};
+    std::tuple_element_t<2, OutParameters> recv_displs(recv_displs_container);
 
     std::vector<int> send_displs_data(20);
     std::iota(send_displs_data.begin(), send_displs_data.end(), 60);
-    Span<int> send_displs_container = {send_displs_data.data(), send_displs_data.size()};
-    LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::send_displs, btype> send_displs(send_displs_container);
+    Span<int>                              send_displs_container = {send_displs_data.data(), send_displs_data.size()};
+    std::tuple_element_t<3, OutParameters> send_displs(send_displs_container);
 
-    auto result =
-        make_mpi_result(std::move(recv_buf), std::move(recv_counts), std::move(recv_displs), std::move(send_displs));
+    auto result = make_mpi_result_<OutParameters>(
+        std::move(recv_buf),
+        std::move(recv_counts),
+        std::move(recv_displs),
+        std::move(send_displs)
+    );
 
     auto result_recv_buf = result.extract_recv_buffer();
     for (size_t i = 0; i < 20; ++i) {
@@ -743,6 +753,57 @@ TEST(MakeMpiResult_Test, check_content) {
         EXPECT_EQ(result_recv_displs.data()[i], i + 40);
     }
     auto result_send_displs = result.extract_send_displs();
+    for (size_t i = 0; i < 20; ++i) {
+        EXPECT_EQ(result_send_displs.data()[i], i + 60);
+    }
+}
+
+TEST(MakeMpiResult_Test, check_content_structured_binding) {
+    constexpr BufferType btype = BufferType::out_buffer;
+
+    using OutParameters = std::tuple<
+        LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::recv_buf, btype>,
+        LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::recv_counts, btype>,
+        LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::recv_displs, btype>,
+        LibAllocatedContainerBasedBuffer<Span<int>, ParameterType::send_displs, btype>>;
+
+    std::vector<int> recv_buf_data(20);
+    std::iota(recv_buf_data.begin(), recv_buf_data.end(), 0);
+    Span<int>                              recv_buf_container = {recv_buf_data.data(), recv_buf_data.size()};
+    std::tuple_element_t<0, OutParameters> recv_buf(recv_buf_container);
+
+    std::vector<int> recv_counts_data(20);
+    std::iota(recv_counts_data.begin(), recv_counts_data.end(), 20);
+    Span<int>                              recv_counts_container = {recv_counts_data.data(), recv_counts_data.size()};
+    std::tuple_element_t<1, OutParameters> recv_counts(recv_counts_container);
+
+    std::vector<int> recv_displs_data(20);
+    std::iota(recv_displs_data.begin(), recv_displs_data.end(), 40);
+    Span<int>                              recv_displs_container = {recv_displs_data.data(), recv_displs_data.size()};
+    std::tuple_element_t<2, OutParameters> recv_displs(recv_displs_container);
+
+    std::vector<int> send_displs_data(20);
+    std::iota(send_displs_data.begin(), send_displs_data.end(), 60);
+    Span<int>                              send_displs_container = {send_displs_data.data(), send_displs_data.size()};
+    std::tuple_element_t<3, OutParameters> send_displs(send_displs_container);
+
+    auto [result_recv_buf, result_recv_counts, result_recv_displs, result_send_displs] =
+        make_mpi_result_<OutParameters>(
+            std::move(recv_buf),
+            std::move(recv_counts),
+            std::move(recv_displs),
+            std::move(send_displs)
+        );
+
+    for (size_t i = 0; i < 20; ++i) {
+        EXPECT_EQ(result_recv_buf.data()[i], i);
+    }
+    for (size_t i = 0; i < 20; ++i) {
+        EXPECT_EQ(result_recv_counts.data()[i], i + 20);
+    }
+    for (size_t i = 0; i < 20; ++i) {
+        EXPECT_EQ(result_recv_displs.data()[i], i + 40);
+    }
     for (size_t i = 0; i < 20; ++i) {
         EXPECT_EQ(result_send_displs.data()[i], i + 60);
     }
