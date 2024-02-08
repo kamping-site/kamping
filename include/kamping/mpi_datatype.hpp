@@ -199,7 +199,9 @@ auto type_dispatcher() {
 /// ```
 ///
 template <typename T>
-struct mpi_type_traits : decltype(type_dispatcher<T>()) {
+struct mpi_type_traits {
+    /// @brief The base type of this trait obtained via \ref type_dispatcher.
+    /// This defines how the data type is constructed in \ref mpi_type_traits::data_type().
     using base = decltype(type_dispatcher<T>());
     /// @brief The category of the type.
     static constexpr TypeCategory category = base::category;
@@ -212,6 +214,12 @@ struct mpi_type_traits : decltype(type_dispatcher<T>()) {
     }
 };
 
+/// @brief Register a new \c MPI_Datatype for \p T with the MPI environment. It will be freed when the environment is
+/// finalized.
+///
+/// The \c MPI_Datatype is created using \c mpi_type_traits<T>::data_type() and committed using \c MPI_Type_commit.
+///
+/// @tparam T The type to register.
 template <typename T>
 inline MPI_Datatype construct_and_commit_type() {
     MPI_Datatype type = mpi_type_traits<T>::data_type();
@@ -230,9 +238,16 @@ inline MPI_Datatype construct_and_commit_type() {
 /// @see mpi_custom_continuous_type()
 ///
 
+/// @brief Translate type \p T to an MPI_Datatype using the type defined via \ref mpi_type_traits.
+///
+/// If the type has not been registered with MPI yet, it will be created and committed and automatically registered with
+/// the MPI environment, such that it will be freed when the environment is finalized.
+///
+/// @tparam T The type to translate into an MPI_Datatype.
 template <typename T>
 [[nodiscard]] MPI_Datatype mpi_datatype() KAMPING_NOEXCEPT {
     if constexpr (mpi_type_traits<T>::has_to_be_committed) {
+        // using static initialization to ensure that the type is only committed once
         static MPI_Datatype type = construct_and_commit_type<T>();
         return type;
     } else {
@@ -255,10 +270,10 @@ MPI_Datatype contiguous_type<T, N>::data_type() {
     return type;
 }
 
+namespace internal {
 /// @brief Applies functor \p f to each field of the tuple with an index in index sequence \p Is.
 ///
 /// \p f should be a callable that takes a reference to the field and its index.
-namespace internal {
 template <typename T, typename F, size_t... Is>
 void for_each_tuple_field(T&& t, F&& f, std::index_sequence<Is...>) {
     (f(std::get<Is>(std::forward<T>(t)), Is), ...);
