@@ -73,12 +73,11 @@ struct Foo {
 namespace kamping {
 
 template <>
-struct mpi_type_traits<std::tuple<int, float, double>> : mpi_type_struct<std::tuple<int, float, double>> {};
+struct mpi_type_traits<std::tuple<int, float, double>> : struct_type<std::tuple<int, float, double>> {};
 } // namespace kamping
 
 int main() {
     using namespace kamping;
-
     kamping::Environment e;
     Communicator         comm;
     std::cout << std::boolalpha;

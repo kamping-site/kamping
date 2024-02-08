@@ -28,7 +28,10 @@ using namespace ::testing;
 std::set<MPI_Datatype> freed_types;
 
 int MPI_Type_free(MPI_Datatype* type) {
-    freed_types.insert(*type);
+    auto it = freed_types.insert(*type);
+    if (!it.second) {
+        ADD_FAILURE() << "Type " << *type << " was freed twice";
+    }
     return PMPI_Type_free(type);
 }
 
@@ -323,9 +326,9 @@ struct Empty {};
 namespace kamping {
 template <>
 struct mpi_type_traits<std::tuple<int, double, std::complex<float>>>
-    : mpi_type_struct<std::tuple<int, double, std::complex<float>>> {};
+    : struct_type<std::tuple<int, double, std::complex<float>>> {};
 template <>
-struct mpi_type_traits<std::pair<int, double>> : mpi_type_contiguous_byte<std::pair<int, double>> {};
+struct mpi_type_traits<std::pair<int, double>> : byte_serialized<std::pair<int, double>> {};
 } // namespace kamping
 
 TEST(MpiDataTypeTest, mpi_datatype_struct) {
@@ -333,40 +336,37 @@ TEST(MpiDataTypeTest, mpi_datatype_struct) {
         (mpi_type_traits<TestStruct<int, int>>::data_type()),
         ContiguousType(MPI_BYTE, sizeof(TestStruct<int, int>))
     );
-    EXPECT_EQ((mpi_type_traits<TestStruct<int, int>>::category), TypeCategory::kamping_provided);
+    EXPECT_EQ((mpi_type_traits<TestStruct<int, int>>::category), TypeCategory::contiguous);
 
     EXPECT_THAT(
         (mpi_type_traits<TestStruct<double, int>>::data_type()),
         ContiguousType(MPI_BYTE, sizeof(TestStruct<double, int>))
     );
-    EXPECT_EQ((mpi_type_traits<TestStruct<double, int>>::category), TypeCategory::kamping_provided);
+    EXPECT_EQ((mpi_type_traits<TestStruct<double, int>>::category), TypeCategory::contiguous);
 
     EXPECT_THAT(
         (mpi_type_traits<TestStruct<int, double>>::data_type()),
         ContiguousType(MPI_BYTE, sizeof(TestStruct<int, double>))
     );
-    EXPECT_EQ((mpi_type_traits<TestStruct<int, double>>::category), TypeCategory::kamping_provided);
+    EXPECT_EQ((mpi_type_traits<TestStruct<int, double>>::category), TypeCategory::contiguous);
 
     EXPECT_THAT(
         (mpi_type_traits<TestStruct<int, Empty>>::data_type()),
         ContiguousType(MPI_BYTE, sizeof(TestStruct<int, Empty>))
     );
-    EXPECT_EQ((mpi_type_traits<TestStruct<int, Empty>>::category), TypeCategory::kamping_provided);
+    EXPECT_EQ((mpi_type_traits<TestStruct<int, Empty>>::category), TypeCategory::contiguous);
 
     EXPECT_THAT(
         (mpi_type_traits<std::pair<int, double>>::data_type()),
         ContiguousType(MPI_BYTE, sizeof(std::pair<int, double>))
     );
-    EXPECT_EQ((mpi_type_traits<std::pair<int, double>>::category), TypeCategory::kamping_provided);
+    EXPECT_EQ((mpi_type_traits<std::pair<int, double>>::category), TypeCategory::contiguous);
 
     EXPECT_THAT(
         (mpi_type_traits<std::tuple<int, double, std::complex<float>>>::data_type()),
         StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX})
     );
-    EXPECT_EQ(
-        (mpi_type_traits<std::tuple<int, double, std::complex<float>>>::category),
-        TypeCategory::kamping_provided
-    );
+    EXPECT_EQ((mpi_type_traits<std::tuple<int, double, std::complex<float>>>::category), TypeCategory::struct_like);
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_c_array) {
@@ -374,22 +374,18 @@ TEST(MpiDataTypeTest, mpi_datatype_c_array) {
     {
         int c_array[3];
         EXPECT_THAT(mpi_type_traits<decltype(c_array)>::data_type(), ContiguousType(MPI_INT, 3));
-        EXPECT_EQ(mpi_type_traits<decltype(c_array)>::category, TypeCategory::kamping_provided);
-    }
-    {
-        int* ptr;
-        EXPECT_EQ(mpi_type_traits<decltype(ptr)>::category, TypeCategory::undefined);
+        EXPECT_EQ(mpi_type_traits<decltype(c_array)>::category, TypeCategory::contiguous);
     }
     {
         std::array<int, 3> cpp_array;
         EXPECT_THAT(mpi_type_traits<decltype(cpp_array)>::data_type(), ContiguousType(MPI_INT, 3));
-        EXPECT_EQ(mpi_type_traits<decltype(cpp_array)>::category, TypeCategory::kamping_provided);
+        EXPECT_EQ(mpi_type_traits<decltype(cpp_array)>::category, TypeCategory::contiguous);
     }
 
     {
         std::array<double, 3> cpp_array;
         EXPECT_THAT(mpi_type_traits<decltype(cpp_array)>::data_type(), ContiguousType(MPI_DOUBLE, 3));
-        EXPECT_EQ(mpi_type_traits<decltype(cpp_array)>::category, TypeCategory::kamping_provided);
+        EXPECT_EQ(mpi_type_traits<decltype(cpp_array)>::category, TypeCategory::contiguous);
     }
 }
 
@@ -434,9 +430,9 @@ TEST(MpiDataTypeTest, test_type_groups) {
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<double>>::category, kamping::TypeCategory::complex);
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<long double>>::category, kamping::TypeCategory::complex);
 
-    EXPECT_EQ(kamping::mpi_type_traits<std::complex<int>>::category, kamping::TypeCategory::kamping_provided);
+    EXPECT_EQ(kamping::mpi_type_traits<std::complex<int>>::category, kamping::TypeCategory::contiguous);
     EXPECT_EQ(kamping::mpi_type_traits<char>::category, kamping::TypeCategory::character);
-    EXPECT_EQ(kamping::mpi_type_traits<DummyType>::category, kamping::TypeCategory::kamping_provided);
+    EXPECT_EQ(kamping::mpi_type_traits<DummyType>::category, kamping::TypeCategory::contiguous);
 }
 
 TEST(MpiDataTypeTest, kabool_basics) {

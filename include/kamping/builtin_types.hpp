@@ -1,13 +1,38 @@
 #pragma once
 #include <complex>
+#include <type_traits>
 
-#include "./kabool.hpp"
-#include "./traits.hpp"
+#include <mpi.h>
+
+#include "kamping/kabool.hpp"
 
 namespace kamping {
+/// @brief the members specify which group the datatype belongs to according to the type groups specified in
+/// Section 6.9.2 of the MPI 4.0 standard.
+enum class TypeCategory { integer, floating, complex, logical, byte, character, struct_like, contiguous };
+constexpr bool category_has_to_be_committed(TypeCategory category) {
+    switch (category) {
+        case TypeCategory::integer:
+        case TypeCategory::floating:
+        case TypeCategory::complex:
+        case TypeCategory::logical:
+        case TypeCategory::byte:
+        case TypeCategory::character:
+            return false;
+        case TypeCategory::struct_like:
+        case TypeCategory::contiguous:
+            return true;
+    }
+}
+
+template <typename T>
+struct builtin_type : std::false_type {};
+
+template <typename T>
+constexpr bool is_builtin_type_v = builtin_type<T>::value;
 
 template <>
-struct mpi_type_traits<char> : is_builtin_mpi_type_true {
+struct builtin_type<char> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CHAR;
     }
@@ -15,7 +40,7 @@ struct mpi_type_traits<char> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<signed char> : is_builtin_mpi_type_true {
+struct builtin_type<signed char> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_SIGNED_CHAR;
     }
@@ -23,7 +48,7 @@ struct mpi_type_traits<signed char> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<unsigned char> : is_builtin_mpi_type_true {
+struct builtin_type<unsigned char> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_CHAR;
     }
@@ -31,7 +56,7 @@ struct mpi_type_traits<unsigned char> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<wchar_t> : is_builtin_mpi_type_true {
+struct builtin_type<wchar_t> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_WCHAR;
     }
@@ -39,7 +64,7 @@ struct mpi_type_traits<wchar_t> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<short int> : is_builtin_mpi_type_true {
+struct builtin_type<short int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_SHORT;
     }
@@ -47,7 +72,7 @@ struct mpi_type_traits<short int> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<unsigned short int> : is_builtin_mpi_type_true {
+struct builtin_type<unsigned short int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_SHORT;
     }
@@ -55,7 +80,7 @@ struct mpi_type_traits<unsigned short int> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<int> : is_builtin_mpi_type_true {
+struct builtin_type<int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_INT;
     }
@@ -63,7 +88,7 @@ struct mpi_type_traits<int> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<unsigned int> : is_builtin_mpi_type_true {
+struct builtin_type<unsigned int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED;
     }
@@ -71,7 +96,7 @@ struct mpi_type_traits<unsigned int> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<long int> : is_builtin_mpi_type_true {
+struct builtin_type<long int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_LONG;
     }
@@ -79,7 +104,7 @@ struct mpi_type_traits<long int> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<unsigned long int> : is_builtin_mpi_type_true {
+struct builtin_type<unsigned long int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_LONG;
     }
@@ -87,7 +112,7 @@ struct mpi_type_traits<unsigned long int> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<long long int> : is_builtin_mpi_type_true {
+struct builtin_type<long long int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_LONG_LONG;
     }
@@ -95,7 +120,7 @@ struct mpi_type_traits<long long int> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<unsigned long long int> : is_builtin_mpi_type_true {
+struct builtin_type<unsigned long long int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_LONG_LONG;
     }
@@ -103,7 +128,7 @@ struct mpi_type_traits<unsigned long long int> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<float> : is_builtin_mpi_type_true {
+struct builtin_type<float> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_FLOAT;
     }
@@ -111,7 +136,7 @@ struct mpi_type_traits<float> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<double> : is_builtin_mpi_type_true {
+struct builtin_type<double> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_DOUBLE;
     }
@@ -119,7 +144,7 @@ struct mpi_type_traits<double> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<long double> : is_builtin_mpi_type_true {
+struct builtin_type<long double> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_LONG_DOUBLE;
     }
@@ -127,7 +152,7 @@ struct mpi_type_traits<long double> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<bool> : is_builtin_mpi_type_true {
+struct builtin_type<bool> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CXX_BOOL;
     }
@@ -135,7 +160,7 @@ struct mpi_type_traits<bool> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<kabool> : is_builtin_mpi_type_true {
+struct builtin_type<kabool> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CXX_BOOL;
     }
@@ -143,14 +168,14 @@ struct mpi_type_traits<kabool> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<std::complex<float>> : is_builtin_mpi_type_true {
+struct builtin_type<std::complex<float>> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CXX_FLOAT_COMPLEX;
     }
     static constexpr TypeCategory category = TypeCategory::complex;
 };
 template <>
-struct mpi_type_traits<std::complex<double>> : is_builtin_mpi_type_true {
+struct builtin_type<std::complex<double>> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CXX_DOUBLE_COMPLEX;
     }
@@ -158,7 +183,7 @@ struct mpi_type_traits<std::complex<double>> : is_builtin_mpi_type_true {
 };
 
 template <>
-struct mpi_type_traits<std::complex<long double>> : is_builtin_mpi_type_true {
+struct builtin_type<std::complex<long double>> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CXX_LONG_DOUBLE_COMPLEX;
     }
