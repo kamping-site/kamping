@@ -170,8 +170,8 @@ auto type_dispatcher() {
 
 /// @brief The type trait that maps a C++ type \p T to a type trait that can be used to construct an MPI_Datatype.
 ///
-/// The default behavior is controlled by \ref type_dispatcher. If you want to support a type that is not supported by
-/// the default behavior, you can specialize this trait. For example:
+/// The default behavior is controlled by \ref kamping::type_dispatcher(). If you want to support a type that is not
+/// supported by the default behavior, you can specialize this trait. For example:
 ///
 /// ```cpp
 /// struct MyType {
