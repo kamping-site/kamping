@@ -16,9 +16,6 @@
 
 #pragma once
 
-#include <cassert>
-#include <complex>
-#include <cstdint>
 #include <type_traits>
 
 #include <kassert/kassert.hpp>
@@ -120,7 +117,8 @@ auto select_type_trait() {
         return byte_serialized<T_no_const>{};
     } else {
         static_assert(
-            false,
+            // this should always evaluate to false
+            !std::is_trivially_copyable_v<T_no_const>,
             "Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
         );
     }
@@ -128,11 +126,15 @@ auto select_type_trait() {
 
 template <typename T>
 struct mpi_type_traits : decltype(select_type_trait<T>()) {
-    using base                                        = decltype(select_type_trait<T>());
-    static constexpr TypeCategory category            = base::category;
-    static constexpr bool         has_to_be_committed = category_has_to_be_committed(category);
-    static MPI_Datatype           data_type() {
-                  return decltype(select_type_trait<T>())::data_type();
+    using base = decltype(select_type_trait<T>());
+    /// @brief The category of the type.
+    static constexpr TypeCategory category = base::category;
+    /// @brief Whether the type has to be committed before it can be used in MPI calls.
+    static constexpr bool has_to_be_committed = category_has_to_be_committed(category);
+
+    /// @brief The MPI_Datatype corresponding to the type T.
+    static MPI_Datatype data_type() {
+        return decltype(select_type_trait<T>())::data_type();
     }
 };
 
