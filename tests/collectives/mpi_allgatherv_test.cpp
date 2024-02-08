@@ -566,3 +566,133 @@ TEST(AllgathervTest, different_send_and_recv_counts_without_explicit_mpi_types) 
     }
     EXPECT_EQ(recv_buffer, expected_result);
 }
+
+TEST(AllgathervTest, structured_bindings) {
+    // each PE contributes its rank rank times.
+    Communicator           comm;
+    std::vector<int>       input(comm.rank(), comm.rank_signed());
+    const std::vector<int> expected_recv_buffer = [&]() {
+        std::vector<int> vec;
+        for (size_t i = 0; i < comm.size(); ++i) {
+            std::fill_n(std::back_inserter(vec), i, static_cast<int>(i));
+        }
+        return vec;
+    }();
+    const std::vector<int> expected_recv_counts = [&]() {
+        std::vector<int> vec(comm.size());
+        std::iota(vec.begin(), vec.end(), 0);
+        return vec;
+    }();
+    {
+        // return recv buffer only
+        std::vector<int> recv_buffer;
+        static_assert(
+            std::is_same_v<decltype(comm.allgatherv(send_buf(input), recv_buf<resize_to_fit>(recv_buffer))), void>,
+            "there are no buffers to return!"
+        );
+        comm.allgatherv(send_buf(input), recv_buf<resize_to_fit>(recv_buffer));
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+    }
+
+    {
+        // return recv buffer only
+        auto recv_buffer = comm.allgatherv(send_buf(input));
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+    }
+    {
+        // explicit recv buffer
+        std::vector<int> recv_buffer;
+        auto [recv_counts, send_count, recv_type, send_type] = comm.allgatherv(
+            send_buf(input),
+            recv_counts_out(),
+            recv_buf<resize_to_fit>(recv_buffer),
+            send_count_out(),
+            recv_type_out(),
+            send_type_out()
+        );
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+        EXPECT_EQ(recv_counts, expected_recv_counts);
+        EXPECT_EQ(send_count, comm.rank());
+        EXPECT_EQ(recv_type, MPI_INT);
+        EXPECT_EQ(send_type, MPI_INT);
+    }
+    {
+        // implicit recv buffer
+        auto [recv_buffer, recv_counts, send_count, recv_type, send_type] =
+            comm.allgatherv(send_buf(input), recv_counts_out(), send_count_out(), recv_type_out(), send_type_out());
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+        EXPECT_EQ(recv_counts, expected_recv_counts);
+        EXPECT_EQ(send_count, comm.rank());
+        EXPECT_EQ(recv_type, MPI_INT);
+        EXPECT_EQ(send_type, MPI_INT);
+    }
+    {
+        // explicit but owning recv buffer
+        auto [recv_counts, send_count, recv_type, send_type, recv_buffer] = comm.allgatherv(
+            send_buf(input),
+            recv_counts_out(),
+            send_count_out(),
+            recv_type_out(),
+            send_type_out(),
+            recv_buf<resize_to_fit>(std::vector<int>(42))
+        );
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+        EXPECT_EQ(recv_counts, expected_recv_counts);
+        EXPECT_EQ(send_count, comm.rank());
+        EXPECT_EQ(recv_type, MPI_INT);
+        EXPECT_EQ(send_type, MPI_INT);
+    }
+    {
+        // explicit but owning recv buffer and non-owning send_count
+        int send_count                                        = -1;
+        auto [recv_counts, recv_type, send_type, recv_buffer] = comm.allgatherv(
+            send_buf(input),
+            recv_counts_out(),
+            send_count_out(send_count),
+            recv_type_out(),
+            send_type_out(),
+            recv_buf<resize_to_fit>(std::vector<int>(42))
+        );
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+        EXPECT_EQ(recv_counts, expected_recv_counts);
+        EXPECT_EQ(send_count, comm.rank());
+        EXPECT_EQ(recv_type, MPI_INT);
+        EXPECT_EQ(send_type, MPI_INT);
+    }
+    {
+        // explicit but owning recv buffer and non-owning send_count, recv_type
+        int          send_count = -1;
+        MPI_Datatype recv_type;
+        auto [recv_counts, send_type, recv_buffer] = comm.allgatherv(
+            send_buf(input),
+            recv_counts_out(),
+            send_count_out(send_count),
+            recv_type_out(recv_type),
+            send_type_out(),
+            recv_buf<resize_to_fit>(std::vector<int>(42))
+        );
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+        EXPECT_EQ(recv_counts, expected_recv_counts);
+        EXPECT_EQ(send_count, comm.rank());
+        EXPECT_EQ(recv_type, MPI_INT);
+        EXPECT_EQ(send_type, MPI_INT);
+    }
+    {
+        // explicit but owning recv buffer and non-owning send_count, recv_type (other order)
+        int          send_count = -1;
+        MPI_Datatype recv_type;
+        auto [recv_counts, send_type, recv_buffer] = comm.allgatherv(
+            send_count_out(send_count),
+            recv_type_out(recv_type),
+            recv_counts_out(),
+            send_buf(input),
+            send_type_out(),
+            recv_buf<resize_to_fit>(std::vector<int>(42))
+        );
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+        EXPECT_EQ(recv_counts, expected_recv_counts);
+        EXPECT_EQ(send_count, comm.rank());
+        EXPECT_EQ(recv_type, MPI_INT);
+        EXPECT_EQ(send_type, MPI_INT);
+    }
+}

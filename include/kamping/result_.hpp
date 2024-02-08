@@ -466,7 +466,8 @@ template <typename CallerProvidedArgs, typename... Buffers>
 auto make_mpi_result_(Buffers&&... buffers) {
     // filter named parameters provided to the wrapped MPI function and keep only owning out parameters (=owning out
     // buffers)
-    using CallerProvidedOwningOutParameters = typename internal::Filter<CallerProvidedArgs>::type;
+    using CallerProvidedOwningOutParameters                      = typename internal::Filter<CallerProvidedArgs>::type;
+    constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutParameters>;
 
     // receive buffer needs (potentially) a special treatment (if it is an owning (out) buffer and provided by the
     // caller)
@@ -478,9 +479,14 @@ auto make_mpi_result_(Buffers&&... buffers) {
 
     // special case 1: recv buffer is not owning
     if constexpr (!recv_buf_is_owning) {
-        // no special treatement of recv buffer is needed as the recv_buffer is not part of the result
-        // object anyway.
-        return MPIResult_(construct_buffer_tuple_for_result_object<CallerProvidedOwningOutParameters>(buffers...));
+        if constexpr (num_caller_provided_owning_out_buffers == 0) {
+            // there are no buffers to return
+            return;
+        } else {
+            // no special treatement of recv buffer is needed as the recv_buffer is not part of the result
+            // object anyway.
+            return MPIResult_(construct_buffer_tuple_for_result_object<CallerProvidedOwningOutParameters>(buffers...));
+        }
     }
     // specialcase 2: recv buffer is the only owning out parameter
     else if constexpr (return_recv_buffer_only<CallerProvidedOwningOutParameters>()) {
