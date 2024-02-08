@@ -168,6 +168,36 @@ auto type_dispatcher() {
     }
 }
 
+/// @brief The type trait that maps a C++ type \p T to a type trait that can be used to construct an MPI_Datatype.
+///
+/// The default behavior is controlled by \ref type_dispatcher. If you want to support a type that is not supported by
+/// the default behavior, you can specialize this trait. For example:
+///
+/// ```cpp
+/// struct MyType {
+///    int a;
+///    double b;
+///    char c;
+///    std::array<int, 3> d;
+/// };
+/// namespace kamping {
+/// // using KaMPIng's built-in struct serializer
+/// template <>
+/// struct mpi_type_traits<MyType> : struct_type<MyType> {};
+///
+/// // or using an explicitly constructed type
+/// template <>
+/// struct mpi_type_traits<MyType> {
+///    static constexpr bool has_to_be_committed = true;
+///    static MPI_Datatype data_type() {
+///        MPI_Datatype type;
+///        MPI_Type_create_*(..., &type);
+///        return type;
+///    }
+/// };
+/// } // namespace kamping
+/// ```
+///
 template <typename T>
 struct mpi_type_traits : decltype(type_dispatcher<T>()) {
     using base = decltype(type_dispatcher<T>());
@@ -199,6 +229,7 @@ inline MPI_Datatype construct_and_commit_type() {
 /// @return The tag identifying the corresponding MPI_Datatype or the newly created type.
 /// @see mpi_custom_continuous_type()
 ///
+
 template <typename T>
 [[nodiscard]] MPI_Datatype mpi_datatype() KAMPING_NOEXCEPT {
     if constexpr (mpi_type_traits<T>::has_to_be_committed) {
