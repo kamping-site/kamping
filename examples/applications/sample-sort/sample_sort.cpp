@@ -35,7 +35,7 @@ bool globally_sorted(MPI_Comm comm, std::vector<T> const& data, std::vector<T>& 
 
 template <typename T>
 auto generate_data(size_t n_local, size_t seed) -> std::vector<T> {
-    std::mt19937                     eng(static_cast<std::mt19937::result_type>(seed + kamping::world_rank()));
+    std::mt19937                     eng(seed + kamping::world_rank());
     std::uniform_int_distribution<T> dist(0, std::numeric_limits<T>::max());
     std::vector<T>                   data(n_local);
     auto                             gen = [&] {

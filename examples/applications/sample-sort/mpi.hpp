@@ -23,13 +23,7 @@ void sort(MPI_Comm comm, std::vector<T>& data, size_t seed) {
     MPI_Comm_size(comm, &size);
     size_t const   oversampling_ratio = 16 * static_cast<size_t>(std::log2(size)) + 1;
     std::vector<T> local_samples(oversampling_ratio);
-    std::sample(
-        data.begin(),
-        data.end(),
-        local_samples.begin(),
-        oversampling_ratio,
-        std::mt19937{static_cast<std::mt19937::result_type>(seed)}
-    );
+    std::sample(data.begin(), data.end(), local_samples.begin(), oversampling_ratio, std::mt19937{seed});
     std::vector<T> global_samples(local_samples.size() * static_cast<size_t>(size));
     MPI_Allgather(
         local_samples.data(),
