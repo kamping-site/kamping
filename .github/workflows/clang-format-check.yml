@@ -11,7 +11,7 @@ jobs:
     name: C++ Formatting Check
     runs-on: self-hosted
     container:
-      image: "localhost:5000/kamping-ci"
+      image: "localhost:5000/kamping-ci:2024.1"
     steps:
     - uses: actions/checkout@v3
     - name: Check formatting
