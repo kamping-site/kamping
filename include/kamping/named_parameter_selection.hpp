@@ -122,8 +122,7 @@ constexpr bool has_parameter_type() {
 
 /// @brief Helper struct needed to retrieve the types stored in a std::tuple for the has_parameter_type check.
 ///
-/// @tparam T any template arguments.
-template <typename... T>
+template <typename>
 struct has_parameter_helper {};
 
 /// @brief Checks if parameter with requested parameter type exists. Wrapper using the functionality from \ref

@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2023 The KaMPIng Authors
+// Copyright 2021-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -28,8 +28,6 @@
 #include "named_parameter_selection.hpp"
 
 namespace kamping {
-template <typename>
-class TD;
 
 /// @brief MPIResult contains the result of a \c MPI call wrapped by KaMPIng.
 ///
@@ -51,7 +49,7 @@ public:
 
     /// @brief Constructor for MPIResult.
     ///
-    /// @param data std::tuple containing all return data buffers.
+    /// @param data std::tuple containing all data buffers to be returned.
     MPIResult_(std::tuple<Args...> data) : _data(std::move(data)) {}
 
     /// @brief Extracts the \c kamping::Status from the MPIResult object.
@@ -246,7 +244,7 @@ public:
     /// structured binding enabling machinery.
     ///
     /// @tparam i Index of the data buffer to extract.
-    /// @return Returns the underlying data of the i-th data buffer.
+    /// @return Returns a reference to the underlying data of the i-th data buffer.
     template <std::size_t i>
     decltype(auto) get() {
         return std::get<i>(_data).underlying();
@@ -256,7 +254,7 @@ public:
     /// structured binding enabling machinery.
     ///
     /// @tparam i Index of the data buffer to extract.
-    /// @return Returns the underlying data of the i-th data buffer.
+    /// @return Returns a reference to the underlying data of the i-th data buffer.
     template <std::size_t i>
     decltype(auto) get() const {
         return std::get<i>(_data).underlying();
@@ -302,8 +300,7 @@ struct tuple_element<index, const kamping::MPIResult_<Args...>> {
 };
 } // namespace std
 
-namespace kamping {
-namespace internal {
+namespace kamping::internal {
 
 /// @brief Base template used to concatenate a type to a given std::tuple.
 /// based on https://stackoverflow.com/a/18366475
@@ -331,12 +328,12 @@ struct ParameterTypeEntry {
 /// @brief Base template used to filter a list of types and only keep the those whose types meet specified criteria.
 /// See the following specialisations for more information.
 template <typename...>
-struct Filter;
+struct FilterOwningOut;
 
 /// @brief Specialisation of template class used to filter a list of types and only keep the those whose types meet
 /// the specified criteria.
 template <>
-struct Filter<> {
+struct FilterOwningOut<> {
     using type = std::tuple<>; ///< Tuple of types meeting the specified criteria.
 };
 
@@ -352,7 +349,7 @@ struct Filter<> {
 /// @tparam Head Type for which it is checked whether it meets the predicate.
 /// @tparam Tail Types that are checked later on during the recursive instantiation.
 template <typename Head, typename... Tail>
-struct Filter<Head, Tail...> {
+struct FilterOwningOut<Head, Tail...> {
     using non_ref_first = std::remove_reference_t<Head>; ///< Remove potential reference from Head.
     static constexpr bool predicate =
         non_ref_first::is_owning && non_ref_first::is_out_buffer; ///< Predicate which Head has to fulfill to be kept.
@@ -360,9 +357,9 @@ struct Filter<Head, Tail...> {
         non_ref_first::parameter_type; ///< ParameterType stored as a static variable in Head.
     using type = std::conditional_t<
         predicate,
-        typename PrependType<ParameterTypeEntry<ptype>, typename Filter<Tail...>::type>::type,
-        typename Filter<Tail...>::type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those types among Head,
-                                         ///< Tail... which fulfill the predicate.
+        typename PrependType<ParameterTypeEntry<ptype>, typename FilterOwningOut<Tail...>::type>::type,
+        typename FilterOwningOut<Tail...>::type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those types among
+                                                  ///< Head, Tail... which fulfill the predicate.
 };
 
 /// @brief Specialisation of template class for types stored in a std::tuple<...> that is used to filter these types and
@@ -370,9 +367,9 @@ struct Filter<Head, Tail...> {
 ///
 /// @tparam Types Types to check.
 template <typename... Types>
-struct Filter<std::tuple<Types...>> {
-    using type = typename Filter<Types...>::type; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those types among
-                                                  ///< Types... which match the criteria.
+struct FilterOwningOut<std::tuple<Types...>> {
+    using type = typename FilterOwningOut<Types...>::type; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those
+                                                           ///< types among Types... which match the criteria.
 };
 
 /// @brief Template class to prepend the ParameterTypeEntry<ParameterType::ptype> type to a given std::tuple.
@@ -455,24 +452,6 @@ constexpr bool return_recv_or_send_recv_buffer_only() {
 
 /// @brief Returns recv or send_recv buffer.
 ///
-/// @tparam Buffers All parameter types to be searched for type `recv_buf` or `send_recv_buf`.
-/// @param buffers All parameters from which a parameter with the correct type is selected.
-/// @returns The first parameter whose type is recv_buf or send_recv_buf.
-template <typename... Buffers>
-auto& select_recv_or_send_recv_buffer(Buffers&... buffers) {
-    constexpr bool has_recv_buffer = internal::has_parameter_type<internal::ParameterType::recv_buf, Buffers...>();
-    constexpr bool has_send_recv_buffer =
-        internal::has_parameter_type<internal::ParameterType::send_recv_buf, Buffers...>();
-    static_assert(has_recv_buffer ^ has_send_recv_buffer, "either a recv or a send_recv buffer must be present");
-    if constexpr (has_recv_buffer) {
-        return internal::select_parameter_type<internal::ParameterType::recv_buf>(buffers...);
-    } else {
-        return internal::select_parameter_type<internal::ParameterType::send_recv_buf>(buffers...);
-    }
-}
-
-/// @brief Returns recv or send_recv buffer.
-///
 /// @tparam Args All parameter types to be searched for type `recv_buf` or `send_recv_buf`.
 /// @param args All parameters from which a parameter with the correct type is selected.
 /// @returns The first parameter whose type is recv_buf or send_recv_buf.
@@ -494,17 +473,17 @@ constexpr ParameterType determine_recv_buffer_type() {
 /// a) The recv_buffer owns its underlying data (i.e. the received data has to be returned via the result object):
 ///
 /// a.1) The recv_buffer is the only buffer to be returned, i.e. the only caller provided owning out buffer:
-/// In this case, the recv_buffers's underlying data is extracted and returned directly (per value).
+/// In this case, the recv_buffers's underlying data is extracted and returned directly (by value).
 ///
-/// a.2) There are more multiple buffers to be returned and recv_buffer is explicitly provided by the caller:
-/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return (owning out buffers) in
-/// a std::tuple respecting the order in which these buffers where provided to the wrapped MPI call. This enables
+/// a.2) There are multiple buffers to be returned and recv_buffer is explicitly provided by the caller:
+/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffers to return (owning out buffers)
+/// in a std::tuple respecting the order in which these buffers where provided to the wrapped MPI call. This enables
 /// unpacking the object via structured binding.
 ///
 /// a.3) There are more data buffers to be returned and recv_buffer is *not* explicitly provided by the caller:
-/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffer to return in a std::tuple. The
-/// recv_buffer is always the first entry in the std::tuple followed by the other buffers respecting the order in which
-/// these buffers where provided to the wrapped MPI call.
+/// In this case a \ref kamping::MPIResult_ object is created, which stores the buffers to return. The
+/// recv_buffer is always the first entry in the result object followed by the other buffers respecting the order in
+/// which these buffers where provided to the wrapped MPI call.
 ///
 /// b) The recv_buffer only references its underlying data (i.e. it is a non-owinig out buffer):
 /// In this case recv_buffer is not part of the result object. The \ref kamping::MPIResult_ object stores the buffer to
@@ -521,15 +500,11 @@ template <typename CallerProvidedArgs, typename... Buffers>
 auto make_mpi_result_(Buffers&&... buffers) {
     // filter named parameters provided to the wrapped MPI function and keep only owning out parameters (=owning out
     // buffers)
-    using CallerProvidedOwningOutParameters                      = typename internal::Filter<CallerProvidedArgs>::type;
+    using CallerProvidedOwningOutParameters = typename internal::FilterOwningOut<CallerProvidedArgs>::type;
     constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutParameters>;
 
     // receive (send-receive) buffer needs (potentially) a special treatment (if it is an owning (out) buffer and
     // provided by the caller)
-    constexpr bool has_recv_buffer = internal::has_parameter_type<internal::ParameterType::recv_buf, Buffers...>();
-    constexpr bool has_send_recv_buffer =
-        internal::has_parameter_type<internal::ParameterType::send_recv_buf, Buffers...>();
-    static_assert(has_recv_buffer ^ has_send_recv_buffer, "either a recv or a send_recv buffer must be present");
     constexpr internal::ParameterType recv_parameter_type = determine_recv_buffer_type<Buffers...>();
     auto&          recv_or_send_recv_buffer = internal::select_parameter_type<recv_parameter_type>(buffers...);
     constexpr bool recv_or_send_recv_buf_is_owning =
@@ -568,5 +543,4 @@ auto make_mpi_result_(Buffers&&... buffers) {
     }
 }
 
-} // namespace internal
-} // namespace kamping
+} // namespace kamping::internal

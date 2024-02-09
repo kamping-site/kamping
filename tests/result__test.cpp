@@ -513,6 +513,7 @@ TEST(MpiResult_Test, removed_extract_functions) {
 TEST(MakeMpiResult_Test, structured_bindings_basics) {
     constexpr BufferType btype = BufferType::out_buffer;
     {
+        // structured binding by value
         using OutParameters = std::tuple<
             LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_buf, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<std::int16_t>, ParameterType::recv_counts, btype>,
@@ -534,6 +535,7 @@ TEST(MakeMpiResult_Test, structured_bindings_basics) {
         static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, std::vector<std::int64_t>>);
     }
     {
+        // structured binding by rvalue ref
         using OutParameters = std::tuple<
             LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_buf, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<std::int16_t>, ParameterType::recv_counts, btype>,
