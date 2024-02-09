@@ -557,6 +557,7 @@ TEST(MakeMpiResult_Test, structured_bindings_basics) {
         static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, std::vector<std::int64_t>>);
     }
     {
+        // structured binding by const value
         using OutParameters = std::tuple<
             LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_buf, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<std::int16_t>, ParameterType::recv_counts, btype>,
@@ -578,6 +579,7 @@ TEST(MakeMpiResult_Test, structured_bindings_basics) {
         static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, const std::vector<std::int64_t>>);
     }
     {
+        // structured binding by const reference
         using OutParameters = std::tuple<
             LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_buf, btype>,
             LibAllocatedContainerBasedBuffer<std::vector<std::int16_t>, ParameterType::recv_counts, btype>,
@@ -593,6 +595,11 @@ TEST(MakeMpiResult_Test, structured_bindings_basics) {
             std::move(recv_displs_buf),
             std::move(send_counts_buf)
         );
+
+        static_assert(std::is_lvalue_reference_v<decltype(recv_buffer)>);
+        static_assert(std::is_lvalue_reference_v<decltype(recv_counts)>);
+        static_assert(std::is_lvalue_reference_v<decltype(recv_displs)>);
+        static_assert(std::is_lvalue_reference_v<decltype(send_counts)>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, const std::vector<std::int8_t>>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, const std::vector<std::int16_t>>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, const std::vector<std::int32_t>>);
