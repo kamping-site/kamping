@@ -46,6 +46,15 @@ class MPIResult_ {
 public:
     /// @brief \c true, if the result does not encapsulate any data.
     static constexpr bool is_empty = (sizeof...(Args) == 0);
+    /// @brief \c true, if the result encapsulates a recv_buf.
+    static constexpr bool has_recv_buffer = internal::has_parameter_type<internal::ParameterType::recv_buf, Args...>();
+    /// @brief \c true, if the result encapsulates a send_recv_buf.
+    static constexpr bool has_send_recv_buffer =
+        internal::has_parameter_type<internal::ParameterType::send_recv_buf, Args...>();
+    static_assert(
+        !(has_recv_buffer && has_send_recv_buffer),
+        "We cannot have a recv and a send_recv buffer contained in the result object."
+    );
 
     /// @brief Constructor for MPIResult.
     ///
@@ -450,11 +459,11 @@ constexpr bool return_recv_or_send_recv_buffer_only() {
     }
 }
 
-/// @brief Returns recv or send_recv buffer.
+/// @brief Checks whether a buffer with parameter type recv_buf or a buffer with type send_recv_buf is present and
+/// returns the found parameter type. Note that we require that either a recv_buf or a send_recv_buf is present.
 ///
-/// @tparam Args All parameter types to be searched for type `recv_buf` or `send_recv_buf`.
-/// @param args All parameters from which a parameter with the correct type is selected.
-/// @returns The first parameter whose type is recv_buf or send_recv_buf.
+/// @tparam Buffers All buffer types to be searched for type `recv_buf` or `send_recv_buf`.
+/// @returns The parameter type of the first buffer whose parameter type is recv_buf or send_recv_buf.
 template <typename... Buffers>
 constexpr ParameterType determine_recv_buffer_type() {
     constexpr bool has_recv_buffer = internal::has_parameter_type<internal::ParameterType::recv_buf, Buffers...>();
