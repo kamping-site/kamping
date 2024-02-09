@@ -51,7 +51,7 @@ constexpr bool category_has_to_be_committed(TypeCategory category) {
 ///
 /// Provides a member constant \c value which is equal to \c true if \p T is a builtin type.
 /// If `value` is `true`, the following members are defined, where \c data_type() returns the
-/// corresponding \c MPI_Datatype and \c category the corresponding \ref TypeCategory.
+/// corresponding \c MPI_Datatype and \c category the corresponding \ref kamping::TypeCategory.
 ///
 /// ```cpp
 ///        struct builtin_type<T> {
@@ -75,7 +75,7 @@ struct builtin_type<char> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CHAR;
     }
-    static constexpr TypeCategory category = TypeCategory::character; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::character; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `signed char`.
@@ -85,7 +85,7 @@ struct builtin_type<signed char> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_SIGNED_CHAR;
     }
-    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `unsigned char`.
@@ -95,7 +95,7 @@ struct builtin_type<unsigned char> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_CHAR;
     }
-    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `wchar_t`.
@@ -105,7 +105,7 @@ struct builtin_type<wchar_t> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_WCHAR;
     }
-    static constexpr TypeCategory category = TypeCategory::character; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::character; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `short int`.
@@ -115,7 +115,7 @@ struct builtin_type<short int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_SHORT;
     }
-    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `unsigned short int`.
@@ -125,7 +125,7 @@ struct builtin_type<unsigned short int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_SHORT;
     }
-    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `int`.
@@ -135,7 +135,7 @@ struct builtin_type<int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_INT;
     }
-    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `unsigned int`.
@@ -145,7 +145,7 @@ struct builtin_type<unsigned int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED;
     }
-    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `long int`.
@@ -155,7 +155,7 @@ struct builtin_type<long int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_LONG;
     }
-    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `unsigned long int`.
@@ -165,7 +165,7 @@ struct builtin_type<unsigned long int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_LONG;
     }
-    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `long long int`.
@@ -175,7 +175,7 @@ struct builtin_type<long long int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_LONG_LONG;
     }
-    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `unsigned long long int`.
@@ -185,7 +185,7 @@ struct builtin_type<unsigned long long int> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_UNSIGNED_LONG_LONG;
     }
-    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::integer; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `float`.
@@ -195,7 +195,7 @@ struct builtin_type<float> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_FLOAT;
     }
-    static constexpr TypeCategory category = TypeCategory::floating; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::floating; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `double`.
@@ -205,7 +205,7 @@ struct builtin_type<double> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_DOUBLE;
     }
-    static constexpr TypeCategory category = TypeCategory::floating; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::floating; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `long double`.
@@ -215,7 +215,7 @@ struct builtin_type<long double> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_LONG_DOUBLE;
     }
-    static constexpr TypeCategory category = TypeCategory::floating; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::floating; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `bool`.
@@ -225,7 +225,7 @@ struct builtin_type<bool> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CXX_BOOL;
     }
-    static constexpr TypeCategory category = TypeCategory::logical; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::logical; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for \ref kabool.
@@ -235,7 +235,7 @@ struct builtin_type<kabool> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CXX_BOOL;
     }
-    static constexpr TypeCategory category = TypeCategory::logical; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::logical; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `std::complex<float>`.
@@ -245,7 +245,7 @@ struct builtin_type<std::complex<float>> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CXX_FLOAT_COMPLEX;
     }
-    static constexpr TypeCategory category = TypeCategory::complex; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::complex; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `std::complex<double>`.
@@ -255,7 +255,7 @@ struct builtin_type<std::complex<double>> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CXX_DOUBLE_COMPLEX;
     }
-    static constexpr TypeCategory category = TypeCategory::complex; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::complex; ///< The types's \ref kamping::TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `std::complex<long double>`.
@@ -265,7 +265,7 @@ struct builtin_type<std::complex<long double>> : std::true_type {
     static MPI_Datatype data_type() {
         return MPI_CXX_LONG_DOUBLE_COMPLEX;
     }
-    static constexpr TypeCategory category = TypeCategory::complex; ///< The types's \ref TypeCategory.
+    static constexpr TypeCategory category = TypeCategory::complex; ///< The types's \ref kamping::TypeCategory.
 };
 /// @}
 } // namespace kamping
