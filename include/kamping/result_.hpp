@@ -255,7 +255,7 @@ public:
     /// @tparam i Index of the data buffer to extract.
     /// @return Returns a reference to the underlying data of the i-th data buffer.
     template <std::size_t i>
-    decltype(auto) get() {
+    auto& get() {
         return std::get<i>(_data).underlying();
     }
 
@@ -265,7 +265,7 @@ public:
     /// @tparam i Index of the data buffer to extract.
     /// @return Returns a reference to the underlying data of the i-th data buffer.
     template <std::size_t i>
-    decltype(auto) get() const {
+    auto& get() const {
         return std::get<i>(_data).underlying();
     }
 
