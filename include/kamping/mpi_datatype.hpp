@@ -200,7 +200,7 @@ auto type_dispatcher() {
 ///
 template <typename T>
 struct mpi_type_traits {
-    /// @brief The base type of this trait obtained via \ref type_dispatcher.
+    /// @brief The base type of this trait obtained via \ref kamping::type_dispatcher.
     /// This defines how the data type is constructed in \ref mpi_type_traits::data_type().
     using base = decltype(type_dispatcher<T>());
     /// @brief The category of the type.
