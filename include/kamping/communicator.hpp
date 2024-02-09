@@ -460,6 +460,9 @@ public:
     auto recv_single(Args... args) const;
 
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
+    auto try_recv(Args... args) const;
+
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto irecv(Args... args) const;
 
     template <typename... Args>
