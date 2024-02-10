@@ -446,6 +446,130 @@ TEST(MpiDataTypeTest, struct_type_works_with_struct) {
     MPI_Type_free(&struct_type);
 }
 
+struct ExplicitNestedStruct {
+    float c;
+    bool  d;
+};
+struct ImplicitNestedStruct {
+    float c;
+    bool  d;
+};
+namespace kamping {
+template <>
+struct mpi_type_traits<ExplicitNestedStruct> : struct_type<ExplicitNestedStruct> {};
+} // namespace kamping
+
+TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
+    struct TestStruct {
+        uint8_t              a;
+        uint64_t             b;
+        ExplicitNestedStruct nested;          // should use the explicit struct MPI type declaration
+        ImplicitNestedStruct implicit_nested; // should use byte serialized type
+    };
+    MPI_Datatype struct_type = kamping::struct_type<TestStruct>::data_type();
+    int          num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(struct_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
+    // returned values for MPI_COMBINER_STRUCT
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 5);  // count + 1
+    EXPECT_EQ(num_addresses, 4); // count
+    EXPECT_EQ(num_datatypes, 4); // count
+    std::vector<int>          integers(static_cast<size_t>(num_integers));
+    std::vector<MPI_Aint>     addresses(static_cast<size_t>(num_addresses));
+    std::vector<MPI_Datatype> datatypes(static_cast<size_t>(num_datatypes));
+    MPI_Type_get_contents(
+        struct_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        integers.data(),
+        addresses.data(),
+        datatypes.data()
+    );
+    EXPECT_EQ(integers[0], 4);                                               // i[0] == count
+    EXPECT_EQ(integers[1], 1);                                               // i[1] == blocklength[0]
+    EXPECT_EQ(integers[2], 1);                                               // i[2] == blocklength[1]
+    EXPECT_EQ(integers[3], 1);                                               // i[3] == blocklength[2]
+    EXPECT_EQ(integers[4], 1);                                               // i[4] == blocklength[3]
+    EXPECT_EQ(addresses[0], offsetof(TestStruct, a));                        // a[0] == displacements[0]
+    EXPECT_EQ(addresses[1], offsetof(TestStruct, b));                        // a[1] == displacements[1]
+    EXPECT_EQ(addresses[2], offsetof(TestStruct, nested));                   // a[2] == displacements[2]
+    EXPECT_EQ(addresses[3], offsetof(TestStruct, implicit_nested));          // a[3] == displacements[3]
+    EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(datatypes[0]));  // d[0] == types[0]
+    EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(datatypes[1])); // d[1] == types[1]
+
+    MPI_Datatype explicit_nested_type = datatypes[2];
+    MPI_Type_get_envelope(explicit_nested_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
+    // returned values for MPI_COMBINER_STRUCT
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 3);  // count + 1
+    EXPECT_EQ(num_addresses, 2); // count
+    EXPECT_EQ(num_datatypes, 2); // count
+    integers.resize(static_cast<size_t>(num_integers));
+    addresses.resize(static_cast<size_t>(num_addresses));
+    datatypes.resize(static_cast<size_t>(num_datatypes));
+    MPI_Type_get_contents(
+        explicit_nested_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        integers.data(),
+        addresses.data(),
+        datatypes.data()
+    );
+    EXPECT_EQ(integers[0], 2);                                            // i[0] == count
+    EXPECT_EQ(integers[1], 1);                                            // i[1] == blocklength[0]
+    EXPECT_EQ(integers[2], 1);                                            // i[2] == blocklength[1]
+    EXPECT_EQ(addresses[0], offsetof(ExplicitNestedStruct, c));             // a[0] == displacements[0]
+    EXPECT_EQ(addresses[1], offsetof(ExplicitNestedStruct, d));             // a[1] == displacements[1]
+    EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(datatypes[0])); // d[0] == types[0]
+    EXPECT_THAT(possible_mpi_datatypes<bool>(), Contains(datatypes[1]));  // d[1] == types[1]
+
+    MPI_Datatype implicit_nested_type = datatypes[3];
+    MPI_Type_get_envelope(implicit_nested_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_CONTIGUOUS);
+    // returned values for MPI_COMBINER_CONTIGUOUS
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 1);
+    EXPECT_EQ(num_addresses, 0);
+    EXPECT_EQ(num_datatypes, 1);
+    int          count;
+    MPI_Datatype underlying_type;
+    MPI_Type_get_contents(
+        implicit_nested_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        &count,
+        nullptr,
+        &underlying_type
+                          );
+    EXPECT_EQ(count, sizeof(ImplicitNestedStruct));
+    EXPECT_EQ(underlying_type, MPI_BYTE);
+
+
+    // now pack our struct into a buffer and and unpack it again to check if the datatype works
+    MPI_Type_commit(&struct_type);
+    int pack_size;
+    MPI_Pack_size(1, struct_type, MPI_COMM_WORLD, &pack_size);
+    std::vector<char> buffer(static_cast<size_t>(pack_size));
+    int               position = 0;
+    TestStruct        t        = {1, 2, {3.0f, true}, {4.0f, false}};
+    MPI_Pack(&t, 1, struct_type, buffer.data(), static_cast<int>(buffer.size()), &position, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    position = 0;
+    TestStruct u;
+    MPI_Unpack(buffer.data(), static_cast<int>(buffer.size()), &position, &u, 1, struct_type, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    EXPECT_EQ(u.a, t.a);
+    EXPECT_EQ(u.b, t.b);
+    EXPECT_EQ(u.nested.c, t.nested.c);
+    EXPECT_EQ(u.nested.d, t.nested.d);
+    MPI_Type_free(&struct_type);
+}
+
 TEST(MpiDataTypeTest, struct_type_works_with_pair) {
     MPI_Datatype struct_type = kamping::struct_type<std::pair<uint8_t, uint64_t>>::data_type();
     int          num_integers, num_addresses, num_datatypes, combiner;
