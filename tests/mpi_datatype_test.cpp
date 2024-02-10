@@ -26,6 +26,12 @@ using namespace ::kamping;
 using namespace ::testing;
 
 std::set<MPI_Datatype> freed_types;
+size_t                 num_commit_calls = 0;
+
+int MPI_Type_commit(MPI_Datatype* type) {
+    num_commit_calls++;
+    return PMPI_Type_commit(type);
+}
 
 int MPI_Type_free(MPI_Datatype* type) {
     auto it = freed_types.insert(*type);
@@ -522,8 +528,8 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
     EXPECT_EQ(integers[0], 2);                                            // i[0] == count
     EXPECT_EQ(integers[1], 1);                                            // i[1] == blocklength[0]
     EXPECT_EQ(integers[2], 1);                                            // i[2] == blocklength[1]
-    EXPECT_EQ(addresses[0], offsetof(ExplicitNestedStruct, c));             // a[0] == displacements[0]
-    EXPECT_EQ(addresses[1], offsetof(ExplicitNestedStruct, d));             // a[1] == displacements[1]
+    EXPECT_EQ(addresses[0], offsetof(ExplicitNestedStruct, c));           // a[0] == displacements[0]
+    EXPECT_EQ(addresses[1], offsetof(ExplicitNestedStruct, d));           // a[1] == displacements[1]
     EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(datatypes[0])); // d[0] == types[0]
     EXPECT_THAT(possible_mpi_datatypes<bool>(), Contains(datatypes[1]));  // d[1] == types[1]
 
@@ -545,10 +551,9 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
         &count,
         nullptr,
         &underlying_type
-                          );
+    );
     EXPECT_EQ(count, sizeof(ImplicitNestedStruct));
     EXPECT_EQ(underlying_type, MPI_BYTE);
-
 
     // now pack our struct into a buffer and and unpack it again to check if the datatype works
     MPI_Type_commit(&struct_type);
@@ -813,18 +818,25 @@ TEST(MpiDataTypeTest, register_types_with_environment) {
     // Setup
     mpi_env.free_registered_mpi_types();
     freed_types.clear();
+    num_commit_calls = 0;
 
     int          c_array[3];
     MPI_Datatype array_type = mpi_datatype<decltype(c_array)>();
+    EXPECT_EQ(num_commit_calls, 1);
 
     struct TestStruct {
         int a;
         int b;
     };
     MPI_Datatype struct_type = mpi_datatype<TestStruct>();
+    EXPECT_EQ(num_commit_calls, 2);
     // should not register the type again
     MPI_Datatype other_struct_type = mpi_datatype<TestStruct>();
-    (void)other_struct_type;
+    EXPECT_EQ(num_commit_calls, 2);
+
+    // just do something with the types to avoid optimizing it away
+    int size;
+    MPI_Pack_size(1, other_struct_type, MPI_COMM_WORLD, &size);
 
     freed_types.clear();
     mpi_env.free_registered_mpi_types();
