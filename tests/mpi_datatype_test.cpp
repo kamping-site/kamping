@@ -262,7 +262,7 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
     );
 }
 
-TEST(MpiDataTypeTest, mpi_datatype_const_and_volatile) {
+TEST(MpiDataTypeTest, mpi_datatype_const) {
     // Ignore const qualifiers.
     EXPECT_THAT(possible_mpi_datatypes<int8_t>(), Contains(mpi_type_traits<int8_t const>::data_type()));
 }
@@ -316,6 +316,231 @@ TEST(MpiDataTypeTest, mpi_datatype_enum) {
     EXPECT_THAT(possible_mpi_datatypes<int64_t>(), Contains(mpi_type_traits<scopedEnumInt64_t>::data_type()));
 }
 
+TEST(MpiDataTypeTest, contiguous_type_works) {
+    std::array<float, 3> a               = {1.0f, 2.0f, 3.0f};
+    MPI_Datatype         contiguous_type = kamping::contiguous_type<float, 3>::data_type();
+    int                  num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(contiguous_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_CONTIGUOUS);
+    // returned values for MPI_COMBINER_CONTIGUOUS according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 1);
+    EXPECT_EQ(num_addresses, 0);
+    EXPECT_EQ(num_datatypes, 1);
+    int          count;
+    MPI_Datatype underlying_type;
+    MPI_Type_get_contents(
+        contiguous_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        &count,
+        nullptr,
+        &underlying_type
+    );
+    EXPECT_EQ(count, 3);
+    EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(MPI_FLOAT));
+    // now pack our array into a buffer and and unpack it again to check if the datatype works
+    MPI_Type_commit(&contiguous_type);
+    int pack_size;
+    MPI_Pack_size(1, contiguous_type, MPI_COMM_WORLD, &pack_size);
+    std::vector<char> buffer(static_cast<size_t>(pack_size));
+    int               position = 0;
+    MPI_Pack(a.data(), 1, contiguous_type, buffer.data(), static_cast<int>(buffer.size()), &position, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    position = 0;
+    std::array<float, 3> b;
+    MPI_Unpack(buffer.data(), static_cast<int>(buffer.size()), &position, b.data(), 1, contiguous_type, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    EXPECT_THAT(b, ElementsAreArray(a));
+    MPI_Type_free(&contiguous_type);
+}
+
+TEST(MpiDataTypeTest, byte_serialized_type_works) {
+    std::pair<int, double> a                    = {1, 2.0};
+    MPI_Datatype           byte_serialized_type = kamping::byte_serialized<std::pair<int, double>>::data_type();
+    int                    num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(byte_serialized_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_CONTIGUOUS);
+    // returned values for MPI_COMBINER_CONTIGUOUS
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 1);
+    EXPECT_EQ(num_addresses, 0);
+    EXPECT_EQ(num_datatypes, 1);
+    int          count;
+    MPI_Datatype underlying_type;
+    MPI_Type_get_contents(
+        byte_serialized_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        &count,
+        nullptr,
+        &underlying_type
+    );
+    EXPECT_EQ(count, sizeof(a));
+    EXPECT_EQ(underlying_type, MPI_BYTE);
+    // now pack our type into a buffer and and unpack it again to check if the datatype works
+    MPI_Type_commit(&byte_serialized_type);
+    int pack_size;
+    MPI_Pack_size(1, byte_serialized_type, MPI_COMM_WORLD, &pack_size);
+    std::vector<char> buffer(static_cast<size_t>(pack_size));
+    int               position = 0;
+    MPI_Pack(&a, 1, byte_serialized_type, buffer.data(), static_cast<int>(buffer.size()), &position, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    position = 0;
+    std::pair<int, double> b;
+    MPI_Unpack(buffer.data(), static_cast<int>(buffer.size()), &position, &b, 1, byte_serialized_type, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    EXPECT_EQ(b, a);
+    MPI_Type_free(&byte_serialized_type);
+}
+
+TEST(MpiDataTypeTest, struct_type_works_with_struct) {
+    struct TestStruct {
+        uint8_t  a;
+        uint64_t b;
+    };
+    MPI_Datatype struct_type = kamping::struct_type<TestStruct>::data_type();
+    int          num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(struct_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
+    // returned values for MPI_COMBINER_STRUCT
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 3);  // count + 1
+    EXPECT_EQ(num_addresses, 2); // count
+    EXPECT_EQ(num_datatypes, 2); // count
+    std::vector<int>          integers(static_cast<size_t>(num_integers));
+    std::vector<MPI_Aint>     addresses(static_cast<size_t>(num_addresses));
+    std::vector<MPI_Datatype> datatypes(static_cast<size_t>(num_datatypes));
+    MPI_Type_get_contents(
+        struct_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        integers.data(),
+        addresses.data(),
+        datatypes.data()
+    );
+    EXPECT_EQ(integers[0], 2);                                               // i[0] == count
+    EXPECT_EQ(integers[1], 1);                                               // i[1] == blocklength[0]
+    EXPECT_EQ(integers[2], 1);                                               // i[2] == blocklength[1]
+    EXPECT_EQ(addresses[0], offsetof(TestStruct, a));                        // a[0] == displacements[0]
+    EXPECT_EQ(addresses[1], offsetof(TestStruct, b));                        // a[1] == displacements[1]
+    EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(datatypes[0]));  // d[0] == types[0]
+    EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(datatypes[1])); // d[1] == types[1]
+    // now pack our struct into a buffer and and unpack it again to check if the datatype works
+    MPI_Type_commit(&struct_type);
+    int pack_size;
+    MPI_Pack_size(1, struct_type, MPI_COMM_WORLD, &pack_size);
+    std::vector<char> buffer(static_cast<size_t>(pack_size));
+    int               position = 0;
+    TestStruct        t        = {1, 2};
+    MPI_Pack(&t, 1, struct_type, buffer.data(), static_cast<int>(buffer.size()), &position, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    position = 0;
+    TestStruct u;
+    MPI_Unpack(buffer.data(), static_cast<int>(buffer.size()), &position, &u, 1, struct_type, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    EXPECT_EQ(u.a, t.a);
+    EXPECT_EQ(u.b, t.b);
+    MPI_Type_free(&struct_type);
+}
+
+TEST(MpiDataTypeTest, struct_type_works_with_pair) {
+    MPI_Datatype struct_type = kamping::struct_type<std::pair<uint8_t, uint64_t>>::data_type();
+    int          num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(struct_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
+    // returned values for MPI_COMBINER_STRUCT
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 3);  // count + 1
+    EXPECT_EQ(num_addresses, 2); // count
+    EXPECT_EQ(num_datatypes, 2); // count
+    std::vector<int>          integers(static_cast<size_t>(num_integers));
+    std::vector<MPI_Aint>     addresses(static_cast<size_t>(num_addresses));
+    std::vector<MPI_Datatype> datatypes(static_cast<size_t>(num_datatypes));
+    MPI_Type_get_contents(
+        struct_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        integers.data(),
+        addresses.data(),
+        datatypes.data()
+    );
+    EXPECT_EQ(integers[0], 2); // i[0] == count
+    EXPECT_EQ(integers[1], 1); // i[1] == blocklength[0]
+    EXPECT_EQ(integers[2], 1); // i[2] == blocklength[1]
+    using pair_type = std::pair<uint8_t, uint64_t>;
+    EXPECT_EQ(addresses[0], offsetof(pair_type, first));                     // a[0] == displacements[0]
+    EXPECT_EQ(addresses[1], offsetof(pair_type, second));                    // a[1] == displacements[1]
+    EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(datatypes[0]));  // d[0] == types[0]
+    EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(datatypes[1])); // d[1] == types[1]
+    // now pack our pair into a buffer and and unpack it again to check if the datatype works
+    MPI_Type_commit(&struct_type);
+    int pack_size;
+    MPI_Pack_size(1, struct_type, MPI_COMM_WORLD, &pack_size);
+    std::vector<char>            buffer(static_cast<size_t>(pack_size));
+    int                          position = 0;
+    std::pair<uint8_t, uint64_t> t        = {1, 2};
+    MPI_Pack(&t, 1, struct_type, buffer.data(), static_cast<int>(buffer.size()), &position, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    position = 0;
+    std::pair<uint8_t, uint64_t> u;
+    MPI_Unpack(buffer.data(), static_cast<int>(buffer.size()), &position, &u, 1, struct_type, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    EXPECT_EQ(u, t);
+    MPI_Type_free(&struct_type);
+}
+
+TEST(MpiDataTypeTest, struct_type_works_with_tuple) {
+    MPI_Datatype struct_type = kamping::struct_type<std::tuple<uint8_t, uint64_t>>::data_type();
+    int          num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(struct_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
+    // returned values for MPI_COMBINER_STRUCT
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 3);  // count + 1
+    EXPECT_EQ(num_addresses, 2); // count
+    EXPECT_EQ(num_datatypes, 2); // count
+    std::vector<int>          integers(static_cast<size_t>(num_integers));
+    std::vector<MPI_Aint>     addresses(static_cast<size_t>(num_addresses));
+    std::vector<MPI_Datatype> datatypes(static_cast<size_t>(num_datatypes));
+    MPI_Type_get_contents(
+        struct_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        integers.data(),
+        addresses.data(),
+        datatypes.data()
+    );
+    EXPECT_EQ(integers[0], 2); // i[0] == count
+    EXPECT_EQ(integers[1], 1); // i[1] == blocklength[0]
+    EXPECT_EQ(integers[2], 1); // i[2] == blocklength[1]
+    std::tuple<uint8_t, uint64_t> tuple;
+    MPI_Aint                      base_address = reinterpret_cast<MPI_Aint>(&tuple);
+    EXPECT_EQ(addresses[0], reinterpret_cast<MPI_Aint>(&std::get<0>(tuple)) - base_address); // a[0] == displacements[0]
+    EXPECT_EQ(addresses[1], reinterpret_cast<MPI_Aint>(&std::get<1>(tuple)) - base_address); // a[1] == displacements[1]
+    EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(datatypes[0]));                  // d[0] == types[0]
+    EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(datatypes[1]));                 // d[1] == types[1]
+    // now pack our tuple into a buffer and and unpack it again to check if the datatype works
+    MPI_Type_commit(&struct_type);
+    int pack_size;
+    MPI_Pack_size(1, struct_type, MPI_COMM_WORLD, &pack_size);
+    std::vector<char>             buffer(static_cast<size_t>(pack_size));
+    int                           position = 0;
+    std::tuple<uint8_t, uint64_t> t        = {1, 2};
+    MPI_Pack(&t, 1, struct_type, buffer.data(), static_cast<int>(buffer.size()), &position, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    position = 0;
+    std::tuple<uint8_t, uint64_t> u;
+    MPI_Unpack(buffer.data(), static_cast<int>(buffer.size()), &position, &u, 1, struct_type, MPI_COMM_WORLD);
+    EXPECT_EQ(position, pack_size);
+    EXPECT_EQ(u, t);
+    MPI_Type_free(&struct_type);
+}
+
 template <typename T1, typename T2>
 struct TestStruct {
     T1 a;
@@ -356,6 +581,7 @@ TEST(MpiDataTypeTest, mpi_datatype_struct) {
     );
     EXPECT_EQ((mpi_type_traits<TestStruct<int, Empty>>::category), TypeCategory::contiguous);
 
+    // pair is not trivially copyable, but we defined a byte_serialized trait for it explicitly.
     EXPECT_THAT(
         (mpi_type_traits<std::pair<int, double>>::data_type()),
         ContiguousType(MPI_BYTE, sizeof(std::pair<int, double>))
@@ -366,7 +592,13 @@ TEST(MpiDataTypeTest, mpi_datatype_struct) {
         (mpi_type_traits<std::tuple<int, double, std::complex<float>>>::data_type()),
         StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX})
     );
+
+    // struct is no trivially copyable, but we defined a struct_type trait for it explicitly.
     EXPECT_EQ((mpi_type_traits<std::tuple<int, double, std::complex<float>>>::category), TypeCategory::struct_like);
+    EXPECT_THAT(
+        (mpi_type_traits<std::tuple<int, double, std::complex<float>>>::data_type()),
+        StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX})
+    );
 }
 
 TEST(MpiDataTypeTest, mpi_datatype_c_array) {
