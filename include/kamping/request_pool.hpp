@@ -172,10 +172,53 @@ public:
                 return static_cast<index_type>(index);
             }
         }
+    }
+
+    /// @brief Tests if any request in the pool is completed by calling \c MPI_Testany.
+    /// @param status A \c status parameter object to which the status information about the completed operation is
+    /// written. Defaults to \c kamping::status(ignore<>).
+    /// @return If any request completes, returns an `std::optional` containing information about the completed request.
+    /// Otherwise, `std::nullopt`. The value contained inside the optional is dependent on \p status parameter and
+    /// follows the same rules as for \ref wait_any.
+    /// @see wait_any
+    template <typename StatusParamObjectType = decltype(status(ignore<>))>
+    auto test_any(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
+        int index;
+        int flag;
+        int err = MPI_Testany(
+            asserting_cast<int>(num_requests()),
+            request_ptr(),
+            &index,
+            &flag,
+            internal::status_param_to_native_ptr(status)
+        );
+        THROW_IF_MPI_ERROR(err, MPI_Testany);
         if constexpr (internal::is_extractable<decltype(status)>) {
-            return PoolAnyResult<index_type, decltype(status.extract())>{index, status.extract()};
+            using status_type = decltype(status.extract());
+            using return_type = PoolAnyResult<index_type, status_type>;
+            if (flag) {
+                if (index == MPI_UNDEFINED) {
+                    return std::optional<return_type>{index_end(), status.extract()};
+                } else {
+                    return std::optional<return_type>{static_cast<index_type>(index), status.extract()};
+                }
+            } else {
+                return std::optional<PoolAnyResult<index_type, status_type>>{};
+            }
         } else {
-            return std::optional<index_type>{index};
+            if (flag) {
+                if (index == MPI_UNDEFINED) {
+                    return std::optional{index_end()};
+                } else {
+                    return std::optional{static_cast<index_type>(index)};
+                }
+            } else {
+                return std::optional<index_type>{};
+            }
         }
     }
 
