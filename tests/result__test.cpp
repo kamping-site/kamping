@@ -1026,29 +1026,12 @@ TEST(MakeMpiResult_Test, check_order_of_handling_of_send_recv_buffer) {
     }
 }
 
-/// @brief Simple non-copyable container type.
-///
-template <typename T>
-class NonCopyableOwnContainer : public testing::OwnContainer<T> {
-public:
-    using testing::OwnContainer<T>::OwnContainer;
-
-    NonCopyableOwnContainer(NonCopyableOwnContainer<T> const&) = delete;
-    NonCopyableOwnContainer(NonCopyableOwnContainer<T>&&)      = default;
-
-    NonCopyableOwnContainer<T>& operator=(NonCopyableOwnContainer<T> const&) = delete;
-    NonCopyableOwnContainer<T>& operator=(NonCopyableOwnContainer<T>&&)      = default;
-};
-
-auto construct_mpi_result_object() {
-    using RecvCountsType = LibAllocatedContainerBasedBuffer<
-        NonCopyableOwnContainer<int>,
-        ParameterType::recv_counts,
-        BufferType::out_buffer>;
-    using RecvBufType = LibAllocatedContainerBasedBuffer<
-        NonCopyableOwnContainer<char>,
-        ParameterType::recv_buf,
-        BufferType::out_buffer>;
+template <template <typename> typename Container>
+auto construct_mpi_result_object_with_recv_counts_and_recv_buf() {
+    using RecvCountsType =
+        LibAllocatedContainerBasedBuffer<Container<int>, ParameterType::recv_counts, BufferType::out_buffer>;
+    using RecvBufType =
+        LibAllocatedContainerBasedBuffer<Container<char>, ParameterType::recv_buf, BufferType::out_buffer>;
 
     RecvCountsType recv_counts_wrapper;
     recv_counts_wrapper.resize(3);
@@ -1068,8 +1051,75 @@ auto construct_mpi_result_object() {
     return result;
 }
 
+TEST(MpiResult_Test, structured_bindings_with_copy_couting_containers_by_value) {
+    auto [recv_counts, recv_buf] = construct_mpi_result_object_with_recv_counts_and_recv_buf<testing::OwnContainer>();
+    static_assert(!std::is_const_v<decltype(recv_counts)>);
+    static_assert(!std::is_const_v<decltype(recv_buf)>);
+    EXPECT_EQ(recv_counts.copy_count(), 0);
+    EXPECT_EQ(recv_buf.copy_count(), 0);
+    EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
+    EXPECT_THAT(recv_buf, testing::ElementsAre(3, 4, 5, 6));
+}
+
+TEST(MpiResult_Test, structured_bindings_with_copy_couting_containers_by_const_value) {
+    auto const [recv_counts, recv_buf] =
+        construct_mpi_result_object_with_recv_counts_and_recv_buf<testing::OwnContainer>();
+    static_assert(std::is_const_v<decltype(recv_counts)>);
+    static_assert(std::is_const_v<decltype(recv_buf)>);
+    EXPECT_EQ(recv_counts.copy_count(), 0);
+    EXPECT_EQ(recv_buf.copy_count(), 0);
+    EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
+    EXPECT_THAT(recv_buf, testing::ElementsAre(3, 4, 5, 6));
+}
+
+TEST(MpiResult_Test, structured_bindings_with_copy_couting_containers_by_with_lvalue_ref) {
+    auto result                   = construct_mpi_result_object_with_recv_counts_and_recv_buf<testing::OwnContainer>();
+    auto& [recv_counts, recv_buf] = result;
+    static_assert(!std::is_const_v<decltype(recv_counts)>);
+    static_assert(!std::is_const_v<decltype(recv_buf)>);
+    EXPECT_EQ(recv_counts.copy_count(), 0);
+    EXPECT_EQ(recv_buf.copy_count(), 0);
+    EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
+    EXPECT_THAT(recv_buf, testing::ElementsAre(3, 4, 5, 6));
+}
+
+TEST(MpiResult_Test, structured_bindings_with_copy_couting_containers_by_const_lvalue_ref) {
+    auto const& [recv_counts, recv_buf] =
+        construct_mpi_result_object_with_recv_counts_and_recv_buf<testing::OwnContainer>();
+    static_assert(std::is_const_v<decltype(recv_counts)>);
+    static_assert(std::is_const_v<decltype(recv_buf)>);
+    EXPECT_EQ(recv_counts.copy_count(), 0);
+    EXPECT_EQ(recv_buf.copy_count(), 0);
+    EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
+    EXPECT_THAT(recv_buf, testing::ElementsAre(3, 4, 5, 6));
+}
+
+TEST(MpiResult_Test, structured_bindings_with_copy_couting_containers_by_rvalue_ref) {
+    auto&& [recv_counts, recv_buf] = construct_mpi_result_object_with_recv_counts_and_recv_buf<testing::OwnContainer>();
+    static_assert(!std::is_const_v<decltype(recv_counts)>);
+    static_assert(!std::is_const_v<decltype(recv_buf)>);
+    EXPECT_EQ(recv_counts.copy_count(), 0);
+    EXPECT_EQ(recv_buf.copy_count(), 0);
+    EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
+    EXPECT_THAT(recv_buf, testing::ElementsAre(3, 4, 5, 6));
+}
+
+/// @brief Simple non-copyable container type.
+///
+template <typename T>
+class NonCopyableOwnContainer : public testing::OwnContainer<T> {
+public:
+    using testing::OwnContainer<T>::OwnContainer;
+
+    NonCopyableOwnContainer(NonCopyableOwnContainer<T> const&) = delete;
+    NonCopyableOwnContainer(NonCopyableOwnContainer<T>&&)      = default;
+
+    NonCopyableOwnContainer<T>& operator=(NonCopyableOwnContainer<T> const&) = delete;
+    NonCopyableOwnContainer<T>& operator=(NonCopyableOwnContainer<T>&&)      = default;
+};
+
 TEST(MpiResult_Test, structured_bindings_with_non_copyable_containers_by_value) {
-    auto [recv_counts, recv_buf] = construct_mpi_result_object();
+    auto [recv_counts, recv_buf] = construct_mpi_result_object_with_recv_counts_and_recv_buf<NonCopyableOwnContainer>();
     static_assert(!std::is_const_v<decltype(recv_counts)>);
     static_assert(!std::is_const_v<decltype(recv_buf)>);
     EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
@@ -1077,8 +1127,8 @@ TEST(MpiResult_Test, structured_bindings_with_non_copyable_containers_by_value) 
 }
 
 TEST(MpiResult_Test, structured_bindings_with_non_copyable_containers_by_const_value) {
-    auto const [recv_counts, recv_buf] = construct_mpi_result_object();
-    auto const result                  = construct_mpi_result_object();
+    auto const [recv_counts, recv_buf] =
+        construct_mpi_result_object_with_recv_counts_and_recv_buf<NonCopyableOwnContainer>();
     static_assert(std::is_const_v<decltype(recv_counts)>);
     static_assert(std::is_const_v<decltype(recv_buf)>);
     EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
@@ -1086,7 +1136,7 @@ TEST(MpiResult_Test, structured_bindings_with_non_copyable_containers_by_const_v
 }
 
 TEST(MpiResult_Test, structured_bindings_with_lvalue_ref) {
-    auto result                   = construct_mpi_result_object();
+    auto result = construct_mpi_result_object_with_recv_counts_and_recv_buf<NonCopyableOwnContainer>();
     auto& [recv_counts, recv_buf] = result;
     static_assert(!std::is_const_v<decltype(recv_counts)>);
     static_assert(!std::is_const_v<decltype(recv_buf)>);
@@ -1095,7 +1145,8 @@ TEST(MpiResult_Test, structured_bindings_with_lvalue_ref) {
 }
 
 TEST(MpiResult_Test, structured_bindings_with_const_lvalue_ref) {
-    auto const& [recv_counts, recv_buf] = construct_mpi_result_object();
+    auto const& [recv_counts, recv_buf] =
+        construct_mpi_result_object_with_recv_counts_and_recv_buf<NonCopyableOwnContainer>();
     static_assert(std::is_const_v<decltype(recv_counts)>);
     static_assert(std::is_const_v<decltype(recv_buf)>);
     EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
@@ -1103,7 +1154,8 @@ TEST(MpiResult_Test, structured_bindings_with_const_lvalue_ref) {
 }
 
 TEST(MpiResult_Test, structured_bindings_with_non_copyable_containers_rvalue_ref) {
-    auto&& [recv_counts, recv_buf] = construct_mpi_result_object();
+    auto&& [recv_counts, recv_buf] =
+        construct_mpi_result_object_with_recv_counts_and_recv_buf<NonCopyableOwnContainer>();
     static_assert(!std::is_const_v<decltype(recv_counts)>);
     static_assert(!std::is_const_v<decltype(recv_buf)>);
     EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
