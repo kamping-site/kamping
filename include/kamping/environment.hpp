@@ -188,6 +188,20 @@ public:
         internal::registered_mpi_types.push_back(type);
     }
 
+    /// @brief Commit an MPI data type (without registering it with KaMPIng).
+    static void commit(MPI_Datatype type) {
+        int err = MPI_Type_commit(&type);
+        THROW_IF_MPI_ERROR(err, MPI_Type_commit);
+    }
+
+    /// @brief Commit an MPI data type and register it with KaMPIng.
+    /// @see commit()
+    /// @see register_type()
+    static void commit_and_register(MPI_Datatype type) {
+        commit(type);
+        register_mpi_type(type);
+    }
+
     /// @brief Free all registered MPI data types.
     ///
     /// Only call this when you no longer want to use any MPI data types created by KaMPIng as other KaMPIng functions
@@ -201,7 +215,7 @@ public:
         internal::registered_mpi_types.clear();
     }
 
-    static const size_t bsend_overhead = MPI_BSEND_OVERHEAD; ///< Provides an upper bound on the additional memory
+    static size_t const bsend_overhead = MPI_BSEND_OVERHEAD; ///< Provides an upper bound on the additional memory
                                                              ///< required by buffered send operations.
 
     /// @brief Attach a buffer to use for buffered send operations to the environment.
