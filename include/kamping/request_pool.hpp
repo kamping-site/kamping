@@ -13,6 +13,16 @@
 
 namespace kamping {
 
+/// @brief Result returned by \ref RequestPool.wait_any()
+/// @tparam IndexType Type of the stored Index.
+/// @tparam StatusType Type of the status object.
+template <typename IndexType, typename StatusType>
+struct PoolAnyResult {
+    std::optional<IndexType>
+               index;  ///< The index of the completed operation. \c std::nullopt there were no active requests.
+    StatusType status; ///< The status of the complete operation.
+};
+
 /// @brief A pool for storing multiple \ref Request s and checking them for completion.
 ///
 /// Requests are internally stored in a vector. The vector is resized as needed.
@@ -114,6 +124,43 @@ public:
             }
         } else {
             return static_cast<bool>(succeeded);
+        }
+    }
+
+    /// @brief Waits any request in the pool to complete by calling \c MPI_Waitany.
+    /// @param status A \c status parameter object to which the status information about the completed operation is
+    /// written. Defaults to \c kamping::status(ignore<>).
+    /// @return By default, returns an \c std::optional containing the index of the completed operation. If the pool is
+    /// empty or no request in the pool is active, returns `std::nullopt`. If \p status is an owning out parameter, also
+    /// returns the status alongside the index by returning a \ref PoolAnyResult.
+    /// @see PoolAnyResult
+    template <typename StatusParamObjectType = decltype(status(ignore<>))>
+    auto wait_any(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
+        int index;
+        int err = MPI_Waitany(
+            asserting_cast<int>(num_requests()),
+            request_ptr(),
+            &index,
+            internal::status_param_to_native_ptr(status)
+        );
+        THROW_IF_MPI_ERROR(err, MPI_Waitany);
+        if (index == MPI_UNDEFINED) {
+            if constexpr (internal::is_extractable<decltype(status)>) {
+                return PoolAnyResult<index_type, decltype(status.extract())>{
+                    std::optional<index_type>{},
+                    status.extract()};
+            } else {
+                return std::optional<index_type>{std::nullopt};
+            }
+        }
+        if constexpr (internal::is_extractable<decltype(status)>) {
+            return PoolAnyResult<index_type, decltype(status.extract())>{index, status.extract()};
+        } else {
+            return std::optional<index_type>{index};
         }
     }
 
