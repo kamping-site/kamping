@@ -147,6 +147,7 @@ TEST_F(EnvironmentTest, commit_test) {
     EXPECT_EQ(last_commited_type, type);
     // nothing should have been registered
     EXPECT_TRUE(internal::registered_mpi_types.empty());
+    MPI_Type_free(&type);
 }
 
 TEST_F(EnvironmentTest, commit_and_register_test) {
@@ -161,6 +162,7 @@ TEST_F(EnvironmentTest, commit_and_register_test) {
     // the type should have been registered
     EXPECT_EQ(internal::registered_mpi_types.size(), 1);
     EXPECT_EQ(internal::registered_mpi_types.front(), type);
+    env.free_registered_mpi_types();
 }
 
 TEST_F(EnvironmentTest, free_registered_tests) {
