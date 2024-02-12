@@ -95,29 +95,6 @@
         static_assert(kamping::internal::all_unique_v<parameter_types>, "There are duplicate parameter types.");    \
     } while (false)
 
-#define KAMPING_CONDITIONAL_CHECK_PARAMETERS(enable, args, required, optional)                                       \
-    do {                                                                                                             \
-        if constexpr (enable) {                                                                                      \
-            KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETERS(args, required);                                  \
-                                                                                                                     \
-            using required_parameters_types = typename kamping::internal::parameter_types_to_integral_constants<     \
-                KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(required)>::type;                                      \
-            using optional_parameters_types = typename kamping::internal::parameter_types_to_integral_constants<     \
-                KAMPING_PARAMETER_CHECK_HPP_PREFIX_PARAMETERS(optional)>::type;                                      \
-            using parameter_types = typename kamping::internal::parameters_to_integral_constant<args...>::type;      \
-            static_assert(                                                                                           \
-                kamping::internal::has_no_unused_parameters<                                                         \
-                    required_parameters_types,                                                                       \
-                    optional_parameters_types,                                                                       \
-                    args...>::assertion,                                                                             \
-                "There are unsupported parameters, only support required "                                           \
-                "parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(required                                    \
-                ) " and optional parameters " KAMPING_PARAMETER_CHECK_HPP_EVAL_STRINGIFY(optional)                   \
-            );                                                                                                       \
-            static_assert(kamping::internal::all_unique_v<parameter_types>, "There are duplicate parameter types."); \
-        }                                                                                                            \
-    } while (false)
-
 /// @cond IMPLEMENTATION
 
 // Used to stringify variadic parameters:
