@@ -202,9 +202,9 @@ public:
             using return_type = PoolAnyResult<index_type, status_type>;
             if (flag) {
                 if (index == MPI_UNDEFINED) {
-                    return std::optional<return_type>{index_end(), status.extract()};
+                    return std::optional<return_type>{{index_end(), status.extract()}};
                 } else {
-                    return std::optional<return_type>{static_cast<index_type>(index), status.extract()};
+                    return std::optional<return_type>{{static_cast<index_type>(index), status.extract()}};
                 }
             } else {
                 return std::optional<PoolAnyResult<index_type, status_type>>{};
