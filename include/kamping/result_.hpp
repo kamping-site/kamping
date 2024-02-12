@@ -59,7 +59,7 @@ public:
     /// @brief Constructor for MPIResult.
     ///
     /// @param data std::tuple containing all data buffers to be returned.
-    MPIResult_(std::tuple<Args...> data) : _data(std::move(data)) {}
+    MPIResult_(std::tuple<Args...>&& data) : _data(std::move(data)) {}
 
     /// @brief Extracts the \c kamping::Status from the MPIResult object.
     ///
@@ -265,7 +265,7 @@ public:
     /// @tparam i Index of the data buffer to extract.
     /// @return Returns a reference to the underlying data of the i-th data buffer.
     template <std::size_t i>
-    auto& get() const {
+    auto const& get() const {
         return std::get<i>(_data).underlying();
     }
 
@@ -292,21 +292,10 @@ struct tuple_size<kamping::MPIResult_<Args...>> {
 /// @tparam Args Automatically deducted template parameters.
 template <size_t index, typename... Args>
 struct tuple_element<index, kamping::MPIResult_<Args...>> {
-    using type = decltype(declval<kamping::MPIResult_<Args...>>().template get<index>()
-    ); ///< Type of the underlying data of the i-th data buffer in the result object.
+    using type = std::remove_reference_t<decltype(declval<kamping::MPIResult_<Args...>>().template get<index>()
+    )>; ///< Type of the underlying data of the i-th data buffer in the result object.
 };
 
-/// @brief Specialization of the std::tuple_element for \c const \ref kamping::MPIResult_. Part of the structured
-/// binding machinery.
-///
-/// @param index Index of the entry of \c const \ref kamping::MPIResult_ for which the underlying data type shall be
-/// deduced.
-/// @tparam Args Automatically deducted template parameters.
-template <size_t index, typename... Args>
-struct tuple_element<index, const kamping::MPIResult_<Args...>> {
-    using type = decltype(declval<const kamping::MPIResult_<Args...>>().template get<index>()
-    ); ///< Type of the underlying data of the i-th data buffer in the result object.
-};
 } // namespace std
 
 namespace kamping::internal {

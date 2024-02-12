@@ -11,6 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "gmock/gmock.h"
 #include <numeric>
 
 #include <gtest/gtest.h>
@@ -529,6 +530,7 @@ TEST(MakeMpiResult_Test, structured_bindings_basics) {
             std::move(recv_displs_buf),
             std::move(send_counts_buf)
         );
+
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, std::vector<std::int8_t>>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, std::vector<std::int16_t>>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, std::vector<std::int32_t>>);
@@ -573,6 +575,7 @@ TEST(MakeMpiResult_Test, structured_bindings_basics) {
             std::move(recv_displs_buf),
             std::move(send_counts_buf)
         );
+
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, const std::vector<std::int8_t>>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, const std::vector<std::int16_t>>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, const std::vector<std::int32_t>>);
@@ -596,10 +599,6 @@ TEST(MakeMpiResult_Test, structured_bindings_basics) {
             std::move(send_counts_buf)
         );
 
-        static_assert(std::is_lvalue_reference_v<decltype(recv_buffer)>);
-        static_assert(std::is_lvalue_reference_v<decltype(recv_counts)>);
-        static_assert(std::is_lvalue_reference_v<decltype(recv_displs)>);
-        static_assert(std::is_lvalue_reference_v<decltype(send_counts)>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, const std::vector<std::int8_t>>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, const std::vector<std::int16_t>>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, const std::vector<std::int32_t>>);
@@ -1025,4 +1024,88 @@ TEST(MakeMpiResult_Test, check_order_of_handling_of_send_recv_buffer) {
         static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_buf)>::value_type, char>);
         static_assert(std::is_same_v<std::remove_reference_t<decltype(result_recv_counts)>::value_type, int>);
     }
+}
+
+/// @brief Simple non-copyable container type.
+///
+template <typename T>
+class NonCopyableOwnContainer : public testing::OwnContainer<T> {
+public:
+    using testing::OwnContainer<T>::OwnContainer;
+
+    NonCopyableOwnContainer(NonCopyableOwnContainer<T> const&) = delete;
+    NonCopyableOwnContainer(NonCopyableOwnContainer<T>&&)      = default;
+
+    NonCopyableOwnContainer<T>& operator=(NonCopyableOwnContainer<T> const&) = delete;
+    NonCopyableOwnContainer<T>& operator=(NonCopyableOwnContainer<T>&&)      = default;
+};
+
+auto construct_mpi_result_object() {
+    using RecvCountsType = LibAllocatedContainerBasedBuffer<
+        NonCopyableOwnContainer<int>,
+        ParameterType::recv_counts,
+        BufferType::out_buffer>;
+    using RecvBufType = LibAllocatedContainerBasedBuffer<
+        NonCopyableOwnContainer<char>,
+        ParameterType::recv_buf,
+        BufferType::out_buffer>;
+
+    RecvCountsType recv_counts_wrapper;
+    recv_counts_wrapper.resize(3);
+    recv_counts_wrapper.underlying()[0] = 0;
+    recv_counts_wrapper.underlying()[1] = 1;
+    recv_counts_wrapper.underlying()[2] = 2;
+    RecvBufType recv_buf_wrapper;
+    recv_buf_wrapper.resize(4);
+    recv_buf_wrapper.underlying()[0] = 3;
+    recv_buf_wrapper.underlying()[1] = 4;
+    recv_buf_wrapper.underlying()[2] = 5;
+    recv_buf_wrapper.underlying()[3] = 6;
+
+    MPIResult_<RecvCountsType, RecvBufType> result(
+        std::make_tuple(std::move(recv_counts_wrapper), std::move(recv_buf_wrapper))
+    );
+    return result;
+}
+
+TEST(MpiResult_Test, structured_bindings_with_non_copyable_containers_by_value) {
+    auto [recv_counts, recv_buf] = construct_mpi_result_object();
+    static_assert(!std::is_const_v<decltype(recv_counts)>);
+    static_assert(!std::is_const_v<decltype(recv_buf)>);
+    EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
+    EXPECT_THAT(recv_buf, testing::ElementsAre(3, 4, 5, 6));
+}
+
+TEST(MpiResult_Test, structured_bindings_with_non_copyable_containers_by_const_value) {
+    auto const [recv_counts, recv_buf] = construct_mpi_result_object();
+    auto const result                  = construct_mpi_result_object();
+    static_assert(std::is_const_v<decltype(recv_counts)>);
+    static_assert(std::is_const_v<decltype(recv_buf)>);
+    EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
+    EXPECT_THAT(recv_buf, testing::ElementsAre(3, 4, 5, 6));
+}
+
+TEST(MpiResult_Test, structured_bindings_with_lvalue_ref) {
+    auto result                   = construct_mpi_result_object();
+    auto& [recv_counts, recv_buf] = result;
+    static_assert(!std::is_const_v<decltype(recv_counts)>);
+    static_assert(!std::is_const_v<decltype(recv_buf)>);
+    EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
+    EXPECT_THAT(recv_buf, testing::ElementsAre(3, 4, 5, 6));
+}
+
+TEST(MpiResult_Test, structured_bindings_with_const_lvalue_ref) {
+    auto const& [recv_counts, recv_buf] = construct_mpi_result_object();
+    static_assert(std::is_const_v<decltype(recv_counts)>);
+    static_assert(std::is_const_v<decltype(recv_buf)>);
+    EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
+    EXPECT_THAT(recv_buf, testing::ElementsAre(3, 4, 5, 6));
+}
+
+TEST(MpiResult_Test, structured_bindings_with_non_copyable_containers_rvalue_ref) {
+    auto&& [recv_counts, recv_buf] = construct_mpi_result_object();
+    static_assert(!std::is_const_v<decltype(recv_counts)>);
+    static_assert(!std::is_const_v<decltype(recv_buf)>);
+    EXPECT_THAT(recv_counts, testing::ElementsAre(0, 1, 2));
+    EXPECT_THAT(recv_buf, testing::ElementsAre(3, 4, 5, 6));
 }
