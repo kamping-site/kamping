@@ -18,8 +18,8 @@ namespace kamping {
 /// @tparam StatusType Type of the status object.
 template <typename IndexType, typename StatusType>
 struct PoolAnyResult {
-    std::optional<IndexType>
-               index;  ///< The index of the completed operation. \c std::nullopt there were no active requests.
+    IndexType
+        index; ///< The index of the completed operation. \ref RequestPool.index_end() if there were no active requests.
     StatusType status; ///< The status of the complete operation.
 };
 
@@ -33,6 +33,16 @@ public:
     RequestPool() {}
 
     using index_type = size_t; ///< The type used to index requests in the pool.
+
+    /// @brief The first index value. The pool is empty if `index_begin() == index_end()`.
+    index_type index_begin() const {
+        return 0;
+    }
+
+    /// @brief The index value after the last one. The pool is empty if `index_begin() == index_end()`.
+    index_type index_end() const {
+        return _requests.size();
+    }
 
     /// @brief Returns the number of requests currently stored in the pool.
     size_t num_requests() const {
@@ -130,9 +140,9 @@ public:
     /// @brief Waits any request in the pool to complete by calling \c MPI_Waitany.
     /// @param status A \c status parameter object to which the status information about the completed operation is
     /// written. Defaults to \c kamping::status(ignore<>).
-    /// @return By default, returns an \c std::optional containing the index of the completed operation. If the pool is
-    /// empty or no request in the pool is active, returns `std::nullopt`. If \p status is an owning out parameter, also
-    /// returns the status alongside the index by returning a \ref PoolAnyResult.
+    /// @return By default, returns  the index of the completed operation. If the pool is
+    /// empty or no request in the pool is active, returns an index equal to `index_end()`. If \p status is an owning
+    /// out parameter, also returns the status alongside the index by returning a \ref PoolAnyResult.
     /// @see PoolAnyResult
     template <typename StatusParamObjectType = decltype(status(ignore<>))>
     auto wait_any(StatusParamObjectType status = kamping::status(ignore<>)) {
@@ -148,13 +158,18 @@ public:
             internal::status_param_to_native_ptr(status)
         );
         THROW_IF_MPI_ERROR(err, MPI_Waitany);
-        if (index == MPI_UNDEFINED) {
-            if constexpr (internal::is_extractable<decltype(status)>) {
-                return PoolAnyResult<index_type, decltype(status.extract())>{
-                    std::optional<index_type>{},
-                    status.extract()};
+        if constexpr (internal::is_extractable<decltype(status)>) {
+            using status_type = decltype(status.extract());
+            if (index == MPI_UNDEFINED) {
+                return PoolAnyResult<index_type, status_type>{index_end(), status.extract()};
             } else {
-                return std::optional<index_type>{std::nullopt};
+                return PoolAnyResult<index_type, status_type>{static_cast<index_type>(index), status.extract()};
+            }
+        } else {
+            if (index == MPI_UNDEFINED) {
+                return index_end();
+            } else {
+                return static_cast<index_type>(index);
             }
         }
         if constexpr (internal::is_extractable<decltype(status)>) {

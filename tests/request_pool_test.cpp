@@ -164,26 +164,26 @@ TEST(RequestPoolTest, wait_any) {
     kamping::RequestPool      pool;
     DummyNonBlockingOperation op1;
     DummyNonBlockingOperation op2;
-    int                       val1   = -1;
-    int                       val2   = -1;
-    auto                      result = pool.wait_any();
-    EXPECT_FALSE(result.has_value()); // nothing to wait for
+    int                       val1  = -1;
+    int                       val2  = -1;
+    auto                      index = pool.wait_any();
+    EXPECT_EQ(index, pool.index_end()); // nothing to wait for
     op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
     op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
     op2.finish_op();
-    result = pool.wait_any();
-    EXPECT_THAT(result, Optional(Eq(1)));
+    index = pool.wait_any();
+    EXPECT_THAT(index, 1);
     EXPECT_EQ(val1, -1); // not finished yet
     EXPECT_EQ(val2, 43);
 
     op1.finish_op();
-    result = pool.wait_any();
-    EXPECT_THAT(result, Optional(Eq(0)));
+    index = pool.wait_any();
+    EXPECT_THAT(index, 0);
     EXPECT_EQ(val1, 42);
     EXPECT_EQ(val2, 43);
 
-    result = pool.wait_any();
-    EXPECT_FALSE(result.has_value()); // nothing to wait for
+    index = pool.wait_any();
+    EXPECT_EQ(index, pool.index_end());
 }
 
 TEST(RequestPoolTest, wait_any_status_out) {
@@ -194,12 +194,12 @@ TEST(RequestPoolTest, wait_any_status_out) {
     int                       val1 = -1;
     int                       val2 = -1;
     auto [index1, status1]         = pool.wait_any(status_out());
-    EXPECT_FALSE(index1.has_value()); // nothing to wait for
+    EXPECT_EQ(index1, pool.index_end()); // nothing to wait for
     op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
     op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
     op2.finish_op();
     auto [index2, status2] = pool.wait_any(status_out());
-    EXPECT_THAT(index2, Optional(Eq(1)));
+    EXPECT_THAT(index2, 1);
     EXPECT_EQ(val1, -1); // not finished yet
     EXPECT_EQ(val2, 43);
     EXPECT_THAT(status2, Property(&Status::tag, 43));
@@ -207,13 +207,13 @@ TEST(RequestPoolTest, wait_any_status_out) {
     // op1.finish_op();
     op1.finish_op();
     auto [index3, status3] = pool.wait_any(status_out());
-    EXPECT_THAT(index3, Optional(Eq(0)));
+    EXPECT_THAT(index3, 0);
     EXPECT_EQ(val1, 42);
     EXPECT_EQ(val2, 43);
     EXPECT_THAT(status3, Property(&Status::tag, 42));
 
     auto result = pool.wait_any(status_out());
-    EXPECT_FALSE(result.index.has_value()); // nothing to wait for
+    EXPECT_EQ(result.index, pool.index_end());
 }
 
 TEST(RequestPoolTest, wait_any_status_out_reference) {
@@ -224,24 +224,24 @@ TEST(RequestPoolTest, wait_any_status_out_reference) {
     int                       val1 = -1;
     int                       val2 = -1;
     Status                    status;
-    auto                      result = pool.wait_any(status_out(status));
-    EXPECT_FALSE(result.has_value()); // nothing to wait for
+    auto                      index = pool.wait_any(status_out(status));
+    EXPECT_EQ(index, pool.index_end());
     op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
     op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
     op2.finish_op();
-    result = pool.wait_any(status_out(status));
-    EXPECT_THAT(result, Optional(Eq(1)));
+    index = pool.wait_any(status_out(status));
+    EXPECT_THAT(index, 1);
     EXPECT_EQ(val1, -1); // not finished yet
     EXPECT_EQ(val2, 43);
     EXPECT_THAT(status, Property(&Status::tag, 43));
 
     op1.finish_op();
-    result = pool.wait_any(status_out(status));
-    EXPECT_THAT(result, Optional(Eq(0)));
+    index = pool.wait_any(status_out(status));
+    EXPECT_THAT(index, 0);
     EXPECT_EQ(val1, 42);
     EXPECT_THAT(status, Property(&Status::tag, 42));
     EXPECT_EQ(val2, 43);
 
-    result = pool.wait_any(status_out(status));
-    EXPECT_FALSE(result.has_value()); // nothing to wait for
+    index = pool.wait_any(status_out(status));
+    EXPECT_EQ(index, pool.index_end()); // nothing to wait for
 }
