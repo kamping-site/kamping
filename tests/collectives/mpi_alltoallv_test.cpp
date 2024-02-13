@@ -41,13 +41,19 @@ TEST(AlltoallvTest, single_element_no_parameters) {
     std::vector<int> send_counts(comm.size(), 1);
 
     // Do the alltoallv
-    auto mpi_result = comm.alltoallv(send_buf(input), kamping::send_counts(send_counts));
+    auto mpi_result = comm.alltoallv(
+        send_buf(input),
+        kamping::send_counts(send_counts),
+        recv_counts_out(),
+        send_displs_out(),
+        recv_displs_out()
+    );
 
     // Check recv buf
-    auto result = mpi_result.extract_recv_buffer();
-    EXPECT_EQ(result.size(), comm.size());
+    auto recv_buf = mpi_result.extract_recv_buffer();
+    EXPECT_EQ(recv_buf.size(), comm.size());
     std::vector<int> expected_result(comm.size(), comm.rank_signed());
-    EXPECT_EQ(result, expected_result);
+    EXPECT_EQ(recv_buf, expected_result);
 
     // Check recv counts
     auto recv_counts = mpi_result.extract_recv_counts();
@@ -109,7 +115,10 @@ TEST(AlltoallvTest, multiple_elements_same_on_all_ranks) {
     auto             mpi_result = comm.alltoallv(
         send_buf(input),
         recv_buf<BufferResizePolicy::resize_to_fit>(result),
-        kamping::send_counts(send_counts)
+        kamping::send_counts(send_counts),
+        recv_counts_out(),
+        send_displs_out(),
+        recv_displs_out()
     );
 
     // Check recv buffer
@@ -159,21 +168,20 @@ TEST(AlltoallvTest, custom_type_custom_container) {
     std::vector<int> send_counts(comm.size(), 1);
 
     // Do the alltoallv - receive into a library allocated OwnContainer
-    auto result = comm.alltoallv(
+    auto recv_buffer = comm.alltoallv(
                           send_buf(input),
                           recv_buf(alloc_new<OwnContainer<CustomType>>),
                           kamping::send_counts(send_counts)
-    )
-                      .extract_recv_buffer();
-    ASSERT_NE(result.data(), nullptr);
-    EXPECT_EQ(result.size(), comm.size());
+    );
+    ASSERT_NE(recv_buffer.data(), nullptr);
+    EXPECT_EQ(recv_buffer.size(), comm.size());
 
     // Check recv buffer
     OwnContainer<CustomType> expected_result(comm.size());
     for (size_t i = 0; i < expected_result.size(); ++i) {
         expected_result[i] = {i, comm.rank()};
     }
-    EXPECT_EQ(result, expected_result);
+    EXPECT_EQ(recv_buffer, expected_result);
 }
 
 TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i) {
@@ -519,9 +527,9 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
     std::exclusive_scan(recv_counts.begin(), recv_counts.end(), recv_displs.begin(), 0);
 
     // Do the alltoallv - all counts and displacements are already pre-calculated
-    auto mpi_result = comm.alltoallv(
+    auto recv_buf = comm.alltoallv(
         send_buf(input),
-        recv_buf(alloc_new<OwnContainer<CustomType>>),
+        kamping::recv_buf(alloc_new<OwnContainer<CustomType>>),
         kamping::send_counts(send_counts),
         kamping::send_displs(send_displs),
         kamping::recv_counts(recv_counts),
@@ -529,9 +537,8 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
     );
 
     // Check recv buffer
-    OwnContainer<CustomType> result = mpi_result.extract_recv_buffer();
-    ASSERT_NE(result.data(), nullptr);
-    EXPECT_EQ(result.size(), comm.size() * (comm.rank() + 1));
+    ASSERT_NE(recv_buf.data(), nullptr);
+    EXPECT_EQ(recv_buf.size(), comm.size() * (comm.rank() + 1));
 
     OwnContainer<CustomType> expected_result(comm.size() * (comm.rank() + 1));
     {
@@ -543,7 +550,7 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
         }
         ASSERT_EQ(i, expected_result.size());
     }
-    EXPECT_EQ(result, expected_result);
+    EXPECT_EQ(recv_buf, expected_result);
 }
 
 TEST(AlltoallvTest, default_container_type) {
@@ -558,7 +565,7 @@ TEST(AlltoallvTest, default_container_type) {
     std::vector<int> send_counts(comm.size(), 1);
 
     // Do the alltoallv
-    auto mpi_result = comm.alltoallv(send_buf(input), kamping::send_counts(send_counts));
+    auto mpi_result = comm.alltoallv(recv_counts_out(), send_displs_out(), recv_displs_out(), send_buf(input), kamping::send_counts(send_counts));
 
     // These just have to compile
     OwnContainer<int> result      = mpi_result.extract_recv_buffer();
