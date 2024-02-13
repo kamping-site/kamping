@@ -38,9 +38,18 @@ int main() {
     // Rank i sends it own rank to all others
     std::fill(input.begin(), input.end(), comm.rank());
 
-    std::vector<size_t> output = comm.alltoallv(send_buf(input), send_counts(counts_per_rank)).extract_recv_buffer();
+    {
+        // retrieve recv buffer only
+        std::vector<size_t> recv_buf = comm.alltoallv(send_buf(input), send_counts(counts_per_rank));
+        print_result_on_root(recv_buf, comm);
+    }
 
-    print_result_on_root(output, comm);
+    {
+        // additionally retrieve the recv counts
+        auto [recv_buf, recv_counts] = comm.alltoallv(send_buf(input), send_counts(counts_per_rank), recv_counts_out());
+        print_result_on_root(recv_buf, comm);
+        print_result_on_root(recv_counts, comm);
+    }
 
     return 0;
 }

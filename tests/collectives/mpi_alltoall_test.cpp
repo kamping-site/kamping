@@ -35,7 +35,7 @@ TEST(AlltoallTest, single_element_no_receive_buffer) {
     std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
 
-    auto mpi_result = comm.alltoall(send_buf(input));
+    auto mpi_result = comm.alltoall(send_buf(input), send_count_out(), recv_count_out());
 
     auto recv_buffer = mpi_result.extract_recv_buffer();
     auto send_count  = mpi_result.extract_send_count();
@@ -56,7 +56,12 @@ TEST(AlltoallTest, single_element_with_receive_buffer) {
 
     std::vector<int> result;
 
-    auto mpi_result = comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_to_fit>(result));
+    auto mpi_result = comm.alltoall(
+        send_buf(input),
+        recv_buf<BufferResizePolicy::resize_to_fit>(result),
+        send_count_out(),
+        recv_count_out()
+    );
     auto send_count = mpi_result.extract_send_count();
     auto recv_count = mpi_result.extract_recv_count();
 
@@ -158,7 +163,7 @@ TEST(AlltoallTest, single_element_with_send_count) {
 
     std::vector<int> input(comm.size(), comm.rank_signed());
 
-    auto             mpi_result = comm.alltoall(send_buf(input), send_count(1));
+    auto             mpi_result = comm.alltoall(send_buf(input), send_count(1), recv_count_out());
     std::vector<int> recv_buf   = mpi_result.extract_recv_buffer();
     int              recv_count = mpi_result.extract_recv_count();
 
@@ -202,7 +207,12 @@ TEST(AlltoallTest, multiple_elements) {
     });
 
     std::vector<int> result;
-    auto             mpi_result = comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::resize_to_fit>(result));
+    auto             mpi_result = comm.alltoall(
+        send_buf(input),
+        recv_buf<BufferResizePolicy::resize_to_fit>(result),
+        send_count_out(),
+        recv_count_out()
+    );
 
     EXPECT_EQ(mpi_result.extract_send_count(), 4);
     EXPECT_EQ(mpi_result.extract_recv_count(), 4);
@@ -228,7 +238,8 @@ TEST(AlltoallTest, given_send_count_overrides_deduced_send_count) {
     auto             mpi_result = comm.alltoall(
         send_buf(input),
         send_count(num_elements_per_processor_pair),
-        recv_buf<BufferResizePolicy::resize_to_fit>(result)
+        recv_buf<BufferResizePolicy::resize_to_fit>(result),
+        recv_count_out()
     );
 
     EXPECT_EQ(mpi_result.extract_recv_count(), num_elements_per_processor_pair);
@@ -256,15 +267,15 @@ TEST(AlltoallTest, custom_type_custom_container) {
         input[i] = {comm.rank(), i};
     }
 
-    auto result = comm.alltoall(send_buf(input), recv_buf(alloc_new<OwnContainer<CustomType>>)).extract_recv_buffer();
-    ASSERT_NE(result.data(), nullptr);
-    EXPECT_EQ(result.size(), comm.size());
+    auto recv_buf = comm.alltoall(send_buf(input), kamping::recv_buf(alloc_new<OwnContainer<CustomType>>));
+    ASSERT_NE(recv_buf.data(), nullptr);
+    EXPECT_EQ(recv_buf.size(), comm.size());
 
     OwnContainer<CustomType> expected_result(comm.size());
     for (size_t i = 0; i < expected_result.size(); ++i) {
         expected_result[i] = {i, comm.rank()};
     }
-    EXPECT_EQ(result, expected_result);
+    EXPECT_EQ(recv_buf, expected_result);
 }
 
 TEST(AlltoallTest, default_container_type) {
@@ -274,7 +285,7 @@ TEST(AlltoallTest, default_container_type) {
     std::iota(input.begin(), input.end(), 0);
 
     // This just has to compile
-    OwnContainer<int> result = comm.alltoall(send_buf(input)).extract_recv_buffer();
+    OwnContainer<int> result = comm.alltoall(send_buf(input));
 }
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
@@ -426,4 +437,60 @@ TEST(AlltoallTest, different_send_and_recv_counts_without_explicit_mpi_types) {
         expected_result[i] = CustomRecvStruct{comm.rank_signed() * 2, comm.rank_signed() * 2 + 1};
     }
     EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(AlltoallTest, structured_bindings_explicit_recv_buffer) {
+    Communicator comm;
+    // each PE sends its rank to all other PEs
+    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
+    std::vector<std::uint64_t>       recv_buffer(comm.size());
+    // explicit recv buffer
+    auto [send_type, recv_type, send_count, recv_count] = comm.alltoall(
+        send_type_out(),
+        send_buf(input),
+        recv_buf<BufferResizePolicy::resize_to_fit>(recv_buffer),
+        recv_type_out(),
+        send_count_out(),
+        recv_count_out()
+    );
+
+    EXPECT_EQ(send_count, 1);
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_type));
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(recv_type));
+    EXPECT_EQ(recv_buffer, iota_container_n<std::vector<std::uint64_t>>(comm.size(), 0ull));
+}
+
+TEST(AlltoallTest, structured_bindings_implicit_recv_buffer) {
+    Communicator comm;
+    // each PE sends its rank to all other PEs
+    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
+    auto [recv_buffer, send_type, recv_type, send_count, recv_count] =
+        comm.alltoall(send_type_out(), send_buf(input), recv_type_out(), send_count_out(), recv_count_out());
+
+    EXPECT_EQ(send_count, 1);
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_type));
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(recv_type));
+    EXPECT_EQ(recv_buffer, iota_container_n<std::vector<std::uint64_t>>(comm.size(), 0ull));
+}
+
+TEST(AlltoallTest, structured_bindings_explicit_owning_recv_buffer) {
+    Communicator comm;
+    // each PE sends its rank to all other PEs
+    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
+    auto [send_type, recv_buffer, recv_type, send_count, recv_count] = comm.alltoall(
+        send_type_out(),
+        send_buf(input),
+        recv_buf(std::vector<std::uint64_t>(comm.size())),
+        recv_type_out(),
+        send_count_out(),
+        recv_count_out()
+    );
+
+    EXPECT_EQ(send_count, 1);
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_type));
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(recv_type));
+    EXPECT_EQ(recv_buffer, iota_container_n<std::vector<std::uint64_t>>(comm.size(), 0ull));
 }
