@@ -108,7 +108,7 @@ Matcher<MPI_Datatype> StructType(std::initializer_list<MPI_Datatype> types) {
 }
 
 // Returns a std::vector containing all MPI_Datatypes equivalent to the given C++ datatype on this machine.
-// Removes the topmost level of const and volatile qualifiers.
+// Removes the topmost level of const qualifiers.
 template <typename T>
 std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
     // Remove const qualifiers.
@@ -126,7 +126,7 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
         return possible_mpi_datatypes<std::underlying_type_t<T_no_const>>();
     }
 
-    // For each supported C++ datatype, check if it is equivalent to the T_no_cv and if so, add the corresponding MPI
+    // For each supported C++ datatype, check if it is equivalent to the T_no_const and if so, add the corresponding MPI
     // datatype to the list of possible types.
     std::vector<MPI_Datatype> possible_mpi_datatypes;
     if constexpr (std::is_same_v<T_no_const, char>) {
@@ -623,7 +623,8 @@ TEST(MpiDataTypeTest, struct_type_works_with_pair) {
 }
 
 TEST(MpiDataTypeTest, struct_type_works_with_tuple) {
-    MPI_Datatype struct_type = kamping::struct_type<std::tuple<uint8_t, uint64_t>>::data_type();
+    using Tuple              = std::tuple<uint8_t, uint64_t>;
+    MPI_Datatype struct_type = kamping::struct_type<Tuple>::data_type();
     int          num_integers, num_addresses, num_datatypes, combiner;
     MPI_Type_get_envelope(struct_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
     EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
@@ -647,8 +648,8 @@ TEST(MpiDataTypeTest, struct_type_works_with_tuple) {
     EXPECT_EQ(integers[0], 2); // i[0] == count
     EXPECT_EQ(integers[1], 1); // i[1] == blocklength[0]
     EXPECT_EQ(integers[2], 1); // i[2] == blocklength[1]
-    std::tuple<uint8_t, uint64_t> tuple;
-    MPI_Aint                      base_address = reinterpret_cast<MPI_Aint>(&tuple);
+    Tuple    tuple;
+    MPI_Aint base_address = reinterpret_cast<MPI_Aint>(&tuple);
     EXPECT_EQ(addresses[0], reinterpret_cast<MPI_Aint>(&std::get<0>(tuple)) - base_address); // a[0] == displacements[0]
     EXPECT_EQ(addresses[1], reinterpret_cast<MPI_Aint>(&std::get<1>(tuple)) - base_address); // a[1] == displacements[1]
     EXPECT_THAT(possible_mpi_datatypes<uint8_t>(), Contains(datatypes[0]));                  // d[0] == types[0]

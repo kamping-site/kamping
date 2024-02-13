@@ -4,7 +4,7 @@
 #include "kamping/environment.hpp"
 #include "kamping/p2p/send.hpp"
 
-void printdatatype(MPI_Datatype datatype) {
+void print_datatype(MPI_Datatype datatype) {
     int num_integers, num_addresses, num_datatypes, combiner;
     MPI_Type_get_envelope(datatype, &num_integers, &num_addresses, &num_datatypes, &combiner);
     switch (combiner) {
@@ -31,7 +31,7 @@ void printdatatype(MPI_Datatype datatype) {
             );
             for (size_t i = 0; i < static_cast<size_t>(integers[0]); i++) {
                 std::cout << "blocklength=" << integers[i + 1] << ", displacement=" << addresses[i];
-                printdatatype(datatypes[i]);
+                print_datatype(datatypes[i]);
             }
             break;
         }
@@ -41,7 +41,7 @@ void printdatatype(MPI_Datatype datatype) {
             MPI_Datatype t;
             MPI_Type_get_contents(datatype, num_integers, num_addresses, num_datatypes, &count, nullptr, &t);
             std::cout << "count=" << count << " ";
-            printdatatype(t);
+            print_datatype(t);
             break;
         }
         default:
@@ -51,7 +51,7 @@ void printdatatype(MPI_Datatype datatype) {
 
 int MPI_Type_commit(MPI_Datatype* type) {
     std::cout << "MPI_Type_commit" << std::endl;
-    printdatatype(*type);
+    print_datatype(*type);
     return PMPI_Type_commit(type);
 }
 int MPI_Type_free(MPI_Datatype* type) {
@@ -70,8 +70,9 @@ struct Foo {
     double               b;
     MyPair<float, float> p;
 };
+// Explicit specialization of mpi_type_traits for MyPair using the automic type constructor which uses reflection to
+// create the type using MPI_Type_create_struct.
 namespace kamping {
-
 template <>
 struct mpi_type_traits<std::tuple<int, float, double>> : struct_type<std::tuple<int, float, double>> {};
 } // namespace kamping
@@ -85,8 +86,10 @@ int main() {
     comm.send(destination(rank::null), send_buf(p));
     std::tuple<int, float, double> t = {1, 2.0f, 3.0};
     comm.send(destination(rank::null), send_buf(t));
-    // std::pair<double, bool>        p2 = {2.0, false};
-    // comm.send(destination(rank::null), send_buf(p2));
+    // using a pair directly does not work because std::pair is not a trivially copyable type, so the automatic byte
+    // serialization is not enabled. This could be fixed by providing a specialization of mpi_type_traits for
+    // std::pair<double, bool>. std::pair<double, bool>        p2 = {2.0, false}; comm.send(destination(rank::null),
+    // send_buf(p2));
     Foo f = {1, 2.0, {3.0, 4.0}};
     comm.send(destination(rank::null), send_buf(f));
 }
