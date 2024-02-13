@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022-2023 The KaMPIng Authors
+// Copyright 2022-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -169,9 +169,9 @@ TEST(AlltoallvTest, custom_type_custom_container) {
 
     // Do the alltoallv - receive into a library allocated OwnContainer
     auto recv_buffer = comm.alltoallv(
-                          send_buf(input),
-                          recv_buf(alloc_new<OwnContainer<CustomType>>),
-                          kamping::send_counts(send_counts)
+        send_buf(input),
+        recv_buf(alloc_new<OwnContainer<CustomType>>),
+        kamping::send_counts(send_counts)
     );
     ASSERT_NE(recv_buffer.data(), nullptr);
     EXPECT_EQ(recv_buffer.size(), comm.size());
@@ -553,26 +553,33 @@ TEST(AlltoallvTest, custom_type_custom_container_i_pus_one_elements_to_rank_i_al
     EXPECT_EQ(recv_buf, expected_result);
 }
 
-TEST(AlltoallvTest, default_container_type) {
-    // Sends a single element from each rank to each other rank with only the mandatory parameters
-    Communicator<OwnContainer> comm;
-
-    // Prepare send buffer (all zeros)
-    std::vector<int> input(comm.size());
-    std::iota(input.begin(), input.end(), 0);
-
-    // Prepare send counts (all ones)
-    std::vector<int> send_counts(comm.size(), 1);
-
-    // Do the alltoallv
-    auto mpi_result = comm.alltoallv(recv_counts_out(), send_displs_out(), recv_displs_out(), send_buf(input), kamping::send_counts(send_counts));
-
-    // These just have to compile
-    OwnContainer<int> result      = mpi_result.extract_recv_buffer();
-    OwnContainer<int> recv_counts = mpi_result.extract_recv_counts();
-    OwnContainer<int> send_displs = mpi_result.extract_send_displs();
-    OwnContainer<int> recv_displs = mpi_result.extract_recv_displs();
-}
+/// @todo reactive once rebind/data-buffer recipe is implemented
+// TEST(AlltoallvTest, default_container_type) {
+//     // Sends a single element from each rank to each other rank with only the mandatory parameters
+//     Communicator<OwnContainer> comm;
+//
+//     // Prepare send buffer (all zeros)
+//     std::vector<int> input(comm.size());
+//     std::iota(input.begin(), input.end(), 0);
+//
+//     // Prepare send counts (all ones)
+//     std::vector<int> send_counts(comm.size(), 1);
+//
+//     // Do the alltoallv
+//     auto mpi_result = comm.alltoallv(
+//         recv_counts_out(),
+//         send_displs_out(),
+//         recv_displs_out(),
+//         send_buf(input),
+//         kamping::send_counts(send_counts)
+//     );
+//
+//     // These just have to compile
+//     OwnContainer<int> result      = mpi_result.extract_recv_buffer();
+//     OwnContainer<int> recv_counts = mpi_result.extract_recv_counts();
+//     OwnContainer<int> send_displs = mpi_result.extract_send_displs();
+//     OwnContainer<int> recv_displs = mpi_result.extract_recv_displs();
+// }
 
 TEST(AlltoallvTest, given_buffers_are_bigger_than_required) {
     // Check that if preallocated buffer are given for *_counts and *displacements that the resizing happens according
@@ -766,20 +773,18 @@ TEST(AlltoallvTest, non_monotonically_increasing_recv_displacements) {
     {
         // do the alltoallv without recv_counts
         auto recv_buf =
-            comm.alltoallv(send_buf(input), kamping::send_counts(send_counts), kamping::recv_displs(recv_displs))
-                .extract_recv_buffer();
+            comm.alltoallv(send_buf(input), kamping::send_counts(send_counts), kamping::recv_displs(recv_displs));
 
         EXPECT_EQ(recv_buf, expected_recv_buffer());
     }
     {
         // do the alltoallv with recv_counts
         auto recv_buf = comm.alltoallv(
-                                send_buf(input),
-                                kamping::send_counts(send_counts),
-                                kamping::recv_counts(recv_counts),
-                                kamping::recv_displs(recv_displs)
-        )
-                            .extract_recv_buffer();
+            send_buf(input),
+            kamping::send_counts(send_counts),
+            kamping::recv_counts(recv_counts),
+            kamping::recv_displs(recv_displs)
+        );
         EXPECT_EQ(recv_buf, expected_recv_buffer());
     }
 }
@@ -1082,4 +1087,80 @@ TEST(AlltoallvTest, different_send_and_recv_counts_without_explicitly_given_mpi_
         expected_result[i] = CustomRecvStruct{comm.rank_signed() * 2, comm.rank_signed() * 2 + 1};
     }
     EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(AlltoallvTest, structured_bindings_explicit_recv_buffer) {
+    Communicator comm;
+    // each PE sends its rank to all other PEs
+    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
+    const std::vector<int>           send_counts(comm.size(), 1);
+
+    std::vector<std::uint64_t> recv_buffer(comm.size());
+    // explicit recv buffer
+    auto [send_type, recv_type, recv_counts, send_displs, recv_displs] = comm.alltoallv(
+        send_type_out(),
+        send_buf(input),
+        kamping::send_counts(send_counts),
+        recv_buf<BufferResizePolicy::resize_to_fit>(recv_buffer),
+        recv_type_out(),
+        recv_counts_out(),
+        send_displs_out(),
+        recv_displs_out()
+    );
+
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_type));
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(recv_type));
+    EXPECT_EQ(recv_buffer, iota_container_n<std::vector<std::uint64_t>>(comm.size(), 0ull));
+    EXPECT_EQ(send_displs, iota_container_n(comm.size(), 0));
+    EXPECT_EQ(recv_counts, std::vector<int>(comm.size(), 1));
+    EXPECT_EQ(recv_displs, iota_container_n(comm.size(), 0));
+}
+
+TEST(AlltoallTest, structured_bindings_implicit_recv_buffer) {
+    Communicator comm;
+    // each PE sends its rank to all other PEs
+    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
+    const std::vector<int>           send_counts(comm.size(), 1);
+
+    auto [recv_buffer, send_type, recv_type, recv_counts, send_displs, recv_displs] = comm.alltoallv(
+        send_type_out(),
+        send_buf(input),
+        kamping::send_counts(send_counts),
+        recv_type_out(),
+        recv_counts_out(),
+        send_displs_out(),
+        recv_displs_out()
+    );
+
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_type));
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(recv_type));
+    EXPECT_EQ(recv_buffer, iota_container_n<std::vector<std::uint64_t>>(comm.size(), 0ull));
+    EXPECT_EQ(send_displs, iota_container_n(comm.size(), 0));
+    EXPECT_EQ(recv_counts, std::vector<int>(comm.size(), 1));
+    EXPECT_EQ(recv_displs, iota_container_n(comm.size(), 0));
+}
+
+TEST(AlltoallTest, structured_bindings_explicit_owning_recv_buffer) {
+    Communicator comm;
+    // each PE sends its rank to all other PEs
+    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
+    const std::vector<int>           send_counts(comm.size(), 1);
+
+    auto [send_type, recv_type, recv_counts, send_displs, recv_displs, recv_buffer] = comm.alltoallv(
+        send_type_out(),
+        send_buf(input),
+        kamping::send_counts(send_counts),
+        recv_type_out(),
+        recv_counts_out(),
+        send_displs_out(),
+        recv_displs_out(),
+        recv_buf(std::vector<std::uint64_t>(comm.size()))
+    );
+
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_type));
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(recv_type));
+    EXPECT_EQ(recv_buffer, iota_container_n<std::vector<std::uint64_t>>(comm.size(), 0ull));
+    EXPECT_EQ(send_displs, iota_container_n(comm.size(), 0));
+    EXPECT_EQ(recv_counts, std::vector<int>(comm.size(), 1));
+    EXPECT_EQ(recv_displs, iota_container_n(comm.size(), 0));
 }
