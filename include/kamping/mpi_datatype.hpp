@@ -32,11 +32,6 @@ namespace kamping {
 struct kamping_tag {};
 } // namespace kamping
 
-namespace pfr {
-template <typename T>
-struct is_reflectable<T, kamping::kamping_tag> : std::true_type {};
-} // namespace pfr
-
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
 /// @{
@@ -89,15 +84,9 @@ struct byte_serialized : contiguous_type<std::byte, sizeof(T)> {};
 /// @tparam T The type to construct the MPI_Datatype for.
 ///
 /// This requires that \p T is a `std::pair`, `std::tuple` or a type that is reflectable with
-/// [pfr](https://github.com/apolukhin/pfr_non_boost). For a type to be reflectable, it must have a specialization of \c
-/// pfr::is_reflectable with the tag \ref kamping_tag. This is enabled for all types by default using
-/// ```cpp
-/// namespace pfr {
-/// template <typename T>
-/// struct is_reflectable<T, kamping::kamping_tag> : std::true_type {};
-/// } // namespace pfr
-/// ```
-/// , but can be disabled by specializing \c pfr::is_reflectable for a type.
+/// [pfr](https://github.com/apolukhin/pfr_non_boost). If you do not agree with PFR's decision if a type is implicitly
+/// reflectable, you can override it by providing a specialization of \c pfr::is_reflectable with the tag \ref
+/// kamping_tag.
 /// @see https://apolukhin.github.io/pfr_non_boost/pfr/is_reflectable.html for details
 template <typename T>
 struct struct_type {
