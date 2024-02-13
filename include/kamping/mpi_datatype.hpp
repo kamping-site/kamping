@@ -27,6 +27,8 @@
 #include "kamping/noexcept.hpp"
 
 namespace kamping {
+/// @brief Tag used for indicating that a struct is reflectable.
+/// @see struct_type
 struct kamping_tag {};
 } // namespace kamping
 
