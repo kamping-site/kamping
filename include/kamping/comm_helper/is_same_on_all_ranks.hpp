@@ -19,6 +19,7 @@
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameters.hpp"
 
@@ -50,7 +51,7 @@ bool Communicator<DefaultContainerType, Plugins...>::is_same_on_all_ranks(Value 
 
     // Build the operation for the reduction.
     auto operation_param = kamping::op(
-        [](auto a, auto b) {
+        [](ValueEqual const& a, ValueEqual const& b) {
             if (a.equal && b.equal && a.value == b.value) {
                 return ValueEqual{a.value, true};
             } else {

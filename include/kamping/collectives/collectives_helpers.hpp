@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameters.hpp"
 
@@ -118,7 +119,11 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
             args...
         );
     if constexpr (!is_send_type_given_as_in_param) {
-        mpi_send_type.underlying() = mpi_datatype<send_value_type>();
+        if constexpr (std::is_same_v<send_value_type, unused_tparam>) {
+            mpi_send_type.underlying() = MPI_DATATYPE_NULL;
+        } else {
+            mpi_send_type.underlying() = mpi_datatype<send_value_type>();
+        }
     }
 
     auto&& mpi_recv_type =

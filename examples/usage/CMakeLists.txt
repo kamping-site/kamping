@@ -45,3 +45,7 @@ target_compile_options(example_timer PRIVATE ${KAMPING_WARNING_FLAGS})
 add_executable(example_request_pool request_pool_example.cpp)
 target_link_libraries(example_request_pool kamping)
 target_compile_options(example_timer PRIVATE ${KAMPING_WARNING_FLAGS})
+
+add_executable(example_datatype datatype_example.cpp)
+target_link_libraries(example_datatype kamping)
+target_compile_options(example_datatype PRIVATE ${KAMPING_WARNING_FLAGS})

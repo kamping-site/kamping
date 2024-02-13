@@ -40,14 +40,13 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     }
 
     // Try different data types.
-    int           value_int           = 0;
-    unsigned long value_ulint         = 10;
-    short const   value_const_short   = 0;
-    long volatile value_volatile_long = 0;
-    bool   value_bool                 = false;
-    float  value_float                = 0.0;
-    double value_double               = 0.0;
-    char   value_char                 = 'a';
+    int           value_int         = 0;
+    unsigned long value_ulint       = 10;
+    short const   value_const_short = 0;
+    bool          value_bool        = false;
+    float         value_float       = 0.0;
+    double        value_double      = 0.0;
+    char          value_char        = 'a';
 
     enum ValueEnum { a, b, c };
     enum class ValueEnumClass { a, b, c };
@@ -65,7 +64,6 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_int));
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_ulint));
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_const_short));
-    EXPECT_TRUE(comm.is_same_on_all_ranks(value_volatile_long));
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_bool));
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_float));
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_double));
@@ -75,20 +73,18 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     EXPECT_TRUE(comm.is_same_on_all_ranks(value_struct));
 
     if (comm.rank() == 0) {
-        value_int           = 1;
-        value_ulint         = 1;
-        value_volatile_long = 2;
-        value_bool          = true;
-        value_float         = 1.0;
-        value_double        = -1.0;
-        value_char          = 'b';
-        value_struct.a      = 1;
+        value_int      = 1;
+        value_ulint    = 1;
+        value_bool     = true;
+        value_float    = 1.0;
+        value_double   = -1.0;
+        value_char     = 'b';
+        value_struct.a = 1;
     }
 
     if (comm.size() > 1) {
         EXPECT_FALSE(comm.is_same_on_all_ranks(value_int));
         EXPECT_FALSE(comm.is_same_on_all_ranks(value_ulint));
-        EXPECT_FALSE(comm.is_same_on_all_ranks(value_volatile_long));
         EXPECT_FALSE(comm.is_same_on_all_ranks(value_bool));
         EXPECT_FALSE(comm.is_same_on_all_ranks(value_float));
         EXPECT_FALSE(comm.is_same_on_all_ranks(value_double));
@@ -97,7 +93,6 @@ TEST(AssertionHelpersTests, is_same_on_all_ranks) {
     } else {
         EXPECT_TRUE(comm.is_same_on_all_ranks(value_int));
         EXPECT_TRUE(comm.is_same_on_all_ranks(value_ulint));
-        EXPECT_TRUE(comm.is_same_on_all_ranks(value_volatile_long));
         EXPECT_TRUE(comm.is_same_on_all_ranks(value_bool));
         EXPECT_TRUE(comm.is_same_on_all_ranks(value_float));
         EXPECT_TRUE(comm.is_same_on_all_ranks(value_double));

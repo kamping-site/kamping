@@ -120,6 +120,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     // Get send_type and recv_type
     auto&& [send_type, recv_type] =
         internal::determine_mpi_datatypes<send_value_type, recv_value_type, decltype(recv_buf)>(args...);
+    KASSERT(
+        !is_root(int_root) || send_type.underlying() != MPI_DATATYPE_NULL,
+        "Send type must be specified on root.",
+        assert::light
+    );
     [[maybe_unused]] constexpr bool recv_type_is_in_param = !has_to_be_computed<decltype(recv_type)>;
 
     // Compute sendcount based on the size of the sendbuf

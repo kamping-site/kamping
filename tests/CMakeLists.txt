@@ -79,7 +79,7 @@ kamping_register_mpi_test(
 kamping_register_mpi_test(
     test_mpi_datatype
     FILES mpi_datatype_test.cpp
-    CORES 1
+    CORES 1 NO_GLIBCXX_DEBUG_CONTAINERS
 )
 kamping_register_mpi_test(
     test_mpi_gather

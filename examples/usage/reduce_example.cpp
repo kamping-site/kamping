@@ -53,14 +53,18 @@ int main() {
     );
     print_result_on_root(output, comm);
 
-    std::vector<std::pair<int, double>> input2 = {{3, 0.25}};
+    struct Bar {
+        int    first;
+        double second;
+    };
+    std::vector<Bar> input2 = {{3, 0.25}};
 
     auto result4 = comm.reduce(
                            send_buf(input2),
                            op(
                                [](auto a, auto b) {
                                    // dummy
-                                   return std::pair(a.first + b.first, a.second + b.second);
+                                   return Bar{a.first + b.first, a.second + b.second};
                                },
                                ops::commutative
                            )
