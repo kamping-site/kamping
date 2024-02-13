@@ -168,6 +168,20 @@ private:
     std::shared_ptr<size_t> _copy_count;
 };
 
+/// @brief Simple non-copyable container type.
+///
+template <typename T>
+class NonCopyableOwnContainer : public testing::OwnContainer<T> {
+public:
+    using testing::OwnContainer<T>::OwnContainer;
+
+    NonCopyableOwnContainer(NonCopyableOwnContainer<T> const&) = delete;
+    NonCopyableOwnContainer(NonCopyableOwnContainer<T>&&)      = default;
+
+    NonCopyableOwnContainer<T>& operator=(NonCopyableOwnContainer<T> const&) = delete;
+    NonCopyableOwnContainer<T>& operator=(NonCopyableOwnContainer<T>&&)      = default;
+};
+
 /// @ Mock argument for wrapped \c MPI calls.
 template <kamping::internal::ParameterType _parameter_type>
 struct Argument {
