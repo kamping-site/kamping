@@ -621,12 +621,9 @@ TEST(BcastTest, structured_bindings_explicit_owning_send_recv_buffer_on_all_rank
 TEST(BcastTest, structured_bindings_explicit_non_owning_send_recv_buffer_on_all_ranks) {
     Communicator               comm;
     std::vector<std::uint64_t> values;
-    values                                                = {42, 1337};
-    auto [send_recv_count, send_recv_type] = comm.bcast(
-        send_recv_count_out(),
-        send_recv_type_out(),
-        kamping::send_recv_buf<resize_to_fit>(values)
-    );
+    values = {42, 1337};
+    auto [send_recv_count, send_recv_type] =
+        comm.bcast(send_recv_count_out(), send_recv_type_out(), kamping::send_recv_buf<resize_to_fit>(values));
     EXPECT_THAT(values, ElementsAre(42, 1337));
     EXPECT_EQ(send_recv_count, 2);
     EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
