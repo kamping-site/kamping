@@ -229,13 +229,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
     // In contrast to bcast(...), send_recv_count is not a possible parameter.
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(send_recv_buf, root));
 
-    if constexpr (has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
-        KASSERT(
-            select_parameter_type<ParameterType::send_recv_buf>(args...).size() == 1u,
-            "The send/receive buffer has to be of size 1 on all ranks.",
-            assert::light
-        );
-    }
     // Get the root PE
     auto&& root = select_parameter_type_or_default<ParameterType::root, internal::RootDataBuffer>(
         std::tuple(this->root()),
@@ -252,14 +245,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
 
     if constexpr (has_parameter_type<ParameterType::send_recv_buf, Args...>()) {
         using send_recv_buf_type = buffer_type_with_requested_parameter_type<ParameterType::send_recv_buf, Args...>;
-        if constexpr (send_recv_buf_type::is_owning && !send_recv_buf_type::is_single_element) {
-            // very unidiomatic caller decision to deliberately have an owning (send)_recv_buffer with a
-            // container type.
-            return *this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1)).data();
-        } else {
-            return this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1));
-        }
+        static_assert(
+            send_recv_buf_type::is_single_element,
+            "The underlying container has to be a single element \"container\""
+        );
+        return this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1));
     } else {
-        return this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1))[0];
+        return *this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1)).data();
     }
 }

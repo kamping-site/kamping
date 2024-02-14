@@ -466,22 +466,8 @@ TEST(BcastTest, bcast_single) {
     EXPECT_EQ(value, 0);
 
     std::vector<int> value_vector = {comm.rank_signed()};
-    EXPECT_NO_THROW(comm.bcast_single(send_recv_buf(value_vector)));
+    EXPECT_NO_THROW(comm.bcast_single(send_recv_buf(value_vector.front())));
     EXPECT_EQ(value_vector[0], 0);
-
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
-    value_vector.resize(2);
-    EXPECT_KASSERT_FAILS(
-        comm.bcast_single(send_recv_buf(value_vector)),
-        "The send/receive buffer has to be of size 1 on all ranks."
-    );
-
-    value_vector.resize(0);
-    EXPECT_KASSERT_FAILS(
-        comm.bcast_single(send_recv_buf(value_vector)),
-        "The send/receive buffer has to be of size 1 on all ranks."
-    );
-#endif
 }
 
 TEST(BcastTest, bcast_single_send_recv_buf_parameter_only_on_root) {
@@ -510,27 +496,6 @@ TEST(BcastTest, bcast_single_owning_send_recv_buf_parameter_on_non_root) {
     EXPECT_EQ(value, 0);
 }
 
-TEST(BcastTest, bcast_single_owning_container_send_recv_buf_parameter_on_non_root) {
-    Communicator comm;
-
-    int value = 1;
-    if (comm.is_root()) {
-        value = comm.rank_signed();
-        comm.bcast_single(send_recv_buf(value));
-    } else {
-        value = comm.bcast_single(send_recv_buf(std::vector<int>(1)));
-    }
-    EXPECT_EQ(value, 0);
-}
-
-///@todo shall this be allowed?
-TEST(BcastTest, bcast_single_owning_container_send_recv_buf_parameter_on_all_ranks) {
-    Communicator     comm;
-    std::vector<int> input_vector{comm.rank_signed() + 42};
-    int const        value = comm.bcast_single(send_recv_buf(std::move(input_vector)));
-    EXPECT_EQ(value, 42);
-}
-
 TEST(BcastTest, bcast_single_owning_single_value_send_recv_buf_parameter_on_all_ranks) {
     Communicator comm;
     int const    value = comm.bcast_single(send_recv_buf(comm.rank_signed() + 42));
@@ -549,19 +514,6 @@ TEST(BcastTest, bcast_single_send_recv_buf_parameter_required_on_root) {
 
     OwnContainer<int> message;
     EXPECT_KASSERT_FAILS(comm.bcast_single<int>(), "send_recv_buf must be provided on the root rank.");
-}
-#endif
-
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
-TEST(BcastTest, bcast_single_invalid_parameters) {
-    Communicator comm;
-
-    std::vector<int> input = {42, 1};
-
-    EXPECT_KASSERT_FAILS(
-        (comm.bcast_single(send_recv_buf(input))),
-        "The send/receive buffer has to be of size 1 on all ranks."
-    );
 }
 #endif
 
