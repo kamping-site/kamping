@@ -323,7 +323,7 @@ struct ParameterTypeEntry {
     static constexpr ParameterType parameter_type = ptype; ///< ParameterType to be stored in this type.
 };
 
-/// @brief list of parameter type (entries) which should not be included in the result object.
+/// @brief List of parameter type (entries) which should not be included in the result object.
 using parameter_types_to_ignore_for_result_object = type_list<
     ParameterTypeEntry<ParameterType::op>,
     ParameterTypeEntry<ParameterType::source>,
