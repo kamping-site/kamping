@@ -71,7 +71,7 @@ TEST(BcastTest, extract_receive_buffer) {
         values = {42, 1337};
         comm.bcast(send_recv_buf(values));
     } else {
-        values = comm.bcast(send_recv_buf(alloc_new<std::vector<size_t>>)).extract_recv_buffer();
+        values = comm.bcast(send_recv_buf(alloc_new<std::vector<size_t>>));
     }
 
     EXPECT_THAT(values, ElementsAre(42, 1337));
@@ -315,7 +315,7 @@ TEST(BcastTest, send_recv_buf_parameter_only_on_root) {
         message = {42, 1337};
         comm.bcast(send_recv_buf(message));
     } else {
-        message = comm.bcast<int>().extract_recv_buffer();
+        message = comm.bcast<int>();
     }
     EXPECT_THAT(message, ElementsAre(42, 1337));
 }
@@ -363,7 +363,7 @@ TEST(BcastTest, send_recv_type_part_of_result_object) {
     if (comm.is_root(root_rank)) {
         std::iota(data.begin(), data.end(), 0);
     }
-    auto result = comm.bcast(send_recv_buf(data), root(root_rank));
+    auto result = comm.bcast(send_recv_buf(data), root(root_rank), send_recv_type_out());
     EXPECT_EQ(result.extract_send_recv_type(), MPI_INT);
     EXPECT_THAT(data, ElementsAre(0, 1));
 }
@@ -494,8 +494,53 @@ TEST(BcastTest, bcast_single_send_recv_buf_parameter_only_on_root) {
     } else {
         value = comm.bcast_single<int>();
     }
-
     EXPECT_EQ(value, 0);
+}
+
+TEST(BcastTest, bcast_single_owning_send_recv_buf_parameter_on_non_root) {
+    Communicator comm;
+
+    int value = 1;
+    if (comm.is_root()) {
+        value = comm.rank_signed();
+        comm.bcast_single(send_recv_buf(value));
+    } else {
+        value = comm.bcast_single(send_recv_buf(int{}));
+    }
+    EXPECT_EQ(value, 0);
+}
+
+TEST(BcastTest, bcast_single_owning_container_send_recv_buf_parameter_on_non_root) {
+    Communicator comm;
+
+    int value = 1;
+    if (comm.is_root()) {
+        value = comm.rank_signed();
+        comm.bcast_single(send_recv_buf(value));
+    } else {
+        value = comm.bcast_single(send_recv_buf(std::vector<int>(1)));
+    }
+    EXPECT_EQ(value, 0);
+}
+
+///@todo shall this be allowed?
+TEST(BcastTest, bcast_single_owning_container_send_recv_buf_parameter_on_all_ranks) {
+    Communicator     comm;
+    std::vector<int> input_vector{comm.rank_signed() + 42};
+    int const        value = comm.bcast_single(send_recv_buf(std::move(input_vector)));
+    EXPECT_EQ(value, 42);
+}
+
+TEST(BcastTest, bcast_single_owning_single_value_send_recv_buf_parameter_on_all_ranks) {
+    Communicator comm;
+    int const    value = comm.bcast_single(send_recv_buf(comm.rank_signed() + 42));
+    EXPECT_EQ(value, 42);
+}
+
+TEST(BcastTest, bcast_single_owning_single_value_send_recv_buf_parameter_on_all_ranks_non_standard_root) {
+    Communicator comm;
+    int const    value = comm.bcast_single(send_recv_buf(comm.rank_signed() + 42), root(comm.size() - 1));
+    EXPECT_EQ(value, 42 + comm.size_signed() - 1);
 }
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION)
@@ -519,3 +564,93 @@ TEST(BcastTest, bcast_single_invalid_parameters) {
     );
 }
 #endif
+
+TEST(BcastTest, structured_bindings_implicit_recv_buffer) {
+    Communicator               comm;
+    std::vector<std::uint64_t> values;
+    if (comm.is_root()) {
+        values = {42, 1337};
+        auto [send_recv_count, send_recv_type] =
+            comm.bcast(send_recv_buf(values), send_recv_count_out(), send_recv_type_out());
+        EXPECT_EQ(send_recv_count, 2);
+        EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+    } else {
+        auto [send_recv_buf, send_recv_count, send_recv_type] =
+            comm.bcast<std::uint64_t>(send_recv_count_out(), send_recv_type_out());
+        EXPECT_THAT(send_recv_buf, ElementsAre(42, 1337));
+        EXPECT_EQ(send_recv_count, 2);
+        EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+    }
+}
+
+TEST(BcastTest, structured_bindings_explicit_owing_recv_buffer) {
+    Communicator               comm;
+    std::vector<std::uint64_t> values;
+    if (comm.is_root()) {
+        values = {42, 1337};
+        auto [send_recv_count, send_recv_type] =
+            comm.bcast(send_recv_buf(values), send_recv_count_out(), send_recv_type_out());
+        EXPECT_EQ(send_recv_count, 2);
+        EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+    } else {
+        auto [send_recv_count, send_recv_buf, send_recv_type] = comm.bcast<std::uint64_t>(
+            send_recv_count_out(),
+            kamping::send_recv_buf(alloc_new<std::vector<std::uint64_t>>),
+            send_recv_type_out()
+        );
+        EXPECT_THAT(send_recv_buf, ElementsAre(42, 1337));
+        EXPECT_EQ(send_recv_count, 2);
+        EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+    }
+}
+
+TEST(BcastTest, structured_bindings_explicit_owning_send_recv_buffer_on_all_ranks) {
+    Communicator               comm;
+    std::vector<std::uint64_t> values;
+    values                                                = {42, 1337};
+    auto [send_recv_count, send_recv_type, send_recv_buf] = comm.bcast(
+        send_recv_count_out(),
+        send_recv_type_out(),
+        kamping::send_recv_buf<resize_to_fit>(std::move(values))
+    );
+    EXPECT_THAT(send_recv_buf, ElementsAre(42, 1337));
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+}
+
+TEST(BcastTest, structured_bindings_explicit_non_owning_send_recv_buffer_on_all_ranks) {
+    Communicator               comm;
+    std::vector<std::uint64_t> values;
+    values                                                = {42, 1337};
+    auto [send_recv_count, send_recv_type] = comm.bcast(
+        send_recv_count_out(),
+        send_recv_type_out(),
+        kamping::send_recv_buf<resize_to_fit>(values)
+    );
+    EXPECT_THAT(values, ElementsAre(42, 1337));
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+}
+
+TEST(BcastTest, structured_bindings_explicit_owning_send_recv_buffer_on_all_ranks_with_non_standard_root) {
+    Communicator               comm;
+    std::vector<std::uint64_t> values;
+    values                                                = {42, 1337};
+    auto [send_recv_count, send_recv_type, send_recv_buf] = comm.bcast(
+        send_recv_count_out(),
+        root(comm.size() - 1),
+        send_recv_type_out(),
+        kamping::send_recv_buf<resize_to_fit>(std::move(values))
+    );
+    EXPECT_THAT(send_recv_buf, ElementsAre(42, 1337));
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+}
+
+TEST(BcastTest, structured_bindings_explicit_owning_send_recv_buffer_on_all_ranks_only) {
+    Communicator               comm;
+    std::vector<std::uint64_t> values;
+    values             = {42, 1337};
+    auto send_recv_buf = comm.bcast(root(comm.size() - 1), kamping::send_recv_buf<resize_to_fit>(std::move(values)));
+    EXPECT_THAT(send_recv_buf, ElementsAre(42, 1337));
+}
