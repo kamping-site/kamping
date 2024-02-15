@@ -37,6 +37,14 @@ TEST(ExscanTest, exscan_single) {
     }
 }
 
+TEST(ScanTest, scan_single_with_temporary) {
+    Communicator comm;
+
+    auto result          = comm.exscan_single(send_buf(42), op(kamping::ops::plus<>{}));
+    int  expected_result = comm.rank_signed() * 42;
+    EXPECT_EQ(result, expected_result);
+}
+
 TEST(ExscanTest, exscan_single_values_on_rank_0) {
     Communicator comm;
 
@@ -52,7 +60,7 @@ TEST(ExscanTest, exscan_single_vector_of_size_1) {
 
     std::vector<int> input = {42};
 
-    auto result = comm.exscan_single(send_buf(input), op(kamping::ops::plus<>{}));
+    auto result = comm.exscan_single(send_buf(input.front()), op(kamping::ops::plus<>{}));
     static_assert(std::is_same_v<decltype(result), decltype(input)::value_type>);
     if (comm.rank() != 0) {
         int expected_result = comm.rank_signed() * 42;
@@ -60,25 +68,12 @@ TEST(ExscanTest, exscan_single_vector_of_size_1) {
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
-TEST(ExscanTest, exscan_single_vector_of_size_2) {
-    Communicator comm;
-
-    std::vector<int> input = {42, 1};
-
-    EXPECT_KASSERT_FAILS(
-        (comm.exscan_single(send_buf(input), op(kamping::ops::plus<>{}))),
-        "The send buffer has to be of size 1 on all ranks."
-    );
-}
-#endif
-
 TEST(ExscanTest, no_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
 
-    auto result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+    auto result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{}));
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {((comm.rank_signed() - 1) * comm.rank_signed()) / 2, comm.rank_signed() * 42};
@@ -194,8 +189,7 @@ TEST(ExscanTest, builtin_op_on_non_builtin_type) {
     std::vector<MyInt> input = {comm.rank_signed(), 42};
 
     auto result =
-        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative), values_on_rank_0(MyInt{0}))
-            .extract_recv_buffer();
+        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative), values_on_rank_0(MyInt{0}));
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {((comm.rank_signed() - 1) * comm.rank_signed()) / 2, comm.rank_signed() * 42};
     EXPECT_EQ(result, expected_result);
@@ -217,8 +211,7 @@ TEST(ExscanTest, identity_not_auto_deducible_and_no_values_on_rank_0_provided) {
     };
     std::vector<MyInt> input = {comm.rank_signed(), 42};
 
-    auto result =
-        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
+    auto result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative));
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {((comm.rank_signed() - 1) * comm.rank_signed()) / 2, comm.rank_signed() * 42};
     if (comm.rank() != 0) { // The result of this exscan() is not defined on rank 0.
@@ -231,8 +224,7 @@ TEST(ExscanTest, non_identity_values_on_rank_0) {
 
     std::vector<int> input = {0};
 
-    auto result =
-        comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), values_on_rank_0(1337)).extract_recv_buffer();
+    auto result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), values_on_rank_0(1337));
     EXPECT_EQ(result.size(), 1);
 
     std::vector<int> expected_result;
@@ -305,11 +297,10 @@ TEST(ExscanTest, custom_operation_on_builtin_type) {
 
     { // use function ptr
         auto result = comm.exscan(
-                              send_buf(input),
-                              op(add_plus_42_function, kamping::ops::commutative),
-                              values_on_rank_0({0, 1, 2})
-        )
-                          .extract_recv_buffer();
+            send_buf(input),
+            op(add_plus_42_function, kamping::ops::commutative),
+            values_on_rank_0({0, 1, 2})
+        );
 
         EXPECT_EQ(result.size(), 3);
         if (comm.rank() == 0) {
@@ -324,9 +315,11 @@ TEST(ExscanTest, custom_operation_on_builtin_type) {
     }
 
     { // use lambda
-        auto result =
-            comm.exscan(send_buf(input), op(add_plus_42_lambda, kamping::ops::commutative), values_on_rank_0({0, 1, 2}))
-                .extract_recv_buffer();
+        auto result = comm.exscan(
+            send_buf(input),
+            op(add_plus_42_lambda, kamping::ops::commutative),
+            values_on_rank_0({0, 1, 2})
+        );
 
         EXPECT_EQ(result.size(), 3);
         if (comm.rank() == 0) {
@@ -341,13 +334,11 @@ TEST(ExscanTest, custom_operation_on_builtin_type) {
     }
 
     { // use lambda inline
-        auto result =
-            comm.exscan(
-                    send_buf(input),
-                    op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative),
-                    values_on_rank_0({0, 1, 2})
-            )
-                .extract_recv_buffer();
+        auto result = comm.exscan(
+            send_buf(input),
+            op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative),
+            values_on_rank_0({0, 1, 2})
+        );
 
         EXPECT_EQ(result.size(), 3);
         if (comm.rank() == 0) {
@@ -368,8 +359,7 @@ TEST(ExscanTest, custom_operation_on_builtin_type) {
             }
         };
         auto result =
-            comm.exscan(send_buf(input), op(MySum42{}, kamping::ops::commutative), values_on_rank_0({0, 1, 2}))
-                .extract_recv_buffer();
+            comm.exscan(send_buf(input), op(MySum42{}, kamping::ops::commutative), values_on_rank_0({0, 1, 2}));
 
         EXPECT_EQ(result.size(), 3);
         if (comm.rank() == 0) {
@@ -393,8 +383,7 @@ TEST(ExscanTest, custom_operation_on_builtin_type_non_commutative) {
 
     std::vector<int> input = {comm.rank_signed() + 17};
 
-    auto result = comm.exscan(send_buf(input), op(get_right, kamping::ops::non_commutative), values_on_rank_0(0))
-                      .extract_recv_buffer();
+    auto result = comm.exscan(send_buf(input), op(get_right, kamping::ops::non_commutative), values_on_rank_0(0));
 
     EXPECT_EQ(result.size(), 1);
     if (comm.rank() == 0) {
@@ -411,7 +400,7 @@ TEST(ExscanTest, default_container_type) {
     std::vector<int> input = {comm.rank_signed(), 42};
 
     // This just has to compile
-    OwnContainer<int> result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+    OwnContainer<int> result = comm.exscan(send_buf(input), op(kamping::ops::plus<>{}));
 }
 
 TEST(ExscanTest, given_values_on_rank_0_have_wrong_size) {
@@ -450,7 +439,7 @@ TEST(ExscanTest, send_recv_count_is_out_parameter) {
     );
 
     EXPECT_EQ(send_recv_count, 2);
-    EXPECT_THAT(result.extract_recv_buffer(), ElementsAre(0, comm.rank()));
+    EXPECT_THAT(result, ElementsAre(0, comm.rank()));
 }
 
 TEST(ExscanTest, send_recv_count_is_part_of_result_object) {
@@ -476,7 +465,7 @@ TEST(ExscanTest, send_recv_type_is_out_parameter) {
     );
 
     EXPECT_EQ(send_recv_type, MPI_INT);
-    EXPECT_THAT(result.extract_recv_buffer(), ElementsAre(0, comm.rank()));
+    EXPECT_THAT(result, ElementsAre(0, comm.rank()));
 }
 
 TEST(ScanTest, send_recv_type_is_part_of_result_object) {
@@ -621,4 +610,43 @@ TEST(
     MPI_Type_free(&int_padding_padding);
     MPI_Op_free(&user_defined_op);
     EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(ExscanTest, structured_bindings_explicit_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t> input = {42u, 1u};
+    std::vector<std::uint64_t> recv_buffer(2);
+
+    auto [send_recv_count] =
+        comm.exscan(send_buf(input), send_recv_count_out(), op(kamping::ops::plus<>{}), recv_buf(recv_buffer));
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank() * 42, comm.rank()));
+    EXPECT_EQ(send_recv_count, 2);
+}
+
+TEST(ScanTest, structured_bindings_explicit_owning_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t> input = {42u, 1u};
+
+    auto [send_recv_count, recv_buffer] = comm.exscan(
+        send_buf(input),
+        send_recv_count_out(),
+        op(kamping::ops::plus<>{}),
+        recv_buf(alloc_new<std::vector<std::uint64_t>>)
+    );
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank() * 42, comm.rank()));
+    EXPECT_EQ(send_recv_count, 2);
+}
+
+TEST(ScanTest, structured_bindings_implicit_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t> input = {42u, 1u};
+
+    auto [recv_buffer, send_recv_type, send_recv_count] =
+        comm.exscan(send_recv_type_out(), send_buf(input), send_recv_count_out(), op(kamping::ops::plus<>{}));
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank() * 42, comm.rank()));
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
 }

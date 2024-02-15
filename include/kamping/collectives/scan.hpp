@@ -141,8 +141,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 /// i\f$ (inclusive).
 ///
 /// The following parameters are required:
-/// - kamping::send_buf() containing the data for which to perform the scan. This buffer has to be of
-/// size 1 on each rank.
+/// - kamping::send_buf() containing the data for which to perform the scan. This buffer has to be a single element on
+/// each rank.
 /// - kamping::op() wrapping the operation to apply to the input.
 ///
 /// @tparam Args Automatically deducted template parameters.
