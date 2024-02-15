@@ -106,7 +106,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template rebind_container<DefaultContainerType>();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());
@@ -228,7 +229,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template rebind_container<DefaultContainerType>();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());

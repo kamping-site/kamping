@@ -130,7 +130,7 @@ auto send_recv_buf(AllocNewT<Container>) {
 /// @return Object referring to the storage containing the send counts.
 template <typename Container>
 auto send_counts(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -146,7 +146,7 @@ auto send_counts(Container&& container) {
 /// @return Object referring to the storage containing the send counts.
 template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -165,7 +165,7 @@ auto send_counts(std::initializer_list<T> counts) {
 /// @return Object referring to the storage containing the send counts.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_counts_out(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -180,7 +180,7 @@ auto send_counts_out(Container&& container) {
 /// @return Object referring to the storage containing the send counts.
 template <typename Container>
 auto send_counts_out(AllocNewT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -195,7 +195,7 @@ auto send_counts_out(AllocNewT<Container>) {
 /// @return Object referring to the storage containing the send counts.
 template <template <typename...> typename Container>
 auto send_counts_out(AllocNewAutoT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -213,7 +213,7 @@ inline auto send_counts_out() {
 /// @param count The number of elements.
 /// @return The corresponding parameter object.
 inline auto send_count(int count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_count,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -225,7 +225,7 @@ inline auto send_count(int count) {
 /// The value will be returned as part of the result of the MPI call.
 /// @return The corresponding parameter object.
 inline auto send_count_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -238,7 +238,7 @@ inline auto send_count_out() {
 /// @param count Reference to the location to story the count at.
 /// @return The corresponding parameter object.
 inline auto send_count_out(int& count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,

@@ -28,6 +28,89 @@
 
 namespace kamping::internal {
 
+template <typename T>
+static constexpr bool is_alloc_new_v = false;
+template <typename T>
+static constexpr bool is_alloc_new_v<AllocNewT<T>> = true;
+
+template <typename T>
+static constexpr bool is_alloc_new_auto_v = false;
+template <template <typename...> typename Container>
+static constexpr bool is_alloc_new_auto_v<AllocNewAutoT<Container>> = true;
+
+template <
+    typename Data,
+    ParameterType       parameter_type_param,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag>
+struct DataBufferBuilder {
+    static constexpr ParameterType parameter_type = parameter_type_param;
+
+    DataBufferBuilder() : data() {}
+    template <typename Data_>
+    DataBufferBuilder(Data_&& data) : data(std::forward<Data_>(data)) {}
+    template <template <typename...> typename ContainerType>
+    auto rebind_container() {
+        if constexpr (is_alloc_new_v<std::remove_const_t<std::remove_reference_t<Data>>>) {
+            return make_data_buffer<
+                parameter_type,
+                modifiability,
+                buffer_type,
+                buffer_resize_policy,
+                ValueType>(alloc_new<typename Data::container_type>);
+            // } else if constexpr (is_alloc_new_auto_v<Data>) {
+            //     return make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
+            //         alloc_new_auto<typename Data::value_type>
+            //     );
+        } else {
+            return make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
+                std::forward<Data>(data)
+            );
+        }
+    }
+    Data data;
+    using NoRebindBuffer =
+        decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
+            std::forward<Data>(data)
+        ));
+    static constexpr bool is_out_buffer    = NoRebindBuffer::is_out_buffer;
+    static constexpr bool is_owning        = NoRebindBuffer::is_owning;
+    static constexpr bool is_lib_allocated = NoRebindBuffer::is_lib_allocated;
+    // static constexpr bool is_modifiable    = NoRebindBuffer::is_modifiable;
+    using value_type = typename NoRebindBuffer::value_type;
+};
+
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    typename Data>
+auto make_data_buffer_builder(Data&& data) {
+    return DataBufferBuilder<Data, parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
+        std::forward<Data>(data)
+    );
+}
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    typename Data>
+auto make_data_buffer_builder(AllocNewT<Data>) {
+    return DataBufferBuilder<
+        AllocNewT<Data>,
+        parameter_type,
+        modifiability,
+        buffer_type,
+        buffer_resize_policy,
+        ValueType>(alloc_new<Data>);
+}
+
 /// @brief Helper type for representing a type list
 /// @tparam Args the types.
 template <typename... Args>

@@ -160,7 +160,9 @@ KAMPING_MAKE_HAS_MEMBER(resize)
 /// Passing this with an appropriate template parameter to a buffer creation function (such as \c recv_buf()) indicates,
 /// that the MPI operation should allocate an appropriately sized buffer of type \c Container internally.
 template <typename Container>
-struct AllocNewT {};
+struct AllocNewT {
+    using container_type = Container; ///< The container type to allocate.
+};
 
 /// @brief Convenience wrapper for creating library allocated containers. See \ref AllocNewT for details.
 template <typename Container>

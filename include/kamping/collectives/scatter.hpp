@@ -133,7 +133,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template rebind_container<DefaultContainerType>();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         if (is_root(int_root)) {
@@ -306,7 +307,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     // Get send counts
     using default_send_counts_type = decltype(send_counts_out(alloc_new<DefaultContainerType<int>>));
     auto&& send_counts =
-        select_parameter_type_or_default<ParameterType::send_counts, default_send_counts_type>(std::tuple(), args...);
+        select_parameter_type_or_default<ParameterType::send_counts, default_send_counts_type>(std::tuple(), args...)
+            .template rebind_container<DefaultContainerType>();
     [[maybe_unused]] constexpr bool send_counts_provided = !has_to_be_computed<decltype(send_counts)>;
     KASSERT(
         !is_root(root_val) || send_counts_provided,

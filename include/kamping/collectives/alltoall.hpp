@@ -100,7 +100,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template rebind_container<DefaultContainerType>();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size() / size());
@@ -230,8 +231,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     [[maybe_unused]] constexpr bool recv_type_has_to_be_deduced = internal::has_to_be_computed<decltype(recv_type)>;
 
     // Get send_counts
-    auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
-    using send_counts_type  = typename std::remove_reference_t<decltype(send_counts)>::value_type;
+    auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...)
+                                  .template rebind_container<DefaultContainerType>();
+    using send_counts_type = typename std::remove_reference_t<decltype(send_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<send_counts_type>, int>, "Send counts must be of type int");
     static_assert(
         !internal::has_to_be_computed<decltype(send_counts)>,

@@ -155,7 +155,8 @@ template <typename UnderlyingContainer>
 void test_send_counts_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_counts = send_counts_out(alloc_new<UnderlyingContainer>);
+    // TODO fix this
+    auto send_counts = send_counts_out(alloc_new<UnderlyingContainer>).template rebind_container<std::vector>();
     static_assert(std::is_integral_v<typename decltype(send_counts)::value_type>, "Use integral Types in this test.");
 
     send_counts.resize(10);
