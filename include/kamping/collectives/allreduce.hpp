@@ -31,7 +31,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 /// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
 ///
@@ -129,7 +129,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return make_mpi_result(std::move(recv_buf), std::move(send_recv_count), std::move(send_recv_type));
+    return make_mpi_result_<std::tuple<Args...>>(
+        std::move(recv_buf),
+        std::move(send_recv_count),
+        std::move(send_recv_type)
+    );
 }
 
 /// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
@@ -152,12 +156,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_single(A
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS());
 
-    KASSERT(
-        select_parameter_type<ParameterType::send_buf>(args...).size() == 1ul,
-        "The send buffer has to be of size 1 on all ranks.",
-        assert::light
+    using send_buf_type = buffer_type_with_requested_parameter_type<ParameterType::send_buf, Args...>;
+    static_assert(
+        send_buf_type::is_single_element,
+        "The underlying container has to be a single element \"container\""
     );
+
     using value_type =
         typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...))>::value_type;
-    return this->allreduce(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...).extract_recv_buffer();
+    return this->allreduce(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...);
 }
