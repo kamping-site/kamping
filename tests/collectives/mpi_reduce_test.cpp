@@ -31,7 +31,7 @@ TEST(ReduceTest, reduce_no_receive_buffer) {
 
     std::vector<int> input = {comm.rank_signed(), 42};
 
-    auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}));
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
     if (comm.is_root()) {
@@ -43,7 +43,7 @@ TEST(ReduceTest, reduce_no_receive_buffer) {
 
     // Change default root and test with communicator's default root again
     comm.root(comm.size() - 1);
-    result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+    result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}));
     if (comm.is_root()) {
         EXPECT_EQ(comm.root(), comm.size() - 1);
         EXPECT_EQ(result.size(), 2);
@@ -54,7 +54,7 @@ TEST(ReduceTest, reduce_no_receive_buffer) {
 
     // Pass any possible root to reduce
     for (size_t i = 0; i < comm.size(); ++i) {
-        result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), root(i)).extract_recv_buffer();
+        result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}), root(i));
         if (comm.rank() == i) {
             EXPECT_EQ(comm.root(), comm.size() - 1);
             EXPECT_EQ(result.size(), 2);
@@ -73,7 +73,7 @@ TEST(ReduceTest, reduce_no_receive_buffer_bool) {
         input[1] = true;
     }
 
-    auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{})).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{}));
 
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), 2);
@@ -96,7 +96,7 @@ TEST(ReduceTest, reduce_no_receive_buffer_kabool_custom_operation) {
     auto my_or = [&](bool lhs, bool rhs) {
         return lhs || rhs;
     };
-    auto result = comm.reduce(send_buf(input), op(my_or, ops::commutative)).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(my_or, ops::commutative));
 
     if (comm.is_root()) {
         std::vector<kabool> expected_result = {false, true};
@@ -115,7 +115,7 @@ TEST(ReduceTest, reduce_single_element_no_receive_buffer_kabool) {
         input = true;
     }
 
-    auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{})).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(ops::logical_or<>{}));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
@@ -136,7 +136,7 @@ TEST(ReduceTest, reduce_single_element_initializer_list_bool_no_receive_buffer) 
 
     // reduce does not support single element bool when no recv_buf is specified, because the default would be
     // std::vector<bool>, which is not supported
-    auto result = comm.reduce(send_buf({input}), op(ops::logical_or<>{})).extract_recv_buffer();
+    auto result = comm.reduce(send_buf({input}), op(ops::logical_or<>{}));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
@@ -329,7 +329,7 @@ TEST(ReduceTest, reduce_with_receive_buffer_on_root) {
             comm.size_signed() * 42};
         EXPECT_EQ(result, expected_result);
     } else {
-        auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+        auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}));
         EXPECT_EQ(result.size(), 0);
     }
 }
@@ -348,9 +348,8 @@ TEST(ReduceTest, reduce_builtin_op_on_non_builtin_type) {
             return this->_value == rhs._value;
         }
     };
-    std::vector<MyInt> input = {comm.rank_signed(), 42};
-    auto               result =
-        comm.reduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
+    std::vector<MyInt> input  = {comm.rank_signed(), 42};
+    auto               result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative));
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 2);
         std::vector<MyInt> expected_result = {
@@ -376,8 +375,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     // use function ptr
-    auto result =
-        comm.reduce(send_buf(input), op(add_plus_42_function, kamping::ops::commutative)).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(add_plus_42_function, kamping::ops::commutative));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -391,7 +389,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
     }
 
     // use lambda
-    result = comm.reduce(send_buf(input), op(add_plus_42_lambda, kamping::ops::commutative)).extract_recv_buffer();
+    result = comm.reduce(send_buf(input), op(add_plus_42_lambda, kamping::ops::commutative));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -406,10 +404,9 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
 
     // use lambda inline
     result = comm.reduce(
-                     send_buf(input),
-                     op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
-    )
-                 .extract_recv_buffer();
+        send_buf(input),
+        op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
+    );
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -428,7 +425,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
             return lhs + rhs + 42;
         }
     };
-    result = comm.reduce(send_buf(input), op(MySum42{}, kamping::ops::commutative)).extract_recv_buffer();
+    result = comm.reduce(send_buf(input), op(MySum42{}, kamping::ops::commutative));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -447,7 +444,7 @@ TEST(ReduceTest, reduce_builtin_native_operation) {
 
     std::vector<int> input = {1, 2, 3};
 
-    auto result = comm.reduce(send_buf(input), op(MPI_SUM)).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(MPI_SUM));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -476,7 +473,7 @@ TEST(ReduceTest, reduce_builtin_native_operation_with_incompatible_type) {
     std::vector<MyInt> input = {1, 2, 3};
 
     EXPECT_KASSERT_FAILS(
-        auto result = comm.reduce(send_buf(input), op(MPI_SUM)).extract_recv_buffer(),
+        auto result = comm.reduce(send_buf(input), op(MPI_SUM)),
         "The provided builtin operation is not compatible with datatype T."
     )
 }
@@ -497,7 +494,7 @@ TEST(ReduceTest, reduce_builtin_handmade_native_operation) {
 
     std::vector<int> input = {1 + comm.rank_signed(), 2 + comm.rank_signed(), 3 + comm.rank_signed()};
 
-    auto result = comm.reduce(send_buf(input), op(select_left_op)).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(select_left_op));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 3);
@@ -518,7 +515,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type_non_commutative) {
 
     std::vector<int> input = {comm.rank_signed() + 17};
 
-    auto result = comm.reduce(send_buf(input), op(get_right, kamping::ops::non_commutative)).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(get_right, kamping::ops::non_commutative));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 1);
@@ -562,7 +559,7 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_type) {
     Aggregate              agg2_expected   = {42, comm.size_signed() - 1 + 42, false, comm.size_signed()};
     std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
 
-    auto result = comm.reduce(send_buf(input), op(my_op, kamping::ops::commutative)).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(input), op(my_op, kamping::ops::commutative));
 
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), 2);
@@ -577,7 +574,7 @@ TEST(ReduceTest, reduce_default_container_type) {
 
     std::vector<int> input = {comm.rank_signed(), 42};
 
-    OwnContainer<int> result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+    OwnContainer<int> result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}));
 }
 
 TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_type) {
@@ -672,11 +669,10 @@ TEST(ReduceTest, send_recv_type_is_out_parameter) {
     const std::vector<int> data{1};
     MPI_Datatype           send_type;
     int const              root_rank = 0;
-    auto                   result =
+    auto                   recv_buf =
         comm.reduce(send_buf(data), send_recv_type_out(send_type), op(kamping::ops::plus<>{}), root(root_rank));
 
     EXPECT_EQ(send_type, MPI_INT);
-    auto recv_buf = result.extract_recv_buffer();
     if (comm.is_root(root_rank)) {
         EXPECT_EQ(recv_buf.size(), 1);
         EXPECT_EQ(recv_buf.front(), comm.size());
@@ -712,3 +708,89 @@ TEST(ReduceTest, send_type_part_of_result_object) {
 //             "Root has to be the same on all ranks.");
 //     }
 // }
+
+TEST(ReduceTest, structured_bindings_explicit_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
+    const std::vector<std::uint64_t> expected_recv_buffer_on_root(2, comm.size() * (comm.size() - 1) / 2);
+    std::vector<std::uint64_t>       recv_buffer;
+    int const                        root        = comm.size_signed() - 1;
+    auto const [send_recv_type, send_recv_count] = comm.reduce(
+        send_recv_type_out(),
+        send_recv_count_out(),
+        send_buf(values),
+        recv_buf<resize_to_fit>(recv_buffer),
+        op(kamping::ops::plus<>{}),
+        kamping::root(root)
+    );
+
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+    if (comm.is_root(root)) {
+        EXPECT_EQ(recv_buffer, expected_recv_buffer_on_root);
+    } else {
+        EXPECT_TRUE(recv_buffer.empty());
+    }
+}
+
+TEST(ReduceTest, structured_bindings_explicit_owning_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
+    const std::vector<std::uint64_t> expected_recv_buffer_on_root(2, comm.size() * (comm.size() - 1) / 2);
+    auto const [send_recv_type, send_recv_count, recv_buffer] = comm.reduce(
+        send_recv_type_out(),
+        send_recv_count_out(),
+        send_buf(values),
+        recv_buf(alloc_new<std::vector<std::uint64_t>>),
+        op(kamping::ops::plus<>{})
+    );
+
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+    if (comm.is_root()) {
+        EXPECT_EQ(recv_buffer, expected_recv_buffer_on_root);
+    } else {
+        EXPECT_TRUE(recv_buffer.empty());
+    }
+}
+
+TEST(ReduceTest, structured_bindings_implicit_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
+    const std::vector<std::uint64_t> expected_recv_buffer_on_root(2, comm.size() * (comm.size() - 1) / 2);
+    {
+        std::vector<std::uint64_t> tmp(2);
+        auto const [recv_buffer, send_recv_type, send_recv_count] =
+            comm.reduce(send_recv_type_out(), send_recv_count_out(), send_buf(values), op(kamping::ops::plus<>{}));
+
+        EXPECT_EQ(send_recv_count, 2);
+        EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+        if (comm.is_root()) {
+            EXPECT_EQ(recv_buffer, expected_recv_buffer_on_root);
+        } else {
+            EXPECT_TRUE(recv_buffer.empty());
+        }
+    }
+    {
+        // non-owning send_recv_type out buffer
+        std::vector<std::uint64_t> tmp(2);
+        MPI_Datatype               send_recv_type;
+        auto const [recv_buffer, send_recv_count] = comm.reduce(
+            send_recv_type_out(send_recv_type),
+            send_recv_count_out(),
+            send_buf(values),
+            op(kamping::ops::plus<>{})
+        );
+
+        EXPECT_EQ(send_recv_count, 2);
+        EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+        if (comm.is_root()) {
+            EXPECT_EQ(recv_buffer, expected_recv_buffer_on_root);
+        } else {
+            EXPECT_TRUE(recv_buffer.empty());
+        }
+    }
+}

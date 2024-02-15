@@ -104,7 +104,7 @@ kamping_top_k(TopK<K, ValueType> const& local_top_k, kamping::BasicCommunicator&
     // - Defaulting to using rank 0 as root.
     // - Automatically deducing the datatype of the elements.
     // - Automatically creating and de-creating the custom datatype and the reduce operation.
-    auto result = comm.reduce(send_buf(local_top_k), op(merge<K, size_t>, ops::commutative)).extract_recv_buffer();
+    auto result = comm.reduce(send_buf(local_top_k), op(merge<K, size_t>, ops::commutative));
 
     return comm.is_root() ? std::make_optional(result[0]) : std::optional<TopK<K, ValueType>>{};
 }
