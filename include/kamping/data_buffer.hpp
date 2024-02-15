@@ -168,6 +168,12 @@ struct AllocNewT {
 template <typename Container>
 static constexpr auto alloc_new = AllocNewT<Container>{};
 
+template <typename T>
+static constexpr bool is_alloc_new_v = false;
+
+template <typename T>
+static constexpr bool is_alloc_new_v<AllocNewT<T>> = true;
+
 /// @brief Type used for indicating that a buffer should be allocated by KaMPIng.
 /// @tparam Container A container template to use for allocation.
 ///
@@ -178,11 +184,33 @@ static constexpr auto alloc_new = AllocNewT<Container>{};
 /// In case of \c recv_counts(alloc_new_auto<std::vector>) this means, that internally, a \c std::vector<int> is
 /// allocated.
 template <template <typename...> typename Container>
-struct AllocNewAutoT {};
+struct AllocNewUsingT {
+    template <typename... Ts>
+    using container_type = Container<Ts...>;
+};
 
 /// @brief Convenience wrapper for creating library allocated containers. See \ref AllocNewAutoT for details.
 template <template <typename...> typename Container>
-static constexpr auto alloc_new_auto = AllocNewAutoT<Container>{};
+static constexpr auto alloc_new_using = AllocNewUsingT<Container>{};
+
+template <typename T>
+static constexpr bool is_alloc_new_using_v = false;
+template <template <typename...> typename Container>
+static constexpr bool is_alloc_new_using_v<AllocNewUsingT<Container>> = true;
+
+template <typename T>
+struct AllocContainerOfT {
+    using value_type = T;
+};
+
+template <typename T>
+static constexpr auto alloc_container_of = AllocContainerOfT<T>{};
+
+template <typename T>
+static constexpr bool is_alloc_container_of_v = false;
+
+template <typename T>
+static constexpr bool is_alloc_container_of_v<AllocContainerOfT<T>> = true;
 
 namespace internal {
 /// @brief Helper to decide if data type has \c .data() method.
@@ -670,7 +698,7 @@ template <
     typename ValueType = default_value_type_tag,
     template <typename...>
     typename Data>
-auto make_data_buffer(AllocNewAutoT<Data>) {
+auto make_data_buffer(AllocNewUsingT<Data>) {
     // this check prevents that this factory function is used, when the value type is not known
     static_assert(
         !std::is_same_v<ValueType, default_value_type_tag>,

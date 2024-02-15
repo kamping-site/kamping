@@ -84,7 +84,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
             {},
             args...
         )
-            .template rebind_container<DefaultContainerType>();
+            .get();
     if constexpr (has_to_be_computed<decltype(send_count)>) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());
     }

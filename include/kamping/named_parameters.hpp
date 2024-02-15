@@ -194,13 +194,13 @@ auto send_counts_out(AllocNewT<Container>) {
 /// size() and \c resize() member functions and expose the contained \c value_type.
 /// @return Object referring to the storage containing the send counts.
 template <template <typename...> typename Container>
-auto send_counts_out(AllocNewAutoT<Container>) {
+auto send_counts_out(AllocNewUsingT<Container>) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         BufferResizePolicy::resize_to_fit,
-        int>(alloc_new_auto<Container>);
+        int>(alloc_new_using<Container>);
 }
 
 /// @brief Generates a wrapper for a send counts output parameter without any user input.
@@ -255,7 +255,7 @@ inline auto send_count_out(int& count) {
 /// @return Object referring to the storage containing the recv counts.
 template <typename Container>
 auto recv_counts(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -271,7 +271,7 @@ auto recv_counts(Container&& container) {
 /// @return Object referring to the storage containing the recv counts.
 template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -296,7 +296,7 @@ inline auto recv_counts(internal::ignore_t<void> ignore [[maybe_unused]]) {
 /// @return Object referring to the storage containing the receive counts.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_counts_out(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -311,7 +311,7 @@ auto recv_counts_out(Container&& container) {
 /// @return Object referring to the storage containing the recv counts.
 template <typename Data>
 auto recv_counts_out(AllocNewT<Data> container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -325,8 +325,8 @@ auto recv_counts_out(AllocNewT<Data> container) {
 /// size() and \c resize() member functions and expose the contained \c value_type.
 /// @return Object referring to the storage containing the recv counts.
 template <template <typename...> typename Data>
-auto recv_counts_out(AllocNewAutoT<Data> container) {
-    return internal::make_data_buffer<
+auto recv_counts_out(AllocNewUsingT<Data> container) {
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -344,7 +344,7 @@ inline auto recv_counts_out() {
 /// @param count The number of elements.
 /// @return The corresponding parameter object.
 inline auto recv_count(int count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_count,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -356,7 +356,7 @@ inline auto recv_count(int count) {
 /// The value will be returned as part of the result of the MPI call.
 /// @return The corresponding parameter object.
 inline auto recv_count_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -369,7 +369,7 @@ inline auto recv_count_out() {
 /// @param count Reference to the location to story the count at.
 /// @return The corresponding parameter object.
 inline auto recv_count_out(int& count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -381,7 +381,7 @@ inline auto recv_count_out(int& count) {
 /// @param count The number of elements.
 /// @return The corresponding parameter object.
 inline auto send_recv_count(int count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_count,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -393,7 +393,7 @@ inline auto send_recv_count(int count) {
 /// The value will be returned as part of the result of the MPI call.
 /// @return The corresponding parameter object.
 inline auto send_recv_count_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -406,7 +406,7 @@ inline auto send_recv_count_out() {
 /// @param count Reference to the location to story the count at.
 /// @return The corresponding parameter object.
 inline auto send_recv_count_out(int& count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -489,13 +489,13 @@ auto send_displs_out(AllocNewT<Container>) {
 /// size() and \c resize() member functions and expose the contained \c value_type.
 /// @return Object referring to the storage containing the send displacements.
 template <template <typename...> typename Container>
-auto send_displs_out(AllocNewAutoT<Container>) {
+auto send_displs_out(AllocNewUsingT<Container>) {
     return internal::make_data_buffer<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         BufferResizePolicy::resize_to_fit,
-        int>(alloc_new_auto<Container>);
+        int>(alloc_new_using<Container>);
 }
 
 /// @brief Generates a wrapper for a send displs output parameter without any user input.
@@ -612,13 +612,13 @@ auto recv_displs_out(AllocNewT<Data>) {
 /// size() and \c resize() member functions and expose the contained \c value_type.
 /// @return Object referring to the storage containing the recv displacements.
 template <template <typename...> typename Container>
-auto recv_displs_out(AllocNewAutoT<Container>) {
+auto recv_displs_out(AllocNewUsingT<Container>) {
     return internal::make_data_buffer<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         BufferResizePolicy::resize_to_fit,
-        int>(alloc_new_auto<Container>);
+        int>(alloc_new_using<Container>);
 }
 
 /// @brief Generates a wrapper for a recv displs output parameter without any user input.

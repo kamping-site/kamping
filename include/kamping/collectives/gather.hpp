@@ -98,7 +98,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
             std::tuple(),
             args...
         )
-            .template rebind_container<DefaultContainerType>();
+            .get();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());
@@ -125,7 +125,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
         internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
             std::tuple(),
             args...
-        );
+        )
+            .get();
     constexpr bool do_compute_recv_count = has_to_be_computed<decltype(recv_count)>;
     if constexpr (do_compute_recv_count) {
         if (this->is_root(root.rank_signed())) {
@@ -240,7 +241,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using recv_counts_type = typename std::remove_reference_t<decltype(recv_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
     constexpr bool recv_counts_is_ignore =
@@ -262,7 +264,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
             std::tuple(),
             args...
         )
-            .template rebind_container<DefaultContainerType>();
+            .get();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());

@@ -28,15 +28,8 @@
 
 namespace kamping::internal {
 
-template <typename T>
-static constexpr bool is_alloc_new_v = false;
-template <typename T>
-static constexpr bool is_alloc_new_v<AllocNewT<T>> = true;
-
-template <typename T>
-static constexpr bool is_alloc_new_auto_v = false;
-template <template <typename...> typename Container>
-static constexpr bool is_alloc_new_auto_v<AllocNewAutoT<Container>> = true;
+template <typename>
+struct UnusedRebindContainer {};
 
 template <
     typename Data,
@@ -51,20 +44,35 @@ struct DataBufferBuilder {
     DataBufferBuilder() : data() {}
     template <typename Data_>
     DataBufferBuilder(Data_&& data) : data(std::forward<Data_>(data)) {}
-    template <template <typename...> typename ContainerType>
-    auto rebind_container() {
-        if constexpr (is_alloc_new_v<std::remove_const_t<std::remove_reference_t<Data>>>) {
+
+    template <template <typename...> typename RebindContainerType = UnusedRebindContainer>
+    auto get() {
+        using Data_no_ref = std::remove_const_t<std::remove_reference_t<Data>>;
+        if constexpr (is_alloc_new_v<Data_no_ref>) {
             return make_data_buffer<
                 parameter_type,
                 modifiability,
                 buffer_type,
                 buffer_resize_policy,
                 ValueType>(alloc_new<typename Data::container_type>);
-            // } else if constexpr (is_alloc_new_auto_v<Data>) {
-            //     return make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
-            //         alloc_new_auto<typename Data::value_type>
-            //     );
+        } else if constexpr (is_alloc_new_using_v<Data_no_ref>) {
+            return make_data_buffer<
+                parameter_type,
+                modifiability,
+                buffer_type,
+                buffer_resize_policy,
+                ValueType>(alloc_new_using<Data_no_ref::template container_type>);
+        } else if constexpr (is_alloc_container_of_v<Data_no_ref>) {
+            static_assert(!std::is_same_v<RebindContainerType<void>, UnusedRebindContainer<void>>);
+            return make_data_buffer<
+                parameter_type,
+                modifiability,
+                buffer_type,
+                buffer_resize_policy,
+                ValueType>(alloc_new<RebindContainerType<typename Data_no_ref::value_type>>);
+
         } else {
+            // static_assert(std::is_same_v<RebindContainerType<void>, void>);
             return make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
                 std::forward<Data>(data)
             );

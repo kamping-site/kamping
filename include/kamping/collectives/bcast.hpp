@@ -113,9 +113,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
     using default_count_type = decltype(kamping::send_recv_count_out());
     auto&& count_param = internal::select_parameter_type_or_default<ParameterType::send_recv_count, default_count_type>(
-        std::tuple(),
-        args...
-    );
+                             std::tuple(),
+                             args...
+    )
+                             .get();
 
     constexpr bool count_has_to_be_computed = has_to_be_computed<decltype(count_param)>;
     KASSERT(

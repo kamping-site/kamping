@@ -132,7 +132,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::irecv(Args... args
         internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
             std::tuple(),
             args...
-        );
+        )
+            .get();
 
     KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
     int source = source_param.rank_signed();

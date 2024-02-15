@@ -71,7 +71,7 @@ template <typename UnderlyingContainer>
 void test_recv_counts_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_counts = recv_counts_out(alloc_new<UnderlyingContainer>);
+    auto recv_counts = recv_counts_out(alloc_new<UnderlyingContainer>).get();
     static_assert(std::is_integral_v<typename decltype(recv_counts)::value_type>, "Use integral Types in this test.");
 
     recv_counts.resize(10);
@@ -155,8 +155,7 @@ template <typename UnderlyingContainer>
 void test_send_counts_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    // TODO fix this
-    auto send_counts = send_counts_out(alloc_new<UnderlyingContainer>).template rebind_container<std::vector>();
+    auto send_counts = send_counts_out(alloc_new<UnderlyingContainer>).get();
     static_assert(std::is_integral_v<typename decltype(send_counts)::value_type>, "Use integral Types in this test.");
 
     send_counts.resize(10);
@@ -296,7 +295,7 @@ TEST(MpiResultTest, extract_send_displs_basics_own_container) {
 TEST(MpiResultTest, extract_send_recv_count) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_recv_count         = kamping::send_recv_count_out();
+    auto send_recv_count         = kamping::send_recv_count_out().get();
     send_recv_count.underlying() = 42;
     MPIResult mpi_result{
         ResultCategoryNotUsed{},
