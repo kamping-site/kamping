@@ -121,6 +121,9 @@ auto send_recv_buf(AllocNewT<Container>) {
         BufferResizePolicy::resize_to_fit>(alloc_new<Container>);
 }
 
+/// @brief Construct a send recv buffer using \p ValueType as the underlying value type. The kind of container is
+/// determined by the MPI operation and usually defaults to \ref Communicator::default_container_type.
+/// @tparam ValueType The type of the elements in the buffer.
 template <typename ValueType>
 auto send_recv_buf(AllocContainerOfT<ValueType>) {
     return internal::make_data_buffer_builder<
@@ -584,7 +587,6 @@ auto recv_buf(Container&& container) {
 /// contained \c value_type
 /// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
 /// size() and \c resize() member functions and expose the contained \c value_type.
-/// @param container Container which will contain the received elements.
 /// @return Object referring to the storage containing the received elements.
 template <typename Data>
 auto recv_buf(AllocNewT<Data>) {
@@ -595,6 +597,9 @@ auto recv_buf(AllocNewT<Data>) {
         internal::maximum_viable_resize_policy<Data>>(alloc_new<Data>);
 }
 
+/// @brief Construct a recv buffer using \p ValueType as the underlying value type. The kind of container is determined
+/// by the MPI operation and usually defaults to \ref Communicator::default_container_type.
+/// @tparam ValueType The type of the elements in the buffer.
 template <typename ValueType>
 auto recv_buf(AllocContainerOfT<ValueType>) {
     return internal::make_data_buffer_builder<

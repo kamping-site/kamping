@@ -159,11 +159,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_single(Args..
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS());
 
     KASSERT(
-        select_parameter_type<ParameterType::send_buf>(args...).size() == 1u,
+        select_parameter_type<ParameterType::send_buf>(args...).get().size() == 1u,
         "The send buffer has to be of size 1 on all ranks.",
         assert::light
     );
     using value_type =
-        typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...))>::value_type;
+        typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...).get()
+        )>::value_type;
     return this->scan(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...).extract_recv_buffer();
 }

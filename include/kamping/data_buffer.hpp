@@ -154,13 +154,14 @@ KAMPING_MAKE_HAS_MEMBER(resize)
 
 } // namespace internal
 
-/// @brief Type used for indicating that a buffer should be allocated by KaMPIng.
+/// @brief Buffer allocation tag used for indicating that a buffer should be allocated by KaMPIng.
 /// @tparam Container The container to allocate.
 ///
 /// Passing this with an appropriate template parameter to a buffer creation function (such as \c recv_buf()) indicates,
 /// that the MPI operation should allocate an appropriately sized buffer of type \c Container internally.
 template <typename Container>
 struct AllocNewT {
+    /// @brief The container type to allocate.
     using container_type = Container; ///< The container type to allocate.
 };
 
@@ -168,47 +169,65 @@ struct AllocNewT {
 template <typename Container>
 static constexpr auto alloc_new = AllocNewT<Container>{};
 
+/// @brief Helper to decide if an allocation tag is an \c AllocNewT.
 template <typename T>
 static constexpr bool is_alloc_new_v = false;
 
+/// @brief Helper to decide if an allocation tag is an \c AllocNewT.
 template <typename T>
 static constexpr bool is_alloc_new_v<AllocNewT<T>> = true;
 
-/// @brief Type used for indicating that a buffer should be allocated by KaMPIng.
+/// @brief Buffer allocationt tag used for indicating that a buffer should be allocated by KaMPIng.
 /// @tparam Container A container template to use for allocation.
 ///
-/// Passing this with an appropriate template parameter to a buffer creation function (such as \c recv_counts())
+/// Passing this with an appropriate template parameter to a buffer creation function (such as \c recv_counts_out())
 /// indicates, that the MPI operation should allocate an appropriately sized buffer of type \c Container<T> internally,
 /// where \c T is automatically determined.
 ///
-/// In case of \c recv_counts(alloc_new_auto<std::vector>) this means, that internally, a \c std::vector<int> is
+/// In case of \c recv_counts_out(alloc_new_using<std::vector>) this means, that internally, a \c std::vector<int> is
 /// allocated.
 template <template <typename...> typename Container>
 struct AllocNewUsingT {
+    /// @brief The container type to allocate.
+    /// @tparam Ts The template parameters for the container.
     template <typename... Ts>
     using container_type = Container<Ts...>;
 };
 
-/// @brief Convenience wrapper for creating library allocated containers. See \ref AllocNewAutoT for details.
+/// @brief Convenience wrapper for creating library allocated containers. See \ref AllocNewUsingT for details.
 template <template <typename...> typename Container>
 static constexpr auto alloc_new_using = AllocNewUsingT<Container>{};
 
+/// @brief Helper to decide if an allocation tag is an \c AllocNewUsingT.
 template <typename T>
 static constexpr bool is_alloc_new_using_v = false;
+
+/// @brief Helper to decide if an allocation tag is an \c AllocNewUsingT.
 template <template <typename...> typename Container>
 static constexpr bool is_alloc_new_using_v<AllocNewUsingT<Container>> = true;
 
+/// @brief Buffer allocation tag used for indicating that a buffer of type \p T should be allocated by KaMPIng.
+/// @tparam T The value type to use for the allocated buffer.
+///
+/// Passing this to a buffer creation function (such as \c recv_counts_out()) indicates, that the MPI operation should
+/// allocate an appropriately sized buffer of value type \p T internally. The allocation is defered until the MPI
+/// operation is executed and the actual type of the container is determined by the MPI operation (usually \ref
+/// Communicator::default_container_type).
 template <typename T>
 struct AllocContainerOfT {
+    /// @brief The value type to use for the allocated buffer.
     using value_type = T;
 };
 
+/// @brief Convenience wrapper for creating library allocated containers. See \ref AllocContainerOfT for details.
 template <typename T>
 static constexpr auto alloc_container_of = AllocContainerOfT<T>{};
 
+/// @brief Helper to decide if an allocation tag is an \c AllocContainerOfT.
 template <typename T>
 static constexpr bool is_alloc_container_of_v = false;
 
+/// @brief Helper to decide if an allocation tag is an \c AllocContainerOfT.
 template <typename T>
 static constexpr bool is_alloc_container_of_v<AllocContainerOfT<T>> = true;
 
@@ -598,9 +617,11 @@ public:
     void resize_if_requested(SizeFunc&& compute_required_size [[maybe_unused]]) {}
 };
 
+/// @brief Helper to decide if a type is an instance of \c EmptyDataBuffer.
 template <typename T>
 constexpr bool is_empty_data_buffer_v = false;
 
+/// @brief Helper to decide if a type is an instance of \c EmptyDataBuffer.
 template <typename T, ParameterType type, BufferType buffer_type_param>
 constexpr bool is_empty_data_buffer_v<EmptyDataBuffer<T, type, buffer_type_param>> = true;
 

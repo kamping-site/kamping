@@ -74,9 +74,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
     );
 
     // get the send/recv buffer and types
-    auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
-    auto  send_buf        = send_buf_param.get();
-    using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
+    auto&& send_buf       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+    using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
     auto&& recv_buf =
@@ -206,9 +205,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     );
 
     // get send_buf
-    auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
-    auto  send_buf        = send_buf_param.get();
-    using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
+    auto&& send_buf       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+    using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     // get recv_buf
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
