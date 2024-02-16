@@ -88,7 +88,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
     using default_recv_value_type = std::remove_const_t<send_value_type>;
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
     auto&& recv_buf =
-        select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
+        select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...)
+            .template get<DefaultContainerType>();
 
     // Get the send_recv_type.
     auto&& send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
@@ -150,7 +151,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
         // auto-deduce the identity, as this would introduce a parameter which is required in some situtations in
         // KaMPIng, but never in MPI.
         if constexpr (has_values_on_rank_0_param) {
-            auto const& values_on_rank_0_param = select_parameter_type<ParameterType::values_on_rank_0>(args...);
+            auto const& values_on_rank_0_param = select_parameter_type<ParameterType::values_on_rank_0>(args...).get();
             KASSERT(
                 // if the send_recv type is user provided, kamping cannot make any assumptions about the required size
                 // of the recv buffer

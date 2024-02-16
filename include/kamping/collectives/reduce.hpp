@@ -87,7 +87,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
 
     // Get the send type.
     auto&& send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);

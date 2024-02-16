@@ -76,7 +76,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
     );
 
     // Get the buffers
-    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
+    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
 
@@ -85,7 +85,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     static_assert(!std::is_const_v<recv_value_type>, "The receive buffer must not have a const value_type.");
@@ -212,7 +213,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     );
 
     // Get send_buf
-    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
+    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
 
@@ -222,7 +223,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     // Get send/recv types

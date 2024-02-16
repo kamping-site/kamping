@@ -110,7 +110,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     // Get send_type and recv_type
@@ -221,7 +222,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     // get root rank

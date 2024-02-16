@@ -103,6 +103,30 @@ auto make_data_buffer_builder(Data&& data) {
         std::forward<Data>(data)
     );
 }
+
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename Data>
+auto make_data_buffer_builder(std::initializer_list<Data> data) {
+    auto data_vec = [&]() {
+        if constexpr (std::is_same_v<Data, bool>) {
+            return std::vector<kabool>(data.begin(), data.end());
+            // We only use automatic conversion of bool to kabool for initializer lists, but not for single elements of
+            // type bool. The reason for that is, that sometimes single element conversion may not be desired.
+            // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
+            // send_recv_buf = bool&
+        } else {
+            return std::vector<Data>{data};
+        }
+    }();
+    return DataBufferBuilder<decltype(data_vec), parameter_type, modifiability, buffer_type, buffer_resize_policy>(
+        std::move(data_vec)
+    );
+}
+
 template <
     ParameterType       parameter_type,
     BufferModifiability modifiability,

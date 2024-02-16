@@ -48,7 +48,8 @@ struct unused_tparam {};
 /// @return Object wrapping a \c nullptr as a send buffer.
 template <typename Data>
 auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
-    return internal::EmptyDataBuffer<Data, internal::ParameterType::send_buf, internal::BufferType::ignore>();
+    return internal::
+        make_empty_data_buffer_builder<Data, internal::ParameterType::send_buf, internal::BufferType::ignore>();
 }
 
 /// @brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
@@ -63,7 +64,7 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename Data>
 auto send_buf(Data&& data) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_buf,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -77,7 +78,7 @@ auto send_buf(Data&& data) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_buf,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -99,7 +100,7 @@ auto send_recv_buf(Data&& data) {
     constexpr internal::BufferModifiability modifiability = std::is_const_v<std::remove_reference_t<Data>>
                                                                 ? internal::BufferModifiability::constant
                                                                 : internal::BufferModifiability::modifiable;
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_buf,
         modifiability,
         internal::BufferType::in_out_buffer,
@@ -113,7 +114,7 @@ auto send_recv_buf(Data&& data) {
 /// @return Object referring to the storage containing the data elements to send / the received elements.
 template <typename Container>
 auto send_recv_buf(AllocNewT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::in_out_buffer,
@@ -550,7 +551,7 @@ auto recv_displs(std::initializer_list<T> displs) {
 /// @return Object referring to the storage containing the received elements.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_buf(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -566,7 +567,7 @@ auto recv_buf(Container&& container) {
 /// @return Object referring to the storage containing the received elements.
 template <typename Data>
 auto recv_buf(AllocNewT<Data> container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -785,7 +786,7 @@ op(Op&& op, Commutative commute = ops::internal::undefined_commutative_tag{}) {
 /// @returns OnRank0 Object containing the information which value to return on the first rank.
 template <typename Container>
 inline auto values_on_rank_0(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::values_on_rank_0,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -799,7 +800,7 @@ inline auto values_on_rank_0(Container&& container) {
 // TODO zero-overhead
 template <typename T>
 inline auto values_on_rank_0(std::initializer_list<T> values) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::values_on_rank_0,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,

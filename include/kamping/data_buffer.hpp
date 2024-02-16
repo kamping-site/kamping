@@ -721,48 +721,49 @@ auto make_data_buffer(AllocNewUsingT<Data>) {
         ValueType>();
 }
 
-/// @brief Creates an owning DataBuffer containing the supplied data in a std::vector.
-///
-/// Creates an owning DataBuffer with the given template parameters.
-///
-/// An initializer list of type \c bool will be converted to a \c std::vector<kamping::kabool>.
-///
-/// @tparam parameter_type parameter type represented by this buffer.
-/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
-/// modify the underlying container. `constant` otherwise.
-/// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
-/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
-/// @tparam Data Container or data type on which this buffer is based.
-/// @param data std::initializer_list holding the data for the buffer.
-///
-/// @return A library allocated DataBuffer with the given template parameters.
-template <
-    ParameterType       parameter_type,
-    BufferModifiability modifiability,
-    BufferType          buffer_type,
-    BufferResizePolicy  buffer_resize_policy,
-    typename Data>
-auto make_data_buffer(std::initializer_list<Data> data) {
-    auto data_vec = [&]() {
-        if constexpr (std::is_same_v<Data, bool>) {
-            return std::vector<kabool>(data.begin(), data.end());
-            // We only use automatic conversion of bool to kabool for initializer lists, but not for single elements of
-            // type bool. The reason for that is, that sometimes single element conversion may not be desired.
-            // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
-            // send_recv_buf = bool&
-        } else {
-            return std::vector<Data>{data};
-        }
-    }();
-    return DataBuffer<
-        decltype(data_vec),
-        parameter_type,
-        modifiability,
-        BufferOwnership::owning,
-        buffer_type,
-        buffer_resize_policy,
-        BufferAllocation::user_allocated>(std::move(data_vec));
-}
+// /// @brief Creates an owning DataBuffer containing the supplied data in a std::vector.
+// ///
+// /// Creates an owning DataBuffer with the given template parameters.
+// ///
+// /// An initializer list of type \c bool will be converted to a \c std::vector<kamping::kabool>.
+// ///
+// /// @tparam parameter_type parameter type represented by this buffer.
+// /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+// /// modify the underlying container. `constant` otherwise.
+// /// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+// /// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+// /// @tparam Data Container or data type on which this buffer is based.
+// /// @param data std::initializer_list holding the data for the buffer.
+// ///
+// /// @return A library allocated DataBuffer with the given template parameters.
+// template <
+//     ParameterType       parameter_type,
+//     BufferModifiability modifiability,
+//     BufferType          buffer_type,
+//     BufferResizePolicy  buffer_resize_policy,
+//     typename Data>
+// auto make_data_buffer(std::initializer_list<Data> data) {
+//     // auto data_vec = [&]() {
+//     //     if constexpr (std::is_same_v<Data, bool>) {
+//     //         return std::vector<kabool>(data.begin(), data.end());
+//     //         // We only use automatic conversion of bool to kabool for initializer lists, but not for single
+//     elements of
+//     //         // type bool. The reason for that is, that sometimes single element conversion may not be desired.
+//     //         // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
+//     //         // send_recv_buf = bool&
+//     //     } else {
+//     //         return std::vector<Data>{data};
+//     //     }
+//     // }();
+//     return DataBuffer<
+//         decltype(data_vec),
+//         parameter_type,
+//         modifiability,
+//         BufferOwnership::owning,
+//         buffer_type,
+//         buffer_resize_policy,
+//         BufferAllocation::user_allocated>(std::move(data_vec));
+// }
 
 } // namespace internal
 

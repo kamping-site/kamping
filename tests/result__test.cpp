@@ -42,7 +42,7 @@ template <typename UnderlyingContainer>
 void test_recv_buffer_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_buffer = recv_buf(kamping::alloc_new<UnderlyingContainer>);
+    auto recv_buffer = recv_buf(kamping::alloc_new<UnderlyingContainer>).get();
     static_assert(std::is_integral_v<typename decltype(recv_buffer)::value_type>, "Use integral Types in this test.");
 
     recv_buffer.resize(10);

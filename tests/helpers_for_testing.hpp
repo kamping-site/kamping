@@ -254,7 +254,8 @@ struct DummyNonBlockingOperation {
         );
         using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<std::vector<int>>));
         auto&& recv_buf =
-            select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
+            select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...)
+                .get();
         using recv_buf_type       = typename std::remove_reference_t<decltype(recv_buf)>;
         using recv_buf_value_type = typename recv_buf_type::value_type;
         static_assert(std::is_same_v<recv_buf_value_type, int>);

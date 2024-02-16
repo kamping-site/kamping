@@ -108,7 +108,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     static_assert(
@@ -291,7 +292,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     static_assert(

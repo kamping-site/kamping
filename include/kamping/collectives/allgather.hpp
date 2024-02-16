@@ -83,7 +83,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     auto&& [send_type, recv_type] =
@@ -215,7 +216,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     // get send/recv types

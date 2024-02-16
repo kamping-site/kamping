@@ -90,7 +90,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_buf, default_send_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
 
     using value_type = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
     static_assert(

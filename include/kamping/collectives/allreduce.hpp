@@ -74,7 +74,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
     // Deduce the recv buffer type and get (if provided) the recv buffer or allocate one (if not provided).
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
     auto&& recv_buf =
-        select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
+        select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...)
+            .template get<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
         std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
