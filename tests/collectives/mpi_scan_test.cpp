@@ -36,28 +36,23 @@ TEST(ScanTest, scan_single) {
     EXPECT_EQ(result, expected_result);
 }
 
+TEST(ScanTest, scan_single_with_temporary) {
+    Communicator comm;
+
+    auto result          = comm.scan_single(send_buf(42), op(kamping::ops::plus<>{}));
+    int  expected_result = (comm.rank_signed() + 1) * 42;
+    EXPECT_EQ(result, expected_result);
+}
+
 TEST(ScanTest, scan_single_vector_of_size_1) {
     Communicator comm;
 
     std::vector<int> input = {42};
 
-    auto result = comm.scan_single(send_buf(input), op(kamping::ops::plus<>{}));
+    auto result = comm.scan_single(send_buf(input.front()), op(kamping::ops::plus<>{}));
     static_assert(std::is_same_v<decltype(result), decltype(input)::value_type>);
     int expected_result = (comm.rank_signed() + 1) * 42;
     EXPECT_EQ(result, expected_result);
-}
-
-TEST(ScanTest, scan_single_vector_of_size_2) {
-    Communicator comm;
-
-    std::vector<int> input = {42, 1};
-
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(
-        (comm.scan_single(send_buf(input), op(kamping::ops::plus<>{}))),
-        "The send buffer has to be of size 1 on all ranks."
-    );
-#endif
 }
 
 TEST(ScanTest, scan_explicit_send_recv_count_smaller_than_send_buffer_size) {
@@ -65,9 +60,7 @@ TEST(ScanTest, scan_explicit_send_recv_count_smaller_than_send_buffer_size) {
 
     std::vector<int> input = {42, 1, 1, 1, 1};
 
-    auto result   = comm.scan(send_buf(input), send_recv_count(2), op(kamping::ops::plus<>{}));
-    auto recv_buf = result.extract_recv_buffer();
-    EXPECT_EQ(recv_buf.size(), 2);
+    auto recv_buf = comm.scan(send_buf(input), send_recv_count(2), op(kamping::ops::plus<>{}));
     EXPECT_THAT(recv_buf, ElementsAre((comm.rank_signed() + 1) * 42, (comm.rank_signed() + 1)));
 }
 
@@ -77,9 +70,7 @@ TEST(ScanTest, scan_explicit_send_recv_count_out_value_not_taken_into_account) {
     std::vector<int> input           = {42, 1};
     int              send_recv_count = -1;
 
-    auto result   = comm.scan(send_buf(input), send_recv_count_out(send_recv_count), op(kamping::ops::plus<>{}));
-    auto recv_buf = result.extract_recv_buffer();
-    EXPECT_EQ(recv_buf.size(), 2);
+    auto recv_buf = comm.scan(send_buf(input), send_recv_count_out(send_recv_count), op(kamping::ops::plus<>{}));
     EXPECT_EQ(send_recv_count, 2);
     EXPECT_THAT(recv_buf, ElementsAre((comm.rank_signed() + 1) * 42, (comm.rank_signed() + 1)));
 }
@@ -89,8 +80,7 @@ TEST(ScanTest, scan_explicit_send_recv_count) {
 
     std::vector<int> input = {42, 1};
 
-    auto result   = comm.scan(send_buf(input), send_recv_count(2), op(kamping::ops::plus<>{}));
-    auto recv_buf = result.extract_recv_buffer();
+    auto recv_buf = comm.scan(send_buf(input), send_recv_count(2), op(kamping::ops::plus<>{}));
     EXPECT_THAT(recv_buf, ElementsAre((comm.rank_signed() + 1) * 42, (comm.rank_signed() + 1)));
 }
 
@@ -99,7 +89,7 @@ TEST(ScanTest, scan_no_receive_buffer) {
 
     std::vector<int> input = {comm.rank_signed(), 42};
 
-    auto result = comm.scan(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+    auto result = comm.scan(send_buf(input), op(kamping::ops::plus<>{}));
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {
@@ -139,8 +129,7 @@ TEST(ScanTest, scan_builtin_op_on_non_builtin_type) {
     };
     std::vector<MyInt> input = {comm.rank_signed(), 42};
 
-    auto result =
-        comm.scan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
+    auto result = comm.scan(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative));
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {
         ((comm.rank_signed() + 1) * comm.rank_signed()) / 2,
@@ -162,8 +151,7 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     { // use function ptr
-        auto result =
-            comm.scan(send_buf(input), op(add_plus_42_function, kamping::ops::commutative)).extract_recv_buffer();
+        auto result = comm.scan(send_buf(input), op(add_plus_42_function, kamping::ops::commutative));
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -174,8 +162,7 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     }
 
     { // use lambda
-        auto result =
-            comm.scan(send_buf(input), op(add_plus_42_lambda, kamping::ops::commutative)).extract_recv_buffer();
+        auto result = comm.scan(send_buf(input), op(add_plus_42_lambda, kamping::ops::commutative));
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -186,12 +173,10 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
     }
 
     { // use lambda inline
-        auto result =
-            comm.scan(
-                    send_buf(input),
-                    op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
-            )
-                .extract_recv_buffer();
+        auto result = comm.scan(
+            send_buf(input),
+            op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
+        );
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -207,7 +192,7 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
                 return lhs + rhs + 42;
             }
         };
-        auto result = comm.scan(send_buf(input), op(MySum42{}, kamping::ops::commutative)).extract_recv_buffer();
+        auto result = comm.scan(send_buf(input), op(MySum42{}, kamping::ops::commutative));
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -227,7 +212,7 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type_non_commutative) {
 
     std::vector<int> input = {comm.rank_signed() + 17};
 
-    auto result = comm.scan(send_buf(input), op(get_right, kamping::ops::non_commutative)).extract_recv_buffer();
+    auto result = comm.scan(send_buf(input), op(get_right, kamping::ops::non_commutative));
 
     EXPECT_EQ(result.size(), 1);
     std::vector<int> expected_result = {comm.rank_signed() + 17};
@@ -265,7 +250,7 @@ TEST(ScanTest, scan_custom_operation_on_custom_type) {
     Aggregate              agg2_expected   = {42, comm.rank_signed() + 42, false, comm.rank_signed() + 1};
     std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
 
-    auto result = comm.scan(send_buf(input), op(my_op, kamping::ops::commutative)).extract_recv_buffer();
+    auto result = comm.scan(send_buf(input), op(my_op, kamping::ops::commutative));
 
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(result, expected_result);
@@ -276,7 +261,7 @@ TEST(ScanTest, scan_default_container_type) {
     std::vector<int>           input = {comm.rank_signed(), 42};
 
     // This just has to compile
-    OwnContainer<int> result = comm.scan(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+    OwnContainer<int> result = comm.scan(send_buf(input), op(kamping::ops::plus<>{}));
 }
 
 TEST(ScanTest, single_element_with_given_recv_buf_bigger_than_required) {
@@ -354,7 +339,7 @@ TEST(ScanTest, send_recv_count_is_out_parameter) {
     auto result = comm.scan(send_buf(data), send_recv_count_out(send_recv_count), op(kamping::ops::plus<>{}));
 
     EXPECT_EQ(send_recv_count, 2);
-    EXPECT_THAT(result.extract_recv_buffer(), ElementsAre(0, comm.rank() + 1));
+    EXPECT_THAT(result, ElementsAre(0, comm.rank() + 1));
 }
 
 TEST(ScanTest, send_recv_count_is_part_of_result_object) {
@@ -374,7 +359,7 @@ TEST(ScanTest, send_recv_type_is_out_parameter) {
         comm.scan(send_buf(data), send_recv_count(2), op(kamping::ops::plus<>{}), send_recv_type_out(send_recv_type));
 
     EXPECT_EQ(send_recv_type, MPI_INT);
-    EXPECT_THAT(result.extract_recv_buffer(), ElementsAre(0, comm.rank() + 1));
+    EXPECT_THAT(result, ElementsAre(0, comm.rank() + 1));
 }
 
 TEST(ScanTest, send_recv_type_is_part_of_result_object) {
@@ -469,4 +454,43 @@ TEST(ScanTest, custom_operation_on_custom_mpi_without_matching_cpp_type) {
     MPI_Op_free(&user_defined_op);
 
     EXPECT_EQ(recv_buffer, expected_result);
+}
+
+TEST(ScanTest, structured_bindings_explicit_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t> input = {42u, 1u};
+    std::vector<std::uint64_t> recv_buffer(2);
+
+    auto [send_recv_count] =
+        comm.scan(send_buf(input), send_recv_count_out(), op(kamping::ops::plus<>{}), recv_buf(recv_buffer));
+    EXPECT_THAT(recv_buffer, ElementsAre((comm.rank() + 1) * 42, (comm.rank() + 1)));
+    EXPECT_EQ(send_recv_count, 2);
+}
+
+TEST(ScanTest, structured_bindings_explicit_owning_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t> input = {42u, 1u};
+
+    auto [send_recv_count, recv_buffer] = comm.scan(
+        send_buf(input),
+        send_recv_count_out(),
+        op(kamping::ops::plus<>{}),
+        recv_buf(alloc_new<std::vector<std::uint64_t>>)
+    );
+    EXPECT_THAT(recv_buffer, ElementsAre((comm.rank() + 1) * 42, (comm.rank() + 1)));
+    EXPECT_EQ(send_recv_count, 2);
+}
+
+TEST(ScanTest, structured_bindings_implicit_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t> input = {42u, 1u};
+
+    auto [recv_buffer, send_recv_type, send_recv_count] =
+        comm.scan(send_recv_type_out(), send_buf(input), send_recv_count_out(), op(kamping::ops::plus<>{}));
+    EXPECT_THAT(recv_buffer, ElementsAre((comm.rank() + 1) * 42, (comm.rank() + 1)));
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
 }

@@ -88,6 +88,7 @@ public:
         DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng.
     static constexpr bool is_single_element =
         DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
+    using value_type = typename DataBufferType::value_type; ///< The construted data buffer's value type.
 };
 
 /// @brief Parameter object representing a data buffer to be allocated by KaMPIng. This is an intermediate object not
@@ -159,6 +160,7 @@ public:
         DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng
     static constexpr bool is_single_element =
         DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
+    using value_type = typename DataBufferType::value_type; ///< The construted data buffer's value type.
 };
 
 /// @brief Factory method for constructing a \ref DataBufferBuilder from the given Container \p Data.

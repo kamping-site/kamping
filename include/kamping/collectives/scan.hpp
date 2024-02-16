@@ -29,7 +29,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 /// @brief Wrapper for \c MPI_Scan.
 ///
@@ -127,7 +127,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return make_mpi_result(std::move(recv_buf), std::move(send_recv_type), std::move(send_recv_count));
+    return make_mpi_result_<std::tuple<Args...>>(
+        std::move(recv_buf),
+        std::move(send_recv_type),
+        std::move(send_recv_count)
+    );
 }
 
 /// @brief Wrapper for \c MPI_Scan for single elements.
@@ -139,8 +143,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 /// i\f$ (inclusive).
 ///
 /// The following parameters are required:
-/// - kamping::send_buf() containing the data for which to perform the scan. This buffer has to be of
-/// size 1 on each rank.
+/// - kamping::send_buf() containing the data for which to perform the scan. This buffer has to be a single element on
+/// each rank.
 /// - kamping::op() wrapping the operation to apply to the input.
 ///
 /// @tparam Args Automatically deducted template parameters.
@@ -158,13 +162,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_single(Args..
     // recv_counts.
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS());
 
-    KASSERT(
-        select_parameter_type<ParameterType::send_buf>(args...).get().size() == 1u,
-        "The send buffer has to be of size 1 on all ranks.",
-        assert::light
+    using send_buf_type = buffer_type_with_requested_parameter_type<ParameterType::send_buf, Args...>;
+    static_assert(
+        send_buf_type::is_single_element,
+        "The underlying container has to be a single element \"container\""
     );
-    using value_type =
-        typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...).get()
-        )>::value_type;
-    return this->scan(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...).extract_recv_buffer();
+    using value_type = typename send_buf_type::value_type;
+    return this->scan(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...);
 }
