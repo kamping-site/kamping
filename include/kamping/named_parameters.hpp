@@ -121,6 +121,15 @@ auto send_recv_buf(AllocNewT<Container>) {
         BufferResizePolicy::resize_to_fit>(alloc_new<Container>);
 }
 
+template <typename ValueType>
+auto send_recv_buf(AllocContainerOfT<ValueType>) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::in_out_buffer,
+        BufferResizePolicy::resize_to_fit>(alloc_container_of<ValueType>);
+}
+
 /// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must
 /// contain the send counts to each relevant PE.
 ///
@@ -207,7 +216,11 @@ auto send_counts_out(AllocNewUsingT<Container>) {
 /// @brief Generates a wrapper for a send counts output parameter without any user input.
 /// @return Wrapper for the send counts that can be retrieved as structured binding.
 inline auto send_counts_out() {
-    return send_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<std::vector<int>>);
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_counts,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<int>);
 }
 
 /// @brief The number of elements to send.
@@ -339,7 +352,11 @@ auto recv_counts_out(AllocNewUsingT<Data> container) {
 /// @brief Generates a wrapper for a recv counts output parameter without any user input.
 /// @return Wrapper for the recv counts that can be retrieved as structured binding.
 inline auto recv_counts_out() {
-    return recv_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<std::vector<int>>);
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_counts,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<int>);
 }
 
 /// @brief The number of elements to received.
@@ -503,7 +520,11 @@ auto send_displs_out(AllocNewUsingT<Container>) {
 /// @brief Generates a wrapper for a send displs output parameter without any user input.
 /// @return Wrapper for the send displs that can be retrieved as structured binding.
 inline auto send_displs_out() {
-    return send_displs_out<BufferResizePolicy::resize_to_fit>(alloc_new<std::vector<int>>);
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<int>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage
@@ -566,12 +587,21 @@ auto recv_buf(Container&& container) {
 /// @param container Container which will contain the received elements.
 /// @return Object referring to the storage containing the received elements.
 template <typename Data>
-auto recv_buf(AllocNewT<Data> container) {
+auto recv_buf(AllocNewT<Data>) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        internal::maximum_viable_resize_policy<Data>>(container);
+        internal::maximum_viable_resize_policy<Data>>(alloc_new<Data>);
+}
+
+template <typename ValueType>
+auto recv_buf(AllocContainerOfT<ValueType>) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<ValueType>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
@@ -626,7 +656,11 @@ auto recv_displs_out(AllocNewUsingT<Container>) {
 /// @brief Generates a wrapper for a recv displs output parameter without any user input.
 /// @return Wrapper for the recv displs that can be retrieved as structured binding.
 inline auto recv_displs_out() {
-    return recv_displs_out<BufferResizePolicy::resize_to_fit>(alloc_new<std::vector<int>>);
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<int>);
 }
 
 /// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like

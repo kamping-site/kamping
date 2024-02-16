@@ -48,29 +48,7 @@ struct DataBufferBuilder {
     template <template <typename...> typename RebindContainerType = UnusedRebindContainer>
     auto get() {
         using Data_no_ref = std::remove_const_t<std::remove_reference_t<Data>>;
-        if constexpr (is_alloc_new_v<Data_no_ref>) {
-            return make_data_buffer<
-                parameter_type,
-                modifiability,
-                buffer_type,
-                buffer_resize_policy,
-                ValueType>(alloc_new<typename Data::container_type>);
-        } else if constexpr (is_alloc_new_using_v<Data_no_ref>) {
-            return make_data_buffer<
-                parameter_type,
-                modifiability,
-                buffer_type,
-                buffer_resize_policy,
-                ValueType>(alloc_new_using<Data_no_ref::template container_type>);
-        } else if constexpr (is_alloc_container_of_v<Data_no_ref>) {
-            static_assert(!std::is_same_v<RebindContainerType<void>, UnusedRebindContainer<void>>);
-            return make_data_buffer<
-                parameter_type,
-                modifiability,
-                buffer_type,
-                buffer_resize_policy,
-                ValueType>(alloc_new<RebindContainerType<typename Data_no_ref::value_type>>);
-        } else if constexpr (is_empty_data_buffer_v<Data_no_ref>) {
+        if constexpr (is_empty_data_buffer_v<Data_no_ref>) {
             return internal::EmptyDataBuffer<ValueType, parameter_type, buffer_type>{};
         } else {
             // static_assert(std::is_same_v<RebindContainerType<void>, void>);
@@ -80,15 +58,14 @@ struct DataBufferBuilder {
         }
     }
     Data data;
-    using NoRebindBuffer =
+    using DataBufferType =
         decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
             std::forward<Data>(data)
         ));
-    static constexpr bool is_out_buffer    = NoRebindBuffer::is_out_buffer;
-    static constexpr bool is_owning        = NoRebindBuffer::is_owning;
-    static constexpr bool is_lib_allocated = NoRebindBuffer::is_lib_allocated;
-    // static constexpr bool is_modifiable    = NoRebindBuffer::is_modifiable;
-    using value_type = typename NoRebindBuffer::value_type;
+    static constexpr bool is_out_buffer    = DataBufferType::is_out_buffer;
+    static constexpr bool is_owning        = DataBufferType::is_owning;
+    static constexpr bool is_lib_allocated = DataBufferType::is_lib_allocated;
+    using value_type                       = typename DataBufferType::value_type;
 };
 
 template <
@@ -116,15 +93,28 @@ struct AllocNewDataBufferBuilder {
                 buffer_type,
                 buffer_resize_policy,
                 ValueType>(alloc_new_using<AllocType::template container_type>);
+        } else if constexpr (is_alloc_container_of_v<AllocType>) {
+            static_assert(
+                !std::is_same_v<RebindContainerType<void>, UnusedRebindContainer<void>>,
+                "RebindContainerType is required."
+            );
+            return make_data_buffer<
+                parameter_type,
+                modifiability,
+                buffer_type,
+                buffer_resize_policy,
+                ValueType>(alloc_new<RebindContainerType<typename AllocType::value_type>>);
+        } else {
+            static_assert(is_alloc_container_of_v<AllocType>, "Unknown AllocType");
         }
     }
-    using NoRebindBuffer =
+    using DataBufferType =
         decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
-            AllocType{}
+            std::conditional_t<is_alloc_container_of_v<AllocType>, AllocNewT<std::vector<ValueType>>, AllocType>{}
         ));
-    static constexpr bool is_out_buffer    = NoRebindBuffer::is_out_buffer;
-    static constexpr bool is_owning        = NoRebindBuffer::is_owning;
-    static constexpr bool is_lib_allocated = NoRebindBuffer::is_lib_allocated;
+    static constexpr bool is_out_buffer    = DataBufferType::is_out_buffer;
+    static constexpr bool is_owning        = DataBufferType::is_owning;
+    static constexpr bool is_lib_allocated = DataBufferType::is_lib_allocated;
 };
 
 template <
@@ -173,6 +163,40 @@ template <
 auto make_data_buffer_builder(AllocNewT<Data>) {
     return AllocNewDataBufferBuilder<
         AllocNewT<Data>,
+        ValueType,
+        parameter_type,
+        modifiability,
+        buffer_type,
+        buffer_resize_policy>();
+}
+
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    template <typename...>
+    typename Container>
+auto make_data_buffer_builder(AllocNewUsingT<Container>) {
+    return AllocNewDataBufferBuilder<
+        AllocNewUsingT<Container>,
+        ValueType,
+        parameter_type,
+        modifiability,
+        buffer_type,
+        buffer_resize_policy>();
+}
+
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType>
+auto make_data_buffer_builder(AllocContainerOfT<ValueType>) {
+    return AllocNewDataBufferBuilder<
+        AllocContainerOfT<ValueType>,
         ValueType,
         parameter_type,
         modifiability,

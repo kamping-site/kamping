@@ -637,6 +637,26 @@ TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc) {
     );
 }
 
+TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc_container_of) {
+    auto buffer_based_on_library_alloc_vector = recv_buf(alloc_container_of<int>).template get<std::vector>();
+    using ExpectedValueType                   = int;
+    testing::test_library_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_library_alloc_vector,
+        ParameterType::recv_buf,
+        internal::BufferType::out_buffer
+    );
+}
+
+TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc_container_of_with_own_container) {
+    auto buffer_based_on_library_alloc_vector = recv_buf(alloc_container_of<int>).template get<testing::OwnContainer>();
+    using ExpectedValueType                   = int;
+    testing::test_library_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_library_alloc_vector,
+        ParameterType::recv_buf,
+        internal::BufferType::out_buffer
+    );
+}
+
 TEST(ParameterFactoriesTest, send_counts_out_basics_user_alloc) {
     const size_t     size = 10;
     std::vector<int> int_vec(size);
@@ -1380,6 +1400,17 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_container_library_alloc) {
     );
 }
 
+TEST(ParameterFactoriesTest, send_recv_buf_alloc_container_of_with_own_container) {
+    auto buffer_based_on_library_alloc_vector =
+        send_recv_buf(alloc_container_of<int>).template get<testing::OwnContainer>();
+    using ExpectedValueType = int;
+    testing::test_library_allocated_buffer<ExpectedValueType>(
+        buffer_based_on_library_alloc_vector,
+        ParameterType::send_recv_buf,
+        internal::BufferType::in_out_buffer
+    );
+}
+
 TEST(ParameterFactoriesTest, recv_counts_single_value_in_basics) {
     {
         int  value             = 42;
@@ -1407,7 +1438,7 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
         EXPECT_EQ(decltype(recv_count_out_obj)::buffer_type, internal::BufferType::out_buffer);
     }
     {
-        auto recv_count_out_obj = recv_counts_out().get();
+        auto recv_count_out_obj = recv_counts_out().template get<std::vector>();
         EXPECT_TRUE(decltype(recv_count_out_obj)::is_modifiable);
         EXPECT_EQ(decltype(recv_count_out_obj)::buffer_type, internal::BufferType::out_buffer);
     }
@@ -1415,31 +1446,31 @@ TEST(ParameterFactoriesTest, recv_count_out_basics) {
 
 TEST(ParameterFactoriesTest, out_parameter_without_passed_parameters) {
     {
-        auto data_buf = recv_counts_out().get();
+        auto data_buf = recv_counts_out().template get<std::vector>();
         EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::recv_counts);
         EXPECT_EQ(data_buf.is_modifiable, true);
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
     }
     {
-        auto data_buf = send_displs_out().get();
+        auto data_buf = send_displs_out().template get<std::vector>();
         EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::send_displs);
         EXPECT_EQ(data_buf.is_modifiable, true);
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
     }
     {
-        auto data_buf = recv_counts_out().get();
+        auto data_buf = recv_counts_out().template get<std::vector>();
         EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::recv_counts);
         EXPECT_EQ(data_buf.is_modifiable, true);
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
     }
     {
-        auto data_buf = recv_displs_out().get();
+        auto data_buf = recv_displs_out().template get<std::vector>();
         EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::recv_displs);
         EXPECT_EQ(data_buf.is_modifiable, true);
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
     }
     {
-        auto data_buf = send_counts_out().get();
+        auto data_buf = send_counts_out().template get<std::vector>();
         EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::send_counts);
         EXPECT_EQ(data_buf.is_modifiable, true);
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
