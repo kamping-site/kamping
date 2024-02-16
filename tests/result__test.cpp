@@ -90,7 +90,7 @@ template <typename UnderlyingContainer>
 void test_recv_displs_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_displs = recv_displs_out(alloc_new<UnderlyingContainer>);
+    auto recv_displs = recv_displs_out(alloc_new<UnderlyingContainer>).get();
     static_assert(std::is_integral_v<typename decltype(recv_displs)::value_type>, "Use integral Types in this test.");
 
     recv_displs.resize(10);
@@ -139,7 +139,7 @@ template <typename UnderlyingContainer>
 void test_send_displs_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_displs = send_displs_out(alloc_new<UnderlyingContainer>);
+    auto send_displs = send_displs_out(alloc_new<UnderlyingContainer>).get();
     static_assert(std::is_integral_v<typename decltype(send_displs)::value_type>, "Use integral Types in this test.");
 
     send_displs.resize(10);

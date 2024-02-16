@@ -259,7 +259,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using send_displs_type = typename std::remove_reference_t<decltype(send_displs)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<send_displs_type>, int>, "Send displs must be of type int");
 
@@ -269,7 +270,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template get<DefaultContainerType>();
     using recv_displs_type = typename std::remove_reference_t<decltype(recv_displs)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_displs_type>, int>, "Recv displs must be of type int");
 

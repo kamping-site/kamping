@@ -325,7 +325,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     // Get send displacements
     using default_send_displs_type = decltype(send_displs_out(alloc_new<DefaultContainerType<int>>));
     auto&& send_displs =
-        select_parameter_type_or_default<ParameterType::send_displs, default_send_displs_type>(std::tuple(), args...);
+        select_parameter_type_or_default<ParameterType::send_displs, default_send_displs_type>(std::tuple(), args...)
+            .template get<DefaultContainerType>();
 
     if (is_root(root_val)) {
         // send displacements are only considered on the root PE and ignored by MPI on all non-root PEs.

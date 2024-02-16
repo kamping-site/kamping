@@ -487,7 +487,7 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_initializer_list) {
 
 TEST(ParameterFactoriesTest, send_displs_in_basics_int_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_int_vec = send_displs(int_vec);
+    auto             gen_via_int_vec = send_displs(int_vec).get();
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
@@ -500,7 +500,7 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_int_vector) {
 
 TEST(ParameterFactoriesTest, send_displs_in_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto                   gen_via_const_int_vec = send_displs(const_int_vec);
+    auto                   gen_via_const_int_vec = send_displs(const_int_vec).get();
     Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
@@ -514,7 +514,7 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_const_int_vector) {
 TEST(ParameterFactoriesTest, send_displs_in_basics_moved_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto             expected          = int_vec;
-    auto             gen_via_moved_vec = send_displs(std::move(int_vec));
+    auto             gen_via_moved_vec = send_displs(std::move(int_vec)).get();
     using ExpectedValueType            = int;
     testing::test_owning_buffer<ExpectedValueType>(
         gen_via_moved_vec,
@@ -526,7 +526,7 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_moved_vector) {
 
 TEST(ParameterFactoriesTest, send_displs_in_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_initializer_list = send_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1});
+    auto             gen_via_initializer_list = send_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).get();
     using ExpectedValueType                   = int;
     testing::test_owning_buffer<ExpectedValueType>(
         gen_via_initializer_list,
@@ -538,7 +538,7 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_initializer_list) {
 
 TEST(ParameterFactoriesTest, recv_displs_in_basics_int_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_int_vec = recv_displs(int_vec);
+    auto             gen_via_int_vec = recv_displs(int_vec).get();
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
@@ -551,7 +551,7 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_int_vector) {
 
 TEST(ParameterFactoriesTest, recv_displs_in_basics_const_int_vector) {
     std::vector<int> const const_int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto                   gen_via_const_int_vec = recv_displs(const_int_vec);
+    auto                   gen_via_const_int_vec = recv_displs(const_int_vec).get();
     Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
     testing::test_const_buffer<ExpectedValueType>(
@@ -565,7 +565,7 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_const_int_vector) {
 TEST(ParameterFactoriesTest, recv_displs_in_basics_moved_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto             expected          = int_vec;
-    auto             gen_via_moved_vec = recv_displs(std::move(int_vec));
+    auto             gen_via_moved_vec = recv_displs(std::move(int_vec)).get();
     using ExpectedValueType            = int;
     testing::test_owning_buffer<ExpectedValueType>(
         gen_via_moved_vec,
@@ -577,7 +577,7 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_moved_vector) {
 
 TEST(ParameterFactoriesTest, recv_displs_in_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_initializer_list = recv_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1});
+    auto             gen_via_initializer_list = recv_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).get();
     using ExpectedValueType                   = int;
     testing::test_owning_buffer<ExpectedValueType>(
         gen_via_initializer_list,
@@ -702,7 +702,7 @@ TEST(ParameterFactoriesTest, send_counts_out_basics_library_alloc_without_explic
 TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
     const size_t     size = 10;
     std::vector<int> int_vec(size);
-    auto             buffer_based_on_user_alloc_vector = send_displs_out(int_vec);
+    auto             buffer_based_on_user_alloc_vector = send_displs_out(int_vec).get();
     using ExpectedValueType                            = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
@@ -716,7 +716,7 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
 TEST(ParameterFactoriesTest, resizing_send_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
     const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
-    auto                     buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec);
+    auto                     buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec).get();
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
@@ -730,7 +730,7 @@ TEST(ParameterFactoriesTest, resizing_send_displs_out_basics_user_alloc) {
 TEST(ParameterFactoriesTest, resizing_if_required_send_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
     const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
-    auto                     buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec);
+    auto                     buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec).get();
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
@@ -742,7 +742,7 @@ TEST(ParameterFactoriesTest, resizing_if_required_send_displs_out_basics_user_al
 }
 
 TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = send_displs_out(alloc_new<std::vector<int>>);
+    auto buffer_based_on_library_alloc_vector = send_displs_out(alloc_new<std::vector<int>>).get();
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -752,7 +752,7 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc_without_explicit_type) {
-    auto buffer_based_on_library_alloc_vector = send_displs_out(alloc_new_using<std::vector>);
+    auto buffer_based_on_library_alloc_vector = send_displs_out(alloc_new_using<std::vector>).get();
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -826,7 +826,7 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc_without_explic
 TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
     const size_t     size = 10;
     std::vector<int> int_vec(size);
-    auto             buffer_based_on_user_alloc_vector = recv_displs_out(int_vec);
+    auto             buffer_based_on_user_alloc_vector = recv_displs_out(int_vec).get();
     using ExpectedValueType                            = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
@@ -840,7 +840,7 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
 TEST(ParameterFactoriesTest, resizing_recv_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
     const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
-    auto                     buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec);
+    auto                     buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec).get();
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
@@ -854,7 +854,7 @@ TEST(ParameterFactoriesTest, resizing_recv_displs_out_basics_user_alloc) {
 TEST(ParameterFactoriesTest, resizing_if_required_recv_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
     const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
-    auto                     buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec);
+    auto                     buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec).get();
     using ExpectedValueType                                    = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
@@ -866,7 +866,7 @@ TEST(ParameterFactoriesTest, resizing_if_required_recv_displs_out_basics_user_al
 }
 
 TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = recv_displs_out(alloc_new<std::vector<int>>);
+    auto buffer_based_on_library_alloc_vector = recv_displs_out(alloc_new<std::vector<int>>).get();
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -876,7 +876,7 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc_without_explicit_type) {
-    auto buffer_based_on_library_alloc_vector = recv_displs_out(alloc_new_using<std::vector>);
+    auto buffer_based_on_library_alloc_vector = recv_displs_out(alloc_new_using<std::vector>).get();
     using ExpectedValueType                   = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
@@ -1421,7 +1421,7 @@ TEST(ParameterFactoriesTest, out_parameter_without_passed_parameters) {
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
     }
     {
-        auto data_buf = send_displs_out();
+        auto data_buf = send_displs_out().get();
         EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::send_displs);
         EXPECT_EQ(data_buf.is_modifiable, true);
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
@@ -1433,7 +1433,7 @@ TEST(ParameterFactoriesTest, out_parameter_without_passed_parameters) {
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);
     }
     {
-        auto data_buf = recv_displs_out();
+        auto data_buf = recv_displs_out().get();
         EXPECT_EQ(data_buf.parameter_type, internal::ParameterType::recv_displs);
         EXPECT_EQ(data_buf.is_modifiable, true);
         EXPECT_EQ(data_buf.buffer_type, internal::BufferType::out_buffer);

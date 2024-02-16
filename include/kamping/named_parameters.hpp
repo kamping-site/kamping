@@ -425,7 +425,7 @@ inline auto send_recv_count_out(int& count) {
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
 auto send_displs(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -441,7 +441,7 @@ auto send_displs(Container&& container) {
 /// @return Object referring to the storage containing the send displacements.
 template <typename T>
 auto send_displs(std::initializer_list<T> displs) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -461,7 +461,7 @@ auto send_displs(std::initializer_list<T> displs) {
 /// @return Object referring to the storage containing the send displacements.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_displs_out(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -476,7 +476,7 @@ auto send_displs_out(Container&& container) {
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
 auto send_displs_out(AllocNewT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -491,7 +491,7 @@ auto send_displs_out(AllocNewT<Container>) {
 /// @return Object referring to the storage containing the send displacements.
 template <template <typename...> typename Container>
 auto send_displs_out(AllocNewUsingT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -515,7 +515,7 @@ inline auto send_displs_out() {
 /// @return Object referring to the storage containing the recv displacements.
 template <typename Container>
 auto recv_displs(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -531,7 +531,7 @@ auto recv_displs(Container&& container) {
 /// @return Object referring to the storage containing the receive displacements.
 template <typename T>
 auto recv_displs(std::initializer_list<T> displs) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -584,7 +584,7 @@ auto recv_buf(AllocNewT<Data> container) {
 /// @return Object referring to the storage containing the receive displacements.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_displs_out(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -599,7 +599,7 @@ auto recv_displs_out(Container&& container) {
 /// @return Object referring to the storage containing the recv displacements.
 template <typename Data>
 auto recv_displs_out(AllocNewT<Data>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -614,7 +614,7 @@ auto recv_displs_out(AllocNewT<Data>) {
 /// @return Object referring to the storage containing the recv displacements.
 template <template <typename...> typename Container>
 auto recv_displs_out(AllocNewUsingT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
