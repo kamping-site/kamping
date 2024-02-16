@@ -70,7 +70,8 @@ struct DataBufferBuilder {
                 buffer_type,
                 buffer_resize_policy,
                 ValueType>(alloc_new<RebindContainerType<typename Data_no_ref::value_type>>);
-
+        } else if constexpr (is_empty_data_buffer_v<Data_no_ref>) {
+            return internal::EmptyDataBuffer<ValueType, parameter_type, buffer_type>{};
         } else {
             // static_assert(std::is_same_v<RebindContainerType<void>, void>);
             return make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
@@ -117,6 +118,16 @@ auto make_data_buffer_builder(AllocNewT<Data>) {
         buffer_type,
         buffer_resize_policy,
         ValueType>(alloc_new<Data>);
+}
+template <typename ValueType, ParameterType parameter_type, BufferType buffer_type>
+auto make_empty_data_buffer_builder() {
+    return DataBufferBuilder<
+        EmptyDataBuffer<ValueType, parameter_type, buffer_type>,
+        parameter_type,
+        BufferModifiability::constant,
+        buffer_type,
+        no_resize,
+        ValueType>();
 }
 
 /// @brief Helper type for representing a type list

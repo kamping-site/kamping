@@ -598,6 +598,12 @@ public:
     void resize_if_requested(SizeFunc&& compute_required_size [[maybe_unused]]) {}
 };
 
+template <typename T>
+constexpr bool is_empty_data_buffer_v = false;
+
+template <typename T, ParameterType type, BufferType buffer_type_param>
+constexpr bool is_empty_data_buffer_v<EmptyDataBuffer<T, type, buffer_type_param>> = true;
+
 ///
 /// @brief Creates a user allocated DataBuffer containing the supplied data (a container or a single element)
 ///

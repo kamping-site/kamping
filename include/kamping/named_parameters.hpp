@@ -281,7 +281,8 @@ auto recv_counts(std::initializer_list<T> counts) {
 
 /// @brief Indicate that the recv counts are ignored.
 inline auto recv_counts(internal::ignore_t<void> ignore [[maybe_unused]]) {
-    return internal::EmptyDataBuffer<int, internal::ParameterType::recv_counts, internal::BufferType::ignore>();
+    return internal::
+        make_empty_data_buffer_builder<int, internal::ParameterType::recv_counts, internal::BufferType::ignore>();
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
