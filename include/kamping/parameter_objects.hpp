@@ -86,7 +86,8 @@ public:
         DataBufferType::is_owning; ///< Indicates whether the buffer owns its underlying storage.
     static constexpr bool is_lib_allocated =
         DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng.
-    // using value_type                       = typename DataBufferType::value_type;
+    static constexpr bool is_single_element =
+        DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
 };
 
 /// @brief Parameter object representing a data buffer to be allocated by KaMPIng. This is an intermediate object not
@@ -155,7 +156,9 @@ public:
     static constexpr bool is_owning =
         DataBufferType::is_owning; ///< Indicates whether the buffer owns its underlying storage.
     static constexpr bool is_lib_allocated =
-        DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng.
+        DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng
+    static constexpr bool is_single_element =
+        DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
 };
 
 /// @brief Factory method for constructing a \ref DataBufferBuilder from the given Container \p Data.
