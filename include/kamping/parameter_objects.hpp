@@ -51,18 +51,18 @@ template <
     typename ValueType = default_value_type_tag>
 struct DataBufferBuilder {
     static constexpr ParameterType parameter_type = parameter_type_param; ///< The parameter type.
-    DataBufferBuilder() : data() {}
+    DataBufferBuilder() : data_() {}
     /// @brief Constructor for DataBufferBuilder.
     /// @param data The container to build a databuffer for
     /// @tparam Data_ The type of the container.
     template <typename Data_>
-    DataBufferBuilder(Data_&& data) : data(std::forward<Data_>(data)) {}
+    DataBufferBuilder(Data_&& data) : data_(std::forward<Data_>(data)) {}
 
 private:
-    Data data;
+    Data data_;
     using DataBufferType =
         decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
-            std::forward<Data>(data)
+            std::forward<Data>(data_)
         ));
 
 public:
@@ -75,7 +75,7 @@ public:
             return internal::EmptyDataBuffer<ValueType, parameter_type, buffer_type>{};
         } else {
             return make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
-                std::forward<Data>(data)
+                std::forward<Data>(data_)
             );
         }
     }
