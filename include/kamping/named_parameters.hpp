@@ -811,7 +811,7 @@ inline auto values_on_rank_0(std::initializer_list<T> values) {
 /// @param send_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
 inline auto send_type(MPI_Datatype send_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -822,7 +822,7 @@ inline auto send_type(MPI_Datatype send_type) {
 /// @brief Output parameter for the send type.
 /// @return The corresponding parameter object.
 inline auto send_type_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -835,7 +835,7 @@ inline auto send_type_out() {
 /// @param send_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
 inline auto send_type_out(MPI_Datatype& send_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -847,7 +847,7 @@ inline auto send_type_out(MPI_Datatype& send_type) {
 /// @param recv_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
 inline auto recv_type(MPI_Datatype recv_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -858,7 +858,7 @@ inline auto recv_type(MPI_Datatype recv_type) {
 /// @brief Output parameter for the recv type.
 /// @return The corresponding parameter object.
 inline auto recv_type_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -871,7 +871,7 @@ inline auto recv_type_out() {
 /// @param recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
 inline auto recv_type_out(MPI_Datatype& recv_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -883,7 +883,7 @@ inline auto recv_type_out(MPI_Datatype& recv_type) {
 /// @param send_recv_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
 inline auto send_recv_type(MPI_Datatype send_recv_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -894,7 +894,7 @@ inline auto send_recv_type(MPI_Datatype send_recv_type) {
 /// @brief Output parameter for the send_recv type.
 /// @return The corresponding parameter object.
 inline auto send_recv_type_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -907,7 +907,7 @@ inline auto send_recv_type_out() {
 /// @param send_recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
 inline auto send_recv_type_out(MPI_Datatype& send_recv_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,

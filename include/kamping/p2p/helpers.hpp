@@ -30,8 +30,9 @@ namespace kamping::internal {
 template <typename send_value_type, typename... Args>
 constexpr auto determine_mpi_send_datatype(Args&... args)
     -> decltype(internal::select_parameter_type_or_default<
-                internal::ParameterType::send_type,
-                decltype(kamping::send_type_out())>(std::make_tuple(), args...)) {
+                    internal::ParameterType::send_type,
+                    decltype(kamping::send_type_out())>(std::make_tuple(), args...)
+                    .get()) {
     // Some assertions:
     // If a send_type is given, the send_count information has to be provided, too.
     constexpr bool is_send_type_given_as_in_param = is_parameter_given_as_in_buffer<ParameterType::send_type, Args...>;
@@ -52,7 +53,8 @@ constexpr auto determine_mpi_send_datatype(Args&... args)
         internal::select_parameter_type_or_default<internal::ParameterType::send_type, default_mpi_send_type>(
             std::make_tuple(),
             args...
-        );
+        )
+            .get();
 
     // assure that our expectation about the return value value category (lvalue or pr-value) is true. This ensures
     // that the return value of the function does not become a dangling rvalue reference bound to a function-local
@@ -85,8 +87,9 @@ constexpr auto determine_mpi_send_datatype(Args&... args)
 template <typename recv_value_type, typename recv_buf, typename... Args>
 constexpr auto determine_mpi_recv_datatype(Args&... args)
     -> decltype(internal::select_parameter_type_or_default<
-                internal::ParameterType::recv_type,
-                decltype(kamping::recv_type_out())>(std::make_tuple(), args...)) {
+                    internal::ParameterType::recv_type,
+                    decltype(kamping::recv_type_out())>(std::make_tuple(), args...)
+                    .get()) {
     // Get the recv type
     using default_mpi_recv_type = decltype(kamping::recv_type_out());
 
@@ -97,7 +100,8 @@ constexpr auto determine_mpi_recv_datatype(Args&... args)
         internal::select_parameter_type_or_default<internal::ParameterType::recv_type, default_mpi_recv_type>(
             std::make_tuple(),
             args...
-        );
+        )
+            .get();
 
     // assure that our expectation about the return value value category (lvalue or pr-value) is true. This ensures
     // that the return value of the function does not become a dangling rvalue reference bound to a function-local

@@ -117,7 +117,8 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
         internal::select_parameter_type_or_default<internal::ParameterType::send_type, default_mpi_send_type>(
             std::make_tuple(),
             args...
-        );
+        )
+            .get();
     if constexpr (!is_send_type_given_as_in_param) {
         if constexpr (std::is_same_v<send_value_type, unused_tparam>) {
             mpi_send_type.underlying() = MPI_DATATYPE_NULL;
@@ -130,7 +131,8 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
         internal::select_parameter_type_or_default<internal::ParameterType::recv_type, default_mpi_recv_type>(
             std::make_tuple(),
             args...
-        );
+        )
+            .get();
     if constexpr (!is_recv_type_given_as_in_param) {
         mpi_recv_type.underlying() = mpi_datatype<recv_value_type>();
     }
@@ -163,8 +165,9 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
 template <typename send_or_send_recv_value_type, typename recv_or_send_recv_buf, typename... Args>
 constexpr auto determine_mpi_send_recv_datatype(Args&... args)
     -> decltype(internal::select_parameter_type_or_default<
-                internal::ParameterType::send_recv_type,
-                decltype(kamping::send_recv_type_out())>(std::make_tuple(), args...)) {
+                    internal::ParameterType::send_recv_type,
+                    decltype(kamping::send_recv_type_out())>(std::make_tuple(), args...)
+                    .get()) {
     // Some assertions:
     // If a send_recv type is given, the corresponding count information has to be provided, too.
     constexpr bool is_send_recv_type_given_as_in_param =
@@ -197,7 +200,8 @@ constexpr auto determine_mpi_send_recv_datatype(Args&... args)
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_type, default_mpi_send_recv_type>(
             std::make_tuple(),
             args...
-        );
+        )
+            .get();
 
     // assure that our expectectation about the return value value category (lvalue or pr-value) is true. This ensures
     // that the return value of the function does not become a dangling rvalue reference bound to a function-local

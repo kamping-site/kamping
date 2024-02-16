@@ -92,6 +92,42 @@ struct DataBufferBuilder {
 };
 
 template <
+    typename AllocType,
+    typename ValueType,
+    ParameterType       parameter_type_param,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy>
+struct AllocNewDataBufferBuilder {
+    static constexpr ParameterType parameter_type = parameter_type_param;
+    template <template <typename...> typename RebindContainerType = UnusedRebindContainer>
+    auto get() {
+        if constexpr (is_alloc_new_v<AllocType>) {
+            return make_data_buffer<
+                parameter_type,
+                modifiability,
+                buffer_type,
+                buffer_resize_policy,
+                ValueType>(alloc_new<typename AllocType::container_type>);
+        } else if constexpr (is_alloc_new_using_v<AllocType>) {
+            return make_data_buffer<
+                parameter_type,
+                modifiability,
+                buffer_type,
+                buffer_resize_policy,
+                ValueType>(alloc_new_using<AllocType::template container_type>);
+        }
+    }
+    using NoRebindBuffer =
+        decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
+            AllocType{}
+        ));
+    static constexpr bool is_out_buffer    = NoRebindBuffer::is_out_buffer;
+    static constexpr bool is_owning        = NoRebindBuffer::is_owning;
+    static constexpr bool is_lib_allocated = NoRebindBuffer::is_lib_allocated;
+};
+
+template <
     ParameterType       parameter_type,
     BufferModifiability modifiability,
     BufferType          buffer_type,
@@ -135,14 +171,15 @@ template <
     typename ValueType = default_value_type_tag,
     typename Data>
 auto make_data_buffer_builder(AllocNewT<Data>) {
-    return DataBufferBuilder<
+    return AllocNewDataBufferBuilder<
         AllocNewT<Data>,
+        ValueType,
         parameter_type,
         modifiability,
         buffer_type,
-        buffer_resize_policy,
-        ValueType>(alloc_new<Data>);
+        buffer_resize_policy>();
 }
+
 template <typename ValueType, ParameterType parameter_type, BufferType buffer_type>
 auto make_empty_data_buffer_builder() {
     return DataBufferBuilder<

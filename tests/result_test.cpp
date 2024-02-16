@@ -316,7 +316,7 @@ TEST(MpiResultTest, extract_send_recv_count) {
 TEST(MpiResultTest, extract_send_type) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_type         = kamping::send_type_out();
+    auto send_type         = kamping::send_type_out().get();
     send_type.underlying() = MPI_DOUBLE;
     MPIResult mpi_result{
         ResultCategoryNotUsed{},
@@ -337,7 +337,7 @@ TEST(MpiResultTest, extract_send_type) {
 TEST(MpiResultTest, extract_recv_type) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_type         = kamping::recv_type_out();
+    auto recv_type         = kamping::recv_type_out().get();
     recv_type.underlying() = MPI_CHAR;
     MPIResult mpi_result{
         ResultCategoryNotUsed{},
@@ -358,7 +358,7 @@ TEST(MpiResultTest, extract_recv_type) {
 TEST(MpiResultTest, extract_send_recv_type) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_recv_type         = kamping::send_recv_type_out();
+    auto send_recv_type         = kamping::send_recv_type_out().get();
     send_recv_type.underlying() = MPI_CHAR;
     MPIResult mpi_result{
         ResultCategoryNotUsed{},
