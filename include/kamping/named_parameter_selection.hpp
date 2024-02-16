@@ -99,6 +99,14 @@ auto& select_parameter_type_in_tuple(std::tuple<Args...>& tuple) {
     return std::get<selected_index>(tuple);
 }
 
+/// @brief Type of Buffer with requested \tparam parameter_type
+///
+/// @tparam parameter_type The parameter type with which a parameter should be found.
+/// @tparam Args All parameter types to be searched for type `parameter_type`.
+template <ParameterType parameter_type, typename... Args>
+using buffer_type_with_requested_parameter_type =
+    std::tuple_element_t<find_pos<parameter_type, 0, Args...>(), std::tuple<Args...>>;
+
 /// @brief Checks if parameter with requested parameter type exists.
 ///
 /// @tparam parameter_type The parameter type with which a parameter should be found.

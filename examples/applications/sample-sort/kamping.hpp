@@ -33,7 +33,7 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
         data.insert(data.end(), bucket.begin(), bucket.end());
         scounts.push_back(static_cast<int>(bucket.size()));
     }
-    data = comm.alltoallv(send_buf(data), send_counts(scounts)).extract_recv_buffer();
+    data = comm.alltoallv(send_buf(data), send_counts(scounts));
     std::sort(data.begin(), data.end());
 }
 } // namespace kamping

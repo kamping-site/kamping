@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022-2023 The KaMPIng Authors
+// Copyright 2022-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -29,7 +29,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 /// @brief Wrapper for \c MPI_Bcast
 ///
@@ -192,7 +192,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     );
     THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
-    return make_mpi_result(std::move(send_recv_buf), std::move(count_param), std::move(send_recv_type));
+    return make_mpi_result_<std::tuple<Args...>>(
+        std::move(send_recv_buf),
+        std::move(count_param),
+        std::move(send_recv_type)
+    );
 } // namespace kamping::internal
 
 /// @brief Wrapper for \c MPI_Bcast
@@ -227,13 +231,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
     // In contrast to bcast(...), send_recv_count is not a possible parameter.
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(send_recv_buf, root));
 
-    if constexpr (has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
-        KASSERT(
-            select_parameter_type<ParameterType::send_recv_buf>(args...).size() == 1u,
-            "The send/receive buffer has to be of size 1 on all ranks.",
-            assert::light
-        );
-    }
     // Get the root PE
     auto&& root = select_parameter_type_or_default<ParameterType::root, internal::RootDataBuffer>(
         std::tuple(this->root()),
@@ -248,10 +245,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
         KASSERT(root_has_buffer, "send_recv_buf must be provided on the root rank.", assert::light_communication);
     }
 
-    if constexpr (has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()) {
+    if constexpr (has_parameter_type<ParameterType::send_recv_buf, Args...>()) {
+        using send_recv_buf_type = buffer_type_with_requested_parameter_type<ParameterType::send_recv_buf, Args...>;
+        static_assert(
+            send_recv_buf_type::is_single_element,
+            "The underlying container has to be a single element \"container\""
+        );
         return this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1));
     } else {
-        return this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1))
-            .extract_recv_buffer()[0];
+        return *this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1)).data();
     }
 }

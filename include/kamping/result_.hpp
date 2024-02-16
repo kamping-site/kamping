@@ -323,7 +323,34 @@ struct ParameterTypeEntry {
     static constexpr ParameterType parameter_type = ptype; ///< ParameterType to be stored in this type.
 };
 
-/// @brief Base template used to filter a list of types and only keep the those whose types meet specified criteria.
+/// @brief List of parameter type (entries) which should not be included in the result object.
+using parameter_types_to_ignore_for_result_object = type_list<
+    ParameterTypeEntry<ParameterType::op>,
+    ParameterTypeEntry<ParameterType::source>,
+    ParameterTypeEntry<ParameterType::destination>,
+    ParameterTypeEntry<ParameterType::statuses>,
+    ParameterTypeEntry<ParameterType::request>,
+    ParameterTypeEntry<ParameterType::root>,
+    ParameterTypeEntry<ParameterType::tag>,
+    ParameterTypeEntry<ParameterType::send_mode>,
+    ParameterTypeEntry<ParameterType::values_on_rank_0>>;
+
+/// @brief Determines whether a given buffer with \tparam BufferType should we included in the result object.
+///
+/// @tparam BufferType Type of the data buffer.
+/// @return \c True iff the \tparam BufferType has the static bool members \c is_owning and \c is_out_buffer and both
+/// values are true.
+template <typename BufferType>
+constexpr bool is_returnable_owning_out_data_buffer() {
+    using ptype_entry = ParameterTypeEntry<BufferType::parameter_type>;
+    if constexpr (parameter_types_to_ignore_for_result_object::contains<ptype_entry>) {
+        return false;
+    } else {
+        return BufferType::is_owning && BufferType::is_out_buffer; ///< Predicate which Head has to fulfill to be kept.
+    }
+}
+
+/// @brief Base template used to filter a list of types and only keep those whose types meet specified criteria.
 /// See the following specialisations for more information.
 template <typename...>
 struct FilterOwningOut;
@@ -339,6 +366,7 @@ struct FilterOwningOut<> {
 /// the following criteria:
 /// - an object of the type owns its underlying storage
 /// - an object of the type is an out buffer
+/// - @see \ref is_returnable_owning_out_data_buffer()
 ///
 /// The template is recursively instantiated to check one type after the other and "insert" it into a
 /// std::tuple if it meets the criteria.
@@ -350,7 +378,7 @@ template <typename Head, typename... Tail>
 struct FilterOwningOut<Head, Tail...> {
     using non_ref_first = std::remove_reference_t<Head>; ///< Remove potential reference from Head.
     static constexpr bool predicate =
-        non_ref_first::is_owning && non_ref_first::is_out_buffer; ///< Predicate which Head has to fulfill to be kept.
+        is_returnable_owning_out_data_buffer<non_ref_first>(); ///< Predicate which Head has to fulfill to be kept.
     static constexpr ParameterType ptype =
         non_ref_first::parameter_type; ///< ParameterType stored as a static variable in Head.
     using type = std::conditional_t<
