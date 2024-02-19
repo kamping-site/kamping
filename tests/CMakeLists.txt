@@ -22,6 +22,7 @@ option(KAMPING_TEST_ENABLE_SANITIZERS "Enable undefined behavior sanitizer and a
 # Registering tests without MPI:
 kamping_register_test(test_checking_casts FILES checking_casts_test.cpp)
 kamping_register_test(test_result FILES result_test.cpp)
+kamping_register_test(test_result_ FILES result__test.cpp)
 kamping_register_test(test_nonblocking_result FILES nonblocking_result_test.cpp)
 kamping_register_test(test_mpi_operations FILES mpi_operations_test.cpp)
 kamping_register_test(test_named_parameter_check FILES named_parameter_check_test.cpp)
@@ -78,7 +79,7 @@ kamping_register_mpi_test(
 kamping_register_mpi_test(
     test_mpi_datatype
     FILES mpi_datatype_test.cpp
-    CORES 1
+    CORES 1 NO_GLIBCXX_DEBUG_CONTAINERS
 )
 kamping_register_mpi_test(
     test_mpi_gather
@@ -421,7 +422,7 @@ kamping_register_compilation_failure_test(
     FILES collectives/mpi_allreduce_compilation_failure_test.cpp
     SECTIONS "OPERATION_TYPE_DOES_NOT_MATCH_BUFFER_TYPE" "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT"
              "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
-             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY" "SINGLE_VARIANT_WITH_VECTOR"
     LIBRARIES kamping_base
 )
 kamping_register_compilation_failure_test(
@@ -436,7 +437,7 @@ kamping_register_compilation_failure_test(
     FILES collectives/mpi_bcast_compilation_failure_test.cpp
     SECTIONS "SEND_RECV_COUNT_GIVEN" "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT"
              "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
-             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY" "SINGLE_VARIANT_WITH_VECTOR"
     LIBRARIES kamping_base
 )
 kamping_register_compilation_failure_test(
@@ -450,14 +451,14 @@ kamping_register_compilation_failure_test(
     test_mpi_exscan_compilation_failure
     FILES collectives/mpi_exscan_compilation_failure_test.cpp
     SECTIONS "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT" "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
-             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+             "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY" "SINGLE_VARIANT_WITH_VECTOR"
     LIBRARIES kamping_base
 )
 kamping_register_compilation_failure_test(
     test_mpi_scan_compilation_failure
     FILES collectives/mpi_scan_compilation_failure_test.cpp
     SECTIONS "SEND_RECV_TYPE_GIVEN_BUT_NO_SEND_RECV_COUNT" "SEND_RECV_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_RESIZE_TO_FIT"
-             "SEND_REC_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY"
+             "SEND_REC_TYPE_GIVEN_BUT_RESIZE_POLICY_IS_GROW_ONLY" "SINGLE_VARIANT_WITH_VECTOR"
     LIBRARIES kamping_base
 )
 kamping_register_compilation_failure_test(

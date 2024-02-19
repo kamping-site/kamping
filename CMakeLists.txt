@@ -194,6 +194,10 @@ add_subdirectory(extern/kassert)
 target_include_directories(kamping_base INTERFACE extern/kassert/include)
 target_link_libraries(kamping_base INTERFACE kassert)
 
+add_library(pfr INTERFACE)
+target_include_directories(pfr SYSTEM INTERFACE extern/pfr/include)
+target_link_libraries(kamping_base INTERFACE pfr)
+
 add_library(kamping::kamping ALIAS kamping)
 
 # Testing and examples are only built if this is the main project or if KAMPING_BUILD_EXAMPLES_AND_TESTS is set (OFF by

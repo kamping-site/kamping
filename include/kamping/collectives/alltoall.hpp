@@ -30,7 +30,7 @@
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 /// @brief Wrapper for \c MPI_Alltoall.
 ///
@@ -161,7 +161,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         );
 
         THROW_IF_MPI_ERROR(err, MPI_Alltoall);
-        return make_mpi_result(
+        return make_mpi_result_<std::tuple<Args...>>(
             std::move(recv_buf),   // recv_buf
             std::move(send_count), // send_count
             std::move(recv_count), // recv_count
@@ -252,7 +252,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(A
     );
     THROW_IF_MPI_ERROR(err, MPI_Alltoall);
 
-    return make_mpi_result(std::move(send_recv_buf), std::move(count_param), std::move(send_recv_type));
+    return make_mpi_result_<std::tuple<Args...>>(
+        std::move(send_recv_buf),
+        std::move(count_param),
+        std::move(send_recv_type)
+    );
 }
 
 /// @brief Wrapper for \c MPI_Alltoallv.
@@ -450,7 +454,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
 
     THROW_IF_MPI_ERROR(err, MPI_Alltoallv);
 
-    return make_mpi_result(
+    return internal::make_mpi_result_<std::tuple<Args...>>(
         std::move(recv_buf),    // recv_buf
         std::move(recv_counts), // recv_counts
         std::move(recv_displs), // recv_displs

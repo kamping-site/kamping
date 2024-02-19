@@ -158,3 +158,200 @@ TEST(RequestPoolTest, test_all_statuses_out_reference) {
     EXPECT_EQ(val1, 42);
     EXPECT_EQ(val2, 43);
 }
+
+TEST(RequestPoolTest, wait_any) {
+    using namespace ::testing;
+    kamping::RequestPool      pool;
+    DummyNonBlockingOperation op1;
+    DummyNonBlockingOperation op2;
+    int                       val1  = -1;
+    int                       val2  = -1;
+    auto                      index = pool.wait_any();
+    EXPECT_EQ(index, pool.index_end()); // nothing to wait for
+    op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
+    op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
+    op2.finish_op();
+    index = pool.wait_any();
+    EXPECT_THAT(index, 1);
+    EXPECT_EQ(val1, -1); // not finished yet
+    EXPECT_EQ(val2, 43);
+
+    op1.finish_op();
+    index = pool.wait_any();
+    EXPECT_THAT(index, 0);
+    EXPECT_EQ(val1, 42);
+    EXPECT_EQ(val2, 43);
+
+    index = pool.wait_any();
+    EXPECT_EQ(index, pool.index_end());
+}
+
+TEST(RequestPoolTest, wait_any_status_out) {
+    using namespace ::testing;
+    kamping::RequestPool      pool;
+    DummyNonBlockingOperation op1;
+    DummyNonBlockingOperation op2;
+    int                       val1 = -1;
+    int                       val2 = -1;
+    auto [index1, status1]         = pool.wait_any(status_out());
+    EXPECT_EQ(index1, pool.index_end()); // nothing to wait for
+    op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
+    op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
+    op2.finish_op();
+    auto [index2, status2] = pool.wait_any(status_out());
+    EXPECT_THAT(index2, 1);
+    EXPECT_EQ(val1, -1); // not finished yet
+    EXPECT_EQ(val2, 43);
+    EXPECT_THAT(status2, Property(&Status::tag, 43));
+
+    // op1.finish_op();
+    op1.finish_op();
+    auto [index3, status3] = pool.wait_any(status_out());
+    EXPECT_THAT(index3, 0);
+    EXPECT_EQ(val1, 42);
+    EXPECT_EQ(val2, 43);
+    EXPECT_THAT(status3, Property(&Status::tag, 42));
+
+    auto result = pool.wait_any(status_out());
+    EXPECT_EQ(result.index, pool.index_end());
+}
+
+TEST(RequestPoolTest, wait_any_status_out_reference) {
+    using namespace ::testing;
+    kamping::RequestPool      pool;
+    DummyNonBlockingOperation op1;
+    DummyNonBlockingOperation op2;
+    int                       val1 = -1;
+    int                       val2 = -1;
+    Status                    status;
+    auto                      index = pool.wait_any(status_out(status));
+    EXPECT_EQ(index, pool.index_end());
+    op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
+    op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
+    op2.finish_op();
+    index = pool.wait_any(status_out(status));
+    EXPECT_THAT(index, 1);
+    EXPECT_EQ(val1, -1); // not finished yet
+    EXPECT_EQ(val2, 43);
+    EXPECT_THAT(status, Property(&Status::tag, 43));
+
+    op1.finish_op();
+    index = pool.wait_any(status_out(status));
+    EXPECT_THAT(index, 0);
+    EXPECT_EQ(val1, 42);
+    EXPECT_THAT(status, Property(&Status::tag, 42));
+    EXPECT_EQ(val2, 43);
+
+    index = pool.wait_any(status_out(status));
+    EXPECT_EQ(index, pool.index_end()); // nothing to wait for
+}
+
+TEST(RequestPoolTest, test_any) {
+    using namespace ::testing;
+    kamping::RequestPool      pool;
+    DummyNonBlockingOperation op1;
+    DummyNonBlockingOperation op2;
+    int                       val1  = -1;
+    int                       val2  = -1;
+    auto                      index = pool.test_any();
+    EXPECT_THAT(index, Optional(Eq(pool.index_end()))); // nothing to wait for
+    op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
+    op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
+    index = pool.test_any();
+    EXPECT_EQ(index, std::nullopt);
+
+    op2.finish_op();
+    index = pool.test_any();
+    EXPECT_THAT(index, Optional(1));
+    EXPECT_EQ(val1, -1); // not finished yet
+    EXPECT_EQ(val2, 43);
+
+    index = pool.test_any();
+    EXPECT_EQ(index, std::nullopt);
+
+    op1.finish_op();
+    index = pool.test_any();
+    EXPECT_THAT(index, Optional(0));
+    EXPECT_EQ(val1, 42);
+    EXPECT_EQ(val2, 43);
+
+    index = pool.test_any();
+    EXPECT_THAT(index, Optional(Eq(pool.index_end()))); // nothing to wait for
+}
+
+TEST(RequestPoolTest, test_any_status_out) {
+    using namespace ::testing;
+    kamping::RequestPool      pool;
+    DummyNonBlockingOperation op1;
+    DummyNonBlockingOperation op2;
+    int                       val1   = -1;
+    int                       val2   = -1;
+    auto                      result = pool.test_any(status_out());
+    using pool_any_result            = decltype(result)::value_type;
+    EXPECT_THAT(result, Optional(Field(&pool_any_result::index, pool.index_end()))); // nothing to wait for
+    op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
+    op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
+
+    result = pool.test_any(status_out());
+    EXPECT_EQ(result, std::nullopt);
+
+    op2.finish_op();
+    result = pool.test_any(status_out());
+    EXPECT_TRUE(result.has_value());
+    auto& [index1, status1] = result.value();
+    EXPECT_THAT(index1, 1);
+    EXPECT_EQ(val1, -1); // not finished yet
+    EXPECT_EQ(val2, 43);
+    EXPECT_THAT(status1, Property(&Status::tag, 43));
+
+    result = pool.test_any(status_out());
+    EXPECT_EQ(result, std::nullopt);
+
+    op1.finish_op();
+    result = pool.test_any(status_out());
+    EXPECT_TRUE(result.has_value());
+    auto& [index2, status2] = result.value();
+    EXPECT_THAT(index2, 0);
+    EXPECT_EQ(val1, 42);
+    EXPECT_THAT(status2, Property(&Status::tag, 42));
+    EXPECT_EQ(val2, 43);
+
+    result = pool.test_any(status_out());
+    EXPECT_THAT(result, Optional(Field(&pool_any_result::index, pool.index_end()))); // nothing to wait for
+}
+
+TEST(RequestPoolTest, test_any_status_out_reference) {
+    using namespace ::testing;
+    kamping::RequestPool      pool;
+    DummyNonBlockingOperation op1;
+    DummyNonBlockingOperation op2;
+    int                       val1 = -1;
+    int                       val2 = -1;
+    Status                    status;
+    auto                      index = pool.test_any(status_out(status));
+    EXPECT_THAT(index, Optional(Eq(pool.index_end()))); // nothing to wait for
+    op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
+    op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
+    index = pool.test_any(status_out(status));
+    EXPECT_EQ(index, std::nullopt);
+
+    op2.finish_op();
+    index = pool.test_any(status_out(status));
+    EXPECT_THAT(index, Optional(1));
+    EXPECT_EQ(val1, -1); // not finished yet
+    EXPECT_EQ(val2, 43);
+    EXPECT_THAT(status, Property(&Status::tag, 43));
+
+    index = pool.test_any(status_out(status));
+    EXPECT_EQ(index, std::nullopt);
+
+    op1.finish_op();
+    index = pool.test_any(status_out(status));
+    EXPECT_THAT(index, Optional(0));
+    EXPECT_EQ(val1, 42);
+    EXPECT_THAT(status, Property(&Status::tag, 42));
+    EXPECT_EQ(val2, 43);
+
+    index = pool.test_any(status_out(status));
+    EXPECT_THAT(index, Optional(Eq(pool.index_end()))); // nothing to wait for
+}

@@ -28,7 +28,7 @@ TEST(AllreduceTest, allreduce_no_receive_buffer) {
 
     std::vector<int> input = {comm.rank_signed(), 42};
 
-    auto result = comm.allreduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+    auto result = comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}));
     EXPECT_EQ(result.size(), 2);
 
     std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
@@ -118,8 +118,7 @@ TEST(AllreduceTest, allreduce_builtin_op_on_non_builtin_type) {
     };
     std::vector<MyInt> input = {comm.rank_signed(), 42};
 
-    auto result =
-        comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative)).extract_recv_buffer();
+    auto result = comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}, kamping::ops::commutative));
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
     EXPECT_EQ(result, expected_result);
@@ -139,8 +138,7 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
     std::vector<int> input = {0, 17, 8};
 
     { // use function ptr
-        auto result =
-            comm.allreduce(send_buf(input), op(add_plus_42_function, kamping::ops::commutative)).extract_recv_buffer();
+        auto result = comm.allreduce(send_buf(input), op(add_plus_42_function, kamping::ops::commutative));
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -151,8 +149,7 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
     }
 
     { // use lambda
-        auto result =
-            comm.allreduce(send_buf(input), op(add_plus_42_lambda, kamping::ops::commutative)).extract_recv_buffer();
+        auto result = comm.allreduce(send_buf(input), op(add_plus_42_lambda, kamping::ops::commutative));
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -163,12 +160,10 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
     }
 
     { // use lambda inline
-        auto result =
-            comm.allreduce(
-                    send_buf(input),
-                    op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
-            )
-                .extract_recv_buffer();
+        auto result = comm.allreduce(
+            send_buf(input),
+            op([](auto const& lhs, auto const& rhs) { return lhs + rhs + 42; }, kamping::ops::commutative)
+        );
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -184,7 +179,7 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
                 return lhs + rhs + 42;
             }
         };
-        auto result = comm.allreduce(send_buf(input), op(MySum42{}, kamping::ops::commutative)).extract_recv_buffer();
+        auto result = comm.allreduce(send_buf(input), op(MySum42{}, kamping::ops::commutative));
 
         EXPECT_EQ(result.size(), 3);
         std::vector<int> expected_result = {
@@ -204,7 +199,7 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type_non_commutative) 
 
     std::vector<int> input = {comm.rank_signed() + 17};
 
-    auto result = comm.allreduce(send_buf(input), op(get_right, kamping::ops::non_commutative)).extract_recv_buffer();
+    auto result = comm.allreduce(send_buf(input), op(get_right, kamping::ops::non_commutative));
 
     EXPECT_EQ(result.size(), 1);
     std::vector<int> expected_result = {comm.size_signed() - 1 + 17};
@@ -242,7 +237,7 @@ TEST(AllreduceTest, allreduce_custom_operation_on_custom_type) {
     Aggregate              agg2_expected   = {42, comm.size_signed() - 1 + 42, false, comm.size_signed()};
     std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
 
-    auto result = comm.allreduce(send_buf(input), op(my_op, kamping::ops::commutative)).extract_recv_buffer();
+    auto result = comm.allreduce(send_buf(input), op(my_op, kamping::ops::commutative));
 
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(result, expected_result);
@@ -333,17 +328,16 @@ TEST(AllreduceTest, allreduce_default_container_type) {
     std::vector<int>           input = {comm.rank_signed(), 42};
 
     // This just has to compile
-    OwnContainer<int> result = comm.allreduce(send_buf(input), op(kamping::ops::plus<>{})).extract_recv_buffer();
+    OwnContainer<int> result = comm.allreduce(send_buf(input), op(kamping::ops::plus<>{}));
 }
 
 TEST(AllreduceTest, send_recv_type_is_out_parameter) {
     Communicator           comm;
     const std::vector<int> data{1};
     MPI_Datatype           send_recv_type;
-    auto result = comm.allreduce(send_buf(data), send_recv_type_out(send_recv_type), op(kamping::ops::plus<>{}));
+    auto recv_buf = comm.allreduce(send_buf(data), send_recv_type_out(send_recv_type), op(kamping::ops::plus<>{}));
 
     EXPECT_EQ(send_recv_type, MPI_INT);
-    auto recv_buf = result.extract_recv_buffer();
     EXPECT_EQ(recv_buf.size(), 1);
     EXPECT_EQ(recv_buf.front(), comm.size());
 }
@@ -382,4 +376,82 @@ TEST(AllreduceTest, allreduce_single) {
 
     int expected_result = (comm.size_signed() * (comm.size_signed() - 1)) / 2;
     EXPECT_EQ(result, expected_result);
+}
+
+TEST(AllreduceTest, allreduce_single_with_temporary) {
+    Communicator comm;
+
+    int const result = comm.allreduce_single(send_buf(comm.rank_signed()), op(kamping::ops::plus<>{}));
+
+    int expected_result = (comm.size_signed() * (comm.size_signed() - 1)) / 2;
+    EXPECT_EQ(result, expected_result);
+}
+
+TEST(AllreduceTest, structured_bindings_explicit_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
+    const std::vector<std::uint64_t> expected_recv_buffer(2, comm.size() * (comm.size() - 1) / 2);
+    std::vector<std::uint64_t>       recv_buffer(2);
+    auto const [send_recv_type, send_recv_count] = comm.allreduce(
+        send_recv_type_out(),
+        send_recv_count_out(),
+        send_buf(values),
+        recv_buf(recv_buffer),
+        op(kamping::ops::plus<>{})
+    );
+
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+    EXPECT_EQ(recv_buffer, expected_recv_buffer);
+}
+
+TEST(AllreduceTest, structured_bindings_explicit_owning_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
+    const std::vector<std::uint64_t> expected_recv_buffer(2, comm.size() * (comm.size() - 1) / 2);
+    std::vector<std::uint64_t>       tmp(2);
+    auto const [send_recv_type, send_recv_count, recv_buffer] = comm.allreduce(
+        send_recv_type_out(),
+        send_recv_count_out(),
+        send_buf(values),
+        recv_buf(std::move(tmp)),
+        op(kamping::ops::plus<>{})
+    );
+
+    EXPECT_EQ(send_recv_count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+    EXPECT_EQ(recv_buffer, expected_recv_buffer);
+}
+
+TEST(AllreduceTest, structured_bindings_implicit_recv_buffer) {
+    Communicator comm;
+
+    std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
+    const std::vector<std::uint64_t> expected_recv_buffer(2, comm.size() * (comm.size() - 1) / 2);
+    {
+        std::vector<std::uint64_t> tmp(2);
+        auto const [recv_buffer, send_recv_type, send_recv_count] =
+            comm.allreduce(send_recv_type_out(), send_recv_count_out(), send_buf(values), op(kamping::ops::plus<>{}));
+
+        EXPECT_EQ(send_recv_count, 2);
+        EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+    }
+    {
+        // non-owning send_recv_type out buffer
+        std::vector<std::uint64_t> tmp(2);
+        MPI_Datatype               send_recv_type;
+        auto const [recv_buffer, send_recv_count] = comm.allreduce(
+            send_recv_type_out(send_recv_type),
+            send_recv_count_out(),
+            send_buf(values),
+            op(kamping::ops::plus<>{})
+        );
+
+        EXPECT_EQ(send_recv_count, 2);
+        EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+        EXPECT_EQ(recv_buffer, expected_recv_buffer);
+    }
 }

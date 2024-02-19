@@ -28,7 +28,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 /// @brief Wrapper for \c MPI_Exscan.
 ///
@@ -176,7 +176,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
         }
     }
 
-    return make_mpi_result(std::move(recv_buf), std::move(send_recv_count), std::move(send_recv_type));
+    return make_mpi_result_<std::tuple<Args...>>(
+        std::move(recv_buf),
+        std::move(send_recv_count),
+        std::move(send_recv_type)
+    );
 }
 
 /// @brief Wrapper for \c MPI_exscan for single elements.
@@ -192,8 +196,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
 /// undefined.
 ///
 /// The following parameters are required:
-///  - \ref kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be of
-///  size 1 on each rank.
+///  - \ref kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be a
+///  single element on each rank.
 ///  - \ref kamping::op() the operation to apply to the input.
 ///
 ///  The following parameters are optional:
@@ -218,12 +222,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_single(Args
         KAMPING_OPTIONAL_PARAMETERS(values_on_rank_0)
     );
 
-    KASSERT(
-        select_parameter_type<ParameterType::send_buf>(args...).size() == 1u,
-        "The send buffer has to be of size 1 on all ranks.",
-        assert::light
+    using send_buf_type = buffer_type_with_requested_parameter_type<ParameterType::send_buf, Args...>;
+    static_assert(
+        send_buf_type::is_single_element,
+        "The underlying container has to be a single element \"container\""
     );
-    using value_type =
-        typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...))>::value_type;
-    return this->exscan(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...).extract_recv_buffer();
+    using value_type = typename send_buf_type::value_type;
+    return this->exscan(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...);
 }

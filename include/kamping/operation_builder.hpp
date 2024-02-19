@@ -78,7 +78,7 @@ public:
 #endif
             return ReduceOperation<T, MPI_Op, ops::internal::undefined_commutative_tag>(_op);
         } else {
-            static_assert(std::is_invocable_r_v<T, Op, T&, T&>, "Type of custom operation does not match.");
+            static_assert(std::is_invocable_r_v<T, Op, T const&, T const&>, "Type of custom operation does not match.");
             return ReduceOperation<T, Op, Commutative>(std::forward<Op>(_op), Commutative{});
         }
     }

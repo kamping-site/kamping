@@ -129,6 +129,42 @@ TEST_F(EnvironmentTest, is_valid_tag) {
     EXPECT_FALSE(mpi_env.is_valid_tag(std::numeric_limits<int>::min()));
 }
 
+static MPI_Datatype last_committed_type = MPI_DATATYPE_NULL;
+
+int MPI_Type_commit(MPI_Datatype* type) {
+    last_committed_type = *type;
+    return PMPI_Type_commit(type);
+}
+
+TEST_F(EnvironmentTest, commit_test) {
+    last_committed_type = MPI_DATATYPE_NULL;
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    EXPECT_TRUE(freed_types.empty());
+    MPI_Datatype type;
+    MPI_Type_contiguous(1, MPI_CHAR, &type);
+    EXPECT_EQ(last_committed_type, MPI_DATATYPE_NULL);
+    env.commit(type);
+    EXPECT_EQ(last_committed_type, type);
+    // nothing should have been registered
+    EXPECT_TRUE(internal::registered_mpi_types.empty());
+    MPI_Type_free(&type);
+}
+
+TEST_F(EnvironmentTest, commit_and_register_test) {
+    last_committed_type = MPI_DATATYPE_NULL;
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    EXPECT_TRUE(freed_types.empty());
+    MPI_Datatype type;
+    MPI_Type_contiguous(1, MPI_CHAR, &type);
+    EXPECT_EQ(last_committed_type, MPI_DATATYPE_NULL);
+    env.commit_and_register(type);
+    EXPECT_EQ(last_committed_type, type);
+    // the type should have been registered
+    EXPECT_EQ(internal::registered_mpi_types.size(), 1);
+    EXPECT_EQ(internal::registered_mpi_types.front(), type);
+    env.free_registered_mpi_types();
+}
+
 TEST_F(EnvironmentTest, free_registered_tests) {
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
     MPI_Datatype                                      type1, type2;

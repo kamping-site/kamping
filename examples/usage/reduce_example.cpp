@@ -39,33 +39,36 @@ int main() {
     std::vector<double> input = {1, 2, 3};
     std::vector<double> output;
 
-    auto result0 = comm.reduce(send_buf(input), op(ops::plus<>()), root(0)).extract_recv_buffer();
+    auto result0 = comm.reduce(send_buf(input), op(ops::plus<>()), root(0));
     print_result_on_root(result0, comm);
-    auto result1 = comm.reduce(send_buf(input), op(ops::plus<double>())).extract_recv_buffer();
+    auto result1 = comm.reduce(send_buf(input), op(ops::plus<double>()));
     print_result_on_root(result1, comm);
-    auto result2 = comm.reduce(send_buf(input), op(my_plus{}, ops::commutative)).extract_recv_buffer();
+    auto result2 = comm.reduce(send_buf(input), op(my_plus{}, ops::commutative));
     print_result_on_root(result2, comm);
 
-    auto result3 [[maybe_unused]] = comm.reduce(
+    /*auto result3 = */ comm.reduce(
         send_buf({1.0, 2.0, 3.0}),
         recv_buf(output),
         op([](auto a, auto b) { return a + b; }, ops::non_commutative)
     );
     print_result_on_root(output, comm);
 
-    std::vector<std::pair<int, double>> input2 = {{3, 0.25}};
+    struct Bar {
+        int    first;
+        double second;
+    };
+    std::vector<Bar> input2 = {{3, 0.25}};
 
     auto result4 = comm.reduce(
-                           send_buf(input2),
-                           op(
-                               [](auto a, auto b) {
-                                   // dummy
-                                   return std::pair(a.first + b.first, a.second + b.second);
-                               },
-                               ops::commutative
-                           )
-    )
-                       .extract_recv_buffer();
+        send_buf(input2),
+        op(
+            [](auto a, auto b) {
+                // dummy
+                return Bar{a.first + b.first, a.second + b.second};
+            },
+            ops::commutative
+        )
+    );
     if (comm.rank() == 0) {
         for (auto& elem: result4) {
             std::cout << elem.first << " " << elem.second << std::endl;
@@ -89,7 +92,7 @@ int main() {
         input3[1].y = 0.75;
     }
 
-    auto result5 = comm.reduce(send_buf(input3), op(ops::max<>(), ops::commutative)).extract_recv_buffer();
+    auto result5 = comm.reduce(send_buf(input3), op(ops::max<>(), ops::commutative));
     if (comm.rank() == 0) {
         for (auto& elem: result5) {
             std::cout << elem.x << " " << elem.y << " " << elem.z << std::endl;

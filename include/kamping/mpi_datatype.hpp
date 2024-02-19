@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPIng Authors
+// Copyright 2021-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -16,337 +16,316 @@
 
 #pragma once
 
-#include <cassert>
-#include <complex>
-#include <cstdint>
 #include <type_traits>
 
 #include <kassert/kassert.hpp>
 #include <mpi.h>
+#include <pfr.hpp>
 
-#include "kamping/checking_casts.hpp"
+#include "kamping/builtin_types.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/error_handling.hpp"
 #include "kamping/noexcept.hpp"
 
-namespace kamping::internal {
+namespace kamping {
+/// @brief Tag used for indicating that a struct is reflectable.
+/// @see struct_type
+struct kamping_tag {};
+} // namespace kamping
 
-/// @brief Construct a custom continuous MPI datatype.
+namespace kamping {
+/// @addtogroup kamping_mpi_utility
+/// @{
 ///
-/// @param num_bytes_unsigned The number of bytes for the new type.
-/// @return The newly created MPI_Datatype.
-/// @see mpi_datatype()
 ///
-inline MPI_Datatype construct_custom_continuous_type(size_t const num_bytes_unsigned) {
-    int const    num_bytes = asserting_cast<int>(num_bytes_unsigned);
-    MPI_Datatype type      = MPI_DATATYPE_NULL;
-    MPI_Type_contiguous(num_bytes, MPI_CHAR, &type);
+
+namespace internal {
+/// @brief Helper to check if a type is a `std::pair`.
+template <typename T>
+struct is_std_pair : std::false_type {};
+/// @brief Helper to check if a type is a `std::pair`.
+template <typename T1, typename T2>
+struct is_std_pair<std::pair<T1, T2>> : std::true_type {};
+
+/// @brief Helper to check if a type is a `std::tuple`.
+template <typename T>
+struct is_std_tuple : std::false_type {};
+/// @brief Helper to check if a type is a `std::tuple`.
+template <typename... Ts>
+struct is_std_tuple<std::tuple<Ts...>> : std::true_type {};
+
+/// @brief Helper to check if a type is a `std::array`.
+template <typename A>
+struct is_std_array : std::false_type {};
+
+/// @brief Helper to check if a type is a `std::array`.
+template <typename T, size_t N>
+struct is_std_array<std::array<T, N>> : std::true_type {
+    using value_type             = T; ///< The type of the elements in the array.
+    static constexpr size_t size = N; ///< The number of elements in the array.
+};
+} // namespace internal
+
+/// @brief Constructs an contiguous type of size \p N from type \p T using `MPI_Type_contiguous`.
+template <typename T, size_t N>
+struct contiguous_type {
+    static constexpr TypeCategory category = TypeCategory::contiguous; ///< The category of the type.
+    /// @brief Whether the type has to be committed before it can be used in MPI calls.
+    static constexpr bool has_to_be_committed = category_has_to_be_committed(category);
+    /// @brief The MPI_Datatype corresponding to the type.
+    static MPI_Datatype data_type();
+};
+
+/// @brief Constructs a type that is serialized as a sequence of `sizeof(T)` bytes using `MPI_BYTE`. Note that you must
+/// ensure that this conversion is valid.
+template <typename T>
+struct byte_serialized : contiguous_type<std::byte, sizeof(T)> {};
+
+/// @brief Constructs a MPI_Datatype for a struct-like type.
+/// @tparam T The type to construct the MPI_Datatype for.
+///
+/// This requires that \p T is a `std::pair`, `std::tuple` or a type that is reflectable with
+/// [pfr](https://github.com/apolukhin/pfr_non_boost). If you do not agree with PFR's decision if a type is implicitly
+/// reflectable, you can override it by providing a specialization of \c pfr::is_reflectable with the tag \ref
+/// kamping_tag.
+/// @see https://apolukhin.github.io/pfr_non_boost/pfr/is_reflectable.html for details
+template <typename T>
+struct struct_type {
+    static_assert(
+        internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value
+            || pfr::is_implicitly_reflectable<T, kamping_tag>::value,
+        "Type must be a std::pair, std::tuple or reflectable"
+    );
+    /// @brief The category of the type.
+    static constexpr TypeCategory category = TypeCategory::struct_like;
+    /// @brief Whether the type has to be committed before it can be used in MPI calls.
+    static constexpr bool has_to_be_committed = category_has_to_be_committed(category);
+    /// @brief The MPI_Datatype corresponding to the type.
+    static MPI_Datatype data_type();
+};
+
+/// @brief The type dispatcher that maps a C++ type \p T to a type trait that can be used to construct an MPI_Datatype.
+///
+/// The mapping is as follows:
+/// - C++ types directly supported by MPI are mapped to the corresponding `MPI_Datatype`.
+/// - Enums are mapped to the underlying type.
+/// - C-style arrays and `std::array` are mapped to contiguous types of the underlying type.
+/// - All other trivially copyable types are mapped to a contiguous type consisting of `sizeof(T)` bytes.
+/// - All other types are not supported directly and require a specialization of `mpi_type_traits`.
+///
+/// @returns The corresponding type trait for the type \p T.
+template <typename T>
+auto type_dispatcher() {
+    using T_no_const = std::remove_const_t<T>; // remove const from T
+                                               // we previously also removed volatile here, but interpreting a pointer
+                                               // to a volatile type as a pointer to a non-volatile type is UB
+
+    static_assert(
+        !std::is_pointer_v<T_no_const>,
+        "MPI does not support pointer types. Why do you want to transfer a pointer over MPI?"
+    );
+
+    static_assert(!std::is_function_v<T_no_const>, "MPI does not support function types.");
+
+    // TODO: this might be a bit too strict. We might want to allow unions in the future.
+    static_assert(!std::is_union_v<T_no_const>, "MPI does not support union types.");
+
+    static_assert(!std::is_void_v<T_no_const>, "There is no MPI datatype corresponding to void.");
+
+    if constexpr (is_builtin_type_v<T_no_const>) {
+        // builtin types are handled by the builtin_type trait
+        return builtin_type<T_no_const>{};
+    } else if constexpr (std::is_enum_v<T_no_const>) {
+        // enums are mapped to the underlying type
+        return type_dispatcher<std::underlying_type_t<T_no_const>>();
+    } else if constexpr (std::is_array_v<T_no_const>) {
+        // arrays are mapped to contiguous types
+        constexpr size_t array_size = std::extent_v<T_no_const>;
+        using underlying_type       = std::remove_extent_t<T_no_const>;
+        return contiguous_type<underlying_type, array_size>{};
+    } else if constexpr (internal::is_std_array<T_no_const>::value) {
+        // std::array is mapped to contiguous types
+        using underlying_type       = typename internal::is_std_array<T_no_const>::value_type;
+        constexpr size_t array_size = internal::is_std_array<T_no_const>::size;
+        return contiguous_type<underlying_type, array_size>{};
+    } else if constexpr (std::is_trivially_copyable_v<T_no_const>) {
+        // all other trivially copyable types are mapped to a sequence of bytes
+        return byte_serialized<T_no_const>{};
+    } else {
+        static_assert(
+            // this should always evaluate to false
+            !std::is_trivially_copyable_v<T_no_const>,
+            "Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
+        );
+    }
+}
+
+/// @brief The type trait that maps a C++ type \p T to a type trait that can be used to construct an MPI_Datatype.
+///
+/// The default behavior is controlled by \ref type_dispatcher. If you want to support a type that is not supported by
+/// the default behavior, you can specialize this trait. For example:
+///
+/// ```cpp
+/// struct MyType {
+///    int a;
+///    double b;
+///    char c;
+///    std::array<int, 3> d;
+/// };
+/// namespace kamping {
+/// // using KaMPIng's built-in struct serializer
+/// template <>
+/// struct mpi_type_traits<MyType> : struct_type<MyType> {};
+///
+/// // or using an explicitly constructed type
+/// template <>
+/// struct mpi_type_traits<MyType> {
+///    static constexpr bool has_to_be_committed = true;
+///    static MPI_Datatype data_type() {
+///        MPI_Datatype type;
+///        MPI_Type_create_*(..., &type);
+///        return type;
+///    }
+/// };
+/// } // namespace kamping
+/// ```
+///
+template <typename T>
+struct mpi_type_traits {
+    /// @brief The base type of this trait obtained via \ref type_dispatcher.
+    /// This defines how the data type is constructed in \ref mpi_type_traits::data_type().
+    using base = decltype(type_dispatcher<T>());
+    /// @brief The category of the type.
+    static constexpr TypeCategory category = base::category;
+    /// @brief Whether the type has to be committed before it can be used in MPI calls.
+    static constexpr bool has_to_be_committed = category_has_to_be_committed(category);
+
+    /// @brief The MPI_Datatype corresponding to the type T.
+    static MPI_Datatype data_type() {
+        return decltype(type_dispatcher<T>())::data_type();
+    }
+};
+
+/// @brief Register a new \c MPI_Datatype for \p T with the MPI environment. It will be freed when the environment is
+/// finalized.
+///
+/// The \c MPI_Datatype is created using \c mpi_type_traits<T>::data_type() and committed using \c MPI_Type_commit.
+///
+/// @tparam T The type to register.
+template <typename T>
+inline MPI_Datatype construct_and_commit_type() {
+    MPI_Datatype type = mpi_type_traits<T>::data_type();
     MPI_Type_commit(&type);
     KASSERT(type != MPI_DATATYPE_NULL);
     mpi_env.register_mpi_type(type);
     return type;
 }
-} // namespace kamping::internal
-
-namespace kamping {
-/// @brief Wrapper around bool to allow handling containers of boolean values
-class kabool {
-public:
-    /// @brief default constructor for a \c kabool with value \c false
-    constexpr kabool() noexcept : _value() {}
-    /// @brief constructor to construct a \c kabool out of a \c bool
-    constexpr kabool(bool value) noexcept : _value(value) {}
-
-    /// @brief implicit cast of \c kabool to \c bool
-    inline constexpr operator bool() const noexcept {
-        return _value;
-    }
-
-private:
-    bool _value; /// < the wrapped boolean value
-};
-
-/// @addtogroup kamping_mpi_utility
-/// @{
-
-/// @brief Creates a custom continuous MPI datatype.
-///
-/// @tparam NumBytes The number of bytes for the new type.
-/// @return The newly created MPI_Datatype.
-/// @see mpi_datatype()
-///
-template <size_t NumBytes>
-[[nodiscard]] MPI_Datatype mpi_custom_continuous_type() KAMPING_NOEXCEPT {
-    static_assert(NumBytes > 0, "You cannot create a continuous type with 0 bytes.");
-    // Create a new MPI datatype only the first type per NumBytes this function is called.
-    // By initializing this in the same line as the static declaration, this is thread safe.
-    static MPI_Datatype type = internal::construct_custom_continuous_type(NumBytes);
-    // From the second call onwards, re-use the existing type.
-    return type;
-}
-
-/// @brief the members specify which group the datatype belongs to according to the type groups specified in
-/// Section 5.9.2 of the MPI 3.1 standard.
-enum class TypeCategory { integer, floating, complex, logical, byte, undefined };
-
-#ifdef KAMPING_DOXYGEN_ONLY
-/// @brief maps C++ types to builtin \c MPI_Datatypes
-///
-/// the members specify which group the datatype belongs to according to the type groups specified in Section 5.9.2 of
-/// the MPI 3.1 standard.
-/// @tparam T Type to map to an \c MPI_Datatype.
-template <typename T>
-struct mpi_type_traits {
-    /// @brief \c true, if the type maps to a builtin \c MPI_Datatype.
-    static constexpr bool is_builtin;
-    /// @brief Category the type belongs to according to the MPI standard.
-    static constexpr TypeCategory category;
-    /// @brief This member function is only available if \c is_builtin is true. If this is the case, it returns the \c
-    /// MPI_Datatype
-    /// @returns Constant of type \c MPI_Datatype mapping to type \c T according the the MPI standard.
-    static MPI_Datatype data_type();
-};
-#else
-/// @brief Base type for non-builtin types.
-struct is_builtin_mpi_type_false {
-    static constexpr bool         is_builtin = false;
-    static constexpr TypeCategory category   = TypeCategory::undefined;
-};
-
-/// @brief Base type for builtin types.
-struct is_builtin_mpi_type_true : is_builtin_mpi_type_false {
-    static constexpr bool is_builtin = true;
-};
-
-/// @brief Base template for implementation.
-template <typename T>
-struct mpi_type_traits_impl : is_builtin_mpi_type_false {};
-
-// template specializations of mpi_type_traits_impl
-
-template <>
-struct mpi_type_traits_impl<char> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_CHAR;
-    }
-};
-
-template <>
-struct mpi_type_traits_impl<signed char> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_SIGNED_CHAR;
-    }
-    static constexpr TypeCategory category = TypeCategory::integer;
-};
-
-template <>
-struct mpi_type_traits_impl<unsigned char> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_UNSIGNED_CHAR;
-    }
-    static constexpr TypeCategory category = TypeCategory::integer;
-};
-
-template <>
-struct mpi_type_traits_impl<wchar_t> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_WCHAR;
-    }
-};
-
-template <>
-struct mpi_type_traits_impl<short int> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_SHORT;
-    }
-    static constexpr TypeCategory category = TypeCategory::integer;
-};
-
-template <>
-struct mpi_type_traits_impl<unsigned short int> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_UNSIGNED_SHORT;
-    }
-    static constexpr TypeCategory category = TypeCategory::integer;
-};
-
-template <>
-struct mpi_type_traits_impl<int> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_INT;
-    }
-    static constexpr TypeCategory category = TypeCategory::integer;
-};
-
-template <>
-struct mpi_type_traits_impl<unsigned int> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_UNSIGNED;
-    }
-    static constexpr TypeCategory category = TypeCategory::integer;
-};
-
-template <>
-struct mpi_type_traits_impl<long int> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_LONG;
-    }
-    static constexpr TypeCategory category = TypeCategory::integer;
-};
-
-template <>
-struct mpi_type_traits_impl<unsigned long int> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_UNSIGNED_LONG;
-    }
-    static constexpr TypeCategory category = TypeCategory::integer;
-};
-
-template <>
-struct mpi_type_traits_impl<long long int> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_LONG_LONG;
-    }
-    static constexpr TypeCategory category = TypeCategory::integer;
-};
-
-template <>
-struct mpi_type_traits_impl<unsigned long long int> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_UNSIGNED_LONG_LONG;
-    }
-    static constexpr TypeCategory category = TypeCategory::integer;
-};
-
-template <>
-struct mpi_type_traits_impl<float> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_FLOAT;
-    }
-    static constexpr TypeCategory category = TypeCategory::floating;
-};
-
-template <>
-struct mpi_type_traits_impl<double> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_DOUBLE;
-    }
-    static constexpr TypeCategory category = TypeCategory::floating;
-};
-
-template <>
-struct mpi_type_traits_impl<long double> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_LONG_DOUBLE;
-    }
-    static constexpr TypeCategory category = TypeCategory::floating;
-};
-
-template <>
-struct mpi_type_traits_impl<bool> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_CXX_BOOL;
-    }
-    static constexpr TypeCategory category = TypeCategory::logical;
-};
-
-template <>
-struct mpi_type_traits_impl<kabool> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_CXX_BOOL;
-    }
-    static constexpr TypeCategory category = TypeCategory::logical;
-};
-
-template <>
-struct mpi_type_traits_impl<std::complex<float>> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_CXX_FLOAT_COMPLEX;
-    }
-    static constexpr TypeCategory category = TypeCategory::complex;
-};
-template <>
-struct mpi_type_traits_impl<std::complex<double>> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_CXX_DOUBLE_COMPLEX;
-    }
-    static constexpr TypeCategory category = TypeCategory::complex;
-};
-
-template <>
-struct mpi_type_traits_impl<std::complex<long double>> : is_builtin_mpi_type_true {
-    static MPI_Datatype data_type() {
-        return MPI_CXX_LONG_DOUBLE_COMPLEX;
-    }
-    static constexpr TypeCategory category = TypeCategory::complex;
-};
-
-/// @brief wrapper for \c mpi_type_traits_impl which removes const and volatile qualifiers
-template <typename T>
-struct mpi_type_traits : mpi_type_traits_impl<std::remove_cv_t<T>> {};
-#endif
 
 /// @brief Translate template parameter T to an MPI_Datatype. If no corresponding MPI_Datatype exists, we will create
-/// new custom continuous type.
+/// new  continuous type.
 ///        Based on https://gist.github.com/2b-t/50d85115db8b12ed263f8231abf07fa2
 /// To check if type \c T maps to a builtin \c MPI_Datatype at compile-time, use \c mpi_type_traits.
 /// @tparam T The type to translate into an MPI_Datatype.
 /// @return The tag identifying the corresponding MPI_Datatype or the newly created type.
 /// @see mpi_custom_continuous_type()
 ///
+
+/// @brief Translate type \p T to an MPI_Datatype using the type defined via \ref mpi_type_traits.
+///
+/// If the type has not been registered with MPI yet, it will be created and committed and automatically registered with
+/// the MPI environment, such that it will be freed when the environment is finalized.
+///
+/// @tparam T The type to translate into an MPI_Datatype.
 template <typename T>
 [[nodiscard]] MPI_Datatype mpi_datatype() KAMPING_NOEXCEPT {
-    if constexpr (mpi_type_traits<T>::is_builtin) {
+    if constexpr (mpi_type_traits<T>::has_to_be_committed) {
+        // using static initialization to ensure that the type is only committed once
+        static MPI_Datatype type = construct_and_commit_type<T>();
+        return type;
+    } else {
         return mpi_type_traits<T>::data_type();
     }
-
-    // Remove const and volatile qualifiers.
-    using T_no_cv = std::remove_cv_t<T>;
-
-    // Check if we got a pointer type -> error
-    static_assert(
-        !std::is_pointer_v<T_no_cv>,
-        "MPI does not support pointer types. Why do you want to transfer a pointer over MPI?"
-    );
-
-    // Check if we got a function type -> error
-    static_assert(!std::is_function_v<T_no_cv>, "MPI does not support function types.");
-
-    // Check if we got a union type -> error
-    static_assert(!std::is_union_v<T_no_cv>, "MPI does not support union types.");
-
-    // Check if we got void -> error
-    static_assert(!std::is_void_v<T_no_cv>, "There is no MPI datatype corresponding to void.");
-
-    // Check if we got an array type -> create a continuous type.
-    if constexpr (std::is_array_v<T_no_cv>) {
-        // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
-        return mpi_custom_continuous_type<sizeof(T_no_cv)>();
-    }
-
-    // Check if we got an enum type -> use underlying type
-    MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
-    if constexpr (std::is_enum_v<T_no_cv>) {
-        return mpi_datatype<std::underlying_type_t<T_no_cv>>();
-    } else {
-        mpi_type = mpi_custom_continuous_type<sizeof(T)>();
-    }
-
-    KASSERT(mpi_type != MPI_DATATYPE_NULL);
-
-    return mpi_type;
 }
 
-/// @brief Gets the size of an MPI datatype in bytes.
+template <typename T, size_t N>
+MPI_Datatype contiguous_type<T, N>::data_type() {
+    MPI_Datatype type;
+    MPI_Datatype base_type;
+    if constexpr (std::is_same_v<T, std::byte>) {
+        base_type = MPI_BYTE;
+    } else {
+        base_type = mpi_type_traits<T>::data_type();
+    }
+    int count = static_cast<int>(N);
+    int err   = MPI_Type_contiguous(count, base_type, &type);
+    THROW_IF_MPI_ERROR(err, MPI_Type_contiguous);
+    return type;
+}
+
+namespace internal {
+/// @brief Applies functor \p f to each field of the tuple with an index in index sequence \p Is.
 ///
-/// @param mpi_datatype The MPI datatype to get the size of.
-/// @return The size of the MPI datatype in bytes.
+/// \p f should be a callable that takes a reference to the field and its index.
+template <typename T, typename F, size_t... Is>
+void for_each_tuple_field(T&& t, F&& f, std::index_sequence<Is...>) {
+    (f(std::get<Is>(std::forward<T>(t)), Is), ...);
+}
+
+/// @brief Applies functor \p f to each field of the tuple \p t.
 ///
-inline int mpi_datatype_size(MPI_Datatype mpi_datatype) {
-    int                  result;
-    [[maybe_unused]] int err = MPI_Type_size(mpi_datatype, &result);
-    THROW_IF_MPI_ERROR(err, MPI_Type_size);
-    return result;
+/// \p f should be a callable that takes a reference to the field and its index.
+template <typename T, typename F>
+void for_each_tuple_field(T& t, F&& f) {
+    for_each_tuple_field(t, std::forward<F>(f), std::make_index_sequence<std::tuple_size_v<T>>{});
+}
+
+/// @brief Applies functor \p f to each field of the tuple-like type \p t.
+/// This works for `std::pair` and `std::tuple` as well as types that are reflectable with
+/// [pfr](https://github.com/apolukhin/pfr_non_boost).
+///
+/// \p f should be a callable that takes a reference to the field and
+/// its index.
+template <typename T, typename F>
+void for_each_field(T& t, F&& f) {
+    if constexpr (internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value) {
+        for_each_tuple_field(t, std::forward<F>(f));
+    } else {
+        pfr::for_each_field(t, std::forward<F>(f));
+    }
+}
+
+/// @brief The number of elements in a tuple-like type.
+/// This works for `std::pair` and `std::tuple` as well as types that are reflectable with
+/// [pfr](https://github.com/apolukhin/pfr_non_boost).
+template <typename T>
+constexpr size_t tuple_size = [] {
+    if constexpr (internal::is_std_pair<T>::value) {
+        return 2;
+    } else if constexpr (internal::is_std_tuple<T>::value) {
+        return std::tuple_size_v<T>;
+    } else {
+        return pfr::tuple_size_v<T>;
+    }
+}();
+} // namespace internal
+
+template <typename T>
+MPI_Datatype struct_type<T>::data_type() {
+    T        t{};
+    MPI_Aint base;
+    MPI_Get_address(&t, &base);
+    int          blocklens[internal::tuple_size<T>];
+    MPI_Datatype types[internal::tuple_size<T>];
+    MPI_Aint     disp[internal::tuple_size<T>];
+    internal::for_each_field(t, [&](auto& elem, size_t i) {
+        MPI_Get_address(&elem, &disp[i]);
+        types[i]     = mpi_type_traits<std::remove_reference_t<decltype(elem)>>::data_type();
+        disp[i]      = MPI_Aint_diff(disp[i], base);
+        blocklens[i] = 1;
+    });
+    MPI_Datatype type;
+    int          err = MPI_Type_create_struct(static_cast<int>(internal::tuple_size<T>), blocklens, disp, types, &type);
+    THROW_IF_MPI_ERROR(err, MPI_Type_create_struct);
+    return type;
 }
 
 /// @}
