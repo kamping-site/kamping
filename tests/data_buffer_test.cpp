@@ -919,7 +919,8 @@ TEST(DataBufferTest, make_data_buffer) {
         constexpr internal::BufferType    btype         = internal::BufferType::in_buffer;
         constexpr BufferResizePolicy      resize_policy = BufferResizePolicy::no_resize;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype, resize_policy>({1, 2, 3});
+            internal::make_data_buffer_builder<ptype, BufferModifiability::modifiable, btype, resize_policy>({1, 2, 3})
+                .construct_buffer_or_rebind();
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -937,7 +938,8 @@ TEST(DataBufferTest, make_data_buffer) {
         constexpr internal::BufferType    btype         = internal::BufferType::in_buffer;
         constexpr BufferResizePolicy      resize_policy = BufferResizePolicy::no_resize;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, resize_policy>({1, 2, 3});
+            internal::make_data_buffer_builder<ptype, BufferModifiability::constant, btype, resize_policy>({1, 2, 3})
+                .construct_buffer_or_rebind();
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -1079,9 +1081,11 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::no_resize>(
-                {true, false, true}
-            );
+            internal::
+                make_data_buffer_builder<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::no_resize>(
+                    {true, false, true}
+                )
+                    .construct_buffer_or_rebind();
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -1098,9 +1102,11 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
         auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
-                {true, false, true}
-            );
+            internal::
+                make_data_buffer_builder<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
+                    {true, false, true}
+                )
+                    .construct_buffer_or_rebind();
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);

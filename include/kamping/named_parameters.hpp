@@ -48,7 +48,8 @@ struct unused_tparam {};
 /// @return Object wrapping a \c nullptr as a send buffer.
 template <typename Data>
 auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
-    return internal::EmptyDataBuffer<Data, internal::ParameterType::send_buf, internal::BufferType::ignore>();
+    return internal::
+        make_empty_data_buffer_builder<Data, internal::ParameterType::send_buf, internal::BufferType::ignore>();
 }
 
 /// @brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
@@ -63,7 +64,7 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename Data>
 auto send_buf(Data&& data) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_buf,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -77,7 +78,7 @@ auto send_buf(Data&& data) {
 /// @return Object referring to the storage containing the data elements to send.
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_buf,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -99,7 +100,7 @@ auto send_recv_buf(Data&& data) {
     constexpr internal::BufferModifiability modifiability = std::is_const_v<std::remove_reference_t<Data>>
                                                                 ? internal::BufferModifiability::constant
                                                                 : internal::BufferModifiability::modifiable;
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_buf,
         modifiability,
         internal::BufferType::in_out_buffer,
@@ -113,11 +114,23 @@ auto send_recv_buf(Data&& data) {
 /// @return Object referring to the storage containing the data elements to send / the received elements.
 template <typename Container>
 auto send_recv_buf(AllocNewT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::in_out_buffer,
         BufferResizePolicy::resize_to_fit>(alloc_new<Container>);
+}
+
+/// @brief Construct a send recv buffer using \p ValueType as the underlying value type. The kind of container is
+/// determined by the MPI operation and usually defaults to \ref Communicator::default_container_type.
+/// @tparam ValueType The type of the elements in the buffer.
+template <typename ValueType>
+auto send_recv_buf(AllocContainerOfT<ValueType>) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::in_out_buffer,
+        BufferResizePolicy::resize_to_fit>(alloc_container_of<ValueType>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must
@@ -130,7 +143,7 @@ auto send_recv_buf(AllocNewT<Container>) {
 /// @return Object referring to the storage containing the send counts.
 template <typename Container>
 auto send_counts(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -146,7 +159,7 @@ auto send_counts(Container&& container) {
 /// @return Object referring to the storage containing the send counts.
 template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -165,7 +178,7 @@ auto send_counts(std::initializer_list<T> counts) {
 /// @return Object referring to the storage containing the send counts.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_counts_out(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -180,7 +193,7 @@ auto send_counts_out(Container&& container) {
 /// @return Object referring to the storage containing the send counts.
 template <typename Container>
 auto send_counts_out(AllocNewT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -194,26 +207,30 @@ auto send_counts_out(AllocNewT<Container>) {
 /// size() and \c resize() member functions and expose the contained \c value_type.
 /// @return Object referring to the storage containing the send counts.
 template <template <typename...> typename Container>
-auto send_counts_out(AllocNewAutoT<Container>) {
-    return internal::make_data_buffer<
+auto send_counts_out(AllocNewUsingT<Container>) {
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         BufferResizePolicy::resize_to_fit,
-        int>(alloc_new_auto<Container>);
+        int>(alloc_new_using<Container>);
 }
 
 /// @brief Generates a wrapper for a send counts output parameter without any user input.
 /// @return Wrapper for the send counts that can be retrieved as structured binding.
 inline auto send_counts_out() {
-    return send_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<std::vector<int>>);
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_counts,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<int>);
 }
 
 /// @brief The number of elements to send.
 /// @param count The number of elements.
 /// @return The corresponding parameter object.
 inline auto send_count(int count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_count,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -225,7 +242,7 @@ inline auto send_count(int count) {
 /// The value will be returned as part of the result of the MPI call.
 /// @return The corresponding parameter object.
 inline auto send_count_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -238,7 +255,7 @@ inline auto send_count_out() {
 /// @param count Reference to the location to story the count at.
 /// @return The corresponding parameter object.
 inline auto send_count_out(int& count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -255,7 +272,7 @@ inline auto send_count_out(int& count) {
 /// @return Object referring to the storage containing the recv counts.
 template <typename Container>
 auto recv_counts(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -271,7 +288,7 @@ auto recv_counts(Container&& container) {
 /// @return Object referring to the storage containing the recv counts.
 template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -281,7 +298,8 @@ auto recv_counts(std::initializer_list<T> counts) {
 
 /// @brief Indicate that the recv counts are ignored.
 inline auto recv_counts(internal::ignore_t<void> ignore [[maybe_unused]]) {
-    return internal::EmptyDataBuffer<int, internal::ParameterType::recv_counts, internal::BufferType::ignore>();
+    return internal::
+        make_empty_data_buffer_builder<int, internal::ParameterType::recv_counts, internal::BufferType::ignore>();
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
@@ -296,7 +314,7 @@ inline auto recv_counts(internal::ignore_t<void> ignore [[maybe_unused]]) {
 /// @return Object referring to the storage containing the receive counts.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_counts_out(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -311,7 +329,7 @@ auto recv_counts_out(Container&& container) {
 /// @return Object referring to the storage containing the recv counts.
 template <typename Data>
 auto recv_counts_out(AllocNewT<Data> container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -325,8 +343,8 @@ auto recv_counts_out(AllocNewT<Data> container) {
 /// size() and \c resize() member functions and expose the contained \c value_type.
 /// @return Object referring to the storage containing the recv counts.
 template <template <typename...> typename Data>
-auto recv_counts_out(AllocNewAutoT<Data> container) {
-    return internal::make_data_buffer<
+auto recv_counts_out(AllocNewUsingT<Data> container) {
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -337,14 +355,18 @@ auto recv_counts_out(AllocNewAutoT<Data> container) {
 /// @brief Generates a wrapper for a recv counts output parameter without any user input.
 /// @return Wrapper for the recv counts that can be retrieved as structured binding.
 inline auto recv_counts_out() {
-    return recv_counts_out<BufferResizePolicy::resize_to_fit>(alloc_new<std::vector<int>>);
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_counts,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<int>);
 }
 
 /// @brief The number of elements to received.
 /// @param count The number of elements.
 /// @return The corresponding parameter object.
 inline auto recv_count(int count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_count,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -356,7 +378,7 @@ inline auto recv_count(int count) {
 /// The value will be returned as part of the result of the MPI call.
 /// @return The corresponding parameter object.
 inline auto recv_count_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -369,7 +391,7 @@ inline auto recv_count_out() {
 /// @param count Reference to the location to story the count at.
 /// @return The corresponding parameter object.
 inline auto recv_count_out(int& count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -381,7 +403,7 @@ inline auto recv_count_out(int& count) {
 /// @param count The number of elements.
 /// @return The corresponding parameter object.
 inline auto send_recv_count(int count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_count,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -393,7 +415,7 @@ inline auto send_recv_count(int count) {
 /// The value will be returned as part of the result of the MPI call.
 /// @return The corresponding parameter object.
 inline auto send_recv_count_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -406,7 +428,7 @@ inline auto send_recv_count_out() {
 /// @param count Reference to the location to story the count at.
 /// @return The corresponding parameter object.
 inline auto send_recv_count_out(int& count) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_count,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -424,7 +446,7 @@ inline auto send_recv_count_out(int& count) {
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
 auto send_displs(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -440,7 +462,7 @@ auto send_displs(Container&& container) {
 /// @return Object referring to the storage containing the send displacements.
 template <typename T>
 auto send_displs(std::initializer_list<T> displs) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -460,7 +482,7 @@ auto send_displs(std::initializer_list<T> displs) {
 /// @return Object referring to the storage containing the send displacements.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_displs_out(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -475,7 +497,7 @@ auto send_displs_out(Container&& container) {
 /// @return Object referring to the storage containing the send displacements.
 template <typename Container>
 auto send_displs_out(AllocNewT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -489,19 +511,23 @@ auto send_displs_out(AllocNewT<Container>) {
 /// size() and \c resize() member functions and expose the contained \c value_type.
 /// @return Object referring to the storage containing the send displacements.
 template <template <typename...> typename Container>
-auto send_displs_out(AllocNewAutoT<Container>) {
-    return internal::make_data_buffer<
+auto send_displs_out(AllocNewUsingT<Container>) {
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         BufferResizePolicy::resize_to_fit,
-        int>(alloc_new_auto<Container>);
+        int>(alloc_new_using<Container>);
 }
 
 /// @brief Generates a wrapper for a send displs output parameter without any user input.
 /// @return Wrapper for the send displs that can be retrieved as structured binding.
 inline auto send_displs_out() {
-    return send_displs_out<BufferResizePolicy::resize_to_fit>(alloc_new<std::vector<int>>);
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<int>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage
@@ -514,7 +540,7 @@ inline auto send_displs_out() {
 /// @return Object referring to the storage containing the recv displacements.
 template <typename Container>
 auto recv_displs(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -530,7 +556,7 @@ auto recv_displs(Container&& container) {
 /// @return Object referring to the storage containing the receive displacements.
 template <typename T>
 auto recv_displs(std::initializer_list<T> displs) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -549,7 +575,7 @@ auto recv_displs(std::initializer_list<T> displs) {
 /// @return Object referring to the storage containing the received elements.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_buf(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -561,15 +587,26 @@ auto recv_buf(Container&& container) {
 /// contained \c value_type
 /// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
 /// size() and \c resize() member functions and expose the contained \c value_type.
-/// @param container Container which will contain the received elements.
 /// @return Object referring to the storage containing the received elements.
 template <typename Data>
-auto recv_buf(AllocNewT<Data> container) {
-    return internal::make_data_buffer<
+auto recv_buf(AllocNewT<Data>) {
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
-        internal::maximum_viable_resize_policy<Data>>(container);
+        internal::maximum_viable_resize_policy<Data>>(alloc_new<Data>);
+}
+
+/// @brief Construct a recv buffer using \p ValueType as the underlying value type. The kind of container is determined
+/// by the MPI operation and usually defaults to \ref Communicator::default_container_type.
+/// @tparam ValueType The type of the elements in the buffer.
+template <typename ValueType>
+auto recv_buf(AllocContainerOfT<ValueType>) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<ValueType>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
@@ -583,7 +620,7 @@ auto recv_buf(AllocNewT<Data> container) {
 /// @return Object referring to the storage containing the receive displacements.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_displs_out(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -598,7 +635,7 @@ auto recv_displs_out(Container&& container) {
 /// @return Object referring to the storage containing the recv displacements.
 template <typename Data>
 auto recv_displs_out(AllocNewT<Data>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -612,19 +649,23 @@ auto recv_displs_out(AllocNewT<Data>) {
 /// size() and \c resize() member functions and expose the contained \c value_type.
 /// @return Object referring to the storage containing the recv displacements.
 template <template <typename...> typename Container>
-auto recv_displs_out(AllocNewAutoT<Container>) {
-    return internal::make_data_buffer<
+auto recv_displs_out(AllocNewUsingT<Container>) {
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         BufferResizePolicy::resize_to_fit,
-        int>(alloc_new_auto<Container>);
+        int>(alloc_new_using<Container>);
 }
 
 /// @brief Generates a wrapper for a recv displs output parameter without any user input.
 /// @return Wrapper for the recv displs that can be retrieved as structured binding.
 inline auto recv_displs_out() {
-    return recv_displs_out<BufferResizePolicy::resize_to_fit>(alloc_new<std::vector<int>>);
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<int>);
 }
 
 /// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
@@ -784,7 +825,7 @@ op(Op&& op, Commutative commute = ops::internal::undefined_commutative_tag{}) {
 /// @returns OnRank0 Object containing the information which value to return on the first rank.
 template <typename Container>
 inline auto values_on_rank_0(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::values_on_rank_0,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -798,7 +839,7 @@ inline auto values_on_rank_0(Container&& container) {
 // TODO zero-overhead
 template <typename T>
 inline auto values_on_rank_0(std::initializer_list<T> values) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::values_on_rank_0,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -809,7 +850,7 @@ inline auto values_on_rank_0(std::initializer_list<T> values) {
 /// @param send_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
 inline auto send_type(MPI_Datatype send_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -820,7 +861,7 @@ inline auto send_type(MPI_Datatype send_type) {
 /// @brief Output parameter for the send type.
 /// @return The corresponding parameter object.
 inline auto send_type_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -833,7 +874,7 @@ inline auto send_type_out() {
 /// @param send_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
 inline auto send_type_out(MPI_Datatype& send_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -845,7 +886,7 @@ inline auto send_type_out(MPI_Datatype& send_type) {
 /// @param recv_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
 inline auto recv_type(MPI_Datatype recv_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -856,7 +897,7 @@ inline auto recv_type(MPI_Datatype recv_type) {
 /// @brief Output parameter for the recv type.
 /// @return The corresponding parameter object.
 inline auto recv_type_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -869,7 +910,7 @@ inline auto recv_type_out() {
 /// @param recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
 inline auto recv_type_out(MPI_Datatype& recv_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -881,7 +922,7 @@ inline auto recv_type_out(MPI_Datatype& recv_type) {
 /// @param send_recv_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
 inline auto send_recv_type(MPI_Datatype send_recv_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
@@ -892,7 +933,7 @@ inline auto send_recv_type(MPI_Datatype send_recv_type) {
 /// @brief Output parameter for the send_recv type.
 /// @return The corresponding parameter object.
 inline auto send_recv_type_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -905,7 +946,7 @@ inline auto send_recv_type_out() {
 /// @param send_recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
 inline auto send_recv_type_out(MPI_Datatype& send_recv_type) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,

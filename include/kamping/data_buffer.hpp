@@ -154,33 +154,82 @@ KAMPING_MAKE_HAS_MEMBER(resize)
 
 } // namespace internal
 
-/// @brief Type used for indicating that a buffer should be allocated by KaMPIng.
+/// @brief Buffer allocation tag used for indicating that a buffer should be allocated by KaMPIng.
 /// @tparam Container The container to allocate.
 ///
 /// Passing this with an appropriate template parameter to a buffer creation function (such as \c recv_buf()) indicates,
 /// that the MPI operation should allocate an appropriately sized buffer of type \c Container internally.
 template <typename Container>
-struct AllocNewT {};
+struct AllocNewT {
+    /// @brief The container type to allocate.
+    using container_type = Container; ///< The container type to allocate.
+};
 
 /// @brief Convenience wrapper for creating library allocated containers. See \ref AllocNewT for details.
 template <typename Container>
 static constexpr auto alloc_new = AllocNewT<Container>{};
 
-/// @brief Type used for indicating that a buffer should be allocated by KaMPIng.
+/// @brief Helper to decide if an allocation tag is an \c AllocNewT.
+template <typename T>
+static constexpr bool is_alloc_new_v = false;
+
+/// @brief Helper to decide if an allocation tag is an \c AllocNewT.
+template <typename T>
+static constexpr bool is_alloc_new_v<AllocNewT<T>> = true;
+
+/// @brief Buffer allocationt tag used for indicating that a buffer should be allocated by KaMPIng.
 /// @tparam Container A container template to use for allocation.
 ///
-/// Passing this with an appropriate template parameter to a buffer creation function (such as \c recv_counts())
+/// Passing this with an appropriate template parameter to a buffer creation function (such as \c recv_counts_out())
 /// indicates, that the MPI operation should allocate an appropriately sized buffer of type \c Container<T> internally,
 /// where \c T is automatically determined.
 ///
-/// In case of \c recv_counts(alloc_new_auto<std::vector>) this means, that internally, a \c std::vector<int> is
+/// In case of \c recv_counts_out(alloc_new_using<std::vector>) this means, that internally, a \c std::vector<int> is
 /// allocated.
 template <template <typename...> typename Container>
-struct AllocNewAutoT {};
+struct AllocNewUsingT {
+    /// @brief The container type to allocate.
+    /// @tparam Ts The template parameters for the container.
+    template <typename... Ts>
+    using container_type = Container<Ts...>;
+};
 
-/// @brief Convenience wrapper for creating library allocated containers. See \ref AllocNewAutoT for details.
+/// @brief Convenience wrapper for creating library allocated containers. See \ref AllocNewUsingT for details.
 template <template <typename...> typename Container>
-static constexpr auto alloc_new_auto = AllocNewAutoT<Container>{};
+static constexpr auto alloc_new_using = AllocNewUsingT<Container>{};
+
+/// @brief Helper to decide if an allocation tag is an \c AllocNewUsingT.
+template <typename T>
+static constexpr bool is_alloc_new_using_v = false;
+
+/// @brief Helper to decide if an allocation tag is an \c AllocNewUsingT.
+template <template <typename...> typename Container>
+static constexpr bool is_alloc_new_using_v<AllocNewUsingT<Container>> = true;
+
+/// @brief Buffer allocation tag used for indicating that a buffer of type \p T should be allocated by KaMPIng.
+/// @tparam T The value type to use for the allocated buffer.
+///
+/// Passing this to a buffer creation function (such as \c recv_counts_out()) indicates, that the MPI operation should
+/// allocate an appropriately sized buffer of value type \p T internally. The allocation is defered until the MPI
+/// operation is executed and the actual type of the container is determined by the MPI operation (usually \ref
+/// Communicator::default_container_type).
+template <typename T>
+struct AllocContainerOfT {
+    /// @brief The value type to use for the allocated buffer.
+    using value_type = T;
+};
+
+/// @brief Convenience wrapper for creating library allocated containers. See \ref AllocContainerOfT for details.
+template <typename T>
+static constexpr auto alloc_container_of = AllocContainerOfT<T>{};
+
+/// @brief Helper to decide if an allocation tag is an \c AllocContainerOfT.
+template <typename T>
+static constexpr bool is_alloc_container_of_v = false;
+
+/// @brief Helper to decide if an allocation tag is an \c AllocContainerOfT.
+template <typename T>
+static constexpr bool is_alloc_container_of_v<AllocContainerOfT<T>> = true;
 
 namespace internal {
 /// @brief Helper to decide if data type has \c .data() method.
@@ -568,6 +617,14 @@ public:
     void resize_if_requested(SizeFunc&& compute_required_size [[maybe_unused]]) {}
 };
 
+/// @brief Helper to decide if a type is an instance of \c EmptyDataBuffer.
+template <typename T>
+constexpr bool is_empty_data_buffer_v = false;
+
+/// @brief Helper to decide if a type is an instance of \c EmptyDataBuffer.
+template <typename T, ParameterType type, BufferType buffer_type_param>
+constexpr bool is_empty_data_buffer_v<EmptyDataBuffer<T, type, buffer_type_param>> = true;
+
 ///
 /// @brief Creates a user allocated DataBuffer containing the supplied data (a container or a single element)
 ///
@@ -668,7 +725,7 @@ template <
     typename ValueType = default_value_type_tag,
     template <typename...>
     typename Data>
-auto make_data_buffer(AllocNewAutoT<Data>) {
+auto make_data_buffer(AllocNewUsingT<Data>) {
     // this check prevents that this factory function is used, when the value type is not known
     static_assert(
         !std::is_same_v<ValueType, default_value_type_tag>,
@@ -685,48 +742,49 @@ auto make_data_buffer(AllocNewAutoT<Data>) {
         ValueType>();
 }
 
-/// @brief Creates an owning DataBuffer containing the supplied data in a std::vector.
-///
-/// Creates an owning DataBuffer with the given template parameters.
-///
-/// An initializer list of type \c bool will be converted to a \c std::vector<kamping::kabool>.
-///
-/// @tparam parameter_type parameter type represented by this buffer.
-/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
-/// modify the underlying container. `constant` otherwise.
-/// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
-/// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
-/// @tparam Data Container or data type on which this buffer is based.
-/// @param data std::initializer_list holding the data for the buffer.
-///
-/// @return A library allocated DataBuffer with the given template parameters.
-template <
-    ParameterType       parameter_type,
-    BufferModifiability modifiability,
-    BufferType          buffer_type,
-    BufferResizePolicy  buffer_resize_policy,
-    typename Data>
-auto make_data_buffer(std::initializer_list<Data> data) {
-    auto data_vec = [&]() {
-        if constexpr (std::is_same_v<Data, bool>) {
-            return std::vector<kabool>(data.begin(), data.end());
-            // We only use automatic conversion of bool to kabool for initializer lists, but not for single elements of
-            // type bool. The reason for that is, that sometimes single element conversion may not be desired.
-            // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
-            // send_recv_buf = bool&
-        } else {
-            return std::vector<Data>{data};
-        }
-    }();
-    return DataBuffer<
-        decltype(data_vec),
-        parameter_type,
-        modifiability,
-        BufferOwnership::owning,
-        buffer_type,
-        buffer_resize_policy,
-        BufferAllocation::user_allocated>(std::move(data_vec));
-}
+// /// @brief Creates an owning DataBuffer containing the supplied data in a std::vector.
+// ///
+// /// Creates an owning DataBuffer with the given template parameters.
+// ///
+// /// An initializer list of type \c bool will be converted to a \c std::vector<kamping::kabool>.
+// ///
+// /// @tparam parameter_type parameter type represented by this buffer.
+// /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+// /// modify the underlying container. `constant` otherwise.
+// /// @tparam buffer_type Type of this buffer, i.e., in, out, or in_out.
+// /// @tparam buffer_resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+// /// @tparam Data Container or data type on which this buffer is based.
+// /// @param data std::initializer_list holding the data for the buffer.
+// ///
+// /// @return A library allocated DataBuffer with the given template parameters.
+// template <
+//     ParameterType       parameter_type,
+//     BufferModifiability modifiability,
+//     BufferType          buffer_type,
+//     BufferResizePolicy  buffer_resize_policy,
+//     typename Data>
+// auto make_data_buffer(std::initializer_list<Data> data) {
+//     // auto data_vec = [&]() {
+//     //     if constexpr (std::is_same_v<Data, bool>) {
+//     //         return std::vector<kabool>(data.begin(), data.end());
+//     //         // We only use automatic conversion of bool to kabool for initializer lists, but not for single
+//     elements of
+//     //         // type bool. The reason for that is, that sometimes single element conversion may not be desired.
+//     //         // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
+//     //         // send_recv_buf = bool&
+//     //     } else {
+//     //         return std::vector<Data>{data};
+//     //     }
+//     // }();
+//     return DataBuffer<
+//         decltype(data_vec),
+//         parameter_type,
+//         modifiability,
+//         BufferOwnership::owning,
+//         buffer_type,
+//         buffer_resize_policy,
+//         BufferAllocation::user_allocated>(std::move(data_vec));
+// }
 
 } // namespace internal
 

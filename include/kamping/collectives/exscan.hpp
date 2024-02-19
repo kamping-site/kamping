@@ -76,7 +76,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
     );
 
     // Get the send buffer and deduce the send and recv value types.
-    auto const& send_buf  = select_parameter_type<ParameterType::send_buf>(args...).get();
+    auto const& send_buf  = select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     KASSERT(
         is_same_on_all_ranks(send_buf.size()),
@@ -88,7 +88,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
     using default_recv_value_type = std::remove_const_t<send_value_type>;
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
     auto&& recv_buf =
-        select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...);
+        select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...)
+            .template construct_buffer_or_rebind<DefaultContainerType>();
 
     // Get the send_recv_type.
     auto&& send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
@@ -97,8 +98,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
     // Get the send_recv count
     using default_send_recv_count_type = decltype(kamping::send_recv_count_out());
     auto&& send_recv_count             = internal::select_parameter_type_or_default<
-        internal::ParameterType::send_recv_count,
-        default_send_recv_count_type>(std::tuple(), args...);
+                                 internal::ParameterType::send_recv_count,
+                                 default_send_recv_count_type>(std::tuple(), args...)
+                                 .construct_buffer_or_rebind();
 
     constexpr bool do_compute_send_recv_count = internal::has_to_be_computed<decltype(send_recv_count)>;
     if constexpr (do_compute_send_recv_count) {
@@ -149,7 +151,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
         // auto-deduce the identity, as this would introduce a parameter which is required in some situtations in
         // KaMPIng, but never in MPI.
         if constexpr (has_values_on_rank_0_param) {
-            auto const& values_on_rank_0_param = select_parameter_type<ParameterType::values_on_rank_0>(args...);
+            auto const& values_on_rank_0_param =
+                select_parameter_type<ParameterType::values_on_rank_0>(args...).construct_buffer_or_rebind();
             KASSERT(
                 // if the send_recv type is user provided, kamping cannot make any assumptions about the required size
                 // of the recv buffer
