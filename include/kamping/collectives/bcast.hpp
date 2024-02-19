@@ -90,7 +90,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_buf, default_send_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template construct_buffer_or_rebind<DefaultContainerType>();
 
     using value_type = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
     static_assert(
@@ -113,9 +114,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
     using default_count_type = decltype(kamping::send_recv_count_out());
     auto&& count_param = internal::select_parameter_type_or_default<ParameterType::send_recv_count, default_count_type>(
-        std::tuple(),
-        args...
-    );
+                             std::tuple(),
+                             args...
+    )
+                             .construct_buffer_or_rebind();
 
     constexpr bool count_has_to_be_computed = has_to_be_computed<decltype(count_param)>;
     KASSERT(

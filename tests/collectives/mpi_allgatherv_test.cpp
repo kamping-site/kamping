@@ -189,7 +189,7 @@ TEST(AllgathervTest, allgatherv_all_empty_but_rank_in_the_middle_with_different_
     auto result = comm.allgatherv(
         send_buf(input),
         kamping::recv_counts_out<resize_to_fit>(recv_counts_out),
-        recv_displs_out(alloc_new_auto<OwnContainer>)
+        recv_displs_out(alloc_new_using<OwnContainer>)
     );
     EXPECT_EQ(result.extract_recv_buffer(), expected_output);
     EXPECT_EQ(recv_counts_out, expected_recv_counts);

@@ -179,7 +179,7 @@ TEST(GathervTest, gather_mix_different_container_types) {
                 root(i),
                 recv_buf(alloc_new<std::vector<double>>),
                 kamping::recv_counts(recv_counts),
-                kamping::recv_displs_out(alloc_new_auto<OwnContainer>)
+                kamping::recv_displs_out(alloc_new_using<OwnContainer>)
             );
 
             if (comm.rank_signed() == i) {

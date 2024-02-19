@@ -81,8 +81,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
         );
 
         // get the send/recv buffer and types
-        auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
-        auto  send_buf        = send_buf_param.get();
+        auto&& send_buf_param =
+            internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+        auto send_buf         = send_buf_param.get();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
 
         using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
@@ -90,7 +91,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
             internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
                 std::tuple(),
                 args...
-            );
+            )
+                .template construct_buffer_or_rebind<DefaultContainerType>();
         using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
         auto&& [send_type, recv_type] =
@@ -114,7 +116,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
             internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
                 std::tuple(),
                 args...
-            );
+            )
+                .construct_buffer_or_rebind();
         constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
         if constexpr (do_compute_send_count) {
             send_count.underlying() = asserting_cast<int>(send_buf.size());
@@ -126,7 +129,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
             internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
                 std::tuple(),
                 args...
-            );
+            )
+                .construct_buffer_or_rebind();
         constexpr bool do_compute_recv_count = internal::has_to_be_computed<decltype(recv_count)>;
         if constexpr (do_compute_recv_count) {
             recv_count.underlying() = send_count.get_single_element();
@@ -195,7 +199,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
     );
 
     // get the send/recv buffer and type
-    auto& buffer     = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
+    auto&& buffer =
+        internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...).construct_buffer_or_rebind();
     using value_type = typename std::remove_reference_t<decltype(buffer)>::value_type;
 
     auto&& type = internal::determine_mpi_send_recv_datatype<value_type, decltype(buffer)>(args...);
@@ -216,7 +221,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_count, default_count_type>(
             std::tuple(),
             args...
-        );
+        )
+            .construct_buffer_or_rebind();
     constexpr bool do_compute_count = internal::has_to_be_computed<decltype(count)>;
     // Opposed the non-inplace version, this requires that the data contributed by each rank is already at the correct
     // location in the buffer. Therefore the count is inferred as buffer.size() / size() if not given.
@@ -304,9 +310,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     );
 
     // get send_buf
-    auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
-    auto  send_buf        = send_buf_param.get();
-    using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
+    auto&& send_buf =
+        internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+    using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     // get recv_buf
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
@@ -314,7 +320,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     // get send/recv types
@@ -329,7 +336,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
-        );
+        )
+            .construct_buffer_or_rebind();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());
@@ -340,7 +348,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_counts_type = typename std::remove_reference_t<decltype(recv_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
     // calculate recv_counts if necessary
@@ -367,7 +376,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_displs_type = typename std::remove_reference_t<decltype(recv_displs)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_displs_type>, int>, "Recv displs must be of type int");
 

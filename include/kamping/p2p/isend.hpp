@@ -72,9 +72,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
         KAMPING_OPTIONAL_PARAMETERS(send_count, tag, send_mode, request, send_type)
     );
 
-    auto& send_buf_param  = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
-    auto  send_buf        = send_buf_param.get();
-    using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
+    auto&& send_buf =
+        internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+    using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     auto&& send_type = internal::determine_mpi_send_datatype<send_value_type>(args...);
 
@@ -83,7 +83,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             {},
             args...
-        );
+        )
+            .construct_buffer_or_rebind();
     if constexpr (has_to_be_computed<decltype(send_count)>) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());
     }

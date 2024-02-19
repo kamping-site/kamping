@@ -83,7 +83,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
         !std::is_same_v<recv_value_type, internal::unused_tparam>,
@@ -130,7 +131,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
             std::tuple(),
             args...
-        );
+        )
+            .construct_buffer_or_rebind();
 
     KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
     int source = source_param.rank_signed();
