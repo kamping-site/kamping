@@ -82,7 +82,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
-        );
+        )
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
         !std::is_same_v<recv_value_type, internal::unused_tparam>,

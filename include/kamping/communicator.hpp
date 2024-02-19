@@ -41,6 +41,11 @@ namespace kamping {
 template <template <typename...> typename DefaultContainerType = std::vector, template <typename> typename... Plugins>
 class Communicator : public Plugins<Communicator<DefaultContainerType, Plugins...>>... {
 public:
+    /// @brief Type of the default container type to use for containers created inside operations of this communicator.
+    /// @tparam Args Arguments to the container type.
+    template <typename... Args>
+    using default_container_type = DefaultContainerType<Args...>;
+
     /// @brief Default constructor not specifying any MPI communicator and using \c MPI_COMM_WORLD by default.
     Communicator() : Communicator(MPI_COMM_WORLD) {}
 

@@ -86,18 +86,18 @@ inline auto statuses_out(AllocNewT<Container>) {
 
 /// @brief Internally contruct a new \p Container<MPI_Status> which will hold the returned statuses.
 template <template <typename...> typename Container>
-inline auto statuses_out(AllocNewAutoT<Container>) {
+inline auto statuses_out(AllocNewUsingT<Container>) {
     return internal::make_data_buffer<
         internal::ParameterType::statuses,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         resize_to_fit,
-        MPI_Status>(alloc_new_auto<Container>);
+        MPI_Status>(alloc_new_using<Container>);
 }
 
 /// @brief Internally contruct an \c std::vector<MPI_Status>, which will hold the returned statuses.
 inline auto statuses_out() {
-    return statuses_out(alloc_new_auto<std::vector>);
+    return statuses_out(alloc_new_using<std::vector>);
 }
 
 /// @}

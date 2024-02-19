@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPIng Authors
+// Copyright 2021-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -27,6 +27,253 @@
 #include "kamping/status.hpp"
 
 namespace kamping::internal {
+
+/// @brief Dummy template for representing the absence of a container to rebind to.
+/// @see AllocNewDataBufferBuilder::construct_buffer_or_rebind()
+template <typename>
+struct UnusedRebindContainer {};
+
+/// @brief Parameter object representing a data buffer. This is an intermediate object which only holds the data and
+/// parameters. The actual buffer is created by calling the \c construct_buffer_or_rebind() method.
+/// @tparam Data The data type.
+/// @tparam parameter_type_param The parameter type.
+/// @tparam modifiability The modifiability of the buffer.
+/// @tparam buffer_type The type of the buffer.
+/// @tparam buffer_resize_policy The resize policy of the buffer.
+/// @tparam ValueType The value type of the buffer. Defaults to \ref default_value_type_tag, indicating that this buffer
+/// does not enforce a specific value type.
+template <
+    typename Data,
+    ParameterType       parameter_type_param,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag>
+struct DataBufferBuilder {
+    static constexpr ParameterType parameter_type = parameter_type_param; ///< The parameter type.
+    DataBufferBuilder() : data_() {}
+    /// @brief Constructor for DataBufferBuilder.
+    /// @param data The container to build a databuffer for
+    /// @tparam Data_ The type of the container.
+    template <typename Data_>
+    DataBufferBuilder(Data_&& data) : data_(std::forward<Data_>(data)) {}
+
+private:
+    Data data_;
+    using DataBufferType =
+        decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
+            std::forward<Data>(data_)
+        ));
+
+public:
+    /// @brief Constructs the data buffer.
+    /// @tparam RebindContainerType The container to use for the data buffer (has no effect here)
+    template <template <typename...> typename RebindContainerType = UnusedRebindContainer>
+    auto construct_buffer_or_rebind() {
+        using Data_no_ref = std::remove_const_t<std::remove_reference_t<Data>>;
+        if constexpr (is_empty_data_buffer_v<Data_no_ref>) {
+            return internal::EmptyDataBuffer<ValueType, parameter_type, buffer_type>{};
+        } else {
+            return make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
+                std::forward<Data>(data_)
+            );
+        }
+    }
+    static constexpr bool is_out_buffer =
+        DataBufferType::is_out_buffer; ///< \c true if the buffer is an out or in/out buffer that results will be
+                                       ///< written to and \c false otherwise.
+    static constexpr bool is_owning =
+        DataBufferType::is_owning; ///< Indicates whether the buffer owns its underlying storage.
+    static constexpr bool is_lib_allocated =
+        DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng.
+    static constexpr bool is_single_element =
+        DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
+    using value_type = typename DataBufferType::value_type; ///< The construted data buffer's value type.
+};
+
+/// @brief Parameter object representing a data buffer to be allocated by KaMPIng. This is a specialization of \ref
+/// DataBufferBuilder for buffer allocation tags, such as \ref alloc_new, \ref alloc_new_using and \ref
+/// alloc_container_of. This is an intermediate object not holding any data. The actual buffer is constructed by
+/// calling the \c construct_buffer_or_rebind() method.
+///
+/// This type should be constructed using the factory methods \ref make_data_buffer_builder.
+///
+/// @tparam AllocType A tag type indicating what kind of buffer should be allocated. see \ref alloc_new, \ref
+/// alloc_new_using and \ref alloc_container_of.
+template <
+    typename AllocType,
+    typename ValueType,
+    ParameterType       parameter_type_param,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy>
+struct AllocNewDataBufferBuilder {
+    static constexpr ParameterType parameter_type = parameter_type_param; ///< The parameter type.
+private:
+    using DataBufferType =
+        decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
+            std::conditional_t<
+                is_alloc_container_of_v<AllocType>,
+                AllocNewT<std::vector<ValueType>>, // we rebind to std::vector here, because this DataBufferType is only
+                                                   // used for determining is_out_buffer, is_owning, etc. and rebinding
+                                                   // does not affect this.
+                AllocType>{}
+        ));
+
+public:
+    /// @brief Constructs the data buffer.
+    /// @tparam RebingContainerType The container to use for constructing the data buffer. This parameter is ignored if
+    /// the buffer allocation trait is \ref alloc_new or \ref alloc_new_using. In case of `alloc_container_of<U>`, the
+    /// created data buffer encapsulated a `RebindContainerType<U>`.
+    template <template <typename...> typename RebindContainerType = UnusedRebindContainer>
+    auto construct_buffer_or_rebind() {
+        if constexpr (is_alloc_new_v<AllocType>) {
+            return make_data_buffer<
+                parameter_type,
+                modifiability,
+                buffer_type,
+                buffer_resize_policy,
+                ValueType>(alloc_new<typename AllocType::container_type>);
+        } else if constexpr (is_alloc_new_using_v<AllocType>) {
+            return make_data_buffer<
+                parameter_type,
+                modifiability,
+                buffer_type,
+                buffer_resize_policy,
+                ValueType>(alloc_new_using<AllocType::template container_type>);
+        } else if constexpr (is_alloc_container_of_v<AllocType>) {
+            static_assert(
+                !std::is_same_v<RebindContainerType<void>, UnusedRebindContainer<void>>,
+                "RebindContainerType is required."
+            );
+            return make_data_buffer<
+                parameter_type,
+                modifiability,
+                buffer_type,
+                buffer_resize_policy,
+                ValueType>(alloc_new<RebindContainerType<typename AllocType::value_type>>);
+        } else {
+            static_assert(is_alloc_container_of_v<AllocType>, "Unknown AllocType");
+        }
+    }
+    static constexpr bool is_out_buffer =
+        DataBufferType::is_out_buffer; ///< \c true if the buffer is an out or in/out buffer that results will be
+                                       ///< written to and \c false otherwise.
+    static constexpr bool is_owning =
+        DataBufferType::is_owning; ///< Indicates whether the buffer owns its underlying storage.
+    static constexpr bool is_lib_allocated =
+        DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng
+    static constexpr bool is_single_element =
+        DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
+    using value_type = typename DataBufferType::value_type; ///< The construted data buffer's value type.
+};
+
+/// @brief Factory method for constructing a \ref DataBufferBuilder from the given Container \p Data.
+/// @see DataBufferBuilder
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    typename Data>
+auto make_data_buffer_builder(Data&& data) {
+    return DataBufferBuilder<Data, parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
+        std::forward<Data>(data)
+    );
+}
+
+/// @brief Factory method for constructing a \ref DataBufferBuilder from an `std::initializer_list`.
+/// @see DataBufferBuilder
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename Data>
+auto make_data_buffer_builder(std::initializer_list<Data> data) {
+    auto data_vec = [&]() {
+        if constexpr (std::is_same_v<Data, bool>) {
+            return std::vector<kabool>(data.begin(), data.end());
+            // We only use automatic conversion of bool to kabool for initializer lists, but not for single elements of
+            // type bool. The reason for that is, that sometimes single element conversion may not be desired.
+            // E.g. consider a gather operation with send_buf := bool& and recv_buf := Span<bool>, or a bcast with
+            // send_recv_buf = bool&
+        } else {
+            return std::vector<Data>{data};
+        }
+    }();
+    return DataBufferBuilder<decltype(data_vec), parameter_type, modifiability, buffer_type, buffer_resize_policy>(
+        std::move(data_vec)
+    );
+}
+
+/// @brief Factory method for constructing an \ref AllocNewDataBufferBuilder for \ref alloc_new.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    typename Data>
+auto make_data_buffer_builder(AllocNewT<Data>) {
+    return AllocNewDataBufferBuilder<
+        AllocNewT<Data>,
+        ValueType,
+        parameter_type,
+        modifiability,
+        buffer_type,
+        buffer_resize_policy>();
+}
+
+/// @brief Factory method for constructing an \ref AllocNewDataBufferBuilder for \ref alloc_new_using.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType = default_value_type_tag,
+    template <typename...>
+    typename Container>
+auto make_data_buffer_builder(AllocNewUsingT<Container>) {
+    return AllocNewDataBufferBuilder<
+        AllocNewUsingT<Container>,
+        ValueType,
+        parameter_type,
+        modifiability,
+        buffer_type,
+        buffer_resize_policy>();
+}
+
+/// @brief Factory method for constructing an \ref AllocNewDataBufferBuilder for \ref alloc_container_of.
+template <
+    ParameterType       parameter_type,
+    BufferModifiability modifiability,
+    BufferType          buffer_type,
+    BufferResizePolicy  buffer_resize_policy,
+    typename ValueType>
+auto make_data_buffer_builder(AllocContainerOfT<ValueType>) {
+    return AllocNewDataBufferBuilder<
+        AllocContainerOfT<ValueType>,
+        ValueType,
+        parameter_type,
+        modifiability,
+        buffer_type,
+        buffer_resize_policy>();
+}
+
+/// @brief Factory method for constructing an DataBufferBuilder for an \ref EmptyDataBuffer.
+/// @see DataBufferBuilder
+template <typename ValueType, ParameterType parameter_type, BufferType buffer_type>
+auto make_empty_data_buffer_builder() {
+    return DataBufferBuilder<
+        EmptyDataBuffer<ValueType, parameter_type, buffer_type>,
+        parameter_type,
+        BufferModifiability::constant,
+        buffer_type,
+        no_resize,
+        ValueType>();
+}
 
 /// @brief Helper type for representing a type list
 /// @tparam Args the types.
