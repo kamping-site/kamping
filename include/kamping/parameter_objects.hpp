@@ -94,7 +94,7 @@ public:
 /// @brief Parameter object representing a data buffer to be allocated by KaMPIng. This is a specialization of \ref
 /// DataBufferBuilder for buffer allocation tags, such as \ref alloc_new, \ref alloc_new_using and \ref
 /// alloc_container_of. This is an intermediate object not holding any data. The actual buffer is constructed by
-/// called the \c get() method.
+/// calling the \c get() method.
 ///
 /// This type should be constructed using the factory methods \ref make_data_buffer_builder.
 ///
