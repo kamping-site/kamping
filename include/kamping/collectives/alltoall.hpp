@@ -62,6 +62,9 @@
 /// - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
 /// derived automatically based on recv_buf's underlying \c value_type.
 ///
+/// Inplace alltoall is supported by passing send_recv_buf as parameter. This changes the requirements for the other
+/// parameters, see \ref Communicator::alltoall_inplace.
+///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
@@ -167,6 +170,30 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         );
     }
 }
+
+/// @brief Wrapper for the in-place version of \ref Communicator::alltoall.
+///
+/// This variant must be called collectively by all ranks in the communicator. It sends the same amount of data from
+/// each rank to each rank, using the same buffer for sending and receiving data.
+///
+/// The following parameteres are required:
+///
+/// - \ref kamping::send_recv_buf() containing the data that is sent to each rank and received from each rank. The size
+/// of this buffer has to be the same at each rank and divisible by the size of the communicator unless a
+/// send_recv_count or a send_recv_type is explicitly given as parameter. Each rank receives the same number of elements
+/// from this buffer.
+///
+/// The following parameters are optional:
+///
+/// - \ref kamping::send_recv_count() specifying how many elements are sent and received. If
+/// omitted, the size of send_recv_buf divided by communicator size is used.
+/// This parameter is mandatory if \ref kamping::send_recv_type() is given.
+/// -
+/// \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send and recv type. If omitted, the \c MPI
+/// datatype is derived automatically based on send_recv_buf's underlying \c value_type.
+///
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described above.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(Args... args) const {
