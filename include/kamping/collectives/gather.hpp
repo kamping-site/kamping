@@ -88,7 +88,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
         assert::light_communication
     );
 
-    auto&& send_buf       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+    auto&& send_buf =
+        internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     using default_send_count_type = decltype(kamping::send_count_out());
@@ -211,7 +212,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
     );
 
     // get send buffer
-    auto&& send_buf       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+    auto&& send_buf =
+        internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     // get recv buffer

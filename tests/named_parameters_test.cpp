@@ -255,9 +255,9 @@ TEST(ParameterFactoriesTest, send_buf_basics_vector_from_function) {
 }
 
 TEST(ParameterFactoriesTest, send_buf_basics_vector_from_initializer_list) {
-    std::vector<int> expected                  = {1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_vec_from_function = send_buf({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
-    using ExpectedValueType                    = int;
+    std::vector<int> expected      = {1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
+    auto gen_via_vec_from_function = send_buf({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
+    using ExpectedValueType        = int;
     testing::test_owning_buffer<ExpectedValueType>(
         gen_via_vec_from_function,
         ParameterType::send_buf,
@@ -356,7 +356,8 @@ TEST(ParameterFactoriesTest, send_buf_switch) {
     [[maybe_unused]] auto gen_single_element_buffer        = send_buf(value).construct_buffer_or_rebind();
     [[maybe_unused]] auto gen_int_vec_buffer               = send_buf(values).construct_buffer_or_rebind();
     [[maybe_unused]] auto gen_single_element_owning_buffer = send_buf(uint8_t(0)).construct_buffer_or_rebind();
-    [[maybe_unused]] auto gen_int_vec_owning_buffer        = send_buf(std::vector<uint8_t>{0, 0, 0, 0, 0, 0}).construct_buffer_or_rebind();
+    [[maybe_unused]] auto gen_int_vec_owning_buffer =
+        send_buf(std::vector<uint8_t>{0, 0, 0, 0, 0, 0}).construct_buffer_or_rebind();
 
     bool const single_result = std::is_same_v<
         decltype(gen_single_element_buffer),
@@ -424,8 +425,8 @@ TEST(ParameterFactoriesTest, send_counts_basics_moved_int_vector) {
 
 TEST(ParameterFactoriesTest, send_counts_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_int_initializer_list = send_counts({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
-    using ExpectedValueType                       = int;
+    auto gen_via_int_initializer_list = send_counts({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
+    using ExpectedValueType           = int;
     testing::test_owning_buffer<ExpectedValueType>(
         gen_via_int_initializer_list,
         ParameterType::send_counts,
@@ -475,8 +476,8 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_moved_vector) {
 
 TEST(ParameterFactoriesTest, recv_counts_in_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_initializer_list = recv_counts({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto gen_via_initializer_list = recv_counts({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
+    using ExpectedValueType       = int;
     testing::test_owning_buffer<ExpectedValueType>(
         gen_via_initializer_list,
         ParameterType::recv_counts,
@@ -526,8 +527,8 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_moved_vector) {
 
 TEST(ParameterFactoriesTest, send_displs_in_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_initializer_list = send_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto gen_via_initializer_list = send_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
+    using ExpectedValueType       = int;
     testing::test_owning_buffer<ExpectedValueType>(
         gen_via_initializer_list,
         ParameterType::send_displs,
@@ -577,8 +578,8 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_moved_vector) {
 
 TEST(ParameterFactoriesTest, recv_displs_in_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_initializer_list = recv_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto gen_via_initializer_list = recv_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
+    using ExpectedValueType       = int;
     testing::test_owning_buffer<ExpectedValueType>(
         gen_via_initializer_list,
         ParameterType::recv_displs,
@@ -603,8 +604,9 @@ TEST(ParameterFactoriesTest, recv_buf_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_recv_buf_basics_user_alloc) {
     std::vector<int> int_vec;
-    auto             buffer_on_user_alloc_vector = recv_buf<BufferResizePolicy::resize_to_fit>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                      = int;
+    auto             buffer_on_user_alloc_vector =
+        recv_buf<BufferResizePolicy::resize_to_fit>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_on_user_alloc_vector,
         ParameterType::recv_buf,
@@ -616,8 +618,8 @@ TEST(ParameterFactoriesTest, resizing_recv_buf_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_recv_buf_basics_user_alloc) {
     std::vector<int> int_vec;
-    auto             buffer_on_user_alloc_vector = recv_buf<BufferResizePolicy::grow_only>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                      = int;
+    auto buffer_on_user_alloc_vector = recv_buf<BufferResizePolicy::grow_only>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType          = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_on_user_alloc_vector,
         ParameterType::recv_buf,
@@ -638,8 +640,9 @@ TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc_container_of) {
-    auto buffer_based_on_library_alloc_vector = recv_buf(alloc_container_of<int>).template construct_buffer_or_rebind<std::vector>();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        recv_buf(alloc_container_of<int>).template construct_buffer_or_rebind<std::vector>();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::recv_buf,
@@ -648,8 +651,9 @@ TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc_container_of) {
 }
 
 TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc_container_of_with_own_container) {
-    auto buffer_based_on_library_alloc_vector = recv_buf(alloc_container_of<int>).template construct_buffer_or_rebind<testing::OwnContainer>();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        recv_buf(alloc_container_of<int>).template construct_buffer_or_rebind<testing::OwnContainer>();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::recv_buf,
@@ -673,9 +677,9 @@ TEST(ParameterFactoriesTest, send_counts_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, always_resizing_send_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
-    auto                     buffer_based_on_user_alloc_vector = send_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                                    = int;
+    const BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    auto buffer_based_on_user_alloc_vector = send_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
         ParameterType::send_counts,
@@ -687,9 +691,9 @@ TEST(ParameterFactoriesTest, always_resizing_send_counts_out_basics_user_alloc) 
 
 TEST(ParameterFactoriesTest, resizing_if_required_send_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
-    auto                     buffer_based_on_user_alloc_vector = send_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                                    = int;
+    const BufferResizePolicy resize_policy = BufferResizePolicy::grow_only;
+    auto buffer_based_on_user_alloc_vector = send_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
         ParameterType::send_counts,
@@ -700,8 +704,9 @@ TEST(ParameterFactoriesTest, resizing_if_required_send_counts_out_basics_user_al
 }
 
 TEST(ParameterFactoriesTest, send_counts_out_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = send_counts_out(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        send_counts_out(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::send_counts,
@@ -710,8 +715,9 @@ TEST(ParameterFactoriesTest, send_counts_out_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, send_counts_out_basics_library_alloc_without_explicit_type) {
-    auto buffer_based_on_library_alloc_vector = send_counts_out(alloc_new_using<std::vector>).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        send_counts_out(alloc_new_using<std::vector>).construct_buffer_or_rebind();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::send_counts,
@@ -735,9 +741,9 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_send_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
-    auto                     buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                                    = int;
+    const BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    auto buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
         ParameterType::send_displs,
@@ -749,9 +755,9 @@ TEST(ParameterFactoriesTest, resizing_send_displs_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_send_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
-    auto                     buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                                    = int;
+    const BufferResizePolicy resize_policy = BufferResizePolicy::grow_only;
+    auto buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
         ParameterType::send_displs,
@@ -762,8 +768,9 @@ TEST(ParameterFactoriesTest, resizing_if_required_send_displs_out_basics_user_al
 }
 
 TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = send_displs_out(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        send_displs_out(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::send_displs,
@@ -772,8 +779,9 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc_without_explicit_type) {
-    auto buffer_based_on_library_alloc_vector = send_displs_out(alloc_new_using<std::vector>).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        send_displs_out(alloc_new_using<std::vector>).construct_buffer_or_rebind();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::send_displs,
@@ -797,9 +805,9 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_recv_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
-    auto                     buffer_based_on_user_alloc_buffer = recv_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                                    = int;
+    const BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    auto buffer_based_on_user_alloc_buffer = recv_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_buffer,
         ParameterType::recv_counts,
@@ -811,9 +819,9 @@ TEST(ParameterFactoriesTest, resizing_recv_counts_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_recv_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
-    auto                     buffer_based_on_user_alloc_buffer = recv_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                                    = int;
+    const BufferResizePolicy resize_policy = BufferResizePolicy::grow_only;
+    auto buffer_based_on_user_alloc_buffer = recv_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_buffer,
         ParameterType::recv_counts,
@@ -824,8 +832,9 @@ TEST(ParameterFactoriesTest, resizing_if_required_recv_counts_out_basics_user_al
 }
 
 TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = recv_counts_out(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        recv_counts_out(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::recv_counts,
@@ -834,8 +843,9 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc_without_explicit_type) {
-    auto buffer_based_on_library_alloc_vector = recv_counts_out(alloc_new_using<std::vector>).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        recv_counts_out(alloc_new_using<std::vector>).construct_buffer_or_rebind();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::recv_counts,
@@ -859,9 +869,9 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_recv_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::resize_to_fit;
-    auto                     buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                                    = int;
+    const BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    auto buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
         ParameterType::recv_displs,
@@ -873,9 +883,9 @@ TEST(ParameterFactoriesTest, resizing_recv_displs_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_recv_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy                     = BufferResizePolicy::grow_only;
-    auto                     buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                                    = int;
+    const BufferResizePolicy resize_policy = BufferResizePolicy::grow_only;
+    auto buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_based_on_user_alloc_vector,
         ParameterType::recv_displs,
@@ -886,8 +896,9 @@ TEST(ParameterFactoriesTest, resizing_if_required_recv_displs_out_basics_user_al
 }
 
 TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = recv_displs_out(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        recv_displs_out(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::recv_displs,
@@ -896,8 +907,9 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, recv_displs_out_basics_library_alloc_without_explicit_type) {
-    auto buffer_based_on_library_alloc_vector = recv_displs_out(alloc_new_using<std::vector>).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        recv_displs_out(alloc_new_using<std::vector>).construct_buffer_or_rebind();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::recv_displs,
@@ -1334,9 +1346,9 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_send_recv_buf_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy               = BufferResizePolicy::resize_to_fit;
-    auto                     buffer_on_user_alloc_vector = send_recv_buf<resize_policy>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                              = int;
+    const BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    auto buffer_on_user_alloc_vector       = send_recv_buf<resize_policy>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_on_user_alloc_vector,
         ParameterType::send_recv_buf,
@@ -1348,9 +1360,9 @@ TEST(ParameterFactoriesTest, resizing_send_recv_buf_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_send_recv_buf_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy               = BufferResizePolicy::grow_only;
-    auto                     buffer_on_user_alloc_vector = send_recv_buf<resize_policy>(int_vec).construct_buffer_or_rebind();
-    using ExpectedValueType                              = int;
+    const BufferResizePolicy resize_policy = BufferResizePolicy::grow_only;
+    auto buffer_on_user_alloc_vector       = send_recv_buf<resize_policy>(int_vec).construct_buffer_or_rebind();
+    using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
         buffer_on_user_alloc_vector,
         ParameterType::send_recv_buf,
@@ -1381,8 +1393,9 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_type_library_alloc) {
         }
     }; // struct CustomType
 
-    auto buffer_based_on_library_alloc_vector = send_recv_buf(alloc_new<std::vector<CustomType>>).construct_buffer_or_rebind();
-    using ExpectedValueType                   = CustomType;
+    auto buffer_based_on_library_alloc_vector =
+        send_recv_buf(alloc_new<std::vector<CustomType>>).construct_buffer_or_rebind();
+    using ExpectedValueType = CustomType;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::send_recv_buf,
@@ -1391,8 +1404,9 @@ TEST(ParameterFactoriesTest, send_recv_buf_custom_type_library_alloc) {
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_custom_container_library_alloc) {
-    auto buffer_based_on_library_alloc_vector = send_recv_buf(alloc_new<testing::OwnContainer<int>>).construct_buffer_or_rebind();
-    using ExpectedValueType                   = int;
+    auto buffer_based_on_library_alloc_vector =
+        send_recv_buf(alloc_new<testing::OwnContainer<int>>).construct_buffer_or_rebind();
+    using ExpectedValueType = int;
     testing::test_library_allocated_buffer<ExpectedValueType>(
         buffer_based_on_library_alloc_vector,
         ParameterType::send_recv_buf,
@@ -1550,9 +1564,9 @@ TEST(ParameterFactoriesTest, values_on_rank_0_basics_vector_from_function) {
 }
 
 TEST(ParameterFactoriesTest, values_on_rank_0_basics_vector_from_initializer_list) {
-    std::vector<int> expected                  = {1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
-    auto             gen_via_vec_from_function = values_on_rank_0({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
-    using ExpectedValueType                    = int;
+    std::vector<int> expected      = {1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
+    auto gen_via_vec_from_function = values_on_rank_0({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
+    using ExpectedValueType        = int;
     testing::test_owning_buffer<ExpectedValueType>(
         gen_via_vec_from_function,
         ParameterType::values_on_rank_0,
@@ -1633,7 +1647,8 @@ TEST(ParameterFactoriesTest, values_on_rank_0_single_element) {
             );
         }
         {
-            auto gen_single_element_buffer = values_on_rank_0(CustomType{843290834, -482, 'a'}).construct_buffer_or_rebind();
+            auto gen_single_element_buffer =
+                values_on_rank_0(CustomType{843290834, -482, 'a'}).construct_buffer_or_rebind();
             testing::test_single_element_buffer(
                 gen_single_element_buffer,
                 ParameterType::values_on_rank_0,
@@ -1651,7 +1666,8 @@ TEST(ParameterFactoriesTest, values_on_rank_0_switch) {
     [[maybe_unused]] auto gen_single_element_buffer        = values_on_rank_0(value).construct_buffer_or_rebind();
     [[maybe_unused]] auto gen_int_vec_buffer               = values_on_rank_0(values).construct_buffer_or_rebind();
     [[maybe_unused]] auto gen_single_element_owning_buffer = values_on_rank_0(uint8_t(0)).construct_buffer_or_rebind();
-    [[maybe_unused]] auto gen_int_vec_owning_buffer = values_on_rank_0(std::vector<uint8_t>{0, 0, 0, 0, 0, 0}).construct_buffer_or_rebind();
+    [[maybe_unused]] auto gen_int_vec_owning_buffer =
+        values_on_rank_0(std::vector<uint8_t>{0, 0, 0, 0, 0, 0}).construct_buffer_or_rebind();
 
     bool const single_result = std::is_same_v<
         decltype(gen_single_element_buffer),

@@ -151,7 +151,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
         // auto-deduce the identity, as this would introduce a parameter which is required in some situtations in
         // KaMPIng, but never in MPI.
         if constexpr (has_values_on_rank_0_param) {
-            auto const& values_on_rank_0_param = select_parameter_type<ParameterType::values_on_rank_0>(args...).construct_buffer_or_rebind();
+            auto const& values_on_rank_0_param =
+                select_parameter_type<ParameterType::values_on_rank_0>(args...).construct_buffer_or_rebind();
             KASSERT(
                 // if the send_recv type is user provided, kamping cannot make any assumptions about the required size
                 // of the recv buffer

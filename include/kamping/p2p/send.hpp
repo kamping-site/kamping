@@ -63,7 +63,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
         KAMPING_OPTIONAL_PARAMETERS(send_count, tag, send_mode, send_type)
     );
 
-    auto&& send_buf       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+    auto&& send_buf =
+        internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     auto&& send_type = internal::determine_mpi_send_datatype<send_value_type>(args...);

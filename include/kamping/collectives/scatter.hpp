@@ -97,7 +97,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     // Parameter send_buf()
     using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
     auto send_buf =
-        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...).construct_buffer_or_rebind();
+        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...)
+            .construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     KASSERT(!is_root(int_root) || send_buf.data() != nullptr, "Send buffer must be specified on root.", assert::light);
 
@@ -280,7 +281,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     // Parameter send_buf()
     using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
     auto send_buf =
-        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...).construct_buffer_or_rebind();
+        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...)
+            .construct_buffer_or_rebind();
     using send_value_type    = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     auto const* send_buf_ptr = send_buf.data();
     KASSERT(!is_root(root_val) || send_buf_ptr != nullptr, "Send buffer must be specified on root.", assert::light);
