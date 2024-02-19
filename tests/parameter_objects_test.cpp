@@ -11,12 +11,15 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "./helpers_for_testing.hpp"
 #include "kamping/parameter_objects.hpp"
 
 using namespace ::kamping;
 using namespace ::kamping::internal;
+using namespace ::testing;
 
 TEST(ParameterObjectsTest, tag_param_clone) {
     TagParam<TagType::value> value_tag(5);
@@ -50,4 +53,40 @@ TEST(ParameterObjectsTest, rank_data_buffer_clone) {
     EXPECT_EQ(null_rank.parameter_type, null_rank_clone.parameter_type);
     EXPECT_EQ(null_rank.rank_type, null_rank_clone.rank_type);
     EXPECT_EQ(null_rank.rank_signed(), null_rank_clone.rank_signed());
+}
+
+TEST(ParameterObjectsTest, DataBufferBuilder_with_noncopyable_type) {
+    { // by reference
+        testing::NonCopyableOwnContainer<int> container{1, 2, 3, 4};
+        auto                                  b = make_data_buffer_builder<
+            kamping::internal::ParameterType::recv_buf,
+            kamping::internal::BufferModifiability::modifiable,
+            kamping::internal::BufferType::out_buffer,
+            resize_to_fit>(container);
+        container[0] = 42;
+        auto buffer  = b.get();
+        EXPECT_THAT(buffer.underlying(), ElementsAre(42, 2, 3, 4));
+    }
+
+    { // by value
+        testing::NonCopyableOwnContainer<int> container{1, 2, 3, 4};
+        auto                                  b = make_data_buffer_builder<
+            kamping::internal::ParameterType::recv_buf,
+            kamping::internal::BufferModifiability::modifiable,
+            kamping::internal::BufferType::out_buffer,
+            resize_to_fit>(std::move(container));
+        container.resize(1);
+        container[0] = 42;
+        auto buffer  = b.get();
+        EXPECT_THAT(buffer.underlying(), ElementsAre(1, 2, 3, 4));
+    }
+    { // rebind
+        auto b = make_data_buffer_builder<
+            kamping::internal::ParameterType::recv_buf,
+            kamping::internal::BufferModifiability::modifiable,
+            kamping::internal::BufferType::out_buffer,
+            resize_to_fit>(alloc_container_of<int>);
+        auto buffer = b.template get<NonCopyableOwnContainer>();
+        EXPECT_TRUE(is_non_copyable_own_container<std::remove_reference_t<decltype(buffer.underlying())>>);
+    }
 }

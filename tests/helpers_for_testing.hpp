@@ -185,6 +185,12 @@ public:
     NonCopyableOwnContainer<T>& operator=(NonCopyableOwnContainer<T>&&)      = default;
 };
 
+template <typename T>
+static constexpr bool is_non_copyable_own_container = false;
+
+template <typename T>
+static constexpr bool is_non_copyable_own_container<NonCopyableOwnContainer<T>> = true;
+
 /// @ Mock argument for wrapped \c MPI calls.
 template <kamping::internal::ParameterType _parameter_type>
 struct Argument {
