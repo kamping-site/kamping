@@ -508,6 +508,9 @@ public:
     auto allgather(Args... args) const;
 
     template <typename... Args>
+    auto allgather_inplace(Args... args) const;
+
+    template <typename... Args>
     auto allgatherv(Args... args) const;
 
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>

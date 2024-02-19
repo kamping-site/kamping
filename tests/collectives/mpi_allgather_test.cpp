@@ -603,3 +603,101 @@ TEST(AllgatherTest, structured_bindings) {
         EXPECT_EQ(send_type, MPI_INT);
     }
 }
+
+TEST(AllgatherTest, inplace_basic) {
+    Communicator     comm;
+    std::vector<int> input(2 * comm.size(), -1);
+    input[comm.rank() * 2]     = comm.rank_signed();
+    input[comm.rank() * 2 + 1] = comm.rank_signed();
+    comm.allgather(send_recv_buf(input));
+    std::vector<int> expected_result(2 * comm.size(), -1);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = static_cast<int>(i);
+        expected_result[i * 2 + 1] = static_cast<int>(i);
+    }
+    EXPECT_EQ(input, expected_result);
+}
+
+TEST(AllgatherTest, inplace_out_parameters) {
+    Communicator     comm;
+    std::vector<int> input(2 * comm.size(), -1);
+    input[comm.rank() * 2]     = comm.rank_signed();
+    input[comm.rank() * 2 + 1] = comm.rank_signed();
+    auto [count, type]         = comm.allgather(send_recv_buf(input), send_recv_count_out(), send_recv_type_out());
+    EXPECT_EQ(count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(type));
+    std::vector<int> expected_result(2 * comm.size(), -1);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = static_cast<int>(i);
+        expected_result[i * 2 + 1] = static_cast<int>(i);
+    }
+    EXPECT_EQ(input, expected_result);
+}
+
+TEST(AllgatherTest, inplace_rvalue_buffer) {
+    Communicator     comm;
+    std::vector<int> input(2 * comm.size(), -1);
+    input[comm.rank() * 2]     = comm.rank_signed();
+    input[comm.rank() * 2 + 1] = comm.rank_signed();
+    auto [output, count, type] =
+        comm.allgather(send_recv_buf(std::move(input)), send_recv_count_out(), send_recv_type_out());
+    EXPECT_EQ(count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(type));
+    std::vector<int> expected_result(2 * comm.size(), -1);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = static_cast<int>(i);
+        expected_result[i * 2 + 1] = static_cast<int>(i);
+    }
+    EXPECT_EQ(output, expected_result);
+}
+
+TEST(AllgatherTest, inplace_explicit_count) {
+    Communicator comm;
+    // make the buffer too big
+    std::vector<int> input(2 * comm.size() + 5, -1);
+    input[comm.rank() * 2]     = comm.rank_signed();
+    input[comm.rank() * 2 + 1] = comm.rank_signed();
+    comm.allgather(send_recv_buf(input), send_recv_count(2));
+    std::vector<int> expected_result(2 * comm.size() + 5, -1);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = static_cast<int>(i);
+        expected_result[i * 2 + 1] = static_cast<int>(i);
+    }
+    // the last 5 elements are untouched, because the buffer is not resized
+    for (size_t i = 2 * comm.size(); i < expected_result.size(); ++i) {
+        expected_result[i] = -1;
+    }
+    EXPECT_EQ(input, expected_result);
+}
+
+TEST(AllgatherTest, inplace_explicit_count_resize) {
+    Communicator comm;
+    // make the buffer too big
+    std::vector<int> input(2 * comm.size() + 5, -1);
+    input[comm.rank() * 2]     = comm.rank_signed();
+    input[comm.rank() * 2 + 1] = comm.rank_signed();
+    comm.allgather(send_recv_buf<resize_to_fit>(input), send_recv_count(2));
+    std::vector<int> expected_result(2 * comm.size(), -1);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = static_cast<int>(i);
+        expected_result[i * 2 + 1] = static_cast<int>(i);
+    }
+    EXPECT_EQ(input, expected_result);
+}
+
+TEST(AllgatherTest, inplace_explicit_type) {
+    Communicator                     comm;
+    std::vector<std::pair<int, int>> input(comm.size() * 2, std::make_pair(-1, -1));
+    input[comm.rank() * 2]     = {comm.rank_signed(), comm.rank_signed() + 1};
+    input[comm.rank() * 2 + 1] = {comm.rank_signed(), comm.rank_signed() + 1};
+    MPI_Datatype type          = struct_type<std::pair<int, int>>::data_type();
+    MPI_Type_commit(&type);
+    comm.allgather(send_recv_buf(input), send_recv_type(type), send_recv_count(2));
+    MPI_Type_free(&type);
+    std::vector<std::pair<int, int>> expected_result(comm.size() * 2);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = std::make_pair(static_cast<int>(i), static_cast<int>(i) + 1);
+        expected_result[i * 2 + 1] = std::make_pair(static_cast<int>(i), static_cast<int>(i) + 1);
+    }
+    EXPECT_EQ(input, expected_result);
+}
