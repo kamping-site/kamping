@@ -67,7 +67,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
     );
 
     // Get the send buffer and deduce the send and recv value types.
-    auto const& send_buf          = select_parameter_type<ParameterType::send_buf>(args...).get();
+    auto const& send_buf          = select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
 
@@ -75,7 +75,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
     auto&& recv_buf =
         select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...)
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
         std::is_same_v<std::remove_const_t<send_value_type>, recv_value_type>,
@@ -94,7 +94,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
     auto&& send_recv_count             = internal::select_parameter_type_or_default<
                                  internal::ParameterType::send_recv_count,
                                  default_send_recv_count_type>({}, args...)
-                                 .get();
+                                 .construct_buffer_or_rebind();
     if constexpr (has_to_be_computed<decltype(send_recv_count)>) {
         send_recv_count.underlying() = asserting_cast<int>(send_buf.size());
     }
@@ -165,7 +165,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_single(A
     );
 
     using value_type =
-        typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...).get()
+        typename std::remove_reference_t<decltype(select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind()
         )>::value_type;
     return this->allreduce(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...);
 }

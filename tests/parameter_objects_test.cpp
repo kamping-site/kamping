@@ -64,7 +64,7 @@ TEST(ParameterObjectsTest, DataBufferBuilder_with_noncopyable_type) {
             kamping::internal::BufferType::out_buffer,
             resize_to_fit>(container);
         container[0] = 42;
-        auto buffer  = b.get();
+        auto buffer  = b.construct_buffer_or_rebind();
         EXPECT_THAT(buffer.underlying(), ElementsAre(42, 2, 3, 4));
     }
 
@@ -77,7 +77,7 @@ TEST(ParameterObjectsTest, DataBufferBuilder_with_noncopyable_type) {
             resize_to_fit>(std::move(container));
         container.resize(1);
         container[0] = 42;
-        auto buffer  = b.get();
+        auto buffer  = b.construct_buffer_or_rebind();
         EXPECT_THAT(buffer.underlying(), ElementsAre(1, 2, 3, 4));
     }
     { // rebind
@@ -86,7 +86,7 @@ TEST(ParameterObjectsTest, DataBufferBuilder_with_noncopyable_type) {
             kamping::internal::BufferModifiability::modifiable,
             kamping::internal::BufferType::out_buffer,
             resize_to_fit>(alloc_container_of<int>);
-        auto buffer = b.template get<NonCopyableOwnContainer>();
+        auto buffer = b.template construct_buffer_or_rebind<NonCopyableOwnContainer>();
         EXPECT_TRUE(is_non_copyable_own_container<std::remove_reference_t<decltype(buffer.underlying())>>);
     }
 }

@@ -84,7 +84,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
         !std::is_same_v<recv_value_type, internal::unused_tparam>,
@@ -132,7 +132,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
             std::tuple(),
             args...
         )
-            .get();
+            .construct_buffer_or_rebind();
 
     KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
     int source = source_param.rank_signed();

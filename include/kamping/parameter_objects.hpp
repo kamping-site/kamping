@@ -29,12 +29,12 @@
 namespace kamping::internal {
 
 /// @brief Dummy template for representing the absence of a container to rebind to.
-/// @see AllocNewDataBufferBuilder::get()helper
+/// @see AllocNewDataBufferBuilder::construct_buffer_or_rebind()
 template <typename>
 struct UnusedRebindContainer {};
 
 /// @brief Parameter object representing a data buffer. This is an intermediate object which only holds the data and
-/// parameters. The actual buffer is created by calling the \c get() method.
+/// parameters. The actual buffer is created by calling the \c construct_buffer_or_rebind() method.
 /// @tparam Data The data type.
 /// @tparam parameter_type_param The parameter type.
 /// @tparam modifiability The modifiability of the buffer.
@@ -69,7 +69,7 @@ public:
     /// @brief Constructs the data buffer.
     /// @tparam RebindContainerType The container to use for the data buffer (has no effect here)
     template <template <typename...> typename RebindContainerType = UnusedRebindContainer>
-    auto get() {
+    auto construct_buffer_or_rebind() {
         using Data_no_ref = std::remove_const_t<std::remove_reference_t<Data>>;
         if constexpr (is_empty_data_buffer_v<Data_no_ref>) {
             return internal::EmptyDataBuffer<ValueType, parameter_type, buffer_type>{};
@@ -94,7 +94,7 @@ public:
 /// @brief Parameter object representing a data buffer to be allocated by KaMPIng. This is a specialization of \ref
 /// DataBufferBuilder for buffer allocation tags, such as \ref alloc_new, \ref alloc_new_using and \ref
 /// alloc_container_of. This is an intermediate object not holding any data. The actual buffer is constructed by
-/// calling the \c get() method.
+/// calling the \c construct_buffer_or_rebind() method.
 ///
 /// This type should be constructed using the factory methods \ref make_data_buffer_builder.
 ///
@@ -126,7 +126,7 @@ public:
     /// the buffer allocation trait is \ref alloc_new or \ref alloc_new_using. In case of `alloc_container_of<U>`, the
     /// created data buffer encapsulated a `RebindContainerType<U>`.
     template <template <typename...> typename RebindContainerType = UnusedRebindContainer>
-    auto get() {
+    auto construct_buffer_or_rebind() {
         if constexpr (is_alloc_new_v<AllocType>) {
             return make_data_buffer<
                 parameter_type,

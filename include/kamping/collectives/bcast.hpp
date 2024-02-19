@@ -91,7 +91,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
 
     using value_type = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
     static_assert(
@@ -117,7 +117,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
                              std::tuple(),
                              args...
     )
-                             .get();
+                             .construct_buffer_or_rebind();
 
     constexpr bool count_has_to_be_computed = has_to_be_computed<decltype(count_param)>;
     KASSERT(

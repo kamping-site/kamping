@@ -88,7 +88,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
         assert::light_communication
     );
 
-    auto&& send_buf       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+    auto&& send_buf       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     using default_send_count_type = decltype(kamping::send_count_out());
@@ -97,7 +97,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
             std::tuple(),
             args...
         )
-            .get();
+            .construct_buffer_or_rebind();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());
@@ -110,7 +110,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     // Get send_type and recv_type
@@ -126,7 +126,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
             std::tuple(),
             args...
         )
-            .get();
+            .construct_buffer_or_rebind();
     constexpr bool do_compute_recv_count = has_to_be_computed<decltype(recv_count)>;
     if constexpr (do_compute_recv_count) {
         if (this->is_root(root.rank_signed())) {
@@ -211,7 +211,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
     );
 
     // get send buffer
-    auto&& send_buf       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+    auto&& send_buf       = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     // get recv buffer
@@ -221,7 +221,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     // get root rank
@@ -242,7 +242,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_counts_type = typename std::remove_reference_t<decltype(recv_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
     using recv_counts_param_type = std::remove_reference_t<decltype(recv_counts)>;
@@ -266,7 +266,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
             std::tuple(),
             args...
         )
-            .get();
+            .construct_buffer_or_rebind();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size());
@@ -279,7 +279,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_displs_type = typename std::remove_reference_t<decltype(recv_displs)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_displs_type>, int>, "Recv displs must be of type int");
 

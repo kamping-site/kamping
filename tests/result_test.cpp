@@ -41,7 +41,7 @@ template <typename UnderlyingContainer>
 void test_recv_buffer_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_buffer = recv_buf(kamping::alloc_new<UnderlyingContainer>).get();
+    auto recv_buffer = recv_buf(kamping::alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
     static_assert(std::is_integral_v<typename decltype(recv_buffer)::value_type>, "Use integral Types in this test.");
 
     recv_buffer.resize(10);
@@ -71,7 +71,7 @@ template <typename UnderlyingContainer>
 void test_recv_counts_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_counts = recv_counts_out(alloc_new<UnderlyingContainer>).get();
+    auto recv_counts = recv_counts_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
     static_assert(std::is_integral_v<typename decltype(recv_counts)::value_type>, "Use integral Types in this test.");
 
     recv_counts.resize(10);
@@ -125,7 +125,7 @@ template <typename UnderlyingContainer>
 void test_recv_displs_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_displs = recv_displs_out(alloc_new<UnderlyingContainer>).get();
+    auto recv_displs = recv_displs_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
     static_assert(std::is_integral_v<typename decltype(recv_displs)::value_type>, "Use integral Types in this test.");
 
     recv_displs.resize(10);
@@ -155,7 +155,7 @@ template <typename UnderlyingContainer>
 void test_send_counts_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_counts = send_counts_out(alloc_new<UnderlyingContainer>).get();
+    auto send_counts = send_counts_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
     static_assert(std::is_integral_v<typename decltype(send_counts)::value_type>, "Use integral Types in this test.");
 
     send_counts.resize(10);
@@ -210,7 +210,7 @@ template <typename UnderlyingContainer>
 void test_send_displs_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_displs = send_displs_out(alloc_new<UnderlyingContainer>).get();
+    auto send_displs = send_displs_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
     static_assert(std::is_integral_v<typename decltype(send_displs)::value_type>, "Use integral Types in this test.");
 
     send_displs.resize(10);
@@ -295,7 +295,7 @@ TEST(MpiResultTest, extract_send_displs_basics_own_container) {
 TEST(MpiResultTest, extract_send_recv_count) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_recv_count         = kamping::send_recv_count_out().get();
+    auto send_recv_count         = kamping::send_recv_count_out().construct_buffer_or_rebind();
     send_recv_count.underlying() = 42;
     MPIResult mpi_result{
         ResultCategoryNotUsed{},
@@ -316,7 +316,7 @@ TEST(MpiResultTest, extract_send_recv_count) {
 TEST(MpiResultTest, extract_send_type) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_type         = kamping::send_type_out().get();
+    auto send_type         = kamping::send_type_out().construct_buffer_or_rebind();
     send_type.underlying() = MPI_DOUBLE;
     MPIResult mpi_result{
         ResultCategoryNotUsed{},
@@ -337,7 +337,7 @@ TEST(MpiResultTest, extract_send_type) {
 TEST(MpiResultTest, extract_recv_type) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_type         = kamping::recv_type_out().get();
+    auto recv_type         = kamping::recv_type_out().construct_buffer_or_rebind();
     recv_type.underlying() = MPI_CHAR;
     MPIResult mpi_result{
         ResultCategoryNotUsed{},
@@ -358,7 +358,7 @@ TEST(MpiResultTest, extract_recv_type) {
 TEST(MpiResultTest, extract_send_recv_type) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_recv_type         = kamping::send_recv_type_out().get();
+    auto send_recv_type         = kamping::send_recv_type_out().construct_buffer_or_rebind();
     send_recv_type.underlying() = MPI_CHAR;
     MPIResult mpi_result{
         ResultCategoryNotUsed{},

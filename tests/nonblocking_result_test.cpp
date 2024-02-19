@@ -117,7 +117,7 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_types_match) {
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works) {
-    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).get();
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
@@ -134,7 +134,7 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works) {
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works_with_status_out) {
-    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).get();
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
@@ -153,7 +153,7 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works_with_status_o
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works_with_status_in) {
-    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).get();
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
@@ -172,7 +172,7 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works_with_status_i
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_test_works) {
-    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).get();
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
@@ -188,7 +188,7 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works) {
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_out) {
-    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).get();
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
@@ -205,7 +205,7 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_out) {
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_in) {
-    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).get();
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
@@ -223,7 +223,7 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_in) {
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_extract_works) {
-    auto recv_buf_obj          = recv_buf(alloc_new<std::vector<int>>).get();
+    auto recv_buf_obj          = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     using expected_result_type = MPIResult<
         internal::ResultCategoryNotUsed,
         decltype(recv_buf_obj),
@@ -360,7 +360,7 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_extract_works) {
 }
 
 TEST_F(NonBlockingResultTest, non_owning_request_and_result_types_match) {
-    auto    recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).get();
+    auto    recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     Request req;
     auto    request_obj = request(req);
     auto    result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
@@ -371,7 +371,7 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_types_match) {
 }
 
 TEST_F(NonBlockingResultTest, non_owning_request_and_result_extract_works) {
-    auto recv_buf_obj          = recv_buf(alloc_new<std::vector<int>>).get();
+    auto recv_buf_obj          = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     using expected_result_type = MPIResult<
         internal::ResultCategoryNotUsed,
         decltype(recv_buf_obj),

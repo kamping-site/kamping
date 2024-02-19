@@ -97,7 +97,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     // Parameter send_buf()
     using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
     auto send_buf =
-        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...).get();
+        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...).construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     KASSERT(!is_root(int_root) || send_buf.data() != nullptr, "Send buffer must be specified on root.", assert::light);
 
@@ -109,7 +109,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     static_assert(
@@ -135,7 +135,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
             std::tuple(),
             args...
         )
-            .get();
+            .construct_buffer_or_rebind();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         if (is_root(int_root)) {
@@ -158,7 +158,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
             std::tuple(),
             args...
         )
-            .get();
+            .construct_buffer_or_rebind();
     constexpr bool do_compute_recv_count = has_to_be_computed<decltype(recv_count)>;
 
     KASSERT(
@@ -280,7 +280,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     // Parameter send_buf()
     using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
     auto send_buf =
-        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...).get();
+        select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...).construct_buffer_or_rebind();
     using send_value_type    = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     auto const* send_buf_ptr = send_buf.data();
     KASSERT(!is_root(root_val) || send_buf_ptr != nullptr, "Send buffer must be specified on root.", assert::light);
@@ -293,7 +293,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     static_assert(
@@ -311,7 +311,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     using default_send_counts_type = decltype(send_counts_out(alloc_new<DefaultContainerType<int>>));
     auto&& send_counts =
         select_parameter_type_or_default<ParameterType::send_counts, default_send_counts_type>(std::tuple(), args...)
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     [[maybe_unused]] constexpr bool send_counts_provided = !has_to_be_computed<decltype(send_counts)>;
     KASSERT(
         !is_root(root_val) || send_counts_provided,
@@ -328,7 +328,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     using default_send_displs_type = decltype(send_displs_out(alloc_new<DefaultContainerType<int>>));
     auto&& send_displs =
         select_parameter_type_or_default<ParameterType::send_displs, default_send_displs_type>(std::tuple(), args...)
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
 
     if (is_root(root_val)) {
         // send displacements are only considered on the root PE and ignored by MPI on all non-root PEs.
@@ -351,7 +351,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     using default_recv_count_type = decltype(recv_count_out());
     auto&& recv_count =
         select_parameter_type_or_default<ParameterType::recv_count, default_recv_count_type>(std::tuple(), args...)
-            .get();
+            .construct_buffer_or_rebind();
 
     // Check that recv_counts() can be used to compute send_counts(); or send_counts() is given on the root PE
     [[maybe_unused]] constexpr bool do_compute_recv_count = has_to_be_computed<decltype(recv_count)>;

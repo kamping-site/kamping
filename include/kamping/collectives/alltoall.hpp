@@ -77,7 +77,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
     );
 
     // Get the buffers
-    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
 
@@ -87,7 +87,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     static_assert(!std::is_const_v<recv_value_type>, "The receive buffer must not have a const value_type.");
@@ -103,7 +103,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             std::tuple(),
             args...
         )
-            .get();
+            .construct_buffer_or_rebind();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         send_count.underlying() = asserting_cast<int>(send_buf.size() / size());
@@ -115,7 +115,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             std::tuple(),
             args...
         )
-            .get();
+            .construct_buffer_or_rebind();
 
     constexpr bool do_compute_recv_count = internal::has_to_be_computed<decltype(recv_count)>;
     if constexpr (do_compute_recv_count) {
@@ -214,7 +214,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     );
 
     // Get send_buf
-    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).get();
+    auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
 
@@ -225,7 +225,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     // Get send/recv types
@@ -236,7 +236,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
 
     // Get send_counts
     auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...)
-                                  .template get<DefaultContainerType>();
+                                  .template construct_buffer_or_rebind<DefaultContainerType>();
     using send_counts_type = typename std::remove_reference_t<decltype(send_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<send_counts_type>, int>, "Send counts must be of type int");
     static_assert(
@@ -252,7 +252,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_counts_type = typename std::remove_reference_t<decltype(recv_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
 
@@ -263,7 +263,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using send_displs_type = typename std::remove_reference_t<decltype(send_displs)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<send_displs_type>, int>, "Send displs must be of type int");
 
@@ -274,7 +274,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
             std::tuple(),
             args...
         )
-            .template get<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_displs_type = typename std::remove_reference_t<decltype(recv_displs)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_displs_type>, int>, "Recv displs must be of type int");
 
