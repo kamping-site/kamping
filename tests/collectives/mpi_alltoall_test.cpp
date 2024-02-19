@@ -494,3 +494,91 @@ TEST(AlltoallTest, structured_bindings_explicit_owning_recv_buffer) {
     EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(recv_type));
     EXPECT_EQ(recv_buffer, iota_container_n<std::vector<std::uint64_t>>(comm.size(), 0ull));
 }
+
+TEST(AlltoallTest, inplace_basic) {
+    Communicator     comm;
+    std::vector<int> input(comm.size() * 2, comm.rank_signed());
+    comm.alltoall(send_recv_buf(input));
+    std::vector<int> expected_result(comm.size() * 2);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = static_cast<int>(i);
+        expected_result[i * 2 + 1] = static_cast<int>(i);
+    }
+    EXPECT_EQ(input, expected_result);
+}
+
+TEST(AlltoallTest, inplace_out_parameters) {
+    Communicator     comm;
+    std::vector<int> input(comm.size() * 2, comm.rank_signed());
+    auto [count, type] = comm.alltoall(send_recv_buf(input), send_recv_count_out(), send_recv_type_out());
+    std::vector<int> expected_result(comm.size() * 2);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = static_cast<int>(i);
+        expected_result[i * 2 + 1] = static_cast<int>(i);
+    }
+    EXPECT_EQ(count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(type));
+    EXPECT_EQ(input, expected_result);
+}
+
+TEST(AlltoallTest, inplace_rvalue_buffer) {
+    Communicator     comm;
+    std::vector<int> input(comm.size() * 2, comm.rank_signed());
+    auto [output, count, type] =
+        comm.alltoall(send_recv_buf(std::move(input)), send_recv_count_out(), send_recv_type_out());
+    std::vector<int> expected_result(comm.size() * 2);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = static_cast<int>(i);
+        expected_result[i * 2 + 1] = static_cast<int>(i);
+    }
+    EXPECT_EQ(count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(type));
+    EXPECT_EQ(output, expected_result);
+}
+
+TEST(AlltoallTest, inplace_explicit_count) {
+    Communicator comm;
+    // make the buffer too big
+    std::vector<int> input(comm.size() * 2 + 5, comm.rank_signed());
+    comm.alltoall(send_recv_buf(input), send_recv_count(2), send_recv_type_out());
+    std::vector<int> expected_result(comm.size() * 2 + 5);
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = static_cast<int>(i);
+        expected_result[i * 2 + 1] = static_cast<int>(i);
+    }
+    // the last 5 elements are untouched, because the buffer is not resized
+    for (size_t i = comm.size() * 2; i < comm.size() * 2 + 5; ++i) {
+        expected_result[i] = comm.rank_signed();
+    }
+    EXPECT_EQ(input, expected_result);
+}
+
+TEST(AlltoallTest, inplace_explicit_count_resize) {
+    Communicator comm;
+    // make the buffer too big
+    std::vector<int> input(comm.size() * 2 + 5, comm.rank_signed());
+    comm.alltoall(send_recv_buf<resize_to_fit>(input), send_recv_count(2), send_recv_type_out());
+    std::vector<int> expected_result(comm.size() * 2); // the buffer will be resized to only hold the received elements
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = static_cast<int>(i);
+        expected_result[i * 2 + 1] = static_cast<int>(i);
+    }
+    EXPECT_EQ(input, expected_result);
+}
+
+TEST(AlltoallTest, inplace_explicit_type) {
+    Communicator                     comm;
+    std::vector<std::pair<int, int>> input(comm.size() * 2, {comm.rank_signed(), comm.rank_signed() + 1});
+    MPI_Datatype                     type = struct_type<std::pair<int, int>>::data_type();
+    MPI_Type_commit(&type);
+    comm.alltoall(send_recv_buf(input), send_recv_type(type), send_recv_count(2));
+    MPI_Type_free(&type);
+    std::vector<std::pair<int, int>> expected_result(
+        comm.size() * 2
+    ); // the buffer will be resized to only hold the received elements
+    for (size_t i = 0; i < comm.size(); ++i) {
+        expected_result[i * 2]     = {static_cast<int>(i), static_cast<int>(i + 1)};
+        expected_result[i * 2 + 1] = {static_cast<int>(i), static_cast<int>(i + 1)};
+    }
+    EXPECT_EQ(input, expected_result);
+}

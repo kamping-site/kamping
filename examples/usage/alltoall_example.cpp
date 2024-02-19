@@ -52,6 +52,13 @@ int main() {
         print_on_root("------", comm);
         output.clear();
     }
+    {
+        // inplace
+        comm.alltoall(send_recv_buf(input));
+        print_result_on_root(input, comm);
+        print_on_root("------", comm);
+        output.clear();
+    }
 
     return 0;
 }
