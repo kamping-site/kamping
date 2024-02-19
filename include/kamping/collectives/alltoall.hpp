@@ -83,7 +83,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
         );
 
         // Get the buffers
-        auto const& send_buf          = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
+        auto const&& send_buf =
+            internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
         using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
         using default_recv_value_type = std::remove_const_t<send_value_type>;
 
@@ -93,7 +94,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
                 std::tuple(),
                 args...
-            );
+            )
+                .template construct_buffer_or_rebind<DefaultContainerType>();
         using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
         static_assert(!std::is_const_v<recv_value_type>, "The receive buffer must not have a const value_type.");
@@ -108,7 +110,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
                 std::tuple(),
                 args...
-            );
+            )
+                .construct_buffer_or_rebind();
         constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
         if constexpr (do_compute_send_count) {
             send_count.underlying() = asserting_cast<int>(send_buf.size() / size());
@@ -119,7 +122,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
                 std::tuple(),
                 args...
-            );
+            )
+                .construct_buffer_or_rebind();
 
         constexpr bool do_compute_recv_count = internal::has_to_be_computed<decltype(recv_count)>;
         if constexpr (do_compute_recv_count) {
@@ -204,7 +208,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(A
         KAMPING_OPTIONAL_PARAMETERS(send_recv_count, send_recv_type)
     );
 
-    auto& send_recv_buf        = internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...);
+    auto&& send_recv_buf =
+        internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...).construct_buffer_or_rebind();
     using send_recv_value_type = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
     auto&& send_recv_type =
         internal::determine_mpi_send_recv_datatype<send_recv_value_type, decltype(send_recv_buf)>(args...);
@@ -213,9 +218,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(A
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
     using default_count_type = decltype(kamping::send_recv_count_out());
     auto&& count_param = internal::select_parameter_type_or_default<ParameterType::send_recv_count, default_count_type>(
-        std::tuple(),
-        args...
-    );
+                             std::tuple(),
+                             args...
+    )
+                             .construct_buffer_or_rebind();
     constexpr bool count_has_to_be_computed = has_to_be_computed<decltype(count_param)>;
 
     KASSERT(
