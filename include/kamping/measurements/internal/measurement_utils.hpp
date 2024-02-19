@@ -273,10 +273,9 @@ inline bool is_string_same_on_all_ranks(std::string const& str, Communicator con
         return false;
     }
     // std::vector<char> name_as_char_vector;
-    auto res    = comm.gatherv(send_buf(str));
-    auto result = true;
+    auto recv_buf = comm.gatherv(send_buf(str));
+    auto result   = true;
     if (comm.is_root()) {
-        auto recv_buf = res.extract_recv_buffer();
         for (std::size_t cur_rank = 0; cur_rank < comm.size(); ++cur_rank) {
             auto              begin = recv_buf.begin() + static_cast<int>(cur_rank * str.size());
             auto              end   = begin + static_cast<int>(str.size());

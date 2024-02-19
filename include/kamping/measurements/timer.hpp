@@ -280,7 +280,7 @@ private:
 
         // gather all durations at once as gathering all durations individually may deteriorate
         // the performance of the evaluation operation significantly.
-        auto       recv_buf      = _comm.gatherv(send_buf(timer_tree_node.durations())).extract_recv_buffer();
+        auto       recv_buf      = _comm.gatherv(send_buf(timer_tree_node.durations()));
         auto const num_durations = timer_tree_node.durations().size();
         for (size_t duration_idx = 0; duration_idx < num_durations; ++duration_idx) {
             if (!_comm.is_root()) {

@@ -35,7 +35,7 @@ TEST(GatherTest, gather_single_element_no_receive_buffer) {
     auto         value = comm.rank();
 
     // Test default root of communicator
-    auto result = comm.gather(send_buf(value)).extract_recv_buffer();
+    auto result = comm.gather(send_buf(value));
     EXPECT_EQ(comm.root(), 0);
     if (comm.rank() == comm.root()) {
         ASSERT_EQ(result.size(), comm.size());
@@ -48,7 +48,7 @@ TEST(GatherTest, gather_single_element_no_receive_buffer) {
 
     // Change default root and test with communicator's default root again
     comm.root(comm.size_signed() - 1);
-    result = comm.gather(send_buf(value)).extract_recv_buffer();
+    result = comm.gather(send_buf(value));
     EXPECT_EQ(comm.root(), comm.size() - 1);
     if (comm.rank() == comm.root()) {
         ASSERT_EQ(result.size(), comm.size());
@@ -61,7 +61,7 @@ TEST(GatherTest, gather_single_element_no_receive_buffer) {
 
     // Pass any possible root to gather
     for (size_t i = 0; i < comm.size(); ++i) {
-        result = comm.gather(send_buf(value), root(i)).extract_recv_buffer();
+        result = comm.gather(send_buf(value), root(i));
         EXPECT_EQ(comm.root(), comm.size() - 1);
         if (comm.rank() == i) {
             ASSERT_EQ(result.size(), comm.size());
@@ -81,8 +81,7 @@ TEST(GatherTest, default_count_deduction) {
         int send_count = -1;
         int recv_count = -1;
         // send_count is deduced from send_buf.size()
-        auto result =
-            comm.gather(send_buf(input), send_count_out(send_count), recv_count_out(recv_count)).extract_recv_buffer();
+        auto result = comm.gather(send_buf(input), send_count_out(send_count), recv_count_out(recv_count));
         EXPECT_EQ(send_count, 3);
         if (comm.is_root()) {
             EXPECT_EQ(recv_count, 3);
@@ -94,7 +93,7 @@ TEST(GatherTest, default_count_deduction) {
     }
     { // only recv count deduced
         int  recv_count = -1;
-        auto result     = comm.gather(send_buf(input), send_count(1), recv_count_out(recv_count)).extract_recv_buffer();
+        auto result     = comm.gather(send_buf(input), send_count(1), recv_count_out(recv_count));
         if (comm.is_root()) {
             // recv count is deduced from send_buf size on root, untouched on other ranks
             EXPECT_EQ(recv_count, 1);
@@ -136,7 +135,7 @@ TEST(GatherTest, send_recv_count_is_part_of_result_object) {
 TEST(GatherTest, explicit_send_count_works) {
     Communicator     comm;
     std::vector<int> input(3, comm.rank_signed());
-    auto             result = comm.gather(send_buf(input), send_count(1)).extract_recv_buffer();
+    auto             result = comm.gather(send_buf(input), send_count(1));
     if (comm.is_root()) {
         EXPECT_EQ(result.size(), comm.size());
         std::vector<int> expected_result(comm.size());
@@ -287,7 +286,7 @@ TEST(GatherTest, gather_single_custom_element_no_receive_buffer) {
     CustomDataType value = {comm.rank_signed(), comm.size_signed() - comm.rank_signed()};
 
     // Test default root of communicator
-    auto result = comm.gather(send_buf(value)).extract_recv_buffer();
+    auto result = comm.gather(send_buf(value));
     EXPECT_EQ(comm.root(), 0);
     if (comm.rank() == comm.root()) {
         ASSERT_EQ(result.size(), comm.size());
@@ -301,7 +300,7 @@ TEST(GatherTest, gather_single_custom_element_no_receive_buffer) {
 
     // Change default root and test with communicator's default root again
     comm.root(comm.size_signed() - 1);
-    result = comm.gather(send_buf(value)).extract_recv_buffer();
+    result = comm.gather(send_buf(value));
     EXPECT_EQ(comm.root(), comm.size() - 1);
     if (comm.rank() == comm.root()) {
         ASSERT_EQ(result.size(), comm.size());
@@ -315,7 +314,7 @@ TEST(GatherTest, gather_single_custom_element_no_receive_buffer) {
 
     // Pass any possible root to gather
     for (size_t i = 0; i < comm.size(); ++i) {
-        result = comm.gather(send_buf(value), root(i)).extract_recv_buffer();
+        result = comm.gather(send_buf(value), root(i));
         EXPECT_EQ(comm.root(), comm.size() - 1);
         if (comm.rank() == i) {
             ASSERT_EQ(result.size(), comm.size());
@@ -379,7 +378,7 @@ TEST(GatherTest, gather_single_element_with_receive_buffer) {
 TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
     Communicator     comm;
     std::vector<int> values = {comm.rank_signed(), comm.rank_signed(), comm.rank_signed(), comm.rank_signed()};
-    auto             result = comm.gather(send_buf(values)).extract_recv_buffer();
+    auto             result = comm.gather(send_buf(values));
 
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
@@ -393,7 +392,7 @@ TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
 
     // Change default root and test with communicator's default root again
     comm.root(comm.size() - 1);
-    result = comm.gather(send_buf(values)).extract_recv_buffer();
+    result = comm.gather(send_buf(values));
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), values.size() * comm.size());
         for (size_t i = 0; i < result.size(); ++i) {
@@ -405,7 +404,7 @@ TEST(GatherTest, gather_multiple_elements_no_receive_buffer) {
 
     // Pass any possible root to gather
     for (size_t i = 0; i < comm.size(); ++i) {
-        result = comm.gather(send_buf(values), root(i)).extract_recv_buffer();
+        result = comm.gather(send_buf(values), root(i));
         EXPECT_EQ(comm.root(), comm.size() - 1);
         if (comm.rank() == i) {
             EXPECT_EQ(result.size(), values.size() * comm.size());
@@ -525,7 +524,7 @@ TEST(GatherTest, gather_single_element_initializer_list_bool_no_receive_buffer) 
     Communicator comm;
     // gather does not support single element bool when specifying no recv_buffer, because the default receive buffer is
     // std::vector<bool>, which is not supported
-    auto result = comm.gather(send_buf({false})).extract_recv_buffer();
+    auto result = comm.gather(send_buf({false}));
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
@@ -540,7 +539,7 @@ TEST(GatherTest, gather_single_element_initializer_list_bool_no_receive_buffer) 
 
 TEST(GatherTest, gather_initializer_list_bool_no_receive_buffer) {
     Communicator comm;
-    auto         result = comm.gather(send_buf({false, false})).extract_recv_buffer();
+    auto         result = comm.gather(send_buf({false, false}));
 
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
@@ -556,7 +555,7 @@ TEST(GatherTest, gather_initializer_list_bool_no_receive_buffer) {
 
 TEST(GatherTest, gather_single_element_kabool_no_receive_buffer) {
     Communicator comm;
-    auto         result = comm.gather(send_buf(kabool{false})).extract_recv_buffer();
+    auto         result = comm.gather(send_buf(kabool{false}));
 
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
@@ -607,7 +606,7 @@ TEST(GatherTest, gather_single_element_kabool_with_receive_buffer) {
 TEST(GatherTest, gather_multiple_elements_kabool_no_receive_buffer) {
     Communicator        comm;
     std::vector<kabool> input  = {false, true};
-    auto                result = comm.gather(send_buf(input)).extract_recv_buffer();
+    auto                result = comm.gather(send_buf(input));
 
     KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
@@ -644,7 +643,7 @@ TEST(GatherTest, gather_default_container_type) {
     size_t                     value = comm.rank();
 
     // This just has to compile
-    OwnContainer<size_t> result = comm.gather(send_buf(value)).extract_recv_buffer();
+    OwnContainer<size_t> result = comm.gather(send_buf(value));
 }
 
 TEST(GatherTest, gather_send_recv_type_are_out_parameters) {
@@ -838,3 +837,149 @@ TEST(GatherTest, different_send_and_recv_counts_without_explicit_mpi_types) {
 //         ranks.");
 //     }
 // }
+//
+
+TEST(GatherTest, structured_bindings) {
+    Communicator           comm;
+    std::vector<int>       input{comm.rank_signed()};
+    const std::vector<int> expected_recv_buffer_on_root = [&]() {
+        std::vector<int> vec(comm.size());
+        std::iota(vec.begin(), vec.end(), 0);
+        return vec;
+    }();
+
+    {
+        // explicit recv buffer
+        std::vector<int> recv_buffer(comm.size());
+        auto [recv_count, send_count, recv_type, send_type] = comm.gather(
+            send_buf(input),
+            recv_count_out(),
+            recv_buf(recv_buffer),
+            send_count_out(),
+            recv_type_out(),
+            send_type_out()
+        );
+        if (comm.is_root()) {
+            EXPECT_EQ(recv_buffer, expected_recv_buffer_on_root);
+            EXPECT_EQ(recv_type, MPI_INT);
+            EXPECT_EQ(recv_count, 1);
+            EXPECT_EQ(send_count, 1);
+        } else {
+            EXPECT_EQ(recv_buffer, std::vector<int>(comm.size()));
+            EXPECT_EQ(send_type, MPI_INT);
+            EXPECT_EQ(recv_count, 0);
+            EXPECT_EQ(send_count, 1);
+        }
+    }
+    {
+        // implicit recv buffer
+        auto [recv_buffer, recv_count, send_count, recv_type, send_type] =
+            comm.gather(send_buf(input), recv_count_out(), send_count_out(), recv_type_out(), send_type_out());
+        if (comm.is_root()) {
+            EXPECT_EQ(recv_buffer, expected_recv_buffer_on_root);
+            EXPECT_EQ(recv_count, 1);
+            EXPECT_EQ(send_count, 1);
+            EXPECT_EQ(send_type, MPI_INT);
+        } else {
+            EXPECT_EQ(recv_buffer.size(), 0);
+            EXPECT_EQ(send_count, 1);
+            EXPECT_EQ(recv_count, 0);
+            EXPECT_EQ(recv_type, MPI_INT);
+        }
+    }
+    {
+        // explicit but owning recv buffer
+        auto [recv_count, send_count, recv_type, send_type, recv_buffer] = comm.gather(
+            send_buf(input),
+            recv_count_out(),
+            send_count_out(),
+            recv_type_out(),
+            send_type_out(),
+            recv_buf(std::vector<int>(comm.size()))
+        );
+        if (comm.is_root()) {
+            EXPECT_EQ(recv_buffer, expected_recv_buffer_on_root);
+            EXPECT_EQ(recv_type, MPI_INT);
+            EXPECT_EQ(recv_count, 1);
+            EXPECT_EQ(send_count, 1);
+        } else {
+            EXPECT_EQ(recv_buffer, std::vector<int>(comm.size()));
+            EXPECT_EQ(send_type, MPI_INT);
+            EXPECT_EQ(send_count, 1);
+            EXPECT_EQ(recv_count, 0);
+        }
+    }
+    {
+        // explicit but owning recv buffer and non-owning send_count
+        int send_count                                       = -1;
+        auto [recv_count, recv_type, send_type, recv_buffer] = comm.gather(
+            send_buf(input),
+            recv_count_out(),
+            send_count_out(send_count),
+            recv_type_out(),
+            send_type_out(),
+            recv_buf(std::vector<int>(comm.size()))
+        );
+        if (comm.is_root()) {
+            EXPECT_EQ(recv_buffer, expected_recv_buffer_on_root);
+            EXPECT_EQ(recv_count, 1);
+            EXPECT_EQ(recv_type, MPI_INT);
+            EXPECT_EQ(send_count, 1);
+        } else {
+            EXPECT_EQ(recv_buffer, std::vector<int>(comm.size()));
+            EXPECT_EQ(send_count, 1);
+            EXPECT_EQ(send_type, MPI_INT);
+            EXPECT_EQ(recv_count, 0);
+        }
+    }
+    {
+        // explicit but owning recv buffer and non-owning send_count, recv_type
+        int          send_count = -1;
+        MPI_Datatype recv_type;
+        auto [recv_count, send_type, recv_buffer] = comm.gather(
+            send_buf(input),
+            recv_count_out(),
+            send_count_out(send_count),
+            recv_type_out(recv_type),
+            send_type_out(),
+            recv_buf(std::vector<int>(comm.size()))
+        );
+        if (comm.is_root()) {
+            EXPECT_EQ(recv_buffer, expected_recv_buffer_on_root);
+            EXPECT_EQ(recv_count, 1);
+            EXPECT_EQ(recv_type, MPI_INT);
+            EXPECT_EQ(send_count, 1);
+        } else {
+            EXPECT_EQ(recv_buffer, std::vector<int>(comm.size()));
+            EXPECT_EQ(send_count, 1);
+            EXPECT_EQ(send_type, MPI_INT);
+            EXPECT_EQ(recv_count, 0);
+        }
+    }
+    {
+        // explicit but owning recv buffer and non-owning send_count, recv_type (other order) and root parameter
+        int          send_count = -1;
+        int          root       = comm.size_signed() - 1;
+        MPI_Datatype recv_type;
+        auto [recv_count, send_type, recv_buffer] = comm.gather(
+            send_count_out(send_count),
+            recv_type_out(recv_type),
+            recv_count_out(),
+            send_buf(input),
+            send_type_out(),
+            recv_buf(std::vector<int>(comm.size())),
+            kamping::root(root)
+        );
+        if (comm.is_root(root)) {
+            EXPECT_EQ(recv_buffer, expected_recv_buffer_on_root);
+            EXPECT_EQ(recv_count, 1);
+            EXPECT_EQ(recv_type, MPI_INT);
+            EXPECT_EQ(send_count, 1);
+        } else {
+            EXPECT_EQ(recv_buffer, std::vector<int>(comm.size()));
+            EXPECT_EQ(send_count, 1);
+            EXPECT_EQ(send_type, MPI_INT);
+            EXPECT_EQ(recv_count, 0);
+        }
+    }
+}

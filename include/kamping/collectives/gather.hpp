@@ -30,7 +30,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 /// @brief Wrapper for \c MPI_Gather.
 ///
@@ -158,7 +158,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
         this->mpi_communicator()         // communicator
     );
     THROW_IF_MPI_ERROR(err, MPI_Gather);
-    return make_mpi_result(
+    return make_mpi_result_<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(recv_count),
         std::move(send_count),
@@ -362,7 +362,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         this->mpi_communicator()         // communicator
     );
     THROW_IF_MPI_ERROR(err, MPI_Gather);
-    return make_mpi_result(
+    return make_mpi_result_<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(recv_counts),
         std::move(recv_displs),
