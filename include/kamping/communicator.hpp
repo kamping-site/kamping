@@ -504,6 +504,9 @@ public:
     auto allreduce(Args... args) const;
 
     template <typename... Args>
+    auto allreduce_inplace(Args... args) const;
+
+    template <typename... Args>
     auto allreduce_single(Args... args) const;
 
     template <typename... Args>
