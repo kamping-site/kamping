@@ -53,6 +53,9 @@
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype
 /// is derived automatically based on send_buf's underlying \c value_type.
 ///
+/// In-place allreduce is supported by providing `send_recv_buf()` instead of `send_buf()` and `recv_buf()`. For details
+/// on the in-place version, see \ref Communicator::allreduce_inplace().
+///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
@@ -144,6 +147,30 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
     }
 }
 
+/// @brief Wrapper for the in-place version of \ref Communicator::allreduce().
+///
+/// This variant must be called collectively by all ranks in the communicator. It is semantically equivalent to \ref
+/// Communicator::allreduce(), but the input buffer is used as the output buffer. This means that the input buffer is
+/// overwritten with the result of the reduction.
+///
+/// The following parameters are required:
+/// - \ref kamping::send_recv_buf() containing the data that is sent to each rank and will store the result of the
+/// reduction. This buffer will be resized according to the buffer's kamping::BufferResizePolicy.
+///
+/// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided
+/// explicitly, the compatibility of the type and operation has to be ensured by the user.
+///
+/// The following parameters are optional:
+/// - \ref kamping::send_recv_count() specifiying how many elements of the send buffer take part in the reduction. If
+/// omitted, the size of `send_recv_buf` is used. This parameter is mandatory if \ref kamping::send_recv_type() is
+/// given.
+///
+/// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype
+/// is derived automatically based on `send_recv_buf`'s underlying \c value_type.
+///
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described above.
+/// @return Result type wrapping the output buffer if not specified as input parameter.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_inplace(Args... args) const {
