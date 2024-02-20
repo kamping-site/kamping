@@ -333,7 +333,7 @@ TEST(AllreduceTest, allreduce_default_container_type) {
 
 TEST(AllreduceTest, send_recv_type_is_out_parameter) {
     Communicator           comm;
-    const std::vector<int> data{1};
+    std::vector<int> const data{1};
     MPI_Datatype           send_recv_type;
     auto recv_buf = comm.allreduce(send_buf(data), send_recv_type_out(send_recv_type), op(kamping::ops::plus<>{}));
 
@@ -344,7 +344,7 @@ TEST(AllreduceTest, send_recv_type_is_out_parameter) {
 
 TEST(AllreduceTest, send_recv_type_part_of_result_object) {
     Communicator           comm;
-    const std::vector<int> data{1};
+    std::vector<int> const data{1};
     auto                   result = comm.allreduce(send_buf(data), send_recv_type_out(), op(kamping::ops::plus<>{}));
 
     EXPECT_EQ(result.extract_send_recv_type(), MPI_INT);
@@ -391,7 +391,7 @@ TEST(AllreduceTest, structured_bindings_explicit_recv_buffer) {
     Communicator comm;
 
     std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
-    const std::vector<std::uint64_t> expected_recv_buffer(2, comm.size() * (comm.size() - 1) / 2);
+    std::vector<std::uint64_t> const expected_recv_buffer(2, comm.size() * (comm.size() - 1) / 2);
     std::vector<std::uint64_t>       recv_buffer(2);
     auto const [send_recv_type, send_recv_count] = comm.allreduce(
         send_recv_type_out(),
@@ -410,7 +410,7 @@ TEST(AllreduceTest, structured_bindings_explicit_owning_recv_buffer) {
     Communicator comm;
 
     std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
-    const std::vector<std::uint64_t> expected_recv_buffer(2, comm.size() * (comm.size() - 1) / 2);
+    std::vector<std::uint64_t> const expected_recv_buffer(2, comm.size() * (comm.size() - 1) / 2);
     std::vector<std::uint64_t>       tmp(2);
     auto const [send_recv_type, send_recv_count, recv_buffer] = comm.allreduce(
         send_recv_type_out(),
@@ -429,7 +429,7 @@ TEST(AllreduceTest, structured_bindings_implicit_recv_buffer) {
     Communicator comm;
 
     std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
-    const std::vector<std::uint64_t> expected_recv_buffer(2, comm.size() * (comm.size() - 1) / 2);
+    std::vector<std::uint64_t> const expected_recv_buffer(2, comm.size() * (comm.size() - 1) / 2);
     {
         std::vector<std::uint64_t> tmp(2);
         auto const [recv_buffer, send_recv_type, send_recv_count] =
@@ -454,4 +454,78 @@ TEST(AllreduceTest, structured_bindings_implicit_recv_buffer) {
         EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
         EXPECT_EQ(recv_buffer, expected_recv_buffer);
     }
+}
+
+TEST(AllreduceTest, inplace_basic) {
+    Communicator comm;
+
+    std::vector<int> values = {comm.rank_signed(), comm.rank_signed()};
+    comm.allreduce(send_recv_buf(values), op(kamping::ops::plus<>{}));
+
+    std::vector<int> expected_recv_buffer = {
+        comm.size_signed() * (comm.size_signed() - 1) / 2,
+        comm.size_signed() * (comm.size_signed() - 1) / 2};
+    EXPECT_EQ(values, expected_recv_buffer);
+}
+
+TEST(AllreduceTest, inplace_out_parameters) {
+    Communicator comm;
+
+    std::vector<int> values = {comm.rank_signed(), comm.rank_signed()};
+    auto [count, type] =
+        comm.allreduce(send_recv_buf(values), op(kamping::ops::plus<>{}), send_recv_count_out(), send_recv_type_out());
+
+    EXPECT_EQ(count, 2);
+    EXPECT_EQ(type, MPI_INT);
+
+    std::vector<int> expected_recv_buffer = {
+        comm.size_signed() * (comm.size_signed() - 1) / 2,
+        comm.size_signed() * (comm.size_signed() - 1) / 2};
+    EXPECT_EQ(values, expected_recv_buffer);
+}
+
+TEST(AllreduceTest, inplace_rvalue_buffer) {
+    Communicator comm;
+
+    std::vector<int> values = {comm.rank_signed(), comm.rank_signed()};
+    auto             result = comm.allreduce(send_recv_buf(std::move(values)), op(kamping::ops::plus<>()));
+
+    std::vector<int> expected_recv_buffer = {
+        comm.size_signed() * (comm.size_signed() - 1) / 2,
+        comm.size_signed() * (comm.size_signed() - 1) / 2};
+    EXPECT_EQ(result, expected_recv_buffer);
+}
+
+TEST(AllreduceTest, inplace_explicit_count) {
+    Communicator comm;
+
+    std::vector<int> values = {comm.rank_signed(), -1};
+    comm.allreduce(send_recv_buf(values), op(kamping::ops::plus<>{}), send_recv_count(1));
+
+    std::vector<int> expected_recv_buffer = {comm.size_signed() * (comm.size_signed() - 1) / 2, -1};
+    EXPECT_EQ(values, expected_recv_buffer);
+}
+
+TEST(AllreduceTest, inplace_explicit_type) {
+    Communicator comm;
+
+    std::vector<std::pair<int, int>> values = {std::pair{comm.rank_signed(), comm.rank_signed()}};
+    MPI_Datatype                     type   = struct_type<std::pair<int, int>>::data_type();
+    MPI_Type_commit(&type);
+    comm.allreduce(
+        send_recv_buf(values),
+        op(
+            [](std::pair<int, int> const& lhs, std::pair<int, int> const& rhs) {
+                return std::pair{lhs.first + rhs.first, lhs.second + rhs.second};
+            },
+            kamping::ops::commutative
+        ),
+        send_recv_type(type),
+        send_recv_count(1)
+    );
+    MPI_Type_free(&type);
+
+    std::vector<std::pair<int, int>> expected_recv_buffer = {
+        {comm.size_signed() * (comm.size_signed() - 1) / 2, comm.size_signed() * (comm.size_signed() - 1) / 2}};
+    EXPECT_EQ(values, expected_recv_buffer);
 }
