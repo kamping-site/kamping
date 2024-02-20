@@ -53,7 +53,7 @@ TEST(ScatterTest, scatter_single_element_no_recv_buffer) {
     Communicator comm;
 
     auto const input  = create_input_vector_on_root(comm, 1);
-    auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -128,7 +128,7 @@ TEST(ScatterTest, scatter_single_element_with_recv_count) {
     Communicator comm;
 
     auto const input  = create_input_vector_on_root(comm, 1);
-    auto const result = comm.scatter(send_buf(input), recv_count(1)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input), recv_count(1));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -139,7 +139,7 @@ TEST(ScatterTest, scatter_extract_recv_count) {
 
     auto const input = create_input_vector_on_root(comm, 1);
 
-    EXPECT_EQ(comm.scatter(send_buf(input)).extract_recv_count(), 1);
+    EXPECT_EQ(comm.scatter(send_buf(input), recv_count_out()).extract_recv_count(), 1);
 
     int recv_count_value;
     comm.scatter(send_buf(input), recv_count_out(recv_count_value));
@@ -152,7 +152,7 @@ TEST(ScatterTest, scatter_multiple_elements) {
     Communicator comm;
 
     auto const input  = create_input_vector_on_root(comm, elements_per_pe);
-    auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input));
 
     ASSERT_EQ(result.size(), elements_per_pe);
     EXPECT_THAT(result, Each(comm.rank()));
@@ -177,8 +177,7 @@ TEST(ScatterTest, scatter_with_send_buf_ignore) {
     Communicator comm;
 
     auto const input  = create_input_vector_on_root(comm, 1);
-    auto const result = (comm.is_root()) ? comm.scatter(send_buf(input)).extract_recv_buffer()
-                                         : comm.scatter(send_buf(ignore<int>)).extract_recv_buffer();
+    auto const result = (comm.is_root()) ? comm.scatter(send_buf(input)) : comm.scatter(send_buf(ignore<int>));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -203,8 +202,7 @@ TEST(ScatterTest, scatter_with_send_buf_only_on_root) {
     Communicator comm;
 
     auto const input  = create_input_vector_on_root(comm, 1);
-    auto const result = (comm.is_root()) ? comm.scatter(send_buf(input)).extract_recv_buffer()
-                                         : comm.scatter<int>().extract_recv_buffer();
+    auto const result = (comm.is_root()) ? comm.scatter(send_buf(input)) : comm.scatter<int>();
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -215,7 +213,7 @@ TEST(ScatterTest, scatter_with_root_arg) {
     int const    root = comm.size_signed() - 1; // use last PE as root
 
     auto const input  = create_input_vector_on_root(comm, 1, root);
-    auto const result = comm.scatter(send_buf(input), kamping::root(root)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input), kamping::root(root));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -226,7 +224,7 @@ TEST(ScatterTest, scatter_with_nonzero_root_comm) {
     comm.root(comm.size() - 1);
 
     auto const input  = create_input_vector_on_root(comm, 1);
-    auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -237,7 +235,7 @@ TEST(ScatterTest, scatter_with_recv_count_out) {
 
     auto const input = create_input_vector_on_root(comm, 2);
     int        recv_count;
-    auto const result = comm.scatter(send_buf(input), recv_count_out(recv_count)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input), recv_count_out(recv_count));
 
     EXPECT_EQ(result.size(), 2);
     EXPECT_EQ(recv_count, 2);
@@ -256,7 +254,7 @@ TEST(ScatterTest, scatter_with_custom_sendbuf_and_type) {
         }
     }
 
-    auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front().value, comm.rank());
@@ -270,7 +268,7 @@ TEST(ScatterTest, scatter_with_nonempty_sendbuf_on_non_root) {
         input[rank] = asserting_cast<int>(rank);
     }
 
-    auto const result = comm.scatter(send_buf(input)).extract_recv_buffer();
+    auto const result = comm.scatter(send_buf(input));
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result.front(), comm.rank());
@@ -291,7 +289,7 @@ TEST(ScatterTest, scatter_default_container_type) {
     std::vector<int> const     input = create_input_vector_on_root(comm, 1);
 
     // This just has to compile
-    OwnContainer<int> const result = comm.scatter(send_buf(input)).extract_recv_buffer();
+    OwnContainer<int> const result = comm.scatter(send_buf(input));
 }
 
 TEST(ScatterTest, scatter_single_element_with_given_recv_buf_bigger_than_required) {
@@ -571,4 +569,144 @@ TEST(ScatterTest, different_send_and_recv_counts_without_explicit_mpi_types) {
         EXPECT_EQ(send_count, -1);
     }
     EXPECT_THAT(recv_buffer, ElementsAre(expected_result));
+}
+
+TEST(ScatterTest, structured_bindings_explicit_recv_buf) {
+    Communicator comm;
+    auto const   input = create_input_vector_on_root(comm, 1);
+
+    std::vector<int> recv_buffer(1);
+    auto [recv_count, send_count, recv_type, send_type] = comm.scatter(
+        send_buf(input),
+        recv_count_out(),
+        recv_buf(recv_buffer),
+        send_count_out(),
+        recv_type_out(),
+        send_type_out()
+    );
+
+    EXPECT_EQ(recv_type, MPI_INT);
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank_signed()));
+    if (comm.is_root()) {
+        EXPECT_EQ(send_count, 1);
+        EXPECT_EQ(send_type, MPI_INT);
+    } else {
+        EXPECT_EQ(send_count, 0);
+    }
+}
+
+TEST(ScatterTest, structured_bindings_implicit_recv_buf) {
+    Communicator comm;
+    auto const   input = create_input_vector_on_root(comm, 1);
+    auto [recv_buffer, recv_count, send_count, recv_type, send_type] =
+        comm.scatter(send_buf(input), recv_count_out(), send_count_out(), recv_type_out(), send_type_out());
+
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank_signed()));
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_EQ(recv_type, MPI_INT);
+    if (comm.is_root()) {
+        EXPECT_EQ(send_count, 1);
+        EXPECT_EQ(send_type, MPI_INT);
+    } else {
+        EXPECT_EQ(send_count, 0);
+    }
+}
+
+TEST(ScatterTest, structured_bindings_explicit_owning_recv_buf) {
+    Communicator comm;
+    auto const   input                                               = create_input_vector_on_root(comm, 1);
+    auto [recv_count, send_count, recv_type, send_type, recv_buffer] = comm.scatter(
+        send_buf(input),
+        recv_count_out(),
+        send_count_out(),
+        recv_type_out(),
+        send_type_out(),
+        recv_buf<resize_to_fit>(std::vector<int>{})
+    );
+
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank_signed()));
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_EQ(recv_type, MPI_INT);
+    if (comm.is_root()) {
+        EXPECT_EQ(send_type, MPI_INT);
+        EXPECT_EQ(send_count, 1);
+    } else {
+        EXPECT_EQ(send_count, 0);
+    }
+}
+
+TEST(ScatterTest, structured_bindings_explicit_owning_recv_buf_non_owning_send_count) {
+    Communicator comm;
+    auto const   input                                   = create_input_vector_on_root(comm, 1);
+    int          send_count                              = -1;
+    auto [recv_count, recv_type, send_type, recv_buffer] = comm.scatter(
+        send_buf(input),
+        recv_count_out(),
+        send_count_out(send_count),
+        recv_type_out(),
+        send_type_out(),
+        recv_buf<resize_to_fit>(std::vector<int>{})
+    );
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank_signed()));
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_EQ(recv_type, MPI_INT);
+    if (comm.is_root()) {
+        EXPECT_EQ(send_count, 1);
+        EXPECT_EQ(send_type, MPI_INT);
+    } else {
+        EXPECT_EQ(send_count, -1);
+    }
+}
+TEST(ScatterTest, structured_bindings_explicit_owning_recv_buf_non_owning_send_count_recv_type) {
+    Communicator comm;
+    auto const   input      = create_input_vector_on_root(comm, 1);
+    int          send_count = -1;
+    MPI_Datatype recv_type;
+    auto [recv_count, send_type, recv_buffer] = comm.scatter(
+        send_buf(input),
+        recv_count_out(),
+        send_count_out(send_count),
+        recv_type_out(recv_type),
+        send_type_out(),
+        recv_buf<resize_to_fit>(std::vector<int>{})
+    );
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank_signed()));
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_EQ(recv_type, MPI_INT);
+    if (comm.is_root()) {
+        EXPECT_EQ(send_count, 1);
+        EXPECT_EQ(send_type, MPI_INT);
+    } else {
+        EXPECT_EQ(send_count, -1);
+    }
+}
+
+TEST(
+    ScatterTest,
+    structured_bindings_explicit_owning_recv_buf_non_owning_send_count_recv_type_with_changed_order_and_root_param
+) {
+    Communicator comm;
+    int const    root       = comm.size_signed() - 1;
+    auto const   input      = create_input_vector_on_root(comm, 1, root);
+    int          send_count = -1;
+    MPI_Datatype recv_type;
+    auto [recv_count, send_type, recv_buffer] = comm.scatter(
+        send_count_out(send_count),
+        recv_type_out(recv_type),
+        recv_count_out(),
+        send_buf(input),
+        send_type_out(),
+        recv_buf<resize_to_fit>(std::vector<int>{}),
+        kamping::root(root)
+    );
+    EXPECT_THAT(recv_buffer, ElementsAre(comm.rank_signed()));
+    EXPECT_EQ(recv_count, 1);
+    EXPECT_EQ(recv_type, MPI_INT);
+    if (comm.is_root(root)) {
+        EXPECT_EQ(send_count, 1);
+        EXPECT_EQ(send_type, MPI_INT);
+    } else {
+        EXPECT_EQ(send_count, -1);
+    }
 }
