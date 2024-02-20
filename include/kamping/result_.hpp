@@ -273,6 +273,20 @@ private:
     std::tuple<Args...> _data; ///< tuple storing the data buffers
 };
 
+/// @brief Primary template for result trait indicates whether the result object is empty.
+template <typename T>
+constexpr bool is_result_empty_v = false;
+
+/// @brief Template specialization for result trait indicates whether the result object is
+/// empty.
+template <typename... Args>
+constexpr bool is_result_empty_v<MPIResult_<Args...>> = MPIResult_<Args...>::is_empty;
+
+/// @brief Template specialization for result trait indicates whether the result object is
+/// empty.
+template <>
+inline constexpr bool is_result_empty_v<void> = true;
+
 } // namespace kamping
 
 namespace std {
@@ -494,6 +508,28 @@ constexpr ParameterType determine_recv_buffer_type() {
     }
 }
 
+/// @brief Returns True iff only a status buffer but no recv or send_recv buffer is present.
+/// Note that we require that a status (see e.g. \ref kamping::Communicator::probe()or \ref
+/// kamping::Communicator::iprobe()) or either a recv_buf or a send_recv_buf is present.
+///
+/// @tparam Buffers All buffer types to be searched for type `status`.
+template <typename... Buffers>
+constexpr bool has_status_but_no_recv_or_send_recv_buf() {
+    constexpr bool has_status_buffer = internal::has_parameter_type<internal::ParameterType::status, Buffers...>();
+    constexpr bool has_recv_buffer   = internal::has_parameter_type<internal::ParameterType::recv_buf, Buffers...>();
+    constexpr bool has_send_recv_buffer =
+        internal::has_parameter_type<internal::ParameterType::send_recv_buf, Buffers...>();
+    static_assert(
+        has_status_buffer || (has_recv_buffer ^ has_send_recv_buffer),
+        "a status or either a recv or a send_recv buffer must be present"
+    );
+    if constexpr (has_recv_buffer || has_send_recv_buffer) {
+        return false;
+    } else {
+        return has_status_buffer;
+    }
+}
+
 /// @brief Construct result object for a wrapped MPI call. Four different cases are handled:
 /// (Note that in the following recv_buffer also means send_recv_buffer for functions such as MPI_Bcast etc.)
 /// a) The recv_buffer owns its underlying data (i.e. the received data has to be returned via the result object):
@@ -528,44 +564,49 @@ auto make_mpi_result_(Buffers&&... buffers) {
     // buffers)
     using CallerProvidedOwningOutParameters = typename internal::FilterOwningOut<CallerProvidedArgs>::type;
     constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutParameters>;
+    if constexpr (has_status_but_no_recv_or_send_recv_buf<Buffers...>()) {
+        // do no special handling for receive buffer at all, since there is none.
+        return MPIResult_(construct_buffer_tuple_for_result_object<CallerProvidedOwningOutParameters>(buffers...));
+    } else {
+        // receive (send-receive) buffer needs (potentially) a special treatment (if it is an owning (out) buffer and
+        // provided by the caller)
+        constexpr internal::ParameterType recv_parameter_type = determine_recv_buffer_type<Buffers...>();
+        auto&          recv_or_send_recv_buffer = internal::select_parameter_type<recv_parameter_type>(buffers...);
+        constexpr bool recv_or_send_recv_buf_is_owning =
+            std::remove_reference_t<decltype(recv_or_send_recv_buffer)>::is_owning;
+        constexpr bool recv_or_send_recv_buffer_is_owning_and_provided_by_caller =
+            has_parameter_type_in_tuple<recv_parameter_type, CallerProvidedOwningOutParameters>();
 
-    // receive (send-receive) buffer needs (potentially) a special treatment (if it is an owning (out) buffer and
-    // provided by the caller)
-    constexpr internal::ParameterType recv_parameter_type = determine_recv_buffer_type<Buffers...>();
-    auto&          recv_or_send_recv_buffer = internal::select_parameter_type<recv_parameter_type>(buffers...);
-    constexpr bool recv_or_send_recv_buf_is_owning =
-        std::remove_reference_t<decltype(recv_or_send_recv_buffer)>::is_owning;
-    constexpr bool recv_or_send_recv_buffer_is_owning_and_provided_by_caller =
-        has_parameter_type_in_tuple<recv_parameter_type, CallerProvidedOwningOutParameters>();
+        // special case 1: recv (send_recv) buffer is not owning
+        if constexpr (!recv_or_send_recv_buf_is_owning) {
+            if constexpr (num_caller_provided_owning_out_buffers == 0) {
+                // there are no buffers to return
+                return;
+            } else {
+                // no special treatement of recv buffer is needed as the recv_buffer is not part of the result
+                // object anyway.
+                return MPIResult_(construct_buffer_tuple_for_result_object<CallerProvidedOwningOutParameters>(buffers...
+                ));
+            }
+        }
+        // specialcase 2: recv (send_recv) buffer is the only owning out parameter
+        else if constexpr (return_recv_or_send_recv_buffer_only<CallerProvidedOwningOutParameters>()) {
+            // if only the receive buffer shall be returned, its underlying data is returned directly instead of a
+            // wrapping result object
+            return recv_or_send_recv_buffer.extract();
+        }
 
-    // special case 1: recv (send_recv) buffer is not owning
-    if constexpr (!recv_or_send_recv_buf_is_owning) {
-        if constexpr (num_caller_provided_owning_out_buffers == 0) {
-            // there are no buffers to return
-            return;
-        } else {
-            // no special treatement of recv buffer is needed as the recv_buffer is not part of the result
-            // object anyway.
+        // case A: recv (send_recv) buffer is provided by caller (and owning)
+        else if constexpr (recv_or_send_recv_buffer_is_owning_and_provided_by_caller) {
             return MPIResult_(construct_buffer_tuple_for_result_object<CallerProvidedOwningOutParameters>(buffers...));
         }
-    }
-    // specialcase 2: recv (send_recv) buffer is the only owning out parameter
-    else if constexpr (return_recv_or_send_recv_buffer_only<CallerProvidedOwningOutParameters>()) {
-        // if only the receive buffer shall be returned, its underlying data is returned directly instead of a
-        // wrapping result object
-        return recv_or_send_recv_buffer.extract();
-    }
-
-    // case A: recv (send_recv) buffer is provided by caller (and owning)
-    else if constexpr (recv_or_send_recv_buffer_is_owning_and_provided_by_caller) {
-        return MPIResult_(construct_buffer_tuple_for_result_object<CallerProvidedOwningOutParameters>(buffers...));
-    }
-    // case B: recv buffer is not provided by caller -> recv buffer will be stored as first entry in
-    // underlying result object
-    else {
-        using ParametersToReturn =
-            typename PrependParameterType<recv_parameter_type, CallerProvidedOwningOutParameters>::type;
-        return MPIResult_(construct_buffer_tuple_for_result_object<ParametersToReturn>(buffers...));
+        // case B: recv buffer is not provided by caller -> recv buffer will be stored as first entry in
+        // underlying result object
+        else {
+            using ParametersToReturn =
+                typename PrependParameterType<recv_parameter_type, CallerProvidedOwningOutParameters>::type;
+            return MPIResult_(construct_buffer_tuple_for_result_object<ParametersToReturn>(buffers...));
+        }
     }
 }
 

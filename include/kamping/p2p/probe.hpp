@@ -26,7 +26,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 /// @brief Wrapper for \c MPI_Probe.
 ///
@@ -91,5 +91,5 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
     );
     THROW_IF_MPI_ERROR(err, MPI_Probe);
 
-    return make_mpi_result(std::move(status));
+    return internal::make_mpi_result_<std::tuple<Args...>>(std::move(status));
 }

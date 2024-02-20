@@ -524,6 +524,18 @@ TEST_F(IProbeTest, probe_null) {
     EXPECT_EQ(status.count<int>(), 0);
 }
 
+TEST_F(IProbeTest, probe_null_structured_binding) {
+    Communicator comm;
+    auto         result = comm.iprobe(source(rank::null), status_out());
+    while (!result.has_value()) {
+        result = comm.iprobe(source(rank::null), status_out());
+    }
+    auto const& [status] = *result;
+    EXPECT_EQ(status.source_signed(), MPI_PROC_NULL);
+    EXPECT_EQ(status.tag(), MPI_ANY_TAG);
+    EXPECT_EQ(status.count<int>(), 0);
+}
+
 TEST_F(IProbeTest, nothing_to_probe) {
     Communicator comm;
     EXPECT_FALSE(comm.iprobe());

@@ -26,7 +26,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 /// @brief Wrapper for \c MPI_Iprobe.
 ///
@@ -101,9 +101,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
     // indicating probe success.
     if constexpr (internal::is_extractable<std::remove_reference_t<decltype(status)>>) {
         if (flag) {
-            return std::optional{make_mpi_result(std::move(status))};
+            return std::optional{internal::make_mpi_result_<std::tuple<Args...>>(std::move(status))};
         } else {
-            return std::optional<decltype(make_mpi_result(std::move(status)))>{};
+            return std::optional<decltype(internal::make_mpi_result_<std::tuple<Args...>>(std::move(status)))>{};
         }
     } else {
         return static_cast<bool>(flag);

@@ -258,8 +258,8 @@ TEST_F(TryRecvTest, try_recv_vector_with_status_out) {
         Status           recv_status;
         // pass status as input parameter
         while (true) {
-            auto result_opt = comm.try_recv(recv_buf<resize_to_fit>(message), status_out(recv_status));
-            if (result_opt.has_value()) {
+            bool const result_opt = comm.try_recv(recv_buf<resize_to_fit>(message), status_out(recv_status));
+            if (result_opt) {
                 EXPECT_EQ(recv_status.source(), comm.root());
                 EXPECT_EQ(recv_status.tag(), 0);
                 EXPECT_EQ(recv_status.count<int>(), 5);
@@ -299,9 +299,8 @@ TEST_F(TryRecvTest, try_recv_default_custom_container_without_recv_buf) {
         while (true) {
             auto result_opt = comm.try_recv<int>();
             if (result_opt.has_value()) {
-                auto& result = result_opt.value();
-                EXPECT_TRUE(has_member_extract_recv_buffer_v<decltype(result)>);
-                ::testing::OwnContainer<int> message = result.extract_recv_buffer();
+                auto&                        result  = result_opt.value();
+                ::testing::OwnContainer<int> message = result;
                 EXPECT_EQ(message, ::testing::OwnContainer<int>({1, 2, 3, 4, 5}));
                 break;
             }
@@ -394,7 +393,7 @@ TEST_F(TryRecvTest, non_trivial_recv_type) {
     int const        default_init = -1;
     std::vector<int> message;
 
-    EXPECT_EQ(comm.try_recv(recv_buf<no_resize>(message), recv_type(MPI_INT_padding_padding())), std::nullopt);
+    EXPECT_FALSE(comm.try_recv(recv_buf<no_resize>(message), recv_type(MPI_INT_padding_padding())));
     comm.barrier();
 
     MPI_Request req;
@@ -443,7 +442,7 @@ TEST_F(TryRecvTest, non_trivial_recv_type) {
     }
     // ensure that we have received all inflight messages
     MPI_Wait(&req, MPI_STATUS_IGNORE);
-    EXPECT_EQ(comm.try_recv(recv_buf<no_resize>(message), recv_type(MPI_INT_padding_padding())), std::nullopt);
+    EXPECT_FALSE(comm.try_recv(recv_buf<no_resize>(message), recv_type(MPI_INT_padding_padding())));
 }
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
