@@ -101,7 +101,12 @@ inline auto statuses_out(AllocNewUsingT<Container>) {
 /// is usually determined by operations called on a \ref RequestPool, and defaults to \ref
 /// RequestPool::default_container_type.
 inline auto statuses_out() {
-    return statuses_out(alloc_container_of<MPI_Status>);
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::statuses,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit,
+        MPI_Status>(alloc_container_of<MPI_Status>);
 }
 
 /// @}

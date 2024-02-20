@@ -72,6 +72,33 @@ TEST(RequestPoolTest, wait_all_statuses_out) {
     );
 }
 
+TEST(RequestPoolTest, wait_all_statuses_out_own_container_as_default) {
+    using namespace ::testing;
+    kamping::RequestPool<NonCopyableOwnContainer> pool;
+    std::vector<DummyNonBlockingOperation>        ops(5);
+    std::vector<int>                              values;
+    values.reserve(5);
+    int i = 0;
+    for (auto& op: ops) {
+        values.emplace_back();
+        op.start_op(kamping::request(pool.get_request()), kamping::tag(42 + i), recv_buf(values.back()));
+        i++;
+    }
+    std::for_each(ops.begin(), ops.end(), [](auto& op) { op.finish_op(); });
+    NonCopyableOwnContainer<MPI_Status> statuses = pool.wait_all(statuses_out());
+    EXPECT_THAT(values, ElementsAre(42, 43, 44, 45, 46));
+    EXPECT_THAT(
+        statuses,
+        ElementsAre(
+            Field(&MPI_Status::MPI_TAG, 42),
+            Field(&MPI_Status::MPI_TAG, 43),
+            Field(&MPI_Status::MPI_TAG, 44),
+            Field(&MPI_Status::MPI_TAG, 45),
+            Field(&MPI_Status::MPI_TAG, 46)
+        )
+    );
+}
+
 TEST(RequestPoolTest, wait_all_statuses_out_reference) {
     using namespace ::testing;
     kamping::RequestPool                   pool;
@@ -133,6 +160,26 @@ TEST(RequestPoolTest, test_all_statuses_out) {
     EXPECT_EQ(pool.test_all(statuses_out()), std::nullopt);
     op1.finish_op();
     auto statuses = pool.test_all(statuses_out());
+    EXPECT_THAT(statuses, Optional(ElementsAre(Field(&MPI_Status::MPI_TAG, 42), Field(&MPI_Status::MPI_TAG, 43))));
+    EXPECT_EQ(val1, 42);
+    EXPECT_EQ(val2, 43);
+}
+
+TEST(RequestPoolTest, test_all_statuses_out_own_container_as_default) {
+    using namespace ::testing;
+    kamping::RequestPool<NonCopyableOwnContainer> pool;
+    DummyNonBlockingOperation                     op1;
+    DummyNonBlockingOperation                     op2;
+    int                                           val1;
+    int                                           val2;
+    op1.start_op(kamping::request(pool.get_request()), kamping::tag(42), recv_buf(val1));
+    op2.start_op(kamping::request(pool.get_request()), kamping::tag(43), recv_buf(val2));
+    EXPECT_EQ(pool.test_all(statuses_out()), std::nullopt);
+    op2.finish_op();
+    EXPECT_EQ(pool.test_all(statuses_out()), std::nullopt);
+    op1.finish_op();
+    auto statuses = pool.test_all(statuses_out());
+    EXPECT_TRUE(is_non_copyable_own_container<decltype(statuses)::value_type>);
     EXPECT_THAT(statuses, Optional(ElementsAre(Field(&MPI_Status::MPI_TAG, 42), Field(&MPI_Status::MPI_TAG, 43))));
     EXPECT_EQ(val1, 42);
     EXPECT_EQ(val2, 43);
