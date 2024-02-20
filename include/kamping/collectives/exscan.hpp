@@ -84,7 +84,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
         );
 
         // Get the send buffer and deduce the send and recv value types.
-        auto const& send_buf  = select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+        auto const&& send_buf = select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
         KASSERT(
             is_same_on_all_ranks(send_buf.size()),
@@ -234,7 +234,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_inplace(Arg
         KAMPING_OPTIONAL_PARAMETERS(send_recv_count, send_recv_type, values_on_rank_0)
     );
 
-    // get the send buffer and deduce the send and recv value types.
+    // get the send recv buffer and deduce the send and recv value types.
     auto&& send_recv_buf = select_parameter_type<ParameterType::send_recv_buf>(args...).construct_buffer_or_rebind();
     using value_type     = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
 
@@ -278,7 +278,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_inplace(Arg
         assert::light
     );
 
-    // Perform the MPI_Allreduce call and return.
+    // Perform the MPI_Exscan call and return.
     [[maybe_unused]] int err = MPI_Exscan(
         MPI_IN_PLACE,               // sendbuf
         send_recv_buf.data(),       // recvbuf,
@@ -324,11 +324,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_inplace(Arg
         }
     }
 
-    return make_mpi_result_<std::tuple<Args...>>(
-        std::move(send_recv_buf),
-        std::move(send_recv_count),
-        std::move(send_recv_type)
-    );
+    return make_mpi_result_<std::tuple<Args...>>(std::move(send_recv_buf), std::move(count), std::move(type));
 }
 
 /// @brief Wrapper for \c MPI_exscan for single elements.

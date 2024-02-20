@@ -551,5 +551,6 @@ TEST(ScanTest, inplace_explicit_type) {
            kamping::ops::commutative),
         send_recv_type(type)
     );
+    MPI_Type_free(&type);
     EXPECT_EQ(data, std::make_pair((comm.rank_signed() + 1) * 42, comm.rank_signed() + 1));
 }
