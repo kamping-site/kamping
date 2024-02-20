@@ -31,7 +31,7 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/helpers.hpp"
 #include "kamping/parameter_objects.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 #include "kamping/status.hpp"
 
 /// @brief Receives a message if one is available.
@@ -65,7 +65,8 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return If no message is available return \c std::nullopt, else return a \c std::optional wrapping an \ref
-/// kamping::MPIResult
+/// kamping::MPIResult. If the result object is empty, i.e. there are no owning out parameters passed to `try_recv` (see
+/// \ref docs/named_parameters.md), returns a \c bool indicating success instead of an \c std::optional.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
 template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... args) const {
@@ -133,7 +134,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
     THROW_IF_MPI_ERROR(err, MPI_Improbe);
 
     auto construct_result = [&] {
-        return make_mpi_result(std::move(recv_buf), std::move(status_param), std::move(recv_type));
+        return internal::make_mpi_result_<std::tuple<Args...>>(
+            std::move(recv_buf),
+            std::move(status_param),
+            std::move(recv_type)
+        );
     };
     using result_type = decltype(construct_result());
     // If a message is available, receive it using a matched receive.
@@ -164,9 +169,17 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         THROW_IF_MPI_ERROR(err, MPI_Mrecv);
 
         // Build the result object from the parameters and return.
-        return std::optional{construct_result()};
+        if constexpr (is_result_empty_v<result_type>) {
+            return true;
+        } else {
+            return std::optional{construct_result()};
+        }
     } else {
-        // There was no message to receive, thus return std::nullopt.
-        return std::optional<result_type>{};
+        // There was no message to receive, thus return false/std::nullopt.
+        if constexpr (is_result_empty_v<result_type>) {
+            return false;
+        } else {
+            return std::optional<result_type>{};
+        }
     }
 }

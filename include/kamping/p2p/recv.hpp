@@ -33,7 +33,7 @@
 #include "kamping/p2p/helpers.hpp"
 #include "kamping/p2p/probe.hpp"
 #include "kamping/parameter_objects.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 #include "kamping/status.hpp"
 
 /// @brief Wrapper for \c MPI_Recv.
@@ -171,7 +171,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     );
     THROW_IF_MPI_ERROR(err, MPI_Recv);
 
-    return make_mpi_result(std::move(recv_buf), std::move(recv_count_param), std::move(status), std::move(recv_type));
+    return internal::make_mpi_result_<std::tuple<Args...>>(
+        std::move(recv_buf),
+        std::move(recv_count_param),
+        std::move(status),
+        std::move(recv_type)
+    );
 }
 
 /// @brief Convience wrapper for receiving single values via \c MPI_Recv.
@@ -215,6 +220,5 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args..
         "KaMPIng cannot allocate a status object for you here, because we have no way of returning it. Pass a "
         "reference to a status object instead."
     );
-    return recv(recv_count(1), recv_buf(alloc_new<recv_value_type_tparam>), std::forward<Args>(args)...)
-        .extract_recv_buffer();
+    return recv(recv_count(1), recv_buf(alloc_new<recv_value_type_tparam>), std::forward<Args>(args)...);
 }
