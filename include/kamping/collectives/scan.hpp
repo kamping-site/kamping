@@ -38,7 +38,7 @@
 /// according to the function op) of the values in the sendbufs of processes with ranks \f$0, ..., i\f$ (inclusive).
 ///
 /// The following parameters are required:
-/// - \ref kamping::send_buf() containing the data for which to perform the exclusive scan. This buffer has to be the
+/// - \ref kamping::send_buf() containing the data for which to perform the scan. This buffer has to be the
 ///  same size at each rank.
 ///
 /// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided
@@ -146,13 +146,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 
 /// @brief Wrapper for the in-place version of \ref Communicator::scan().
 ///
-///
 /// This variant must be called collectively by all ranks in the communicator. It is semantically equivalent to \ref
 /// Communicator::scan(), but the input buffer is used as the output buffer. This means that the input buffer is
 /// overwritten with the result of the scan.
 ///
 /// The following parameters are required:
-/// - \ref kamping::send_recv_buf() containing the data for which to perform the exclusive scan and will sore the result
+/// - \ref kamping::send_recv_buf() containing the data for which to perform the scan and will store the result
 /// of the scan. This buffer will be resized according to the buffer's kamping::BufferResizePolicy.
 ///
 /// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided

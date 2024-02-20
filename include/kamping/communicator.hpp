@@ -501,6 +501,9 @@ public:
     auto exscan(Args... args) const;
 
     template <typename... Args>
+    auto exscan_inplace(Args... args) const;
+
+    template <typename... Args>
     auto exscan_single(Args... args) const;
 
     template <typename... Args>
