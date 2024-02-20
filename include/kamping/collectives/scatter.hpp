@@ -32,7 +32,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 /// @brief Wrapper for \c MPI_Scatter.
 ///
@@ -198,7 +198,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     );
     THROW_IF_MPI_ERROR(err, MPI_Scatter);
 
-    return make_mpi_result(
+    return make_mpi_result_<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(send_count),
         std::move(recv_count),
@@ -397,7 +397,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     );
     THROW_IF_MPI_ERROR(err, MPI_Scatterv);
 
-    return make_mpi_result(
+    return make_mpi_result_<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(recv_count),
         std::move(send_counts),
