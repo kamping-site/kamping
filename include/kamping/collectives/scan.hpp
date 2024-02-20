@@ -1,7 +1,7 @@
 
 // This file is part of KaMPIng.
 //
-// Copyright 2022-2023 The KaMPIng Authors
+// Copyright 2022-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -178,7 +178,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_inplace(Args.
     );
 
     // get the send buffer and deduce the send and recv value types.
-    auto&& send_recv_buf = select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+    auto&& send_recv_buf = select_parameter_type<ParameterType::send_recv_buf>(args...).construct_buffer_or_rebind();
     using value_type     = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
 
     // get the send_recv_type

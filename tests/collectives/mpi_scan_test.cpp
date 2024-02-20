@@ -1,7 +1,7 @@
 
 // This file is part of KaMPIng.
 //
-// Copyright 2022-2023 The KaMPIng Authors
+// Copyright 2022-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -493,4 +493,63 @@ TEST(ScanTest, structured_bindings_implicit_recv_buffer) {
     EXPECT_THAT(recv_buffer, ElementsAre((comm.rank() + 1) * 42, (comm.rank() + 1)));
     EXPECT_EQ(send_recv_count, 2);
     EXPECT_THAT(possible_mpi_datatypes<std::uint64_t>(), Contains(send_recv_type));
+}
+
+TEST(ScanTest, inplace_basic) {
+    Communicator comm;
+
+    std::vector<int> data = {42, 1};
+    comm.scan(send_recv_buf(data), op(kamping::ops::plus<>{}));
+    EXPECT_THAT(data, ElementsAre((comm.rank() + 1) * 42, (comm.rank() + 1)));
+}
+
+TEST(ScanTest, inplace_out_parameters) {
+    Communicator comm;
+
+    std::vector<int> data = {42, 1};
+    auto [count, type] =
+        comm.scan(send_recv_buf(data), send_recv_count_out(), send_recv_type_out(), op(kamping::ops::plus<>{}));
+    EXPECT_EQ(count, 2);
+    EXPECT_THAT(possible_mpi_datatypes<int>(), Contains(type));
+    EXPECT_THAT(data, ElementsAre((comm.rank() + 1) * 42, (comm.rank() + 1)));
+}
+
+TEST(ScanTest, inplace_rvalue_buffer) {
+    Communicator comm;
+
+    auto result = comm.scan(send_recv_buf(std::vector<int>{42, 1}), op(kamping::ops::plus<>{}));
+    EXPECT_THAT(result, ElementsAre((comm.rank() + 1) * 42, (comm.rank() + 1)));
+}
+
+TEST(ScanTest, inplace_explicit_count) {
+    Communicator comm;
+
+    std::vector<int> data = {42, 1};
+    comm.scan(send_recv_buf(data), send_recv_count(1), op(kamping::ops::plus<>{}));
+    EXPECT_THAT(data, ElementsAre((comm.rank() + 1) * 42, 1 /* unchanged */));
+}
+
+TEST(ScanTest, inplace_explicit_count_resize) {
+    Communicator comm;
+
+    std::vector<int> data = {42, 1};
+    comm.scan(send_recv_buf<resize_to_fit>(data), send_recv_count(1), op(kamping::ops::plus<>{}));
+    EXPECT_THAT(data, ElementsAre((comm.rank() + 1) * 42));
+}
+
+TEST(ScanTest, inplace_explicit_type) {
+    Communicator comm;
+
+    std::pair<int, int> data = {42, 1};
+    MPI_Datatype        type = struct_type<std::pair<int, int>>::data_type();
+    MPI_Type_commit(&type);
+    comm.scan(
+        send_recv_buf(data),
+        send_recv_count(1),
+        op([](auto const& lhs,
+              auto const& rhs) { return std::make_pair(lhs.first + rhs.first, lhs.second + rhs.second); },
+           kamping::ops::commutative),
+        send_recv_type(type)
+    );
+    EXPECT_EQ(data, std::make_pair((comm.rank_signed() + 1) * 42, comm.rank_signed() + 1));
 }
