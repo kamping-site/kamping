@@ -557,7 +557,7 @@ TEST_F(ISendTest, poor_mans_broadcast) {
         }
         kamping::requests::wait_all(requests);
     } else {
-        result = comm.recv<int>(source(comm.root())).extract_recv_buffer()[0];
+        result = comm.recv<int>(source(comm.root()))[0];
     }
     EXPECT_EQ(result, 42);
 }
@@ -583,7 +583,7 @@ TEST_F(ISendTest, poor_mans_broadcast_with_test) {
             }
         } while (any_test_failed);
     } else {
-        result = comm.recv<int>(source(comm.root())).extract_recv_buffer()[0];
+        result = comm.recv<int>(source(comm.root()))[0];
     }
     EXPECT_EQ(result, 42);
 }
