@@ -64,7 +64,7 @@ public:
     /// If the underlying request was initialized by a non-blocking communication call, it is set to \c
     /// MPI_REQUEST_NULL.
     ///
-    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// @param status_param A parameter created by \ref kamping::status() or \ref kamping::status_out().
     /// Defaults to \c kamping::status(ignore<>).
     ///
     /// @return The status object, if \p status is \ref kamping::status_out(), otherwise nothing.
@@ -90,7 +90,7 @@ public:
     /// @brief Tests for completion of the underlying request. If the underlying request was
     /// initialized by a non-blocking communication call and completes, it is set to \c MPI_REQUEST_NULL.
     ///
-    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// @param status_param A parameter created by \ref kamping::status() or \ref kamping::status_out().
     /// Defaults to \c kamping::status(ignore<>).
     ///
     /// @return Returns \c true if the underlying request is complete. If \p status is \ref kamping::status_out(),

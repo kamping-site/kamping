@@ -84,7 +84,7 @@ public:
     }
 
     /// @brief Waits for all requests in the pool to complete by calling \c MPI_Waitall.
-    /// @param statuses A \c statuses parameter object to which the status information is written. Defaults
+    /// @param statuses_param A \c statuses parameter object to which the status information is written. Defaults
     /// to \c kamping::statuses(ignore<>).
     /// @return If \p statuses is an owning out parameter, returns the status information, otherwise returns nothing.
     template <typename StatusesParamObjectType = decltype(kamping::statuses(ignore<>))>
@@ -117,7 +117,7 @@ public:
     }
 
     /// @brief Tests whether all requests in the pool have completed by calling \c MPI_Testall.
-    /// @param statuses A \c statuses parameter object to which the status information is written. Defaults
+    /// @param statuses_param A \c statuses parameter object to which the status information is written. Defaults
     /// to \c kamping::statuses(ignore<>).
     /// @return A truthful value if all requests have completed, a falsy value otherwise.
     /// @note By default, returns a \c bool indicated completion, but if \p statuses is an owning out parameter, returns
@@ -163,8 +163,8 @@ public:
     }
 
     /// @brief Waits any request in the pool to complete by calling \c MPI_Waitany.
-    /// @param status A \c status parameter object to which the status information about the completed operation is
-    /// written. Defaults to \c kamping::status(ignore<>).
+    /// @param status_param A \c status parameter object to which the status information about the completed operation
+    /// is written. Defaults to \c kamping::status(ignore<>).
     /// @return By default, returns  the index of the completed operation. If the pool is
     /// empty or no request in the pool is active, returns an index equal to `index_end()`. If \p status is an owning
     /// out parameter, also returns the status alongside the index by returning a \ref PoolAnyResult.
@@ -201,8 +201,8 @@ public:
     }
 
     /// @brief Tests if any request in the pool is completed by calling \c MPI_Testany.
-    /// @param status A \c status parameter object to which the status information about the completed operation is
-    /// written. Defaults to \c kamping::status(ignore<>).
+    /// @param status_param A \c status parameter object to which the status information about the completed operation
+    /// is written. Defaults to \c kamping::status(ignore<>).
     /// @return If any request completes, returns an `std::optional` containing information about the completed request.
     /// Otherwise, `std::nullopt`. The value contained inside the optional depends on \p status parameter and
     /// follows the same rules as for \ref wait_any.
