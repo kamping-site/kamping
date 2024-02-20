@@ -1126,14 +1126,14 @@ TEST(ParameterFactoriesTest, tag_enum_class) {
 
 TEST(ParameterFactoriesTest, status_basics) {
     {
-        auto status_obj = status(kamping::ignore<>);
+        auto status_obj = status(kamping::ignore<>).construct_buffer_or_rebind();
         EXPECT_EQ(status_param_to_native_ptr(status_obj), MPI_STATUS_IGNORE);
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
         EXPECT_EQ(decltype(status_obj)::buffer_type, BufferType::ignore);
     }
     {
         MPI_Status native_status;
-        auto       status_obj = status_out(native_status);
+        auto       status_obj = status_out(native_status).construct_buffer_or_rebind();
         EXPECT_EQ(status_param_to_native_ptr(status_obj), &native_status);
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
         EXPECT_TRUE((std::is_same_v<decltype(status_obj)::value_type, MPI_Status>));
@@ -1141,14 +1141,14 @@ TEST(ParameterFactoriesTest, status_basics) {
     }
     {
         kamping::Status stat;
-        auto            status_obj = status_out(stat);
+        auto            status_obj = status_out(stat).construct_buffer_or_rebind();
         EXPECT_EQ(status_param_to_native_ptr(status_obj), &stat.native());
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
         EXPECT_TRUE((std::is_same_v<decltype(status_obj)::value_type, Status>));
         EXPECT_FALSE(decltype(status_obj)::is_owning);
     }
     {
-        auto status_obj = status_out();
+        auto status_obj = status_out().construct_buffer_or_rebind();
         EXPECT_EQ(decltype(status_obj)::parameter_type, ParameterType::status);
         EXPECT_TRUE(decltype(status_obj)::is_owning);
         EXPECT_TRUE((std::is_same_v<decltype(status_obj)::value_type, Status>));

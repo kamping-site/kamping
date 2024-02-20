@@ -379,7 +379,7 @@ TEST(MpiResultTest, extract_send_recv_type) {
 TEST(MpiResultTest, extract_status_basics) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto status = status_out();
+    auto status = status_out().construct_buffer_or_rebind();
 
     status_param_to_native_ptr(status)->MPI_TAG = 42;
     MPIResult mpi_result{

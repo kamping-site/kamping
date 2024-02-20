@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2023 The KaMPIng Authors
+// Copyright 2023-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -31,7 +31,7 @@ template <typename StatusObject>
 inline auto status_out(StatusObject&& status) {
     using status_type = std::remove_cv_t<std::remove_reference_t<StatusObject>>;
     static_assert(internal::type_list<MPI_Status, Status>::contains<status_type>);
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::status,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -41,7 +41,7 @@ inline auto status_out(StatusObject&& status) {
 /// @brief Constructs a status object internally, which may then be retrieved from \c kamping::MPIResult returned by the
 /// operation.
 inline auto status_out() {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::status,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -50,12 +50,14 @@ inline auto status_out() {
 
 /// @brief pass \c MPI_STATUS_IGNORE to the underlying MPI call.
 inline auto status(internal::ignore_t<void>) {
-    return internal::EmptyDataBuffer<Status, internal::ParameterType::status, internal::BufferType::ignore>{};
+    return internal::
+        make_empty_data_buffer_builder<Status, internal::ParameterType::status, internal::BufferType::ignore>();
 }
 
 /// @brief pass \c MPI_STATUSES_IGNORE to the underlying MPI call.
 inline auto statuses(internal::ignore_t<void>) {
-    return internal::EmptyDataBuffer<MPI_Status, internal::ParameterType::statuses, internal::BufferType::ignore>();
+    return internal::
+        make_empty_data_buffer_builder<MPI_Status, internal::ParameterType::statuses, internal::BufferType::ignore>();
 }
 
 /// @brief Pass a \p Container of \c MPI_Status to the underlying MPI call in which the statuses are stored upon
@@ -65,7 +67,7 @@ inline auto statuses(internal::ignore_t<void>) {
 /// @tparam Container the container type to use for the statuses.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 inline auto statuses_out(Container&& container) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::statuses,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -76,7 +78,7 @@ inline auto statuses_out(Container&& container) {
 /// @brief Internally contruct a new \p Container of \c MPI_Status, which will hold the returned statuses.
 template <typename Container>
 inline auto statuses_out(AllocNewT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::statuses,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -87,7 +89,7 @@ inline auto statuses_out(AllocNewT<Container>) {
 /// @brief Internally contruct a new \p Container<MPI_Status> which will hold the returned statuses.
 template <template <typename...> typename Container>
 inline auto statuses_out(AllocNewUsingT<Container>) {
-    return internal::make_data_buffer<
+    return internal::make_data_buffer_builder<
         internal::ParameterType::statuses,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -95,9 +97,11 @@ inline auto statuses_out(AllocNewUsingT<Container>) {
         MPI_Status>(alloc_new_using<Container>);
 }
 
-/// @brief Internally contruct an \c std::vector<MPI_Status>, which will hold the returned statuses.
+/// @brief Internally contruct a container of \c MPI_Status, which will hold the returned statuses. The container's type
+/// is usually determined by operations called on a \ref RequestPool, and defaults to \ref
+/// RequestPool::default_container_type.
 inline auto statuses_out() {
-    return statuses_out(alloc_new_using<std::vector>);
+    return statuses_out(alloc_container_of<MPI_Status>);
 }
 
 /// @}

@@ -79,7 +79,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
         internal::select_parameter_type_or_default<internal::ParameterType::status, default_status_param_type>(
             {},
             args...
-        );
+        )
+            .construct_buffer_or_rebind();
 
     KASSERT(internal::is_valid_rank_in_comm(source, *this, true, true), "Invalid source rank.");
 

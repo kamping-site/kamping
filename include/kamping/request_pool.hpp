@@ -41,12 +41,21 @@ struct PoolAnyResult {
 ///
 /// Requests are internally stored in a vector. The vector is resized as needed.
 /// New requests can be obtained by calling \ref get_request.
+///
+/// @tparam DefaultContainerType The default container type to use for containers created inside pool operations.
+/// Defaults to std::vector.
+template <template <typename...> typename DefaultContainerType = std::vector>
 class RequestPool {
 public:
     /// @brief Constructs a new empty \ref RequestPool.
     RequestPool() {}
 
     using index_type = size_t; ///< The type used to index requests in the pool.
+
+    /// @brief Type of the default container type to use for containers created inside operations of this request pool.
+    /// @tparam Args Arguments to the container type.
+    template <typename... Args>
+    using default_container_type = DefaultContainerType<Args...>;
 
     /// @brief The first index value. The pool is empty if `index_begin() == index_end()`.
     index_type index_begin() const {
@@ -79,11 +88,12 @@ public:
     /// to \c kamping::statuses(ignore<>).
     /// @return If \p statuses is an owning out parameter, returns the status information, otherwise returns nothing.
     template <typename StatusesParamObjectType = decltype(kamping::statuses(ignore<>))>
-    auto wait_all(StatusesParamObjectType statuses = kamping::statuses(ignore<>)) {
+    auto wait_all(StatusesParamObjectType statuses_param = kamping::statuses(ignore<>)) {
         static_assert(
             StatusesParamObjectType::parameter_type == internal::ParameterType::statuses,
             "Only statuses parameters are allowed."
         );
+        auto        statuses = statuses_param.template construct_buffer_or_rebind<DefaultContainerType>();
         MPI_Status* statuses_ptr;
         if constexpr (decltype(statuses)::buffer_type == internal::BufferType::ignore) {
             statuses_ptr = MPI_STATUS_IGNORE;
@@ -116,11 +126,12 @@ public:
     /// according to its \c resize_policy, even if not all requests have completed yet. This is because MPI
     /// does not allow retrieving statuses after a test succeeded.
     template <typename StatusesParamObjectType = decltype(kamping::statuses(ignore<>))>
-    auto test_all(StatusesParamObjectType statuses = kamping::statuses(ignore<>)) {
+    auto test_all(StatusesParamObjectType statuses_param = kamping::statuses(ignore<>)) {
         static_assert(
             StatusesParamObjectType::parameter_type == internal::ParameterType::statuses,
             "Only statuses parameters are allowed."
         );
+        auto        statuses = statuses_param.template construct_buffer_or_rebind<DefaultContainerType>();
         MPI_Status* statuses_ptr;
         if constexpr (decltype(statuses)::buffer_type == internal::BufferType::ignore) {
             statuses_ptr = MPI_STATUS_IGNORE;
@@ -159,13 +170,14 @@ public:
     /// out parameter, also returns the status alongside the index by returning a \ref PoolAnyResult.
     /// @see PoolAnyResult
     template <typename StatusParamObjectType = decltype(status(ignore<>))>
-    auto wait_any(StatusParamObjectType status = kamping::status(ignore<>)) {
+    auto wait_any(StatusParamObjectType status_param = kamping::status(ignore<>)) {
         static_assert(
             StatusParamObjectType::parameter_type == internal::ParameterType::status,
             "Only status parameters are allowed."
         );
-        int index;
-        int err = MPI_Waitany(
+        auto status = status_param.construct_buffer_or_rebind();
+        int  index;
+        int  err = MPI_Waitany(
             asserting_cast<int>(num_requests()),
             request_ptr(),
             &index,
@@ -196,14 +208,15 @@ public:
     /// follows the same rules as for \ref wait_any.
     /// @see wait_any
     template <typename StatusParamObjectType = decltype(status(ignore<>))>
-    auto test_any(StatusParamObjectType status = kamping::status(ignore<>)) {
+    auto test_any(StatusParamObjectType status_param = kamping::status(ignore<>)) {
         static_assert(
             StatusParamObjectType::parameter_type == internal::ParameterType::status,
             "Only status parameters are allowed."
         );
-        int index;
-        int flag;
-        int err = MPI_Testany(
+        auto status = status_param.construct_buffer_or_rebind();
+        int  index;
+        int  flag;
+        int  err = MPI_Testany(
             asserting_cast<int>(num_requests()),
             request_ptr(),
             &index,
