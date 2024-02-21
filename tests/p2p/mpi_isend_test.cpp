@@ -253,7 +253,7 @@ TEST_F(ISendTest, send_vector_with_enum_tag_recv_out_of_order) {
     Communicator comm;
     auto         other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
-        auto [req1, _r1] =
+        auto req1 =
             comm.isend(send_buf(std::vector<int>{}), destination(other_rank), tag(Tag::control_message)).extract();
         ASSERT_EQ(isend_counter, 1);
         ASSERT_EQ(ibsend_counter, 0);
@@ -261,7 +261,7 @@ TEST_F(ISendTest, send_vector_with_enum_tag_recv_out_of_order) {
         ASSERT_EQ(irsend_counter, 0);
 
         std::vector<int> values{42, 3, 8, 7};
-        auto [req2, _r2] = comm.isend(send_buf(values), destination(other_rank), tag(Tag::data_message)).extract();
+        auto             req2 = comm.isend(send_buf(values), destination(other_rank), tag(Tag::data_message)).extract();
         ASSERT_EQ(isend_counter, 2);
         ASSERT_EQ(ibsend_counter, 0);
         ASSERT_EQ(issend_counter, 0);
