@@ -31,7 +31,7 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/helpers.hpp"
 #include "kamping/parameter_objects.hpp"
-#include "kamping/result_.hpp"
+#include "kamping/result.hpp"
 #include "kamping/status.hpp"
 
 /// @brief Receives a message if one is available.
@@ -135,7 +135,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
     THROW_IF_MPI_ERROR(err, MPI_Improbe);
 
     auto construct_result = [&] {
-        return internal::make_mpi_result_<std::tuple<Args...>>(
+        return internal::make_mpi_result<std::tuple<Args...>>(
             std::move(recv_buf),
             std::move(status_param),
             std::move(recv_type)

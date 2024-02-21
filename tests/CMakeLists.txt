@@ -22,7 +22,6 @@ option(KAMPING_TEST_ENABLE_SANITIZERS "Enable undefined behavior sanitizer and a
 # Registering tests without MPI:
 kamping_register_test(test_checking_casts FILES checking_casts_test.cpp)
 kamping_register_test(test_result FILES result_test.cpp)
-kamping_register_test(test_result_ FILES result__test.cpp)
 kamping_register_test(test_nonblocking_result FILES nonblocking_result_test.cpp)
 kamping_register_test(test_mpi_operations FILES mpi_operations_test.cpp)
 kamping_register_test(test_named_parameter_check FILES named_parameter_check_test.cpp)

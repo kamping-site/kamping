@@ -28,7 +28,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result_.hpp"
+#include "kamping/result.hpp"
 
 /// @brief Wrapper for \c MPI_Exscan.
 ///
@@ -189,7 +189,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
             }
         }
 
-        return make_mpi_result_<std::tuple<Args...>>(
+        return make_mpi_result<std::tuple<Args...>>(
             std::move(recv_buf),
             std::move(send_recv_count),
             std::move(send_recv_type)
@@ -324,7 +324,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_inplace(Arg
         }
     }
 
-    return make_mpi_result_<std::tuple<Args...>>(std::move(send_recv_buf), std::move(count), std::move(type));
+    return make_mpi_result<std::tuple<Args...>>(std::move(send_recv_buf), std::move(count), std::move(type));
 }
 
 /// @brief Wrapper for \c MPI_exscan for single elements.
