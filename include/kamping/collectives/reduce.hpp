@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -31,7 +31,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result_.hpp"
+#include "kamping/result.hpp"
 
 /// @brief Wrapper for \c MPI_Reduce.
 ///
@@ -151,7 +151,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Reduce);
-    return make_mpi_result_<std::tuple<Args...>>(
+    return make_mpi_result<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(send_recv_count),
         std::move(send_recv_type)

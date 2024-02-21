@@ -31,7 +31,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result_.hpp"
+#include "kamping/result.hpp"
 
 /// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
 ///
@@ -139,7 +139,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
         );
 
         THROW_IF_MPI_ERROR(err, MPI_Allreduce);
-        return make_mpi_result_<std::tuple<Args...>>(
+        return make_mpi_result<std::tuple<Args...>>(
             std::move(recv_buf),
             std::move(send_recv_count),
             std::move(send_recv_type)
@@ -230,7 +230,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_inplace(
     );
 
     THROW_IF_MPI_ERROR(err, MPI_Allreduce);
-    return make_mpi_result_<std::tuple<Args...>>(
+    return make_mpi_result<std::tuple<Args...>>(
         std::move(send_recv_buf),
         std::move(send_recv_count),
         std::move(send_recv_type)

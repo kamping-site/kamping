@@ -29,7 +29,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/result_.hpp"
+#include "kamping/result.hpp"
 
 /// @brief Wrapper for \c MPI_Bcast
 ///
@@ -192,7 +192,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     );
     THROW_IF_MPI_ERROR(err, MPI_Bcast);
 
-    return make_mpi_result_<std::tuple<Args...>>(
+    return make_mpi_result<std::tuple<Args...>>(
         std::move(send_recv_buf),
         std::move(count_param),
         std::move(send_recv_type)

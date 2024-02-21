@@ -23,7 +23,7 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/request.hpp"
-#include "kamping/result_.hpp"
+#include "kamping/result.hpp"
 
 /// @brief Perform a non-blocking barrier synchronization on this communicator using \c MPI_Ibarrier. The call is
 /// associated with a \ref kamping::Request (either allocated by KaMPIng or provided by the user). Only when the request
@@ -54,5 +54,5 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::ibarrier(Args... a
     );
     THROW_IF_MPI_ERROR(err, MPI_Ibarrier);
 
-    return internal::make_nonblocking_result_<std::tuple<Args...>>(std::move(request_param));
+    return internal::make_nonblocking_result<std::tuple<Args...>>(std::move(request_param));
 }

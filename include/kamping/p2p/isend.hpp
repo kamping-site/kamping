@@ -31,7 +31,7 @@
 #include "kamping/p2p/helpers.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/request.hpp"
-#include "kamping/result_.hpp"
+#include "kamping/result.hpp"
 
 /// @brief Wrapper for \c MPI_Isend.
 ///
@@ -173,7 +173,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
         );
         THROW_IF_MPI_ERROR(err, MPI_Irsend);
     }
-    return make_nonblocking_result_<std::tuple<Args...>>(std::move(request_param));
+    return make_nonblocking_result<std::tuple<Args...>>(std::move(request_param));
 }
 
 /// @brief Convenience wrapper for MPI_Ibsend. Calls \ref kamping::Communicator::isend() with the appropriate send mode

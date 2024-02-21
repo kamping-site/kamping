@@ -722,22 +722,36 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mpi_result) {
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf, BufferType::out_buffer>    recv_buffer;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::out_buffer> recv_counts;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, BufferType::out_buffer> recv_displs;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, BufferType::out_buffer> send_counts;
-    LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, BufferType::out_buffer> send_displs;
-    // we use out_buffer here because extracting is only done from out buffers
-    LibAllocatedContainerBasedBuffer<int, ParameterType::recv_count, BufferType::out_buffer>         recv_count;
-    LibAllocatedContainerBasedBuffer<int, ParameterType::send_count, BufferType::out_buffer>         send_count;
-    LibAllocatedContainerBasedBuffer<int, ParameterType::send_recv_count, BufferType::out_buffer>    send_recv_count;
-    LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_type, BufferType::out_buffer> send_type;
-    LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::recv_type, BufferType::out_buffer> recv_type;
-    LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_recv_type, BufferType::out_buffer>
-                                                                                            send_recv_type;
-    LibAllocatedContainerBasedBuffer<Status, ParameterType::status, BufferType::out_buffer> status;
+    using OutParams = std::tuple<
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf, BufferType::out_buffer>,
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, BufferType::out_buffer>,
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_displs, BufferType::out_buffer>,
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_counts, BufferType::out_buffer>,
+        LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::send_displs, BufferType::out_buffer>,
+        // we use out_buffer here because extracting is only done from out buffers
+        LibAllocatedContainerBasedBuffer<int, ParameterType::recv_count, BufferType::out_buffer>,
+        LibAllocatedContainerBasedBuffer<int, ParameterType::send_count, BufferType::out_buffer>,
+        LibAllocatedContainerBasedBuffer<int, ParameterType::send_recv_count, BufferType::out_buffer>,
+        LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_type, BufferType::out_buffer>,
+        LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::recv_type, BufferType::out_buffer>,
+        LibAllocatedContainerBasedBuffer<MPI_Datatype, ParameterType::send_recv_type, BufferType::out_buffer>,
+        LibAllocatedContainerBasedBuffer<Status, ParameterType::status, BufferType::out_buffer>>;
 
-    MPIResult result(
+    std::tuple_element_t<0, OutParams> recv_buffer;
+    std::tuple_element_t<1, OutParams> recv_counts;
+    std::tuple_element_t<2, OutParams> recv_displs;
+    std::tuple_element_t<3, OutParams> send_counts;
+    std::tuple_element_t<4, OutParams> send_displs;
+    // we use out_buffer here because extracting is only done from out buffers
+    std::tuple_element_t<5, OutParams>  recv_count;
+    std::tuple_element_t<6, OutParams>  send_count;
+    std::tuple_element_t<7, OutParams>  send_recv_count;
+    std::tuple_element_t<8, OutParams>  send_type;
+    std::tuple_element_t<9, OutParams>  recv_type;
+    std::tuple_element_t<10, OutParams> send_recv_type;
+    std::tuple_element_t<11, OutParams> status;
+
+    MPIResult result = make_mpi_result<OutParams>(
         std::move(status),
         std::move(recv_buffer),
         std::move(recv_counts),

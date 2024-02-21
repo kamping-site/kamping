@@ -33,6 +33,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/result.hpp"
 
 namespace testing {
 /// @brief Simple Container type. Can be used to test library function with containers other than vector.
@@ -305,8 +306,13 @@ struct DummyNonBlockingOperation {
             this->state,
             &request_param.underlying().mpi_request()
         );
-        this->req = request_param.underlying().mpi_request();
-        return make_nonblocking_result(std::move(recv_buf), std::move(request_param));
+        this->req         = request_param.underlying().mpi_request();
+        using RecvBufType = std::remove_reference_t<decltype(recv_buf)>;
+        using RequestType = std::remove_reference_t<decltype(request_param)>;
+        return kamping::internal::make_nonblocking_result<std::tuple<RecvBufType, RequestType>>(
+            std::move(recv_buf),
+            std::move(request_param)
+        );
     }
 
     ///@brief Manually marks the operation as completed.

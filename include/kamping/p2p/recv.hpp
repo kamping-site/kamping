@@ -33,7 +33,7 @@
 #include "kamping/p2p/helpers.hpp"
 #include "kamping/p2p/probe.hpp"
 #include "kamping/parameter_objects.hpp"
-#include "kamping/result_.hpp"
+#include "kamping/result.hpp"
 #include "kamping/status.hpp"
 
 /// @brief Wrapper for \c MPI_Recv.
@@ -172,7 +172,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     );
     THROW_IF_MPI_ERROR(err, MPI_Recv);
 
-    return internal::make_mpi_result_<std::tuple<Args...>>(
+    return internal::make_mpi_result<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(recv_count_param),
         std::move(status),
