@@ -77,11 +77,14 @@ public:
     using const_reference = T const&;            ///< The type of a const reference to a single elements in the span.
     using iterator        = pointer;             ///< The type of an iterator to a single elements in the span.
 
+    constexpr Span() noexcept : _ptr(nullptr), _size(0) {}
     /// @brief Constructor for a span from a pointer and a size.
     ///
     /// @param ptr Pointer to the first element in the span.
     /// @param size The number of elements in the span.
-    constexpr Span(pointer ptr, size_type size) : _ptr(ptr), _size(size) {}
+    template <typename It>
+    constexpr Span(It first, size_type size) : _ptr(internal::to_address(first)),
+                                               _size(size) {}
 
     /// @brief Constructs a span that is a view over the range <code>[first, last)</code>; the resulting span has
     /// <code>data() == kamping::internal::to_address(first)</code> and <code>size() == last-first</code>.
@@ -158,7 +161,9 @@ template <typename Range>
 Span(Range&&) -> Span<typename std::remove_reference_t<Range>::value_type>;
 
 template <typename It>
-Span(It, It) -> Span<typename std::iterator_traits<It>::value_type>;
+Span(It, It) -> Span<std::remove_reference_t<typename std::iterator_traits<It>::reference> >;
+template <typename It>
+Span(It, size_t) -> Span<std::remove_reference_t<typename std::iterator_traits<It>::reference> >;
 } // namespace kamping
 
 #endif // C++ 17
