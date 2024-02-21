@@ -332,6 +332,178 @@ struct tuple_element<index, kamping::MPIResult<Args...>> {
 
 } // namespace std
 
+namespace kamping {
+
+/// @brief NonBlockingResult contains the result of a non-blocking \c MPI call wrapped by KaMPIng. It encapsulates a
+/// \ref kamping::MPIResult and a \ref kamping::Request.
+///
+///
+/// @tparam MPIResultType The underlying result type.
+/// @tparam RequestDataBuffer Container encapsulating the underlying request.
+template <typename MPIResultType, typename RequestDataBuffer>
+class NonBlockingResult {
+public:
+    /// @brief Constructor for \c NonBlockingResult.
+    /// @param result The underlying \ref kamping::MPIResult.
+    /// @param request A \ref kamping::internal::DataBuffer containing the associated \ref kamping::Request.
+    NonBlockingResult(MPIResultType result, RequestDataBuffer request)
+        : _mpi_result(std::move(result)),
+          _request(std::move(request)) {}
+
+    /// @brief \c true if the result object owns the underlying \ref kamping::Request.
+    static constexpr bool owns_request = internal::has_extract_v<RequestDataBuffer>;
+
+    /// @brief Extracts the components of this results, leaving the user responsible.
+    ///
+    /// If this result owns the underlying request:
+    /// - returns a \c std::pair containing the \ref Request and \ref
+    /// MPIResult if the result object contains owning out buffers.
+    /// - returns only the \ref Request object otherwise.
+    ///
+    /// If the request is owned by the user
+    /// - return the underlying \ref MPIResult if the result object contains any owning out buffers.
+    /// - returns nothing otherwise.
+    ///
+    /// Note that the result may be in an undefined state because the associated operations is still underway and it
+    /// is the user's responsibilty to ensure that the corresponding request has been completed before accessing the
+    /// result.
+    auto extract() {
+        if constexpr (owns_request) {
+            if constexpr (is_result_empty_v<decltype(extract_result())>) {
+                return _request.extract();
+            } else {
+                auto result =
+                    extract_result(); // we try to extract the result first, so that we get a nice error message
+                // TODO: return a named struct
+                return std::pair(_request.extract(), std::move(result));
+            }
+        } else {
+            if constexpr (is_result_empty_v<decltype(extract_result())>) {
+                return;
+            } else {
+                return extract_result();
+            }
+        }
+    }
+
+    /// @brief Waits for the underlying \ref Request to complete by calling \ref Request::wait() and upon completion
+    /// returns:
+    ///
+    /// If \p status is an out-parameter:
+    /// - If the result is not empty (see \ref is_result_empty_v), an \c std::pair containing an \ref MPIResult
+    /// and the status.
+    /// - If the result is empty, only the status is returned.
+    ///
+    /// If \p is \c kamping::status(ignore<>), or not an out-paramter:
+    /// - If the result is not empty (see \ref is_result_empty_v), only the result is returned.
+    /// - If the result is empty, nothing is returned.
+    ///
+    /// This method is only available if this result owns the underlying request. If this is not the case, the user
+    /// must manually wait on the request that they own and manually obtain the result via \ref extract().
+    ///
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
+    template <
+        typename StatusParamObjectType = decltype(status(ignore<>)),
+        typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
+        typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
+    auto wait(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
+        kassert_not_extracted("The result of this request has already been extracted.");
+        constexpr bool return_status = internal::is_extractable<StatusParamObjectType>;
+        if constexpr (!is_result_empty_v<MPIResultType>) {
+            if constexpr (return_status) {
+                auto status_return = _request.underlying().wait(std::move(status));
+                return std::make_pair(extract_result(), std::move(status_return));
+            } else {
+                _request.underlying().wait(std::move(status));
+                return extract_result();
+            }
+        } else {
+            return _request.underlying().wait(std::move(status));
+        }
+    }
+
+    /// @brief Tests the underlying \ref Request for completion by calling \ref
+    /// Request::test() and returns a value convertible to \c bool indicating if the request is complete.
+    ///
+    /// The type of the return value depends on the encapsulated result and the \p status parameter and follows the
+    /// same semantics as \ref wait(), but its return value is wrapped in an \c std::optional. The optional only
+    /// contains a value if the request is complete, i.e. \c test() succeeded.
+    ///
+    /// If both the result is empty and no status returned, returns a \c bool indicating completion instead of an \c
+    /// std::optional.
+    ///
+    /// This method is only available if this result owns the underlying request. If this is not the case, the user
+    /// must manually test the request that they own and manually obtain the result via \ref extract().
+    ///
+    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// Defaults to \c kamping::status(ignore<>).
+    template <
+        typename StatusParamObjectType = decltype(status(ignore<>)),
+        typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
+        typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
+    auto test(StatusParamObjectType status = kamping::status(ignore<>)) {
+        static_assert(
+            StatusParamObjectType::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
+        kassert_not_extracted("The result of this request has already been extracted.");
+        constexpr bool return_status = internal::is_extractable<StatusParamObjectType>;
+        if constexpr (!is_result_empty_v<MPIResultType>) {
+            if constexpr (return_status) {
+                auto status_return = _request.underlying().test(std::move(status));
+                if (status_return) {
+                    return std::optional{std::pair{extract_result(), std::move(*status_return)}};
+                } else {
+                    return std::optional<std::pair<MPIResultType, typename decltype(status_return)::value_type>>{};
+                }
+            } else {
+                if (_request.underlying().test(std::move(status))) {
+                    return std::optional{extract_result()};
+                } else {
+                    return std::optional<MPIResultType>{};
+                }
+            }
+        } else {
+            return _request.underlying().test(std::move(status));
+        }
+    }
+
+private:
+    /// @brief Moves the wrapped \ref MPIResult out of this object.
+    MPIResultType extract_result() {
+        kassert_not_extracted("The result of this request has already been extracted.");
+        auto extracted = std::move(_mpi_result);
+        set_extracted();
+        return extracted;
+    }
+
+    void set_extracted() {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        is_extracted = true;
+#endif
+    }
+
+    /// @brief Throws an assertion if the extracted flag is set, i.e. the underlying status has been moved out.
+    ///
+    /// @param message The message for the assertion.
+    void kassert_not_extracted(std::string const message [[maybe_unused]]) const {
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KASSERT(!is_extracted, message, assert::normal);
+#endif
+    }
+    MPIResultType     _mpi_result; ///< The wrapped \ref MPIResult.
+    RequestDataBuffer _request;    ///< DataBuffer containing the wrapped \ref Request.
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    bool is_extracted = false; ///< Has the status been extracted and is therefore in an invalid state?
+#endif
+};
+} // namespace kamping
+
 namespace kamping::internal {
 
 /// @brief Base template used to concatenate a type to a given std::tuple.
@@ -619,175 +791,6 @@ auto make_mpi_result(Buffers&&... buffers) {
         }
     }
 }
-
-/// @brief NonBlockingResult contains the result of a non-blocking \c MPI call wrapped by KaMPIng. It encapsulates a
-/// \ref kamping::MPIResult and a \ref kamping::Request.
-///
-///
-/// @tparam MPIResultType The underlying result type.
-/// @tparam RequestDataBuffer Container encapsulating the underlying request.
-template <typename MPIResultType, typename RequestDataBuffer>
-class NonBlockingResult {
-public:
-    /// @brief Constructor for \c NonBlockingResult.
-    /// @param result The underlying \ref kamping::MPIResult.
-    /// @param request A \ref kamping::internal::DataBuffer containing the associated \ref kamping::Request.
-    NonBlockingResult(MPIResultType result, RequestDataBuffer request)
-        : _mpi_result(std::move(result)),
-          _request(std::move(request)) {}
-
-    /// @brief \c true if the result object owns the underlying \ref kamping::Request.
-    static constexpr bool owns_request = internal::has_extract_v<RequestDataBuffer>;
-
-    /// @brief Extracts the components of this results, leaving the user responsible.
-    ///
-    /// If this result owns the underlying request:
-    /// - returns a \c std::pair containing the \ref Request and \ref
-    /// MPIResult if the result object contains owning out buffers.
-    /// - returns only the \ref Request object otherwise.
-    ///
-    /// If the request is owned by the user
-    /// - return the underlying \ref MPIResult if the result object contains any owning out buffers.
-    /// - returns nothing otherwise.
-    ///
-    /// Note that the result may be in an undefined state because the associated operations is still underway and it
-    /// is the user's responsibilty to ensure that the corresponding request has been completed before accessing the
-    /// result.
-    auto extract() {
-        if constexpr (owns_request) {
-            if constexpr (is_result_empty_v<decltype(extract_result())>) {
-                return _request.extract();
-            } else {
-                auto result =
-                    extract_result(); // we try to extract the result first, so that we get a nice error message
-                // TODO: return a named struct
-                return std::pair(_request.extract(), std::move(result));
-            }
-        } else {
-            if constexpr (is_result_empty_v<decltype(extract_result())>) {
-                return;
-            } else {
-                return extract_result();
-            }
-        }
-    }
-
-    /// @brief Waits for the underlying \ref Request to complete by calling \ref Request::wait() and upon completion
-    /// returns:
-    ///
-    /// If \p status is an out-parameter:
-    /// - If the result is not empty (see \ref is_result_empty_v), an \c std::pair containing an \ref MPIResult
-    /// and the status.
-    /// - If the result is empty, only the status is returned.
-    ///
-    /// If \p is \c kamping::status(ignore<>), or not an out-paramter:
-    /// - If the result is not empty (see \ref is_result_empty_v), only the result is returned.
-    /// - If the result is empty, nothing is returned.
-    ///
-    /// This method is only available if this result owns the underlying request. If this is not the case, the user
-    /// must manually wait on the request that they own and manually obtain the result via \ref extract().
-    ///
-    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
-    /// Defaults to \c kamping::status(ignore<>).
-    template <
-        typename StatusParamObjectType = decltype(status(ignore<>)),
-        typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
-        typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
-    auto wait(StatusParamObjectType status = kamping::status(ignore<>)) {
-        static_assert(
-            StatusParamObjectType::parameter_type == internal::ParameterType::status,
-            "Only status parameters are allowed."
-        );
-        kassert_not_extracted("The result of this request has already been extracted.");
-        constexpr bool return_status = internal::is_extractable<StatusParamObjectType>;
-        if constexpr (!is_result_empty_v<MPIResultType>) {
-            if constexpr (return_status) {
-                auto status_return = _request.underlying().wait(std::move(status));
-                return std::make_pair(extract_result(), std::move(status_return));
-            } else {
-                _request.underlying().wait(std::move(status));
-                return extract_result();
-            }
-        } else {
-            return _request.underlying().wait(std::move(status));
-        }
-    }
-
-    /// @brief Tests the underlying \ref Request for completion by calling \ref
-    /// Request::test() and returns a value convertible to \c bool indicating if the request is complete.
-    ///
-    /// The type of the return value depends on the encapsulated result and the \p status parameter and follows the
-    /// same semantics as \ref wait(), but its return value is wrapped in an \c std::optional. The optional only
-    /// contains a value if the request is complete, i.e. \c test() succeeded.
-    ///
-    /// If both the result is empty and no status returned, returns a \c bool indicating completion instead of an \c
-    /// std::optional.
-    ///
-    /// This method is only available if this result owns the underlying request. If this is not the case, the user
-    /// must manually test the request that they own and manually obtain the result via \ref extract().
-    ///
-    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
-    /// Defaults to \c kamping::status(ignore<>).
-    template <
-        typename StatusParamObjectType = decltype(status(ignore<>)),
-        typename NonBlockingResulType_ = NonBlockingResult<MPIResultType, RequestDataBuffer>,
-        typename std::enable_if<NonBlockingResulType_::owns_request, bool>::type = true>
-    auto test(StatusParamObjectType status = kamping::status(ignore<>)) {
-        static_assert(
-            StatusParamObjectType::parameter_type == internal::ParameterType::status,
-            "Only status parameters are allowed."
-        );
-        kassert_not_extracted("The result of this request has already been extracted.");
-        constexpr bool return_status = internal::is_extractable<StatusParamObjectType>;
-        if constexpr (!is_result_empty_v<MPIResultType>) {
-            if constexpr (return_status) {
-                auto status_return = _request.underlying().test(std::move(status));
-                if (status_return) {
-                    return std::optional{std::pair{extract_result(), std::move(*status_return)}};
-                } else {
-                    return std::optional<std::pair<MPIResultType, typename decltype(status_return)::value_type>>{};
-                }
-            } else {
-                if (_request.underlying().test(std::move(status))) {
-                    return std::optional{extract_result()};
-                } else {
-                    return std::optional<MPIResultType>{};
-                }
-            }
-        } else {
-            return _request.underlying().test(std::move(status));
-        }
-    }
-
-private:
-    /// @brief Moves the wrapped \ref MPIResult out of this object.
-    MPIResultType extract_result() {
-        kassert_not_extracted("The result of this request has already been extracted.");
-        auto extracted = std::move(_mpi_result);
-        set_extracted();
-        return extracted;
-    }
-
-    void set_extracted() {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        is_extracted = true;
-#endif
-    }
-
-    /// @brief Throws an assertion if the extracted flag is set, i.e. the underlying status has been moved out.
-    ///
-    /// @param message The message for the assertion.
-    void kassert_not_extracted(std::string const message [[maybe_unused]]) const {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, message, assert::normal);
-#endif
-    }
-    MPIResultType     _mpi_result; ///< The wrapped \ref MPIResult.
-    RequestDataBuffer _request;    ///< DataBuffer containing the wrapped \ref Request.
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    bool is_extracted = false; ///< Has the status been extracted and is therefore in an invalid state?
-#endif
-};
 
 /// @brief Factory for creating a \ref kamping::NonBlockingResult.
 ///
