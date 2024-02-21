@@ -102,6 +102,31 @@ TEST(ScatterTest, scatter_single_element_with_explicit_send_count_only_at_root) 
     EXPECT_EQ(result.front(), comm.rank());
 }
 
+TEST(ScatterTest, scatter_single) {
+    Communicator comm;
+
+    auto const input  = create_input_vector_on_root(comm, 1);
+    auto const result = comm.scatter_single(send_buf(input));
+    EXPECT_EQ(result, comm.rank());
+}
+
+TEST(ScatterTest, scatter_single_with_owning_send_buf) {
+    Communicator comm;
+
+    auto       input  = create_input_vector_on_root(comm, 1);
+    auto const result = comm.scatter_single(send_buf(std::move(input)));
+    EXPECT_EQ(result, comm.rank());
+}
+
+TEST(ScatterTest, scatter_single_with_explicit_root) {
+    Communicator comm;
+
+    int const  root   = comm.size_signed() - 1;
+    auto const input  = create_input_vector_on_root(comm, 1, root);
+    auto const result = comm.scatter_single(send_buf(input), kamping::root(root));
+    EXPECT_EQ(result, comm.rank());
+}
+
 TEST(ScatterTest, scatter_send_count_parameter_is_only_considered_at_root) {
     Communicator comm;
 

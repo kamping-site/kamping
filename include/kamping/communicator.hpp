@@ -483,6 +483,9 @@ public:
     auto scatter(Args... args) const;
 
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
+    auto scatter_single(Args... args) const;
+
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto scatterv(Args... args) const;
 
     template <typename... Args>

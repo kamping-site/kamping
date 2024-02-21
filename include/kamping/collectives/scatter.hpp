@@ -99,6 +99,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     auto send_buf =
         select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...)
             .construct_buffer_or_rebind();
+
+    std::cout << "check here in scatter: " << rank() << " size: " << send_buf.size() << std::endl;
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     KASSERT(!is_root(int_root) || send_buf.data() != nullptr, "Send buffer must be specified on root.", assert::light);
 
@@ -205,6 +207,62 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
         std::move(send_type),
         std::move(recv_type)
     );
+}
+
+/// Calling scatter_single() is a shorthand for calling scatter() with a \ref kamping::send_buf() with the same size as
+/// the communicator.
+///
+/// The following parameters are required on the root rank:
+/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to have the same size as
+/// the communicator on the root rank.
+///
+/// The following parameters are optional:
+/// - kamping::root() specifying the rank of the root PE. If omitted, the default root PE of the communicator
+/// is used instead.
+///
+/// @tparam recv_value_type_tparam The type that is received.
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described above.
+/// @return The single output value.
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
+auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter_single(Args... args) const {
+    using namespace kamping::internal;
+
+    // In contrast to bcast(...), send_recv_count is not a possible parameter.
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(send_buf, root));
+
+    // Get the root PE
+    auto&& root = select_parameter_type_or_default<ParameterType::root, internal::RootDataBuffer>(
+        std::tuple(this->root()),
+        args...
+    );
+    // we have to do this check with communication, because otherwise the other ranks would already start with the
+    // broadcast and indefinitely wait for the root
+    if constexpr (kassert::internal::assertion_enabled(assert::light_communication)) {
+        bool root_has_buffer_of_size_comm_size = has_parameter_type<internal::ParameterType::send_buf, Args...>();
+        int  err                               = MPI_Bcast(
+            &root_has_buffer_of_size_comm_size,
+            1,
+            MPI_CXX_BOOL,
+            root.rank_signed(),
+            this->mpi_communicator()
+        );
+        THROW_IF_MPI_ERROR(err, MPI_Bcast);
+        KASSERT(
+            root_has_buffer_of_size_comm_size,
+            "send_buf must be provided on the root rank.",
+            assert::light_communication
+        );
+    }
+
+    if constexpr (has_parameter_type<ParameterType::send_buf, Args...>()) {
+        using send_recv_buf_type = buffer_type_with_requested_parameter_type<ParameterType::send_buf, Args...>;
+        using value_type         = typename send_recv_buf_type::value_type;
+        return this->scatter(recv_buf(alloc_new<value_type>), std::forward<Args>(args)..., recv_count(1));
+    } else {
+        return this->scatter(recv_buf(alloc_new<recv_value_type_tparam>), std::forward<Args>(args)..., recv_count(1));
+    }
 }
 
 /// @brief Wrapper for \c MPI_Scatterv.
