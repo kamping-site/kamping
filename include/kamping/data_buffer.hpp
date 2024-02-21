@@ -605,7 +605,7 @@ public:
     /// @brief Returns a span containing a nullptr.
     /// @return Span containing a nullptr.
     Span<value_type> get() const {
-        return {nullptr, 0};
+        return {};
     }
     /// @brief Resizes the underlying container if the buffer the buffer's resize policy allows and resizing is
     /// necessary. Does nothing for an empty buffer.
