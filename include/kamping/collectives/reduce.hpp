@@ -157,3 +157,48 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
         std::move(send_recv_type)
     );
 }
+
+/// @brief Wrapper for \c MPI_Reduce.
+///
+/// Calling reduce_single() is a shorthand for calling reduce() with a \ref kamping::send_buf() of size 1. It
+/// always issues only a single <code>MPI_Reduce</code> call, as no receive counts have to be exchanged.
+///
+/// The following parameters are required:
+/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to wrap a single element
+/// on each rank.
+/// - \ref kamping::op() wrapping the operation to apply to the input.
+///
+/// The following parameters are optional:
+/// - \ref kamping::root() the root rank. If not set, the default root process of the communicator will be used.
+///
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described above.
+/// @return Returns an std::optional object encapsulating the reduced value on the root rank and an empty std::optional
+/// object on all non-root ranks.
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <typename... Args>
+auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce_single(Args... args) const {
+    using namespace kamping::internal;
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS(root));
+
+    using send_buf_type = buffer_type_with_requested_parameter_type<ParameterType::send_buf, Args...>;
+    static_assert(
+        send_buf_type::is_single_element,
+        "The underlying container has to be a single element \"container\""
+    );
+
+    auto&& root = internal::select_parameter_type_or_default<internal::ParameterType::root, internal::RootDataBuffer>(
+        std::tuple(this->root()),
+        args...
+    );
+
+    using value_type = typename std::remove_reference_t<
+        decltype(select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind())>::value_type;
+
+    if (is_root(root.rank_signed())) {
+        return std::optional<value_type>{this->reduce(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...)};
+    } else {
+        this->reduce(std::forward<Args>(args)...);
+        return std::optional<value_type>{};
+    }
+}

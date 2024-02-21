@@ -709,6 +709,49 @@ TEST(ReduceTest, send_type_part_of_result_object) {
 //     }
 // }
 
+TEST(ReduceTest, reduce_single) {
+    Communicator       comm;
+    int                input  = comm.rank_signed();
+    std::optional<int> result = comm.reduce_single(send_buf(input), op(kamping::ops::plus<>{}));
+
+    if (comm.is_root()) {
+        int const expected_result = (comm.size_signed() * (comm.size_signed() - 1)) / 2;
+        EXPECT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), expected_result);
+    } else {
+        EXPECT_EQ(result, std::nullopt);
+    }
+}
+
+TEST(ReduceTest, reduce_single_with_temporary) {
+    Communicator       comm;
+    std::optional<int> result = comm.reduce_single(send_buf(comm.rank_signed()), op(kamping::ops::plus<>{}));
+
+    if (comm.is_root()) {
+        int const expected_result = (comm.size_signed() * (comm.size_signed() - 1)) / 2;
+        EXPECT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), expected_result);
+    } else {
+        EXPECT_EQ(result, std::nullopt);
+    }
+}
+
+TEST(ReduceTest, reduce_single_with_root_param) {
+    Communicator comm;
+
+    int                input  = comm.rank_signed();
+    int const          root   = comm.size_signed() - 1;
+    std::optional<int> result = comm.reduce_single(send_buf(input), kamping::root(root), op(kamping::ops::plus<>{}));
+
+    if (comm.is_root(root)) {
+        int const expected_result = (comm.size_signed() * (comm.size_signed() - 1)) / 2;
+        EXPECT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), expected_result);
+    } else {
+        EXPECT_EQ(result, std::nullopt);
+    }
+}
+
 TEST(ReduceTest, structured_bindings_explicit_recv_buffer) {
     Communicator comm;
 

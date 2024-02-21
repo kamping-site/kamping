@@ -239,13 +239,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_inplace(
 
 /// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
 ///
-/// This wrapper for \c MPI_Allreduce sends a single value from the root to all other ranks. Calling allreduce_single()
-/// is a shorthand for calling allreduce() with a \ref kamping::send_buf() of size 1. It always issues only a single
-/// <code>MPI_Allreduce</code> call, as no receive counts have to be exchanged.
+/// Calling allreduce_single() is a shorthand for calling allreduce() with a \ref kamping::send_buf() of size 1. It
+/// always issues only a single <code>MPI_Allreduce</code> call, as no receive counts have to be exchanged.
 ///
 /// The following parameters are required:
-/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be of size 1 on each
-/// rank.
+/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to wrap a single element
+/// on each rank.
 /// - \ref kamping::op() wrapping the operation to apply to the input.
 ///
 /// @tparam Args Automatically deducted template parameters.

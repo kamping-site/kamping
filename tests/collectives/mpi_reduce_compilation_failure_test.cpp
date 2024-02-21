@@ -42,6 +42,8 @@ int main(int /*argc*/, char** /*argv*/) {
         op(kamping::ops::plus<>{}),
         recv_buf<grow_only>(recv_buffer)
     );
+#elif defined(SINGLE_VARIANT_WITH_VECTOR)
+    std::optional<int> result = comm.reduce_single(send_buf(input), op(kamping::ops::plus<>{}));
 #else
     // If none of the above sections is active, this file will compile successfully.
     comm.reduce(
