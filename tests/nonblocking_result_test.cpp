@@ -203,8 +203,6 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works) {
     EXPECT_EQ(data.value(), expected_data);
 }
 
-// TODO above
-
 TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_out) {
     auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     recv_buf_obj.underlying().push_back(42);
