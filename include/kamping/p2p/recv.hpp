@@ -122,7 +122,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         internal::select_parameter_type_or_default<internal::ParameterType::status, default_status_param_type>(
             {},
             args...
-        );
+        )
+            .construct_buffer_or_rebind();
 
     // Get the optional recv_count parameter. If the parameter is not given,
     // allocate a new container.

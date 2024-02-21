@@ -120,7 +120,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         internal::select_parameter_type_or_default<internal::ParameterType::status, default_status_param_type>(
             {},
             args...
-        );
+        )
+            .construct_buffer_or_rebind();
     KASSERT(internal::is_valid_rank_in_comm(source_param, *this, /*allow_null=*/true, /*allow_any=*/true));
     int source = source_param.rank_signed();
     int tag    = tag_param.tag();

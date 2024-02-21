@@ -256,7 +256,7 @@ TEST(MpiResult_Test, extract_send_recv_type) {
 TEST(MpiResult_Test, extract_status_basics) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto status = status_out();
+    auto status = status_out().construct_buffer_or_rebind();
 
     status_param_to_native_ptr(status)->MPI_TAG = 42;
     MPIResult_ mpi_result{std::make_tuple(std::move(status))};

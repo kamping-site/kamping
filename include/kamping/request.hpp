@@ -64,17 +64,18 @@ public:
     /// If the underlying request was initialized by a non-blocking communication call, it is set to \c
     /// MPI_REQUEST_NULL.
     ///
-    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// @param status_param A parameter created by \ref kamping::status() or \ref kamping::status_out().
     /// Defaults to \c kamping::status(ignore<>).
     ///
     /// @return The status object, if \p status is \ref kamping::status_out(), otherwise nothing.
     template <typename StatusParamObjectType = decltype(status(ignore<>))>
-    auto wait(StatusParamObjectType status = kamping::status(ignore<>)) {
+    auto wait(StatusParamObjectType status_param = kamping::status(ignore<>)) {
         static_assert(
             StatusParamObjectType::parameter_type == internal::ParameterType::status,
             "Only status parameters are allowed."
         );
-        int err = MPI_Wait(request_ptr(), internal::status_param_to_native_ptr(status));
+        auto status = status_param.construct_buffer_or_rebind();
+        int  err    = MPI_Wait(request_ptr(), internal::status_param_to_native_ptr(status));
         THROW_IF_MPI_ERROR(err, MPI_Wait);
         if constexpr (internal::is_extractable<StatusParamObjectType>) {
             return status.extract();
@@ -89,19 +90,20 @@ public:
     /// @brief Tests for completion of the underlying request. If the underlying request was
     /// initialized by a non-blocking communication call and completes, it is set to \c MPI_REQUEST_NULL.
     ///
-    /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
+    /// @param status_param A parameter created by \ref kamping::status() or \ref kamping::status_out().
     /// Defaults to \c kamping::status(ignore<>).
     ///
     /// @return Returns \c true if the underlying request is complete. If \p status is \ref kamping::status_out() and
     /// owning, returns an \c std::optional encapsulating the status in case of completion, \c std::nullopt otherwise.
     template <typename StatusParamObjectType = decltype(status(ignore<>))>
-    [[nodiscard]] auto test(StatusParamObjectType status = kamping::status(ignore<>)) {
+    [[nodiscard]] auto test(StatusParamObjectType status_param = kamping::status(ignore<>)) {
         static_assert(
             StatusParamObjectType::parameter_type == internal::ParameterType::status,
             "Only status parameters are allowed."
         );
-        int is_finished;
-        int err = MPI_Test(request_ptr(), &is_finished, internal::status_param_to_native_ptr(status));
+        auto status = status_param.construct_buffer_or_rebind();
+        int  is_finished;
+        int  err = MPI_Test(request_ptr(), &is_finished, internal::status_param_to_native_ptr(status));
         THROW_IF_MPI_ERROR(err, MPI_Test);
         if constexpr (internal::is_extractable<StatusParamObjectType>) {
             if (is_finished) {
