@@ -11,6 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include "gmock/gmock.h"
 #include <type_traits>
 
 #include <gtest/gtest.h>
@@ -114,7 +115,7 @@ TEST(SpanTest, basic_functionality) {
     EXPECT_EQ(values.data(), empty_span.data());
     EXPECT_EQ(empty_span.begin(), empty_span.end());
 
-    Span<int> nullptr_span = {static_cast<int*>(nullptr), Span<int>::size_type{0}};
+    Span<int> nullptr_span{};
     EXPECT_TRUE(nullptr_span.empty());
     EXPECT_EQ(0, nullptr_span.size());
     EXPECT_EQ(0, nullptr_span.size_bytes());
@@ -172,4 +173,53 @@ TEST(SpanTest, basic_functionality) {
         std::is_same_v<decltype(int_span)::const_reference, decltype(values)::const_reference>,
         "Member const_reference of int_span does not match the element type of the underlying container."
     );
+}
+
+TEST(SpanTest, iterator) {
+    std::vector<int> values = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+    Span<int> int_span(values);
+    {
+        auto it = int_span.begin();
+        for (auto value: values) {
+            EXPECT_EQ(value, *it);
+            ++it;
+        }
+        EXPECT_EQ(int_span.end(), it);
+    }
+
+    // Test reverse iterators
+    {
+        auto rit = int_span.rbegin();
+        for (auto it = values.rbegin(); it != values.rend(); ++it) {
+            EXPECT_EQ(*it, *rit);
+            ++rit;
+        }
+        EXPECT_EQ(int_span.rend(), rit);
+    }
+}
+
+TEST(SpanTest, accessors) {
+    std::vector<int> values = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+    Span<int> int_span(values);
+    EXPECT_EQ(values.front(), 1);
+    EXPECT_EQ(values.back(), 10);
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        EXPECT_EQ(values[i], int_span[i]);
+    }
+}
+
+TEST(SpanTest, subspans) {
+    std::vector<int> values = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+    Span<int> int_span(values);
+    auto      first_5 = int_span.first(5);
+    EXPECT_THAT(first_5, testing::ElementsAreArray({1, 2, 3, 4, 5}));
+
+    auto last_5 = int_span.last(5);
+    EXPECT_THAT(last_5, testing::ElementsAreArray({6, 7, 8, 9, 10}));
+
+    auto subspan = int_span.subspan(3, 4);
+    EXPECT_THAT(subspan, testing::ElementsAreArray({4, 5, 6, 7}));
 }

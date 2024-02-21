@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022-2023 The KaMPIng Authors
+// Copyright 2022-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -55,7 +55,6 @@ using Span = std::span<T>;
 
     #include <cstddef>
     #include <iterator>
-    #include <tuple>
 
 namespace kamping {
 
@@ -76,12 +75,17 @@ public:
     using reference       = T&;                  ///< The type of a reference to a single elements in the span.
     using const_reference = T const&;            ///< The type of a const reference to a single elements in the span.
     using iterator        = pointer;             ///< The type of an iterator to a single elements in the span.
+    using reverse_iterator =
+        std::reverse_iterator<iterator>; ///< The type of a reverse iterator to a single elements in the span.
 
+    /// @brief Default constructor for an empty span. The pointer is set to \c nullptr and the size to 0.
     constexpr Span() noexcept : _ptr(nullptr), _size(0) {}
-    /// @brief Constructor for a span from a pointer and a size.
+
+    /// @brief Constructor for a span from an iterator of type \p It and a \p size.
     ///
-    /// @param ptr Pointer to the first element in the span.
+    /// @param first Iterator pointing to the first element of the span.
     /// @param size The number of elements in the span.
+    /// @tparam It The iterator type.
     template <typename It>
     constexpr Span(It first, size_type size) : _ptr(internal::to_address(first)),
                                                _size(size) {}
@@ -131,6 +135,31 @@ public:
         return _ptr + size();
     }
 
+    /// @brief Get a reverse iterator pointing to the first element of the reversed span.
+    constexpr reverse_iterator rbegin() const noexcept {
+        return std::reverse_iterator{_ptr + _size};
+    }
+
+    /// @brief Get a reverse iterator pointing to the last element of the reversed span.
+    constexpr reverse_iterator rend() const noexcept {
+        return std::reverse_iterator{_ptr};
+    }
+
+    /// @brief Access the first element of the span.
+    constexpr reference front() const noexcept {
+        return *_ptr;
+    }
+
+    /// @brief Access the last element of the span.
+    constexpr reference back() const noexcept {
+        return *(_ptr + _size - 1);
+    }
+
+    /// @brief Access the element at index \p idx.
+    constexpr reference operator[](size_type idx) const noexcept {
+        return _ptr[idx];
+    }
+
     /// @brief Returns the number of elements in the Span.
     ///
     /// @return Number of elements in the span.
@@ -152,16 +181,36 @@ public:
         return _size == 0;
     }
 
+    /// @brief Obtain a span that is a view over the first \p count elements of the span.
+    constexpr Span first(size_type count) const {
+        return Span{_ptr, count};
+    }
+
+    /// @brief Obtain a span that is a view over the last \p count elements of the span.
+    constexpr Span last(size_type count) const {
+        return Span{_ptr + _size - count, count};
+    }
+
+    /// @brief Obtain a span that is a view over the span elements in the range <code>[offset, offset + count)</code>.
+    /// @param offset The offset of the first element of the span.
+    /// @param count The number of elements in the span.
+    constexpr Span subspan(size_type offset, size_type count) const {
+        return Span{_ptr + offset, count};
+    }
+
 protected:
     pointer   _ptr;  ///< Pointer to the data referred to by Span.
     size_type _size; ///< Number of elements of type T referred to by Span.
 };
+
+// Deduction guides
 
 template <typename Range>
 Span(Range&&) -> Span<typename std::remove_reference_t<Range>::value_type>;
 
 template <typename It>
 Span(It, It) -> Span<std::remove_reference_t<typename std::iterator_traits<It>::reference> >;
+
 template <typename It>
 Span(It, size_t) -> Span<std::remove_reference_t<typename std::iterator_traits<It>::reference> >;
 } // namespace kamping
