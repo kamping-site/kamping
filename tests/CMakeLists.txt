@@ -222,6 +222,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_status_container_adaptor
+    FILES status_container_adaptor_test.cpp
+    CORES 1
+)
+kamping_register_mpi_test(
     test_measurement_utils_with_communication
     FILES measurements/mpi_measurement_utils_test.cpp
     CORES 1 4
