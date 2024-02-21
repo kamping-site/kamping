@@ -64,7 +64,8 @@ TEST(ParameterObjectsTest, DataBufferBuilder_with_noncopyable_type) {
             kamping::internal::BufferType::out_buffer,
             resize_to_fit>(container);
         container[0] = 42;
-        auto buffer  = b.construct_buffer_or_rebind();
+        EXPECT_EQ(b.size(), 4);
+        auto buffer = b.construct_buffer_or_rebind();
         EXPECT_THAT(buffer.underlying(), ElementsAre(42, 2, 3, 4));
     }
 
@@ -77,7 +78,8 @@ TEST(ParameterObjectsTest, DataBufferBuilder_with_noncopyable_type) {
             resize_to_fit>(std::move(container));
         container.resize(1);
         container[0] = 42;
-        auto buffer  = b.construct_buffer_or_rebind();
+        EXPECT_EQ(b.size(), 4);
+        auto buffer = b.construct_buffer_or_rebind();
         EXPECT_THAT(buffer.underlying(), ElementsAre(1, 2, 3, 4));
     }
     { // rebind

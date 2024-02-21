@@ -99,8 +99,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     auto send_buf =
         select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...)
             .construct_buffer_or_rebind();
-
-    std::cout << "check here in scatter: " << rank() << " size: " << send_buf.size() << std::endl;
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     KASSERT(!is_root(int_root) || send_buf.data() != nullptr, "Send buffer must be specified on root.", assert::light);
 
@@ -240,8 +238,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter_single(Arg
     // we have to do this check with communication, because otherwise the other ranks would already start with the
     // broadcast and indefinitely wait for the root
     if constexpr (kassert::internal::assertion_enabled(assert::light_communication)) {
-        bool root_has_buffer_of_size_comm_size = has_parameter_type<internal::ParameterType::send_buf, Args...>();
-        int  err                               = MPI_Bcast(
+        using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
+        auto&& send_buf_builder =
+            select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...);
+        bool root_has_buffer_of_size_comm_size =
+            has_parameter_type<internal::ParameterType::send_buf, Args...>() && send_buf_builder.size() == size();
+        int err = MPI_Bcast(
             &root_has_buffer_of_size_comm_size,
             1,
             MPI_CXX_BOOL,
@@ -251,7 +253,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter_single(Arg
         THROW_IF_MPI_ERROR(err, MPI_Bcast);
         KASSERT(
             root_has_buffer_of_size_comm_size,
-            "send_buf must be provided on the root rank.",
+            "send_buf of size equal to comm.size() must be provided on the root rank.",
             assert::light_communication
         );
     }
