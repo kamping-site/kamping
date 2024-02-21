@@ -17,7 +17,7 @@
 #include <mpi.h>
 
 #include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
+#include "kamping/result_.hpp"
 
 using namespace kamping;
 
@@ -58,22 +58,18 @@ class NonBlockingResultTest : public ::testing::Test {
 };
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_types_match) {
-    auto recv_buf_obj          = recv_buf(alloc_new<std::vector<int>>);
-    using expected_result_type = MPIResult<
-        internal::ResultCategoryNotUsed,
-        decltype(recv_buf_obj),
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed>;
-    auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    auto recv_buf_obj          = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
+    auto request_obj           = request();
+    using RecvBufType          = decltype(recv_buf_obj);
+    using RequestType          = decltype(request_obj);
+    using expected_result_type = decltype(internal::make_mpi_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    ));
+    auto result                = kamping::internal::make_nonblocking_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
 
     EXPECT_TRUE(has_member_test_v<decltype(result)>);
     EXPECT_TRUE(has_member_wait_v<decltype(result)>);
@@ -122,9 +118,15 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works) {
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
     auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+
+    using RecvBufType = decltype(recv_buf_obj);
+    using RequestType = decltype(request_obj);
+    auto result       = kamping::internal::make_nonblocking_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
     EXPECT_EQ(num_wait_calls, 0);
-    auto data = result.wait().extract_recv_buffer();
+    auto data = result.wait();
     EXPECT_EQ(num_wait_calls, 1);
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data, expected_data);
@@ -139,10 +141,14 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works_with_status_o
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
     auto request_obj        = request();
-    auto nonblocking_result = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    using RecvBufType       = decltype(recv_buf_obj);
+    using RequestType       = decltype(request_obj);
+    auto nonblocking_result = kamping::internal::make_nonblocking_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
     EXPECT_EQ(num_wait_calls, 0);
-    auto [result, status] = nonblocking_result.wait(status_out());
-    auto data             = result.extract_recv_buffer();
+    auto [data, status] = nonblocking_result.wait(status_out());
     EXPECT_EQ(num_wait_calls, 1);
     EXPECT_EQ(status.tag(), TOUCHED_BY_MOCK_TAG);
     auto expected_data = std::vector{42, 43, 44};
@@ -157,11 +163,16 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works_with_status_i
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
-    auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    auto request_obj  = request();
+    using RecvBufType = decltype(recv_buf_obj);
+    using RequestType = decltype(request_obj);
+    auto result       = kamping::internal::make_nonblocking_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
     EXPECT_EQ(num_wait_calls, 0);
     Status status;
-    auto   data = result.wait(status_out(status)).extract_recv_buffer();
+    auto   data = result.wait(status_out(status));
     EXPECT_EQ(num_wait_calls, 1);
     EXPECT_EQ(status.tag(), TOUCHED_BY_MOCK_TAG);
     auto expected_data = std::vector{42, 43, 44};
@@ -176,31 +187,43 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works) {
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
-    auto request_obj     = request();
-    auto result          = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    auto request_obj  = request();
+    using RecvBufType = decltype(recv_buf_obj);
+    using RequestType = decltype(request_obj);
+    auto result       = kamping::internal::make_nonblocking_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
     let_mpi_test_succeed = false;
     EXPECT_FALSE(result.test().has_value());
     let_mpi_test_succeed = true;
     auto data            = result.test();
     EXPECT_TRUE(data.has_value());
     auto expected_data = std::vector{42, 43, 44};
-    EXPECT_EQ(data.value().extract_recv_buffer(), expected_data);
+    EXPECT_EQ(data.value(), expected_data);
 }
+
+// TODO above
 
 TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_out) {
     auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
-    auto request_obj     = request();
-    auto result          = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    auto request_obj  = request();
+    using RecvBufType = decltype(recv_buf_obj);
+    using RequestType = decltype(request_obj);
+    auto result       = kamping::internal::make_nonblocking_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
     let_mpi_test_succeed = false;
     EXPECT_FALSE(result.test(status_out()).has_value());
     let_mpi_test_succeed = true;
     auto data            = result.test(status_out());
     EXPECT_TRUE(data.has_value());
     auto expected_data = std::vector{42, 43, 44};
-    EXPECT_EQ(data.value().first.extract_recv_buffer(), expected_data);
+    EXPECT_EQ(data.value().first, expected_data);
     EXPECT_EQ(data.value().second.tag(), TOUCHED_BY_MOCK_TAG);
 }
 
@@ -209,8 +232,13 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_in) {
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
-    auto request_obj     = request();
-    auto result          = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    auto request_obj  = request();
+    using RecvBufType = decltype(recv_buf_obj);
+    using RequestType = decltype(request_obj);
+    auto result       = kamping::internal::make_nonblocking_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
     let_mpi_test_succeed = false;
     Status status;
     EXPECT_FALSE(result.test(status_out(status)).has_value());
@@ -218,36 +246,30 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_test_works_status_in) {
     auto data            = result.test(status_out(status));
     EXPECT_TRUE(data.has_value());
     auto expected_data = std::vector{42, 43, 44};
-    EXPECT_EQ(data.value().extract_recv_buffer(), expected_data);
+    EXPECT_EQ(data.value(), expected_data);
     EXPECT_EQ(status.tag(), TOUCHED_BY_MOCK_TAG);
 }
 
+// TODO add nonowning recv buf
 TEST_F(NonBlockingResultTest, owning_request_and_result_extract_works) {
-    auto recv_buf_obj          = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
-    using expected_result_type = MPIResult<
-        internal::ResultCategoryNotUsed,
-        decltype(recv_buf_obj),
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed>;
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
     auto request_obj        = request();
-    auto nonblocking_result = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
-    auto [req, result]      = nonblocking_result.extract();
+    using RecvBufType       = decltype(recv_buf_obj);
+    using RequestType       = decltype(request_obj);
+    auto nonblocking_result = kamping::internal::make_nonblocking_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
+
+    auto [req, recv_buf] = nonblocking_result.extract();
     EXPECT_TRUE((std::is_same_v<decltype(req), Request>));
-    EXPECT_TRUE((std::is_same_v<decltype(result), expected_result_type>));
+    EXPECT_TRUE((std::is_same_v<decltype(recv_buf), std::vector<int>>));
 
     auto expected_data = std::vector{42, 43, 44};
-    EXPECT_EQ(result.extract_recv_buffer(), expected_data);
+    EXPECT_EQ(recv_buf, expected_data);
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
@@ -255,7 +277,8 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_extract_works) {
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_types_match) {
     auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(request_obj));
+    auto result =
+        kamping::internal::make_nonblocking_result_<std::tuple<decltype(request_obj)>>(std::move(request_obj));
 
     EXPECT_TRUE(has_member_test_v<decltype(result)>);
     EXPECT_TRUE(has_member_wait_v<decltype(result)>);
@@ -271,7 +294,7 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_types_match) {
         EXPECT_TRUE((std::is_same_v<test_return_type::value_type, Status>));
     }
     {
-        // also return status, but as out parameter -> bool
+        // also return status, but as non-owning out parameter -> bool
         Status status;
         using test_return_type = decltype(result.test(status_out(status)));
         EXPECT_TRUE((std::is_same_v<test_return_type, bool>));
@@ -295,8 +318,9 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_types_match) {
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works) {
-    auto request_obj     = request();
-    auto result          = kamping::make_nonblocking_result(std::move(request_obj));
+    auto request_obj = request();
+    auto result =
+        kamping::internal::make_nonblocking_result_<std::tuple<decltype(request_obj)>>(std::move(request_obj));
     let_mpi_test_succeed = false;
     EXPECT_FALSE(result.test());
     let_mpi_test_succeed = true;
@@ -304,8 +328,9 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works) {
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works_status_out) {
-    auto request_obj     = request();
-    auto result          = kamping::make_nonblocking_result(std::move(request_obj));
+    auto request_obj = request();
+    auto result =
+        kamping::internal::make_nonblocking_result_<std::tuple<decltype(request_obj)>>(std::move(request_obj));
     let_mpi_test_succeed = false;
     EXPECT_FALSE(result.test(status_out()));
     let_mpi_test_succeed         = true;
@@ -315,8 +340,9 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works_status_
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works_status_in) {
-    auto request_obj     = request();
-    auto result          = kamping::make_nonblocking_result(std::move(request_obj));
+    auto request_obj = request();
+    auto result =
+        kamping::internal::make_nonblocking_result_<std::tuple<decltype(request_obj)>>(std::move(request_obj));
     let_mpi_test_succeed = false;
     Status status;
     EXPECT_FALSE(result.test(status_out(status)));
@@ -327,7 +353,8 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_test_works_status_
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_wait_works) {
     auto request_obj = request();
-    auto result      = kamping::make_nonblocking_result(std::move(request_obj));
+    auto result =
+        kamping::internal::make_nonblocking_result_<std::tuple<decltype(request_obj)>>(std::move(request_obj));
     EXPECT_EQ(num_wait_calls, 0);
     static_assert(std::is_same_v<decltype(result.wait()), void>);
     result.wait();
@@ -335,24 +362,11 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_wait_works) {
 }
 
 TEST_F(NonBlockingResultTest, owning_request_and_empty_result_extract_works) {
-    using expected_result_type = MPIResult<
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed>;
-    auto request_obj        = request();
-    auto nonblocking_result = kamping::make_nonblocking_result(std::move(request_obj));
-    auto [req, result]      = nonblocking_result.extract();
+    auto request_obj = request();
+    auto nonblocking_result =
+        kamping::internal::make_nonblocking_result_<std::tuple<decltype(request_obj)>>(std::move(request_obj));
+    auto req = nonblocking_result.extract();
     EXPECT_TRUE((std::is_same_v<decltype(req), Request>));
-    EXPECT_TRUE((std::is_same_v<decltype(result), expected_result_type>));
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
@@ -363,7 +377,12 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_types_match) {
     auto    recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     Request req;
     auto    request_obj = request(req);
-    auto    result      = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
+    using RecvBufType   = decltype(recv_buf_obj);
+    using RequestType   = decltype(request_obj);
+    auto result         = kamping::internal::make_nonblocking_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
     EXPECT_FALSE(has_member_test_v<decltype(result)>)
         << "The result does not own the request, so test() should not be available.";
     EXPECT_FALSE(has_member_wait_v<decltype(result)>)
@@ -371,53 +390,171 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_types_match) {
 }
 
 TEST_F(NonBlockingResultTest, non_owning_request_and_result_extract_works) {
-    auto recv_buf_obj          = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
-    using expected_result_type = MPIResult<
-        internal::ResultCategoryNotUsed,
-        decltype(recv_buf_obj),
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed,
-        internal::ResultCategoryNotUsed>;
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
     recv_buf_obj.underlying().push_back(42);
     recv_buf_obj.underlying().push_back(43);
     recv_buf_obj.underlying().push_back(44);
     Request req;
-    auto    request_obj        = request(req);
-    auto    nonblocking_result = kamping::make_nonblocking_result(std::move(recv_buf_obj), std::move(request_obj));
-    auto    result             = nonblocking_result.extract();
-    EXPECT_TRUE((std::is_same_v<decltype(result), expected_result_type>));
+    auto    request_obj     = request(req);
+    using RecvBufType       = decltype(recv_buf_obj);
+    using RequestType       = decltype(request_obj);
+    auto nonblocking_result = kamping::internal::make_nonblocking_result_<std::tuple<RecvBufType, RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
+    auto data = nonblocking_result.extract();
+    EXPECT_TRUE((std::is_same_v<decltype(data), std::vector<int>>));
 
     auto expected_data = std::vector{42, 43, 44};
-    EXPECT_EQ(result.extract_recv_buffer(), expected_data);
+    EXPECT_EQ(data, expected_data);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#endif
+}
+
+TEST_F(NonBlockingResultTest, non_owning_request_and_result_with_buffer_other_than_recv_buf_extract_works) {
+    auto recv_count_obj         = recv_count_out().construct_buffer_or_rebind();
+    recv_count_obj.underlying() = 1;
+    Request req;
+    auto    request_obj     = request(req);
+    using RecvCountType     = decltype(recv_count_obj);
+    using RequestType       = decltype(request_obj);
+    auto nonblocking_result = kamping::internal::make_nonblocking_result_<std::tuple<RecvCountType, RequestType>>(
+        std::move(recv_count_obj),
+        std::move(request_obj)
+    );
+    auto [recv_count] = nonblocking_result.extract();
+    EXPECT_TRUE((std::is_same_v<decltype(recv_count), int>));
+
+    EXPECT_EQ(recv_count, 1);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#endif
+}
+
+TEST_F(NonBlockingResultTest, non_owning_request_and_result_with_implicit_recv_buffer_extract_works) {
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
+    recv_buf_obj.underlying().push_back(42);
+    recv_buf_obj.underlying().push_back(43);
+    recv_buf_obj.underlying().push_back(44);
+    Request req;
+    auto    request_obj     = request(req);
+    using RequestType       = decltype(request_obj);
+    auto nonblocking_result = kamping::internal::make_nonblocking_result_<std::tuple<RequestType>>(
+        std::move(recv_buf_obj),
+        std::move(request_obj)
+    );
+    auto data = nonblocking_result.extract();
+    EXPECT_TRUE((std::is_same_v<decltype(data), std::vector<int>>));
+
+    auto expected_data = std::vector{42, 43, 44};
+    EXPECT_EQ(data, expected_data);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#endif
+}
+
+TEST_F(NonBlockingResultTest, non_owning_request_and_result_with_implicit_recv_buffer_and_recv_count_extract_works) {
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
+    recv_buf_obj.underlying().push_back(42);
+    recv_buf_obj.underlying().push_back(43);
+    recv_buf_obj.underlying().push_back(44);
+    auto recv_count_obj         = recv_count_out().construct_buffer_or_rebind();
+    recv_count_obj.underlying() = 1;
+    Request req;
+    auto    request_obj     = request(req);
+    using RequestType       = decltype(request_obj);
+    using RecvCountType     = decltype(recv_count_obj);
+    auto nonblocking_result = kamping::internal::make_nonblocking_result_<std::tuple<RequestType, RecvCountType>>(
+        std::move(recv_buf_obj),
+        std::move(recv_count_obj),
+        std::move(request_obj)
+    );
+    auto [recv_buf, recv_count] = nonblocking_result.extract();
+    EXPECT_TRUE((std::is_same_v<decltype(recv_buf), std::vector<int>>));
+
+    auto expected_recv_buf = std::vector{42, 43, 44};
+    EXPECT_EQ(recv_buf, expected_recv_buf);
+    EXPECT_EQ(recv_count, 1);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#endif
+}
+
+TEST_F(NonBlockingResultTest, non_owning_request_and_result_with_recv_buffer_and_recv_count_extract_works) {
+    auto recv_buf_obj = recv_buf(alloc_new<std::vector<int>>).construct_buffer_or_rebind();
+    recv_buf_obj.underlying().push_back(42);
+    recv_buf_obj.underlying().push_back(43);
+    recv_buf_obj.underlying().push_back(44);
+    auto recv_count_obj         = recv_count_out().construct_buffer_or_rebind();
+    recv_count_obj.underlying() = 1;
+    Request req;
+    auto    request_obj = request(req);
+    using RecvBufType   = decltype(recv_buf_obj);
+    using RecvCountType = decltype(recv_count_obj);
+    using RequestType   = decltype(request_obj);
+    auto nonblocking_result =
+        kamping::internal::make_nonblocking_result_<std::tuple<RecvCountType, RecvBufType, RequestType>>(
+            std::move(recv_buf_obj),
+            std::move(recv_count_obj),
+            std::move(request_obj)
+        );
+    auto [recv_count, recv_buf] = nonblocking_result.extract();
+    EXPECT_TRUE((std::is_same_v<decltype(recv_buf), std::vector<int>>));
+    EXPECT_TRUE((std::is_same_v<decltype(recv_count), int>));
+
+    auto expected_recv_buf = std::vector{42, 43, 44};
+    EXPECT_EQ(recv_buf, expected_recv_buf);
+    EXPECT_EQ(recv_count, 1);
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#endif
+}
+
+TEST_F(NonBlockingResultTest, non_owning_request_and_result_with_non_owning_recv_buffer_and_recv_count_extract_works) {
+    std::vector<int> recv_buf_storage{42, 43, 44};
+    auto             recv_buf_obj   = recv_buf(recv_buf_storage).construct_buffer_or_rebind();
+    auto             recv_count_obj = recv_count_out().construct_buffer_or_rebind();
+    recv_count_obj.underlying()     = 1;
+    Request req;
+    auto    request_obj = request(req);
+    using RecvBufType   = decltype(recv_buf_obj);
+    using RecvCountType = decltype(recv_count_obj);
+    using RequestType   = decltype(request_obj);
+    auto nonblocking_result =
+        kamping::internal::make_nonblocking_result_<std::tuple<RecvCountType, RecvBufType, RequestType>>(
+            std::move(recv_buf_obj),
+            std::move(recv_count_obj),
+            std::move(request_obj)
+        );
+    auto [recv_count] = nonblocking_result.extract();
+    EXPECT_TRUE((std::is_same_v<decltype(recv_count), int>));
+
+    auto expected_recv_buf = std::vector{42, 43, 44};
+    EXPECT_EQ(recv_buf_storage, expected_recv_buf);
+    EXPECT_EQ(recv_count, 1);
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
 TEST_F(NonBlockingResultTest, wait_on_extracted_request) {
-    auto request_obj         = request();
-    auto result              = kamping::make_nonblocking_result(std::move(request_obj));
-    auto [req, empty_result] = result.extract();
+    auto request_obj  = request();
+    using RequestType = decltype(request_obj);
+    auto result       = kamping::internal::make_nonblocking_result_<std::tuple<RequestType>>(std::move(request_obj));
+    auto req          = result.extract();
     (void)req;
-    (void)empty_result;
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(result.wait(), "The result of this request has already been extracted.");
 #endif
 }
 
 TEST_F(NonBlockingResultTest, test_on_extracted_request) {
-    auto request_obj         = request();
-    auto result              = kamping::make_nonblocking_result(std::move(request_obj));
-    auto [req, empty_result] = result.extract();
+    auto request_obj  = request();
+    using RequestType = decltype(request_obj);
+    auto result       = kamping::internal::make_nonblocking_result_<std::tuple<RequestType>>(std::move(request_obj));
+    auto req          = result.extract();
     (void)req;
-    (void)empty_result;
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(result.test(), "The result of this request has already been extracted.");
 #endif

@@ -92,8 +92,8 @@ public:
     /// @param status A parameter created by \ref kamping::status() or \ref kamping::status_out().
     /// Defaults to \c kamping::status(ignore<>).
     ///
-    /// @return Returns \c true if the underlying request is complete. If \p status is \ref kamping::status_out(),
-    /// returns an \c std::optional encapsulating the status in case of completion, \c std::nullopt otherwise.
+    /// @return Returns \c true if the underlying request is complete. If \p status is \ref kamping::status_out() and
+    /// owning, returns an \c std::optional encapsulating the status in case of completion, \c std::nullopt otherwise.
     template <typename StatusParamObjectType = decltype(status(ignore<>))>
     [[nodiscard]] auto test(StatusParamObjectType status = kamping::status(ignore<>)) {
         static_assert(
