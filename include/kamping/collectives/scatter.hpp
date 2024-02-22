@@ -237,25 +237,19 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter_single(Arg
     );
     // we have to do this check with communication, because otherwise the other ranks would already start with the
     // broadcast and indefinitely wait for the root
-    if constexpr (kassert::internal::assertion_enabled(assert::light_communication)) {
-        using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
-        auto&& send_buf_builder =
-            select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...);
-        bool root_has_buffer_of_size_comm_size =
-            has_parameter_type<internal::ParameterType::send_buf, Args...>() && send_buf_builder.size() == size();
-        int err = MPI_Bcast(
-            &root_has_buffer_of_size_comm_size,
-            1,
-            MPI_CXX_BOOL,
-            root.rank_signed(),
-            this->mpi_communicator()
-        );
-        THROW_IF_MPI_ERROR(err, MPI_Bcast);
-        KASSERT(
-            root_has_buffer_of_size_comm_size,
-            "send_buf of size equal to comm.size() must be provided on the root rank.",
-            assert::light_communication
-        );
+    if constexpr (kassert::internal::assertion_enabled(assert::light)) {
+        if (is_root(root.rank_signed())) {
+            using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
+            auto&& send_buf_builder =
+                select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...);
+            bool root_has_buffer_of_size_comm_size =
+                has_parameter_type<internal::ParameterType::send_buf, Args...>() && send_buf_builder.size() == size();
+            KASSERT(
+                root_has_buffer_of_size_comm_size,
+                "send_buf of size equal to comm.size() must be provided on the root rank.",
+                assert::light
+            );
+        }
     }
 
     if constexpr (has_parameter_type<ParameterType::send_buf, Args...>()) {
