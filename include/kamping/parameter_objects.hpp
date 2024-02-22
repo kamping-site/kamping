@@ -89,6 +89,15 @@ public:
     static constexpr bool is_single_element =
         DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
     using value_type = typename DataBufferType::value_type; ///< The construted data buffer's value type.
+
+    /// @brief The size of the underlying container.
+    size_t size() const {
+        if constexpr (is_single_element) {
+            return 1;
+        } else {
+            return data_.size();
+        }
+    }
 };
 
 /// @brief Parameter object representing a data buffer to be allocated by KaMPIng. This is a specialization of \ref
@@ -166,6 +175,15 @@ public:
     static constexpr bool is_single_element =
         DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
     using value_type = typename DataBufferType::value_type; ///< The construted data buffer's value type.
+
+    /// @brief The size of the underlying container.
+    size_t size() const {
+        if constexpr (is_single_element) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
 };
 
 /// @brief Factory method for constructing a \ref DataBufferBuilder from the given Container \p Data.

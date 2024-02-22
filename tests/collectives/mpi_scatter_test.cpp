@@ -102,6 +102,68 @@ TEST(ScatterTest, scatter_single_element_with_explicit_send_count_only_at_root) 
     EXPECT_EQ(result.front(), comm.rank());
 }
 
+TEST(ScatterTest, scatter_single) {
+    Communicator comm;
+
+    auto const input  = create_input_vector_on_root(comm, 1);
+    auto const result = comm.scatter_single(send_buf(input));
+    EXPECT_EQ(result, comm.rank());
+}
+
+TEST(ScatterTest, scatter_single_with_owning_send_buf) {
+    Communicator comm;
+
+    auto       input  = create_input_vector_on_root(comm, 1);
+    auto const result = comm.scatter_single(send_buf(std::move(input)));
+    EXPECT_EQ(result, comm.rank());
+}
+
+TEST(ScatterTest, scatter_single_with_explicit_root) {
+    Communicator comm;
+
+    int const  root   = comm.size_signed() - 1;
+    auto const input  = create_input_vector_on_root(comm, 1, root);
+    auto const result = comm.scatter_single(send_buf(input), kamping::root(root));
+    EXPECT_EQ(result, comm.rank());
+}
+
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+TEST(ScatterTest, scatter_single_with_too_small_send_buf) {
+    Communicator comm;
+
+    const std::vector<int> input = create_input_vector_on_root(comm, 1);
+    if (comm.is_root()) {
+        const std::vector<int> input_too_small(input.begin(), std::next(input.begin(), comm.size_signed() / 2));
+        EXPECT_KASSERT_FAILS(
+            comm.scatter_single(send_buf(input_too_small)),
+            "send_buf of size equal to comm.size() must be provided on the root rank."
+        );
+        // scatter call to catch other ranks waiting on the above failed scatter-call
+        comm.scatter_single(send_buf(input));
+    } else {
+        comm.scatter_single(send_buf(input));
+    }
+}
+
+TEST(ScatterTest, scatter_single_with_too_small_send_buf_and_explicit_root) {
+    Communicator comm;
+
+    int const              root  = comm.size_signed() - 1;
+    const std::vector<int> input = create_input_vector_on_root(comm, 1, root);
+    if (comm.is_root(root)) {
+        const std::vector<int> input_too_small(input.begin(), std::next(input.begin(), comm.size_signed() / 2));
+        EXPECT_KASSERT_FAILS(
+            comm.scatter_single(send_buf(input_too_small), kamping::root(root)),
+            "send_buf of size equal to comm.size() must be provided on the root rank."
+        );
+        // scatter call to catch other ranks waiting on the above failed scatter-call
+        comm.scatter_single(send_buf(input), kamping::root(root));
+    } else {
+        comm.scatter_single(send_buf(input), kamping::root(root));
+    }
+}
+#endif
+
 TEST(ScatterTest, scatter_send_count_parameter_is_only_considered_at_root) {
     Communicator comm;
 

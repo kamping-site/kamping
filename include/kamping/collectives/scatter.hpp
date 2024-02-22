@@ -207,6 +207,60 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     );
 }
 
+/// Calling scatter_single() is a shorthand for calling scatter() with a \ref kamping::send_buf() with the same size as
+/// the communicator.
+///
+/// The following parameters are required on the root rank:
+/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to have the same size as
+/// the communicator on the root rank.
+///
+/// The following parameters are optional:
+/// - kamping::root() specifying the rank of the root PE. If omitted, the default root PE of the communicator
+/// is used instead.
+///
+/// @tparam recv_value_type_tparam The type that is received.
+/// @tparam Args Automatically deducted template parameters.
+/// @param args All required and any number of the optional buffers described above.
+/// @return The single output value.
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
+auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter_single(Args... args) const {
+    using namespace kamping::internal;
+
+    // In contrast to bcast(...), send_recv_count is not a possible parameter.
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(send_buf, root));
+
+    // Get the root PE
+    auto&& root = select_parameter_type_or_default<ParameterType::root, internal::RootDataBuffer>(
+        std::tuple(this->root()),
+        args...
+    );
+    // we have to do this check with communication, because otherwise the other ranks would already start with the
+    // broadcast and indefinitely wait for the root
+    if constexpr (kassert::internal::assertion_enabled(assert::light)) {
+        if (is_root(root.rank_signed())) {
+            using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
+            auto&& send_buf_builder =
+                select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple(), args...);
+            bool root_has_buffer_of_size_comm_size =
+                has_parameter_type<internal::ParameterType::send_buf, Args...>() && send_buf_builder.size() == size();
+            KASSERT(
+                root_has_buffer_of_size_comm_size,
+                "send_buf of size equal to comm.size() must be provided on the root rank.",
+                assert::light
+            );
+        }
+    }
+
+    if constexpr (has_parameter_type<ParameterType::send_buf, Args...>()) {
+        using send_recv_buf_type = buffer_type_with_requested_parameter_type<ParameterType::send_buf, Args...>;
+        using value_type         = typename send_recv_buf_type::value_type;
+        return this->scatter(recv_buf(alloc_new<value_type>), std::forward<Args>(args)..., recv_count(1));
+    } else {
+        return this->scatter(recv_buf(alloc_new<recv_value_type_tparam>), std::forward<Args>(args)..., recv_count(1));
+    }
+}
+
 /// @brief Wrapper for \c MPI_Scatterv.
 ///
 /// This wrapper for \c MPI_Scatterv distributes data on the root PE across all PEs in the current communicator.
