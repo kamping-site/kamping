@@ -85,6 +85,30 @@ auto send_buf(std::initializer_list<T> data) {
         BufferResizePolicy::no_resize>(std::move(data));
 }
 
+/// @brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
+/// the data element(s) to send.
+///
+/// If the underlying container provides \c data(), it is assumed that it is a container and all elements in the
+/// container are considered for the operation. In this case, the container has to provide a \c size() member functions
+/// and expose the contained \c value_type. If no \c data() member function exists, a single element is wrapped in the
+/// send buffer.
+/// @tparam Data Data type representing the element(s) to send.
+/// @param data Data (either a container which contains the elements or the element directly) to send
+/// @return Object referring to the storage containing the data elements to send.
+template <typename Data>
+auto sparse_send_buf(Data&& data) {
+    using namespace internal;
+    constexpr BufferOwnership ownership =
+        std::is_rvalue_reference_v<Data&&> ? BufferOwnership::owning : BufferOwnership::referencing;
+
+    return ReducedDataBuffer<
+        std::remove_reference_t<Data>,
+        internal::ParameterType::sparse_send_buf,
+        BufferModifiability::constant,
+        ownership,
+        BufferType::in_buffer>(std::forward<Data>(data));
+}
+
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
 /// and the root() of the operation. This buffer type may encapsulate const data and in which case it can only be used
 /// as the send buffer. For some functions (e.g. bcast), you have to pass a send_recv_buf as the send buffer.

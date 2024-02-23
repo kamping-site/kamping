@@ -122,14 +122,15 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(C
     const {
     // Get all parameter objects
     using SelfType = kamping::Communicator<DefaultContainerType, Plugins...>;
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS());
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(sparse_send_buf), KAMPING_OPTIONAL_PARAMETERS());
     int tag = 0;
 
     // Get send_buf
     auto const& dst_message_container =
-        internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
-    using dst_message_container_type = typename std::remove_reference_t<decltype(dst_message_container)>::value_type;
-    using message_value_type         = typename std::tuple_element_t<1, dst_message_container_type>::value_type;
+        internal::select_parameter_type<internal::ParameterType::sparse_send_buf>(args...);
+    using dst_message_container_type =
+        typename std::remove_reference_t<decltype(dst_message_container.underlying())>::value_type;
+    using message_value_type = typename std::tuple_element_t<1, dst_message_container_type>::value_type;
 
     RequestPool<DefaultContainerType> request_pool;
     for (auto const& [dst, msg]: dst_message_container.underlying()) {

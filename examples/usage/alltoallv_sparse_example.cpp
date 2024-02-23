@@ -13,9 +13,9 @@
 
 #include <iostream>
 #include <numeric>
-#include <vector>
 #include <random>
 #include <unordered_set>
+#include <vector>
 
 #include <mpi.h>
 
@@ -27,10 +27,10 @@
 #include "kamping/span.hpp"
 
 auto random_comm_partners(int comm_size, size_t num_partners) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::random_device              rd;
+    std::mt19937                    gen(rd());
     std::uniform_int_distribution<> dis(0, comm_size - 1);
-    std::unordered_set<int> comm_partners;
+    std::unordered_set<int>         comm_partners;
 
     while (comm_partners.size() < num_partners) {
         comm_partners.insert(dis(gen));
@@ -46,25 +46,25 @@ int main() {
 
     // generate sparse exchange messages
     std::vector<std::pair<int, std::vector<double>>> dst_msg_pairs;
-    for(const auto dst : random_comm_partners(comm.size_signed(), comm.size() / 2)) {
-      std::vector<double> msg(comm.rank(), static_cast<double>(comm.rank()));
-      dst_msg_pairs.emplace_back(dst, std::move(msg));
+    for (auto const dst: random_comm_partners(comm.size_signed(), comm.size() / 2)) {
+        std::vector<double> msg(comm.rank(), static_cast<double>(comm.rank()));
+        dst_msg_pairs.emplace_back(dst, std::move(msg));
     }
 
     std::unordered_map<int, std::vector<double>> recv_buf;
     // prepare callback function to receive messages
-    auto                                              on_receive = [&](auto const& probed_message) {
+    auto on_receive = [&](auto const& probed_message) {
         recv_buf[probed_message.source_signed()] = probed_message.recv();
     };
 
-    comm.alltoallv_sparse(on_receive, kamping::send_buf(dst_msg_pairs));
+    comm.alltoallv_sparse(on_receive, kamping::sparse_send_buf(dst_msg_pairs));
 
-    if(comm.is_root()) {
-      for(const auto& [source, msg] : recv_buf) {
-        print_result("source: " + std::to_string(source), comm);
-        print_result(msg, comm);
-        print_result("---", comm);
-      }
+    if (comm.is_root()) {
+        for (auto const& [source, msg]: recv_buf) {
+            print_result("source: " + std::to_string(source), comm);
+            print_result(msg, comm);
+            print_result("---", comm);
+        }
     }
 
     return 0;

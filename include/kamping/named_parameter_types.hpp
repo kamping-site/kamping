@@ -38,6 +38,8 @@ enum class ParameterType {
     send_recv_buf,    ///< Tag used to represent a send and receive buffer, i.e. a
                       ///< buffer containing the data elements to be sent or received
                       ///< (depending on the process' rank) via \c MPI.
+    sparse_send_buf,  ///< Tag used to represent a sparse send buffer, i.e. a buffer containing destination-message
+                      ///< pairs.
     recv_counts,      ///< Tag used to represent a receive counts buffer, i.e. a buffer
                       ///< containing the receive counts from the involved PEs.
     recv_count,       ///< Tag used to represent the number of elements to be received.

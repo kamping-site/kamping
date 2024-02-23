@@ -493,4 +493,3 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         std::move(recv_type)    // recv_type
     );
 }
-

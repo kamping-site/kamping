@@ -572,6 +572,120 @@ private:
     MemberTypeWithConstAndRef _data; ///< Container which holds the actual data.
 };
 
+template <
+    typename MemberType,
+    ParameterType       parameter_type_param,
+    BufferModifiability modifiability,
+    BufferOwnership     ownership,
+    BufferType          buffer_type_param>
+class ReducedDataBuffer : private ParameterObjectBase {
+public:
+    static constexpr ParameterType parameter_type =
+        parameter_type_param; ///< The type of parameter this buffer represents.
+
+    static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
+
+    static constexpr BufferResizePolicy resize_policy =
+        BufferResizePolicy::no_resize; ///< The policy specifying in which cases the buffer shall be resized.
+
+    /// @brief \c true if the buffer is an out or in/out buffer that results will be written to and \c false
+    /// otherwise.
+    static constexpr bool is_out_buffer =
+        (buffer_type_param == BufferType::out_buffer || buffer_type_param == BufferType::in_out_buffer);
+
+    /// @brief Indicates whether the buffer is allocated by KaMPIng.
+    static constexpr bool is_lib_allocated = false;
+
+    static constexpr bool is_owning =
+        ownership == BufferOwnership::owning; ///< Indicates whether the buffer owns its underlying storage.
+
+    static constexpr bool is_modifiable =
+        modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
+    static constexpr bool is_single_element =
+        !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
+                                        ///< DataBuffer represents a container.
+    using MemberTypeWithConst =
+        std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
+                                                                         ///< non-const depending on
+                                                                         ///< modifiability.
+
+    using MemberTypeWithConstAndRef = std::conditional_t<
+        ownership == BufferOwnership::owning,
+        MemberTypeWithConst,
+        MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
+                               ///< reference or non-reference depending on ownership.
+
+    static_assert(
+        is_modifiable || resize_policy == BufferResizePolicy::no_resize,
+        "A constant data buffer requires the that the resize policy is no_resize."
+    );
+    static_assert(
+        !is_single_element || resize_policy == BufferResizePolicy::no_resize,
+        "A single element data buffer requires the that the resize policy is no_resize."
+    );
+    static_assert(
+        !(resize_policy == BufferResizePolicy::grow_only || resize_policy == BufferResizePolicy::resize_to_fit)
+            || has_member_resize_v<MemberType, size_t>,
+        "The underlying container does not provide a resize function, which is required by the resize policy."
+    );
+
+    /// @brief Constructor for referencing ContainerBasedBuffer.
+    /// @param container Container holding the actual data.
+    template <bool enabled = ownership == BufferOwnership::referencing, std::enable_if_t<enabled, bool> = true>
+    ReducedDataBuffer(MemberTypeWithConst& container) : _data(container) {}
+
+    /// @brief Constructor for owning ContainerBasedBuffer.
+    /// @param container Container holding the actual data.
+    template <bool enabled = ownership == BufferOwnership::owning, std::enable_if_t<enabled, bool> = true>
+    ReducedDataBuffer(MemberType container) : _data(std::move(container)) {}
+
+    /// @brief Provides access to the underlying data.
+    /// @return A reference to the data.
+    MemberType const& underlying() const {
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
+        // this assertion is only checked if the buffer is actually accessed.
+        static_assert(
+            !is_vector_bool_v<MemberType>,
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead."
+        );
+        return _data;
+    }
+
+    /// @brief Provides access to the underlying data.
+    /// @return A reference to the data.
+    template <bool enabled = modifiability == BufferModifiability::modifiable, std::enable_if_t<enabled, bool> = true>
+    MemberType& underlying() {
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
+        // this assertion is only checked if the buffer is actually accessed.
+        static_assert(
+            !is_vector_bool_v<MemberType>,
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead."
+        );
+        return _data;
+    }
+
+    /// @brief Extract the underlying container. This will leave the DataBuffer in an unspecified
+    /// state.
+    ///
+    /// @return Moves the underlying container out of the DataBuffer.
+    template <bool enabled = is_owning, std::enable_if_t<enabled, bool> = true>
+    MemberTypeWithConst extract() {
+        static_assert(
+            ownership == BufferOwnership::owning,
+            "Moving out of a reference should not be done because it would leave "
+            "a users container in an unspecified state."
+        );
+        kassert_not_extracted("Cannot extract a buffer that has already been extracted.");
+        auto extracted = std::move(underlying());
+        // we set is_extracted here because otherwise the call to underlying() would fail
+        set_extracted();
+        return extracted;
+    }
+
+private:
+    MemberTypeWithConstAndRef _data; ///< Container which holds the actual data.
+};
+
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
 /// @tparam ParameterType Parameter type represented by this pseudo buffer.
 template <typename Data, ParameterType type, BufferType buffer_type_param>
