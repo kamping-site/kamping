@@ -19,10 +19,9 @@
 
 #include "helpers_for_examples.hpp"
 #include "kamping/checking_casts.hpp"
-#include "kamping/collectives/sparse_alltoall.hpp"
+#include "kamping/collectives/alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/span.hpp"
 
 int main() {
     using namespace kamping;
@@ -39,35 +38,18 @@ int main() {
     // Rank i sends it own rank to all others
     std::fill(input.begin(), input.end(), comm.rank());
 
-    //{
-    //    // retrieve recv buffer only
-    //    std::vector<size_t> recv_buf = comm.alltoallv(send_buf(input), send_counts(counts_per_rank));
-    //    print_result_on_root(recv_buf, comm);
-    //}
-
-    //{
-    //    // additionally retrieve the recv counts
-    //    auto [recv_buf, recv_counts] = comm.alltoallv(send_buf(input), send_counts(counts_per_rank),
-    //    recv_counts_out()); print_result_on_root(recv_buf, comm); print_result_on_root(recv_counts, comm);
-    //}
-
-    std::vector<std::pair<int, std::vector<std::size_t>>> send_buf;
-    for (size_t i = 0; i < comm.size(); ++i) {
-        send_buf.emplace_back(i, std::vector<std::size_t>(i + 1, comm.rank()));
+    {
+        // retrieve recv buffer only
+        std::vector<size_t> recv_buf = comm.alltoallv(send_buf(input), send_counts(counts_per_rank));
+        print_result_on_root(recv_buf, comm);
     }
 
-    std::unordered_map<int, std::vector<std::size_t>> recv_buf;
-    std::unordered_map<int, int>                      recv_counts;
-    auto                                              on_receive = [&](auto const& probed_message) {
-        recv_buf[probed_message.source_signed()] = probed_message.recv();
-        if (comm.is_root(1)) {
-            print_result("count: " + std::to_string(probed_message.recv_count_signed()), comm);
-            print_result(recv_buf[probed_message.source_signed()], comm);
-            print_result("---", comm);
-        }
-    };
-
-    comm.alltoallv_sparse(on_receive, kamping::send_buf(send_buf));
+    {
+        // additionally retrieve the recv counts
+        auto [recv_buf, recv_counts] = comm.alltoallv(send_buf(input), send_counts(counts_per_rank), recv_counts_out());
+        print_result_on_root(recv_buf, comm);
+        print_result_on_root(recv_counts, comm);
+    }
 
     return 0;
 }
