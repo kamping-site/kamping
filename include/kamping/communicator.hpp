@@ -248,7 +248,7 @@ public:
     /// @brief Check if this rank is the root rank.
     /// @return Return \c true if this rank is the root rank.
     /// @param root The custom root's rank.
-    [[nodiscard]] bool is_root(const size_t root) const {
+    [[nodiscard]] bool is_root(size_t const root) const {
         return rank() == root;
     }
 
@@ -595,7 +595,7 @@ using BasicCommunicator = Communicator<>;
 /// @return A \c const reference to a \ref BasicCommunicator for \c MPI_COMM_WORLD.
 inline BasicCommunicator const& comm_world() {
     // By using a static variable in a function here, this gets constructed on first use.
-    static const BasicCommunicator comm_world;
+    static BasicCommunicator const comm_world;
     return comm_world;
 }
 
