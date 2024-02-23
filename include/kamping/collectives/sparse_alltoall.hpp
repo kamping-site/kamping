@@ -117,12 +117,15 @@ private:
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional parameters described above.
 template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
-template <typename Callback, typename... Args>
-void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(Callback on_message, Args... args)
-    const {
+template <typename... Args>
+void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(Args... args) const {
     // Get all parameter objects
     using SelfType = kamping::Communicator<DefaultContainerType, Plugins...>;
-    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(sparse_send_buf), KAMPING_OPTIONAL_PARAMETERS());
+    KAMPING_CHECK_PARAMETERS(
+        Args,
+        KAMPING_REQUIRED_PARAMETERS(sparse_send_buf, on_message),
+        KAMPING_OPTIONAL_PARAMETERS()
+    );
     int tag = 0;
 
     // Get send_buf
@@ -131,6 +134,9 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(C
     using dst_message_container_type =
         typename std::remove_reference_t<decltype(dst_message_container.underlying())>::value_type;
     using message_value_type = typename std::tuple_element_t<1, dst_message_container_type>::value_type;
+
+    // Get callback
+    auto const& on_message_cb = internal::select_parameter_type<internal::ParameterType::on_message>(args...);
 
     RequestPool<DefaultContainerType> request_pool;
     for (auto const& [dst, msg]: dst_message_container.underlying()) {
@@ -145,7 +151,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(C
         bool const got_message = iprobe(kamping::tag(tag), kamping::status_out(status));
         if (got_message) {
             ProbedMessage<message_value_type, SelfType> probed_message{std::move(status), *this};
-            on_message(probed_message);
+            on_message_cb.underlying()(probed_message);
         }
         if (!barrier_request.is_null()) {
             if (barrier_request.test()) {

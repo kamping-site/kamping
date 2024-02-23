@@ -45,19 +45,21 @@ int main() {
     Communicator         comm;
 
     // generate sparse exchange messages
-    std::vector<std::pair<int, std::vector<double>>> dst_msg_pairs;
+    using msg_type = std::vector<double>;
+    // std::vector<std::pair<int, msg_type>> dst_msg_pairs;
+    std::unordered_map<int, msg_type> dst_msg_pairs;
     for (auto const dst: random_comm_partners(comm.size_signed(), comm.size() / 2)) {
-        std::vector<double> msg(comm.rank(), static_cast<double>(comm.rank()));
-        dst_msg_pairs.emplace_back(dst, std::move(msg));
+        msg_type msg(comm.rank(), static_cast<double>(comm.rank()));
+        dst_msg_pairs.emplace(dst, std::move(msg));
     }
 
     std::unordered_map<int, std::vector<double>> recv_buf;
     // prepare callback function to receive messages
-    auto on_receive = [&](auto const& probed_message) {
+    auto cb = [&](auto const& probed_message) {
         recv_buf[probed_message.source_signed()] = probed_message.recv();
     };
 
-    comm.alltoallv_sparse(on_receive, kamping::sparse_send_buf(dst_msg_pairs));
+    comm.alltoallv_sparse(sparse_send_buf(dst_msg_pairs), on_message(cb));
 
     if (comm.is_root()) {
         for (auto const& [source, msg]: recv_buf) {
