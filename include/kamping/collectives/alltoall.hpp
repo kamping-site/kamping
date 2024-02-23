@@ -23,13 +23,19 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/collectives_helpers.hpp"
+#include "kamping/collectives/ibarrier.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/p2p/iprobe.hpp"
+#include "kamping/p2p/isend.hpp"
+#include "kamping/p2p/recv.hpp"
+#include "kamping/request_pool.hpp"
 #include "kamping/result.hpp"
 
 /// @brief Wrapper for \c MPI_Alltoall.
@@ -486,4 +492,132 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         std::move(send_type),   // send_type
         std::move(recv_type)    // recv_type
     );
+}
+
+namespace kamping {
+template <typename T>
+class SelfMessage {
+public:
+    SelfMessage(Span<T const> msg, int rank) : _msg(msg), _rank{rank} {}
+    template <template <typename> typename Buffer>
+    void receive_into(Buffer<T>& recv_buffer) const {
+        KASSERT(std::size(recv_buffer) >= recv_count(), assert::light);
+        std::copy_n(_msg.begin(), recv_count_signed(), std::data(recv_buffer));
+    }
+
+    int recv_count_signed() const {
+        return asserting_cast<int>(_msg.size());
+    }
+
+    std::size_t recv_count() const {
+        return _msg.size();
+    }
+    int source_signed() const {
+        return _rank;
+    }
+
+    size_t source() const {
+        return asserting_cast<size_t>(_rank);
+    }
+
+private:
+    Span<T const> _msg;
+    int           _rank;
+};
+
+template <typename T>
+class ProbedMessage {
+public:
+    template <template <typename> typename Buffer>
+    void receive_into(Buffer<T>& recv_buffer) const {
+        _comm.recv(
+            recv_buf(recv_buffer),
+            kamping::recv_count(recv_count_signed()),
+            kamping::source(_status.source_signed()),
+            tag(_status.tag())
+        );
+    }
+
+    int recv_count_signed() const {
+        MPI_Datatype datatype = mpi_datatype<T>();
+        return _status.count_signed(datatype);
+    }
+
+    std::size_t recv_count() const {
+        return static_cast<std::size_t>(recv_count_signed());
+    }
+
+    int source_signed() const {
+        return _status.source_signed();
+    }
+
+    int source() const {
+        return _status.source();
+    }
+
+    ProbedMessage(MPI_Status&& status, kamping::Communicator<> const& comm) : _status(std::move(status)), _comm(comm) {}
+
+private:
+    Status                _status;
+    Communicator<> const& _comm;
+};
+} // namespace kamping
+
+/// @brief sparse all-to-all
+/// implementation based on algorithm by Hoeffler et al.
+template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <typename Callback, typename... Args>
+auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(Callback on_message, Args... args)
+    const {
+    // Get all parameter objects
+    KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS());
+    int tag = 0;
+
+    // Get send_buf
+    auto const& send_buf =
+        internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+    using top_level       = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+    using send_value_type = typename std::tuple_element_t<1, top_level>::value_type;
+
+    for (auto const& kv: send_buf.underlying()) {
+        if (std::size(kv.second) > 0) {
+            if (kv.first == rank_signed()) {
+                SelfMessage<send_value_type> self_message{Span(std::data(kv.second), std::size(kv.second)), rank_signed()};
+                on_message(self_message);
+            }
+        }
+    }
+
+    RequestPool<DefaultContainerType> request_pool;
+    for (auto const& kv: send_buf.underlying()) {
+        if (std::size(kv.second) == 0 || kv.first == rank_signed()) {
+            continue;
+        }
+        issend(
+            kamping::send_buf(kv.second),
+            destination(kv.first),
+            kamping::tag(tag),
+            request(request_pool.get_request())
+        );
+    }
+
+    MPI_Status status;
+    Request    barrier_request(MPI_REQUEST_NULL);
+    while (true) {
+        bool const got_message = iprobe(kamping::tag(tag), kamping::status_out(status));
+        if (got_message) {
+            ProbedMessage<send_value_type> probed_message{std::move(status), *this};
+            on_message(probed_message);
+        }
+        if (!barrier_request.is_null()) {
+            if (barrier_request.test()) {
+                break;
+            }
+        } else {
+            if (request_pool.test_all()) {
+                ibarrier(request(barrier_request));
+            }
+        }
+    }
+    barrier();
 }
