@@ -495,71 +495,71 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
 }
 
 namespace kamping {
-template <typename T>
-class SelfMessage {
-public:
-    SelfMessage(Span<T const> msg, int rank) : _msg(msg), _rank{rank} {}
-    template <template <typename> typename Buffer>
-    void receive_into(Buffer<T>& recv_buffer) const {
-        KASSERT(std::size(recv_buffer) >= recv_count(), assert::light);
-        std::copy_n(_msg.begin(), recv_count_signed(), std::data(recv_buffer));
-    }
-
-    int recv_count_signed() const {
-        return asserting_cast<int>(_msg.size());
-    }
-
-    std::size_t recv_count() const {
-        return _msg.size();
-    }
-    int source_signed() const {
-        return _rank;
-    }
-
-    size_t source() const {
-        return asserting_cast<size_t>(_rank);
-    }
-
-private:
-    Span<T const> _msg;
-    int           _rank;
-};
-
-template <typename T>
+template <typename T, typename Communicator>
 class ProbedMessage {
 public:
-    template <template <typename> typename Buffer>
-    void receive_into(Buffer<T>& recv_buffer) const {
+    ProbedMessage(MPI_Status&& status, Communicator const& comm) : _status(std::move(status)), _comm(comm) {}
+
+    template <typename recv_value_type_tparam = T, typename... Args>
+    auto recv(Args... args) const {
+        KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(recv_buf, recv_type));
+
+        using default_recv_buf_type =
+            decltype(kamping::recv_buf(alloc_new<
+                                       typename Communicator::template default_container_type<recv_value_type_tparam>>)
+            );
+        auto&& recv_buf =
+            internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
+                std::tuple(),
+                args...
+            )
+                .template construct_buffer_or_rebind<Communicator::template default_container_type>();
+        using recv_buf_type = std::remove_reference_t<decltype(recv_buf)>;
+
+        using recv_value_type   = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
+        auto&& recv_type        = internal::determine_mpi_recv_datatype<recv_value_type, decltype(recv_buf)>(args...);
+        auto   repack_recv_type = [&]() {
+            // we cannot simply forward recv_type as kamping::recv_type as there are checks within recv() depending on
+            // whether recv_type is caller provided or not
+            if constexpr (internal::has_to_be_computed<decltype(recv_type)>) {
+                return kamping::recv_type_out(recv_type.underlying());
+            } else {
+                return kamping::recv_type(recv_type.underlying());
+            }
+        };
         _comm.recv(
-            recv_buf(recv_buffer),
-            kamping::recv_count(recv_count_signed()),
+            kamping::recv_buf<recv_buf_type::resize_policy>(recv_buf.underlying()),
+            repack_recv_type(),
+            kamping::recv_count(recv_count_signed(recv_type.underlying())),
             kamping::source(_status.source_signed()),
             tag(_status.tag())
         );
+
+        return internal::make_mpi_result<std::tuple<Args...>>(std::move(recv_buf), std::move(recv_type));
     }
 
-    int recv_count_signed() const {
-        MPI_Datatype datatype = mpi_datatype<T>();
+    int recv_count_signed(MPI_Datatype datatype = MPI_DATATYPE_NULL) const {
+        if (datatype == MPI_DATATYPE_NULL) {
+            datatype = mpi_datatype<T>();
+        }
         return _status.count_signed(datatype);
     }
 
-    std::size_t recv_count() const {
-        return static_cast<std::size_t>(recv_count_signed());
+    size_t recv_count(MPI_Datatype datatype = MPI_DATATYPE_NULL) const {
+        return asserting_cast<size_t>(recv_count_signed(datatype));
     }
 
     int source_signed() const {
         return _status.source_signed();
     }
 
-    int source() const {
+    size_t source() const {
         return _status.source();
     }
 
-    ProbedMessage(MPI_Status&& status, kamping::Communicator<> const& comm) : _status(std::move(status)), _comm(comm) {}
-
 private:
-    Status                _status;
-    Communicator<> const& _comm;
+    Status              _status;
+    Communicator const& _comm;
 };
 } // namespace kamping
 
@@ -570,6 +570,7 @@ template <typename Callback, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(Callback on_message, Args... args)
     const {
     // Get all parameter objects
+    using SelfType = kamping::Communicator<DefaultContainerType, Plugins...>;
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS());
     int tag = 0;
 
@@ -579,26 +580,16 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(C
     using top_level       = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using send_value_type = typename std::tuple_element_t<1, top_level>::value_type;
 
-    for (auto const& kv: send_buf.underlying()) {
-        if (std::size(kv.second) > 0) {
-            if (kv.first == rank_signed()) {
-                SelfMessage<send_value_type> self_message{Span(std::data(kv.second), std::size(kv.second)), rank_signed()};
-                on_message(self_message);
-            }
-        }
-    }
-
     RequestPool<DefaultContainerType> request_pool;
     for (auto const& kv: send_buf.underlying()) {
-        if (std::size(kv.second) == 0 || kv.first == rank_signed()) {
-            continue;
+        if (std::size(kv.second) > 0) {
+            issend(
+                kamping::send_buf(kv.second),
+                destination(kv.first),
+                kamping::tag(tag),
+                request(request_pool.get_request())
+            );
         }
-        issend(
-            kamping::send_buf(kv.second),
-            destination(kv.first),
-            kamping::tag(tag),
-            request(request_pool.get_request())
-        );
     }
 
     MPI_Status status;
@@ -606,7 +597,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(C
     while (true) {
         bool const got_message = iprobe(kamping::tag(tag), kamping::status_out(status));
         if (got_message) {
-            ProbedMessage<send_value_type> probed_message{std::move(status), *this};
+            ProbedMessage<send_value_type, SelfType> probed_message{std::move(status), *this};
             on_message(probed_message);
         }
         if (!barrier_request.is_null()) {
