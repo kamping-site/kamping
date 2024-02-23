@@ -572,6 +572,8 @@ private:
     MemberTypeWithConstAndRef _data; ///< Container which holds the actual data.
 };
 
+/// @brief A "reduced" DataBuffer. In difference to \ref DataBuffer, ReducedDataBuffer does not require the wrapped
+/// container to expose neither \c data(), \c resize() nor \c value_type.
 template <
     typename MemberType,
     ParameterType       parameter_type_param,

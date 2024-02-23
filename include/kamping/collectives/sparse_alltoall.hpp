@@ -28,8 +28,11 @@ namespace kamping {
 template <typename T, typename Communicator>
 class ProbedMessage {
 public:
+    /// @brief Constructor of a probed message.
     ProbedMessage(MPI_Status&& status, Communicator const& comm) : _status(std::move(status)), _comm(comm) {}
 
+    /// @brief Actually receive the probed message into a contiguous memory either provided by the user or allocated by
+    /// the library.
     template <typename recv_value_type_tparam = T, typename... Args>
     auto recv(Args... args) const {
         KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(recv_buf, recv_type));
@@ -68,6 +71,7 @@ public:
         return internal::make_mpi_result<std::tuple<Args...>>(std::move(recv_buf), std::move(recv_type));
     }
 
+    /// @brief Computes the size of the probed message depending on the used datatype.
     int recv_count_signed(MPI_Datatype datatype = MPI_DATATYPE_NULL) const {
         if (datatype == MPI_DATATYPE_NULL) {
             datatype = mpi_datatype<T>();
@@ -75,14 +79,17 @@ public:
         return _status.count_signed(datatype);
     }
 
+    /// @brief Computes the size of the probed message depending on the used datatype.
     size_t recv_count(MPI_Datatype datatype = MPI_DATATYPE_NULL) const {
         return asserting_cast<size_t>(recv_count_signed(datatype));
     }
 
+    /// @brief Returns the source of the probed message.
     int source_signed() const {
         return _status.source_signed();
     }
 
+    /// @brief Returns the source of the probed message.
     size_t source() const {
         return _status.source();
     }
