@@ -572,15 +572,24 @@ private:
     MemberTypeWithConstAndRef _data; ///< Container which holds the actual data.
 };
 
-/// @brief A "reduced" DataBuffer. In difference to \ref DataBuffer, ReducedDataBuffer does not require the wrapped
-/// container to expose neither \c data(), \c resize() nor \c value_type.
+/// @brief A more generic version of a DataBuffer which stores an object of type \tparam MemberType with its associcated
+/// \tparam ParameterType. In difference to \ref DataBuffer, GenericDataBuffer does not require the wrapped object to
+/// expose neither \c data(), \c resize() nor \c value_type.
+///
+/// @tparam MemberType Type of the wrapped object.
+/// @tparam parameter_type_param Parameter type represented by this buffer.
+/// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
+/// modify the underlying container. `constant` otherwise.
+/// @tparam ownership `owning` if the buffer should hold the object.
+/// `referencing` if only a reference to an existing object should be held.
+/// @tparam buffer_type_param Type of buffer, i.e., \c in_buffer, \c out_buffer, or \c in_out_buffer.
 template <
     typename MemberType,
     ParameterType       parameter_type_param,
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param>
-class ReducedDataBuffer : private ParameterObjectBase {
+class GenericDataBuffer : private ParameterObjectBase {
 public:
     static constexpr ParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
@@ -631,15 +640,15 @@ public:
         "The underlying container does not provide a resize function, which is required by the resize policy."
     );
 
-    /// @brief Constructor for referencing ContainerBasedBuffer.
+    /// @brief Constructor for referencing GenericDataBuffer.
     /// @param container Container holding the actual data.
     template <bool enabled = ownership == BufferOwnership::referencing, std::enable_if_t<enabled, bool> = true>
-    ReducedDataBuffer(MemberTypeWithConst& container) : _data(container) {}
+    GenericDataBuffer(MemberTypeWithConst& container) : _data(container) {}
 
-    /// @brief Constructor for owning ContainerBasedBuffer.
+    /// @brief Constructor for owning GenericDataBuffer.
     /// @param container Container holding the actual data.
     template <bool enabled = ownership == BufferOwnership::owning, std::enable_if_t<enabled, bool> = true>
-    ReducedDataBuffer(MemberType container) : _data(std::move(container)) {}
+    GenericDataBuffer(MemberType container) : _data(std::move(container)) {}
 
     /// @brief Provides access to the underlying data.
     /// @return A reference to the data.
@@ -685,7 +694,7 @@ public:
     }
 
 private:
-    MemberTypeWithConstAndRef _data; ///< Container which holds the actual data.
+    MemberTypeWithConstAndRef _data; ///< The wrapped object.
 };
 
 /// @brief Empty buffer that can be used as default argument for optional buffer parameters.
