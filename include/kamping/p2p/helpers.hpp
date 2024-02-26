@@ -18,8 +18,8 @@
 
 namespace kamping::internal {
 /// @brief Deduce the MPI_Datatype to use as send_type in a p2p send operation.If \ref kamping::send_type() is given,
-/// the \c MPI_Dataype wrapped inside will be used as send_type. Otherwise, the \c MPI_datatype is derived automatically
-/// based on send_buf's underlying \c value_type.
+/// the \c MPI_Datatype wrapped inside will be used as send_type. Otherwise, the \c MPI_datatype is derived
+/// automatically based on send_buf's underlying \c value_type.
 ///
 /// @tparam send_value_type Value type of the send buffer.
 /// @tparam Args Types of all arguments passed to the wrapped MPI call.
@@ -74,8 +74,8 @@ constexpr auto determine_mpi_send_datatype(Args&... args)
 }
 
 /// @brief Deduce the MPI_Datatype to use as recv_type in a p2p recv operation.If \ref kamping::recv_type() is given,
-/// the \c MPI_Dataype wrapped inside will be used as recv_type. Otherwise, the \c MPI_datatype is derived automatically
-/// based on recv_buf's underlying \c value_type.
+/// the \c MPI_Datatype wrapped inside will be used as recv_type. Otherwise, the \c MPI_datatype is derived
+/// automatically based on recv_buf's underlying \c value_type.
 ///
 /// @tparam recv_value_type Value type of the recv buffer.
 /// @tparam recv_buf Type of the recv buffer.

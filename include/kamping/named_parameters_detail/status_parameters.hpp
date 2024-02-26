@@ -75,7 +75,7 @@ inline auto statuses_out(Container&& container) {
         MPI_Status>(std::forward<Container>(container));
 }
 
-/// @brief Internally contruct a new \p Container of \c MPI_Status, which will hold the returned statuses.
+/// @brief Internally construct a new \p Container of \c MPI_Status, which will hold the returned statuses.
 template <typename Container>
 inline auto statuses_out(AllocNewT<Container>) {
     return internal::make_data_buffer_builder<
@@ -86,7 +86,7 @@ inline auto statuses_out(AllocNewT<Container>) {
         MPI_Status>(alloc_new<Container>);
 }
 
-/// @brief Internally contruct a new \p Container<MPI_Status> which will hold the returned statuses.
+/// @brief Internally construct a new \p Container<MPI_Status> which will hold the returned statuses.
 template <template <typename...> typename Container>
 inline auto statuses_out(AllocNewUsingT<Container>) {
     return internal::make_data_buffer_builder<
@@ -97,8 +97,8 @@ inline auto statuses_out(AllocNewUsingT<Container>) {
         MPI_Status>(alloc_new_using<Container>);
 }
 
-/// @brief Internally contruct a container of \c MPI_Status, which will hold the returned statuses. The container's type
-/// is usually determined by operations called on a \ref RequestPool, and defaults to \ref
+/// @brief Internally construct a container of \c MPI_Status, which will hold the returned statuses. The container's
+/// type is usually determined by operations called on a \ref RequestPool, and defaults to \ref
 /// RequestPool::default_container_type.
 inline auto statuses_out() {
     return internal::make_data_buffer_builder<

@@ -69,7 +69,7 @@ public:
     /// @brief Construct a printer printing to a given outstream.
     ///
     /// @param outstream Outstream on which the content is printed.
-    SimpleJsonPrinter(std::ostream& outstream) : _outstream{outstream}, _interal_printer(_outstream) {}
+    SimpleJsonPrinter(std::ostream& outstream) : _outstream{outstream}, _internal_printer(_outstream) {}
     /// @brief Prints an evaluated TimerTree in Json format to stdout.
     /// @todo expose indentation parameter to make the indentation customizable.
     /// @param node Root node of the TimerTree to print.
@@ -128,7 +128,7 @@ public:
 private:
     std::ostream& _outstream; ///< Outstream to print on.
     internal::ScalarOrVectorPrinter<Duration>
-        _interal_printer; ///< Internal printer able to print either a scalar or vector of durations.
+        _internal_printer; ///< Internal printer able to print either a scalar or vector of durations.
 };
 
 /// @brief Printer class that prints an evaluated TimerTree in a flat format in which the timer hierarchy is collapsed

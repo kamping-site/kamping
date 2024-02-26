@@ -122,7 +122,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     constexpr bool count_has_to_be_computed = has_to_be_computed<decltype(count_param)>;
     KASSERT(
         is_same_on_all_ranks(count_has_to_be_computed),
-        "send_recv_count() parameter is either deduced on all ranks or must be explicitely provided on all ranks.",
+        "send_recv_count() parameter is either deduced on all ranks or must be explicitly provided on all ranks.",
         assert::light_communication
     );
     if constexpr (count_has_to_be_computed) {

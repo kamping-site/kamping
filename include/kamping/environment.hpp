@@ -275,7 +275,7 @@ public:
                 // Just kassert. We can't throw exceptions in the destructor.
 
                 // During testing we sometimes force KASSERT to throw exceptions. During the resulting stack unwinding,
-                // code in this desturcor might be executed and thus throwing another exception will result in calling
+                // code in this destructor might be executed and thus throwing another exception will result in calling
                 // std::abort(). We're disabling the respective warning here.
 #if defined(__GNUC__) and not defined(__clang__)
     #pragma GCC diagnostic push

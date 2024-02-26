@@ -870,7 +870,7 @@ inline auto send_type_out() {
 }
 
 /// @brief Output parameter for the send type.
-/// The type will be stored at the location refered to by the provided reference.
+/// The type will be stored at the location referred to by the provided reference.
 /// @param send_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
 inline auto send_type_out(MPI_Datatype& send_type) {
@@ -906,7 +906,7 @@ inline auto recv_type_out() {
 }
 
 /// @brief Output parameter for the recv type.
-/// The type will be stored at the location refered to by the provided reference.
+/// The type will be stored at the location referred to by the provided reference.
 /// @param recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
 inline auto recv_type_out(MPI_Datatype& recv_type) {
@@ -942,7 +942,7 @@ inline auto send_recv_type_out() {
 }
 
 /// @brief Output parameter for the send_recv type.
-/// The type will be stored at the location refered to by the provided reference.
+/// The type will be stored at the location referred to by the provided reference.
 /// @param send_recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
 inline auto send_recv_type_out(MPI_Datatype& send_recv_type) {
