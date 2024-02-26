@@ -29,7 +29,7 @@ template <typename T, typename Communicator>
 class ProbedMessage {
 public:
     /// @brief Constructor of a probed message.
-    ProbedMessage(MPI_Status&& status, Communicator const& comm) : _status(std::move(status)), _comm(comm) {}
+    ProbedMessage(Status&& status, Communicator const& comm) : _status(std::move(status)), _comm(comm) {}
 
     /// @brief Actually receive the probed message into a contiguous memory either provided by the user or allocated by
     /// the library.
@@ -152,8 +152,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(A
         }
     }
 
-    MPI_Status status;
-    Request    barrier_request(MPI_REQUEST_NULL);
+    Status  status;
+    Request barrier_request(MPI_REQUEST_NULL);
     while (true) {
         bool const got_message = iprobe(kamping::tag(tag), kamping::status_out(status));
         if (got_message) {

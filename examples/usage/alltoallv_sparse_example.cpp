@@ -46,7 +46,6 @@ int main() {
 
     // generate sparse exchange messages
     using msg_type = std::vector<double>;
-    // std::vector<std::pair<int, msg_type>> dst_msg_pairs;
     std::unordered_map<int, msg_type> dst_msg_pairs;
     for (auto const dst: random_comm_partners(comm.size_signed(), comm.size() / 2)) {
         msg_type msg(comm.rank(), static_cast<double>(comm.rank()));
