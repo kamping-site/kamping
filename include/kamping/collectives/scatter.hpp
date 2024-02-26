@@ -200,7 +200,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
         int_root,
         mpi_communicator()
     );
-    THROW_IF_MPI_ERROR(err, MPI_Scatter);
+    this->_mpi_ret_code_hook(err, "MPI_Scatter");
 
     return make_mpi_result<std::tuple<Args...>>(
         std::move(recv_buf),
@@ -461,7 +461,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         root_val,                        // root
         mpi_communicator()               // communicator
     );
-    THROW_IF_MPI_ERROR(err, MPI_Scatterv);
+    this->_mpi_ret_code_hook(err, "MPI_Scatterv");
 
     return make_mpi_result<std::tuple<Args...>>(
         std::move(recv_buf),

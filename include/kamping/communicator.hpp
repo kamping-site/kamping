@@ -140,7 +140,7 @@ public:
     /// @param errorcode Error code to return to invoking environment.
     void abort(int errorcode = 1) const {
         [[maybe_unused]] int err = MPI_Abort(_comm, errorcode);
-        THROW_IF_MPI_ERROR(err, MPI_Abort);
+        this->_mpi_ret_code_hook(err, "MPI_Abort");
     }
 
     /// @brief Rank of the current MPI process in the communicator as `int`.
@@ -162,6 +162,7 @@ public:
     }
 
     /// @brief Number of MPI processes in this communicator as `size_t`.
+
     /// @return Number of MPI processes in this communicator as `size_t`.
     [[nodiscard]] size_t size() const {
         return _size;
@@ -181,7 +182,7 @@ public:
         char my_name[MPI_MAX_PROCESSOR_NAME];
 
         int ret = MPI_Get_processor_name(my_name, &my_len);
-        THROW_IF_MPI_ERROR(ret, MPI_Get_processor_name);
+        this->_mpi_ret_code_hook(ret, "MPI_Get_processor_name");
         return std::string(my_name, asserting_cast<size_t>(my_len));
     }
 
@@ -288,7 +289,7 @@ public:
 
         MPI_Comm   new_comm;
         auto const ret = MPI_Comm_split_type(_comm, type, rank_signed(), MPI_INFO_NULL, &new_comm);
-        THROW_IF_MPI_ERROR(ret, MPI_Comm_split_type);
+        this->_mpi_ret_code_hook(ret, "MPI_Comm_split_type");
         return Communicator(new_comm, true);
     }
 

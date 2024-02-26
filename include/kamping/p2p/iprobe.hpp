@@ -99,7 +99,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
         &flag,                                       // flag
         internal::status_param_to_native_ptr(status) // status
     );
-    THROW_IF_MPI_ERROR(err, MPI_Iprobe);
+    this->_mpi_ret_code_hook(err, "MPI_Iprobe");
 
     // if KaMPIng owns the status (i.e. when the user passed status_out()) we
     // return an optional, containing the status, otherwise just a bool

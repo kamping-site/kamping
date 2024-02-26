@@ -154,7 +154,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
         mpi_communicator()                    // comm
     );
 
-    THROW_IF_MPI_ERROR(err, MPI_Reduce);
+    this->_mpi_ret_code_hook(err, "MPI_Reduce");
     return make_mpi_result<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(send_recv_count),
