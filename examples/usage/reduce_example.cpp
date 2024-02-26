@@ -37,7 +37,6 @@ int main() {
     Environment         e;
     Communicator        comm;
     std::vector<double> input = {1, 2, 3};
-    std::vector<double> output;
 
     auto result0 = comm.reduce(send_buf(input), op(ops::plus<>()), root(0));
     print_result_on_root(result0, comm);
@@ -46,12 +45,13 @@ int main() {
     auto result2 = comm.reduce(send_buf(input), op(my_plus{}, ops::commutative));
     print_result_on_root(result2, comm);
 
+    std::vector<double> result3;
     /*auto result3 = */ comm.reduce(
         send_buf({1.0, 2.0, 3.0}),
-        recv_buf(output),
+        recv_buf<resize_to_fit>(result3),
         op([](auto a, auto b) { return a + b; }, ops::non_commutative)
     );
-    print_result_on_root(output, comm);
+    print_result_on_root(result3, comm);
 
     struct Bar {
         int    first;
@@ -87,12 +87,13 @@ int main() {
             return x < rhs.x || (x == rhs.x && y < rhs.y) || (x == rhs.x && y == rhs.y && z < rhs.z);
         }
     };
-    std::vector<Point> input3 = {{3, 0.25, 300}, {4, 0.1, 100}};
+
+    std::vector<Point> input5 = {{3, 0.25, 300}, {4, 0.1, 100}};
     if (comm.rank() == 2) {
-        input3[1].y = 0.75;
+        input5[1].y = 0.75;
     }
 
-    auto result5 = comm.reduce(send_buf(input3), op(ops::max<>(), ops::commutative));
+    auto result5 = comm.reduce(send_buf(input5), op(ops::max<>(), ops::commutative));
     if (comm.rank() == 0) {
         for (auto& elem: result5) {
             std::cout << elem.x << " " << elem.y << " " << elem.z << std::endl;
