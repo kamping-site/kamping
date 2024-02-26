@@ -92,7 +92,7 @@ auto sparse_send_buf(Data&& data) {
     constexpr BufferOwnership ownership =
         std::is_rvalue_reference_v<Data&&> ? BufferOwnership::owning : BufferOwnership::referencing;
 
-    return ReducedDataBuffer<
+    return GenericDataBuffer<
         std::remove_reference_t<Data>,
         internal::ParameterType::sparse_send_buf,
         BufferModifiability::constant,
@@ -107,10 +107,14 @@ auto on_message(Callback&& cb) {
     constexpr BufferOwnership ownership =
         std::is_rvalue_reference_v<Callback&&> ? BufferOwnership::owning : BufferOwnership::referencing;
 
-    return ReducedDataBuffer<
+    constexpr internal::BufferModifiability modifiability = std::is_const_v<std::remove_reference_t<Callback>>
+                                                                ? internal::BufferModifiability::constant
+                                                                : internal::BufferModifiability::modifiable;
+
+    return GenericDataBuffer<
         std::remove_reference_t<Callback>,
         internal::ParameterType::on_message,
-        BufferModifiability::constant,
+        modifiability,
         ownership,
         BufferType::in_buffer>(std::forward<Callback>(cb));
 }

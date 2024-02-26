@@ -18,6 +18,8 @@
 #include <mpi.h>
 
 #include "helpers_for_testing.hpp"
+#include "kamping/collectives/sparse_alltoall.hpp"
+#include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
@@ -381,6 +383,260 @@ TEST(ParameterFactoriesTest, send_buf_ignored) {
     auto ignored_send_buf = send_buf(ignore<int>).construct_buffer_or_rebind();
     EXPECT_EQ(ignored_send_buf.get().data(), nullptr);
     EXPECT_EQ(ignored_send_buf.get().size(), 0);
+}
+
+TEST(ParameterFactoriesTest, sparse_send_buf_basics_with_non_container_object) {
+    struct TestStruct {
+        int  a;
+        int  b;
+        int  c;
+        bool operator==(TestStruct const& other) const {
+            return std::tie(a, b, c) == std::tie(other.a, other.b, other.c);
+        }
+    };
+    const TestStruct st{1, 2, 3};
+    {
+        // referencing sparse sparse send buf
+        auto sparse_send_buffer = sparse_send_buf(st);
+        using DataBufferType    = decltype(sparse_send_buffer);
+        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
+        EXPECT_FALSE(DataBufferType::is_owning);
+        EXPECT_FALSE(DataBufferType::is_out_buffer);
+        EXPECT_FALSE(DataBufferType::is_modifiable);
+        EXPECT_EQ(sparse_send_buffer.underlying(), st);
+    }
+    {
+        // referencing sparse sparse send buf initialized from non-const object
+        TestStruct st_copy            = st;
+        auto       sparse_send_buffer = sparse_send_buf(st_copy);
+        using DataBufferType          = decltype(sparse_send_buffer);
+        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
+        EXPECT_FALSE(DataBufferType::is_owning);
+        EXPECT_FALSE(DataBufferType::is_out_buffer);
+        EXPECT_FALSE(DataBufferType::is_modifiable);
+        EXPECT_EQ(sparse_send_buffer.underlying(), st);
+    }
+    {
+        // owning sparse sparse send buf
+        TestStruct st_copy            = st;
+        auto       sparse_send_buffer = sparse_send_buf(std::move(st_copy));
+        using DataBufferType          = decltype(sparse_send_buffer);
+        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
+        EXPECT_TRUE(DataBufferType::is_owning);
+        EXPECT_FALSE(DataBufferType::is_out_buffer);
+        EXPECT_FALSE(DataBufferType::is_modifiable);
+        EXPECT_EQ(sparse_send_buffer.underlying(), st);
+    }
+    {
+        // owning sparse sparse send buf via temporary
+        auto sparse_send_buffer = sparse_send_buf(TestStruct{1, 2, 3});
+        using DataBufferType    = decltype(sparse_send_buffer);
+        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
+        EXPECT_TRUE(DataBufferType::is_owning);
+        EXPECT_FALSE(DataBufferType::is_out_buffer);
+        EXPECT_FALSE(DataBufferType::is_modifiable);
+        EXPECT_EQ(sparse_send_buffer.underlying(), st);
+    }
+}
+
+TEST(ParameterFactoriesTest, sparse_send_buf_basics_with_unordered_map) {
+    const std::unordered_map<int, std::vector<double>> input{{1, {1.0, 2.0}}};
+    {
+        // referencing sparse sparse send buf
+        auto sparse_send_buffer = sparse_send_buf(input);
+        using DataBufferType    = decltype(sparse_send_buffer);
+        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
+        EXPECT_FALSE(DataBufferType::is_owning);
+        EXPECT_FALSE(DataBufferType::is_out_buffer);
+        EXPECT_FALSE(DataBufferType::is_modifiable);
+        EXPECT_EQ(sparse_send_buffer.underlying(), input);
+    }
+    {
+        // referencing sparse sparse send buf initialized from non-const object
+        auto input_copy         = input;
+        auto sparse_send_buffer = sparse_send_buf(input_copy);
+        using DataBufferType    = decltype(sparse_send_buffer);
+        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
+        EXPECT_FALSE(DataBufferType::is_owning);
+        EXPECT_FALSE(DataBufferType::is_out_buffer);
+        EXPECT_FALSE(DataBufferType::is_modifiable);
+        EXPECT_EQ(sparse_send_buffer.underlying(), input);
+    }
+    {
+        // owning sparse sparse send buf
+        auto input_copy         = input;
+        auto sparse_send_buffer = sparse_send_buf(std::move(input_copy));
+        using DataBufferType    = decltype(sparse_send_buffer);
+        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
+        EXPECT_TRUE(DataBufferType::is_owning);
+        EXPECT_FALSE(DataBufferType::is_out_buffer);
+        EXPECT_FALSE(DataBufferType::is_modifiable);
+        EXPECT_EQ(sparse_send_buffer.underlying(), input);
+    }
+    {
+        // owning sparse send buf via temporary
+        auto sparse_send_buffer = sparse_send_buf(std::unordered_map<int, std::vector<double>>{{1, {1.0, 2.0}}});
+        using DataBufferType    = decltype(sparse_send_buffer);
+        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
+        EXPECT_TRUE(DataBufferType::is_owning);
+        EXPECT_FALSE(DataBufferType::is_out_buffer);
+        EXPECT_FALSE(DataBufferType::is_modifiable);
+        EXPECT_EQ(sparse_send_buffer.underlying(), input);
+    }
+}
+
+TEST(ParameterFactoriesTest, on_message_basics_lambda) {
+    int  state     = 0;
+    auto add_value = [state](int val) mutable {
+        state += val;
+        return state;
+    };
+    {
+        // referencing on message obj from non-const lvalue
+        auto add_value_copy = add_value;
+        auto on_message     = kamping::on_message(add_value_copy);
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(42), 42);
+        EXPECT_EQ(on_message.underlying()(1), 43);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_FALSE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_TRUE(OnMessageType::is_modifiable);
+    }
+    {
+        // owning on message obj
+        auto add_value_copy = add_value;
+        auto on_message     = kamping::on_message(std::move(add_value_copy));
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(42), 42);
+        EXPECT_EQ(on_message.underlying()(1), 43);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_TRUE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_TRUE(OnMessageType::is_modifiable);
+    }
+    {
+        // owning on message obj via temporary
+        auto on_message     = kamping::on_message([state](int val) mutable {
+            state += val;
+            return state;
+        });
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(42), 42);
+        EXPECT_EQ(on_message.underlying()(1), 43);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_TRUE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_TRUE(OnMessageType::is_modifiable);
+    }
+}
+
+TEST(ParameterFactoriesTest, on_message_basics_mutable_lambda) {
+    auto const cb = [](auto const&) {
+        return 42;
+    };
+    {
+        // referencing on message obj
+        auto on_message     = kamping::on_message(cb);
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(std::ignore), 42);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_FALSE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_FALSE(OnMessageType::is_modifiable);
+    }
+    {
+        // referencing on message obj from non-const lvalue
+        auto cb_copy        = cb;
+        auto on_message     = kamping::on_message(cb_copy);
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(std::ignore), 42);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_FALSE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_TRUE(OnMessageType::is_modifiable);
+    }
+    {
+        // owning on message obj
+        auto cb_copy        = cb;
+        auto on_message     = kamping::on_message(std::move(cb_copy));
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(std::ignore), 42);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_TRUE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_TRUE(OnMessageType::is_modifiable);
+    }
+    {
+        // owning on message obj via temporary
+        auto on_message     = kamping::on_message([](auto const&) { return 42; });
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(std::ignore), 42);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_TRUE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_TRUE(OnMessageType::is_modifiable);
+    }
+}
+
+TEST(ParameterFactoriesTest, on_message_basics_callable_struct) {
+    struct Callable {
+        auto operator()() {
+            return "nonconst-operator";
+        }
+        auto operator()() const {
+            return "const-operator";
+        }
+        int state;
+    };
+    int const      state = 43;
+    const Callable cb{state};
+    {
+        // referencing on message obj
+        auto on_message     = kamping::on_message(cb);
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(), "const-operator");
+        EXPECT_EQ(on_message.underlying().state, state);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_FALSE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_FALSE(OnMessageType::is_modifiable);
+    }
+    {
+        // referencing on message obj from non-const lvalue
+        auto cb_copy        = cb;
+        auto on_message     = kamping::on_message(cb_copy);
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(), "nonconst-operator");
+        EXPECT_EQ(on_message.underlying().state, state);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_FALSE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_TRUE(OnMessageType::is_modifiable);
+    }
+    {
+        // owning on message obj
+        auto cb_copy        = cb;
+        auto on_message     = kamping::on_message(std::move(cb_copy));
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(), "nonconst-operator");
+        EXPECT_EQ(on_message.underlying().state, state);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_TRUE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_TRUE(OnMessageType::is_modifiable);
+    }
+    {
+        // owning on message obj via temporary
+        auto on_message     = kamping::on_message(Callable{state});
+        using OnMessageType = decltype(on_message);
+        EXPECT_EQ(on_message.underlying()(), "nonconst-operator");
+        EXPECT_EQ(on_message.underlying().state, state);
+        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
+        EXPECT_TRUE(OnMessageType::is_owning);
+        EXPECT_FALSE(OnMessageType::is_out_buffer);
+        EXPECT_TRUE(OnMessageType::is_modifiable);
+    }
 }
 
 TEST(ParameterFactoriesTest, send_counts_basics_int_vector) {
