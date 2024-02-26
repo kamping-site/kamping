@@ -32,7 +32,7 @@
 namespace kamping {
 
 // Needed by the plugin system to check if a plugin provides a callback function for MPI errors.
-KAMPING_MAKE_HAS_MEMBER(mpi_error_hook)
+KAMPING_MAKE_HAS_MEMBER(mpi_ret_code_hook)
 
 /// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
@@ -588,8 +588,8 @@ private:
     template <template <typename> typename Plugin, template <typename> typename... RemainingPlugins>
     void _mpi_ret_code_hook_impl(int const error_code, std::string const& function_name) const {
         using PluginType = Plugin<Communicator<DefaultContainerType, Plugins...>>;
-        if constexpr (has_member_mpi_error_hook_v<PluginType, int, std::string const&>) {
-            static_cast<PluginType const&>(*this).mpi_error_hook(error_code, function_name);
+        if constexpr (has_member_mpi_ret_code_hook_v<PluginType, int, std::string const&>) {
+            static_cast<PluginType const&>(*this).mpi_ret_code_hook(error_code, function_name);
         } else {
             if constexpr (sizeof...(RemainingPlugins) == 0) {
                 _mpi_ret_code_hook_impl<void>(error_code, function_name);
