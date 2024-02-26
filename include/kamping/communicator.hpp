@@ -31,6 +31,9 @@
 
 namespace kamping {
 
+// Needed by the plugin system to check if a plugin provides a callback function for MPI errors.
+KAMPING_MAKE_HAS_MEMBER(mpi_error_hook);
+
 /// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
 /// @tparam DefaultContainerType The default container type to use for containers created by KaMPIng. Defaults to
@@ -573,6 +576,41 @@ private:
         int size;
         MPI_Comm_size(comm, &size);
         return asserting_cast<size_t>(size);
+    }
+
+    // @brief Calls the MPI error hook of the plugins if available, otherwise calls the default error hook.
+    void _mpi_ret_code_hook(int const error_code, std::string const& function_name) const {
+        _mpi_ret_code_hook_impl<Plugins...>(error_code, function_name);
+    }
+
+    // See \ref _mpi_ret_code_hook.
+    template <template <typename> typename Plugin, template <typename> typename... RemainingPlugins>
+    void _mpi_ret_code_hook_impl(int const error_code, std::string const& function_name) const {
+        using PluginType = Plugin<Communicator<DefaultContainerType, Plugins...>>;
+        if constexpr (has_member_mpi_error_hook_v<PluginType, int, std::string const&>) {
+            static_cast<PluginType const&>(*this).mpi_error_hook(error_code, function_name);
+        } else {
+            if constexpr (sizeof...(RemainingPlugins) == 0) {
+                _mpi_ret_code_hook_impl<void>(error_code, function_name);
+            } else {
+                _mpi_ret_code_hook_impl<RemainingPlugins...>(error_code, function_name);
+            }
+        }
+    }
+
+    template <typename = void>
+    void _mpi_ret_code_hook_impl(int const error_code, std::string const& function_name) const {
+        _mpi_ret_code_hook_default(error_code, function_name);
+    }
+
+    // @brief Default MPI error callback, throws a \ref MpiErrorException if \c error_code != \c MPI_SUCCESS.
+    void _mpi_ret_code_hook_default(int const error_code, std::string const& function_name) const {
+        THROWING_KASSERT_SPECIFIED(
+            error_code == MPI_SUCCESS,
+            function_name << " failed!",
+            kamping::MpiErrorException,
+            error_code
+        );
     }
 
     size_t   _rank; ///< Rank of the MPI process in this communicator.
