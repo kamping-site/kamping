@@ -32,7 +32,7 @@
 namespace kamping {
 
 // Needed by the plugin system to check if a plugin provides a callback function for MPI errors.
-KAMPING_MAKE_HAS_MEMBER(mpi_error_hook);
+KAMPING_MAKE_HAS_MEMBER(mpi_error_hook)
 
 /// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
