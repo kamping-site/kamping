@@ -56,7 +56,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::ibarrier(Args... a
         mpi_communicator(),                       // comm
         &request_param.underlying().mpi_request() // request
     );
-    this->_mpi_ret_code_hook(err, "MPI_Ibarrier");
+    this->mpi_error_hook(err, "MPI_Ibarrier");
 
     return internal::make_nonblocking_result<std::tuple<Args...>>(std::move(request_param));
 }

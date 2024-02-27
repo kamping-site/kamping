@@ -35,5 +35,5 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::barrier(Args... ar
     static_assert(sizeof...(args) == 0, "You may not pass any arguments to barrier().");
 
     [[maybe_unused]] int err = MPI_Barrier(mpi_communicator());
-    this->_mpi_ret_code_hook(err, "MPI_Barrier");
+    this->mpi_error_hook(err, "MPI_Barrier");
 }

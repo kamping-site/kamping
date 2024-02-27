@@ -32,7 +32,7 @@
 namespace kamping {
 
 // Needed by the plugin system to check if a plugin provides a callback function for MPI errors.
-KAMPING_MAKE_HAS_MEMBER(mpi_ret_code_hook)
+KAMPING_MAKE_HAS_MEMBER(mpi_error_handler)
 
 /// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
@@ -140,7 +140,7 @@ public:
     /// @param errorcode Error code to return to invoking environment.
     void abort(int errorcode = 1) const {
         [[maybe_unused]] int err = MPI_Abort(_comm, errorcode);
-        this->_mpi_ret_code_hook(err, "MPI_Abort");
+        this->mpi_error_hook(err, "MPI_Abort");
     }
 
     /// @brief Rank of the current MPI process in the communicator as `int`.
@@ -182,7 +182,7 @@ public:
         char my_name[MPI_MAX_PROCESSOR_NAME];
 
         int ret = MPI_Get_processor_name(my_name, &my_len);
-        this->_mpi_ret_code_hook(ret, "MPI_Get_processor_name");
+        this->mpi_error_hook(ret, "MPI_Get_processor_name");
         return std::string(my_name, asserting_cast<size_t>(my_len));
     }
 
@@ -289,7 +289,7 @@ public:
 
         MPI_Comm   new_comm;
         auto const ret = MPI_Comm_split_type(_comm, type, rank_signed(), MPI_INFO_NULL, &new_comm);
-        this->_mpi_ret_code_hook(ret, "MPI_Comm_split_type");
+        this->mpi_error_hook(ret, "MPI_Comm_split_type");
         return Communicator(new_comm, true);
     }
 
@@ -579,33 +579,36 @@ private:
         return asserting_cast<size_t>(size);
     }
 
-    // @brief Calls the MPI error hook of the plugins if available, otherwise calls the default error hook.
-    void _mpi_ret_code_hook(int const error_code, std::string const& function_name) const {
-        _mpi_ret_code_hook_impl<Plugins...>(error_code, function_name);
+    // @brief If \c error_code != \c MPI_SUCCESS, calls the MPI error hook of the plugins if available, otherwise calls
+    // the default error hook. If error code is \c MPI_SUCCESS, does nothing.
+    void mpi_error_hook(int const error_code, std::string const& function_name) const {
+        if (error_code != MPI_SUCCESS) {
+            mpi_error_hook_impl<Plugins...>(error_code, function_name);
+        }
     }
 
     // See \ref _mpi_ret_code_hook.
     template <template <typename> typename Plugin, template <typename> typename... RemainingPlugins>
-    void _mpi_ret_code_hook_impl(int const error_code, std::string const& function_name) const {
+    void mpi_error_hook_impl(int const error_code, std::string const& function_name) const {
         using PluginType = Plugin<Communicator<DefaultContainerType, Plugins...>>;
-        if constexpr (has_member_mpi_ret_code_hook_v<PluginType, int, std::string const&>) {
-            static_cast<PluginType const&>(*this).mpi_ret_code_hook(error_code, function_name);
+        if constexpr (has_member_mpi_error_handler_v<PluginType, int, std::string const&>) {
+            static_cast<PluginType const&>(*this).mpi_error_handler(error_code, function_name);
         } else {
             if constexpr (sizeof...(RemainingPlugins) == 0) {
-                _mpi_ret_code_hook_impl<void>(error_code, function_name);
+                mpi_error_hook_impl<void>(error_code, function_name);
             } else {
-                _mpi_ret_code_hook_impl<RemainingPlugins...>(error_code, function_name);
+                mpi_error_hook_impl<RemainingPlugins...>(error_code, function_name);
             }
         }
     }
 
     template <typename = void>
-    void _mpi_ret_code_hook_impl(int const error_code, std::string const& function_name) const {
-        _mpi_ret_code_hook_default(error_code, function_name);
+    void mpi_error_hook_impl(int const error_code, std::string const& function_name) const {
+        mpi_error_default_handler(error_code, function_name);
     }
 
     // @brief Default MPI error callback, throws a \ref MpiErrorException if \c error_code != \c MPI_SUCCESS.
-    void _mpi_ret_code_hook_default(int const error_code, std::string const& function_name) const {
+    void mpi_error_default_handler(int const error_code, std::string const& function_name) const {
         THROWING_KASSERT_SPECIFIED(
             error_code == MPI_SUCCESS,
             function_name << " failed!",

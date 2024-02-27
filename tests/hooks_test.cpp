@@ -26,10 +26,9 @@
 #include "kamping/plugin_helpers.hpp"
 #include "kassert/kassert.hpp"
 
-// Overwrite MPI_Bcast: Do nothing but return the desired return code.
-int desired_mpi_ret_code  = 0;
-int received_mpi_ret_code = 0;
+int desired_mpi_ret_code;
 
+// Overwrite MPI_Bcast: Do nothing but return the desired return code.
 int MPI_Bcast(
     [[maybe_unused]] void*        buffer,
     [[maybe_unused]] int          count,
@@ -41,12 +40,15 @@ int MPI_Bcast(
     return desired_mpi_ret_code;
 }
 
+bool error_handler_called = false;
+
 /// @brief A plugin overwriting the MPI return code handler.
 template <typename Comm>
 class IgnoreMPIErrorsPlugin : public kamping::plugins::PluginBase<Comm, IgnoreMPIErrorsPlugin> {
 public:
-    void mpi_ret_code_hook(int const ret, [[maybe_unused]] std::string const& function) const {
-        received_mpi_ret_code = ret;
+    void mpi_error_handler([[maybe_unused]] int const ret, [[maybe_unused]] std::string const& function) const {
+        KASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS");
+        error_handler_called = true;
     }
 };
 
@@ -57,13 +59,13 @@ TEST(HooksTest, MPIRetCode) {
 
     size_t value = 0;
 
-    desired_mpi_ret_code  = MPI_SUCCESS;
-    received_mpi_ret_code = MPI_ERR_COMM;
+    desired_mpi_ret_code = MPI_SUCCESS;
+    error_handler_called = false;
     comm.bcast_single(send_recv_buf(value));
-    EXPECT_EQ(desired_mpi_ret_code, received_mpi_ret_code);
+    EXPECT_FALSE(error_handler_called);
 
-    desired_mpi_ret_code  = MPI_ERR_COMM;
-    received_mpi_ret_code = MPI_SUCCESS;
+    desired_mpi_ret_code = MPI_ERR_COMM;
+    error_handler_called = false;
     comm.bcast_single(send_recv_buf(value));
-    EXPECT_EQ(desired_mpi_ret_code, received_mpi_ret_code);
+    EXPECT_TRUE(error_handler_called);
 }

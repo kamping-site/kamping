@@ -139,7 +139,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
             mpi_communicator()                    // communicator
         );
 
-        this->_mpi_ret_code_hook(err, "MPI_Scan");
+        this->mpi_error_hook(err, "MPI_Scan");
         return make_mpi_result<std::tuple<Args...>>(
             std::move(recv_buf),
             std::move(send_recv_type),
@@ -239,7 +239,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_inplace(Args.
         mpi_communicator()          // communicator
     );
 
-    this->_mpi_ret_code_hook(err, "MPI_Scan");
+    this->mpi_error_hook(err, "MPI_Scan");
     return make_mpi_result<std::tuple<Args...>>(std::move(send_recv_buf), std::move(type), std::move(count));
 }
 

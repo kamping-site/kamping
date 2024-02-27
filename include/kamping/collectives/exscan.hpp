@@ -152,7 +152,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
             operation.op(),                       // op
             mpi_communicator()                    // communicator
         );
-        this->_mpi_ret_code_hook(err, "MPI_Exscan");
+        this->mpi_error_hook(err, "MPI_Exscan");
 
         // MPI_Exscan leaves the recv_buf on rank 0 in an undefined state. We set it to the value provided via
         //  values_on_rank_0() if given. If values_on_rank_0() is not given and the operation is a built-in operation on
@@ -295,7 +295,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_inplace(Arg
         operation.op(),             // op
         mpi_communicator()          // communicator
     );
-    this->_mpi_ret_code_hook(err, "MPI_Exscan");
+    this->mpi_error_hook(err, "MPI_Exscan");
 
     // MPI_Exscan leaves the recv_buf on rank 0 in an undefined state. We set it to the value provided via
     //  values_on_rank_0() if given. If values_on_rank_0() is not given and the operation is a built-in operation on

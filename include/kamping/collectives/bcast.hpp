@@ -153,7 +153,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
             root.rank_signed(),              // root
             this->mpi_communicator()         // comm
         );
-        this->_mpi_ret_code_hook(err, "MPI_Bcast");
+        this->mpi_error_hook(err, "MPI_Bcast");
 
         // it is valid to do this check here, because if no send_recv_buf is provided on the root rank, we have
         // always have deduce counts and get into this branch.
@@ -194,7 +194,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         root.rank_signed(),                  // root
         this->mpi_communicator()             // comm
     );
-    this->_mpi_ret_code_hook(err, "MPI_Bcast");
+    this->mpi_error_hook(err, "MPI_Bcast");
 
     return make_mpi_result<std::tuple<Args...>>(
         std::move(send_recv_buf),
@@ -249,7 +249,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
     if constexpr (kassert::internal::assertion_enabled(assert::light_communication)) {
         bool root_has_buffer = has_parameter_type<internal::ParameterType::send_recv_buf, Args...>();
         int  err = MPI_Bcast(&root_has_buffer, 1, MPI_CXX_BOOL, root.rank_signed(), this->mpi_communicator());
-        this->_mpi_ret_code_hook(err, "MPI_Bcast");
+        this->mpi_error_hook(err, "MPI_Bcast");
         KASSERT(root_has_buffer, "send_recv_buf must be provided on the root rank.", assert::light_communication);
     }
 
