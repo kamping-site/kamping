@@ -80,7 +80,6 @@ public:
         auto              evaluation_data       = node.aggregated_data();
         _outstream << std::string(indentation, ' ') << quote_string(name) << ": {" << std::endl;
 
-        internal::ScalarOrVectorPrinter<Duration> _internal_printer{_outstream};
         _outstream << std::string(indentation + indentation_per_level, ' ') << quote_string("statistics") << ": {"
                    << std::endl;
         if (!evaluation_data.empty()) {
