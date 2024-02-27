@@ -27,13 +27,21 @@ int main(int argc, char* argv[]) {
     Environment e(argc, argv);
 
     Communicator     comm;
-    std::vector<int> in(static_cast<std::size_t>(comm.size()));
-    std::vector<int> out;
+    std::vector<int> input(static_cast<std::size_t>(comm.size()));
 
-    std::iota(in.begin(), in.end(), 0);
+    std::iota(input.begin(), input.end(), 0);
 
-    comm.scatter(send_buf(in), recv_buf(out));
-    print_result(out, comm);
+    {
+        // simply return received data
+        auto output = comm.scatter(send_buf(input));
+        print_result_on_root(output, comm);
+    }
+    {
+        // write received data to exisiting container
+        std::vector<int> output;
+        comm.scatter(send_buf(input), recv_buf<resize_to_fit>(output));
+        print_result_on_root(output, comm);
+    }
 
     return 0;
 }

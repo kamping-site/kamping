@@ -30,25 +30,41 @@ int main() {
     kamping::Environment  e;
     kamping::Communicator comm;
     std::vector<int>      input(comm.rank(), comm.rank_signed());
-    std::vector<int>      output;
 
-    comm.allgatherv(send_buf(input), recv_buf(output));
-    print_result(output, comm);
+    {
+        // simply return the recv buffer
+        auto recv_buffer = comm.allgatherv(send_buf(input));
+        print_result(recv_buffer, comm);
+    }
 
-    // additionally, receive counts and/or receive displacements can be provided
-    std::vector<int> recv_counts(comm.size());
-    std::iota(recv_counts.begin(), recv_counts.end(), 0);
-    std::vector<int> recv_displs(comm.size());
-    std::exclusive_scan(recv_counts.begin(), recv_counts.end(), recv_displs.begin(), 0);
-    output.clear();
+    {
+        // return recv buffer and recv_counts
+        auto [recv_buffer, recv_counts] = comm.allgatherv(send_buf(input), recv_counts_out());
+        print_result(recv_buffer, comm);
+        print_result(recv_counts, comm);
+    }
 
-    comm.allgatherv(
-        send_buf(input),
-        recv_buf(output),
-        kamping::recv_counts(recv_counts),
-        kamping::recv_displs(recv_displs)
-    );
-    print_result(output, comm);
+    {
+        // write result to an exisiting container
+        std::vector<int> recv_buffer;
+        comm.allgatherv(send_buf(input), recv_buf<resize_to_fit>(recv_buffer));
+        print_result(recv_buffer, comm);
 
-    return 0;
+        // additionally, receive counts and/or receive displacements can be provided
+        std::vector<int> recv_counts(comm.size());
+        std::iota(recv_counts.begin(), recv_counts.end(), 0);
+        std::vector<int> recv_displs(comm.size());
+        std::exclusive_scan(recv_counts.begin(), recv_counts.end(), recv_displs.begin(), 0);
+        recv_buffer.clear();
+
+        comm.allgatherv(
+            send_buf(input),
+            recv_buf<resize_to_fit>(recv_buffer),
+            kamping::recv_counts(recv_counts),
+            kamping::recv_displs(recv_displs)
+        );
+        print_result(recv_buffer, comm);
+
+        return 0;
+    }
 }

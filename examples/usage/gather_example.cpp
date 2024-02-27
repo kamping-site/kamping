@@ -31,11 +31,17 @@ int main() {
     kamping::Communicator comm;
     std::vector<int>      input(comm.size());
     std::iota(input.begin(), input.end(), 0);
-    std::vector<int> output;
-
-    comm.gather(send_buf(input), recv_buf(output), root(0));
-
-    print_result_on_root(output, comm);
+    {
+        // simply return received data
+        auto output = comm.gather(send_buf(input), root(0));
+        print_result_on_root(output, comm);
+    }
+    {
+        // write received data to exisiting container
+        std::vector<int> output;
+        comm.gather(send_buf(input), recv_buf<resize_to_fit>(output), root(0));
+        print_result_on_root(output, comm);
+    }
 
     return 0;
 }
