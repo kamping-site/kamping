@@ -100,19 +100,21 @@ private:
 };
 } // namespace kamping
 
-/// @brief Sparse alltoall exchange using the NBX algorithm by Hoeffler et al..
+/// @brief Sparse alltoall exchange using the NBX algorithm(Hoefler et al., "Scalable communication protocols for
+/// dynamic sparse data", ACM Sigplan Noctices 45.5, 2010.)
 ///
-/// This wrapper for \c MPI_Alltoallv sends different amounts of data from some/all ranks to some other/all ranks using
-/// direct message exchange and therefore realizing a complexity linear in the number of messages to be sent. To achieve
-/// this time complexity we can no longer rely on an array of size of the communicator for send counts. Instead we use a
-/// sparse representation of the data to be sent.
+/// This function provides a sparse interface for personalized all-to-all communication using
+/// direct message exchange and thus achieving linear complexity in the number of messages to be sent (in
+/// contrast to \c MPI_Alltoallv which exhibits complexity (at least) linear in the size of the communicator due to its
+/// interface). To achieve this time complexity we can no longer rely on an array of size of the communicator for send
+/// counts. Instead we use a sparse representation of the data to be sent.
 ///
 /// The following parameters are required:
-/// - \ref kamping::send_buf() containing the messages to be sent to other ranks. Differently from plain alltoallv, in
-/// alltoallv_sparse \c send_buf() encapsulates a container consisting of destination-message pairs. Each such pair has
-/// to be decomposable via structured bindings with the first parameter being convertible to int and the second
-/// parameter being the actual message to be sent for which we require the usual send_buf properties (i.e., `data()` and
-/// `size()` member function and the exposure of a `value_type`)).
+/// - \ref kamping::sparse_send_buf() containing the messages to be sent to other ranks. Differently from plain
+/// alltoallv, in alltoallv_sparse \c send_buf() encapsulates a container consisting of destination-message pairs. Each
+/// such pair has to be decomposable via structured bindings with the first parameter being convertible to int and the
+/// second parameter being the actual message to be sent for which we require the usual send_buf properties (i.e.,
+/// `data()` and `size()` member function and the exposure of a `value_type`)).
 /// - \ref kamping::on_message() containing a callback function `cb` which is responsible to process the received
 /// messages via a \ref kamping::ProbedMessage object. The callback function `cb` gets called for each probed message
 /// ready to be received via `cb(probed_message)`. See \ref kamping::ProbedMessage for the member functions to be called
@@ -140,15 +142,19 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(A
         internal::select_parameter_type<internal::ParameterType::sparse_send_buf>(args...);
     using dst_message_container_type =
         typename std::remove_reference_t<decltype(dst_message_container.underlying())>::value_type;
-    using message_value_type = typename std::tuple_element_t<1, dst_message_container_type>::value_type;
+    using message_type = typename std::tuple_element_t<1, dst_message_container_type>;
+    // support message_type being a single element.
+    using message_value_type =
+        typename internal::ValueTypeWrapper<internal::has_data_member_v<message_type>, message_type>::value_type;
 
     // Get callback
     auto const& on_message_cb = internal::select_parameter_type<internal::ParameterType::on_message>(args...);
 
     RequestPool<DefaultContainerType> request_pool;
     for (auto const& [dst, msg]: dst_message_container.underlying()) {
-        if (std::size(msg) > 0) {
-            issend(kamping::send_buf(msg), destination(dst), kamping::tag(tag), request(request_pool.get_request()));
+        auto send_buf = kamping::send_buf(msg);
+        if (send_buf.size() > 0) {
+            issend(std::move(send_buf), destination(dst), kamping::tag(tag), request(request_pool.get_request()));
         }
     }
 

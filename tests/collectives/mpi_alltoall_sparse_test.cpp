@@ -64,7 +64,7 @@ TEST(AlltoallvSparseTest, alltoall_single_element) {
     EXPECT_THAT(recv_buf, Each(comm.rank()));
 }
 
-TEST(AlltoallvSparseTest, alltoall_single_element_map_as_send_buf) {
+TEST(AlltoallvSparseTest, alltoall_single_element_with_map_as_sparse_send_buf) {
     // Sends a single element from each rank to each other rank with only the mandatory parameters
     Communicator comm;
 
@@ -97,7 +97,7 @@ TEST(AlltoallvSparseTest, alltoall_single_element_map_as_send_buf) {
     EXPECT_THAT(recv_buf, Each(comm.rank()));
 }
 
-TEST(AlltoallvSparseTest, alltoall_single_element_unordered_map_as_send_buf) {
+TEST(AlltoallvSparseTest, alltoall_single_element_unordered_map_as_sparse_send_buf) {
     // Sends a single element from each rank to each other rank with only the mandatory parameters
     Communicator comm;
 
@@ -115,6 +115,39 @@ TEST(AlltoallvSparseTest, alltoall_single_element_unordered_map_as_send_buf) {
     auto                on_msg = [&](ProbedMessage<size_t, Communicator<>> const& probed_msg) {
         const int source   = probed_msg.source_signed();
         msg_type  recv_msg = probed_msg.recv();
+        EXPECT_EQ(recv_msg.size(), 1);
+        EXPECT_EQ(recv_msg.size(), probed_msg.recv_count_signed());
+        EXPECT_EQ(recv_msg.size(), probed_msg.recv_count());
+        EXPECT_EQ(probed_msg.source(), probed_msg.source_signed());
+        sources.emplace_back(source);
+        recv_buf.emplace_back(recv_msg.front());
+    };
+
+    comm.alltoallv_sparse(sparse_send_buf(input), on_message(on_msg));
+
+    std::sort(sources.begin(), sources.end());
+    EXPECT_EQ(sources, iota_container_n(comm.size(), 0)); // recv message from all ranks
+    EXPECT_THAT(recv_buf, Each(comm.rank()));
+}
+
+TEST(AlltoallvSparseTest, alltoall_single_element_not_encapsulated_in_a_container_and_unordered_map_as_send_buf) {
+    // Sends a single element from each rank to each other rank with only the mandatory parameters
+    Communicator comm;
+
+    using msg_type = size_t;
+
+    // Prepare send buffer
+    std::unordered_map<int, msg_type> input;
+    for (size_t i = 0; i < comm.size(); ++i) {
+        input.emplace(static_cast<int>(i), msg_type{i});
+    }
+
+    // Prepare cb
+    std::vector<size_t> recv_buf;
+    std::vector<int>    sources;
+    auto                on_msg = [&](ProbedMessage<size_t, Communicator<>> const& probed_msg) {
+        const int             source   = probed_msg.source_signed();
+        std::vector<msg_type> recv_msg = probed_msg.recv();
         EXPECT_EQ(recv_msg.size(), 1);
         EXPECT_EQ(recv_msg.size(), probed_msg.recv_count_signed());
         EXPECT_EQ(recv_msg.size(), probed_msg.recv_count());
