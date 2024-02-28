@@ -35,7 +35,11 @@
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
-template <template <typename...> typename DefaultContainerType, template <typename, template <typename...> typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::ibarrier(Args... args) const {
     using namespace kamping::internal;

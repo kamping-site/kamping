@@ -70,7 +70,11 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described
 /// above.
-template <template <typename...> typename DefaultContainerType, template <typename, template <typename...> typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args) const {
     KAMPING_CHECK_PARAMETERS(
@@ -198,7 +202,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return The received value of type \c recv_value_type_tparam.
-template <template <typename...> typename DefaultContainerType, template <typename, template <typename...> typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename recv_value_type_tparam, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args... args) const {
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(tag, source, status));

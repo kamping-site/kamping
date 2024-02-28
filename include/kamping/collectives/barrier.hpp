@@ -24,7 +24,11 @@
 ///
 /// The parameter pack prohibits the compiler form compiling this
 /// function even when it's not used.
-template <template <typename...> typename DefaultContainerType, template <typename, template <typename...> typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 void kamping::Communicator<DefaultContainerType, Plugins...>::barrier(Args... args) const {
     using namespace kamping::internal;

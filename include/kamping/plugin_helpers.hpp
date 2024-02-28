@@ -25,7 +25,7 @@ template <
     typename CommunicatorClass,
     template <typename>
     typename DefaultContainerType,
-    template<typename, template<typename> typename>
+    template <typename, template <typename> typename>
     typename PluginClass>
 struct PluginBase {
 private:

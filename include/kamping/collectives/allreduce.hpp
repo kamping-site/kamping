@@ -258,7 +258,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_inplace(
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return The single output value.
-template <template <typename...> typename DefaultContainerType, template <typename, template<typename...> typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_single(Args... args) const {
     using namespace kamping::internal;
