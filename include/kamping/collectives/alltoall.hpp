@@ -23,13 +23,19 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/collectives_helpers.hpp"
+#include "kamping/collectives/ibarrier.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/p2p/iprobe.hpp"
+#include "kamping/p2p/isend.hpp"
+#include "kamping/p2p/recv.hpp"
+#include "kamping/request_pool.hpp"
 #include "kamping/result.hpp"
 
 /// @brief Wrapper for \c MPI_Alltoall.
