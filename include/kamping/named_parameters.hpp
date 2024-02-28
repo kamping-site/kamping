@@ -86,6 +86,13 @@ auto send_buf(std::initializer_list<T> data) {
 }
 
 /// @brief Generates buffer wrapper based on the data in the sparse send buffer.
+/// \param data is a container consisting of destination-message pairs. Each
+/// such pair has to be decomposable via structured bindings with the first parameter being convertible to int and the
+/// second parameter being the actual message to be sent for which we require the usual send_buf properties (i.e.,
+/// either scalar types or existance  of a `data()` and `size()` member function and the exposure of a `value_type`))
+///
+/// @tparam Data Data type representing the element(s) to send.
+/// @return Object referring to the storage containing the data elements to send.
 template <typename Data>
 auto sparse_send_buf(Data&& data) {
     using namespace internal;
@@ -100,7 +107,8 @@ auto sparse_send_buf(Data&& data) {
         BufferType::in_buffer>(std::forward<Data>(data));
 }
 
-/// @brief Generates buffer wrapper based on the data in the sparse send buffer.
+/// @brief Generates wrapper for an callback to be called on the probed messages in \ref
+/// Communicator::alltoallv_sparse(). Its call operator has to accept a \ref kamping::ProbedMessage as sole parameter.
 template <typename Callback>
 auto on_message(Callback&& cb) {
     using namespace internal;

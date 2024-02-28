@@ -91,7 +91,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
         "Please provide an explicit destination or destination(ranks::null)."
     );
 
-    using default_tag_buf_type = decltype(kamping::tag(0));
+    using default_tag_buf_type = decltype(kamping::tag(this->default_tag()));
 
     auto&& tag_param = internal::select_parameter_type_or_default<internal::ParameterType::tag, default_tag_buf_type>(
         std::tuple(this->default_tag()),

@@ -70,7 +70,7 @@ enum class ParameterType {
     send_recv_type,   ///< Tag used to represent a send and/or recv type in an \c MPI call. This parameter type is used
                       ///< for example in \c MPI collective operations like \c MPI_Bcast where the corresponding \c MPI
                       ///< function expects only one \c MPI_Datatype parameter of type \c MPI_Datatype.
-    on_message        ///< Tag used to represent a call back functio operation on a \ref ProbedMessage object in
+    on_message        ///< Tag used to represent a call back function operation on a \ref ProbedMessage object in
                       ///< alltoallv_sparse.
 
 };
