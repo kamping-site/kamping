@@ -40,32 +40,65 @@ int MPI_Bcast(
     return desired_mpi_ret_code;
 }
 
-bool error_handler_called = false;
+bool first_error_handler_called  = false;
+bool second_error_handler_called = false;
 
 /// @brief A plugin overwriting the MPI return code handler.
-template <typename Comm>
-class IgnoreMPIErrorsPlugin : public kamping::plugins::PluginBase<Comm, IgnoreMPIErrorsPlugin> {
+
+template <typename Comm, template <typename...> typename DefaultContainerType>
+class IgnoreMPIErrorsPlugin : public kamping::plugins::PluginBase<Comm, DefaultContainerType, IgnoreMPIErrorsPlugin> {
 public:
-    void mpi_error_handler([[maybe_unused]] int const ret, [[maybe_unused]] std::string const& function) const {
+    void mpi_error_handler([[maybe_unused]] int const ret, [[maybe_unused]] std::string const& callee) const {
         KASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS");
-        error_handler_called = true;
+        first_error_handler_called = true;
     }
 };
 
-TEST(HooksTest, MPIRetCode) {
+template <typename Comm, template <typename...> typename DefaultContainerType>
+class IgnoreMPIErrorsPlugin2 : public kamping::plugins::PluginBase<Comm, DefaultContainerType, IgnoreMPIErrorsPlugin2> {
+public:
+    void mpi_error_handler([[maybe_unused]] int const ret, [[maybe_unused]] std::string const& callee) const {
+        KASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS");
+        second_error_handler_called = true;
+    }
+};
+
+TEST(HooksTest, MPIErrorHook) {
     using namespace kamping;
 
     Communicator<std::vector, IgnoreMPIErrorsPlugin> comm;
 
     size_t value = 0;
 
-    desired_mpi_ret_code = MPI_SUCCESS;
-    error_handler_called = false;
+    desired_mpi_ret_code       = MPI_SUCCESS;
+    first_error_handler_called = false;
     comm.bcast_single(send_recv_buf(value));
-    EXPECT_FALSE(error_handler_called);
+    EXPECT_FALSE(first_error_handler_called);
 
-    desired_mpi_ret_code = MPI_ERR_COMM;
-    error_handler_called = false;
+    desired_mpi_ret_code       = MPI_ERR_COMM;
+    first_error_handler_called = false;
     comm.bcast_single(send_recv_buf(value));
-    EXPECT_TRUE(error_handler_called);
+    EXPECT_TRUE(first_error_handler_called);
+}
+
+TEST(HooksTest, TwoPluginsProvidingAnMPIErrorHandler) {
+    using namespace kamping;
+
+    Communicator<std::vector, IgnoreMPIErrorsPlugin, IgnoreMPIErrorsPlugin2> comm;
+
+    size_t value = 0;
+
+    desired_mpi_ret_code        = MPI_SUCCESS;
+    first_error_handler_called  = false;
+    second_error_handler_called = false;
+    comm.bcast_single(send_recv_buf(value));
+    EXPECT_FALSE(first_error_handler_called);
+    EXPECT_FALSE(second_error_handler_called);
+
+    desired_mpi_ret_code        = MPI_ERR_COMM;
+    first_error_handler_called  = false;
+    second_error_handler_called = false;
+    comm.bcast_single(send_recv_buf(value));
+    EXPECT_TRUE(first_error_handler_called);
+    EXPECT_FALSE(second_error_handler_called);
 }
