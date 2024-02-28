@@ -159,17 +159,18 @@ struct FilterOut<Predicate> {
 template <typename Predicate, typename Head, typename... Tail>
 struct FilterOut<Predicate, Head, Tail...> {
     using non_ref_first = std::remove_reference_t<Head>; ///< Remove potential reference from Head.
-    static constexpr bool predicate =
-        Predicate::template test<non_ref_first>(); ///< Predicate which Head has to fulfill to be kept.
+    static constexpr bool discard_elem =
+        Predicate::template discard<non_ref_first>(); ///< Predicate which Head has to fulfill to be kept.
     static constexpr internal::ParameterType ptype =
         non_ref_first::parameter_type; ///< ParameterType stored as a static variable in Head.
     using type = std::conditional_t<
-        predicate,
+        discard_elem,
+        typename FilterOut<Predicate, Tail...>::type,
         typename PrependType<
             std::integral_constant<internal::ParameterType, ptype>,
-            typename FilterOut<Predicate, Tail...>::type>::type,
-        typename FilterOut<Predicate, Tail...>::type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those types
-                                                       ///< among Head, Tail... which fulfill the predicate.
+            typename FilterOut<Predicate, Tail...>::type>::type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are
+                                                                  ///< those types among Head, Tail... which fulfill the
+                                                                  ///< predicate.
 };
 
 /// @brief Specialisation of template class for types stored in a std::tuple<...> that is used to filter these types and
@@ -242,14 +243,14 @@ using parameter_types_to_ignore_for_result_object = kamping::internal::type_list
 
 struct Predicate {
     template <typename T>
-    static constexpr bool test() {
+    static constexpr bool discard() {
         using namespace kamping::internal;
-        using parameter_types_to_ignore_for_result_object = type_list<
+        using ptypes_to_ignore = type_list<
             std::integral_constant<ParameterType, ParameterType::sparse_send_buf>,
             std::integral_constant<ParameterType, ParameterType::on_message>,
             std::integral_constant<ParameterType, ParameterType::destination>>;
         using ptype_entry = std::integral_constant<ParameterType, T::parameter_type>;
-        return !parameter_types_to_ignore_for_result_object::contains<ptype_entry>;
+        return ptypes_to_ignore::contains<ptype_entry>;
     }
 };
 template <typename... Args>
