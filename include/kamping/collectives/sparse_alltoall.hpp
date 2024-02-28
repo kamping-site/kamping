@@ -16,6 +16,7 @@
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/ibarrier.hpp"
+#include "kamping/named_parameter_filtering.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/p2p/iprobe.hpp"
@@ -100,145 +101,12 @@ private:
     Status              _status;
     Communicator const& _comm;
 };
-} // namespace kamping
-namespace kamping::experimental {
-/// @brief Base template used to concatenate a type to a given std::tuple.
-/// based on https://stackoverflow.com/a/18366475
-template <typename, typename>
-struct PrependType {};
 
-/// @brief Specialization of a class template used to preprend a type to a given std::tuple.
-///
-/// @tparam Head Type to prepend to the std::tuple.
-/// @tparam Tail Types contained in the std::tuple.
-template <typename Head, typename... Tail>
-struct PrependType<Head, std::tuple<Tail...>> {
-    using type = std::tuple<Head, Tail...>; ///< tuple with prepended Head type.
-};
-
-/// @brief List of parameter type (entries) which should not be included in the result object.
-using parameter_types_to_ignore_for_result_object = internal::type_list<
-    std::integral_constant<internal::ParameterType, internal::ParameterType::sparse_send_buf>,
-    std::integral_constant<internal::ParameterType, internal::ParameterType::on_message>,
-    std::integral_constant<internal::ParameterType, internal::ParameterType::destination>>;
-
-/// @brief Determines whether a given buffer with \tparam BufferType should we included in the result object.
-///
-/// @tparam BufferType Type of the data buffer.
-/// @return \c True iff the \tparam BufferType has the static bool members \c is_owning and \c is_out_buffer and both
-/// values are true.
-template <typename BufferType>
-constexpr bool keep_entry() {
-    using ptype_entry = std::integral_constant<internal::ParameterType, BufferType::parameter_type>;
-    return !experimental::parameter_types_to_ignore_for_result_object::contains<ptype_entry>;
-}
-/// @brief Base template used to filter a list of types and only keep those whose types meet specified criteria.
-/// See the following specialisations for more information.
-template <typename...>
-struct FilterOut;
-
-/// @brief Specialisation of template class used to filter a list of types and only keep the those whose types meet
-/// the specified criteria.
-template <typename Predicate>
-struct FilterOut<Predicate> {
-    using type = std::tuple<>; ///< Tuple of types meeting the specified criteria.
-};
-
-/// @brief Specialization of template class used to filter a list of (buffer-)types and only keep those whose types meet
-/// the following criteria:
-/// - an object of the type owns its underlying storage
-/// - an object of the type is an out buffer
-/// - @see \ref is_returnable_owning_out_data_buffer()
-///
-/// The template is recursively instantiated to check one type after the other and "insert" it into a
-/// std::tuple if it meets the criteria.
-/// based on https://stackoverflow.com/a/18366475
-///
-/// @tparam Head Type for which it is checked whether it meets the predicate.
-/// @tparam Tail Types that are checked later on during the recursive instantiation.
-template <typename Predicate, typename Head, typename... Tail>
-struct FilterOut<Predicate, Head, Tail...> {
-    using non_ref_first = std::remove_reference_t<Head>; ///< Remove potential reference from Head.
-    static constexpr bool discard_elem =
-        Predicate::template discard<non_ref_first>(); ///< Predicate which Head has to fulfill to be kept.
-    static constexpr internal::ParameterType ptype =
-        non_ref_first::parameter_type; ///< ParameterType stored as a static variable in Head.
-    using type = std::conditional_t<
-        discard_elem,
-        typename FilterOut<Predicate, Tail...>::type,
-        typename PrependType<
-            std::integral_constant<internal::ParameterType, ptype>,
-            typename FilterOut<Predicate, Tail...>::type>::type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are
-                                                                  ///< those types among Head, Tail... which fulfill the
-                                                                  ///< predicate.
-};
-
-/// @brief Specialisation of template class for types stored in a std::tuple<...> that is used to filter these types and
-/// only keep those which meet certain criteria (see above).
-///
-/// @tparam Types Types to check.
-template <typename Predicate, typename... Types>
-struct FilterOut<Predicate, std::tuple<Types...>> {
-    using type =
-        typename FilterOut<Predicate, Types...>::type; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those
-                                                       ///< types among Types... which match the criteria.
-};
-
-/// @brief Retrieve the buffer with requested ParameterType from the std::tuple containg all buffers.
-///
-/// @tparam ptype ParameterType of the buffer to retrieve.
-/// @tparam Buffers Types of the data buffers.
-/// @param buffers Data buffers out of which the one with requested parameter type is retrieved.
-/// @return Reference to the buffer which the requested ParameterType.
-template <internal::ParameterType ptype, typename... Buffers>
-auto& retrieve_buffer(std::tuple<Buffers...>& buffers) {
-    return internal::select_parameter_type_in_tuple<ptype>(buffers);
-}
-
-/// @brief Retrieve the Buffer with given ParameterType from the tuple Buffers.
-///
-/// @tparam ParameterTypeTuple Tuple containing std::integral_constant<ParameterType> specifing the entries to be
-/// retrieved from the BufferTuple buffers.
-/// @tparam Buffers Types of the data buffers.
-/// @tparam i Integer sequence.
-/// @param buffers Data buffers out of which the ones with parameter types contained in ParameterTypeTuple are
-/// retrieved.
-/// @return std::tuple containing all requested data buffers.
-template <typename ParameterTypeTuple, typename... Buffers, std::size_t... i>
-auto construct_buffer_tuple_for_result_object_impl(
-    std::tuple<Buffers...>& buffers, std::index_sequence<i...> /*index_sequence*/
-) {
-    return std::make_tuple(
-        std::move(experimental::retrieve_buffer<std::tuple_element_t<i, ParameterTypeTuple>::value>(buffers))...
-    );
-}
-
-/// @brief Retrieve the Buffer with given ParameterType from the tuple Buffers.
-///
-/// @tparam ParameterTypeTuple Tuple containing specialized ParameterTypeEntry types specifing the entries to be
-/// retrieved from the BufferTuple buffers.
-/// @tparam Buffers Types of the data buffers.
-/// @param buffers Data buffers out of which the ones with parameter types contained in ParameterTypeTuple are
-/// retrieved.
-/// @return std::tuple containing all requested data buffers.
-template <typename ParameterTypeTuple, typename... Buffers>
-auto construct_buffer_tuple_for_result_object(Buffers&&... buffers) {
-    // number of buffers that will be contained in the result object (including the receive buffer if it is an out
-    // parameter)
-    constexpr std::size_t num_output_parameters = std::tuple_size_v<ParameterTypeTuple>;
-    auto                  buffers_tuple         = std::tie(buffers...);
-
-    return experimental::construct_buffer_tuple_for_result_object_impl<ParameterTypeTuple>(
-        buffers_tuple,
-        std::make_index_sequence<num_output_parameters>{}
-    );
-}
-} // namespace kamping::experimental
-
-///@brief Predicate to check whether an argument provided to sparse_alltoall shall be discard in the send call.
+namespace internal {
+///@brief Predicate to check whether an argument provided to sparse_alltoall shall be discard in the internal calls to \ref Communicator::issend().
 struct PredicateForSparseAlltoall {
     ///@brief Discard functions to check whether an argument provided to sparse_alltoall shall be discard in the send
-    ///call.
+    /// call.
     ///
     ///@tparam Arg Argument to be checked.
     ///@return \c True (i.e. discard) iff Arg's parameter_type is `sparse_send_buf`, `on_message` or `destination`.
@@ -246,18 +114,20 @@ struct PredicateForSparseAlltoall {
     static constexpr bool discard() {
         using namespace kamping::internal;
         using ptypes_to_ignore = type_list<
-            std::integral_constant<ParameterType, ParameterType::sparse_send_buf>,
-            std::integral_constant<ParameterType, ParameterType::on_message>,
-            std::integral_constant<ParameterType, ParameterType::destination>>;
-        using ptype_entry = std::integral_constant<ParameterType, Arg::parameter_type>;
+            ParameterTypeEntry<ParameterType::sparse_send_buf>,
+            ParameterTypeEntry<ParameterType::on_message>,
+            ParameterTypeEntry<ParameterType::destination>>;
+        using ptype_entry = ParameterTypeEntry<Arg::parameter_type>;
         return ptypes_to_ignore::contains<ptype_entry>;
     }
 };
 template <typename... Args>
-auto filter(Args&&... args) {
-    using ArgsToKeep = typename kamping::experimental::FilterOut<PredicateForSparseAlltoall, std::tuple<Args...>>::type;
-    return kamping::experimental::construct_buffer_tuple_for_result_object<ArgsToKeep>(args...);
+auto filter_args_sparse_alltoall(Args&&... args) {
+    using ArgsToKeep = typename FilterOut<PredicateForSparseAlltoall, std::tuple<Args...>>::type;
+    return construct_buffer_tuple<ArgsToKeep>(args...);
 }
+} // namespace internal
+} // namespace kamping
 
 /// @brief Sparse alltoall exchange using the NBX algorithm(Hoefler et al., "Scalable communication protocols for
 /// dynamic sparse data", ACM Sigplan Noctices 45.5, 2010.)
@@ -287,6 +157,9 @@ auto filter(Args&&... args) {
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional parameters described above.
+template <typename>
+class TD;
+
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -332,7 +205,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(A
                     std::move(argsargs)...
                 );
             };
-            std::apply(callable, filter(args...));
+            std::apply(callable, filter_args_sparse_alltoall(args...));
         }
     }
 
