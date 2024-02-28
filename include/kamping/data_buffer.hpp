@@ -632,11 +632,6 @@ public:
     /// @return A reference to the data.
     MemberType const& underlying() const {
         kassert_not_extracted("Cannot get a buffer that has already been extracted.");
-        // this assertion is only checked if the buffer is actually accessed.
-        static_assert(
-            !is_vector_bool_v<MemberType>,
-            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead."
-        );
         return _data;
     }
 
