@@ -139,8 +139,8 @@ struct FilterOut;
 
 /// @brief Specialisation of template class used to filter a list of types and only keep the those whose types meet
 /// the specified criteria.
-template <>
-struct FilterOut<> {
+template <typename Predicate>
+struct FilterOut<Predicate> {
     using type = std::tuple<>; ///< Tuple of types meeting the specified criteria.
 };
 
@@ -156,29 +156,31 @@ struct FilterOut<> {
 ///
 /// @tparam Head Type for which it is checked whether it meets the predicate.
 /// @tparam Tail Types that are checked later on during the recursive instantiation.
-template <typename Head, typename... Tail>
-struct FilterOut<Head, Tail...> {
-    using non_ref_first             = std::remove_reference_t<Head>; ///< Remove potential reference from Head.
-    static constexpr bool predicate = keep_entry<non_ref_first>(); ///< Predicate which Head has to fulfill to be kept.
+template <typename Predicate, typename Head, typename... Tail>
+struct FilterOut<Predicate, Head, Tail...> {
+    using non_ref_first = std::remove_reference_t<Head>; ///< Remove potential reference from Head.
+    static constexpr bool predicate =
+        Predicate::template test<non_ref_first>(); ///< Predicate which Head has to fulfill to be kept.
     static constexpr internal::ParameterType ptype =
         non_ref_first::parameter_type; ///< ParameterType stored as a static variable in Head.
     using type = std::conditional_t<
         predicate,
         typename PrependType<
             std::integral_constant<internal::ParameterType, ptype>,
-            typename FilterOut<Tail...>::type>::type,
-        typename FilterOut<Tail...>::type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those types among
-                                            ///< Head, Tail... which fulfill the predicate.
+            typename FilterOut<Predicate, Tail...>::type>::type,
+        typename FilterOut<Predicate, Tail...>::type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those types
+                                                       ///< among Head, Tail... which fulfill the predicate.
 };
 
 /// @brief Specialisation of template class for types stored in a std::tuple<...> that is used to filter these types and
 /// only keep those which meet certain criteria (see above).
 ///
 /// @tparam Types Types to check.
-template <typename... Types>
-struct FilterOut<std::tuple<Types...>> {
-    using type = typename FilterOut<Types...>::type; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those
-                                                     ///< types among Types... which match the criteria.
+template <typename Predicate, typename... Types>
+struct FilterOut<Predicate, std::tuple<Types...>> {
+    using type =
+        typename FilterOut<Predicate, Types...>::type; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those
+                                                       ///< types among Types... which match the criteria.
 };
 
 /// @brief Retrieve the buffer with requested ParameterType from the std::tuple containg all buffers.
@@ -232,9 +234,27 @@ auto construct_buffer_tuple_for_result_object(Buffers&&... buffers) {
 }
 } // namespace kamping::experimental
 
+/// @brief List of parameter type (entries) which should not be included in the result object.
+using parameter_types_to_ignore_for_result_object = kamping::internal::type_list<
+    std::integral_constant<kamping::internal::ParameterType, kamping::internal::ParameterType::sparse_send_buf>,
+    std::integral_constant<kamping::internal::ParameterType, kamping::internal::ParameterType::on_message>,
+    std::integral_constant<kamping::internal::ParameterType, kamping::internal::ParameterType::destination>>;
+
+struct Predicate {
+    template <typename T>
+    static constexpr bool test() {
+        using namespace kamping::internal;
+        using parameter_types_to_ignore_for_result_object = type_list<
+            std::integral_constant<ParameterType, ParameterType::sparse_send_buf>,
+            std::integral_constant<ParameterType, ParameterType::on_message>,
+            std::integral_constant<ParameterType, ParameterType::destination>>;
+        using ptype_entry = std::integral_constant<ParameterType, T::parameter_type>;
+        return !parameter_types_to_ignore_for_result_object::contains<ptype_entry>;
+    }
+};
 template <typename... Args>
 constexpr auto filter(Args&&... args) {
-    using ArgsToKeep = typename kamping::experimental::FilterOut<std::tuple<Args...>>::type;
+    using ArgsToKeep = typename kamping::experimental::FilterOut<Predicate, std::tuple<Args...>>::type;
     return kamping::experimental::construct_buffer_tuple_for_result_object<ArgsToKeep>(args...);
 }
 
@@ -296,9 +316,16 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(A
         auto send_buf = kamping::send_buf(msg);
 
         if (send_buf.size() > 0) {
-            int  dst_     = dst; // cannot capture structured binding variable
-            auto callable = [&](auto... args) {
-                issend(std::move(send_buf), destination(dst_), request(request_pool.get_request()), std::move(args)...);
+            int       dst_       = dst; // cannot capture structured binding variable
+            int const send_count = asserting_cast<int>(send_buf.size());
+            auto      callable   = [&](auto... args) {
+                issend(
+                    std::move(send_buf),
+                    kamping::send_count(send_count),
+                    destination(dst_),
+                    request(request_pool.get_request()),
+                    std::move(args)...
+                );
             };
             std::apply(callable, filter(args...));
         }

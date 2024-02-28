@@ -326,7 +326,50 @@ TEST(AlltoallvSparseTest, sparse_exchange) {
     EXPECT_EQ(recv_buf[right_partner], msg_type(42, asserting_cast<size_t>(right_partner)));
 }
 
-TEST(AlltoallvSparseTest, sparse_exchange_custom_dynamic_datatype) {
+TEST(AlltoallvSparseTest, sparse_exchange_custom_dynamic_send_datatype) {
+    // Send a message to left and right partner
+    Communicator comm;
+
+    if (comm.size() < 2) {
+        return;
+    }
+    struct Int_Padding_Int {
+        int value_1;
+        int padding;
+        int value_2;
+    };
+
+    using msg_type               = Int_Padding_Int;
+    MPI_Datatype int_padding_int = MPI_INT_padding_MPI_INT();
+    MPI_Type_commit(&int_padding_int);
+
+    int const left_partner  = (comm.size_signed() + comm.rank_signed() - 1) % comm.size_signed();
+    int const right_partner = (comm.rank_signed() + 1) % comm.size_signed();
+    // Prepare send buffer
+    std::unordered_map<int, msg_type> input;
+    input.emplace(left_partner, Int_Padding_Int{comm.rank_signed(), -1, 42});
+    input.emplace(right_partner, Int_Padding_Int{comm.rank_signed(), -1, 42});
+
+    // Prepare cb
+    std::unordered_map<int, std::pair<int, int>> recv_messages;
+    std::vector<int>                             sources;
+    auto                                         on_msg = [&](auto const& probed_msg) {
+        auto recv_msg = probed_msg.template recv<int>();
+        EXPECT_EQ(probed_msg.recv_count(MPI_INT), 2);
+        EXPECT_EQ(recv_msg.size(), 2);
+        recv_messages[probed_msg.source_signed()] = std::make_pair(recv_msg.front(), recv_msg.back());
+    };
+
+    comm.alltoallv_sparse(sparse_send_buf(input), send_type(int_padding_int), on_message(on_msg));
+
+    EXPECT_EQ(recv_messages.size(), 2);
+    EXPECT_EQ(recv_messages[left_partner], std::make_pair(left_partner, 42));
+    EXPECT_EQ(recv_messages[right_partner], std::make_pair(right_partner, 42));
+
+    MPI_Type_free(&int_padding_int);
+}
+
+TEST(AlltoallvSparseTest, sparse_exchange_custom_dynamic_recv_datatype) {
     // Send a message to left and right partner
     Communicator comm;
 
