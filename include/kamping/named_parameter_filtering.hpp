@@ -52,16 +52,13 @@ struct FilterOut<Predicate> {
     using type = std::tuple<>; ///< Tuple of types meeting the specified criteria.
 };
 
-/// @brief Specialization of template class used to filter a list of (buffer-)types and only keep those whose types meet
-/// the following criteria:
-/// - an object of the type owns its underlying storage
-/// - an object of the type is an out buffer
-/// - @see \ref is_returnable_owning_out_data_buffer()
-///
+/// @brief Specialization of template class used to filter a list of (buffer-)types and discard those for which
 /// The template is recursively instantiated to check one type after the other and "insert" it into a
-/// std::tuple if it meets the criteria.
+/// std::tuple if it meets the criteria .
 /// based on https://stackoverflow.com/a/18366475
 ///
+/// @tparam Predicate Predicate function which has a constexpr static member function `discard()` taking \tparam Head as
+/// template parameter and returning a bool indiciating whether head shall be discard (filtered out).
 /// @tparam Head Type for which it is checked whether it meets the predicate.
 /// @tparam Tail Types that are checked later on during the recursive instantiation.
 template <typename Predicate, typename Head, typename... Tail>
