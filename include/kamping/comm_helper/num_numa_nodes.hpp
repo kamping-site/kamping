@@ -3,7 +3,7 @@
 #include "kamping/collectives/allreduce.hpp"
 #include "kamping/communicator.hpp"
 
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <template <typename...> typename DefaultContainerType, template <typename, template<typename...> typename> typename... Plugins>
 size_t kamping::Communicator<DefaultContainerType, Plugins...>::num_numa_nodes() const {
     // Split this communicator into NUMA nodes.
     Communicator numa_comm = split_to_shared_memory();

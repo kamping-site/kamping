@@ -65,7 +65,7 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <template <typename...> typename DefaultContainerType, template <typename, template <typename...> typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... args) const {
     using namespace kamping::internal;
@@ -187,7 +187,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <template <typename...> typename DefaultContainerType, template <typename, template <typename...> typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(Args... args) const {
     using namespace kamping::internal;
@@ -298,7 +298,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <template <typename...> typename DefaultContainerType, template <typename, template <typename...> typename> typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args... args) const {
     using namespace kamping::internal;

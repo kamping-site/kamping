@@ -70,7 +70,7 @@
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <template <typename...> typename DefaultContainerType, template <typename, template <typename...> typename> typename... Plugins>
 template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... args) const {
     using namespace kamping::internal;
@@ -222,7 +222,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return The single output value.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <template <typename...> typename DefaultContainerType, template <typename, template <typename...> typename> typename... Plugins>
 template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter_single(Args... args) const {
     using namespace kamping::internal;
@@ -299,7 +299,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter_single(Arg
 /// @tparam Args Deduced template parameters.
 /// @param args Required and optionally optional parameters.
 /// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <template <typename...> typename DefaultContainerType, template <typename, template <typename...> typename> typename... Plugins>
 template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... args) const {
     using namespace kamping::internal;
