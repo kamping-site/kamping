@@ -106,11 +106,11 @@ namespace internal {
 /// @brief Predicate to check whether an argument provided to sparse_alltoall shall be discarded in the internal calls
 /// to \ref Communicator::issend().
 struct PredicateForSparseAlltoall {
-    ///@brief Function to check whether an argument provided to \ref Communicator::alltoallv_sparse() shall be discarded
-    /// in the send call.
+    /// @brief Function to check whether an argument provided to \ref Communicator::alltoallv_sparse() shall be
+    /// discarded in the send call.
     ///
-    ///@tparam Arg Argument to be checked.
-    ///@return \c True (i.e. discard) iff Arg's parameter_type is `sparse_send_buf`, `on_message` or `destination`.
+    /// @tparam Arg Argument to be checked.
+    /// @return \c True (i.e. discard) iff Arg's parameter_type is `sparse_send_buf`, `on_message` or `destination`.
     template <typename Arg>
     static constexpr bool discard() {
         using namespace kamping::internal;
