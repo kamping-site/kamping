@@ -596,25 +596,17 @@ public:
 
     static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
 
-    static constexpr BufferResizePolicy resize_policy =
-        BufferResizePolicy::no_resize; ///< The policy specifying in which cases the buffer shall be resized.
-
     /// @brief \c true if the buffer is an out or in/out buffer that results will be written to and \c false
     /// otherwise.
     static constexpr bool is_out_buffer =
         (buffer_type_param == BufferType::out_buffer || buffer_type_param == BufferType::in_out_buffer);
-
-    /// @brief Indicates whether the buffer is allocated by KaMPIng.
-    static constexpr bool is_lib_allocated = false;
 
     static constexpr bool is_owning =
         ownership == BufferOwnership::owning; ///< Indicates whether the buffer owns its underlying storage.
 
     static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
-    static constexpr bool is_single_element =
-        !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
-                                        ///< DataBuffer represents a container.
+
     using MemberTypeWithConst =
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
                                                                          ///< non-const depending on
@@ -625,20 +617,6 @@ public:
         MemberTypeWithConst,
         MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
                                ///< reference or non-reference depending on ownership.
-
-    static_assert(
-        is_modifiable || resize_policy == BufferResizePolicy::no_resize,
-        "A constant data buffer requires the that the resize policy is no_resize."
-    );
-    static_assert(
-        !is_single_element || resize_policy == BufferResizePolicy::no_resize,
-        "A single element data buffer requires the that the resize policy is no_resize."
-    );
-    static_assert(
-        !(resize_policy == BufferResizePolicy::grow_only || resize_policy == BufferResizePolicy::resize_to_fit)
-            || has_member_resize_v<MemberType, size_t>,
-        "The underlying container does not provide a resize function, which is required by the resize policy."
-    );
 
     /// @brief Constructor for referencing GenericDataBuffer.
     /// @param container Container holding the actual data.
