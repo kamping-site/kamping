@@ -287,7 +287,11 @@ constexpr auto filter(Args&&... args) {
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional parameters described above.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(Args... args) const {
     // Get all parameter objects
