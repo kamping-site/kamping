@@ -106,7 +106,7 @@ namespace internal {
 ///@brief Predicate to check whether an argument provided to sparse_alltoall shall be discard in the internal calls to
 ///\ref Communicator::issend().
 struct PredicateForSparseAlltoall {
-    ///@brief Discard functions to check whether an argument provided to sparse_alltoall shall be discard in the send
+    ///@brief Function to check whether an argument provided to sparse_alltoall shall be discard in the send
     /// call.
     ///
     ///@tparam Arg Argument to be checked.
