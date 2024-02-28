@@ -116,20 +116,11 @@ struct PrependType<Head, std::tuple<Tail...>> {
     using type = std::tuple<Head, Tail...>; ///< tuple with prepended Head type.
 };
 
-/// @brief Wrapper class to store an enum entry (\ref kamping::internal::ParameterType) in a separate type (so that it
-/// can be used in a compile time list)
-///
-/// @tparam ptype ParameterType to store as a type
-template <internal::ParameterType ptype>
-struct ParameterTypeEntry {
-    static constexpr internal::ParameterType parameter_type = ptype; ///< ParameterType to be stored in this type.
-};
-
 /// @brief List of parameter type (entries) which should not be included in the result object.
 using parameter_types_to_ignore_for_result_object = internal::type_list<
-    ParameterTypeEntry<internal::ParameterType::sparse_send_buf>,
-    ParameterTypeEntry<internal::ParameterType::on_message>,
-    ParameterTypeEntry<internal::ParameterType::destination>>;
+    std::integral_constant<internal::ParameterType, internal::ParameterType::sparse_send_buf>,
+    std::integral_constant<internal::ParameterType, internal::ParameterType::on_message>,
+    std::integral_constant<internal::ParameterType, internal::ParameterType::destination>>;
 
 /// @brief Determines whether a given buffer with \tparam BufferType should we included in the result object.
 ///
@@ -138,7 +129,7 @@ using parameter_types_to_ignore_for_result_object = internal::type_list<
 /// values are true.
 template <typename BufferType>
 constexpr bool keep_entry() {
-    using ptype_entry = ParameterTypeEntry<BufferType::parameter_type>;
+    using ptype_entry = std::integral_constant<internal::ParameterType, BufferType::parameter_type>;
     return !experimental::parameter_types_to_ignore_for_result_object::contains<ptype_entry>;
 }
 /// @brief Base template used to filter a list of types and only keep those whose types meet specified criteria.
@@ -173,7 +164,9 @@ struct FilterOut<Head, Tail...> {
         non_ref_first::parameter_type; ///< ParameterType stored as a static variable in Head.
     using type = std::conditional_t<
         predicate,
-        typename PrependType<ParameterTypeEntry<ptype>, typename FilterOut<Tail...>::type>::type,
+        typename PrependType<
+            std::integral_constant<internal::ParameterType, ptype>,
+            typename FilterOut<Tail...>::type>::type,
         typename FilterOut<Tail...>::type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are those types among
                                             ///< Head, Tail... which fulfill the predicate.
 };
@@ -201,7 +194,7 @@ auto& retrieve_buffer(std::tuple<Buffers...>& buffers) {
 
 /// @brief Retrieve the Buffer with given ParameterType from the tuple Buffers.
 ///
-/// @tparam ParameterTypeTuple Tuple containing specialized ParameterTypeEntry types specifing the entries to be
+/// @tparam ParameterTypeTuple Tuple containing std::integral_constant<ParameterType> specifing the entries to be
 /// retrieved from the BufferTuple buffers.
 /// @tparam Buffers Types of the data buffers.
 /// @tparam i Integer sequence.
@@ -213,7 +206,7 @@ auto construct_buffer_tuple_for_result_object_impl(
     std::tuple<Buffers...>& buffers, std::index_sequence<i...> /*index_sequence*/
 ) {
     return std::make_tuple(
-        std::move(experimental::retrieve_buffer<std::tuple_element_t<i, ParameterTypeTuple>::parameter_type>(buffers))...
+        std::move(experimental::retrieve_buffer<std::tuple_element_t<i, ParameterTypeTuple>::value>(buffers))...
     );
 }
 
@@ -303,7 +296,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(A
         auto send_buf = kamping::send_buf(msg);
 
         if (send_buf.size() > 0) {
-            int dst_ = dst; // cannot capture structured binding variable
+            int  dst_     = dst; // cannot capture structured binding variable
             auto callable = [&](auto... args) {
                 issend(std::move(send_buf), destination(dst_), request(request_pool.get_request()), std::move(args)...);
             };
