@@ -235,27 +235,27 @@ auto construct_buffer_tuple_for_result_object(Buffers&&... buffers) {
 }
 } // namespace kamping::experimental
 
-/// @brief List of parameter type (entries) which should not be included in the result object.
-using parameter_types_to_ignore_for_result_object = kamping::internal::type_list<
-    std::integral_constant<kamping::internal::ParameterType, kamping::internal::ParameterType::sparse_send_buf>,
-    std::integral_constant<kamping::internal::ParameterType, kamping::internal::ParameterType::on_message>,
-    std::integral_constant<kamping::internal::ParameterType, kamping::internal::ParameterType::destination>>;
-
-struct Predicate {
-    template <typename T>
+///@brief Predicate to check whether an argument provided to sparse_alltoall shall be discard in the send call.
+struct PredicateForSparseAlltoall {
+    ///@brief Discard functions to check whether an argument provided to sparse_alltoall shall be discard in the send
+    ///call.
+    ///
+    ///@tparam Arg Argument to be checked.
+    ///@return \c True (i.e. discard) iff Arg's parameter_type is `sparse_send_buf`, `on_message` or `destination`.
+    template <typename Arg>
     static constexpr bool discard() {
         using namespace kamping::internal;
         using ptypes_to_ignore = type_list<
             std::integral_constant<ParameterType, ParameterType::sparse_send_buf>,
             std::integral_constant<ParameterType, ParameterType::on_message>,
             std::integral_constant<ParameterType, ParameterType::destination>>;
-        using ptype_entry = std::integral_constant<ParameterType, T::parameter_type>;
+        using ptype_entry = std::integral_constant<ParameterType, Arg::parameter_type>;
         return ptypes_to_ignore::contains<ptype_entry>;
     }
 };
 template <typename... Args>
-constexpr auto filter(Args&&... args) {
-    using ArgsToKeep = typename kamping::experimental::FilterOut<Predicate, std::tuple<Args...>>::type;
+auto filter(Args&&... args) {
+    using ArgsToKeep = typename kamping::experimental::FilterOut<PredicateForSparseAlltoall, std::tuple<Args...>>::type;
     return kamping::experimental::construct_buffer_tuple_for_result_object<ArgsToKeep>(args...);
 }
 
@@ -323,13 +323,13 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(A
         if (send_buf.size() > 0) {
             int       dst_       = dst; // cannot capture structured binding variable
             int const send_count = asserting_cast<int>(send_buf.size());
-            auto      callable   = [&](auto... args) {
+            auto      callable   = [&](auto... argsargs) {
                 issend(
                     std::move(send_buf),
                     kamping::send_count(send_count),
                     destination(dst_),
                     request(request_pool.get_request()),
-                    std::move(args)...
+                    std::move(argsargs)...
                 );
             };
             std::apply(callable, filter(args...));
