@@ -1,6 +1,5 @@
 
 #include <cstddef>
-#include <vector>
 
 #include <kamping/collectives/allreduce.hpp>
 #include <mpi.h>
