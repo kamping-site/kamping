@@ -198,6 +198,9 @@ add_library(pfr INTERFACE)
 target_include_directories(pfr SYSTEM INTERFACE extern/pfr/include)
 target_link_libraries(kamping_base INTERFACE pfr)
 
+set(JUST_INSTALL_CEREAL ON)
+add_subdirectory(extern/cereal)
+
 add_library(kamping::kamping ALIAS kamping)
 
 # Testing and examples are only built if this is the main project or if KAMPING_BUILD_EXAMPLES_AND_TESTS is set (OFF by
