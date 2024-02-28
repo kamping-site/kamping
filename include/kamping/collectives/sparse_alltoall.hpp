@@ -124,8 +124,8 @@ struct PredicateForSparseAlltoall {
     }
 };
 
-/// @brief Filter the arguments \tparam Args for which \tparam Predicate ::discard<Arg>() returns true and pack (move)
-/// remaining arguments into
+/// @brief Filter the arguments \tparam Args for which the static member function `discard()` of \tparam Predicate
+/// returns true and pack (move) remaining arguments into
 template <typename Predicate, typename... Args>
 auto filter_args_into_tuple(Args&&... args) {
     using ArgsToKeep = typename FilterOut<Predicate, std::tuple<Args...>>::type;
