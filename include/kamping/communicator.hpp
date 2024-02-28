@@ -38,8 +38,11 @@ namespace kamping {
 /// @tparam Plugins Plugins adding functionality to KaMPIng. Plugins should be classes taking a ``Communicator``
 /// template parameter and can assume that they are castable to `Communicator` from which they can
 /// call any function of `kamping::Communicator`. See `test/plugin_tests.cpp` for examples.
-template <template <typename...> typename DefaultContainerType = std::vector, template <typename> typename... Plugins>
-class Communicator : public Plugins<Communicator<DefaultContainerType, Plugins...>>... {
+template <
+    template <typename...> typename DefaultContainerType = std::vector,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
+class Communicator : public Plugins<Communicator<DefaultContainerType, Plugins...>, DefaultContainerType>... {
 public:
     /// @brief Type of the default container type to use for containers created inside operations of this communicator.
     /// @tparam Args Arguments to the container type.

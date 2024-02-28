@@ -62,7 +62,11 @@
 /// request object, which can be access via the returned result.
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args) const {
     using namespace kamping::internal;
@@ -178,7 +182,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
 
 /// @brief Convenience wrapper for MPI_Ibsend. Calls \ref kamping::Communicator::isend() with the appropriate send mode
 /// set.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::ibsend(Args... args) const {
     return this->isend(std::forward<Args>(args)..., send_mode(send_modes::buffered));
@@ -186,7 +194,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::ibsend(Args... arg
 
 /// @brief Convenience wrapper for MPI_Issend. Calls \ref kamping::Communicator::isend() with the appropriate send mode
 /// set.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::issend(Args... args) const {
     return this->isend(std::forward<Args>(args)..., send_mode(send_modes::synchronous));
@@ -194,7 +206,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::issend(Args... arg
 
 /// @brief Convenience wrapper for MPI_Irsend. Calls \ref kamping::Communicator::isend() with the appropriate send mode
 /// set.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::irsend(Args... args) const {
     return this->isend(std::forward<Args>(args)..., send_mode(send_modes::ready));

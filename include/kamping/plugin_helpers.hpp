@@ -18,9 +18,15 @@ namespace kamping::plugins {
 ///
 /// Taken from https://www.fluentcpp.com/2017/05/19/crtp-helper/
 /// @tparam CommunicatorClass Type of the class we want to add functionality to, i.e. `kamping::Communicator`.
+/// @tparam DefaultContainerType Default container type of Communicator class
 /// @tparam PluginClass Type of the plugin class template which inherits from \c PluginBase and adds functionality to \c
 /// CommunicatorClass.
-template <typename CommunicatorClass, template <typename> class PluginClass>
+template <
+    typename CommunicatorClass,
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename PluginClass>
 struct PluginBase {
 private:
     /// @return Reference to the underlying Communicator class.
@@ -33,9 +39,9 @@ private:
         return static_cast<CommunicatorClass const&>(*this);
     }
 
-    PluginBase() {}                        ///< private constructor
-    friend PluginClass<CommunicatorClass>; // this allows only the class inheriting from \c PluginBase to access the
-                                           // functions of this class.
+    PluginBase() {}                                              ///< private constructor
+    friend PluginClass<CommunicatorClass, DefaultContainerType>; // this allows only the class inheriting from \c
+                                                                 // PluginBase to access the functions of this class.
 };
 
 } // namespace kamping::plugins

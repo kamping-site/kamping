@@ -26,8 +26,8 @@
 #include "kamping/plugin_helpers.hpp"
 
 /// @brief A plugin providing a function to send the integer 42 to a target rank.
-template <typename Comm>
-class Send42Plugin : public kamping::plugins::PluginBase<Comm, Send42Plugin> {
+template <typename Comm, template <typename...> typename DefaultContainerType>
+class Send42Plugin : public kamping::plugins::PluginBase<Comm, DefaultContainerType, Send42Plugin> {
 public:
     /// @brief Sends the single integer `42` to target_rank.
     /// @param target_rank The rank to send 42 to.
@@ -59,8 +59,9 @@ TEST(PluginsTest, additional_function) {
 }
 
 /// @brief A plugin providing an alternative allreduce function.
-template <typename Comm>
-class AlternativeAllreducePlugin : public kamping::plugins::PluginBase<Comm, AlternativeAllreducePlugin> {
+template <typename Comm, template <typename...> typename DefaultContainerType>
+class AlternativeAllreducePlugin
+    : public kamping::plugins::PluginBase<Comm, DefaultContainerType, AlternativeAllreducePlugin> {
 public:
     /// @brief Has the same functionality as `kamping::Communicator::allreduce` with the exception that a `recv_buf`
     /// must be passed and there is no return value. Also leaves the recv_buf on rank 0 untouched.
@@ -123,7 +124,7 @@ TEST(PluginsTest, replace_implementation) {
         std::vector<int> result;
 
         // We can call the alternative allreduce implementation by explicitly selecting it.
-        faultyComm.template AlternativeAllreducePlugin<decltype(faultyComm)>::allreduce(
+        faultyComm.template AlternativeAllreducePlugin<decltype(faultyComm), std::vector>::allreduce(
             kamping::send_buf(input),
             kamping::op(kamping::ops::plus<>{}),
             kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result)
@@ -193,8 +194,9 @@ template <typename T>
 class SendDefaultConstructedPluginOuterClass {
 public:
     /// @brief A plugin providing a function to send a default constructed `T` to a target rank.
-    template <typename Comm>
-    class SendDefaultConstructedPlugin : public kamping::plugins::PluginBase<Comm, SendDefaultConstructedPlugin> {
+    template <typename Comm, template <typename...> typename DefaultContainterType>
+    class SendDefaultConstructedPlugin
+        : public kamping::plugins::PluginBase<Comm, DefaultContainterType, SendDefaultConstructedPlugin> {
     public:
         /// @brief Sends a default constructed `T` to target_rank.
         /// @param target_rank The rank to send to.
@@ -231,8 +233,8 @@ TEST(PluginsTest, additional_function_with_double_template) {
 }
 
 /// @brief A plugin providing a function to send incremental integers to a target PE. The integers start at 42.
-template <typename Comm>
-class IncrementalSendPlugin : public kamping::plugins::PluginBase<Comm, IncrementalSendPlugin> {
+template <typename Comm, template <typename...> typename DefaultContainterType>
+class IncrementalSendPlugin : public kamping::plugins::PluginBase<Comm, DefaultContainterType, IncrementalSendPlugin> {
 public:
     /// @brief Default constructor initializing the integer sent to 42.
     IncrementalSendPlugin() : _send_buf(42) {}
@@ -251,8 +253,8 @@ private:
 };
 
 /// @brief A plugin providing a function to send decremental integers to a target PE. The integers start at 42.
-template <typename Comm>
-class DecrementalSendPlugin : public kamping::plugins::PluginBase<Comm, DecrementalSendPlugin> {
+template <typename Comm, template <typename...> typename DefaultContainerType>
+class DecrementalSendPlugin : public kamping::plugins::PluginBase<Comm, DefaultContainerType, DecrementalSendPlugin> {
 public:
     /// @brief Default constructor initializing the integer sent to 42.
     DecrementalSendPlugin() : _send_buf(42) {}

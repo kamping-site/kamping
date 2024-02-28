@@ -15,8 +15,8 @@ using namespace ::kamping;
 
 /// @brief A plugin implementing the \c num_numa_nodes() function.
 /// We're using CRTP to inject plugins into the kamping::Communicator class.
-template <typename Comm>
-class MyNumNumaNodesPlugin : public plugins::PluginBase<Comm, MyNumNumaNodesPlugin> {
+template <typename Comm, template <typename...> typename DefaultContainerType>
+class MyNumNumaNodesPlugin : public plugins::PluginBase<Comm, DefaultContainerType, MyNumNumaNodesPlugin> {
 public:
     /// @brief Number of NUMA nodes (different shared memory regions) in this communicator.
     /// This operation is expensive (communicator splitting and communication). You should cache the result if you need
@@ -25,8 +25,8 @@ public:
     size_t my_num_numa_nodes() const;
 };
 
-template <typename Comm>
-size_t MyNumNumaNodesPlugin<Comm>::my_num_numa_nodes() const {
+template <typename Comm, template <typename...> typename DefaultContainerType>
+size_t MyNumNumaNodesPlugin<Comm, DefaultContainerType>::my_num_numa_nodes() const {
     // Uses the \c to_communicator() function of \c PluginBase to cast itself to \c Comm
     auto& self = this->to_communicator();
 

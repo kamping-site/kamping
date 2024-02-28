@@ -61,7 +61,11 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... args) const {
     using namespace kamping::internal;
@@ -175,7 +179,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
 /// @param args All required and any number of the optional buffers described above.
 /// @return Returns an std::optional object encapsulating the reduced value on the root rank and an empty std::optional
 /// object on all non-root ranks.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce_single(Args... args) const {
     using namespace kamping::internal;

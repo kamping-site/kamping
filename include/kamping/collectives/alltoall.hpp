@@ -68,7 +68,11 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... args) const {
     using namespace internal;
@@ -198,7 +202,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(Args... args) const {
     using namespace internal;
@@ -302,7 +310,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(A
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer, counts and displacements if not specified as input parameter.
-template <template <typename...> typename DefaultContainerType, template <typename> typename... Plugins>
+template <
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... args) const {
     // Get all parameter objects
