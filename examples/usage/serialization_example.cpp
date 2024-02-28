@@ -32,7 +32,7 @@ struct DeserializableBuffer {
                         return result;
     }
     using value_type = char;
-    char* data() {
+    char* data() noexcept {
         return _data.data();
     }
 
