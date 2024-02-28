@@ -1,5 +1,6 @@
 
 #include <cstddef>
+#include <vector>
 
 #include <kamping/collectives/allreduce.hpp>
 #include <mpi.h>
@@ -25,7 +26,7 @@ public:
     size_t my_num_numa_nodes() const;
 };
 
-template <typename Comm, template <typename> typename DefaultContainerType>
+template <typename Comm, template <typename...> typename DefaultContainerType>
 size_t MyNumNumaNodesPlugin<Comm, DefaultContainerType>::my_num_numa_nodes() const {
     // Uses the \c to_communicator() function of \c PluginBase to cast itself to \c Comm
     auto& self = this->to_communicator();
