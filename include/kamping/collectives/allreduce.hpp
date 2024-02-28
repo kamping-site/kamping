@@ -47,7 +47,7 @@
 /// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
 /// storage must be large enough to hold all received elements.
 ///
-/// - \ref kamping::send_recv_count() specifiying how many elements of the send buffer take part in the reduction. If
+/// - \ref kamping::send_recv_count() specifying how many elements of the send buffer take part in the reduction. If
 /// omitted, the size of send buffer is used. This parameter is mandatory if \ref kamping::send_recv_type() is given.
 ///
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype
@@ -165,7 +165,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
 /// explicitly, the compatibility of the type and operation has to be ensured by the user.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::send_recv_count() specifiying how many elements of the send buffer take part in the reduction. If
+/// - \ref kamping::send_recv_count() specifying how many elements of the send buffer take part in the reduction. If
 /// omitted, the size of `send_recv_buf` is used. This parameter is mandatory if \ref kamping::send_recv_type() is
 /// given.
 ///

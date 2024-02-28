@@ -373,7 +373,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         send_type.get_single_element(),  // send type
         recv_buf.data(),                 // recv buffer
         recv_counts.data(),              // recv counts
-        recv_displs.data(),              // recv displacmenets
+        recv_displs.data(),              // recv displacements
         recv_type.get_single_element(),  // recv type
         root.rank_signed(),              // root rank
         this->mpi_communicator()         // communicator

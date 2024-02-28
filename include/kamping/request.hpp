@@ -188,7 +188,7 @@ public:
 
 private:
     IndexType    _index;   ///< the index
-    MPI_Request& _request; ///< the encapsulated requets
+    MPI_Request& _request; ///< the encapsulated request
 };
 
 namespace requests {

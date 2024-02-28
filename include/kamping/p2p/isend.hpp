@@ -49,8 +49,8 @@
 /// - \ref kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref
 /// Communicator::default_tag()) if not present.
 ///
-/// - \ref kamping::send_count() specifiying how many elements of the buffer are sent.
-/// If ommited, the size of the send buffer is used as a default. This parameter is mandatory if \ref
+/// - \ref kamping::send_count() specifying how many elements of the buffer are sent.
+/// If omitted, the size of the send buffer is used as a default. This parameter is mandatory if \ref
 /// kamping::send_type() is given.
 ///
 ///  - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is

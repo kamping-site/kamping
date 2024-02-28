@@ -177,7 +177,7 @@ static constexpr bool is_alloc_new_v = false;
 template <typename T>
 static constexpr bool is_alloc_new_v<AllocNewT<T>> = true;
 
-/// @brief Buffer allocationt tag used for indicating that a buffer should be allocated by KaMPIng.
+/// @brief Buffer allocation tag used for indicating that a buffer should be allocated by KaMPIng.
 /// @tparam Container A container template to use for allocation.
 ///
 /// Passing this with an appropriate template parameter to a buffer creation function (such as \c recv_counts_out())
@@ -210,7 +210,7 @@ static constexpr bool is_alloc_new_using_v<AllocNewUsingT<Container>> = true;
 /// @tparam T The value type to use for the allocated buffer.
 ///
 /// Passing this to a buffer creation function (such as \c recv_counts_out()) indicates, that the MPI operation should
-/// allocate an appropriately sized buffer of value type \p T internally. The allocation is defered until the MPI
+/// allocate an appropriately sized buffer of value type \p T internally. The allocation is deferred until the MPI
 /// operation is executed and the actual type of the container is determined by the MPI operation (usually \ref
 /// Communicator::default_container_type).
 template <typename T>

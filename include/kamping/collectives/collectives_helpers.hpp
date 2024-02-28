@@ -61,11 +61,11 @@ template <typename T>
 using remove_rvalue_reference_t = std::conditional_t<std::is_rvalue_reference_v<T>, std::remove_reference_t<T>, T>;
 
 /// @brief Deduce the MPI_Datatype to use on the send and recv side.
-/// If \ref kamping::send_type() is given, the \c MPI_Dataype wrapped inside will be used as send_type. Otherwise, the
+/// If \ref kamping::send_type() is given, the \c MPI_Datatype wrapped inside will be used as send_type. Otherwise, the
 /// \c MPI_datatype is derived automatically based on send_buf's underlying \c value_type.
 ///
 /// If \ref kamping::recv_type()
-/// is given, the \c MPI_Dataype wrapped inside will be used as recv_type. Otherwise, the \c MPI_datatype is derived
+/// is given, the \c MPI_Datatype wrapped inside will be used as recv_type. Otherwise, the \c MPI_datatype is derived
 /// automatically based on recv_buf's underlying \c value_type.
 ///
 /// @tparam send_value_type Value type of the send buffer.
@@ -151,7 +151,7 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
 
 /// @brief Deduce the MPI_Datatype to use as send_recv_type in a collective operation which accepts only one parameter
 /// of MPI_Datatype instead of (possibly) distinct send and recv types. If \ref kamping::send_recv_type() is given, the
-/// \c MPI_Dataype wrapped inside will be used as send_recv_type. Otherwise, the \c MPI_datatype is derived
+/// \c MPI_Datatype wrapped inside will be used as send_recv_type. Otherwise, the \c MPI_datatype is derived
 /// automatically based on send_buf's underlying \c value_type.
 ///
 /// @tparam send_or_send_recv_value_type Value type of the send(_recv) buffer.
@@ -203,12 +203,13 @@ constexpr auto determine_mpi_send_recv_datatype(Args&... args)
         )
             .construct_buffer_or_rebind();
 
-    // assure that our expectectation about the return value value category (lvalue or pr-value) is true. This ensures
+    // assure that our expectation about the return value value category (lvalue or pr-value) is true. This ensures
     // that the return value of the function does not become a dangling rvalue reference bound to a function-local
     // object.
     static_assert(
         !std::is_rvalue_reference_v<decltype(mpi_send_recv_type)>,
-        "mpi_send_type is either a lvalue reference (in this case it returned by reference), or a non-referen type (in "
+        "mpi_send_type is either a lvalue reference (in this case it returned by reference), or a non-reference type "
+        "(in "
         "this case it is returned by value)."
     );
 

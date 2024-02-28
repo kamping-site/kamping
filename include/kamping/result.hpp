@@ -557,11 +557,11 @@ constexpr bool is_returnable_owning_out_data_buffer() {
 }
 
 /// @brief Base template used to filter a list of types and only keep those whose types meet specified criteria.
-/// See the following specialisations for more information.
+/// See the following specializations for more information.
 template <typename...>
 struct FilterOwningOut;
 
-/// @brief Specialisation of template class used to filter a list of types and only keep the those whose types meet
+/// @brief Specialization of template class used to filter a list of types and only keep the those whose types meet
 /// the specified criteria.
 template <>
 struct FilterOwningOut<> {
@@ -594,7 +594,7 @@ struct FilterOwningOut<Head, Tail...> {
                                                   ///< Head, Tail... which fulfill the predicate.
 };
 
-/// @brief Specialisation of template class for types stored in a std::tuple<...> that is used to filter these types and
+/// @brief Specialization of template class for types stored in a std::tuple<...> that is used to filter these types and
 /// only keep those which meet certain criteria (see above).
 ///
 /// @tparam Types Types to check.
@@ -613,7 +613,7 @@ struct PrependParameterType {
         type; ///< Concatenated tuple, i.e. type = std::tuple<TypeToPrepend, (Type contained in Tuple)... >.
 };
 
-/// @brief Retrieve the buffer with requested ParameterType from the std::tuple containg all buffers.
+/// @brief Retrieve the buffer with requested ParameterType from the std::tuple containing all buffers.
 ///
 /// @tparam ptype ParameterType of the buffer to retrieve.
 /// @tparam Buffers Types of the data buffers.
@@ -626,7 +626,7 @@ auto& retrieve_buffer(std::tuple<Buffers...>& buffers) {
 
 /// @brief Retrieve the Buffer with given ParameterType from the tuple Buffers.
 ///
-/// @tparam ParameterTypeTuple Tuple containing specialized ParameterTypeEntry types specifing the entries to be
+/// @tparam ParameterTypeTuple Tuple containing specialized ParameterTypeEntry types specifying the entries to be
 /// retrieved from the BufferTuple buffers.
 /// @tparam Buffers Types of the data buffers.
 /// @tparam i Integer sequence.
@@ -644,7 +644,7 @@ auto construct_buffer_tuple_for_result_object_impl(
 
 /// @brief Retrieve the Buffer with given ParameterType from the tuple Buffers.
 ///
-/// @tparam ParameterTypeTuple Tuple containing specialized ParameterTypeEntry types specifing the entries to be
+/// @tparam ParameterTypeTuple Tuple containing specialized ParameterTypeEntry types specifying the entries to be
 /// retrieved from the BufferTuple buffers.
 /// @tparam Buffers Types of the data buffers.
 /// @param buffers Data buffers out of which the ones with parameter types contained in ParameterTypeTuple are
@@ -729,7 +729,7 @@ constexpr bool has_recv_or_send_recv_buf() {
 /// which these buffers where provided to the wrapped MPI call.
 ///
 /// b) There is no recv buffer (see \ref Communicator::probe() for example) or the recv_buffer only references its
-/// underlying data (i.e. it is a non-owinig out buffer): In this case recv_buffer is not part of the result object. The
+/// underlying data (i.e. it is a non-owning out buffer): In this case recv_buffer is not part of the result object. The
 /// \ref kamping::MPIResult object stores the buffer to return (owning buffers for which a *_out() named parameter was
 /// passed to the wrapped MPI call) in a std::tuple respecting the order in which these buffers where provided to the
 /// wrapped MPI call.
@@ -765,7 +765,7 @@ auto make_mpi_result(Buffers&&... buffers) {
                 // there are no buffers to return
                 return;
             } else {
-                // no special treatement of recv buffer is needed as the recv_buffer is not part of the result
+                // no special treatment of recv buffer is needed as the recv_buffer is not part of the result
                 // object anyway.
                 return MPIResult(construct_buffer_tuple_for_result_object<CallerProvidedOwningOutParameters>(buffers...)
                 );

@@ -71,7 +71,7 @@ namespace kamping::measurements {
 ///
 /// There are two types of aggregation operations:
 ///
-/// 1) Local aggreation operations - It is possible to execute measurements with the same key multiple times. Local
+/// 1) Local aggregation operations - It is possible to execute measurements with the same key multiple times. Local
 /// aggregation operations specify how these repeated time measurements will be stored. Currently, there are two
 /// options - stop_and_add() and stop_and_append(). See the following examples:
 ///

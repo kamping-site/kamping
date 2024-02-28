@@ -88,7 +88,7 @@ public:
         DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng.
     static constexpr bool is_single_element =
         DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
-    using value_type = typename DataBufferType::value_type; ///< The construted data buffer's value type.
+    using value_type = typename DataBufferType::value_type; ///< The constructed data buffer's value type.
 
     /// @brief The size of the underlying container.
     size_t size() const {
@@ -131,7 +131,7 @@ private:
 
 public:
     /// @brief Constructs the data buffer.
-    /// @tparam RebingContainerType The container to use for constructing the data buffer. This parameter is ignored if
+    /// @tparam RebindContainerType The container to use for constructing the data buffer. This parameter is ignored if
     /// the buffer allocation trait is \ref alloc_new or \ref alloc_new_using. In case of `alloc_container_of<U>`, the
     /// created data buffer encapsulated a `RebindContainerType<U>`.
     template <template <typename...> typename RebindContainerType = UnusedRebindContainer>
@@ -174,7 +174,7 @@ public:
         DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng
     static constexpr bool is_single_element =
         DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
-    using value_type = typename DataBufferType::value_type; ///< The construted data buffer's value type.
+    using value_type = typename DataBufferType::value_type; ///< The constructed data buffer's value type.
 
     /// @brief The size of the underlying container.
     size_t size() const {

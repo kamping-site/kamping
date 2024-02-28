@@ -44,13 +44,13 @@
 /// explicitly, the compatibility of the type and operation has to be ensured by the user.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::send_recv_count() specifiying how many elements of the buffer take part in the reduction.
-/// If ommited, the size of the send buffer is used as a default.
+/// - \ref kamping::send_recv_count() specifying how many elements of the buffer take part in the reduction.
+/// If omitted, the size of the send buffer is used as a default.
 ///
 /// - \ref kamping::recv_buf() containing a buffer for the output. This parameter is only required on the root rank.
 /// The buffer will be resized according to the buffer's kamping::BufferResizePolicy. If this is
 /// \ref kamping::BufferResizePolicy::no_resize, the buffer's underlying storage must be large enough to hold all
-/// received elements. If the send_recv_type is user provided, the buffer's resize poliy has to be \ref
+/// received elements. If the send_recv_type is user provided, the buffer's resize policy has to be \ref
 /// kamping::BufferResizePolicy::no_resize.
 ///
 /// - \ref kamping::root() the root rank. If not set, the default root process of the communicator will be used.
