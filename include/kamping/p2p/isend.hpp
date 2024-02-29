@@ -142,7 +142,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
             this->mpi_communicator(),                 // comm
             &request_param.underlying().mpi_request() // request
         );
-        THROW_IF_MPI_ERROR(err, MPI_Isend);
+        this->mpi_error_hook(err, "MPI_Isend");
     } else if constexpr (std::is_same_v<send_mode, internal::buffered_mode_t>) {
         [[maybe_unused]] int err = MPI_Ibsend(
             send_buf.data(),                          // send_buf
@@ -153,7 +153,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
             this->mpi_communicator(),                 // comm
             &request_param.underlying().mpi_request() // request
         );
-        THROW_IF_MPI_ERROR(err, MPI_Ibsend);
+        this->mpi_error_hook(err, "MPI_Ibsend");
     } else if constexpr (std::is_same_v<send_mode, internal::synchronous_mode_t>) {
         [[maybe_unused]] int err = MPI_Issend(
             send_buf.data(),                          // send_buf
@@ -164,7 +164,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
             this->mpi_communicator(),                 // comm
             &request_param.underlying().mpi_request() // request
         );
-        THROW_IF_MPI_ERROR(err, MPI_Issend);
+        this->mpi_error_hook(err, "MPI_Issend");
     } else if constexpr (std::is_same_v<send_mode, internal::ready_mode_t>) {
         [[maybe_unused]] int err = MPI_Irsend(
             send_buf.data(),                          // send_buf
@@ -175,7 +175,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
             this->mpi_communicator(),                 // comm
             &request_param.underlying().mpi_request() // request
         );
-        THROW_IF_MPI_ERROR(err, MPI_Irsend);
+        this->mpi_error_hook(err, "MPI_Irsend");
     }
     return make_nonblocking_result<std::tuple<Args...>>(std::move(request_param));
 }

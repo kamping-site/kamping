@@ -142,7 +142,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
             mpi_communicator()                    // communicator
         );
 
-        THROW_IF_MPI_ERROR(err, MPI_Allreduce);
+        this->mpi_error_hook(err, "MPI_Allreduce");
         return make_mpi_result<std::tuple<Args...>>(
             std::move(recv_buf),
             std::move(send_recv_count),
@@ -237,7 +237,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_inplace(
         mpi_communicator()                    // communicator
     );
 
-    THROW_IF_MPI_ERROR(err, MPI_Allreduce);
+    this->mpi_error_hook(err, "MPI_Allreduce");
     return make_mpi_result<std::tuple<Args...>>(
         std::move(send_recv_buf),
         std::move(send_recv_count),

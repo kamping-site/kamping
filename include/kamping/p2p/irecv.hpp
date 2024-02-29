@@ -175,7 +175,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::irecv(Args... args
         this->mpi_communicator(),                 // comm
         &request_param.underlying().mpi_request() // request
     );
-    THROW_IF_MPI_ERROR(err, MPI_Irecv);
+    this->mpi_error_hook(err, "MPI_Irecv");
 
     return internal::make_nonblocking_result<std::tuple<Args...>>(
         std::move(recv_buf),

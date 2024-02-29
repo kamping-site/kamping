@@ -164,7 +164,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
         root.rank_signed(),              // root
         this->mpi_communicator()         // communicator
     );
-    THROW_IF_MPI_ERROR(err, MPI_Gather);
+    this->mpi_error_hook(err, "MPI_Gather");
     return make_mpi_result<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(recv_count),
@@ -378,7 +378,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         root.rank_signed(),              // root rank
         this->mpi_communicator()         // communicator
     );
-    THROW_IF_MPI_ERROR(err, MPI_Gather);
+    this->mpi_error_hook(err, "MPI_Gather");
     return make_mpi_result<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(recv_counts),

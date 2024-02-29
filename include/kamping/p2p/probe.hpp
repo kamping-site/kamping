@@ -94,7 +94,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
         this->mpi_communicator(),                    // comm
         internal::status_param_to_native_ptr(status) // status
     );
-    THROW_IF_MPI_ERROR(err, MPI_Probe);
+    this->mpi_error_hook(err, "MPI_Probe");
 
     return internal::make_mpi_result<std::tuple<Args...>>(std::move(status));
 }

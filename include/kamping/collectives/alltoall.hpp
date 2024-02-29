@@ -174,7 +174,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             mpi_communicator()               // comm
         );
 
-        THROW_IF_MPI_ERROR(err, MPI_Alltoall);
+        this->mpi_error_hook(err, "MPI_Alltoall");
         return make_mpi_result<std::tuple<Args...>>(
             std::move(recv_buf),   // recv_buf
             std::move(send_count), // send_count
@@ -270,7 +270,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(A
         send_recv_type.get_single_element(), // recv_type
         mpi_communicator()                   // comm
     );
-    THROW_IF_MPI_ERROR(err, MPI_Alltoall);
+    this->mpi_error_hook(err, "MPI_Alltoall");
 
     return make_mpi_result<std::tuple<Args...>>(
         std::move(send_recv_buf),
@@ -482,7 +482,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         mpi_communicator()              // comm
     );
 
-    THROW_IF_MPI_ERROR(err, MPI_Alltoallv);
+    this->mpi_error_hook(err, "MPI_Alltoallv");
 
     return internal::make_mpi_result<std::tuple<Args...>>(
         std::move(recv_buf),    // recv_buf

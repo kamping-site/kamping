@@ -31,6 +31,9 @@
 
 namespace kamping {
 
+// Needed by the plugin system to check if a plugin provides a callback function for MPI errors.
+KAMPING_MAKE_HAS_MEMBER(mpi_error_handler)
+
 /// @brief Wrapper for MPI communicator providing access to \c rank() and \c size() of the communicator. The \ref
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
 /// @tparam DefaultContainerType The default container type to use for containers created by KaMPIng. Defaults to
@@ -137,7 +140,7 @@ public:
     /// @param errorcode Error code to return to invoking environment.
     void abort(int errorcode = 1) const {
         [[maybe_unused]] int err = MPI_Abort(_comm, errorcode);
-        THROW_IF_MPI_ERROR(err, MPI_Abort);
+        this->mpi_error_hook(err, "MPI_Abort");
     }
 
     /// @brief Rank of the current MPI process in the communicator as `int`.
@@ -159,6 +162,7 @@ public:
     }
 
     /// @brief Number of MPI processes in this communicator as `size_t`.
+
     /// @return Number of MPI processes in this communicator as `size_t`.
     [[nodiscard]] size_t size() const {
         return _size;
@@ -178,7 +182,7 @@ public:
         char my_name[MPI_MAX_PROCESSOR_NAME];
 
         int ret = MPI_Get_processor_name(my_name, &my_len);
-        THROW_IF_MPI_ERROR(ret, MPI_Get_processor_name);
+        this->mpi_error_hook(ret, "MPI_Get_processor_name");
         return std::string(my_name, asserting_cast<size_t>(my_len));
     }
 
@@ -285,7 +289,7 @@ public:
 
         MPI_Comm   new_comm;
         auto const ret = MPI_Comm_split_type(_comm, type, rank_signed(), MPI_INFO_NULL, &new_comm);
-        THROW_IF_MPI_ERROR(ret, MPI_Comm_split_type);
+        this->mpi_error_hook(ret, "MPI_Comm_split_type");
         return Communicator(new_comm, true);
     }
 
@@ -576,6 +580,51 @@ private:
         int size;
         MPI_Comm_size(comm, &size);
         return asserting_cast<size_t>(size);
+    }
+
+    /// @brief If <tt>error_code != MPI_SUCCESS</tt>, searchs the plugins for a \a public <tt>mpi_error_handler(const
+    /// int error_code, std::string& callee)</tt> member. Searches the plugins front to back and calls the \a first
+    /// handler found. If no handler is found, calls the default error hook. If error code is \c MPI_SUCCESS, does
+    /// nothing.
+    void mpi_error_hook(int const error_code, std::string const& callee) const {
+        if (error_code != MPI_SUCCESS) {
+            mpi_error_hook_impl<Plugins...>(error_code, callee);
+        }
+    }
+
+    /// See \ref mpi_error_hook
+    template <
+        template <typename, template <typename...> typename>
+        typename Plugin,
+        template <typename, template <typename...> typename>
+        typename... RemainingPlugins>
+    void mpi_error_hook_impl(int const error_code, std::string const& callee) const {
+        using PluginType = Plugin<Communicator<DefaultContainerType, Plugins...>, DefaultContainerType>;
+        if constexpr (has_member_mpi_error_handler_v<PluginType, int, std::string const&>) {
+            static_cast<PluginType const&>(*this).mpi_error_handler(error_code, callee);
+        } else {
+            if constexpr (sizeof...(RemainingPlugins) == 0) {
+                mpi_error_hook_impl<void>(error_code, callee);
+            } else {
+                mpi_error_hook_impl<RemainingPlugins...>(error_code, callee);
+            }
+        }
+    }
+
+    template <typename = void>
+    void mpi_error_hook_impl(int const error_code, std::string const& callee) const {
+        mpi_error_default_handler(error_code, callee);
+    }
+
+    /// @brief Default MPI error callback. Depending on `KASSERT_EXCEPTION_MODE` either throws a \ref
+    /// MpiErrorException if \c error_code != \c MPI_SUCCESS or fails an assertion.
+    void mpi_error_default_handler(int const error_code, std::string const& function_name) const {
+        THROWING_KASSERT_SPECIFIED(
+            error_code == MPI_SUCCESS,
+            function_name << " failed!",
+            kamping::MpiErrorException,
+            error_code
+        );
     }
 
     size_t   _rank; ///< Rank of the MPI process in this communicator.

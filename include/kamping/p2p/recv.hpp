@@ -174,7 +174,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         this->mpi_communicator(),                    // comm
         internal::status_param_to_native_ptr(status) // status
     );
-    THROW_IF_MPI_ERROR(err, MPI_Recv);
+    this->mpi_error_hook(err, "MPI_Recv");
 
     return internal::make_mpi_result<std::tuple<Args...>>(
         std::move(recv_buf),

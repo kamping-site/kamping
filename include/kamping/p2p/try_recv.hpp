@@ -136,7 +136,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
 
     Status               status;
     [[maybe_unused]] int err = MPI_Improbe(source, tag, _comm, &msg_avail, &message, &status.native());
-    THROW_IF_MPI_ERROR(err, MPI_Improbe);
+    this->mpi_error_hook(err, "MPI_Improbe");
 
     auto construct_result = [&] {
         return internal::make_mpi_result<std::tuple<Args...>>(
@@ -171,7 +171,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
             &message,                                          // message
             internal::status_param_to_native_ptr(status_param) // status
         );
-        THROW_IF_MPI_ERROR(err, MPI_Mrecv);
+        this->mpi_error_hook(err, "MPI_Mrecv");
 
         // Build the result object from the parameters and return.
         if constexpr (is_result_empty_v<result_type>) {

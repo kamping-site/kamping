@@ -161,7 +161,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
             recv_type.get_single_element(),
             this->mpi_communicator()
         );
-        THROW_IF_MPI_ERROR(err, MPI_Allgather);
+        this->mpi_error_hook(err, "MPI_Allgather");
 
         return make_mpi_result<std::tuple<Args...>>(
             std::move(recv_buf),
@@ -266,7 +266,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
         type.get_single_element(),  // recvtype
         this->mpi_communicator()    // communicator
     );
-    THROW_IF_MPI_ERROR(err, MPI_Allgather);
+    this->mpi_error_hook(err, "MPI_Allgather");
 
     return make_mpi_result<std::tuple<Args...>>(std::move(buffer), std::move(count), std::move(type));
 }
@@ -432,7 +432,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         recv_type.get_single_element(),  // recvtype
         this->mpi_communicator()         // communicator
     );
-    THROW_IF_MPI_ERROR(err, MPI_Allgatherv);
+    this->mpi_error_hook(err, "MPI_Allgatherv");
 
     return make_mpi_result<std::tuple<Args...>>(
         std::move(recv_buf),
