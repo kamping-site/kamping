@@ -613,7 +613,7 @@ private:
         mpi_error_default_handler(error_code, callee);
     }
 
-    /// @brief Default MPI error callback. Depending on KASSERT_EXCEPTION_MODE either throws a \ref
+    /// @brief Default MPI error callback. Depending on `KASSERT_EXCEPTION_MODE` either throws a \ref
     /// MpiErrorException if \c error_code != \c MPI_SUCCESS or fails an assertion.
     void mpi_error_default_handler(int const error_code, std::string const& function_name) const {
         THROWING_KASSERT_SPECIFIED(
