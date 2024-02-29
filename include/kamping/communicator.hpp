@@ -589,7 +589,7 @@ private:
         }
     }
 
-    // See \ref mpi_error_hook
+    /// See \ref mpi_error_hook
     template <
         template <typename, template <typename...> typename>
         typename Plugin,
