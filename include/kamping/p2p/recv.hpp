@@ -90,8 +90,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
             args...
         )
             .template construct_buffer_or_rebind<DefaultContainerType, internal::serialization_support_tag>();
-    constexpr bool serialization = internal::buffer_uses_serialization<decltype(recv_buf)>;
-    if constexpr (serialization) {
+    constexpr bool is_serialization_used = internal::buffer_uses_serialization<decltype(recv_buf)>;
+    if constexpr (is_serialization_used) {
         KAMPING_UNSUPPORTED_PARAMETER(Args, recv_count, when using serialization);
         KAMPING_UNSUPPORTED_PARAMETER(Args, recv_type, when using serialization);
     }

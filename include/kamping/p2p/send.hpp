@@ -69,8 +69,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
 
     auto&& send_buf = internal::select_parameter_type<internal::ParameterType::send_buf>(args...)
                           .template construct_buffer_or_rebind<UnusedRebindContainer, serialization_support_tag>();
-    constexpr bool serialization = internal::buffer_uses_serialization<decltype(send_buf)>;
-    if constexpr (serialization) {
+    constexpr bool is_serialization_used = internal::buffer_uses_serialization<decltype(send_buf)>;
+    if constexpr (is_serialization_used) {
         KAMPING_UNSUPPORTED_PARAMETER(Args, send_count, when using serialization);
         KAMPING_UNSUPPORTED_PARAMETER(Args, send_type, when using serialization);
     }
