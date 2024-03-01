@@ -202,6 +202,7 @@ add_library(cereal INTERFACE)
 add_library(cereal::cereal ALIAS cereal)
 target_include_directories(cereal SYSTEM INTERFACE extern/cereal/include)
 target_compile_features(cereal INTERFACE cxx_std_11)
+target_link_libraries(kamping_base INTERFACE cereal)
 
 add_library(kamping::kamping ALIAS kamping)
 

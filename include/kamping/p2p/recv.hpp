@@ -88,7 +88,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
             std::tuple(),
             args...
         )
-            .template construct_buffer_or_rebind<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType, internal::serialization_support_tag>();
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
         !std::is_same_v<recv_value_type, internal::unused_tparam>,
