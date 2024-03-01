@@ -8,24 +8,33 @@
 
 namespace kamping::plugin {
 namespace grid_plugin_helpers {
+
+/// @brief Mixin for \ref MessageEnvelope to store a source PE.
 struct Source {
+    /// @brief Get destination PE.
     [[nodiscard]] int get_source() const {
         return source;
     }
+
+    /// @brief Set destination PE.
     void set_source(int value) {
         source = value;
     }
-    int source;
+    int source; ///< Rank of source PE.
 };
 
+/// @brief Mixin for \ref MessageEnvelope to store a destination PE.
 struct Destination {
+    /// @brief Get destination PE.
     [[nodiscard]] int get_destination() const {
         return destination;
     }
+
+    /// @brief Set destination PE.
     void set_destination(int value) {
         destination = value;
     }
-    int destination;
+    int destination; ///< Rank of destination PE.
 };
 
 /// @brief Descriptor for different levels for message envelopes used in indirect communication.
@@ -40,14 +49,17 @@ enum MsgEnvelopeLevel {
 /// @tparam Attributes source or destination information
 template <typename PayloadType, typename... Attributes>
 struct MessageEnvelope : public Attributes... {
-    using Payload = PayloadType;
+    using Payload = PayloadType; ///< Underlying Type of message.
     static constexpr bool has_source_information =
         internal::type_list<Attributes...>::template contains<Source>; ///< Indicates whether the envelope contains the
                                                                        ///< source PE.
     static constexpr bool has_destination_information =
         internal::type_list<Attributes...>::template contains<Destination>; ///< Indicates whether the envelope contains
                                                                             ///< the destination PE.
+    /// @brief Default constructor.
     MessageEnvelope() = default;
+
+    /// @brief Constructor for wrapping a message.
     MessageEnvelope(PayloadType payload) : _payload{std::move(payload)} {}
 
     /// @brief Return reference to payload.
@@ -136,6 +148,16 @@ public:
         }
     }
 
+    /// @brief Indirect two dimensional grid based personalized alltoall exchange.
+    /// The following parameters are required:
+    /// - \ref kamping::send_buf() containing the data that is sent to each rank. The size of this buffer has to be at
+    /// least the sum of the send_counts argument.
+    /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
+    ///
+    /// @param envelop_level Determines the envelope of each returned element.
+    /// @tparam Args Automatically deducted template parameters.
+    /// @param args All required and any number of the optional buffers described above.
+    /// @returns
     template <
         grid_plugin_helpers::MsgEnvelopeLevel envelop_level =
             grid_plugin_helpers::MsgEnvelopeLevel::source_and_destination,
