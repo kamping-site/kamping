@@ -240,6 +240,11 @@ kamping_register_mpi_test(
     FILES helpers_for_testing_mpi_test.cpp
     CORES 1 4
 )
+kamping_register_mpi_test(
+    test_serialization
+    FILES serialization_test.cpp
+    CORES 1 2 4
+)
 
 # Tests using C++ 20
 kamping_register_mpi_test(
