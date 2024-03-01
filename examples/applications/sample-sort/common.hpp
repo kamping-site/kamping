@@ -13,8 +13,8 @@
 #pragma once
 #include <algorithm>
 #include <cstddef>
-#include <vector>
 #include <random>
+#include <vector>
 
 using seed_type = std::mt19937::result_type;
 
