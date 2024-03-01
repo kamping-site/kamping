@@ -17,7 +17,7 @@
 #include "kamping/mpi_datatype.hpp"
 namespace mpi {
 template <typename T>
-void sort(MPI_Comm comm, std::vector<T>& data, size_t seed) {
+void sort(MPI_Comm comm, std::vector<T>& data, seed_type seed) {
     int rank, size;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);

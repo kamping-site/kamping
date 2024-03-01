@@ -34,8 +34,8 @@ bool globally_sorted(MPI_Comm comm, std::vector<T> const& data, std::vector<T>& 
 }
 
 template <typename T>
-auto generate_data(size_t n_local, size_t seed) -> std::vector<T> {
-    std::mt19937                     eng(seed + kamping::world_rank());
+auto generate_data(size_t n_local, seed_type seed) -> std::vector<T> {
+    std::mt19937                     eng(seed + static_cast<seed_type>(kamping::world_rank()));
     std::uniform_int_distribution<T> dist(0, std::numeric_limits<T>::max());
     std::vector<T>                   data(n_local);
     auto                             gen = [&] {
@@ -48,18 +48,21 @@ auto generate_data(size_t n_local, size_t seed) -> std::vector<T> {
 int main(int argc, char* argv[]) {
     kamping::Environment env;
     size_t               n_local;
-    size_t               seed = 42;
+    seed_type            seed = 42;
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <n_local> [seed]" << std::endl;
         kamping::comm_world().abort();
         return 1;
     }
-    n_local = std::stoul(argv[1]);
+    std::stringstream ss(argv[1]);
+    ss >> n_local;
     if (argc > 2) {
-        seed = std::stoul(argv[2]);
+        ss.str(argv[2]);
+        ss >> seed;
     }
     using element_type = uint64_t;
-    size_t local_seed  = seed + kamping::world_rank() + kamping::world_size();
+    seed_type local_seed =
+        seed + static_cast<seed_type>(kamping::world_rank()) + static_cast<seed_type>(kamping::world_size());
     {
         std::vector<element_type> data = generate_data<element_type>(n_local, seed);
         kamping::sort(MPI_COMM_WORLD, data, local_seed);
