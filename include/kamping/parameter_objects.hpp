@@ -68,7 +68,7 @@ private:
 
 public:
     /// @brief Constructs the data buffer.
-    /// @tparam RebindContainerType The container to use for the data buffer (has no effect here)
+    /// @tparam RebindContainerType The container to use for the data buffer (has no effect here).
     /// @tparam Flag A tag type indicating special behavior, e.g., serialization support (@see \ref
     /// serialization_support_tag). Defaults to `void`.
     template <template <typename...> typename RebindContainerType = UnusedRebindContainer, typename Flag = void>

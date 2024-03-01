@@ -21,6 +21,7 @@
 
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
+#include "kamping/serialization.hpp"
 
 // The following macros look strange since they use a GNU extension that becomes obsolete with C++-20.
 // The extension is supported by all major compilers.
@@ -399,4 +400,16 @@ static constexpr bool all_have_to_be_computed = (has_to_be_computed<BufferTypes>
 /// @tparam BufferTypes Any number of buffers to be checked.
 template <typename... BufferTypes>
 static constexpr bool any_has_to_be_computed = (has_to_be_computed<BufferTypes> || ...);
+
+/// @brief Checks if \p DataBufferType is a serialization buffer.
+template <typename DataBufferType>
+static constexpr bool buffer_uses_serialization = internal::is_serialization_buffer_v<
+    typename std::remove_const_t<std::remove_reference_t<DataBufferType>>::MemberTypeWithConstAndRef>;
+
+/// @brief Checks if no parameter of type \p parameter_type is present in \p Args. If it is, a static assertion is
+/// thrown.
+template <ParameterType parameter_type, typename... Args>
+void parameter_type_not_supported() {
+    static_assert(!has_parameter_type<parameter_type, Args...>(), "Parameter type not supported.");
+}
 } // namespace kamping::internal
