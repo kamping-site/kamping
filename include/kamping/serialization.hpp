@@ -46,9 +46,9 @@ public:
 
     /// @brief Construct a serialization buffer from an object.
     /// The object is serialized using the provided archive.
-    /// @tparam _T Type of the object to serialize. Default is \ref T.
-    /// @tparam _OutArchive Type of the archive to use for serialization. Defaults the buffer's \ref OutArchive.
-    /// @tparam Enable SFINAE to enable this constructor only if and \ref OutArchive is provided.
+    /// @tparam _T Type of the object to serialize. Default is \p T.
+    /// @tparam _OutArchive Type of the archive to use for serialization. Defaults the buffer's \p OutArchive.
+    /// @tparam Enable SFINAE to enable this constructor only if and \p OutArchive is provided.
     template <
         typename _T          = T,
         typename _OutArchive = OutArchive,
@@ -63,9 +63,9 @@ public:
     }
 
     /// @brief Deserialize the data in the buffer into an object of type \p _T.
-    /// @tparam _T Type of the object to deserialize into. Default is \ref T.
-    /// @tparam _InArchive Type of the archive to use for deserialization. Defaults the buffer's \ref InArchive.
-    /// @tparam Enable SFINAE to enable this function only if \ref _InArchive are provided.
+    /// @tparam _T Type of the object to deserialize into. Default is \p T.
+    /// @tparam _InArchive Type of the archive to use for deserialization. Defaults the buffer's \p InArchive.
+    /// @tparam Enable SFINAE to enable this function only if \p _InArchive are provided.
     /// @return The deserialized object.
     template <
         typename _T         = T,

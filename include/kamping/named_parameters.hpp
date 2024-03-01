@@ -628,7 +628,7 @@ auto recv_buf(Container&& container) {
         resize_policy>(std::forward<Container>(container));
 }
 
-/// @brief A recv buffer wrapper based on a serialization buffer. Create on by using \ref as_serialized().
+/// @brief A recv buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_serialized().
 template <
     typename SerializationBufferType,
     typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>
