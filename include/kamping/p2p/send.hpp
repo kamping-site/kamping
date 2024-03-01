@@ -71,8 +71,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
                           .template construct_buffer_or_rebind<UnusedRebindContainer, serialization_support_tag>();
     constexpr bool serialization = internal::buffer_uses_serialization<decltype(send_buf)>;
     if constexpr (serialization) {
-        parameter_type_not_supported<internal::ParameterType::send_count, Args...>();
-        parameter_type_not_supported<internal::ParameterType::send_type, Args...>();
+        KAMPING_UNSUPPORTED_PARAMETER(Args, send_count, when using serialization);
+        KAMPING_UNSUPPORTED_PARAMETER(Args, send_type, when using serialization);
     }
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 

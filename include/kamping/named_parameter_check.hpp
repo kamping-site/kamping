@@ -271,6 +271,15 @@
     KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER8(args, ignore, x1, x2, x3, x4, x5, x6, x7, x8);        \
     KAMPING_PARAMETER_CHECK_HPP_ASSERT_REQUIRED_PARAMETER1(args, ignore, x9)
 
+/// @brief Assertion macro that checks if a parameter type is not present in the arguments.
+/// Outputs a static assert if the parameter type is present in the arguments with text "Parameter type <parameter_type>
+/// is not supported <whatfor>."
+#define KAMPING_UNSUPPORTED_PARAMETER(args, parameter_type, whatfor)                                         \
+    static_assert(                                                                                           \
+        !kamping::internal::has_parameter_type<kamping::internal::ParameterType::parameter_type, args...>(), \
+        "Parameter type " #parameter_type " is not supported " #whatfor "."                                  \
+    )
+
 /// @endcond
 
 namespace kamping::internal {
@@ -406,10 +415,4 @@ template <typename DataBufferType>
 static constexpr bool buffer_uses_serialization = internal::is_serialization_buffer_v<
     typename std::remove_const_t<std::remove_reference_t<DataBufferType>>::MemberTypeWithConstAndRef>;
 
-/// @brief Checks if no parameter of type \p parameter_type is present in \p Args. If it is, a static assertion is
-/// thrown.
-template <ParameterType parameter_type, typename... Args>
-void parameter_type_not_supported() {
-    static_assert(!has_parameter_type<parameter_type, Args...>(), "Parameter type not supported.");
-}
 } // namespace kamping::internal
