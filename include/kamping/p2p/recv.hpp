@@ -77,6 +77,7 @@ template <
     typename... Plugins>
 template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args) const {
+    using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(),
@@ -89,6 +90,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
             args...
         )
             .template construct_buffer_or_rebind<DefaultContainerType, internal::serialization_support_tag>();
+    constexpr bool serialization = internal::buffer_uses_serialization<decltype(recv_buf)>;
+    if constexpr (serialization) {
+        parameter_type_not_supported<internal::ParameterType::recv_count, Args...>();
+        parameter_type_not_supported<internal::ParameterType::recv_type, Args...>();
+    }
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
         !std::is_same_v<recv_value_type, internal::unused_tparam>,
