@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022-2023 The KaMPIng Authors
+// Copyright 2022-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -77,6 +77,7 @@ template <
     typename... Plugins>
 template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args) const {
+    using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args,
         KAMPING_REQUIRED_PARAMETERS(),
@@ -88,7 +89,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
             std::tuple(),
             args...
         )
-            .template construct_buffer_or_rebind<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType, internal::serialization_support_tag>();
+    constexpr bool is_serialization_used = internal::buffer_uses_serialization<decltype(recv_buf)>;
+    if constexpr (is_serialization_used) {
+        KAMPING_UNSUPPORTED_PARAMETER(Args, recv_count, when using serialization);
+        KAMPING_UNSUPPORTED_PARAMETER(Args, recv_type, when using serialization);
+    }
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
         !std::is_same_v<recv_value_type, internal::unused_tparam>,

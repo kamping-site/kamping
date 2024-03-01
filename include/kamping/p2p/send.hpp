@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022-2023 The KaMPIng Authors
+// Copyright 2022-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -67,8 +67,13 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
         KAMPING_OPTIONAL_PARAMETERS(send_count, tag, send_mode, send_type)
     );
 
-    auto&& send_buf =
-        internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+    auto&& send_buf = internal::select_parameter_type<internal::ParameterType::send_buf>(args...)
+                          .template construct_buffer_or_rebind<UnusedRebindContainer, serialization_support_tag>();
+    constexpr bool is_serialization_used = internal::buffer_uses_serialization<decltype(send_buf)>;
+    if constexpr (is_serialization_used) {
+        KAMPING_UNSUPPORTED_PARAMETER(Args, send_count, when using serialization);
+        KAMPING_UNSUPPORTED_PARAMETER(Args, send_type, when using serialization);
+    }
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     auto&& send_type = internal::determine_mpi_send_datatype<send_value_type>(args...);

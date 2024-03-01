@@ -24,6 +24,7 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_types.hpp"
+#include "kamping/serialization.hpp"
 #include "kamping/status.hpp"
 
 namespace kamping::internal {
@@ -67,10 +68,17 @@ private:
 
 public:
     /// @brief Constructs the data buffer.
-    /// @tparam RebindContainerType The container to use for the data buffer (has no effect here)
-    template <template <typename...> typename RebindContainerType = UnusedRebindContainer>
+    /// @tparam RebindContainerType The container to use for the data buffer (has no effect here).
+    /// @tparam Flag A tag type indicating special behavior, e.g., serialization support (@see \ref
+    /// serialization_support_tag). Defaults to `void`.
+    template <template <typename...> typename RebindContainerType = UnusedRebindContainer, typename Flag = void>
     auto construct_buffer_or_rebind() {
-        using Data_no_ref = std::remove_const_t<std::remove_reference_t<Data>>;
+        using Data_no_ref                           = std::remove_const_t<std::remove_reference_t<Data>>;
+        static constexpr bool support_serialization = std::is_same_v<Flag, internal::serialization_support_tag>;
+        static_assert(
+            support_serialization || !internal::is_serialization_buffer_v<Data_no_ref>,
+            "\n ---> Serialization buffers are not supported here."
+        );
         if constexpr (is_empty_data_buffer_v<Data_no_ref>) {
             return internal::EmptyDataBuffer<ValueType, parameter_type, buffer_type>{};
         } else {
@@ -134,7 +142,9 @@ public:
     /// @tparam RebindContainerType The container to use for constructing the data buffer. This parameter is ignored if
     /// the buffer allocation trait is \ref alloc_new or \ref alloc_new_using. In case of `alloc_container_of<U>`, the
     /// created data buffer encapsulated a `RebindContainerType<U>`.
-    template <template <typename...> typename RebindContainerType = UnusedRebindContainer>
+    /// @tparam Flag A tag type indicating special behavior, e.g., serialization support (@see \ref
+    /// serialization_support_tag). Defaults to `void`.
+    template <template <typename...> typename RebindContainerType = UnusedRebindContainer, typename Flag = void>
     auto construct_buffer_or_rebind() {
         if constexpr (is_alloc_new_v<AllocType>) {
             return make_data_buffer<

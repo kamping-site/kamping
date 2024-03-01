@@ -53,3 +53,7 @@ target_compile_options(example_timer PRIVATE ${KAMPING_WARNING_FLAGS})
 add_executable(example_datatype datatype_example.cpp)
 target_link_libraries(example_datatype kamping)
 target_compile_options(example_datatype PRIVATE ${KAMPING_WARNING_FLAGS})
+
+add_executable(example_serialization serialization_example.cpp)
+target_link_libraries(example_serialization kamping cereal::cereal)
+target_compile_options(example_serialization PRIVATE ${KAMPING_WARNING_FLAGS})

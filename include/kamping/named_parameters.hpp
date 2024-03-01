@@ -27,6 +27,7 @@
 #include "kamping/operation_builder.hpp"
 #include "kamping/parameter_objects.hpp"
 #include "kamping/request.hpp"
+#include "kamping/serialization.hpp"
 
 namespace kamping {
 
@@ -615,13 +616,28 @@ auto recv_displs(std::initializer_list<T> displs) {
 /// @tparam Container Container type which contains the received elements.
 /// @param container Container which will contain the received elements.
 /// @return Object referring to the storage containing the received elements.
-template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
+template <
+    BufferResizePolicy resize_policy = BufferResizePolicy::no_resize,
+    typename Container,
+    typename Enable = std::enable_if_t<!internal::is_serialization_buffer_v<Container>>>
 auto recv_buf(Container&& container) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         resize_policy>(std::forward<Container>(container));
+}
+
+/// @brief A recv buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_serialized().
+template <
+    typename SerializationBufferType,
+    typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>
+auto recv_buf(SerializationBufferType&& buffer) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::resize_to_fit>(std::forward<SerializationBufferType>(buffer));
 }
 
 /// @brief Generates a buffer wrapper based on a library allocated container for the receive buffer.
