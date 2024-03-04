@@ -9,7 +9,7 @@
 namespace kamping::plugin {
 
 /// @brief Descriptor for different levels for message envelopes used in indirect communication.
-enum MsgEnvelopeLevel {
+enum MessageEnvelopeLevel {
     no_envelope,           ///< do not use an envelope at all (if possible)
     source,                ///< only additionally add the source PE in the envelope (if possible)
     source_and_destination ///< add source and destination PE in the envelope
@@ -100,12 +100,12 @@ struct MessageEnvelope : public Attributes... {
 };
 
 /// @brief Select the right MessageEnvelope depending on the provided MsgEnvelopeLevel.
-template <MsgEnvelopeLevel level, typename T>
+template <MessageEnvelopeLevel level, typename T>
 using MessageEnvelopeType = std::conditional_t<
-    level == MsgEnvelopeLevel::no_envelope,
+    level == MessageEnvelopeLevel::no_envelope,
     T,
     std::conditional_t<
-        level == MsgEnvelopeLevel::source,
+        level == MessageEnvelopeLevel::source,
         MessageEnvelope<T, Source>,
         MessageEnvelope<T, Source, Destination>>>;
 
@@ -138,13 +138,14 @@ public:
         double const sqrt       = std::sqrt(self.size());
         const size_t floor_sqrt = static_cast<size_t>(std::floor(sqrt));
         const size_t ceil_sqrt  = static_cast<size_t>(std::ceil(sqrt));
-        // if comm size exceeds the threshold we can afford one more column
+        // We want to ensure that #columns + 1 >= #rows >= #columns.
+        // Therefore, use floor(sqrt(comm.size())) columns unless we have enought PEs to begin another row when using
+        // ceil(sqrt(comm.size()) columns.
         const size_t threshold                   = floor_sqrt * ceil_sqrt;
         _number_columns                          = (self.size() >= threshold) ? ceil_sqrt : floor_sqrt;
         const size_t num_pe_in_incomplete_column = self.size() / _number_columns;
-        size_t       row_num                     = row_index_in_complete_grid(self.rank());
-        size_t       column_num                  = col_index_in_complete_grid(self.rank());
-        _size_complete_rectangle                 = _number_columns * num_pe_in_incomplete_column;
+        auto [row_num, column_num] = pos_in_complete_grid(self.rank()); // assume that we have a complete grid,
+        _size_complete_rectangle   = _number_columns * num_pe_in_incomplete_column;
         if (self.rank() >= _size_complete_rectangle) {
             row_num = self.rank() % _number_columns; // rank() is member of last incomplete row,
             // therefore append it to one of the first
@@ -165,13 +166,18 @@ public:
     /// least the sum of the send_counts argument.
     /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
     ///
-    /// @tparam envelop_level Determines the contents of the envelope of each returned element (no_envelope = use the
+    /// Internally, each element in the send buffer is wrapped in an envelope to faciliate the indirect routing. The
+    /// envelope consists at least consists of the destination PE of each element but can be extended to also hold the
+    /// source PE of the element. The caller can specify whether they want to keep this information also in the output
+    /// via the \tparam envelope_level.
+    ///
+    /// @tparam envelope_level Determines the contents of the envelope of each returned element (no_envelope = use the
     /// actual data type of an exchanged element, source = augment the actual data type with the source PE,
     /// source_and_destination = agument the actual data type with the source and destination PE).
     /// @tparam Args Automatically deducted template parameters.
     /// @param args All required and any number of the optional buffers described above.
     /// @returns
-    template <MsgEnvelopeLevel envelop_level = MsgEnvelopeLevel::no_envelope, typename... Args>
+    template <MessageEnvelopeLevel envelope_level = MessageEnvelopeLevel::no_envelope, typename... Args>
     auto alltoallv_grid(Args... args) const {
         KAMPING_CHECK_PARAMETERS(
             Args,
@@ -184,8 +190,8 @@ public:
         // Get send_counts
         auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...)
                                       .template construct_buffer_or_rebind<DefaultContainerType>();
-        auto rowwise_recv_buf = rowwise_exchange<envelop_level>(send_buf, send_counts);
-        return columnwise_exchange<envelop_level>(std::move(rowwise_recv_buf));
+        auto rowwise_recv_buf = rowwise_exchange<envelope_level>(send_buf, send_counts);
+        return columnwise_exchange<envelope_level>(std::move(rowwise_recv_buf));
     }
 
 private:
@@ -199,94 +205,97 @@ private:
         return row_send_counts;
     }
 
-    [[nodiscard]] size_t row_index_in_complete_grid(size_t destination_rank) const {
-        return destination_rank / _number_columns;
-    }
-    [[nodiscard]] size_t col_index_in_complete_grid(size_t destination_rank) const {
-        return destination_rank % _number_columns;
-    }
-    [[nodiscard]] size_t get_destination_in_rowwise_exchange(size_t destination_rank) const {
-        return col_index_in_complete_grid(destination_rank);
-    }
-    [[nodiscard]] size_t get_destination_in_colwise_exchange(size_t destination_rank) const {
-        return row_index_in_complete_grid(destination_rank);
+    struct GridPosition {
+        size_t row_index;
+        size_t col_index;
+    };
+
+    [[nodiscard]] GridPosition pos_in_complete_grid(size_t rank) const {
+        return GridPosition{rank / _number_columns, rank % _number_columns};
     }
 
-    template <MsgEnvelopeLevel envelope_level, typename SendBuffer, typename SendCounts>
+    //[[nodiscard]] size_t row_index_in_complete_grid(size_t destination_rank) const {
+    //    return destination_rank / _number_columns;
+    //}
+    //[[nodiscard]] size_t col_index_in_complete_grid(size_t destination_rank) const {
+    //    return destination_rank % _number_columns;
+    //}
+    [[nodiscard]] size_t get_destination_in_rowwise_exchange(size_t destination_rank) const {
+        return pos_in_complete_grid(destination_rank).col_index;
+    }
+    [[nodiscard]] size_t get_destination_in_colwise_exchange(size_t destination_rank) const {
+        return pos_in_complete_grid(destination_rank).row_index;
+    }
+
+    template <MessageEnvelopeLevel envelope_level, typename SendBuffer, typename SendCounts>
     auto rowwise_exchange(SendBuffer const& send_buf, SendCounts const& send_counts) const {
         using namespace grid_plugin_helpers;
-        auto const row_send_counts        = compute_row_send_counts(send_counts.underlying());
-        auto       row_send_displacements = row_send_counts;
+        auto const row_send_counts = compute_row_send_counts(send_counts.underlying());
+        auto       row_send_displs = row_send_counts;
+        Span       row_send_counts_span(row_send_counts.data(), row_send_counts.size());
+        Span       row_send_displs_span(row_send_displs.data(), row_send_displs.size());
         std::exclusive_scan(
-            row_send_counts.data(),
-            row_send_counts.data() + row_send_counts.size(),
-            row_send_displacements.data(),
-            0ull
+            row_send_counts_span.begin(),
+            row_send_counts_span.end(),
+            row_send_displs_span.begin(),
+            size_t(0)
         );
-        auto       index_displacements = row_send_displacements;
-        int const  idx_last_elem       = _row_comm.size_signed() - 1;
-        auto const total_send_count =
-            static_cast<size_t>(row_send_displacements.data()[idx_last_elem] + row_send_counts.data()[idx_last_elem]);
+        auto       index_displacements = row_send_displs;
+        auto const total_send_count    = static_cast<size_t>(row_send_displs_span.back() + row_send_counts_span.back());
 
         using value_type = typename SendBuffer::value_type;
         using MsgType    = std::conditional_t<
-            envelope_level == MsgEnvelopeLevel::no_envelope,
+            envelope_level == MessageEnvelopeLevel::no_envelope,
             MessageEnvelope<value_type, Destination>,
             MessageEnvelope<value_type, Source, Destination>>;
         DefaultContainerType<MsgType> rowwise_send_buf(total_send_count);
-        size_t                        base_idx = 0;
+        size_t                        cur_chunk_offset = 0;
 
         for (size_t i = 0; i < send_counts.size(); ++i) {
             int const    destination        = asserting_cast<int>(i);
             auto const   destination_in_row = get_destination_in_rowwise_exchange(asserting_cast<size_t>(i));
             size_t const send_count         = asserting_cast<size_t>(send_counts.underlying().data()[i]);
             for (std::size_t ii = 0; ii < send_count; ++ii) {
-                auto       elem  = send_buf.data()[base_idx + ii];
+                auto       elem  = send_buf.data()[cur_chunk_offset + ii];
                 auto const idx   = index_displacements[destination_in_row]++;
                 auto&      entry = rowwise_send_buf[static_cast<size_t>(idx)];
                 entry            = MsgType(std::move(elem));
                 entry.set_destination(destination
                 ); // this has to be done independently of the envelope level, otherwise routing is not possible
                    //
-                if constexpr (envelope_level == MsgEnvelopeLevel::no_envelope) {
-                    // nothing to be done
-                } else if constexpr (envelope_level == MsgEnvelopeLevel::source) {
+                if constexpr (envelope_level != MessageEnvelopeLevel::no_envelope) {
                     entry.set_source(this->to_communicator().rank_signed());
-                } else if constexpr (envelope_level == MsgEnvelopeLevel::source_and_destination) {
-                    entry.set_source(this->to_communicator().rank_signed());
-                } else {
-                    KASSERT(false);
-                    // should never be executed
                 }
             }
-            base_idx += send_count;
+            cur_chunk_offset += send_count;
         }
         return _row_comm.alltoallv(
             kamping::send_buf(rowwise_send_buf),
             kamping::send_counts(row_send_counts),
-            send_displs(row_send_displacements)
+            send_displs(row_send_displs)
         );
     }
 
     template <
-        MsgEnvelopeLevel envelope_level,
+        MessageEnvelopeLevel envelope_level,
         template <typename...>
         typename RowwiseRecvBuf,
-        typename... IndirectMessageArgs>
-    auto
-    columnwise_exchange(RowwiseRecvBuf<grid_plugin_helpers::MessageEnvelope<IndirectMessageArgs...>>&& rowwise_recv_buf
+        typename... EnvelopeArgs>
+    auto columnwise_exchange(RowwiseRecvBuf<grid_plugin_helpers::MessageEnvelope<EnvelopeArgs...>>&& rowwise_recv_buf
     ) const {
         using namespace grid_plugin_helpers;
-        using IndirectMessageType = MessageEnvelope<IndirectMessageArgs...>;
+        using IndirectMessageType = MessageEnvelope<EnvelopeArgs...>;
         using Payload             = typename IndirectMessageType::Payload;
 
         DefaultContainerType<int> send_counts(_column_comm.size(), 0);
         for (auto const& elem: rowwise_recv_buf) {
             ++send_counts[get_destination_in_colwise_exchange(elem.get_destination())];
         }
-        auto send_offsets = send_counts;
-        std::exclusive_scan(send_counts.begin(), send_counts.end(), send_offsets.begin(), 0ull);
-        auto send_displacements = send_offsets;
+        DefaultContainerType<int> send_offsets = send_counts;
+        Span                      send_counts_span(send_counts.data(), send_counts.size());
+        Span                      send_offsets_span(send_offsets.data(), send_offsets.size());
+        std::exclusive_scan(send_counts_span.begin(), send_counts_span.end(), send_offsets_span.begin(), size_t(0));
+        DefaultContainerType<int> send_displacements = send_offsets;
 
         using MsgType = MessageEnvelopeType<envelope_level, Payload>;
         DefaultContainerType<MsgType> colwise_send_buf(rowwise_recv_buf.size());
@@ -294,16 +303,18 @@ private:
             auto const dst_in_column = get_destination_in_colwise_exchange(elem.get_destination());
             auto&      entry         = colwise_send_buf[static_cast<std::size_t>(send_offsets[dst_in_column]++)];
             entry                    = MsgType(std::move(elem.get_payload()));
-            if constexpr (envelope_level == MsgEnvelopeLevel::no_envelope) {
+            if constexpr (envelope_level == MessageEnvelopeLevel::no_envelope) {
                 // nothing to be done
-            } else if constexpr (envelope_level == MsgEnvelopeLevel::source) {
+            } else if constexpr (envelope_level == MessageEnvelopeLevel::source) {
                 entry.set_source(elem.get_source_signed());
-            } else if constexpr (envelope_level == MsgEnvelopeLevel::source_and_destination) {
+            } else if constexpr (envelope_level == MessageEnvelopeLevel::source_and_destination) {
                 entry.set_source(elem.get_source_signed());
                 entry.set_destination(elem.get_destination_signed());
             } else {
-                KASSERT(false);
-                // should never be executed
+                static_assert(
+                    envelope_level == MessageEnvelopeLevel::source_and_destination /*always false*/,
+                    "This branch is never used"
+                );
             }
         }
         {

@@ -70,7 +70,7 @@ TEST(AlltoallvGridPluginTest, single_element_source_envelope) {
     }
     std::vector<int> send_counts(comm.size(), 1);
 
-    constexpr auto envelope = MsgEnvelopeLevel::source;
+    constexpr auto envelope = MessageEnvelopeLevel::source;
 
     auto result = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
     EXPECT_EQ(result.size(), comm.size());
@@ -95,7 +95,7 @@ TEST(AlltoallvGridPluginTest, single_element_source_destination_envelope) {
     }
     std::vector<int> send_counts(comm.size(), 1);
 
-    constexpr auto envelope = MsgEnvelopeLevel::source_and_destination;
+    constexpr auto envelope = MessageEnvelopeLevel::source_and_destination;
     auto           result   = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
     EXPECT_EQ(result.size(), comm.size());
 
@@ -139,7 +139,7 @@ TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_source_envelope) {
         std::iota(send_counts.begin(), send_counts.end(), 0);
     }
 
-    constexpr auto envelope = MsgEnvelopeLevel::source;
+    constexpr auto envelope = MessageEnvelopeLevel::source;
     auto           result   = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
 
     EXPECT_EQ(result.size(), comm.rank());
@@ -162,7 +162,7 @@ TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_source_destination_e
         std::iota(send_counts.begin(), send_counts.end(), 0);
     }
 
-    constexpr auto envelope = MsgEnvelopeLevel::source_and_destination;
+    constexpr auto envelope = MessageEnvelopeLevel::source_and_destination;
     auto           result   = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
 
     EXPECT_EQ(result.size(), comm.rank());
@@ -203,7 +203,7 @@ TEST(AlltoallvGridPluginTest, all_to_last_pe_single_element_source_envelope) {
     std::vector<int>    send_counts(comm.size(), 0);
     send_counts[comm.size() - 1] = comm.rank_signed();
 
-    constexpr auto envelope = MsgEnvelopeLevel::source;
+    constexpr auto envelope = MessageEnvelopeLevel::source;
     auto           result   = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
 
     if (comm.is_root(comm.size() - 1)) {
@@ -228,7 +228,7 @@ TEST(AlltoallvGridPluginTest, all_to_last_pe_single_element_source_destination_e
     std::vector<int>    send_counts(comm.size(), 0);
     send_counts[comm.size() - 1] = comm.rank_signed();
 
-    constexpr auto envelope = MsgEnvelopeLevel::source_and_destination;
+    constexpr auto envelope = MessageEnvelopeLevel::source_and_destination;
     auto           result   = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
 
     if (comm.is_root(comm.size() - 1)) {
