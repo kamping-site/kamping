@@ -154,7 +154,7 @@ public:
     /// least the sum of the send_counts argument.
     /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
     ///
-    /// @param envelop_level Determines the contents envelope of each returned element (no_envelope = use the actual
+    /// @tparam envelop_level Determines the contents envelope of each returned element (no_envelope = use the actual
     /// data type, source = augment the actual data type with the source PE, source_and_destination = agument the actual
     /// data type with the source and destination PE).
     /// @tparam Args Automatically deducted template parameters.
