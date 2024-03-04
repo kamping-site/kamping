@@ -111,30 +111,18 @@ using MessageEnvelopeType = std::conditional_t<
 
 } // namespace grid_plugin_helpers
 
-/// @brief Plugin adding a two dimensional communication grid to the communicator.
-///
-/// PEs are row-major and abs(`#row - #columns`) <= 1
-/// 0  1  2  3
-/// 4  5  6  7
-/// 8  9  10 11
-/// 12 13 14 15
-///
-/// If `#PE != #row * #column` then the PEs of the last incomplete row are transposed and appended to
-/// the first rows and do not form an own row based communicator.
-///  0  1  2  3 16
-///  4  5  6  7 17
-///  8  9  10 11
-///  12 13 14 15
-/// (16 17)
-/// This enables personalized alltoall exchanges with a latency in about `sqrt(#PE)`.
-template <typename Comm, template <typename...> typename DefaultContainerType>
-class GridCommunicatorPlugin : public plugins::PluginBase<Comm, DefaultContainerType, GridCommunicatorPlugin> {
+template <template <typename...> typename DefaultContainerType>
+class GridCommunicator {
 public:
     using LevelCommunicator = kamping::Communicator<DefaultContainerType>; ///< Type of row and column communicator.
 
-    /// @brief initialized the virtual grid and splits the communicator into a row and column communicator.
-    void initialize_grid() {
-        auto&        self       = this->to_communicator();
+    /// @brief Create a two dimensional grid by splitting \param comm into a row and column communicator.
+    /// @tparam Comm Type of the communicator.
+    /// @param comm Communicator to be split into a two dimensioal grid.
+    template <typename Comm>
+    GridCommunicator(Comm& comm) : _rank_in_outer_comm{comm.rank()} {
+        // GridCommunicator(kamping::Communicator<DefaultContainerType, Plugins...>& comm) {
+        auto&        self       = comm;
         double const sqrt       = std::sqrt(self.size());
         const size_t floor_sqrt = static_cast<size_t>(std::floor(sqrt));
         const size_t ceil_sqrt  = static_cast<size_t>(std::ceil(sqrt));
@@ -178,7 +166,7 @@ public:
     /// @param args All required and any number of the optional buffers described above.
     /// @returns
     template <MessageEnvelopeLevel envelope_level = MessageEnvelopeLevel::no_envelope, typename... Args>
-    auto alltoallv_grid(Args... args) const {
+    auto alltoallv(Args... args) const {
         KAMPING_CHECK_PARAMETERS(
             Args,
             KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
@@ -259,7 +247,7 @@ private:
                 ); // this has to be done independently of the envelope level, otherwise routing is not possible
                    //
                 if constexpr (envelope_level != MessageEnvelopeLevel::no_envelope) {
-                    entry.set_source(this->to_communicator().rank_signed());
+                    entry.set_source(asserting_cast<int>(_rank_in_outer_comm));
                 }
             }
             cur_chunk_offset += send_count;
@@ -325,9 +313,36 @@ private:
     }
 
 private:
+    size_t                                      _rank_in_outer_comm;
     size_t                                      _size_complete_rectangle;
     size_t                                      _number_columns;
     kamping::Communicator<DefaultContainerType> _row_comm;
     kamping::Communicator<DefaultContainerType> _column_comm;
 };
+/// @brief Plugin adding a two dimensional communication grid to the communicator.
+///
+/// PEs are row-major and abs(`#row - #columns`) <= 1
+/// 0  1  2  3
+/// 4  5  6  7
+/// 8  9  10 11
+/// 12 13 14 15
+///
+/// If `#PE != #row * #column` then the PEs of the last incomplete row are transposed and appended to
+/// the first rows and do not form an own row based communicator.
+///  0  1  2  3 16
+///  4  5  6  7 17
+///  8  9  10 11
+///  12 13 14 15
+/// (16 17)
+/// This enables personalized alltoall exchanges with a latency in about `sqrt(#PE)`.
+
+template <typename Comm, template <typename...> typename DefaultContainerType>
+class GridCommunicatorPlugin : public plugins::PluginBase<Comm, DefaultContainerType, GridCommunicatorPlugin> {
+public:
+    /// @brief Returns a \ref kamping::plugin::GridCommunicator.
+    auto make_grid_communicator() {
+        return GridCommunicator<DefaultContainerType>(this->to_communicator());
+    }
+};
+
 } // namespace kamping::plugin

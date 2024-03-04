@@ -46,20 +46,20 @@ bool operator==(
 
 TEST(AlltoallvGridPluginTest, single_element_no_envelope) {
     Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    comm.initialize_grid();
+    auto                                                      grid_comm = comm.make_grid_communicator();
 
     std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
     std::vector<int> send_counts(comm.size(), 1);
 
-    auto result = comm.alltoallv_grid(send_buf(input), kamping::send_counts(send_counts));
+    auto result = grid_comm.alltoallv(send_buf(input), kamping::send_counts(send_counts));
     EXPECT_EQ(result.size(), comm.size());
     EXPECT_THAT(result, Each(comm.rank_signed()));
 }
 
 TEST(AlltoallvGridPluginTest, single_element_source_envelope) {
     Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    comm.initialize_grid();
+    auto                                                      grid_comm = comm.make_grid_communicator();
 
     std::vector<double> input(comm.size());
     std::iota(input.begin(), input.end(), 0.5);
@@ -72,7 +72,7 @@ TEST(AlltoallvGridPluginTest, single_element_source_envelope) {
 
     constexpr auto envelope = MessageEnvelopeLevel::source;
 
-    auto result = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
+    auto result = grid_comm.alltoallv<envelope>(send_buf(input), kamping::send_counts(send_counts));
     EXPECT_EQ(result.size(), comm.size());
 
     for (size_t i = 0; i < comm.size(); ++i) {
@@ -84,7 +84,7 @@ TEST(AlltoallvGridPluginTest, single_element_source_envelope) {
 
 TEST(AlltoallvGridPluginTest, single_element_source_destination_envelope) {
     Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    comm.initialize_grid();
+    auto                                                      grid_comm = comm.make_grid_communicator();
 
     std::vector<double> input(comm.size());
     std::iota(input.begin(), input.end(), 0.5);
@@ -96,7 +96,7 @@ TEST(AlltoallvGridPluginTest, single_element_source_destination_envelope) {
     std::vector<int> send_counts(comm.size(), 1);
 
     constexpr auto envelope = MessageEnvelopeLevel::source_and_destination;
-    auto           result   = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
+    auto           result   = grid_comm.alltoallv<envelope>(send_buf(input), kamping::send_counts(send_counts));
     EXPECT_EQ(result.size(), comm.size());
 
     for (size_t i = 0; i < comm.size(); ++i) {
@@ -109,7 +109,7 @@ TEST(AlltoallvGridPluginTest, single_element_source_destination_envelope) {
 
 TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_no_envelope) {
     Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    comm.initialize_grid();
+    auto                                                      grid_comm = comm.make_grid_communicator();
 
     int                 last_pe = comm.size_signed() - 1;
     std::vector<double> input;
@@ -120,7 +120,7 @@ TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_no_envelope) {
         std::iota(send_counts.begin(), send_counts.end(), 0);
     }
 
-    auto result = comm.alltoallv_grid(send_buf(input), kamping::send_counts(send_counts));
+    auto result = grid_comm.alltoallv(send_buf(input), kamping::send_counts(send_counts));
 
     EXPECT_EQ(result.size(), comm.rank());
     EXPECT_THAT(result, Each(last_pe + 0.5));
@@ -128,7 +128,7 @@ TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_no_envelope) {
 
 TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_source_envelope) {
     Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    comm.initialize_grid();
+    auto                                                      grid_comm = comm.make_grid_communicator();
 
     int                 last_pe = comm.size_signed() - 1;
     std::vector<double> input;
@@ -140,7 +140,7 @@ TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_source_envelope) {
     }
 
     constexpr auto envelope = MessageEnvelopeLevel::source;
-    auto           result   = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
+    auto           result   = grid_comm.alltoallv<envelope>(send_buf(input), kamping::send_counts(send_counts));
 
     EXPECT_EQ(result.size(), comm.rank());
     for (auto const& elem: result) {
@@ -151,7 +151,7 @@ TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_source_envelope) {
 
 TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_source_destination_envelope) {
     Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    comm.initialize_grid();
+    auto                                                      grid_comm = comm.make_grid_communicator();
 
     int                 last_pe = comm.size_signed() - 1;
     std::vector<double> input;
@@ -163,7 +163,7 @@ TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_source_destination_e
     }
 
     constexpr auto envelope = MessageEnvelopeLevel::source_and_destination;
-    auto           result   = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
+    auto           result   = grid_comm.alltoallv<envelope>(send_buf(input), kamping::send_counts(send_counts));
 
     EXPECT_EQ(result.size(), comm.rank());
     for (auto const& elem: result) {
@@ -175,12 +175,13 @@ TEST(AlltoallvGridPluginTest, last_to_all_pe_single_element_source_destination_e
 
 TEST(AlltoallvGridPluginTest, all_to_last_pe_single_element_no_envelope) {
     Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    comm.initialize_grid();
+    auto                                                      grid_comm = comm.make_grid_communicator();
+
     std::vector<double> input(comm.rank(), static_cast<double>(comm.rank()) + 0.5);
     std::vector<int>    send_counts(comm.size(), 0);
     send_counts[comm.size() - 1] = comm.rank_signed();
 
-    auto result = comm.alltoallv_grid(send_buf(input), kamping::send_counts(send_counts));
+    auto result = grid_comm.alltoallv(send_buf(input), kamping::send_counts(send_counts));
 
     if (comm.is_root(comm.size() - 1)) {
         EXPECT_EQ(result.size(), comm.size() * (comm.size() - 1) / 2);
@@ -198,13 +199,14 @@ TEST(AlltoallvGridPluginTest, all_to_last_pe_single_element_no_envelope) {
 
 TEST(AlltoallvGridPluginTest, all_to_last_pe_single_element_source_envelope) {
     Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    comm.initialize_grid();
+    auto                                                      grid_comm = comm.make_grid_communicator();
+
     std::vector<double> input(comm.rank(), static_cast<double>(comm.rank()) + 0.5);
     std::vector<int>    send_counts(comm.size(), 0);
     send_counts[comm.size() - 1] = comm.rank_signed();
 
     constexpr auto envelope = MessageEnvelopeLevel::source;
-    auto           result   = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
+    auto           result   = grid_comm.alltoallv<envelope>(send_buf(input), kamping::send_counts(send_counts));
 
     if (comm.is_root(comm.size() - 1)) {
         EXPECT_EQ(result.size(), comm.size() * (comm.size() - 1) / 2);
@@ -223,13 +225,14 @@ TEST(AlltoallvGridPluginTest, all_to_last_pe_single_element_source_envelope) {
 
 TEST(AlltoallvGridPluginTest, all_to_last_pe_single_element_source_destination_envelope) {
     Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    comm.initialize_grid();
+    auto                                                      grid_comm = comm.make_grid_communicator();
+
     std::vector<double> input(comm.rank(), static_cast<double>(comm.rank()) + 0.5);
     std::vector<int>    send_counts(comm.size(), 0);
     send_counts[comm.size() - 1] = comm.rank_signed();
 
     constexpr auto envelope = MessageEnvelopeLevel::source_and_destination;
-    auto           result   = comm.alltoallv_grid<envelope>(send_buf(input), kamping::send_counts(send_counts));
+    auto           result   = grid_comm.alltoallv<envelope>(send_buf(input), kamping::send_counts(send_counts));
 
     if (comm.is_root(comm.size() - 1)) {
         EXPECT_EQ(result.size(), comm.size() * (comm.size() - 1) / 2);

@@ -14,11 +14,11 @@ int main(int argc, char** argv) {
     Environment<> env(argc, argv);
 
     Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    comm.initialize_grid();
+    auto                                                      grid_comm = comm.make_grid_communicator();
     std::vector<double> input(comm.size(), static_cast<double>(comm.rank_signed()) + 0.5);
     std::vector<int>    counts(comm.size(), 1);
     auto                recv_buf =
-        comm.alltoallv_grid<plugin::MessageEnvelopeLevel::source_and_destination>(send_buf(input), send_counts(counts));
+        grid_comm.alltoallv<plugin::MessageEnvelopeLevel::source_and_destination>(send_buf(input), send_counts(counts));
 
     if (comm.is_root(0)) {
         for (auto const& elem: recv_buf) {
