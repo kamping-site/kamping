@@ -13,7 +13,11 @@
 #pragma once
 #include <algorithm>
 #include <cstddef>
+#include <random>
 #include <vector>
+
+using seed_type = std::mt19937::result_type;
+
 template <typename T>
 void pick_splitters(size_t num_splitters, size_t oversampling_ratio, std::vector<T>& global_samples) {
     std::sort(global_samples.begin(), global_samples.end());

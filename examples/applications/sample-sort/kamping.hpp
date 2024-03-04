@@ -20,7 +20,7 @@
 #include "./common.hpp"
 namespace kamping {
 template <typename T>
-void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
+void sort(MPI_Comm comm_, std::vector<T>& data, seed_type seed) {
     Communicator<> comm(comm_);
     size_t const   oversampling_ratio = 16 * static_cast<size_t>(std::log2(comm.size())) + 1;
     std::vector<T> local_samples(oversampling_ratio);
