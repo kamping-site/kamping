@@ -100,22 +100,22 @@ using MessageEnvelopeType = std::conditional_t<
 
 } // namespace grid_plugin_helpers
 
-/// @brief Plugin addng a two dimensional grid communicator to the communicator.
+/// @brief Plugin adding a two dimensional communication grid to the communicator.
 ///
-/// PEs are row-major and abs(#row - #columns) <= 1
+/// PEs are row-major and abs(`#row - #columns`) <= 1
 /// 0  1  2  3
 /// 4  5  6  7
 /// 8  9  10 11
 /// 12 13 14 15
 ///
-/// If #PE != #row * #column then the PEs of the last incomplete row are transposed and appended to
+/// If `#PE != #row * #column` then the PEs of the last incomplete row are transposed and appended to
 /// the first rows and do not form an own row based communicator.
 ///  0  1  2  3 16
 ///  4  5  6  7 17
 ///  8  9  10 11
 ///  12 13 14 15
 /// (16 17)
-///
+/// This enables personalized alltoall exchanges with a latency in about `sqrt(#PE)`.
 template <typename Comm, template <typename...> typename DefaultContainerType>
 class GridCommunicatorPlugin : public plugins::PluginBase<Comm, DefaultContainerType, GridCommunicatorPlugin> {
 public:
@@ -154,7 +154,9 @@ public:
     /// least the sum of the send_counts argument.
     /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
     ///
-    /// @param envelop_level Determines the envelope of each returned element.
+    /// @param envelop_level Determines the contents envelope of each returned element (no_envelope = use the actual
+    /// data type, source = augment the actual data type with the source PE, source_and_destination = agument the actual
+    /// data type with the source and destination PE).
     /// @tparam Args Automatically deducted template parameters.
     /// @param args All required and any number of the optional buffers described above.
     /// @returns
