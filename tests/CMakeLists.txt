@@ -206,6 +206,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_alltoall_grid_plugin
+    FILES plugins/alltoall_grid_plugin_test.cpp
+    CORES 1 3 4 5 9 11
+)
+kamping_register_mpi_test(
     test_hooks
     FILES hooks_test.cpp
     CORES 1 4

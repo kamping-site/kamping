@@ -7,12 +7,25 @@
 #include "kamping/plugins/plugin_helpers.hpp"
 
 namespace kamping::plugin {
+
+/// @brief Descriptor for different levels for message envelopes used in indirect communication.
+enum MsgEnvelopeLevel {
+    no_envelope,           ///< do not use an envelope at all (if possible)
+    source,                ///< only additionally add the source PE in the envelope (if possible)
+    source_and_destination ///< add source and destination PE in the envelope
+};
+
 namespace grid_plugin_helpers {
 
 /// @brief Mixin for \ref MessageEnvelope to store a source PE.
 struct Source {
     /// @brief Get destination PE.
-    [[nodiscard]] int get_source() const {
+    [[nodiscard]] size_t get_source() const {
+        return asserting_cast<size_t>(source);
+    }
+
+    /// @brief Get destination PE.
+    [[nodiscard]] int get_source_signed() const {
         return source;
     }
 
@@ -26,7 +39,12 @@ struct Source {
 /// @brief Mixin for \ref MessageEnvelope to store a destination PE.
 struct Destination {
     /// @brief Get destination PE.
-    [[nodiscard]] int get_destination() const {
+    [[nodiscard]] size_t get_destination() const {
+        return asserting_cast<size_t>(destination);
+    }
+
+    /// @brief Get destination PE.
+    [[nodiscard]] int get_destination_signed() const {
         return destination;
     }
 
@@ -35,13 +53,6 @@ struct Destination {
         destination = value;
     }
     int destination; ///< Rank of destination PE.
-};
-
-/// @brief Descriptor for different levels for message envelopes used in indirect communication.
-enum MsgEnvelopeLevel {
-    no_envelope,           ///< do not use an envelope at all (if possible)
-    source,                ///< only additionally add the source PE in the envelope (if possible)
-    source_and_destination ///< add source and destination PE in the envelope
 };
 
 /// @brief Augments a plain message with additional information via \tparam Attributes
@@ -154,16 +165,13 @@ public:
     /// least the sum of the send_counts argument.
     /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
     ///
-    /// @tparam envelop_level Determines the contents envelope of each returned element (no_envelope = use the actual
-    /// data type, source = augment the actual data type with the source PE, source_and_destination = agument the actual
-    /// data type with the source and destination PE).
+    /// @tparam envelop_level Determines the contents of the envelope of each returned element (no_envelope = use the
+    /// actual data type of an exchanged element, source = augment the actual data type with the source PE,
+    /// source_and_destination = agument the actual data type with the source and destination PE).
     /// @tparam Args Automatically deducted template parameters.
     /// @param args All required and any number of the optional buffers described above.
     /// @returns
-    template <
-        grid_plugin_helpers::MsgEnvelopeLevel envelop_level =
-            grid_plugin_helpers::MsgEnvelopeLevel::source_and_destination,
-        typename... Args>
+    template <MsgEnvelopeLevel envelop_level = MsgEnvelopeLevel::no_envelope, typename... Args>
     auto alltoallv_grid(Args... args) const {
         KAMPING_CHECK_PARAMETERS(
             Args,
@@ -204,7 +212,7 @@ private:
         return row_index_in_complete_grid(destination_rank);
     }
 
-    template <grid_plugin_helpers::MsgEnvelopeLevel envelope_level, typename SendBuffer, typename SendCounts>
+    template <MsgEnvelopeLevel envelope_level, typename SendBuffer, typename SendCounts>
     auto rowwise_exchange(SendBuffer const& send_buf, SendCounts const& send_counts) const {
         using namespace grid_plugin_helpers;
         auto const row_send_counts        = compute_row_send_counts(send_counts.underlying());
@@ -221,8 +229,7 @@ private:
             static_cast<size_t>(row_send_displacements.data()[idx_last_elem] + row_send_counts.data()[idx_last_elem]);
 
         using value_type = typename SendBuffer::value_type;
-        static_assert(std::is_same_v<value_type, double>);
-        using MsgType = std::conditional_t<
+        using MsgType    = std::conditional_t<
             envelope_level == MsgEnvelopeLevel::no_envelope,
             MessageEnvelope<value_type, Destination>,
             MessageEnvelope<value_type, Source, Destination>>;
@@ -240,13 +247,16 @@ private:
                 entry            = MsgType(std::move(elem));
                 entry.set_destination(destination
                 ); // this has to be done independently of the envelope level, otherwise routing is not possible
-                switch (envelope_level) {
-                    case MsgEnvelopeLevel::no_envelope:
-                        break;
-                    case MsgEnvelopeLevel::source:                 // set source
-                    case MsgEnvelopeLevel::source_and_destination: // set source
-                        entry.set_source(this->to_communicator().rank_signed());
-                        break;
+                   //
+                if constexpr (envelope_level == MsgEnvelopeLevel::no_envelope) {
+                    // nothing to be done
+                } else if constexpr (envelope_level == MsgEnvelopeLevel::source) {
+                    entry.set_source(this->to_communicator().rank_signed());
+                } else if constexpr (envelope_level == MsgEnvelopeLevel::source_and_destination) {
+                    entry.set_source(this->to_communicator().rank_signed());
+                } else {
+                    KASSERT(false);
+                    // should never be executed
                 }
             }
             base_idx += send_count;
@@ -259,7 +269,7 @@ private:
     }
 
     template <
-        grid_plugin_helpers::MsgEnvelopeLevel envelope_level,
+        MsgEnvelopeLevel envelope_level,
         template <typename...>
         typename RowwiseRecvBuf,
         typename... IndirectMessageArgs>
@@ -272,7 +282,7 @@ private:
 
         DefaultContainerType<int> send_counts(_column_comm.size(), 0);
         for (auto const& elem: rowwise_recv_buf) {
-            ++send_counts[get_destination_in_colwise_exchange(asserting_cast<size_t>(elem.get_destination()))];
+            ++send_counts[get_destination_in_colwise_exchange(elem.get_destination())];
         }
         auto send_offsets = send_counts;
         std::exclusive_scan(send_counts.begin(), send_counts.end(), send_offsets.begin(), 0ull);
@@ -281,20 +291,19 @@ private:
         using MsgType = MessageEnvelopeType<envelope_level, Payload>;
         DefaultContainerType<MsgType> colwise_send_buf(rowwise_recv_buf.size());
         for (auto& elem: rowwise_recv_buf) {
-            auto const dst_in_column =
-                get_destination_in_colwise_exchange(asserting_cast<size_t>(elem.get_destination()));
-            auto& entry = colwise_send_buf[static_cast<std::size_t>(send_offsets[dst_in_column]++)];
-            entry       = MsgType(std::move(elem.get_payload()));
-            switch (envelope_level) {
-                case MsgEnvelopeLevel::no_envelope:
-                    break;
-                case MsgEnvelopeLevel::source:
-                    entry.set_source(elem.get_source());
-                    break;
-                case MsgEnvelopeLevel::source_and_destination: // set source
-                    entry.set_source(this->to_communicator().rank_signed());
-                    entry.set_destination(elem.get_destination());
-                    break;
+            auto const dst_in_column = get_destination_in_colwise_exchange(elem.get_destination());
+            auto&      entry         = colwise_send_buf[static_cast<std::size_t>(send_offsets[dst_in_column]++)];
+            entry                    = MsgType(std::move(elem.get_payload()));
+            if constexpr (envelope_level == MsgEnvelopeLevel::no_envelope) {
+                // nothing to be done
+            } else if constexpr (envelope_level == MsgEnvelopeLevel::source) {
+                entry.set_source(elem.get_source_signed());
+            } else if constexpr (envelope_level == MsgEnvelopeLevel::source_and_destination) {
+                entry.set_source(elem.get_source_signed());
+                entry.set_destination(elem.get_destination_signed());
+            } else {
+                KASSERT(false);
+                // should never be executed
             }
         }
         {
