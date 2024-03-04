@@ -17,7 +17,8 @@ int main(int argc, char** argv) {
     comm.initialize_grid();
     std::vector<double> input(comm.size(), static_cast<double>(comm.rank_signed()) + 0.5);
     std::vector<int>    counts(comm.size(), 1);
-    auto recv_buf = comm.alltoallv_grid<plugin::MsgEnvelopeLevel::source_and_destination>(send_buf(input), send_counts(counts));
+    auto                recv_buf =
+        comm.alltoallv_grid<plugin::MsgEnvelopeLevel::source_and_destination>(send_buf(input), send_counts(counts));
 
     using namespace std::literals;
     comm.barrier();
