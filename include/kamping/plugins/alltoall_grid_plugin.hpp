@@ -214,15 +214,10 @@ private:
         return GridPosition{rank / _number_columns, rank % _number_columns};
     }
 
-    //[[nodiscard]] size_t row_index_in_complete_grid(size_t destination_rank) const {
-    //    return destination_rank / _number_columns;
-    //}
-    //[[nodiscard]] size_t col_index_in_complete_grid(size_t destination_rank) const {
-    //    return destination_rank % _number_columns;
-    //}
     [[nodiscard]] size_t get_destination_in_rowwise_exchange(size_t destination_rank) const {
         return pos_in_complete_grid(destination_rank).col_index;
     }
+
     [[nodiscard]] size_t get_destination_in_colwise_exchange(size_t destination_rank) const {
         return pos_in_complete_grid(destination_rank).row_index;
     }
