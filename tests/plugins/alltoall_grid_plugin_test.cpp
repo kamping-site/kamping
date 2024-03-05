@@ -120,11 +120,6 @@ TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_single_element_source_enve
 
     std::vector<double> input(comm.size());
     std::iota(input.begin(), input.end(), 0.5);
-    if (comm.is_root()) {
-        for (auto const& elem: input) {
-            std::cout << elem << std::endl;
-        }
-    }
     std::vector<int> send_counts(comm.size(), 1);
 
     constexpr auto envelope = MessageEnvelopeLevel::source;
@@ -145,11 +140,6 @@ TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_single_element_source_dest
 
     std::vector<double> input(comm.size());
     std::iota(input.begin(), input.end(), 0.5);
-    if (comm.is_root()) {
-        for (auto const& elem: input) {
-            std::cout << elem << std::endl;
-        }
-    }
     std::vector<int> send_counts(comm.size(), 1);
 
     constexpr auto envelope = MessageEnvelopeLevel::source_and_destination;
