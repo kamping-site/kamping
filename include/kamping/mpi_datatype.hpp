@@ -153,7 +153,7 @@ auto type_dispatcher() {
     } else {
         static_assert(
             // this should always evaluate to false
-            !std::is_trivially_copyable_v<T_no_const>,
+            std::is_trivially_copyable_v<T_no_const>,
             "Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
         );
     }
