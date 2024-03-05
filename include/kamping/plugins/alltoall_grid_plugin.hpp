@@ -116,7 +116,8 @@ class GridCommunicator {
 public:
     using LevelCommunicator = kamping::Communicator<DefaultContainerType>; ///< Type of row and column communicator.
 
-    /// @brief Create a two dimensional grid by splitting \param comm into a row and column communicator.
+    /// @brief Creates a two dimensional grid by splitting the given communicator of size `p` into a row and a column
+    /// communicator each of size about `sqrt(p)`.
     /// @tparam Comm Type of the communicator.
     /// @param comm Communicator to be split into a two dimensioal grid.
     template <typename Comm>
