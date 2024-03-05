@@ -129,13 +129,14 @@ public:
         template <typename, template <typename...> typename>
         typename... Plugins>
     GridCommunicator(kamping::Communicator<DefaultContainerType, Plugins...> const& comm)
-        : _rank_in_orig_comm{comm.rank()} {
+        : _size_of_orig_comm{comm.size()},
+          _rank_in_orig_comm{comm.rank()} {
         // GridCommunicator(kamping::Communicator<DefaultContainerType, Plugins...>& comm) {
         double const sqrt       = std::sqrt(comm.size());
         const size_t floor_sqrt = static_cast<size_t>(std::floor(sqrt));
         const size_t ceil_sqrt  = static_cast<size_t>(std::ceil(sqrt));
         // We want to ensure that #columns + 1 >= #rows >= #columns.
-        // Therefore, use floor(sqrt(comm.size())) columns unless we have enought PEs to begin another row when using
+        // Therefore, use floor(sqrt(comm.size())) columns unless we have enough PEs to begin another row when using
         // ceil(sqrt(comm.size()) columns.
         const size_t threshold                   = floor_sqrt * ceil_sqrt;
         _number_columns                          = (comm.size() >= threshold) ? ceil_sqrt : floor_sqrt;
@@ -174,7 +175,7 @@ public:
     /// @param args All required and any number of the optional buffers described above.
     /// @returns
     template <MessageEnvelopeLevel envelope_level = MessageEnvelopeLevel::no_envelope, typename... Args>
-    auto alltoallv(Args... args) const {
+    auto alltoallv_with_envelope(Args... args) const {
         KAMPING_CHECK_PARAMETERS(
             Args,
             KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
@@ -188,6 +189,96 @@ public:
                                       .template construct_buffer_or_rebind<DefaultContainerType>();
         auto rowwise_recv_buf = rowwise_exchange<envelope_level>(send_buf, send_counts);
         return columnwise_exchange<envelope_level>(std::move(rowwise_recv_buf));
+    }
+
+    /// @brief Indirect two dimensional grid based personalized alltoall exchange.
+    /// The following parameters are required:
+    /// - \ref kamping::send_buf() containing the data that is sent to each rank. The size of this buffer has to be at
+    /// least the sum of the send_counts argument.
+    /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
+    ///
+    /// Internally, each element in the send buffer is wrapped in an envelope to faciliate the indirect routing. The
+    /// envelope consists at least consists of the destination PE of each element but can be extended to also hold the
+    /// source PE of the element. The caller can specify whether they want to keep this information also in the output
+    /// via the \tparam envelope_level.
+    ///
+    /// @tparam envelope_level Determines the contents of the envelope of each returned element (no_envelope = use the
+    /// actual data type of an exchanged element, source = augment the actual data type with the source PE,
+    /// source_and_destination = agument the actual data type with the source and destination PE).
+    /// @tparam Args Automatically deducted template parameters.
+    /// @param args All required and any number of the optional buffers described above.
+    /// @returns
+    template <typename... Args>
+    auto alltoallv(Args... args) const {
+        KAMPING_CHECK_PARAMETERS(
+            Args,
+            KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
+            KAMPING_OPTIONAL_PARAMETERS(recv_buf, recv_counts)
+        );
+        constexpr MessageEnvelopeLevel envelope_level = MessageEnvelopeLevel::source;
+        // Get send_buf
+        auto& send_buf                = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
+        using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+        using default_recv_value_type = std::remove_const_t<send_value_type>;
+        // Get send_counts
+        auto& send_counts        = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
+        auto intermediate_result = alltoallv_with_envelope<envelope_level>(std::move(send_buf), std::move(send_counts));
+
+        // Get recv counts
+        using default_recv_counts_type = decltype(kamping::recv_counts_out(alloc_new<DefaultContainerType<int>>));
+        auto&& recv_counts =
+            internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
+                std::tuple(),
+                args...
+            )
+                .template construct_buffer_or_rebind<DefaultContainerType>();
+        constexpr bool do_calculate_recv_counts = internal::has_to_be_computed<decltype(recv_counts)>;
+
+        if constexpr (do_calculate_recv_counts) {
+            recv_counts.resize_if_requested([&]() { return _size_of_orig_comm; });
+            KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
+            Span recv_counts_span(recv_counts.data(), recv_counts.size());
+            std::fill(recv_counts_span.begin(), recv_counts_span.end(), 0);
+
+            for (size_t i = 0; i < intermediate_result.size(); ++i) {
+                ++recv_counts_span[intermediate_result[i].get_source()];
+            }
+        } else {
+            KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
+        }
+
+        Span                      recv_counts_span(recv_counts.data(), recv_counts.size());
+        DefaultContainerType<int> write_pos(_size_of_orig_comm);
+        Span                      write_pos_span(write_pos.data(), write_pos.size());
+        std::exclusive_scan(recv_counts_span.begin(), recv_counts_span.end(), write_pos_span.begin(), size_t(0));
+        const size_t num_recv_elems = asserting_cast<size_t>(write_pos_span.back() + recv_counts_span.back());
+
+        // Get recv_buf
+        using default_recv_buf_type =
+            decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
+        auto&& recv_buf =
+            internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
+                std::tuple(),
+                args...
+            )
+                .template construct_buffer_or_rebind<DefaultContainerType>();
+        auto compute_required_recv_buf_size = [&]() {
+            return num_recv_elems;
+        };
+
+        recv_buf.resize_if_requested(compute_required_recv_buf_size);
+        KASSERT(
+            recv_buf.size() >= compute_required_recv_buf_size(),
+            "Recv buffer is not large enough to hold all received elements.",
+            assert::light
+        );
+        Span recv_buf_span(recv_buf.data(), recv_buf.size());
+        Span intermediate_recv_buf_span(intermediate_result.data(), intermediate_result.size());
+        for (auto const& elem: intermediate_recv_buf_span) {
+            const size_t pos   = asserting_cast<size_t>(write_pos_span[elem.get_source()]++);
+            recv_buf_span[pos] = std::move(elem.get_payload());
+        }
+        return internal::make_mpi_result<std::tuple<Args...>>(std::move(recv_buf), std::move(recv_counts));
     }
 
 private:
@@ -321,6 +412,7 @@ private:
     }
 
 private:
+    size_t                                      _size_of_orig_comm;
     size_t                                      _rank_in_orig_comm;
     size_t                                      _size_complete_rectangle;
     size_t                                      _number_columns;
