@@ -240,7 +240,7 @@ public:
 
         if constexpr (do_calculate_recv_counts) {
             recv_counts.resize_if_requested([&]() { return _size_of_orig_comm; });
-            KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
+            KASSERT(recv_counts.size() >= _size_of_orig_comm, "Recv counts buffer is not large enough.", assert::light);
             Span recv_counts_span(recv_counts.data(), recv_counts.size());
             std::fill(recv_counts_span.begin(), recv_counts_span.end(), 0);
 
