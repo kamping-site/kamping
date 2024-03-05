@@ -19,7 +19,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "kamping/plugins/alltoall_grid_plugin.hpp"
+#include "kamping/plugin/alltoall_grid.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -27,9 +27,9 @@ using namespace ::plugin;
 
 using namespace grid_plugin_helpers;
 
-TEST(AlltoallvGridPluginTest, alltoallv_single_element) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_single_element) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
@@ -40,9 +40,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_single_element) {
     EXPECT_THAT(result, Each(comm.rank_signed()));
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_single_element_st_binding) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_single_element_st_binding) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
@@ -57,9 +57,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_single_element_st_binding) {
     EXPECT_THAT(recv_counts, Each(1));
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_single_element_st_binding_recv_buf_provided) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_single_element_st_binding_recv_buf_provided) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
@@ -79,9 +79,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_single_element_st_binding_recv_buf_provi
     EXPECT_THAT(recv_counts, Each(1));
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_single_element_st_binding_recv_buf_provided_resize) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_single_element_st_binding_recv_buf_provided_resize) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
@@ -101,9 +101,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_single_element_st_binding_recv_buf_provi
     EXPECT_THAT(recv_counts, Each(1));
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_single_element_no_envelope) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_with_envelope_single_element_no_envelope) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
@@ -114,9 +114,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_single_element_no_envelope
     EXPECT_THAT(result, Each(comm.rank_signed()));
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_single_element_source_envelope) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_with_envelope_single_element_source_envelope) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     std::vector<double> input(comm.size());
     std::iota(input.begin(), input.end(), 0.5);
@@ -134,9 +134,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_single_element_source_enve
     }
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_single_element_source_destination_envelope) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_with_envelope_single_element_source_destination_envelope) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     std::vector<double> input(comm.size());
     std::iota(input.begin(), input.end(), 0.5);
@@ -154,9 +154,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_single_element_source_dest
     }
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_last_to_all_pe) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_last_to_all_pe) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     int                 last_pe = comm.size_signed() - 1;
     std::vector<double> input;
@@ -177,9 +177,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_last_to_all_pe) {
     EXPECT_EQ(recv_counts, expected_recv_counts);
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_last_to_all_pe_no_envelope) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_with_envelope_last_to_all_pe_no_envelope) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     int                 last_pe = comm.size_signed() - 1;
     std::vector<double> input;
@@ -196,9 +196,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_last_to_all_pe_no_envelope
     EXPECT_THAT(result, Each(last_pe + 0.5));
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_last_to_all_pe_source_envelope) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_with_envelope_last_to_all_pe_source_envelope) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     int                 last_pe = comm.size_signed() - 1;
     std::vector<double> input;
@@ -219,9 +219,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_last_to_all_pe_source_enve
     }
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_last_to_all_pe_source_destination_envelope) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_with_envelope_last_to_all_pe_source_destination_envelope) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     int                 last_pe = comm.size_signed() - 1;
     std::vector<double> input;
@@ -243,9 +243,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_last_to_all_pe_source_dest
     }
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_all_to_last_pe_no_envelope) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_with_envelope_all_to_last_pe_no_envelope) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     std::vector<double> input(comm.rank(), static_cast<double>(comm.rank()) + 0.5);
     std::vector<int>    send_counts(comm.size(), 0);
@@ -267,9 +267,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_all_to_last_pe_no_envelope
     }
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_all_to_last_pe_source_envelope) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_with_envelope_all_to_last_pe_source_envelope) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     std::vector<double> input(comm.rank(), static_cast<double>(comm.rank()) + 0.5);
     std::vector<int>    send_counts(comm.size(), 0);
@@ -293,9 +293,9 @@ TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_all_to_last_pe_source_enve
     }
 }
 
-TEST(AlltoallvGridPluginTest, alltoallv_with_envelope_all_to_last_pe_source_destination_envelope) {
-    Communicator<std::vector, plugin::GridCommunicatorPlugin> comm;
-    auto                                                      grid_comm = comm.make_grid_communicator();
+TEST(AlltoallvGridTest, alltoallv_with_envelope_all_to_last_pe_source_destination_envelope) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
 
     std::vector<double> input(comm.rank(), static_cast<double>(comm.rank()) + 0.5);
     std::vector<int>    send_counts(comm.size(), 0);

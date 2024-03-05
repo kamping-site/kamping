@@ -4,7 +4,7 @@
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/plugins/plugin_helpers.hpp"
+#include "kamping/plugin/plugin_helpers.hpp"
 
 namespace kamping::plugin {
 
@@ -117,7 +117,8 @@ struct GridPosition {
 
 } // namespace grid_plugin_helpers
 
-/// @brief Object returned by \ref plugin::GridCommunicatorPlugin::make_grid_communicator() representing a grid
+namespace grid {
+/// @brief Object returned by \ref plugin::GridCommunicator::make_grid_communicator() representing a grid
 /// communicator which enables alltoall communication with a latency in `sqrt(p)` where p is the size of the
 /// original communicator.
 /// @tparam DefaultContainerType Container type of the original communicator.
@@ -439,6 +440,8 @@ private:
     kamping::Communicator<DefaultContainerType> _row_comm;
     kamping::Communicator<DefaultContainerType> _column_comm;
 };
+} // namespace grid
+
 /// @brief Plugin adding a two dimensional communication grid to the communicator.
 ///
 /// PEs are row-major and abs(`#row - #columns`) <= 1
@@ -455,13 +458,12 @@ private:
 ///  12 13 14 15
 /// (16 17)
 /// This enables personalized alltoall exchanges with a latency in about `sqrt(#PE)`.
-
 template <typename Comm, template <typename...> typename DefaultContainerType>
-class GridCommunicatorPlugin : public plugins::PluginBase<Comm, DefaultContainerType, GridCommunicatorPlugin> {
+class GridCommunicator : public plugin::PluginBase<Comm, DefaultContainerType, GridCommunicator> {
 public:
     /// @brief Returns a \ref kamping::plugin::GridCommunicator.
     auto make_grid_communicator() {
-        return GridCommunicator<DefaultContainerType>(this->to_communicator());
+        return grid::GridCommunicator<DefaultContainerType>(this->to_communicator());
     }
 };
 
