@@ -109,6 +109,12 @@ using MessageEnvelopeType = std::conditional_t<
         MessageEnvelope<T, Source>,
         MessageEnvelope<T, Source, Destination>>>;
 
+/// @brief Class representing a position within a logical two-dimensional processor grid.
+struct GridPosition {
+    size_t row_index; ///< Row position.
+    size_t col_index; ///< Column position.
+};
+
 } // namespace grid_plugin_helpers
 
 /// @brief Object returned by \ref plugin::GridCommunicatorPlugin::make_grid_communicator() representing a grid
@@ -131,28 +137,27 @@ public:
     GridCommunicator(kamping::Communicator<DefaultContainerType, Plugins...> const& comm)
         : _size_of_orig_comm{comm.size()},
           _rank_in_orig_comm{comm.rank()} {
-        // GridCommunicator(kamping::Communicator<DefaultContainerType, Plugins...>& comm) {
         double const sqrt       = std::sqrt(comm.size());
         const size_t floor_sqrt = static_cast<size_t>(std::floor(sqrt));
         const size_t ceil_sqrt  = static_cast<size_t>(std::ceil(sqrt));
         // We want to ensure that #columns + 1 >= #rows >= #columns.
         // Therefore, use floor(sqrt(comm.size())) columns unless we have enough PEs to begin another row when using
         // ceil(sqrt(comm.size()) columns.
-        const size_t threshold                   = floor_sqrt * ceil_sqrt;
-        _number_columns                          = (comm.size() >= threshold) ? ceil_sqrt : floor_sqrt;
-        const size_t num_pe_in_incomplete_column = comm.size() / _number_columns;
-        auto [row_num, column_num] = pos_in_complete_grid(comm.rank()); // assume that we have a complete grid,
-        _size_complete_rectangle   = _number_columns * num_pe_in_incomplete_column;
+        const size_t threshold                      = floor_sqrt * ceil_sqrt;
+        _num_columns                                = (comm.size() >= threshold) ? ceil_sqrt : floor_sqrt;
+        const size_t num_ranks_in_incomplete_column = comm.size() / _num_columns;
+        auto [row, col]          = pos_in_complete_grid(comm.rank()); // assume that we have a complete grid,
+        _size_complete_rectangle = _num_columns * num_ranks_in_incomplete_column;
         if (comm.rank() >= _size_complete_rectangle) {
-            row_num = comm.rank() % _number_columns; // rank() is member of last incomplete row,
+            row = comm.rank() % _num_columns; // rank() is member of last incomplete row,
             // therefore append it to one of the first
         }
         {
-            auto split_comm = comm.split(static_cast<int>(row_num), comm.rank_signed());
+            auto split_comm = comm.split(static_cast<int>(row), comm.rank_signed());
             _row_comm       = LevelCommunicator(split_comm.disown_mpi_communicator(), split_comm.root_signed(), true);
         }
         {
-            auto split_comm = comm.split(static_cast<int>(column_num), comm.rank_signed());
+            auto split_comm = comm.split(static_cast<int>(col), comm.rank_signed());
             _column_comm    = LevelCommunicator(split_comm.disown_mpi_communicator(), split_comm.root_signed(), true);
         }
     }
@@ -164,7 +169,7 @@ public:
     /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
     ///
     /// Internally, each element in the send buffer is wrapped in an envelope to faciliate the indirect routing. The
-    /// envelope consists at least consists of the destination PE of each element but can be extended to also hold the
+    /// envelope consists at least of the destination PE of each element but can be extended to also hold the
     /// source PE of the element. The caller can specify whether they want to keep this information also in the output
     /// via the \tparam envelope_level.
     ///
@@ -296,13 +301,8 @@ private:
         return row_send_counts;
     }
 
-    struct GridPosition {
-        size_t row_index;
-        size_t col_index;
-    };
-
-    [[nodiscard]] GridPosition pos_in_complete_grid(size_t rank) const {
-        return GridPosition{rank / _number_columns, rank % _number_columns};
+    [[nodiscard]] grid_plugin_helpers::GridPosition pos_in_complete_grid(size_t rank) const {
+        return grid_plugin_helpers::GridPosition{rank / _num_columns, rank % _num_columns};
     }
 
     [[nodiscard]] size_t get_destination_in_rowwise_exchange(size_t destination_rank) const {
@@ -419,7 +419,7 @@ private:
     size_t                                      _size_of_orig_comm;
     size_t                                      _rank_in_orig_comm;
     size_t                                      _size_complete_rectangle;
-    size_t                                      _number_columns;
+    size_t                                      _num_columns;
     kamping::Communicator<DefaultContainerType> _row_comm;
     kamping::Communicator<DefaultContainerType> _column_comm;
 };
