@@ -12,7 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 #pragma once
 
-namespace kamping::plugins {
+namespace kamping::plugin {
 
 /// @brief Helper class for using CRTP for mixins. Which are used to implement kamping plugins.
 ///
@@ -44,4 +44,4 @@ private:
                                                                  // PluginBase to access the functions of this class.
 };
 
-} // namespace kamping::plugins
+} // namespace kamping::plugin

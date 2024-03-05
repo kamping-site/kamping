@@ -9,14 +9,14 @@
 #include "kamping/environment.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/plugins/plugin_helpers.hpp"
+#include "kamping/plugin/plugin_helpers.hpp"
 
 using namespace ::kamping;
 
 /// @brief A plugin implementing the \c num_numa_nodes() function.
 /// We're using CRTP to inject plugins into the kamping::Communicator class.
 template <typename Comm, template <typename...> typename DefaultContainerType>
-class MyNumNumaNodesPlugin : public plugins::PluginBase<Comm, DefaultContainerType, MyNumNumaNodesPlugin> {
+class MyNumNumaNodes : public plugin::PluginBase<Comm, DefaultContainerType, MyNumNumaNodes> {
 public:
     /// @brief Number of NUMA nodes (different shared memory regions) in this communicator.
     /// This operation is expensive (communicator splitting and communication). You should cache the result if you need
@@ -26,7 +26,7 @@ public:
 };
 
 template <typename Comm, template <typename...> typename DefaultContainerType>
-size_t MyNumNumaNodesPlugin<Comm, DefaultContainerType>::my_num_numa_nodes() const {
+size_t MyNumNumaNodes<Comm, DefaultContainerType>::my_num_numa_nodes() const {
     // Uses the \c to_communicator() function of \c PluginBase to cast itself to \c Comm
     auto& self = this->to_communicator();
 
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
     Environment<> env(argc, argv);
 
     // Create a new communicator object with the desired plugins.
-    kamping::Communicator<std::vector, MyNumNumaNodesPlugin> comm;
+    kamping::Communicator<std::vector, MyNumNumaNodes> comm;
 
     // Check that our implementation matches the reference implementation and output put the result.
     KASSERT(comm.my_num_numa_nodes() == comm.num_numa_nodes());

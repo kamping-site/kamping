@@ -23,7 +23,7 @@
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/plugins/plugin_helpers.hpp"
+#include "kamping/plugin/plugin_helpers.hpp"
 #include "kassert/kassert.hpp"
 
 int desired_mpi_ret_code;
@@ -46,7 +46,7 @@ bool second_error_handler_called = false;
 /// @brief A plugin overwriting the MPI return code handler.
 
 template <typename Comm, template <typename...> typename DefaultContainerType>
-class IgnoreMPIErrorsPlugin : public kamping::plugins::PluginBase<Comm, DefaultContainerType, IgnoreMPIErrorsPlugin> {
+class IgnoreMPIErrors : public kamping::plugin::PluginBase<Comm, DefaultContainerType, IgnoreMPIErrors> {
 public:
     void mpi_error_handler([[maybe_unused]] int const ret, [[maybe_unused]] std::string const& callee) const {
         KASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS");
@@ -55,7 +55,7 @@ public:
 };
 
 template <typename Comm, template <typename...> typename DefaultContainerType>
-class IgnoreMPIErrorsPlugin2 : public kamping::plugins::PluginBase<Comm, DefaultContainerType, IgnoreMPIErrorsPlugin2> {
+class IgnoreMPIErrors2 : public kamping::plugin::PluginBase<Comm, DefaultContainerType, IgnoreMPIErrors2> {
 public:
     void mpi_error_handler([[maybe_unused]] int const ret, [[maybe_unused]] std::string const& callee) const {
         KASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS");
@@ -66,7 +66,7 @@ public:
 TEST(HooksTest, MPIErrorHook) {
     using namespace kamping;
 
-    Communicator<std::vector, IgnoreMPIErrorsPlugin> comm;
+    Communicator<std::vector, IgnoreMPIErrors> comm;
 
     size_t value = 0;
 
@@ -84,7 +84,7 @@ TEST(HooksTest, MPIErrorHook) {
 TEST(HooksTest, TwoPluginsProvidingAnMPIErrorHandler) {
     using namespace kamping;
 
-    Communicator<std::vector, IgnoreMPIErrorsPlugin, IgnoreMPIErrorsPlugin2> comm;
+    Communicator<std::vector, IgnoreMPIErrors, IgnoreMPIErrors2> comm;
 
     size_t value = 0;
 
