@@ -216,6 +216,12 @@ foreach (p ${grid_test_cores})
 endforeach ()
 
 kamping_register_mpi_test(
+    test_sort
+    FILES plugins/sort_test.cpp
+    CORES 1 4
+)
+
+kamping_register_mpi_test(
     test_hooks
     FILES hooks_test.cpp
     CORES 1 4
