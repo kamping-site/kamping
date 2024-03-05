@@ -129,7 +129,7 @@ public:
     /// @brief Creates a two dimensional grid by splitting the given communicator of size `p` into a row and a column
     /// communicator each of size about `sqrt(p)`.
     /// @tparam Comm Type of the communicator.
-    /// @param comm Communicator to be split into a two dimensioal grid.
+    /// @param comm Communicator to be split into a two-dimensional grid.
     template <
         template <typename...> typename = DefaultContainerType,
         template <typename, template <typename...> typename>
@@ -168,14 +168,14 @@ public:
     /// least the sum of the send_counts argument.
     /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
     ///
-    /// Internally, each element in the send buffer is wrapped in an envelope to faciliate the indirect routing. The
+    /// Internally, each element in the send buffer is wrapped in an envelope to facilitate the indirect routing. The
     /// envelope consists at least of the destination PE of each element but can be extended to also hold the
     /// source PE of the element. The caller can specify whether they want to keep this information also in the output
     /// via the \tparam envelope_level.
     ///
     /// @tparam envelope_level Determines the contents of the envelope of each returned element (no_envelope = use the
     /// actual data type of an exchanged element, source = augment the actual data type with the source PE,
-    /// source_and_destination = agument the actual data type with the source and destination PE).
+    /// source_and_destination = argument the actual data type with the source and destination PE).
     /// @tparam Args Automatically deducted template parameters.
     /// @param args All required and any number of the optional buffers described above.
     /// @returns
@@ -213,7 +213,7 @@ public:
     ///
     /// @tparam envelope_level Determines the contents of the envelope of each returned element (no_envelope = use the
     /// actual data type of an exchanged element, source = augment the actual data type with the source PE,
-    /// source_and_destination = agument the actual data type with the source and destination PE).
+    /// source_and_destination = argument the actual data type with the source and destination PE).
     /// @tparam Args Automatically deducted template parameters.
     /// @param args All required and any number of the optional buffers described above.
     /// @return Result type wrapping the output buffer and recv_counts (if requested).
@@ -232,7 +232,7 @@ public:
         // get send_counts
         auto& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
 
-        // do the acutal exchange
+        // Perform the actual message exchange.
         auto grid_recv_buf = alltoallv_with_envelope<envelope_level>(std::move(send_buf), std::move(send_counts));
 
         // post-processing (fixing ordering problems etc.)
