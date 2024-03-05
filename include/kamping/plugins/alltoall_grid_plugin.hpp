@@ -232,7 +232,7 @@ public:
         // get send_counts
         auto& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
 
-        // Perform the actual message exchange.
+        // perform the actual message exchange
         auto grid_recv_buf = alltoallv_with_envelope<envelope_level>(std::move(send_buf), std::move(send_counts));
 
         // post-processing (fixing ordering problems etc.)
