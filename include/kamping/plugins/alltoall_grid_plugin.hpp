@@ -278,7 +278,7 @@ private:
     template <typename RecvCounts>
     DefaultContainerType<int> compute_write_positions(RecvCounts const& recv_counts) const {
         DefaultContainerType<int> write_pos(_size_of_orig_comm);
-        std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), write_pos.data(), size_t(0));
+        std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), write_pos.data(), int(0));
         return write_pos;
     }
 
@@ -396,7 +396,7 @@ private:
         DefaultContainerType<int> send_offsets = send_counts;
         Span                      send_counts_span(send_counts.data(), send_counts.size());
         Span                      send_offsets_span(send_offsets.data(), send_offsets.size());
-        std::exclusive_scan(send_counts_span.begin(), send_counts_span.end(), send_offsets_span.begin(), size_t(0));
+        std::exclusive_scan(send_counts_span.begin(), send_counts_span.end(), send_offsets_span.begin(), int(0));
         DefaultContainerType<int> send_displacements = send_offsets;
 
         using MsgType = MessageEnvelopeType<envelope_level, Payload>;
