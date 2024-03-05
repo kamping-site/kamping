@@ -9,7 +9,7 @@
 #include "kamping/environment.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/plugin_helpers.hpp"
+#include "kamping/plugins/plugin_helpers.hpp"
 
 using namespace ::kamping;
 

@@ -23,7 +23,7 @@
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/send.hpp"
-#include "kamping/plugin_helpers.hpp"
+#include "kamping/plugins/plugin_helpers.hpp"
 
 /// @brief A plugin providing a function to send the integer 42 to a target rank.
 template <typename Comm, template <typename...> typename DefaultContainerType>

@@ -23,7 +23,7 @@
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/plugin_helpers.hpp"
+#include "kamping/plugins/plugin_helpers.hpp"
 #include "kassert/kassert.hpp"
 
 int desired_mpi_ret_code;
