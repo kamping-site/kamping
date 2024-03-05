@@ -11,3 +11,7 @@ target_compile_options(example_my_num_numa_nodes PRIVATE ${KAMPING_WARNING_FLAGS
 add_executable(sample_sort sample-sort/sample_sort.cpp)
 target_link_libraries(sample_sort PUBLIC kamping)
 target_compile_options(sample_sort PRIVATE ${KAMPING_WARNING_FLAGS})
+
+add_executable(suffix_sorting suffix-sorting/suffix_sorting.cpp)
+target_link_libraries(suffix_sorting PUBLIC kamping)
+target_compile_options(suffix_sorting PRIVATE ${KAMPING_WARNING_FLAGS})
