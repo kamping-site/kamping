@@ -197,17 +197,21 @@ public:
     /// least the sum of the send_counts argument.
     /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
     ///
-    /// Internally, each element in the send buffer is wrapped in an envelope to faciliate the indirect routing. The
-    /// envelope consists at least consists of the destination PE of each element but can be extended to also hold the
-    /// source PE of the element. The caller can specify whether they want to keep this information also in the output
-    /// via the \tparam envelope_level.
+    /// The following parameters are optional:
+    /// - \ref kamping::recv_counts() containing the number of elements to receive from each rank.
+    /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
+    /// the data received as specified for send_buf. The buffer will be resized according to the buffer's
+    /// kamping::BufferResizePolicy. If resize policy is kamping::BufferResizePolicy::no_resize, the buffer's underlying
+    /// storage must be large enough to store all received elements.
+    ///
+    /// Internally, \ref alltoallv_with_envelope() is called.
     ///
     /// @tparam envelope_level Determines the contents of the envelope of each returned element (no_envelope = use the
     /// actual data type of an exchanged element, source = augment the actual data type with the source PE,
     /// source_and_destination = agument the actual data type with the source and destination PE).
     /// @tparam Args Automatically deducted template parameters.
     /// @param args All required and any number of the optional buffers described above.
-    /// @returns
+    /// @return Result type wrapping the output buffer and recv_counts (if requested).
     template <typename... Args>
     auto alltoallv(Args... args) const {
         KAMPING_CHECK_PARAMETERS(
