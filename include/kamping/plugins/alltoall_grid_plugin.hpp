@@ -225,14 +225,17 @@ public:
             KAMPING_OPTIONAL_PARAMETERS(recv_buf, recv_counts)
         );
         constexpr MessageEnvelopeLevel envelope_level = MessageEnvelopeLevel::source;
-        // Get send_buf
+        // get send_buf
         auto& send_buf                = internal::select_parameter_type<internal::ParameterType::send_buf>(args...);
         using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
         using default_recv_value_type = std::remove_const_t<send_value_type>;
-        // Get send_counts
-        auto& send_counts        = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
-        auto intermediate_result = alltoallv_with_envelope<envelope_level>(std::move(send_buf), std::move(send_counts));
+        // get send_counts
+        auto& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
 
+        // do the acutal exchange
+        auto grid_recv_buf = alltoallv_with_envelope<envelope_level>(std::move(send_buf), std::move(send_counts));
+
+        // post-processing (fixing ordering problems etc.)
         // Get recv counts
         using default_recv_counts_type = decltype(kamping::recv_counts_out(alloc_new<DefaultContainerType<int>>));
         auto&& recv_counts =
@@ -249,20 +252,14 @@ public:
             Span recv_counts_span(recv_counts.data(), recv_counts.size());
             std::fill(recv_counts_span.begin(), recv_counts_span.end(), 0);
 
-            for (size_t i = 0; i < intermediate_result.size(); ++i) {
-                ++recv_counts_span[intermediate_result[i].get_source()];
+            for (size_t i = 0; i < grid_recv_buf.size(); ++i) {
+                ++recv_counts_span[grid_recv_buf[i].get_source()];
             }
         } else {
             KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
         }
 
-        Span                      recv_counts_span(recv_counts.data(), recv_counts.size());
-        DefaultContainerType<int> write_pos(_size_of_orig_comm);
-        Span                      write_pos_span(write_pos.data(), write_pos.size());
-        std::exclusive_scan(recv_counts_span.begin(), recv_counts_span.end(), write_pos_span.begin(), size_t(0));
-        const size_t num_recv_elems = asserting_cast<size_t>(write_pos_span.back() + recv_counts_span.back());
-
-        // Get recv_buf
+        // get recv_buf
         using default_recv_buf_type =
             decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
         auto&& recv_buf =
@@ -271,8 +268,28 @@ public:
                 args...
             )
                 .template construct_buffer_or_rebind<DefaultContainerType>();
-        auto compute_required_recv_buf_size = [&]() {
-            return num_recv_elems;
+
+        write_recv_buffer(grid_recv_buf, recv_counts, recv_buf);
+
+        return internal::make_mpi_result<std::tuple<Args...>>(std::move(recv_buf), std::move(recv_counts));
+    }
+
+private:
+    template <typename RecvCounts>
+    DefaultContainerType<int> compute_write_positions(RecvCounts const& recv_counts) const {
+        DefaultContainerType<int> write_pos(_size_of_orig_comm);
+        std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), write_pos.data(), size_t(0));
+        return write_pos;
+    }
+
+    template <typename GridRecvBuffer, typename RecvCounts, typename RecvBuffer>
+    void write_recv_buffer(GridRecvBuffer const& grid_recv_buffer, RecvCounts const& recv_counts, RecvBuffer& recv_buf)
+        const {
+        DefaultContainerType<int> write_pos = compute_write_positions(recv_counts);
+        Span                      write_pos_span(write_pos.data(), write_pos.size());
+        auto                      compute_required_recv_buf_size = [&]() {
+            Span recv_counts_span(recv_counts.data(), recv_counts.size());
+            return asserting_cast<size_t>(write_pos_span.back() + recv_counts_span.back());
         };
 
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
@@ -281,19 +298,18 @@ public:
             "Recv buffer is not large enough to hold all received elements.",
             assert::light
         );
+
         Span recv_buf_span(recv_buf.data(), recv_buf.size());
-        Span intermediate_recv_buf_span(intermediate_result.data(), intermediate_result.size());
-        for (auto const& elem: intermediate_recv_buf_span) {
+        Span grid_recv_buf_span(grid_recv_buffer.data(), grid_recv_buffer.size());
+        for (auto const& elem: grid_recv_buf_span) {
             const size_t pos   = asserting_cast<size_t>(write_pos_span[elem.get_source()]++);
             recv_buf_span[pos] = std::move(elem.get_payload());
         }
-        return internal::make_mpi_result<std::tuple<Args...>>(std::move(recv_buf), std::move(recv_counts));
     }
 
-private:
     template <typename SendCounts>
     [[nodiscard]] auto compute_row_send_counts(SendCounts const& send_counts) const {
-        SendCounts row_send_counts(_row_comm.size(), 0);
+        DefaultContainerType<int> row_send_counts(_row_comm.size(), 0);
         for (size_t i = 0; i < send_counts.size(); ++i) {
             size_t const destination_pe = get_destination_in_rowwise_exchange(i);
             row_send_counts.data()[destination_pe] += send_counts.data()[i];
@@ -316,15 +332,15 @@ private:
     template <MessageEnvelopeLevel envelope_level, typename SendBuffer, typename SendCounts>
     auto rowwise_exchange(SendBuffer const& send_buf, SendCounts const& send_counts) const {
         using namespace grid_plugin_helpers;
-        auto const row_send_counts = compute_row_send_counts(send_counts.underlying());
-        auto       row_send_displs = row_send_counts;
-        Span       row_send_counts_span(row_send_counts.data(), row_send_counts.size());
-        Span       row_send_displs_span(row_send_displs.data(), row_send_displs.size());
+        auto const                row_send_counts = compute_row_send_counts(send_counts.underlying());
+        DefaultContainerType<int> row_send_displs(_row_comm.size());
+        Span                      row_send_counts_span(row_send_counts.data(), row_send_counts.size());
+        Span                      row_send_displs_span(row_send_displs.data(), row_send_displs.size());
         std::exclusive_scan(
             row_send_counts_span.begin(),
             row_send_counts_span.end(),
             row_send_displs_span.begin(),
-            size_t(0)
+            int(0)
         );
         auto       index_displacements = row_send_displs;
         auto const total_send_count    = static_cast<size_t>(row_send_displs_span.back() + row_send_counts_span.back());
