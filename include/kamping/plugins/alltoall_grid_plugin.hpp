@@ -124,8 +124,12 @@ public:
     /// communicator each of size about `sqrt(p)`.
     /// @tparam Comm Type of the communicator.
     /// @param comm Communicator to be split into a two dimensioal grid.
-    template <typename Comm>
-    GridCommunicator(Comm const& comm) : _rank_in_orig_comm{comm.rank()} {
+    template <
+        template <typename...> typename = DefaultContainerType,
+        template <typename, template <typename...> typename>
+        typename... Plugins>
+    GridCommunicator(kamping::Communicator<DefaultContainerType, Plugins...> const& comm)
+        : _rank_in_orig_comm{comm.rank()} {
         // GridCommunicator(kamping::Communicator<DefaultContainerType, Plugins...>& comm) {
         double const sqrt       = std::sqrt(comm.size());
         const size_t floor_sqrt = static_cast<size_t>(std::floor(sqrt));
