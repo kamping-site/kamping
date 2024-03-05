@@ -111,6 +111,10 @@ using MessageEnvelopeType = std::conditional_t<
 
 } // namespace grid_plugin_helpers
 
+/// @brief Object returned by \ref plugin::GridCommunicatorPlugin::make_grid_communicator() representing a grid
+/// communicator which enables alltoall communication with a latency in `sqrt(p)` where p is the size of the
+/// original communicator.
+/// @tparam DefaultContainerType Container type of the original communicator.
 template <template <typename...> typename DefaultContainerType>
 class GridCommunicator {
 public:
