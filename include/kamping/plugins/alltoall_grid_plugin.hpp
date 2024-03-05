@@ -125,30 +125,29 @@ public:
     /// @tparam Comm Type of the communicator.
     /// @param comm Communicator to be split into a two dimensioal grid.
     template <typename Comm>
-    GridCommunicator(Comm& comm) : _rank_in_outer_comm{comm.rank()} {
+    GridCommunicator(Comm const& comm) : _rank_in_orig_comm{comm.rank()} {
         // GridCommunicator(kamping::Communicator<DefaultContainerType, Plugins...>& comm) {
-        auto&        self       = comm;
-        double const sqrt       = std::sqrt(self.size());
+        double const sqrt       = std::sqrt(comm.size());
         const size_t floor_sqrt = static_cast<size_t>(std::floor(sqrt));
         const size_t ceil_sqrt  = static_cast<size_t>(std::ceil(sqrt));
         // We want to ensure that #columns + 1 >= #rows >= #columns.
         // Therefore, use floor(sqrt(comm.size())) columns unless we have enought PEs to begin another row when using
         // ceil(sqrt(comm.size()) columns.
         const size_t threshold                   = floor_sqrt * ceil_sqrt;
-        _number_columns                          = (self.size() >= threshold) ? ceil_sqrt : floor_sqrt;
-        const size_t num_pe_in_incomplete_column = self.size() / _number_columns;
-        auto [row_num, column_num] = pos_in_complete_grid(self.rank()); // assume that we have a complete grid,
+        _number_columns                          = (comm.size() >= threshold) ? ceil_sqrt : floor_sqrt;
+        const size_t num_pe_in_incomplete_column = comm.size() / _number_columns;
+        auto [row_num, column_num] = pos_in_complete_grid(comm.rank()); // assume that we have a complete grid,
         _size_complete_rectangle   = _number_columns * num_pe_in_incomplete_column;
-        if (self.rank() >= _size_complete_rectangle) {
-            row_num = self.rank() % _number_columns; // rank() is member of last incomplete row,
+        if (comm.rank() >= _size_complete_rectangle) {
+            row_num = comm.rank() % _number_columns; // rank() is member of last incomplete row,
             // therefore append it to one of the first
         }
         {
-            auto split_comm = self.split(static_cast<int>(row_num), self.rank_signed());
+            auto split_comm = comm.split(static_cast<int>(row_num), comm.rank_signed());
             _row_comm       = LevelCommunicator(split_comm.disown_mpi_communicator(), split_comm.root_signed(), true);
         }
         {
-            auto split_comm = self.split(static_cast<int>(column_num), self.rank_signed());
+            auto split_comm = comm.split(static_cast<int>(column_num), comm.rank_signed());
             _column_comm    = LevelCommunicator(split_comm.disown_mpi_communicator(), split_comm.root_signed(), true);
         }
     }
@@ -252,7 +251,7 @@ private:
                 ); // this has to be done independently of the envelope level, otherwise routing is not possible
                    //
                 if constexpr (envelope_level != MessageEnvelopeLevel::no_envelope) {
-                    entry.set_source(asserting_cast<int>(_rank_in_outer_comm));
+                    entry.set_source(asserting_cast<int>(_rank_in_orig_comm));
                 }
             }
             cur_chunk_offset += send_count;
@@ -318,7 +317,7 @@ private:
     }
 
 private:
-    size_t                                      _rank_in_outer_comm;
+    size_t                                      _rank_in_orig_comm;
     size_t                                      _size_complete_rectangle;
     size_t                                      _number_columns;
     kamping::Communicator<DefaultContainerType> _row_comm;
