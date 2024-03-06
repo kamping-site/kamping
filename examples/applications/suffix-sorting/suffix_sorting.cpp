@@ -8,8 +8,11 @@
 
 #include "./prefix_doubling.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/plugin/sort.hpp"
 
-auto load_local_input(std::filesystem::path const& path, kamping::BasicCommunicator& comm) {
+auto load_local_input(
+    std::filesystem::path const& path, kamping::Communicator<std::vector, kamping::plugin::SampleSort>& comm
+) {
     MPI_File mpi_file;
 
     MPI_File_open(comm.mpi_communicator(), path.c_str(), MPI_MODE_RDONLY, MPI_INFO_NULL, &mpi_file);
@@ -36,8 +39,9 @@ auto load_local_input(std::filesystem::path const& path, kamping::BasicCommunica
 }
 
 int main(int argc, char* argv[]) {
-    kamping::Environment       env(argc, argv);
-    kamping::BasicCommunicator comm;
+    kamping::Environment env(argc, argv);
+
+    kamping::Communicator<std::vector, kamping::plugin::SampleSort> comm;
 
     if (argc != 2) {
         std::cerr << "Wrong number of parameters" << std::endl;
@@ -56,7 +60,7 @@ int main(int argc, char* argv[]) {
 
     auto local_input = load_local_input(argv[1], comm);
 
-    auto [input, iteration] = reduce_alphabet<uint32_t>(std::move(local_input), comm);
+    auto suffix_array = prefix_doubling<uint32_t>(std::move(local_input), comm);
 
     return 0;
 }

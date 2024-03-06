@@ -19,7 +19,18 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/isend.hpp"
 #include "kamping/p2p/recv.hpp"
+#include "kamping/plugin/sort.hpp"
 #include "kassert/kassert.hpp"
+
+template <typename IndexType>
+struct IR {
+    IndexType index;
+    IndexType rank;
+
+    IR() = default;
+
+    IR(IndexType idx, IndexType r) : index(idx), rank(r) {}
+}; // struct IR
 
 template <typename IndexType>
 struct IRR {
@@ -27,11 +38,23 @@ struct IRR {
     IndexType rank1;
     IndexType rank2;
 
+    IRR() = default;
+
     IRR(IndexType idx, IndexType r1, IndexType r2) : index(idx), rank1(r1), rank2(r2) {}
+
+    bool operator<(IRR const& other) const {
+        return std::make_pair(rank1, rank2) < std::make_pair(other.rank1, other.rank2);
+    }
+
+    bool operator!=(IRR const& other) const {
+        return std::make_pair(rank1, rank2) != std::make_pair(other.rank1, other.rank2);
+    }
 }; // struct IRR
 
 template <typename IndexType>
-auto reduce_alphabet(std::vector<std::uint8_t>&& input, kamping::BasicCommunicator& comm) {
+auto reduce_alphabet(
+    std::vector<std::uint8_t>&& input, kamping::Communicator<std::vector, kamping::plugin::SampleSort>& comm
+) {
     using InputType = std::remove_reference_t<decltype(input)>::value_type;
 
     std::array<IndexType, std::numeric_limits<InputType>::max() + 1> hist = {0};
@@ -86,13 +109,95 @@ auto reduce_alphabet(std::vector<std::uint8_t>&& input, kamping::BasicCommunicat
 }
 
 template <typename IndexType>
-std::vector<IndexType> prefix_doubling(std::vector<uint8_t>&& input, kamping::BasicCommunicator& comm) {
-    using seed_type = std::mt19937::result_type;
-    auto local_seed =
-        42 + static_cast<seed_type>(kamping::world_rank()) + static_cast<seed_type>(kamping::world_size());
+std::vector<IndexType>
+prefix_doubling(std::vector<uint8_t>&& input, kamping::Communicator<std::vector, kamping::plugin::SampleSort>& comm) {
+    auto [iteration, irrs] = reduce_alphabet<IndexType>(std::move(input), comm);
 
-    auto [irrs, iteration] = reduce_alphabet<IndexType>(std::move(input));
-
+    size_t                     local_size = irrs.size();
+    size_t                     offset     = 0;
+    std::vector<IR<IndexType>> irs;
     while (true) {
+        std::cout << "iteration " << iteration << '\n';
+        comm.sort(irrs);
+        local_size = irrs.size();
+        offset     = comm.exscan_single(kamping::send_buf(local_size), kamping::op(kamping::ops::plus<>()));
+
+        irs.clear();
+        irs.reserve(local_size);
+
+        size_t cur_rank = offset;
+        irs.emplace_back(irrs[0].index, cur_rank);
+        for (size_t i = 1; i < local_size; ++i) {
+            if (irrs[i - 1] != irrs[i]) {
+                cur_rank = offset + i;
+            }
+            irs.emplace_back(irrs[i].index, cur_rank);
+        }
+
+        bool all_distinct = true;
+        for (size_t i = 1; i < irs.size(); ++i) {
+            all_distinct &= (irs[i].rank != irs[i - 1].rank);
+            if (!all_distinct) {
+                break;
+            }
+        }
+
+        all_distinct =
+            comm.allreduce_single(kamping::send_buf(all_distinct), kamping::op(kamping::ops::logical_and<>()));
+        if (all_distinct) {
+            break;
+        }
+
+        comm.sort(irs, [=](IR<IndexType> const& lhs, IR<IndexType> const& rhs) {
+            IndexType const mod_mask = (IndexType{1} << iteration) - 1;
+            IndexType const div_mask = ~mod_mask;
+
+            if (IndexType lhs_mod = lhs.index & mod_mask, rhs_mod = rhs.index & mod_mask; lhs_mod == rhs_mod) {
+                return ((lhs.index & div_mask) < (rhs.index & div_mask));
+            } else {
+                return lhs_mod < rhs_mod;
+            }
+        });
+
+        local_size = irs.size();
+        offset     = comm.exscan_single(kamping::send_buf(local_size), kamping::op(kamping::ops::plus<>()));
+
+        comm.isend(
+            kamping::send_buf(irs.front()),
+            kamping::destination(comm.rank_shifted_cyclic(-1)),
+            kamping::send_count(1)
+        );
+
+        IR<IndexType> rightmost_ir;
+        comm.recv(
+            kamping::recv_buf(rightmost_ir),
+            kamping::source(comm.rank_shifted_cyclic(1)),
+            kamping::recv_count(1)
+        );
+
+        if (comm.rank() + 1 < comm.size()) {
+            irs.push_back(rightmost_ir);
+        } else {
+            irs.emplace_back(0, 0);
+        }
+
+        irrs.clear();
+        irrs.reserve(local_size);
+        IndexType const index_distance = 1ULL << iteration;
+
+        for (size_t i = 0; i < local_size; ++i) {
+            IndexType second_rank{0};
+            if (irs[i].index + index_distance == irs[i + 1].index) {
+                second_rank = irs[i + 1].rank;
+            }
+            irrs.emplace_back(irs[i].index, irs[i].rank, second_rank);
+        }
+        ++iteration;
     }
+    std::vector<IndexType> result;
+    result.reserve(irs.size());
+    std::transform(irs.begin(), irs.end(), std::back_inserter(result), [](IR<IndexType> const& ir) {
+        return ir.index;
+    });
+    return result;
 }
