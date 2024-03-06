@@ -119,7 +119,7 @@ auto deserialization_repack(BufferType buffer) {
         serialization_data.deserialize();
         return std::move(serialization_data).extract();
     } else {
-        std::move(buffer);
+        return std::move(buffer);
     }
 }
 } // namespace internal
