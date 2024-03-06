@@ -607,6 +607,8 @@ public:
     static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
 
+    using value_type = MemberType; ///< Value type of the buffer.
+
     using MemberTypeWithConst =
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
                                                                          ///< non-const depending on

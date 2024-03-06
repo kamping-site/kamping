@@ -59,7 +59,7 @@ struct DataBufferBuilder {
     template <typename Data_>
     DataBufferBuilder(Data_&& data) : data_(std::forward<Data_>(data)) {}
 
-private:
+public:
     Data data_;
     using DataBufferType =
         decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
@@ -126,7 +126,7 @@ template <
     BufferResizePolicy  buffer_resize_policy>
 struct AllocNewDataBufferBuilder {
     static constexpr ParameterType parameter_type = parameter_type_param; ///< The parameter type.
-private:
+public:
     using DataBufferType =
         decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
             std::conditional_t<

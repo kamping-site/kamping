@@ -21,6 +21,7 @@
 #include <utility>
 
 #include "kamping/has_member.hpp"
+#include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_filtering.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
@@ -577,6 +578,36 @@ struct PredicateForResultObject {
     }
 };
 
+template <typename, typename = void>
+constexpr bool has_data_buffer_type_member = false;
+
+template <typename T>
+constexpr bool has_data_buffer_type_member<T, std::void_t<typename T::DataBufferType>> = true;
+
+struct DiscardSerializationBuffers {
+    ///@brief Discard function to check whether a buffer provided to \ref make_mpi_result() shall be discard or returned
+    /// in the result object.
+    /// call.
+    ///
+    ///@tparam BufferType BufferType to be checked.
+    ///@return \c True (i.e. discard) iff Arg's parameter_type is `sparse_send_buf`, `on_message` or `destination`.
+    template <typename BufferType>
+    static constexpr bool discard() {
+        if (PredicateForResultObject::discard<BufferType>()) {
+            return true;
+        }
+        using ptype_entry = ParameterTypeEntry<BufferType::parameter_type>;
+        if constexpr (ptype_entry::parameter_type == internal::ParameterType::recv_buf || ptype_entry::parameter_type == internal::ParameterType::send_recv_buf) {
+            if constexpr (has_data_buffer_type_member<BufferType>) {
+                return buffer_uses_serialization<typename BufferType::DataBufferType>;
+            } else {
+                return buffer_uses_serialization<BufferType>;
+            }
+        }
+        return false;
+    }
+};
+
 /// @brief Returns True iff only a recv or send_recv buffer is present.
 /// Communicator::ibarrier()).
 ///
@@ -632,7 +663,10 @@ auto make_mpi_result(Buffers&&... buffers) {
     // buffers)
     using CallerProvidedOwningOutParameters =
         typename internal::FilterOut<PredicateForResultObject, CallerProvidedArgs>::type;
-    constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutParameters>;
+    using CallerProvidedOwningOutParametersWithoutSerializationBuffers =
+        typename internal::FilterOut<DiscardSerializationBuffers, CallerProvidedArgs>::type;
+    constexpr std::size_t num_caller_provided_owning_out_buffers =
+        std::tuple_size_v<CallerProvidedOwningOutParametersWithoutSerializationBuffers>;
     if constexpr (!has_recv_or_send_recv_buf<Buffers...>()) {
         // do no special handling for receive buffer at all, since there is none.
         return MPIResult(construct_buffer_tuple<CallerProvidedOwningOutParameters>(buffers...));
