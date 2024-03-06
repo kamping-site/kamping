@@ -23,13 +23,12 @@
 
 namespace kamping {
 
-/// @enum kamping::GroupEquality
 /// @brief Describes the equality of two groups.
 enum class GroupEquality : uint8_t {
-    Identical, /// The order and members of the two groups are the same.
-    Similar,   /// Only the members are the same, the order is different.
-    Unequal,   /// Otherwise
-    Invalid    /// Tried to convert an invalid value to a GroupEquality.
+    Identical, ///< The order and members of the two groups are the same.
+    Similar,   ///< Only the members are the same, the order is different.
+    Unequal,   ///< Otherwise
+    Invalid    ///< Tried to convert an invalid value to a GroupEquality.
 };
 
 /// @brief A group of MPI processes.
