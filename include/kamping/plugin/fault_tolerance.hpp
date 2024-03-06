@@ -55,6 +55,8 @@ public:
 
 namespace kamping::plugin {
 
+/// @brief A plugin implementing a wrapper around the User-Level Failure-Mitigation (ULFM) feature of the upcoming MPI 4
+/// standard. This plugin and the accompanying example is tested with OpenMPI 5.0.2.
 template <typename Comm, template <typename...> typename DefaultContainerType>
 class FaultTolerance : public plugin::PluginBase<Comm, DefaultContainerType, FaultTolerance> {
 public:
