@@ -8,6 +8,10 @@ add_executable(example_my_num_numa_nodes my_num_numa_nodes_plugin.cpp)
 target_link_libraries(example_my_num_numa_nodes kamping)
 target_compile_options(example_my_num_numa_nodes PRIVATE ${KAMPING_WARNING_FLAGS})
 
+add_executable(example_grid_alltoall grid_alltoall_plugin.cpp)
+target_link_libraries(example_grid_alltoall kamping)
+target_compile_options(example_grid_alltoall PRIVATE ${KAMPING_WARNING_FLAGS})
+
 add_executable(sample_sort sample-sort/sample_sort.cpp)
 target_link_libraries(sample_sort PUBLIC kamping)
 target_compile_options(sample_sort PRIVATE ${KAMPING_WARNING_FLAGS})
