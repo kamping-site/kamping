@@ -71,6 +71,8 @@ auto send_buf(Data&& data) {
         internal::BufferType::in_buffer,
         BufferResizePolicy::no_resize>(std::forward<Data>(data));
 }
+
+/// @brief A send buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_serialized().
 template <
     typename SerializationBufferType,
     std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>, bool> = true>
@@ -163,6 +165,7 @@ auto send_recv_buf(Data&& data) {
         resize_policy>(std::forward<Data>(data));
 }
 
+/// @brief A send/recv buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_serialized().
 template <
     typename SerializationBufferType,
     typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>
@@ -655,7 +658,7 @@ auto recv_buf(Container&& container) {
         resize_policy>(std::forward<Container>(container));
 }
 
-/// @brief A recv buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_serialized().
+/// @brief A recv buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_deserialized().
 template <
     typename SerializationBufferType,
     typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>

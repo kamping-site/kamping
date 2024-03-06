@@ -578,24 +578,33 @@ struct PredicateForResultObject {
     }
 };
 
+/// @brief Helper to check if a type `T` has a member type `T::DataBufferType`.
 template <typename, typename = void>
 constexpr bool has_data_buffer_type_member = false;
 
+/// @brief Helper to check if a type `T` has a member type `T::DataBufferType`.
 template <typename T>
 constexpr bool has_data_buffer_type_member<T, std::void_t<typename T::DataBufferType>> = true;
 
+///@brief Predicate to check whether a buffer provided to \ref make_mpi_result() shall be discard or returned in the
+/// result object, including a hotfix for serialization.
 struct DiscardSerializationBuffers {
-    ///@brief Discard function to check whether a buffer provided to \ref make_mpi_result() shall be discard or returned
-    /// in the result object.
-    /// call.
+    /// @brief Discard function to check whether a buffer provided to \ref make_mpi_result() shall be discard or
+    /// returned in the result object. call.
     ///
-    ///@tparam BufferType BufferType to be checked.
-    ///@return \c True (i.e. discard) iff Arg's parameter_type is `sparse_send_buf`, `on_message` or `destination`.
+    /// @tparam BufferType BufferType to be checked.
+    /// @return \c True (i.e. discard) iff \ref PredicateForResultObject discards this, or if the parameter uses
+    /// serialization, so we don't expose serialization buffers to the user.
+    ///
+    /// @todo this a quick and dirty hack, in the future we want to select which parameters to return based on a flag.
+    /// Currently we assume that we want to return everything that is out and owning.
     template <typename BufferType>
     static constexpr bool discard() {
         if (PredicateForResultObject::discard<BufferType>()) {
             return true;
         }
+        // we sometimes call this with DataBuffers and sometimes with DataBufferBuilder, so we need a case distinction
+        // here.
         using ptype_entry = ParameterTypeEntry<BufferType::parameter_type>;
         if constexpr (ptype_entry::parameter_type == internal::ParameterType::recv_buf || ptype_entry::parameter_type == internal::ParameterType::send_recv_buf) {
             if constexpr (has_data_buffer_type_member<BufferType>) {
