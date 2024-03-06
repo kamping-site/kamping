@@ -169,4 +169,4 @@ private:
     bool      _owns_group;
 };
 
-}; // namespace kamping
+} // namespace kamping
