@@ -435,6 +435,17 @@ public:
         return rank < size();
     }
 
+    /// @brief Default MPI error callback. Depending on `KASSERT_EXCEPTION_MODE` either throws a \ref
+    /// MpiErrorException if \c error_code != \c MPI_SUCCESS or fails an assertion.
+    void mpi_error_default_handler(int const error_code, std::string const& function_name) const {
+        THROWING_KASSERT_SPECIFIED(
+            error_code == MPI_SUCCESS,
+            function_name << " failed!",
+            kamping::MpiErrorException,
+            error_code
+        );
+    }
+
     template <typename... Args>
     void send(Args... args) const;
 
@@ -614,17 +625,6 @@ private:
     template <typename = void>
     void mpi_error_hook_impl(int const error_code, std::string const& callee) const {
         mpi_error_default_handler(error_code, callee);
-    }
-
-    /// @brief Default MPI error callback. Depending on `KASSERT_EXCEPTION_MODE` either throws a \ref
-    /// MpiErrorException if \c error_code != \c MPI_SUCCESS or fails an assertion.
-    void mpi_error_default_handler(int const error_code, std::string const& function_name) const {
-        THROWING_KASSERT_SPECIFIED(
-            error_code == MPI_SUCCESS,
-            function_name << " failed!",
-            kamping::MpiErrorException,
-            error_code
-        );
     }
 
     size_t   _rank; ///< Rank of the MPI process in this communicator.
