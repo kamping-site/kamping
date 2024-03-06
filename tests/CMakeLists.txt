@@ -260,6 +260,11 @@ kamping_register_mpi_test(
     FILES serialization_test.cpp
     CORES 1 2 4
 )
+kamping_register_mpi_test(
+    test_flatten
+    FILES utils/flatten_test.cpp
+    CORES 1 4
+)
 
 # Tests using C++ 20
 kamping_register_mpi_test(
