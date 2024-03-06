@@ -81,6 +81,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_mpi_group
+    FILES mpi_group_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_mpi_datatype
     FILES mpi_datatype_test.cpp
     CORES 1 NO_GLIBCXX_DEBUG_CONTAINERS
