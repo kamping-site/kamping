@@ -1,8 +1,23 @@
 #pragma once
 #include <numeric>
+#include <utility>
 #include <vector>
 
 #include "kamping/named_parameters.hpp"
+
+template <typename F>
+struct CallableDoWrapper {
+    F f;
+    template <typename... Args>
+    auto do_(Args&&... args) {
+        return f(std::forward<Args...>(args)...);
+    }
+};
+
+template <typename F>
+auto make_callable_do_wrapper(F&& f) {
+    return CallableDoWrapper<F&&>{std::forward<F>(f)};
+}
 
 namespace kamping {
 template <
@@ -29,17 +44,17 @@ auto with_flattened(SparseSendBuf const& sparse_send_buf, CommunicatorType const
             flat_send_buf.data() + send_displs[asserting_cast<size_t>(destination)]
         );
     }
-    return [flat_send_buf = std::move(flat_send_buf),
-            send_counts   = std::move(send_counts),
-            send_displs   = std::move(send_displs)](auto&& f) {
+    return make_callable_do_wrapper([flat_send_buf = std::move(flat_send_buf),
+                                     send_counts   = std::move(send_counts),
+                                     send_displs   = std::move(send_displs)](auto&& f) {
         return std::apply(
-            f,
+            std::forward<decltype(f)>(f),
             std::tuple(
                 kamping::send_buf(flat_send_buf),
                 kamping::send_counts(send_counts),
                 kamping::send_displs(send_displs)
             )
         );
-    };
+    });
 }
 } // namespace kamping

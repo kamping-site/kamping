@@ -14,7 +14,7 @@ TEST(FlattenTest, basic) {
         sparse_send_buf.emplace(dst, std::vector<int>(comm.rank() + 1, comm.rank_signed()));
     }
 
-    auto result = with_flattened(sparse_send_buf, comm)([&](auto... flattened) {
-        return comm.alltoallv(std::move(flattened)...);
+    auto [recv_buf, recv_displs] = with_flattened(sparse_send_buf, comm).do_([&](auto... flattened) {
+      return comm.alltoallv(std::move(flattened)..., recv_counts_out());
     });
 }
