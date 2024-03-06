@@ -7,11 +7,14 @@
 
 namespace kamping {
 
+/// @enum kamping::GroupEquality
 /// @brief Describes the equality of two groups.
-/// - Identical :: The order and members of the two groups are the same.
-/// - Similar :: Only the members are the same, the order is different.
-/// - Unequal :: otherwise
-enum class GroupEquality { Identical, Similar, Unequal, Invalid };
+enum class GroupEquality : uint8_t {
+    Identical, /// The order and members of the two groups are the same.
+    Similar,   /// Only the members are the same, the order is different.
+    Unequal,   /// Otherwise
+    Invalid    /// Tried to convert an invalid value to a GroupEquality.
+};
 
 /// @brief A group of MPI processes.
 class Group {
@@ -95,21 +98,21 @@ public:
         }
     }
 
-    /// @Compare two groups.
+    /// @brief Compare two groups.
     /// @param other The group to compare with.
     /// @return True if the groups are identical; see \ref GroupEquality. False otherwise.
     [[nodiscard]] bool is_identical(Group const& other) const {
         return compare(other) == GroupEquality::Identical;
     }
 
-    /// @Compare two groups.
+    /// @brief Compare two groups.
     /// @param other The group to compare with.
     /// @return True if the groups are similar; see \ref GroupEquality. False otherwise.
     [[nodiscard]] bool is_similar(Group const& other) const {
         return compare(other) == GroupEquality::Similar;
     }
 
-    /// @Compare two groups.
+    /// @brief Compare two groups.
     /// @param other The group to compare with.
     /// @return True if the groups are identical; see \ref GroupEquality. False otherwise.
     [[nodiscard]] bool has_same_ranks(Group const& other) const {
