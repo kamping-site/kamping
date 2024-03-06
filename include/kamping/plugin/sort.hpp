@@ -29,16 +29,68 @@
 
 namespace kamping::plugin {
 
+/// @brief Plugin that adds a canonical sample sort to the communicator.
+/// @tparam Type of the communicator that is extended by the pluging.
+/// @tparam DefaultContainerType Default container type of the original communicator.
 template <typename Comm, template <typename...> typename DefaultContainerType>
 class SampleSort : public plugin::PluginBase<Comm, DefaultContainerType, SampleSort> {
 public:
-    template <typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
-    void sort(RandomIt begin, RandomIt end, Compare comp = Compare{}) {
+    /// @brief Sort the vector based on a binary comparison function (operator< by default).
+    ///
+    /// The order of equal elements is not guaranteed to be preserved. The binary comparison function has to be \c true
+    /// if the first argument is less than the second.
+    /// @tparam T Type of elements to be sorted.
+    /// @tparam Compare Type of the binary comparison function (\c std::less<T> by default).
+    /// @param data Vector containing the data to be sorted.
+    /// @param comp Binary comparison function used to determine the order of elements.
+    template <typename T, typename Compare = std::less<T>>
+    void sort(std::vector<T>& data, Compare comp = Compare{}) {
+        auto&          self               = this->to_communicator();
+        size_t const   local_size         = data.size();
+        size_t const   oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + 1;
+        std::vector<T> local_samples(oversampling_ratio);
+        std::sample(
+            data.begin(),
+            data.end(),
+            local_samples.begin(),
+            oversampling_ratio,
+            std::mt19937{self.rank() + self.size()}
+        );
+
+        auto global_samples = self.allgather(send_buf(local_samples));
+        pick_splitters(self.size() - 1, oversampling_ratio, global_samples, comp);
+        auto             buckets = build_buckets(data.begin(), data.end(), global_samples, comp);
+        std::vector<int> scounts;
+        data.clear();
+        data.reserve(local_size);
+        for (auto& bucket: buckets) {
+            data.insert(data.end(), bucket.begin(), bucket.end());
+            scounts.push_back(static_cast<int>(bucket.size()));
+        }
+        data = self.alltoallv(send_buf(data), send_counts(scounts));
+        std::sort(data.begin(), data.end(), comp);
+    }
+
+    /// @brief Sort the elements in [begin, end) using a binary comparison function (operator< by default).
+    ///
+    /// The order of equal elements in not guaranteed to be preserved. The binary comparison function has to be \c true
+    /// if the first argument is less than the second.
+    /// @tparam RandomIt Iterator type of the container containing the elements that are sorted.
+    /// @tparam OutputIt Iterator type of the output iterator.
+    /// @tparam Compare Type of the binary comparison function (\c std::less<> by default).
+    /// @param begin Start of the range of elements to sort.
+    /// @param end Element after the last element to be sorted.
+    /// @param out Output iterator used to output the sorted elements.
+    /// @param comp Binary comparison function used to determine the order of elements.
+    template <
+        typename RandomIt,
+        typename OutputIt,
+        typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+    void sort(RandomIt begin, RandomIt end, OutputIt out, Compare comp = Compare{}) {
         using ValueType = typename std::iterator_traits<RandomIt>::value_type;
-        auto& self      = this->to_communicator();
 
-        auto number_elements = std::distance(begin, end);
-
+        auto&                  self               = this->to_communicator();
+        size_t const           local_size         = std::distance(begin, end);
         size_t const           oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + 1;
         std::vector<ValueType> local_samples(oversampling_ratio);
         std::sample(begin, end, local_samples.begin(), oversampling_ratio, std::mt19937{self.rank() + self.size()});
@@ -48,22 +100,25 @@ public:
         auto                   buckets = build_buckets(begin, end, global_samples, comp);
         std::vector<int>       scounts;
         std::vector<ValueType> data;
-        data.reserve(number_elements);
-
+        data.reserve(local_size);
         for (auto& bucket: buckets) {
             data.insert(data.end(), bucket.begin(), bucket.end());
             scounts.push_back(static_cast<int>(bucket.size()));
         }
         data = self.alltoallv(send_buf(data), send_counts(scounts));
         std::sort(data.begin(), data.end(), comp);
-
-        data = balance_data(data, number_elements);
-        for (size_t i = 0; i < data.size(); ++i, ++begin) {
-            *begin = data[i];
-        }
+        std::copy(data.begin(), data.end(), out);
     }
 
 private:
+    /// @brief Picks spliters from a global list of splitters.
+    /// @tparam T Type of elements to be sorted (and of splitters)
+    /// @tparam Compare Type of the binary comparison function used to determine order of elements.
+    /// @param num_splitters Number of splitters that should be selected.
+    /// @param oversampling_ratio Ration at which local splitters are sampled.
+    /// @param global_samples List of all (global) samples. Functions as out parameter where the picked samples are
+    /// stored in.
+    /// @param comp Binary comparison function used to determine order of elements.
     template <typename T, typename Compare>
     void pick_splitters(size_t num_splitters, size_t oversampling_ratio, std::vector<T>& global_samples, Compare comp) {
         std::sort(global_samples.begin(), global_samples.end(), comp);
@@ -74,6 +129,13 @@ private:
         global_samples.resize(num_splitters);
     }
 
+    /// @brief Build buckets for a set of elements based on a set of splitters.
+    /// @tparam RandomIt Iterator type used to iterate through the set of elements.
+    /// @tparam T Type of elements.
+    /// @tparam Compare Type of binary comparison function used to determine order of elements.
+    /// @param begin Iterator to the beginning of the elements.
+    /// @param end Iterator pointing behind the laste element.
+    /// @param splitters
     template <typename RandomIt, typename T, typename Compare>
     auto build_buckets(RandomIt begin, RandomIt end, std::vector<T>& splitters, Compare comp)
         -> std::vector<std::vector<T>> {
@@ -84,41 +146,9 @@ private:
         std::vector<std::vector<T>> buckets(splitters.size() + 1);
         for (auto it = begin; it != end; ++it) {
             auto const bound = std::upper_bound(splitters.begin(), splitters.end(), *it, comp);
-            buckets[std::distance(splitters.begin(), bound)].push_back(*it);
+            buckets[asserting_cast<size_t>(std::distance(splitters.begin(), bound))].push_back(*it);
         }
         return buckets;
-    }
-
-    template <typename T>
-    auto balance_data(std::vector<T>& data, size_t const target_size) {
-        auto& self = this->to_communicator();
-
-        size_t local_size     = data.size();
-        size_t preceding_size = self.scan_single(kamping::send_buf(local_size), kamping::op(kamping::ops::plus<>()));
-
-        auto target_sizes = self.allgather(kamping::send_buf(target_size));
-        std::vector<typename decltype(target_sizes)::value_type> target_preceding_sizes;
-        std::inclusive_scan(target_sizes.begin(), target_sizes.end(), std::back_inserter(target_preceding_sizes));
-
-        auto get_target_rank = [&](const size_t pos) {
-            size_t rank = 0;
-            while (rank < self.size() && target_preceding_sizes[rank] < pos) {
-                ++rank;
-            }
-            return rank;
-        };
-
-        std::vector<int32_t> send_counts(self.size(), 0);
-        for (auto cur_rank = get_target_rank(preceding_size); local_size > 0 && cur_rank < self.size(); ++cur_rank) {
-            const size_t to_send  = std::min(target_sizes[cur_rank], local_size);
-            send_counts[cur_rank] = to_send;
-            local_size -= to_send;
-            preceding_size += to_send;
-        }
-        send_counts.back() += local_size;
-
-        auto result = self.alltoallv(kamping::send_buf(data), kamping::send_counts(send_counts));
-        return result;
     }
 };
 

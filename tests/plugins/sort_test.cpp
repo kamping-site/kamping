@@ -13,13 +13,20 @@
 
 #include "../test_assertions.hpp"
 
+#include <algorithm>
+#include <array>
 #include <cstddef>
+#include <cstdint>
+#include <iterator>
 #include <numeric>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "kamping/collectives/allreduce.hpp"
+#include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/named_parameters.hpp"
 #include "kamping/plugin/sort.hpp"
 
 using namespace ::kamping;
@@ -27,12 +34,189 @@ using namespace ::testing;
 using namespace ::plugin;
 
 TEST(SortTest, sort_same_number_elements) {
-    Communicator<std::vector, plugin::SampleSort> comm;
+    std::random_device                     rd;
+    std::uniform_int_distribution<int32_t> dist;
 
-    std::vector<int32_t> local_data;
-    for (size_t i = 0; i < 10'000; ++i) {
-        local_data.push_back(rand());
+    Communicator<std::vector, plugin::SampleSort> comm;
+    size_t const                                  local_size = 10'000;
+    std::vector<int32_t>                          local_data;
+    for (size_t i = 0; i < local_size; ++i) {
+        local_data.push_back(dist(rd));
     }
 
-    comm.sort(local_data.begin(), local_data.end());
+    auto original_data = local_data;
+
+    comm.sort(local_data);
+    EXPECT_TRUE(std::is_sorted(local_data.begin(), local_data.end()));
+
+    std::array<int32_t, 2> borders = {local_data.front(), local_data.back()};
+
+    auto all_borders = comm.allgather(send_buf(borders));
+    EXPECT_TRUE(std::is_sorted(all_borders.begin(), all_borders.end()));
+
+    auto total_expected_size = comm.allreduce_single(send_buf(local_size), op(ops::plus<>()));
+    auto total_size          = comm.allreduce_single(send_buf(local_data.size()), op(ops::plus<>()));
+    EXPECT_EQ(total_size, total_expected_size);
+
+    auto all_sorted_data   = comm.gatherv(send_buf(local_data));
+    auto all_original_data = comm.gatherv(send_buf(original_data));
+    std::sort(all_original_data.begin(), all_original_data.end());
+    ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
+    for (size_t i = 0; i < all_original_data.size(); ++i) {
+        EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
+    }
+}
+
+TEST(SortTest, sort_same_number_elements_output_iterator) {
+    std::random_device                     rd;
+    std::uniform_int_distribution<int32_t> dist;
+
+    Communicator<std::vector, plugin::SampleSort> comm;
+    size_t const                                  local_size = 10'000;
+    std::vector<int32_t>                          local_data;
+    for (size_t i = 0; i < local_size; ++i) {
+        local_data.push_back(dist(rd));
+    }
+
+    auto                 original_data = local_data;
+    std::vector<int32_t> result;
+    comm.sort(local_data.begin(), local_data.end(), std::back_inserter(result));
+    EXPECT_TRUE(std::is_sorted(result.begin(), result.end()));
+
+    std::array<int32_t, 2> borders = {result.front(), result.back()};
+
+    auto all_borders = comm.allgather(send_buf(borders));
+    EXPECT_TRUE(std::is_sorted(all_borders.begin(), all_borders.end()));
+
+    auto total_expected_size = comm.allreduce_single(send_buf(local_size), op(ops::plus<>()));
+    auto total_size          = comm.allreduce_single(send_buf(result.size()), op(ops::plus<>()));
+    EXPECT_EQ(total_size, total_expected_size);
+
+    auto all_sorted_data   = comm.gatherv(send_buf(result));
+    auto all_original_data = comm.gatherv(send_buf(original_data));
+    std::sort(all_original_data.begin(), all_original_data.end());
+    ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
+    for (size_t i = 0; i < all_original_data.size(); ++i) {
+        EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
+    }
+}
+
+TEST(SortTest, sort_different_number_elements) {
+    std::random_device                     rd;
+    std::uniform_int_distribution<int32_t> dist;
+
+    Communicator<std::vector, plugin::SampleSort> comm;
+    size_t const                                  local_size = 10'000 * comm.rank();
+    std::vector<int32_t>                          local_data;
+    for (size_t i = 0; i < local_size; ++i) {
+        local_data.push_back(dist(rd));
+    }
+
+    auto original_data = local_data;
+
+    comm.sort(local_data);
+    EXPECT_TRUE(std::is_sorted(local_data.begin(), local_data.end()));
+
+    std::array<int32_t, 2> borders = {local_data.front(), local_data.back()};
+
+    auto all_borders = comm.allgather(send_buf(borders));
+    EXPECT_TRUE(std::is_sorted(all_borders.begin(), all_borders.end()));
+
+    auto total_expected_size = comm.allreduce_single(send_buf(local_size), op(ops::plus<>()));
+    auto total_size          = comm.allreduce_single(send_buf(local_data.size()), op(ops::plus<>()));
+    EXPECT_EQ(total_size, total_expected_size);
+
+    auto all_sorted_data   = comm.gatherv(send_buf(local_data));
+    auto all_original_data = comm.gatherv(send_buf(original_data));
+    std::sort(all_original_data.begin(), all_original_data.end());
+    ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
+    for (size_t i = 0; i < all_original_data.size(); ++i) {
+        EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
+    }
+}
+
+TEST(SortTest, sort_non_default_comparator) {
+    std::random_device                     rd;
+    std::uniform_int_distribution<int32_t> dist;
+
+    Communicator<std::vector, plugin::SampleSort> comm;
+    size_t const                                  local_size = 10'000;
+    std::vector<int32_t>                          local_data;
+    for (size_t i = 0; i < local_size; ++i) {
+        local_data.push_back(dist(rd));
+    }
+
+    auto original_data = local_data;
+
+    comm.sort(local_data, std::greater<int32_t>());
+    EXPECT_TRUE(std::is_sorted(local_data.begin(), local_data.end(), std::greater<int32_t>()));
+
+    std::array<int32_t, 2> borders = {local_data.front(), local_data.back()};
+
+    auto all_borders = comm.allgather(send_buf(borders));
+    EXPECT_TRUE(std::is_sorted(all_borders.begin(), all_borders.end(), std::greater<int32_t>()));
+
+    auto total_expected_size = comm.allreduce_single(send_buf(local_size), op(ops::plus<>()));
+    auto total_size          = comm.allreduce_single(send_buf(local_data.size()), op(ops::plus<>()));
+    EXPECT_EQ(total_size, total_expected_size);
+
+    auto all_sorted_data   = comm.gatherv(send_buf(local_data));
+    auto all_original_data = comm.gatherv(send_buf(original_data));
+    std::sort(all_original_data.begin(), all_original_data.end(), std::greater<int32_t>());
+    ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
+    for (size_t i = 0; i < all_original_data.size(); ++i) {
+        EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
+    }
+}
+
+TEST(SortTest, sort_custom_type) {
+    std::random_device                     rd;
+    std::uniform_int_distribution<int32_t> dist;
+
+    struct MyStruct {
+        int32_t x;
+        int32_t y;
+        int32_t z;
+
+        MyStruct() = default;
+
+        MyStruct(int32_t _x, int32_t _y, int32_t _z) : x(_x), y(_y), z(_z) {}
+
+        bool operator==(MyStruct other) const {
+            return std::make_tuple(x, y, z) == std::make_tuple(other.x, other.y, other.z);
+        }
+
+        bool operator<(MyStruct other) const {
+            return std::make_tuple(x, y, z) < std::make_tuple(other.x, other.y, other.z);
+        }
+    };
+
+    Communicator<std::vector, plugin::SampleSort> comm;
+    size_t const                                  local_size = 10'000;
+    std::vector<MyStruct>                         local_data;
+    for (size_t i = 0; i < local_size; ++i) {
+        local_data.emplace_back(dist(rd), dist(rd), dist(rd));
+    }
+
+    auto original_data = local_data;
+
+    comm.sort(local_data);
+    EXPECT_TRUE(std::is_sorted(local_data.begin(), local_data.end()));
+
+    std::array<MyStruct, 2> borders = {local_data.front(), local_data.back()};
+
+    auto all_borders = comm.allgather(send_buf(borders));
+    EXPECT_TRUE(std::is_sorted(all_borders.begin(), all_borders.end()));
+
+    auto total_expected_size = comm.allreduce_single(send_buf(local_size), op(ops::plus<>()));
+    auto total_size          = comm.allreduce_single(send_buf(local_data.size()), op(ops::plus<>()));
+    EXPECT_EQ(total_size, total_expected_size);
+
+    auto all_sorted_data   = comm.gatherv(send_buf(local_data));
+    auto all_original_data = comm.gatherv(send_buf(original_data));
+    std::sort(all_original_data.begin(), all_original_data.end());
+    ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
+    for (size_t i = 0; i < all_original_data.size(); ++i) {
+        EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
+    }
 }
