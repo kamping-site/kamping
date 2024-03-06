@@ -15,29 +15,38 @@
 #endif
 
 namespace kamping {
+/// @brief Base class for all exceptions thrown by the FaultTolerance plugin.
+/// Means, that either a process failed or the communicator was revoked.
 class MPIFailureDetected : public std::exception {
 public:
+    /// @brief Returns an explanatory string.
     char const* what() const noexcept override {
         return "A MPI process failed or the communicator was revoked.";
     }
 };
 
+/// @brief Thrown when a process failure prevented the completetion of the MPI operation.
 class MPIProcFailedError : public MPIFailureDetected {
 public:
+    /// @brief Returns an explanatory string.
     char const* what() const noexcept override {
         return "A process failure prevented the completetion of the MPI operation.";
     }
 };
 
+/// @brief Thrown when a potential sender matching a non-blocking wildcard source receive has failed.
 class MPIProcFailedPendingError : public MPIFailureDetected {
 public:
+    /// @brief Returns an explanatory string.
     char const* what() const noexcept override {
         return "A potential sender matching a non-blocking wildcard source receive has failed.";
     }
 };
 
+/// @brief Thrown when the communicator was revoked.
 class MPIRevokedError : public MPIFailureDetected {
 public:
+    /// @brief Returns an explanatory string.
     char const* what() const noexcept override {
         return "The communicator was revoked.";
     }
