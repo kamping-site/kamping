@@ -96,7 +96,7 @@ public:
     /// @param flag The flag to agree on; will be set to the bitwise AND over the contributed input values of \c flag.
     void agree(bool& flag) {
         int flag_int = static_cast<bool>(flag);
-        MPIX_Comm_agree(_comm(), &flag_int);
+        agree(flag_int);
         flag = flag_int;
     }
 
