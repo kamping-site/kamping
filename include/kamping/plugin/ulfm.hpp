@@ -58,12 +58,12 @@ namespace kamping::plugin {
 /// @brief A plugin implementing a wrapper around the User-Level Failure-Mitigation (ULFM) feature of the upcoming MPI 4
 /// standard. This plugin and the accompanying example is tested with OpenMPI 5.0.2.
 template <typename Comm, template <typename...> typename DefaultContainerType>
-class FaultTolerance : public plugin::PluginBase<Comm, DefaultContainerType, FaultTolerance> {
+class UserLevelFailureMitigation : public plugin::PluginBase<Comm, DefaultContainerType, UserLevelFailureMitigation> {
 public:
     /// @brief Default constructor; sets the error handler of MPI_COMM_WORLD (!) to MPI_ERRORS_RETURN.
     /// Although the standard allows setting the error handler for only a specific communicator; neither MPICH nor
     /// OpenMPI currently (March 2024) support this.
-    FaultTolerance() {
+    UserLevelFailureMitigation() {
         // MPI_Comm_set_errhandler(_comm(), MPI_ERRORS_RETURN);
         MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
     }

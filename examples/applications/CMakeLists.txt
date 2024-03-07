@@ -19,8 +19,8 @@ target_link_libraries(sample_sort PUBLIC kamping)
 target_compile_options(sample_sort PRIVATE ${KAMPING_WARNING_FLAGS})
 
 # Example using the fault-tolerance plugin
-if (KAMPING_ENABLE_FAULT_TOLERANCE)
-    add_executable(example_fault_tolerance fault_tolerance.cpp)
-    target_link_libraries(example_fault_tolerance PUBLIC kamping)
-    target_compile_options(example_fault_tolerance PRIVATE ${KAMPING_WARNING_FLAGS})
+if (KAMPING_ENABLE_ULFM)
+    add_executable(example_ulfm ulfm.cpp)
+    target_link_libraries(example_ulfm PUBLIC kamping)
+    target_compile_options(example_ulfm PRIVATE ${KAMPING_WARNING_FLAGS})
 endif ()

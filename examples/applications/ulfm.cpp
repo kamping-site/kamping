@@ -5,11 +5,11 @@
 // In order to run this example, you have to:
 // (1) Compile OpenMPI >= 5.0 with the `--with-ft=mpi` flag.
 // (2) Include the installation dir into your `LIBRARY_PATH`, `LD_LIBRARY_PATH`, `PATH`, and `CPATH`.
-// (3) compile this example by passing `-DKAMPING_FAULT_TOLERANCE_ENABLED=On` to `cmake`.
+// (3) compile this example by passing `-DKAMPING_ENABLE_ULFM=On` to `cmake`.
 // (4a) Run the binary using `mpirun -n <n> --with-ft=mpi ...`.
 // (4b) Send a SIGKILL to one of the processes.
 
-#include "kamping/plugin/fault_tolerance.hpp"
+#include "kamping/plugin/ulfm.hpp"
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/allreduce.hpp"
@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
     // Call MPI_Init() and MPI_Finalize() automatically.
     Environment<> env(argc, argv);
 
-    Communicator<std::vector, plugin::FaultTolerance> comm;
+    Communicator<std::vector, plugin::UserLevelFailureMitigation> comm;
 
     int result = 0;
     while (true) {
