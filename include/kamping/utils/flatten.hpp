@@ -169,7 +169,7 @@ auto with_flattened(Container const& nested_send_buf, size_t comm_size) {
 /// });
 /// ```
 ///
-/// @param nested_send_buf The nested container of send buffers. Must satisfy \ref is_nested_send_buffer_v.
+/// @param nested_send_buf The nested container of send buffers. Must satisfy \c is_nested_send_buffer_v.
 /// @tparam CountContainer The type of the container to use for the send counts and send displacements.
 /// @tparam Container The type of the nested container.
 /// @tparam Enable SFINAE.
