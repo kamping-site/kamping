@@ -167,6 +167,7 @@ auto with_flattened(Container const& nested_send_buf, size_t comm_size) {
 /// auto [recv_buf, recv_counts, recv_displs] = with_flattened(nested_send_buf).call([&](auto... flattened) {
 ///   return comm.alltoallv(std::move(flattened)..., recv_counts_out(), recv_displs_out());
 /// });
+/// ```
 ///
 /// @param nested_send_buf The nested container of send buffers. Must satisfy \ref is_nested_send_buffer_v.
 /// @tparam CountContainer The type of the container to use for the send counts and send displacements.
