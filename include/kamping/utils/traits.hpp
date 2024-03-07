@@ -1,0 +1,146 @@
+// This file is part of KaMPIng.
+//
+// Copyright 2024 The KaMPIng Authors
+//
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
+/// @file
+/// The classes defined in this file serve as in, out and in/out parameters to the
+/// \c MPI calls wrapped by KaMPIng.
+///
+/// The non-modifiable buffers encapsulate input data like data to send or send counts needed for a lot of \c MPI calls.
+/// If the user already computed additional information like the send displacements or receive counts for a collective
+/// operations that would otherwise have to be computed by the library, these values can also be provided to the library
+/// via non-modifiable buffers.
+///
+/// The modifiable buffers provide memory to store the result of \c MPI calls and
+/// (intermediate information needed to complete an \c MPI call like send displacements or receive counts/displacements
+/// etc. if the user has not yet provided them). The storage can be either provided by the user or can be allocated by
+/// the library.
+///
+#pragma once
+#include <list>
+#include <tuple>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+namespace kamping {
+
+/// @brief A type trait that checks if a type \p T is a range, i.e., it has `std::begin` and `std::end` defined.
+template <typename T>
+struct is_range {
+    template <typename S>
+    /// @brief Only enable this overload if `std::begin` and `std::end` are defined for \p S.
+    static auto test(int) -> decltype(std::begin(std::declval<S>()), std::end(std::declval<S>()), std::true_type{});
+    template <typename>
+    /// @brief Fallback overload.
+    static auto           test(...) -> std::false_type;
+    static constexpr bool value = decltype(test<T>(0))::value; ///< The value of the trait.
+};
+
+/// @brief A type trait that checks if a type \p T is a range, i.e., it has `std::begin` and `std::end` defined.
+template <typename T>
+constexpr bool is_range_v = is_range<T>::value;
+
+static_assert(is_range_v<std::vector<int>>);
+static_assert(!is_range_v<int>);
+
+/// @brief A type trait that checks if a type \p T is a contiguous and sized range, i.e., it is a range and has
+/// `std::size` and `std::data` defined.
+template <typename T>
+struct is_contiguous_sized_range {
+    /// @brief Only enable this overload if `std::size` and `std::data` are defined for \p S.
+    template <typename S>
+    static auto test(int) -> decltype(std::size(std::declval<S>()), std::data(std::declval<S>()), std::true_type{});
+    /// @brief Fallback overload.
+    template <typename>
+    static auto           test(...) -> std::false_type;
+    static constexpr bool value = decltype(test<T>(0))::value; ///< The value of the trait.
+};
+
+/// @brief A type trait that checks if a type \p T is a contiguous and sized range, i.e., it is a range and has
+/// `std::size` and `std::data` defined.
+template <typename T>
+constexpr bool is_contiguous_sized_range_v = is_contiguous_sized_range<T>::value;
+
+static_assert(is_contiguous_sized_range_v<std::vector<int>>);
+static_assert(!is_contiguous_sized_range_v<std::list<int>>);
+
+/// @brief A type trait that checks if a type \p T is a pair-like type, i.e., it may be destructured using `std::get<0>`
+/// and `std::get<1>` and has a size of 2.
+template <typename T>
+struct is_pair_like {
+    /// @brief Only enable this overload if `std::tuple_size` is defined for \p S.
+    template <typename S>
+    static auto test(int) -> decltype(std::integral_constant<size_t, std::tuple_size<S>::value>{});
+    template <typename>
+    /// @brief Fallback overload, returns size 0.
+    static auto           test(...) -> std::integral_constant<size_t, 0>;
+    static constexpr bool value = decltype(test<T>(0))::value == 2; ///< The value of the trait.
+};
+
+/// @brief A type trait that checks if a type \p T is a pair-like type, i.e., it may be destructured using `std::get<0>`
+/// and `std::get<1>` and has a size of 2.
+template <typename T>
+constexpr bool is_pair_like_v = is_pair_like<T>::value;
+
+static_assert(is_pair_like_v<std::pair<int, int>>);
+static_assert(is_pair_like_v<std::tuple<int, int>>);
+static_assert(!is_pair_like_v<std::tuple<int, int, int>>);
+static_assert(!is_pair_like_v<int>);
+
+/// @brief A type trait that checks if a type T a pair-like type using \c is_pair_like, the first element is
+/// convertible to int, and the second element satisfies \c is_contiguous_sized_range_v.
+template <typename T>
+constexpr bool is_destination_buffer_pair_v = [] {
+    if constexpr (is_pair_like_v<T>) {
+        return is_contiguous_sized_range_v<std::remove_const_t<std::tuple_element_t<
+                   1,
+                   T>>> && std::is_convertible_v<std::remove_const_t<std::tuple_element_t<0, T>>, int>;
+    } else {
+        return false;
+    }
+}();
+
+static_assert(is_destination_buffer_pair_v<std::pair<int, std::vector<int>>>);
+static_assert(!is_destination_buffer_pair_v<std::vector<int>>);
+
+/// @brief A type trait that checks if a type \p T is a sparse send buffer, i.e., it is a range of pair-like which are
+/// (dst, message) pairs. (see \c is_destination_buffer_pair_v)
+template <typename T>
+constexpr bool is_sparse_send_buffer_v = [] {
+    if constexpr (is_range_v<T>) {
+        return is_destination_buffer_pair_v<std::remove_const_t<typename T::value_type>>;
+    } else {
+        return false;
+    }
+}();
+
+static_assert(is_sparse_send_buffer_v<std::unordered_map<int, std::vector<int>>>);
+static_assert(is_sparse_send_buffer_v<std::vector<std::pair<int, std::vector<int>>>>);
+static_assert(!is_sparse_send_buffer_v<std::vector<int>>);
+static_assert(!is_sparse_send_buffer_v<std::vector<std::vector<int>>>);
+
+/// @brief A type traits that checks if a type is a nested send buffer, i.e., it is a range of contiguous ranges (see
+/// \c is_contiguous_sized_range_v).
+template <typename T>
+constexpr bool is_nested_send_buffer_v = [] {
+    if constexpr (is_range_v<T>) {
+        return is_contiguous_sized_range_v<std::remove_const_t<typename T::value_type>>;
+    } else {
+        return false;
+    }
+}();
+
+static_assert(is_nested_send_buffer_v<std::vector<std::vector<int>>>);
+static_assert(!is_nested_send_buffer_v<std::vector<int>>);
+} // namespace kamping
