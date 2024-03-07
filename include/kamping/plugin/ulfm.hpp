@@ -70,20 +70,23 @@ public:
 
     /// @brief Revokes the current communicator.
     void revoke() {
-        MPIX_Comm_revoke(_comm());
+        auto const ret = MPIX_Comm_revoke(_comm());
+        this->to_communicator().mpi_error_hook(ret, "MPIX_Comm_revoke");
     }
 
     /// @brief Creates a new communicator from this communicator, excluding the failed processes.
     /// @return The new communicator.
     [[nodiscard]] Comm shrink() {
-        MPI_Comm newcomm;
-        MPIX_Comm_shrink(_comm(), &newcomm);
+        MPI_Comm   newcomm;
+        auto const ret = MPIX_Comm_shrink(_comm(), &newcomm);
+        this->to_communicator().mpi_error_hook(ret, "MPIX_Comm_shrink");
         return Comm(newcomm);
     }
 
     /// @brief Agrees on a flag with all processes in the communicator which are not failed.
     void agree(int& flag) const {
-        MPIX_Comm_agree(_comm(), &flag);
+        auto const ret = MPIX_Comm_agree(_comm(), &flag);
+        this->to_communicator().mpi_error_hook(ret, "MPIX_Comm_agree");
     }
 
     /// Overwrite the on-MPI-error handler to throw appropriate exceptions for then hardware faults happened.
