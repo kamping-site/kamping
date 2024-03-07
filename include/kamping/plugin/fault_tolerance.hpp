@@ -60,9 +60,9 @@ namespace kamping::plugin {
 template <typename Comm, template <typename...> typename DefaultContainerType>
 class FaultTolerance : public plugin::PluginBase<Comm, DefaultContainerType, FaultTolerance> {
 public:
-    /// @brief Default constructor; sets the error handler of MPI_COMM_WORLD (!) to MPI_ERRORS_RETURN. I tried to set
-    /// the error handler only for this communicator to MPI_ERRORS_RETURN -- as the standard allows -- but it worked
-    /// neither in OpenMPI nor in MPICH.
+    /// @brief Default constructor; sets the error handler of MPI_COMM_WORLD (!) to MPI_ERRORS_RETURN.
+    /// Although the standard allows setting the error handler for only a specific communicator; neither MPICH nor
+    /// OpenMPI currently (March 2024) support this.
     FaultTolerance() {
         // MPI_Comm_set_errhandler(_comm(), MPI_ERRORS_RETURN);
         MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
