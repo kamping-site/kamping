@@ -15,8 +15,8 @@ struct CallableDoWrapper {
 };
 
 template <typename F>
-auto make_callable_do_wrapper(F&& f) {
-    return CallableDoWrapper<F&&>{std::forward<F>(f)};
+auto make_callable_do_wrapper(F f) {
+    return CallableDoWrapper<F>{std::move(f)};
 }
 
 namespace kamping {
