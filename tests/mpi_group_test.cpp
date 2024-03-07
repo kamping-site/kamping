@@ -22,7 +22,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/group.hpp"
 
-TEST(GroupTest, Basics) {
+TEST(GroupTest, basics) {
     using namespace kamping;
 
     Communicator<std::vector> comm;
@@ -74,11 +74,11 @@ TEST(GroupTest, Basics) {
     EXPECT_TRUE(empty_empty_inter.has_same_ranks(empty_group));
     EXPECT_TRUE(world_world_inter.has_same_ranks(world_group));
 
-    // union_()
-    auto world_empty_union = world_group.union_(empty_group);
-    auto empty_world_union = empty_group.union_(world_group);
-    auto world_world_union = world_group.union_(world_group);
-    auto empty_empty_union = empty_group.union_(empty_group);
+    // set_union()
+    auto world_empty_union = world_group.set_union(empty_group);
+    auto empty_world_union = empty_group.set_union(world_group);
+    auto world_world_union = world_group.set_union(world_group);
+    auto empty_empty_union = empty_group.set_union(empty_group);
     EXPECT_TRUE(world_empty_union.has_same_ranks(world_group));
     EXPECT_TRUE(empty_world_union.has_same_ranks(world_group));
     EXPECT_TRUE(empty_empty_union.has_same_ranks(empty_group));

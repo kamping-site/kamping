@@ -156,8 +156,8 @@ public:
     /// @brief Makes a group from the union of two groups.
     /// @param other The other group.
     /// @return A group containing all ranks present in either of the two groups.
-    /// @note The suffixing underscore is to avoid a name clash with the C++ keyword `union`.
-    Group union_(Group const& other) const {
+    /// @note The set_ prefix was choosen in order to avoid a name clash with the C++ keyword `union`.
+    Group set_union(Group const& other) const {
         MPI_Group un;
         MPI_Group_union(_group, other._group, &un);
         return Group(un);
