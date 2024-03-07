@@ -330,7 +330,8 @@ constexpr BufferResizePolicy maximum_viable_resize_policy = [] {
 /// container, without any checking `user_allocated` if it was allocated by the user.
 template <
     typename MemberType,
-    ParameterType       parameter_type_param,
+    typename TParameterType,
+    TParameterType       parameter_type_param,
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param,
@@ -339,7 +340,7 @@ template <
     typename ValueType             = default_value_type_tag>
 class DataBuffer : private ParameterObjectBase {
 public:
-    static constexpr ParameterType parameter_type =
+    static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
 
     static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
@@ -756,6 +757,7 @@ auto make_data_buffer(Data&& data) {
     static_assert(!is_const_data_type || is_const_buffer);
     return DataBuffer<
         std::remove_const_t<std::remove_reference_t<Data>>,
+        ParameterType,
         parameter_type,
         modifiability,
         ownership,
@@ -789,6 +791,7 @@ template <
 auto make_data_buffer(AllocNewT<Data>) {
     return DataBuffer<
         Data,
+        ParameterType,
         parameter_type,
         BufferModifiability::modifiable, // something library allocated is always modifiable
         BufferOwnership::owning,
@@ -828,6 +831,7 @@ auto make_data_buffer(AllocNewUsingT<Data>) {
     );
     return DataBuffer<
         Data<ValueType>,
+        ParameterType,
         parameter_type,
         BufferModifiability::modifiable, // something library allocated is always modifiable
         BufferOwnership::owning,
