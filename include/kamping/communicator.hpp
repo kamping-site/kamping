@@ -442,6 +442,27 @@ public:
         return rank < size();
     }
 
+    /// @brief If <tt>error_code != MPI_SUCCESS</tt>, searchs the plugins for a \a public <tt>mpi_error_handler(const
+    /// int error_code, std::string& callee)</tt> member. Searches the plugins front to back and calls the \a first
+    /// handler found. If no handler is found, calls the default error hook. If error code is \c MPI_SUCCESS, does
+    /// nothing.
+    void mpi_error_hook(int const error_code, std::string const& callee) const {
+        if (error_code != MPI_SUCCESS) {
+            mpi_error_hook_impl<Plugins...>(error_code, callee);
+        }
+    }
+
+    /// @brief Default MPI error callback. Depending on `KASSERT_EXCEPTION_MODE` either throws a \ref
+    /// MpiErrorException if \c error_code != \c MPI_SUCCESS or fails an assertion.
+    void mpi_error_default_handler(int const error_code, std::string const& function_name) const {
+        THROWING_KASSERT_SPECIFIED(
+            error_code == MPI_SUCCESS,
+            function_name << " failed!",
+            kamping::MpiErrorException,
+            error_code
+        );
+    }
+
     template <typename... Args>
     void send(Args... args) const;
 
@@ -589,16 +610,6 @@ private:
         return asserting_cast<size_t>(size);
     }
 
-    /// @brief If <tt>error_code != MPI_SUCCESS</tt>, searchs the plugins for a \a public <tt>mpi_error_handler(const
-    /// int error_code, std::string& callee)</tt> member. Searches the plugins front to back and calls the \a first
-    /// handler found. If no handler is found, calls the default error hook. If error code is \c MPI_SUCCESS, does
-    /// nothing.
-    void mpi_error_hook(int const error_code, std::string const& callee) const {
-        if (error_code != MPI_SUCCESS) {
-            mpi_error_hook_impl<Plugins...>(error_code, callee);
-        }
-    }
-
     /// See \ref mpi_error_hook
     template <
         template <typename, template <typename...> typename>
@@ -621,17 +632,6 @@ private:
     template <typename = void>
     void mpi_error_hook_impl(int const error_code, std::string const& callee) const {
         mpi_error_default_handler(error_code, callee);
-    }
-
-    /// @brief Default MPI error callback. Depending on `KASSERT_EXCEPTION_MODE` either throws a \ref
-    /// MpiErrorException if \c error_code != \c MPI_SUCCESS or fails an assertion.
-    void mpi_error_default_handler(int const error_code, std::string const& function_name) const {
-        THROWING_KASSERT_SPECIFIED(
-            error_code == MPI_SUCCESS,
-            function_name << " failed!",
-            kamping::MpiErrorException,
-            error_code
-        );
     }
 
     size_t   _rank; ///< Rank of the MPI process in this communicator.
