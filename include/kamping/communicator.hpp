@@ -23,6 +23,7 @@
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/group.hpp"
 #include "kamping/mpi_constants.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
@@ -298,6 +299,12 @@ public:
     /// corresponding to its NUMA node.
     [[nodiscard]] Communicator split_to_shared_memory() const {
         return split_by_type(MPI_COMM_TYPE_SHARED);
+    }
+
+    /// @brief Return the group associated with this communicator.
+    /// @return The group associated with this communicator.
+    [[nodiscard]] Group group() const {
+        return Group(mpi_communicator());
     }
 
     /// @brief Create subcommunicators.
