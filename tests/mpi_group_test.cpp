@@ -26,24 +26,25 @@ TEST(GroupTest, basics) {
     using namespace kamping;
 
     Communicator<std::vector> comm;
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 
     // Construction
     auto empty_group = Group::empty();
-    auto world_group = Group::world();
+    auto world_group = comm_world().group();
     EXPECT_EQ(Group(MPI_GROUP_EMPTY).compare(empty_group), GroupEquality::Identical);
     EXPECT_EQ(Group(kamping::comm_world()).compare(world_group), GroupEquality::Identical);
     EXPECT_EQ(comm.group().compare(world_group), GroupEquality::Identical);
-    EXPECT_EQ(Group(comm.mpi_communicator()).compare(comm.group()), GroupEquality::Identical);
+    EXPECT_EQ(Group(comm).compare(comm.group()), GroupEquality::Identical);
 
     EXPECT_TRUE(Group(MPI_GROUP_EMPTY).is_identical(empty_group));
     EXPECT_TRUE(Group(kamping::comm_world()).is_identical(world_group));
     EXPECT_TRUE(comm.group().is_identical(world_group));
-    EXPECT_TRUE(Group(comm.mpi_communicator()).is_identical(comm.group()));
+    EXPECT_TRUE(Group(comm).is_identical(comm.group()));
 
     EXPECT_TRUE(Group(MPI_GROUP_EMPTY).has_same_ranks(empty_group));
     EXPECT_TRUE(Group(kamping::comm_world()).has_same_ranks(world_group));
     EXPECT_TRUE(comm.group().has_same_ranks(world_group));
-    EXPECT_TRUE(Group(comm.mpi_communicator()).has_same_ranks(comm.group()));
+    EXPECT_TRUE(Group(comm).has_same_ranks(comm.group()));
 
     // rank() and size()
     EXPECT_EQ(empty_group.size(), 0);

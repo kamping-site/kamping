@@ -304,7 +304,7 @@ public:
     /// @brief Return the group associated with this communicator.
     /// @return The group associated with this communicator.
     [[nodiscard]] Group group() const {
-        return Group(mpi_communicator());
+        return Group(*this);
     }
 
     /// @brief Create subcommunicators.

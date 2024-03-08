@@ -20,6 +20,7 @@
 #include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
+#include "kamping/error_handling.hpp"
 
 namespace kamping {
 
@@ -55,25 +56,17 @@ public:
         return *this;
     }
 
-    // /// @brief Constructs the group associated with a communicator.
-    // Group(MPI_Comm comm) : _owns_group(true) {
-    //     MPI_Comm_group(comm, &_group);
-    // }
-
     /// @brief Constructs the group associated with a communicator.
     template <typename Comm>
-    Group(Comm const& comm) : Group(comm.mpi_communicator()) {}
+    Group(Comm const& comm) : _owns_group(true) {
+        int err = MPI_Comm_group(comm.mpi_communicator(), &_group);
+        THROW_IF_MPI_ERROR(err, "MPI_Comm_group");
+    }
 
     /// @brief Constructs an empty group.
     /// @return An empty group.
     [[nodiscard]] static Group empty() {
         return Group(MPI_GROUP_EMPTY);
-    }
-
-    /// @brief Constructs the group associated with the world communicator.
-    /// @return The group associated with the world communicator.
-    [[nodiscard]] static Group world() {
-        return Group(MPI_COMM_WORLD);
     }
 
     /// @brief Default destructor, freeing the encapsulated group if owned.
@@ -98,7 +91,8 @@ public:
     /// @return The equality of the two groups (see \ref GroupEquality).
     GroupEquality compare(Group const& other) const {
         int result;
-        MPI_Group_compare(_group, other._group, &result);
+        int err = MPI_Group_compare(_group, other._group, &result);
+        THROW_IF_MPI_ERROR(err, "MPI_Group_compare");
 
         switch (result) {
             case MPI_IDENT:
@@ -149,7 +143,8 @@ public:
     /// @return A group containing only the ranks present in both groups.
     Group intersection(Group const& other) const {
         MPI_Group inter;
-        MPI_Group_intersection(_group, other._group, &inter);
+        int       err = MPI_Group_intersection(_group, other._group, &inter);
+        THROW_IF_MPI_ERROR(err, "MPI_Group_intersection");
         return Group(inter);
     }
 
@@ -159,7 +154,8 @@ public:
     /// @note The set_ prefix was choosen in order to avoid a name clash with the C++ keyword `union`.
     Group set_union(Group const& other) const {
         MPI_Group un;
-        MPI_Group_union(_group, other._group, &un);
+        int       err = MPI_Group_union(_group, other._group, &un);
+        THROW_IF_MPI_ERROR(err, "MPI_Group_union");
         return Group(un);
     }
 
@@ -167,7 +163,8 @@ public:
     /// @return The number of ranks in the group.
     size_t size() const {
         int size;
-        MPI_Group_size(_group, &size);
+        int err = MPI_Group_size(_group, &size);
+        THROW_IF_MPI_ERROR(err, "MPI_Group_size");
         return asserting_cast<size_t>(size);
     }
 
@@ -175,7 +172,8 @@ public:
     /// @return The rank of the calling process in the group.
     size_t rank() const {
         int rank;
-        MPI_Group_rank(_group, &rank);
+        int err = MPI_Group_rank(_group, &rank);
+        THROW_IF_MPI_ERROR(err, "MPI_Group_rank");
         return asserting_cast<size_t>(rank);
     }
 
