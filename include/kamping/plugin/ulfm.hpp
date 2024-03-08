@@ -134,6 +134,14 @@ public:
         return Group(failed_group);
     }
 
+    /// @brief Checks if this communicator has been revoked.
+    /// @return True if the communicator has been revoked, false otherwise.
+    [[nodiscard]] bool is_revoked() {
+        int is_revoked;
+        MPIX_Comm_is_revoked(_comm(), &is_revoked);
+        return is_revoked;
+    }
+
     /// Overwrite the on-MPI-error handler to throw appropriate exceptions for then hardware faults happened.
     void mpi_error_handler(int const ret, [[maybe_unused]] std::string const& callee) const {
         KASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS", assert::light);
