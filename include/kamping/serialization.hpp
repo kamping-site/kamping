@@ -110,7 +110,7 @@ constexpr bool is_serialization_buffer_v =
     is_serialization_buffer_v_impl<std::remove_const_t<std::remove_reference_t<T>>>;
 
 /// @brief If \p serialization_used is true, this takes a received serialization buffer, deserializes the data and
-/// repacks it into a new buffer only containing the deserialized data. containing the deserialized data.
+/// repacks it into a new buffer only containing the deserialized data
 /// If \p serialization_used is false, the input buffer is returned unchanged.
 template <bool serialization_used, typename BufferType>
 auto deserialization_repack(BufferType buffer) {
