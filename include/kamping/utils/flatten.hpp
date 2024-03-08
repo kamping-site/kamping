@@ -11,20 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-/// @file
-/// The classes defined in this file serve as in, out and in/out parameters to the
-/// \c MPI calls wrapped by KaMPIng.
-///
-/// The non-modifiable buffers encapsulate input data like data to send or send counts needed for a lot of \c MPI calls.
-/// If the user already computed additional information like the send displacements or receive counts for a collective
-/// operations that would otherwise have to be computed by the library, these values can also be provided to the library
-/// via non-modifiable buffers.
-///
-/// The modifiable buffers provide memory to store the result of \c MPI calls and
-/// (intermediate information needed to complete an \c MPI call like send displacements or receive counts/displacements
-/// etc. if the user has not yet provided them). The storage can be either provided by the user or can be allocated by
-/// the library.
-///
 #pragma once
 #include <numeric>
 #include <utility>
