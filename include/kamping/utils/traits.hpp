@@ -26,12 +26,10 @@
 /// the library.
 ///
 #pragma once
-#include <list>
-#include <tuple>
+#include <array> // defines std::tuple_size for std::array
+#include <tuple> // defines std::tuple_size for tuples
 #include <type_traits>
-#include <unordered_map>
-#include <utility>
-#include <vector>
+#include <utility> // defines std::tuple_size for std::pair
 
 namespace kamping {
 
@@ -51,9 +49,6 @@ struct is_range {
 template <typename T>
 constexpr bool is_range_v = is_range<T>::value;
 
-static_assert(is_range_v<std::vector<int>>);
-static_assert(!is_range_v<int>);
-
 /// @brief A type trait that checks if a type \p T is a contiguous and sized range, i.e., it is a range and has
 /// `std::size` and `std::data` defined.
 template <typename T>
@@ -71,9 +66,6 @@ struct is_contiguous_sized_range {
 /// `std::size` and `std::data` defined.
 template <typename T>
 constexpr bool is_contiguous_sized_range_v = is_contiguous_sized_range<T>::value;
-
-static_assert(is_contiguous_sized_range_v<std::vector<int>>);
-static_assert(!is_contiguous_sized_range_v<std::list<int>>);
 
 /// @brief A type trait that checks if a type \p T is a pair-like type, i.e., it may be destructured using `std::get<0>`
 /// and `std::get<1>` and has a size of 2.
@@ -93,11 +85,6 @@ struct is_pair_like {
 template <typename T>
 constexpr bool is_pair_like_v = is_pair_like<T>::value;
 
-static_assert(is_pair_like_v<std::pair<int, int>>);
-static_assert(is_pair_like_v<std::tuple<int, int>>);
-static_assert(!is_pair_like_v<std::tuple<int, int, int>>);
-static_assert(!is_pair_like_v<int>);
-
 /// @brief A type trait that checks if a type T a pair-like type using \c is_pair_like, the first element is
 /// convertible to int, and the second element satisfies \c is_contiguous_sized_range_v.
 template <typename T>
@@ -111,9 +98,6 @@ constexpr bool is_destination_buffer_pair_v = [] {
     }
 }();
 
-static_assert(is_destination_buffer_pair_v<std::pair<int, std::vector<int>>>);
-static_assert(!is_destination_buffer_pair_v<std::vector<int>>);
-
 /// @brief A type trait that checks if a type \p T is a sparse send buffer, i.e., it is a range of pair-like which are
 /// (dst, message) pairs. (see \c is_destination_buffer_pair_v)
 template <typename T>
@@ -125,11 +109,6 @@ constexpr bool is_sparse_send_buffer_v = [] {
     }
 }();
 
-static_assert(is_sparse_send_buffer_v<std::unordered_map<int, std::vector<int>>>);
-static_assert(is_sparse_send_buffer_v<std::vector<std::pair<int, std::vector<int>>>>);
-static_assert(!is_sparse_send_buffer_v<std::vector<int>>);
-static_assert(!is_sparse_send_buffer_v<std::vector<std::vector<int>>>);
-
 /// @brief A type traits that checks if a type is a nested send buffer, i.e., it is a range of contiguous ranges (see
 /// \c is_contiguous_sized_range_v).
 template <typename T>
@@ -140,7 +119,4 @@ constexpr bool is_nested_send_buffer_v = [] {
         return false;
     }
 }();
-
-static_assert(is_nested_send_buffer_v<std::vector<std::vector<int>>>);
-static_assert(!is_nested_send_buffer_v<std::vector<int>>);
 } // namespace kamping
