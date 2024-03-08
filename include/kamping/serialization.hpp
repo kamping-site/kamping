@@ -144,7 +144,7 @@ auto as_serialized(T const& data) {
 }
 
 /// @brief Serializes and deserializes an object using [`cereal`](https://uscilab.github.io/cereal/).
-/// If the input object is an rvalue reference, the result of deserialization is returned by the surround communication
+/// If the input object is an rvalue reference, the result of deserialization is returned by the surrounding communication
 /// call. If the input object is an lvalue reference, the input object is modified in place.
 /// @tparam OutArchive Type of the archive to use for serialization (see
 /// https://uscilab.github.io/cereal/serialization_archives.html). Default is `cereal::BinaryOutputArchive`.
