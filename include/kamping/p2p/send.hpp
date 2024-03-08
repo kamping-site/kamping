@@ -73,6 +73,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
     if constexpr (is_serialization_used) {
         KAMPING_UNSUPPORTED_PARAMETER(Args, send_count, when using serialization);
         KAMPING_UNSUPPORTED_PARAMETER(Args, send_type, when using serialization);
+        send_buf.underlying().serialize();
     }
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 

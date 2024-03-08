@@ -95,7 +95,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
             std::tuple(),
             args...
         )
-            .template construct_buffer_or_rebind<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType, serialization_support_tag>();
+    constexpr bool is_serialization_used = internal::buffer_uses_serialization<decltype(send_recv_buf)>;
+    if constexpr (is_serialization_used) {
+        KAMPING_UNSUPPORTED_PARAMETER(Args, send_recv_count, when using serialization);
+        KAMPING_UNSUPPORTED_PARAMETER(Args, send_recv_type, when using serialization);
+        if (this->is_root(root.rank_signed())) {
+            send_recv_buf.underlying().serialize();
+        }
+    }
 
     using value_type = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
     static_assert(
@@ -197,7 +205,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     this->mpi_error_hook(err, "MPI_Bcast");
 
     return make_mpi_result<std::tuple<Args...>>(
-        std::move(send_recv_buf),
+        deserialization_repack<is_serialization_used>(std::move(send_recv_buf)),
         std::move(count_param),
         std::move(send_recv_type)
     );

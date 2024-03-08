@@ -183,7 +183,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     this->mpi_error_hook(err, "MPI_Recv");
 
     return internal::make_mpi_result<std::tuple<Args...>>(
-        std::move(recv_buf),
+        deserialization_repack<is_serialization_used>(std::move(recv_buf)),
         std::move(recv_count_param),
         std::move(status),
         std::move(recv_type)
