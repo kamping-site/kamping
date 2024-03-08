@@ -69,7 +69,10 @@ comm.recv<int>(recv_buf<kamping::no_resize>(v_out), recv_count(i_know_already_kn
 ### STL support :books:
 - KaMPIng works with everything that is a `std::contiguous_range`, everywhere.
 - Builtin C++ types are automatically mapped to their corresponding MPI types. 
+- Creation of derived MPI data types at compile time.
+- Send arbitrary types using configurable serialization powered by [`cereal`](https://uscilab.github.io/cereal/).
 - All internally used containers can be altered via template parameters.
+
 ### Expandability :jigsaw:
 - Don't like the performance of your MPI implementation's reduce algorithm? Just override it using our plugin architecture.
 - Add additional functionality to communicator objects, without altering any application code.
@@ -94,7 +97,7 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
     size_t const   oversampling_ratio = 16 * static_cast<size_t>(std::log2(comm.size())) + 1;
     std::vector<T> local_samples(oversampling_ratio);
     std::sample(data.begin(), data.end(), local_samples.begin(), oversampling_ratio, std::mt19937{seed});
-    auto global_samples = comm.allgather(send_buf(local_samples)).extract_recv_buffer();
+    auto global_samples = comm.allgather(send_buf(local_samples));
     std::sort(global_samples.begin(), global_samples.end());
     for (size_t i = 0; i < comm.size() - 1; i++) {
         global_samples[i] = global_samples[oversampling_ratio * (i + 1)];
@@ -106,12 +109,9 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
         buckets[static_cast<size_t>(bound - global_samples.begin())].push_back(element);
     }
     data.clear();
-    std::vector<int> scounts;
-    for (auto& bucket: buckets) {
-        data.insert(data.end(), bucket.begin(), bucket.end());
-        scounts.push_back(static_cast<int>(bucket.size()));
+    data = with_flattened(buckets).call(auto... flattened) {
+        return comm.alltoallv(std::move(flattened)...);
     }
-    data = comm.alltoallv(send_buf(data), send_counts(scounts)).extract_recv_buffer();
     std::sort(data.begin(), data.end());
 }
 ```
@@ -119,7 +119,7 @@ It is a lot more concise than the [(verbose) plain MPI implementation](./example
 
 ![](./plot.svg)
 ## Platform :desktop_computer:
-- intensively tested with GCC and Clang and OpenMPI
+- intensively tested with GCC and Clang and OpenMPI, but should work with any MPI implementation
 - requires a C++17 ready compiler
 - easy integration into other projects using modern CMake
    
