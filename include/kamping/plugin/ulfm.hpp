@@ -74,6 +74,29 @@ public:
         this->to_communicator().mpi_error_hook(ret, "MPIX_Comm_revoke");
     }
 
+    /// @brief Acknowledges that the application intends to ignore the effect of currently known failures on wildcard
+    /// receive completions and agreement return values.
+    /// @param num_to_ack The number of failures to acknowledge.
+    /// @return The <i>overall</i> number of failures acknowledged.
+    uint32_t ack_failed(uint32_t const num_to_ack) {
+        int        num_acked;
+        auto const ret = MPIX_Comm_ack_failed(_comm(), asserting_cast<int>(num_to_ack), &num_acked);
+        this->to_communicator().mpi_error_hook(ret, "MPIX_Comm_ack_failed");
+        return asserting_cast<uint32_t>(num_acked);
+    }
+
+    /// @brief Gets the number of acknowledged failures.
+    /// @return The number of acknowledged failures.
+    [[nodiscard]] uint32_t num_ack_failed() {
+        return ack_failed(0);
+    }
+
+    /// @brief Acknowledge all failures.
+    /// @return The <i>overall</i> number of failures acknowledged.
+    uint32_t ack_all_failed() {
+        return ack_failed(this->mpi_communicator().size());
+    }
+
     /// @brief Creates a new communicator from this communicator, excluding the failed processes.
     /// @return The new communicator.
     [[nodiscard]] Comm shrink() {
