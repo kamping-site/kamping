@@ -139,7 +139,7 @@ public:
     [[nodiscard]] bool is_revoked() {
         int is_revoked;
         MPIX_Comm_is_revoked(_comm(), &is_revoked);
-        return is_revoked;
+        return static_cast<bool>(is_revoked);
     }
 
     /// Overwrite the on-MPI-error handler to throw appropriate exceptions for then hardware faults happened.
