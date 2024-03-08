@@ -85,19 +85,20 @@ public:
 
     /// @brief Agrees on a flag from all live processes and distributes the result back to all live processes, even
     /// after process failures.
-    /// @param flag The flag to agree on; will be set to the bitwise AND over the contributed input values of \c flag.
-    void agree(int& flag) {
+    /// @param flag The flag to agree on.
+    /// @return The bitwise AND over the contributed input values of \c flag.
+    [[nodiscard]] int agree(int const flag) {
         auto const ret = MPIX_Comm_agree(_comm(), &flag);
         this->to_communicator().mpi_error_hook(ret, "MPIX_Comm_agree");
+        return flag;
     }
 
     /// @brief Agrees on a boolean flag from all live processes and distributes the result back to all live processes,
     /// even after process failures.
-    /// @param flag The flag to agree on; will be set to the bitwise AND over the contributed input values of \c flag.
-    void agree(bool& flag) {
-        int flag_int = static_cast<bool>(flag);
-        agree(flag_int);
-        flag = flag_int;
+    /// @param flag The flag to agree on.
+    /// @return The bitwise AND over the contributed input values of \c flag.
+    [[nodiscard]] bool agree(bool const flag) {
+        return agree(static_cast<bool>(flag));
     }
 
     /// Overwrite the on-MPI-error handler to throw appropriate exceptions for then hardware faults happened.

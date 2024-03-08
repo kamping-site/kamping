@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
             comm.allreduce(send_recv_buf(result), op(kamping::ops::plus<>()));
         } catch ([[maybe_unused]] MPIFailureDetected const& _) {
             i_see_failed_ranks = 1;
-            comm.agree(i_see_failed_ranks);
+            i_see_failed_ranks = comm.agree(i_see_failed_ranks);
             KASSERT(i_see_failed_ranks == 1, "There has been a failure, but not all ranks agree on it.");
 
             comm.revoke();
