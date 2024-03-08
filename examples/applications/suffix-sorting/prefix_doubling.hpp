@@ -43,11 +43,11 @@ struct IRR {
     IRR(IndexType idx, IndexType r1, IndexType r2) : index(idx), rank1(r1), rank2(r2) {}
 
     bool operator<(IRR const& other) const {
-        return std::make_pair(rank1, rank2) < std::make_pair(other.rank1, other.rank2);
+        return std::tie(rank1, rank2) < std::tie(other.rank1, other.rank2);
     }
 
     bool operator!=(IRR const& other) const {
-        return std::make_pair(rank1, rank2) != std::make_pair(other.rank1, other.rank2);
+        return std::tie(rank1, rank2) != std::tie(other.rank1, other.rank2);
     }
 }; // struct IRR
 
@@ -68,32 +68,30 @@ auto reduce_alphabet(
         return count > 0 ? new_alphabet_size++ : 0;
     });
 
-    size_t const bits_per_symbol = std::ceil(std::log2(new_alphabet_size));
+    size_t const bits_per_symbol = static_cast<size_t>(std::ceil(std::log2(new_alphabet_size)));
 
     size_t const k_fitting = (CHAR_BIT * sizeof(IndexType)) / bits_per_symbol;
 
-    KASSERT(input.size() > k_fitting, "Input too small");
-    input.resize(input.size() + k_fitting);
-    kamping::Span<InputType> shift_span(std::prev(input.end(), k_fitting), k_fitting);
-    kamping::Span<InputType> recv_span(std::prev(input.end(), k_fitting), k_fitting);
-
-    comm.isend(
-        kamping::send_buf(shift_span),
-        kamping::destination(comm.rank_shifted_cyclic(-1)),
-        kamping::send_count(k_fitting)
-    );
-
-    comm.recv(
-        kamping::recv_buf(recv_span),
-        kamping::source(comm.rank_shifted_cyclic(1)),
-        kamping::recv_count(k_fitting)
-    );
-
+    KASSERT(input.size() > 2 * k_fitting, "Input too small");
     size_t const local_size = input.size();
-    auto         offset     = comm.exscan_single(kamping::send_buf(local_size), kamping::op(kamping::ops::plus<>()));
+    input.resize(input.size() + (2 * k_fitting), 0);
+    kamping::Span<InputType> shift_span(
+        std::next(input.begin(), static_cast<int64_t>(local_size - (2 * k_fitting))),
+        2 * k_fitting
+    );
+    kamping::Span<InputType> recv_span(std::next(input.begin(), static_cast<int64_t>(local_size)), 2 * k_fitting);
 
+    if (comm.rank() != 0) {
+        comm.isend(kamping::send_buf(shift_span), kamping::destination(comm.rank_shifted_cyclic(-1)));
+    }
+
+    if (comm.rank() + 1 < comm.size()) {
+        comm.recv(kamping::recv_buf(recv_span), kamping::source(comm.rank_shifted_cyclic(1)));
+    }
+
+    auto offset = comm.exscan_single(kamping::send_buf(local_size), kamping::op(kamping::ops::plus<>()));
     std::vector<IRR<IndexType>> result;
-    result.reserve(input.size());
+    result.reserve(local_size);
     for (size_t i = 0; i < local_size; ++i) {
         IndexType rank1{hist[input[i]]};
         IndexType rank2{hist[input[i + k_fitting]]};
@@ -104,7 +102,7 @@ auto reduce_alphabet(
         result.emplace_back(offset++, rank1, rank2);
     }
 
-    size_t const starting_iteration = std::floor(std::log2(k_fitting)) + 1;
+    size_t const starting_iteration = static_cast<size_t>(std::floor(std::log2(k_fitting))) + 1;
     return std::pair{starting_iteration, result};
 }
 
@@ -117,10 +115,15 @@ prefix_doubling(std::vector<uint8_t>&& input, kamping::Communicator<std::vector,
     size_t                     offset     = 0;
     std::vector<IR<IndexType>> irs;
     while (true) {
-        std::cout << "iteration " << iteration << '\n';
-        comm.sort(irrs);
+        comm.sort(irrs, [](IRR<IndexType> const& lhs, IRR<IndexType> const& rhs) {
+            return std::tie(lhs.rank1, lhs.rank2) < std::tie(rhs.rank1, rhs.rank2);
+        });
         local_size = irrs.size();
-        offset     = comm.exscan_single(kamping::send_buf(local_size), kamping::op(kamping::ops::plus<>()));
+        offset     = comm.exscan_single(
+            kamping::send_buf(local_size),
+            kamping::op(kamping::ops::plus<>()),
+            kamping::values_on_rank_0({0})
+        );
 
         irs.clear();
         irs.reserve(local_size);
@@ -135,7 +138,7 @@ prefix_doubling(std::vector<uint8_t>&& input, kamping::Communicator<std::vector,
         }
 
         bool all_distinct = true;
-        for (size_t i = 1; i < irs.size(); ++i) {
+        for (size_t i = 1; i < local_size; ++i) {
             all_distinct &= (irs[i].rank != irs[i - 1].rank);
             if (!all_distinct) {
                 break;
@@ -151,9 +154,10 @@ prefix_doubling(std::vector<uint8_t>&& input, kamping::Communicator<std::vector,
         comm.sort(irs, [=](IR<IndexType> const& lhs, IR<IndexType> const& rhs) {
             IndexType const mod_mask = (IndexType{1} << iteration) - 1;
             IndexType const div_mask = ~mod_mask;
-
-            if (IndexType lhs_mod = lhs.index & mod_mask, rhs_mod = rhs.index & mod_mask; lhs_mod == rhs_mod) {
-                return ((lhs.index & div_mask) < (rhs.index & div_mask));
+            IndexType const lhs_mod  = lhs.index & mod_mask;
+            IndexType const rhs_mod  = rhs.index & mod_mask;
+            if (lhs_mod == rhs_mod) {
+                return (lhs.index & div_mask) < (rhs.index & div_mask);
             } else {
                 return lhs_mod < rhs_mod;
             }
