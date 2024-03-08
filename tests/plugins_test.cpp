@@ -274,6 +274,9 @@ TEST(PluginsTest, plugins_with_data_member) {
     // Create a new communicator. The first template argument is the default container type (has to be provided when
     // using plugins). The following template arguments are plugin classes.
     kamping::Communicator<std::vector, IncrementalSend, DecrementalSend> comm;
+    if (comm.size() < 2) {
+        return;
+    }
 
     auto other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
