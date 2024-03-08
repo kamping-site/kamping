@@ -26,16 +26,11 @@ int main(int argc, char** argv) {
 
     Communicator<std::vector, plugin::UserLevelFailureMitigation> comm;
 
-    int  result             = 0;
-    bool i_see_failed_ranks = 0;
+    int result = 0;
     while (true) {
         try {
             comm.allreduce(send_recv_buf(result), op(kamping::ops::plus<>()));
         } catch ([[maybe_unused]] MPIFailureDetected const& _) {
-            i_see_failed_ranks = 1;
-            i_see_failed_ranks = comm.agree(i_see_failed_ranks);
-            KASSERT(i_see_failed_ranks == 1, "There has been a failure, but not all ranks agree on it.");
-
             comm.revoke();
             comm = comm.shrink();
             if (comm.rank() == root) {

@@ -87,7 +87,7 @@ public:
     /// after process failures.
     /// @param flag The flag to agree on.
     /// @return The bitwise AND over the contributed input values of \c flag.
-    [[nodiscard]] int agree(int const flag) {
+    [[nodiscard]] int agree(int flag) {
         auto const ret = MPIX_Comm_agree(_comm(), &flag);
         this->to_communicator().mpi_error_hook(ret, "MPIX_Comm_agree");
         return flag;
@@ -97,7 +97,7 @@ public:
     /// even after process failures.
     /// @param flag The flag to agree on.
     /// @return The bitwise AND over the contributed input values of \c flag.
-    [[nodiscard]] bool agree(bool const flag) {
+    [[nodiscard]] bool agree(bool flag) {
         return agree(static_cast<bool>(flag));
     }
 
