@@ -31,17 +31,17 @@ TEST(GroupTest, basics) {
     auto empty_group = Group::empty();
     auto world_group = Group::world();
     EXPECT_EQ(Group(MPI_GROUP_EMPTY).compare(empty_group), GroupEquality::Identical);
-    EXPECT_EQ(Group(MPI_COMM_WORLD).compare(world_group), GroupEquality::Identical);
+    EXPECT_EQ(Group(kamping::comm_world()).compare(world_group), GroupEquality::Identical);
     EXPECT_EQ(comm.group().compare(world_group), GroupEquality::Identical);
     EXPECT_EQ(Group(comm.mpi_communicator()).compare(comm.group()), GroupEquality::Identical);
 
     EXPECT_TRUE(Group(MPI_GROUP_EMPTY).is_identical(empty_group));
-    EXPECT_TRUE(Group(MPI_COMM_WORLD).is_identical(world_group));
+    EXPECT_TRUE(Group(kamping::comm_world()).is_identical(world_group));
     EXPECT_TRUE(comm.group().is_identical(world_group));
     EXPECT_TRUE(Group(comm.mpi_communicator()).is_identical(comm.group()));
 
     EXPECT_TRUE(Group(MPI_GROUP_EMPTY).has_same_ranks(empty_group));
-    EXPECT_TRUE(Group(MPI_COMM_WORLD).has_same_ranks(world_group));
+    EXPECT_TRUE(Group(kamping::comm_world()).has_same_ranks(world_group));
     EXPECT_TRUE(comm.group().has_same_ranks(world_group));
     EXPECT_TRUE(Group(comm.mpi_communicator()).has_same_ranks(comm.group()));
 

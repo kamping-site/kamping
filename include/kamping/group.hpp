@@ -55,10 +55,10 @@ public:
         return *this;
     }
 
-    /// @brief Constructs the group associated with a communicator.
-    Group(MPI_Comm comm) : _owns_group(true) {
-        MPI_Comm_group(comm, &_group);
-    }
+    // /// @brief Constructs the group associated with a communicator.
+    // Group(MPI_Comm comm) : _owns_group(true) {
+    //     MPI_Comm_group(comm, &_group);
+    // }
 
     /// @brief Constructs the group associated with a communicator.
     template <typename Comm>
