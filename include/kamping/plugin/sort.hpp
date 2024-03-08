@@ -90,7 +90,7 @@ public:
         using ValueType = typename std::iterator_traits<RandomIt>::value_type;
 
         auto&                  self               = this->to_communicator();
-        size_t const           local_size         = std::distance(begin, end);
+        size_t const           local_size         = asserting_cast<size_t>(std::distance(begin, end));
         size_t const           oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + 1;
         std::vector<ValueType> local_samples(oversampling_ratio);
         std::sample(begin, end, local_samples.begin(), oversampling_ratio, std::mt19937{self.rank() + self.size()});
