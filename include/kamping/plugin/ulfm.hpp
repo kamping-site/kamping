@@ -83,10 +83,22 @@ public:
         return Comm(newcomm);
     }
 
-    /// @brief Agrees on a flag with all processes in the communicator which are not failed.
-    void agree(int& flag) const {
+    /// @brief Agrees on a flag from all live processes and distributes the result back to all live processes, even
+    /// after process failures.
+    /// @param flag The flag to agree on.
+    /// @return The bitwise AND over the contributed input values of \c flag.
+    [[nodiscard]] int agree(int flag) {
         auto const ret = MPIX_Comm_agree(_comm(), &flag);
         this->to_communicator().mpi_error_hook(ret, "MPIX_Comm_agree");
+        return flag;
+    }
+
+    /// @brief Agrees on a boolean flag from all live processes and distributes the result back to all live processes,
+    /// even after process failures.
+    /// @param flag The flag to agree on.
+    /// @return The bitwise AND over the contributed input values of \c flag.
+    [[nodiscard]] bool agree(bool flag) {
+        return agree(static_cast<bool>(flag));
     }
 
     /// Overwrite the on-MPI-error handler to throw appropriate exceptions for then hardware faults happened.
