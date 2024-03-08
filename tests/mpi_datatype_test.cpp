@@ -248,7 +248,7 @@ TEST(MpiDataTypeTest, contiguous_type_works) {
     MPI_Unpack(buffer.data(), static_cast<int>(buffer.size()), &position, b.data(), 1, contiguous_type, MPI_COMM_WORLD);
     EXPECT_EQ(position, pack_size);
     EXPECT_THAT(b, ElementsAreArray(a));
-    MPI_Type_free(&contiguous_type);
+    PMPI_Type_free(&contiguous_type);
 }
 
 TEST(MpiDataTypeTest, byte_serialized_type_works) {
@@ -288,7 +288,7 @@ TEST(MpiDataTypeTest, byte_serialized_type_works) {
     MPI_Unpack(buffer.data(), static_cast<int>(buffer.size()), &position, &b, 1, byte_serialized_type, MPI_COMM_WORLD);
     EXPECT_EQ(position, pack_size);
     EXPECT_EQ(b, a);
-    MPI_Type_free(&byte_serialized_type);
+    PMPI_Type_free(&byte_serialized_type);
 }
 
 TEST(MpiDataTypeTest, struct_type_works_with_struct) {
@@ -339,7 +339,7 @@ TEST(MpiDataTypeTest, struct_type_works_with_struct) {
     EXPECT_EQ(position, pack_size);
     EXPECT_EQ(u.a, t.a);
     EXPECT_EQ(u.b, t.b);
-    MPI_Type_free(&struct_type);
+    PMPI_Type_free(&struct_type);
 }
 
 struct ExplicitNestedStruct {
@@ -462,7 +462,7 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
     EXPECT_EQ(u.b, t.b);
     EXPECT_EQ(u.nested.c, t.nested.c);
     EXPECT_EQ(u.nested.d, t.nested.d);
-    MPI_Type_free(&struct_type);
+    PMPI_Type_free(&struct_type);
 }
 
 TEST(MpiDataTypeTest, struct_type_works_with_pair) {
@@ -509,7 +509,7 @@ TEST(MpiDataTypeTest, struct_type_works_with_pair) {
     MPI_Unpack(buffer.data(), static_cast<int>(buffer.size()), &position, &u, 1, struct_type, MPI_COMM_WORLD);
     EXPECT_EQ(position, pack_size);
     EXPECT_EQ(u, t);
-    MPI_Type_free(&struct_type);
+    PMPI_Type_free(&struct_type);
 }
 
 TEST(MpiDataTypeTest, struct_type_works_with_tuple) {
@@ -558,7 +558,7 @@ TEST(MpiDataTypeTest, struct_type_works_with_tuple) {
     MPI_Unpack(buffer.data(), static_cast<int>(buffer.size()), &position, &u, 1, struct_type, MPI_COMM_WORLD);
     EXPECT_EQ(position, pack_size);
     EXPECT_EQ(u, t);
-    MPI_Type_free(&struct_type);
+    PMPI_Type_free(&struct_type);
 }
 
 template <typename T1, typename T2>
