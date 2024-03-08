@@ -215,8 +215,8 @@ public:
         internal::registered_mpi_types.clear();
     }
 
-    static size_t const bsend_overhead = MPI_BSEND_OVERHEAD; ///< Provides an upper bound on the additional memory
-                                                             ///< required by buffered send operations.
+    static inline size_t const bsend_overhead = MPI_BSEND_OVERHEAD; ///< Provides an upper bound on the additional
+                                                                    ///< memory required by buffered send operations.
 
     /// @brief Attach a buffer to use for buffered send operations to the environment.
     ///

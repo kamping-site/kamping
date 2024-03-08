@@ -228,11 +228,12 @@ TEST_F(EnvironmentTest, buffer_attach_and_detach_with_other_type) {
     using attach_type = double;
     using detach_type = char;
     std::vector<attach_type> buffer;
-    buffer.resize(13);
+    size_t                   buffer_size = std::max(size_t{13}, Environment<>::bsend_overhead);
+    buffer.resize(buffer_size);
     env.buffer_attach(kamping::Span<attach_type>{buffer.begin(), buffer.end()});
 
     EXPECT_EQ(attached_buffer_ptr, buffer.data());
-    EXPECT_EQ(attached_buffer_size, 13 * sizeof(attach_type));
+    EXPECT_EQ(attached_buffer_size, buffer_size * sizeof(attach_type));
 
     auto detached_buffer = env.buffer_detach<detach_type>();
 
@@ -241,9 +242,9 @@ TEST_F(EnvironmentTest, buffer_attach_and_detach_with_other_type) {
     EXPECT_EQ(attached_buffer_size, detached_buffer_size);
 
     EXPECT_EQ(detached_buffer_ptr, buffer.data());
-    EXPECT_EQ(detached_buffer_size, 13 * sizeof(attach_type));
+    EXPECT_EQ(detached_buffer_size, buffer_size * sizeof(attach_type));
     EXPECT_EQ(static_cast<void*>(detached_buffer.data()), static_cast<void*>(buffer.data()));
-    EXPECT_EQ(detached_buffer.size_bytes(), 13 * sizeof(attach_type));
+    EXPECT_EQ(detached_buffer.size_bytes(), buffer_size * sizeof(attach_type));
 }
 
 TEST_F(EnvironmentTest, buffer_attach_and_detach_with_other_type_not_matching) {
@@ -251,11 +252,12 @@ TEST_F(EnvironmentTest, buffer_attach_and_detach_with_other_type_not_matching) {
     using attach_type                  = char;
     using detach_type [[maybe_unused]] = double;
     std::vector<attach_type> buffer;
-    buffer.resize(13);
+    size_t                   buffer_size = Environment<>::bsend_overhead + 1;
+    buffer.resize(buffer_size);
     env.buffer_attach(kamping::Span<attach_type>{buffer.begin(), buffer.end()});
 
     EXPECT_EQ(attached_buffer_ptr, buffer.data());
-    EXPECT_EQ(attached_buffer_size, 13 * sizeof(attach_type));
+    EXPECT_EQ(attached_buffer_size, buffer_size * sizeof(attach_type));
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(env.buffer_detach<detach_type>(), "The buffer size is not a multiple of the size of T.");
@@ -265,12 +267,12 @@ TEST_F(EnvironmentTest, buffer_attach_and_detach_with_other_type_not_matching) {
 TEST_F(EnvironmentTest, buffer_attach_multiple_fails) {
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
     std::vector<int>                                  buffer1;
-    buffer1.resize(42);
+    buffer1.resize(2 * Environment<>::bsend_overhead);
     std::vector<int> buffer2;
-    buffer2.resize(13);
+    buffer2.resize(Environment<>::bsend_overhead);
     env.buffer_attach(kamping::Span<int>{buffer1.begin(), buffer1.end()});
     EXPECT_EQ(attached_buffer_ptr, buffer1.data());
-    EXPECT_EQ(attached_buffer_size, 42 * sizeof(int));
+    EXPECT_EQ(attached_buffer_size, 2 * Environment<>::bsend_overhead * sizeof(int));
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(
@@ -290,14 +292,15 @@ TEST_F(EnvironmentTest, buffer_detach_none_fails) {
 TEST_F(EnvironmentTest, buffer_detach_multiple_fails) {
     Environment<kamping::InitMPIMode::NoInitFinalize> env;
     std::vector<int>                                  buffer;
-    buffer.resize(42);
+    size_t                                            buffer_size = std::max(size_t{42}, Environment<>::bsend_overhead);
+    buffer.resize(buffer_size);
     env.buffer_attach(kamping::Span<int>{buffer.begin(), buffer.end()});
     EXPECT_EQ(attached_buffer_ptr, buffer.data());
-    EXPECT_EQ(attached_buffer_size, 42 * sizeof(int));
+    EXPECT_EQ(attached_buffer_size, buffer_size * sizeof(int));
 
     auto detached_buffer = env.buffer_detach<int>();
     EXPECT_EQ(detached_buffer_ptr, buffer.data());
-    EXPECT_EQ(detached_buffer_size, 42 * sizeof(int));
+    EXPECT_EQ(detached_buffer_size, buffer_size * sizeof(int));
     EXPECT_EQ(detached_buffer.data(), buffer.data());
     EXPECT_EQ(detached_buffer.size(), buffer.size());
 
