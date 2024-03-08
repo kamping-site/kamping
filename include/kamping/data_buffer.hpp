@@ -331,7 +331,7 @@ constexpr BufferResizePolicy maximum_viable_resize_policy = [] {
 template <
     typename MemberType,
     typename TParameterType,
-    TParameterType       parameter_type_param,
+    TParameterType      parameter_type_param,
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param,

@@ -363,7 +363,7 @@ class RankDataBuffer<RankType::value, type> final : private DataBuffer<
 private:
     using BaseClass = DataBuffer<
         size_t,
-      ParameterType,
+        ParameterType,
         type,
         BufferModifiability::modifiable,
         BufferOwnership::owning,
