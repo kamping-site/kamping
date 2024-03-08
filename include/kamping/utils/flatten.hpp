@@ -74,8 +74,8 @@ struct FlatContainer<T, std::enable_if_t<is_nested_send_buffer_v<T>>> {
 
 } // namespace internal
 
-/// @brief Flattens a nested container of send buffers and provides the flattened buffer, send counts and send
-/// displacements as parameters to be passed to an \c MPI call.
+/// @brief Flattens a container of containers or destination-container-pairs and provides the flattened buffer, send
+/// counts and send displacements as parameters to be passed to an \c MPI call.
 ///
 /// This returns a callable wrapper that can be called with a functor which accepts a parameter pack of these arguments.
 ///
@@ -88,7 +88,7 @@ struct FlatContainer<T, std::enable_if_t<is_nested_send_buffer_v<T>>> {
 /// });
 /// ```
 ///
-/// The nested container can be a range of pair-like types of destination and data (see \c is_sparse_send_buffer_v ) or
+/// The container can be a range of pair-like types of destination and data (see \c is_sparse_send_buffer_v ) or
 /// a container of containers (see \c is_nested_send_buffer_v ).
 ///
 /// @param nested_send_buf The nested container of send buffers.
@@ -154,7 +154,7 @@ auto with_flattened(Container const& nested_send_buf, size_t comm_size) {
     });
 }
 
-/// @brief Flattens a nested container of send buffers and provides the flattened buffer, send counts and send
+/// @brief Flattens a container of containers and provides the flattened buffer, send counts and send
 /// displacements as parameters to be passed to an \c MPI call.
 ///
 /// This returns a callable wrapper that can be called with a functor which accepts a parameter pack of these arguments.
