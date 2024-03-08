@@ -316,6 +316,7 @@ constexpr BufferResizePolicy maximum_viable_resize_policy = [] {
 /// DataBuffer wraps all buffer storages provided by an std-like container like std::vector or single values. A
 /// Container type must provide \c data(), \c size() and expose the type definition \c value_type.
 /// @tparam MemberType Container or data type on which this buffer is based.
+/// @tparam TParameterType Type of the parameter_type_param (required for parameter selection within plugins).
 /// @tparam parameter_type_param Parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -578,6 +579,7 @@ private:
 /// expose neither \c data(), \c resize() nor \c value_type.
 ///
 /// @tparam MemberType Type of the wrapped object.
+/// @tparam TParameterType Type of the parameter_type_param (required for parameter selection within plugins).
 /// @tparam parameter_type_param Parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -586,13 +588,14 @@ private:
 /// @tparam buffer_type_param Type of buffer, i.e., \c in_buffer, \c out_buffer, or \c in_out_buffer.
 template <
     typename MemberType,
-    ParameterType       parameter_type_param,
+    typename TParameterType,
+    TParameterType      parameter_type_param,
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param>
 class GenericDataBuffer : private ParameterObjectBase {
 public:
-    static constexpr ParameterType parameter_type =
+    static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
 
     static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.

@@ -27,7 +27,7 @@ namespace kamping::internal {
 /// @{
 
 /// @brief Base case if there are no parameters: always returns max index indicating that the parameter was not found.
-/// @tparam TParameterType Type of the parameter type (needed for parameter selection within plugins).
+/// @tparam TParameterType Type of the parameter type (required for parameter selection within plugins).
 /// @tparam parameter_type The parameter type which to be searched for.
 /// @tparam Index Index of current argument to evaluate (ignored).
 /// @return \c std::numeric_limits<size_t>::max().
@@ -46,7 +46,7 @@ constexpr size_t find_pos() {
 ///
 /// This is the base case of the recursion.
 ///
-/// @tparam TParameterType Type of the parameter type (needed for parameter selection within plugins).
+/// @tparam TParameterType Type of the parameter type (required for parameter selection within plugins).
 /// @tparam parameter_type The parameter type which to be searched for.
 /// @tparam Index Index of current argument to evaluate.
 /// @tparam Arg Argument to evaluate.
@@ -62,7 +62,7 @@ constexpr size_t find_pos() {
 
 /// @brief Returns position of first argument in Args with Trait trait.
 ///
-/// @tparam TParameterType Type of the parameter type (needed for parameter selection within plugins).
+/// @tparam TParameterType Type of the parameter type (required for parameter selection within plugins).
 /// @tparam parameter_type The parameter type which to be searched for.
 /// @tparam Index Index of current argument to evaluate.
 /// @tparam Arg Argument to evaluate.
@@ -126,7 +126,7 @@ auto& select_parameter_type_in_tuple(std::tuple<Args...>& tuple) {
 
 /// @brief Type of Buffer with requested \tparam parameter_type
 ///
-/// @tparam TParameterType Type of the parameter type (needed for parameter selection within plugins).
+/// @tparam TParameterType Type of the parameter type (required for parameter selection within plugins).
 /// @tparam parameter_type The parameter type with which a parameter should be found.
 /// @tparam Args All parameter types to be searched for type `parameter_type`.
 template <ParameterType parameter_type, typename... Args>
@@ -135,7 +135,7 @@ using buffer_type_with_requested_parameter_type =
 
 /// @brief Checks if parameter with requested parameter type exists.
 ///
-/// @tparam TParameterType Type of the parameter type (needed for parameter selection within plugins).
+/// @tparam TParameterType Type of the parameter type (required for parameter selection within plugins).
 /// @tparam parameter_type The parameter type with which a parameter should be found.
 /// @tparam Args All parameter types to be searched.
 /// @return \c true iff. `Args` contains a parameter of type `parameter_type`.
@@ -182,7 +182,7 @@ constexpr bool has_parameter_type_in_tuple() {
 
 /// @brief Checks if parameter with requested parameter type exists, if not constructs a default value.
 ///
-/// @tparam TParameterType Type of the parameter type (needed for parameter selection within plugins).
+/// @tparam TParameterType Type of the parameter type (required for parameter selection within plugins).
 /// @tparam parameter_type The parameter type with which a parameter should be found.
 /// @tparam Args All parameter types to be searched.
 /// @tparam DefaultParameterType The type of the default parameter to be constructed.

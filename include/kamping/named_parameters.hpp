@@ -114,6 +114,7 @@ auto sparse_send_buf(Data&& data) {
 
     return GenericDataBuffer<
         std::remove_reference_t<Data>,
+        internal::ParameterType,
         internal::ParameterType::sparse_send_buf,
         BufferModifiability::constant,
         ownership,
@@ -134,6 +135,7 @@ auto on_message(Callback&& cb) {
 
     return GenericDataBuffer<
         std::remove_reference_t<Callback>,
+        internal::ParameterType,
         internal::ParameterType::on_message,
         modifiability,
         ownership,
