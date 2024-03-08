@@ -7,6 +7,7 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/group.hpp"
 #include "kamping/plugin/plugin_helpers.hpp"
 
 #if not(defined(MPIX_ERR_PROC_FAILED)) or not(defined(MPIX_ERR_PROC_FAILED_PENDING)) or not(defined(MPIX_ERR_REVOKED))
@@ -122,6 +123,15 @@ public:
     /// @return The bitwise AND over the contributed input values of \c flag.
     [[nodiscard]] bool agree(bool flag) {
         return agree(static_cast<bool>(flag));
+    }
+
+    /// @brief Obtains the group of currently failed processes.
+    /// @return The group of currently failed processes.
+    [[nodiscard]] Group get_failed() {
+        MPI_Group  failed_group;
+        auto const ret = MPIX_Comm_get_failed(_comm(), &failed_group);
+        this->to_communicator().mpi_error_hook(ret, "MPIX_Comm_failure_get_acked");
+        return Group(failed_group);
     }
 
     /// Overwrite the on-MPI-error handler to throw appropriate exceptions for then hardware faults happened.
