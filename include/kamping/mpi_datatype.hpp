@@ -328,6 +328,42 @@ MPI_Datatype struct_type<T>::data_type() {
     return type;
 }
 
+/// @brief A scoped MPI_Datatype that commits the type on construction and frees it on destruction.
+/// This is useful for RAII-style management of MPI_Datatype objects.
+class ScopedDatatype {
+    MPI_Datatype type; ///< The MPI_Datatype.
+public:
+    /// @brief Construct a new scoped MPI_Datatype and commits it.
+    ScopedDatatype(MPI_Datatype type) : type(type) {
+        KASSERT(type != MPI_DATATYPE_NULL);
+        mpi_env.commit(type);
+    }
+    /// @brief Deleted copy constructor.
+    ScopedDatatype(ScopedDatatype const&) = delete;
+    /// @brief Deleted copy assignment.
+    ScopedDatatype& operator=(ScopedDatatype const&) = delete;
+
+    /// @brief Move constructor.
+    ScopedDatatype(ScopedDatatype&& other) noexcept : type(other.type) {
+        other.type = MPI_DATATYPE_NULL;
+    }
+    /// @brief Move assignment.
+    ScopedDatatype& operator=(ScopedDatatype&& other) noexcept {
+        std::swap(type, other.type);
+        return *this;
+    }
+    /// @brief Get the MPI_Datatype.
+    MPI_Datatype const& data_type() const {
+        return type;
+    }
+    /// @brief Free the MPI_Datatype.
+    ~ScopedDatatype() {
+        if (type != MPI_DATATYPE_NULL) {
+            MPI_Type_free(&type);
+        }
+    }
+};
+
 /// @}
 
 } // namespace kamping

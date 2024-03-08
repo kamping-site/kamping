@@ -194,6 +194,12 @@ public:
         THROW_IF_MPI_ERROR(err, MPI_Type_commit);
     }
 
+    /// @brief Free an MPI data type.
+    static void free(MPI_Datatype type) {
+        int err = MPI_Type_free(&type);
+        THROW_IF_MPI_ERROR(err, MPI_Type_free);
+    }
+
     /// @brief Commit an MPI data type and register it with KaMPIng.
     /// @see commit()
     /// @see register_type()
