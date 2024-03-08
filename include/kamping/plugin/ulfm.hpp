@@ -91,7 +91,7 @@ public:
         return ack_failed(0);
     }
 
-    /// @brief Acknowledge all all failures.
+    /// @brief Acknowledge all failures.
     /// @return The <i>overall</i> number of failures acknowledged.
     uint32_t ack_all_failed() {
         return ack_failed(this->mpi_communicator().size());
