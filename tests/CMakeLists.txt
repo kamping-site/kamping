@@ -36,6 +36,7 @@ kamping_register_test(test_has_member FILES has_member_test.cpp)
 kamping_register_test(test_rank_ranges FILES rank_ranges_test.cpp)
 kamping_register_test(test_measurement_utils FILES measurements/measurement_utils_test.cpp)
 kamping_register_test(test_traits FILES utils/traits_test.cpp)
+kamping_register_test(test_scoped_type FILES scoped_type_test.cpp)
 
 # Registering tests with MPI:
 

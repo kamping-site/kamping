@@ -17,6 +17,7 @@
 #include <set>
 #include <thread>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -148,6 +149,16 @@ TEST_F(EnvironmentTest, commit_test) {
     // nothing should have been registered
     EXPECT_TRUE(internal::registered_mpi_types.empty());
     MPI_Type_free(&type);
+}
+
+TEST_F(EnvironmentTest, free_test) {
+    Environment<kamping::InitMPIMode::NoInitFinalize> env;
+    MPI_Datatype                                      type;
+    MPI_Type_contiguous(1, MPI_CHAR, &type);
+    MPI_Type_commit(&type);
+    EXPECT_TRUE(freed_types.empty());
+    env.free(type);
+    EXPECT_THAT(freed_types, ::testing::ElementsAre(type));
 }
 
 TEST_F(EnvironmentTest, commit_and_register_test) {
