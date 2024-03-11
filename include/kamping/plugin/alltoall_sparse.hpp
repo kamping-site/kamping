@@ -197,16 +197,16 @@ public:
 /// counts. Instead we use a sparse representation of the data to be sent.
 ///
 /// The following parameters are required:
-/// - \ref kamping::plugin::sparse_alltoall::sparse_send_buf() containing the messages to be sent to other ranks. Differently from plain
-/// alltoallv, in alltoallv_sparse \c send_buf() encapsulates a container consisting of destination-message pairs. Each
-/// such pair has to be decomposable via structured bindings with the first parameter being convertible to int and the
-/// second parameter being the actual message to be sent for which we require the usual send_buf properties (i.e.,
-/// either scalar types or existance `data()` and `size()` member function and the exposure of a `value_type`)).
-/// Messages of size 0 are not sent.
-/// - \ref kamping::plugin::sparse_alltoall::on_message() containing a callback function `cb` which is responsible to process the
-/// received messages via a \ref sparse_alltoall::ProbedMessage object. The callback function `cb` gets called for each
-/// probed message ready to be received via `cb(probed_message)`. See \ref sparse_alltoall::ProbedMessage for the member
-/// functions to be called on the object.
+/// - \ref kamping::plugin::sparse_alltoall::sparse_send_buf() containing the messages to be sent to other ranks.
+/// Differently from plain alltoallv, in alltoallv_sparse \c send_buf() encapsulates a container consisting of
+/// destination-message pairs. Each such pair has to be decomposable via structured bindings with the first parameter
+/// being convertible to int and the second parameter being the actual message to be sent for which we require the usual
+/// send_buf properties (i.e., either scalar types or existance `data()` and `size()` member function and the exposure
+/// of a `value_type`)). Messages of size 0 are not sent.
+/// - \ref kamping::plugin::sparse_alltoall::on_message() containing a callback function `cb` which is responsible to
+/// process the received messages via a \ref sparse_alltoall::ProbedMessage object. The callback function `cb` gets
+/// called for each probed message ready to be received via `cb(probed_message)`. See \ref
+/// sparse_alltoall::ProbedMessage for the member functions to be called on the object.
 ///
 /// The following buffers are optional:
 /// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
