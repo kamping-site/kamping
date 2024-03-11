@@ -223,12 +223,6 @@ template <typename Comm, template <typename...> typename DefaultContainerType>
 template <typename... Args>
 void SparseAlltoall<Comm, DefaultContainerType>::alltoallv_sparse(Args... args) const {
     auto& self = this->to_communicator();
-    // Get all parameter objects
-    // KAMPING_CHECK_PARAMETERS(
-    //    Args,
-    //    KAMPING_REQUIRED_PARAMETERS(sparse_send_buf, on_message),
-    //    KAMPING_OPTIONAL_PARAMETERS(send_type, tag)
-    //);
     // Get send_buf
     using send_buf_param_type =
         std::integral_constant<sparse_alltoall::ParameterType, sparse_alltoall::ParameterType::sparse_send_buf>;

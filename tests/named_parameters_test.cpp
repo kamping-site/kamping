@@ -18,7 +18,6 @@
 #include <mpi.h>
 
 #include "helpers_for_testing.hpp"
-#include "kamping/collectives/sparse_alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_types.hpp"
