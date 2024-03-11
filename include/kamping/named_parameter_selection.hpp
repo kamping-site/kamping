@@ -25,8 +25,10 @@
 namespace kamping::internal {
 /// @addtogroup kamping_utility
 /// @{
+
 /// @brief Trait struct used to determine the underlying type and value of the parameter type of an object with a
 /// parameter type. (This is a building block to enable plugins to have their own named parameters).
+/// @tparam Arg Type for which the parameter type unwrapping is done.
 template <typename Arg>
 struct ParameterTypeUnwrapping {
     using type = std::remove_cv_t<std::remove_reference_t<decltype(std::remove_reference_t<Arg>::parameter_type
@@ -38,6 +40,9 @@ struct ParameterTypeUnwrapping {
 /// @brief Trait struct used to determine the underlying type and value of the parameter type of an
 /// std::integral_constant wrapping a parameter type. (This is a building block to enable plugins to have their own
 /// named parameters).
+///
+/// @tparam T Type of the parameter type.
+/// @tparam v Value of the parameter type.
 template <typename T, T v>
 struct ParameterTypeUnwrapping<std::integral_constant<T, v>> {
     using type                  = T; ///< Type of the underlying parameter type.
@@ -130,12 +135,7 @@ auto& select_parameter_type(Args&... args) {
     return std::get<selected_index>(std::forward_as_tuple(args...));
 }
 
-/// @brief Returns parameter with requested parameter type.
-///
-/// @tparam parameter_type The parameter type with which a parameter should be found.
-/// @tparam Args All parameter types to be searched for type `parameter_type`.
-/// @param args All parameters from which a parameter with the correct type is selected.
-/// @returns The first parameter whose type has the requested parameter type.
+/// @brief "Specialization" for internal::ParameterType.
 template <ParameterType parameter_type, typename... Args>
 auto& select_parameter_type(Args&... args) {
     return select_parameter_type<std::integral_constant<internal::ParameterType, parameter_type>, Args...>(args...);
@@ -236,16 +236,7 @@ decltype(auto) select_parameter_type_or_default(std::tuple<DefaultArguments...> 
     }
 }
 
-/// @brief Checks if parameter with requested parameter type exists, if not constructs a default value.
-///
-/// @tparam parameter_type The parameter type with which a parameter should be found.
-/// @tparam Args All parameter types to be searched.
-/// @tparam DefaultParameterType The type of the default parameter to be constructed.
-/// @tparam DefaultArguments The types of parameters passed to the constructor \c DefaultParameterType.
-/// @param default_arguments Tuple of the arguments passed to the constructor of \c DefaultParameterType.
-/// @param args All parameters from which a parameter with the correct type is selected.
-/// @return The first parameter whose type has the requested parameter type or the constructed default parameter if
-/// none is found.
+/// @brief "Specialization" for internal::ParameterType.
 template <ParameterType parameter_type, typename DefaultParameterType, typename... DefaultArguments, typename... Args>
 decltype(auto) select_parameter_type_or_default(std::tuple<DefaultArguments...> default_arguments, Args&... args) {
     return select_parameter_type_or_default<
