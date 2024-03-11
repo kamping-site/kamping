@@ -336,7 +336,9 @@ public:
     /// @brief Construct a new scoped MPI_Datatype and commits it. If no type is provided, default to
     /// `MPI_DATATYPE_NULL` and does not commit or free anything.
     ScopedDatatype(MPI_Datatype type = MPI_DATATYPE_NULL) : _type(type) {
-        mpi_env.commit(type);
+        if (type != MPI_DATATYPE_NULL) {
+            mpi_env.commit(type);
+        }
     }
     /// @brief Deleted copy constructor.
     ScopedDatatype(ScopedDatatype const&) = delete;
