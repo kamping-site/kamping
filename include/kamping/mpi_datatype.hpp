@@ -333,9 +333,9 @@ MPI_Datatype struct_type<T>::data_type() {
 class ScopedDatatype {
     MPI_Datatype _type; ///< The MPI_Datatype.
 public:
-    /// @brief Construct a new scoped MPI_Datatype and commits it.
-    ScopedDatatype(MPI_Datatype type) : _type(type) {
-        KASSERT(type != MPI_DATATYPE_NULL);
+    /// @brief Construct a new scoped MPI_Datatype and commits it. If no type is provided, default to
+    /// `MPI_DATATYPE_NULL` and does not commit or free anything.
+    ScopedDatatype(MPI_Datatype type = MPI_DATATYPE_NULL) : _type(type) {
         mpi_env.commit(type);
     }
     /// @brief Deleted copy constructor.
