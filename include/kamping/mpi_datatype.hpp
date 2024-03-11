@@ -359,7 +359,7 @@ public:
     /// @brief Free the MPI_Datatype.
     ~ScopedDatatype() {
         if (_type != MPI_DATATYPE_NULL) {
-            MPI_Type_free(&_type);
+            mpi_env.free(_type);
         }
     }
 };
