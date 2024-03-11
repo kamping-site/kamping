@@ -17,11 +17,18 @@
 
 namespace kamping {
 /// @brief Print all elements in a container, prefixed with the rank of the current PE.
+/// @tparam ContainerType Type of the communicator's default container.
+/// @tparam Plugins Types of the communicator's plugins.
 /// @tparam T Type of the elements contained in the container.
 /// @param result The container whose elements are printed.
 /// @param comm KaMPIng communicator to get the rank of the PE.
-template <template <typename...> typename ContainerType, typename T>
-void print_result(ContainerType<T> const& result, Communicator<ContainerType> const& comm) {
+template <
+    template <typename...>
+    typename ContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins,
+    typename T>
+void print_result(ContainerType<T> const& result, Communicator<ContainerType, Plugins...> const& comm) {
     for (auto const& elem: result) {
         std::cout << "[PE " << comm.rank() << "] " << elem << "\n";
     }
@@ -30,10 +37,17 @@ void print_result(ContainerType<T> const& result, Communicator<ContainerType> co
 
 /// @brief Print the given element, prefixed with the rank of the current PE.
 /// @tparam T Type of the element.
+/// @tparam ContainerType Type of the communicator's default container.
+/// @tparam Plugins Types of the communicator's plugins.
 /// @param result The elements to be printed. Streamed to std::cout.
 /// @param comm KaMPIng communicator to get the rank of the PE.
-template <template <typename...> typename ContainerType, typename T>
-void print_result(T const& result, Communicator<ContainerType> const& comm) {
+template <
+    template <typename...>
+    typename ContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins,
+    typename T>
+void print_result(T const& result, Communicator<ContainerType, Plugins...> const& comm) {
     std::cout << "[PE " << comm.rank() << "] " << result << std::endl;
 }
 

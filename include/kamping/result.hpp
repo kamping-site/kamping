@@ -518,9 +518,9 @@ constexpr bool return_recv_or_send_recv_buffer_only() {
     constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutBuffers>;
     if constexpr (num_caller_provided_owning_out_buffers == 0) {
         return true;
-    } else if constexpr (num_caller_provided_owning_out_buffers == 1 && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::parameter_type == ParameterType::recv_buf) {
+    } else if constexpr (num_caller_provided_owning_out_buffers == 1 && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::recv_buf) {
         return true;
-    } else if constexpr (num_caller_provided_owning_out_buffers == 1 && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::parameter_type == ParameterType::send_recv_buf) {
+    } else if constexpr (num_caller_provided_owning_out_buffers == 1 && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::send_recv_buf) {
         return true;
     } else {
         return false;
@@ -634,7 +634,7 @@ constexpr bool has_recv_or_send_recv_buf() {
 /// @tparam Tuple An std::tuple.
 template <ParameterType ptype, typename Tuple>
 struct PrependParameterType {
-    using type = typename PrependType<ParameterTypeEntry<ptype>, Tuple>::
+    using type = typename PrependType<std::integral_constant<internal::ParameterType, ptype>, Tuple>::
         type; ///< Concatenated tuple, i.e. type = std::tuple<TypeToPrepend, (Type contained in Tuple)... >.
 };
 
