@@ -32,7 +32,9 @@ int main(int argc, char** argv) {
             comm.allreduce(send_recv_buf(result), op(kamping::ops::plus<>()));
             KASSERT(!comm.is_revoked());
         } catch ([[maybe_unused]] MPIFailureDetected const& _) {
-            comm.revoke();
+            if (!comm.is_revoked()) {
+                comm.revoke();
+            }
             comm = comm.shrink();
             if (comm.rank() == root) {
                 std::cerr << "Process failure detected and recovered from. Remaining ranks: " << comm.size()
