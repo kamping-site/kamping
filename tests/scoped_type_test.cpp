@@ -42,7 +42,7 @@ public:
     }
 };
 
-TEST_F(ScopedTypeTest, TestScopedType) {
+TEST_F(ScopedTypeTest, test_scoped_type) {
     {
         kamping::ScopedDatatype scoped_type(MPI_INT);
         auto                    type = scoped_type.data_type();
@@ -61,4 +61,21 @@ TEST_F(ScopedTypeTest, TestScopedType) {
     }
     EXPECT_EQ(free_count, 1);
     EXPECT_EQ(last_freed_datatype, MPI_INT);
+}
+TEST_F(ScopedTypeTest, test_scoped_null) {
+    {
+        kamping::ScopedDatatype scoped_type;
+        auto                    type = scoped_type.data_type();
+        EXPECT_EQ(type, MPI_DATATYPE_NULL);
+        EXPECT_EQ(commit_count, 0);
+        EXPECT_EQ(free_count, 0);
+
+        // Test move constructor
+        kamping::ScopedDatatype scoped_type2(std::move(scoped_type));
+        type = scoped_type2.data_type();
+        EXPECT_EQ(type, MPI_DATATYPE_NULL);
+        EXPECT_EQ(commit_count, 0);
+        EXPECT_EQ(free_count, 0);
+    }
+    EXPECT_EQ(free_count, 0);
 }
