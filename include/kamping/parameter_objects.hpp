@@ -353,6 +353,7 @@ class RankDataBuffer {};
 template <ParameterType type>
 class RankDataBuffer<RankType::value, type> final : private DataBuffer<
                                                         size_t,
+                                                        ParameterType,
                                                         type,
                                                         BufferModifiability::modifiable,
                                                         BufferOwnership::owning,
@@ -362,6 +363,7 @@ class RankDataBuffer<RankType::value, type> final : private DataBuffer<
 private:
     using BaseClass = DataBuffer<
         size_t,
+        ParameterType,
         type,
         BufferModifiability::modifiable,
         BufferOwnership::owning,

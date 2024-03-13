@@ -48,11 +48,6 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
-    test_mpi_alltoall_sparse
-    FILES collectives/mpi_alltoall_sparse_test.cpp
-    CORES 1 4
-)
-kamping_register_mpi_test(
     test_mpi_alltoallv
     FILES collectives/mpi_alltoallv_test.cpp
     CORES 1 4
@@ -221,7 +216,11 @@ kamping_register_mpi_test(
 foreach (p ${grid_test_cores})
     set_tests_properties(test_alltoall_grid.${p}cores PROPERTIES TIMEOUT 30)
 endforeach ()
-
+kamping_register_mpi_test(
+    test_alltoall_sparse
+    FILES plugins/alltoall_sparse_test.cpp
+    CORES 1 4
+)
 kamping_register_mpi_test(
     test_hooks
     FILES hooks_test.cpp

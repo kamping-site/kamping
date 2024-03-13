@@ -39,17 +39,6 @@ TEST(NamedParameterTest, select_parameter_type_basics) {
     }
 }
 
-TEST(NamedParameterTest, has_parameter_type_basics) {
-    testing::Argument<ParameterType::send_buf>    arg0{0};
-    testing::Argument<ParameterType::recv_buf>    arg1{1};
-    testing::Argument<ParameterType::send_counts> arg2{2};
-
-    EXPECT_TRUE(has_parameter_type<ParameterType::send_buf>(arg0, arg1, arg2));
-    EXPECT_TRUE(has_parameter_type<ParameterType::recv_buf>(arg0, arg1, arg2));
-    EXPECT_TRUE(has_parameter_type<ParameterType::send_counts>(arg0, arg1, arg2));
-    EXPECT_FALSE(has_parameter_type<ParameterType::root>(arg0, arg1, arg2));
-}
-
 TEST(NamedParameterTest, has_parameter_type_basics_compile_time) {
     testing::Argument<ParameterType::send_buf>    arg0{0};
     testing::Argument<ParameterType::recv_buf>    arg1{1};

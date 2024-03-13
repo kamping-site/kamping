@@ -382,7 +382,7 @@ struct parameters_to_integral_constant {
 /// buffer.
 template <ParameterType parameter_type, typename... Args>
 static constexpr bool is_parameter_given_as_in_buffer = []() {
-    constexpr size_t found_pos = find_pos<parameter_type, 0, Args...>();
+    constexpr size_t found_pos = find_pos<std::integral_constant<ParameterType, parameter_type>, 0, Args...>();
     if constexpr (found_pos >= sizeof...(Args)) {
         return false;
     } else {

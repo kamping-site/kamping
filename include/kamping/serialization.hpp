@@ -134,6 +134,7 @@ template <typename Archive = cereal::BinaryOutputArchive, typename Allocator = s
 auto as_serialized(T const& data) {
     internal::GenericDataBuffer<
         T,
+        internal::ParameterType,
         internal::ParameterType::send_buf,
         internal::BufferModifiability::constant,
         internal::BufferOwnership::referencing,
@@ -162,6 +163,7 @@ auto as_serialized(T&& data) {
     if constexpr (std::is_rvalue_reference_v<T&&>) {
         internal::GenericDataBuffer<
             std::remove_reference_t<T>,
+            internal::ParameterType,
             internal::ParameterType::send_recv_buf,
             internal::BufferModifiability::modifiable,
             internal::BufferOwnership::owning,
@@ -171,6 +173,7 @@ auto as_serialized(T&& data) {
     } else {
         internal::GenericDataBuffer<
             std::remove_reference_t<T>,
+            internal::ParameterType,
             internal::ParameterType::send_recv_buf,
             internal::BufferModifiability::modifiable,
             internal::BufferOwnership::referencing,
@@ -191,6 +194,7 @@ template <typename T, typename Archive = cereal::BinaryInputArchive, typename Al
 auto as_deserializable() {
     internal::GenericDataBuffer<
         T,
+        internal::ParameterType,
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferOwnership::owning,
@@ -212,6 +216,7 @@ auto as_deserializable(T&& object) {
     if constexpr (std::is_rvalue_reference_v<T&&>) {
         internal::GenericDataBuffer<
             std::remove_reference_t<T>,
+            internal::ParameterType,
             internal::ParameterType::recv_buf,
             internal::BufferModifiability::modifiable,
             internal::BufferOwnership::owning,
@@ -221,6 +226,7 @@ auto as_deserializable(T&& object) {
     } else {
         internal::GenericDataBuffer<
             std::remove_reference_t<T>,
+            internal::ParameterType,
             internal::ParameterType::recv_buf,
             internal::BufferModifiability::modifiable,
             internal::BufferOwnership::referencing,

@@ -98,48 +98,6 @@ auto send_buf(std::initializer_list<T> data) {
         BufferResizePolicy::no_resize>(std::move(data));
 }
 
-/// @brief Generates buffer wrapper based on the data in the sparse send buffer.
-/// \param data is a container consisting of destination-message pairs. Each
-/// such pair has to be decomposable via structured bindings with the first parameter being convertible to int and the
-/// second parameter being the actual message to be sent for which we require the usual send_buf properties (i.e.,
-/// either scalar types or existance  of a `data()` and `size()` member function and the exposure of a `value_type`))
-///
-/// @tparam Data Data type representing the element(s) to send.
-/// @return Object referring to the storage containing the data elements to send.
-template <typename Data>
-auto sparse_send_buf(Data&& data) {
-    using namespace internal;
-    constexpr BufferOwnership ownership =
-        std::is_rvalue_reference_v<Data&&> ? BufferOwnership::owning : BufferOwnership::referencing;
-
-    return GenericDataBuffer<
-        std::remove_reference_t<Data>,
-        internal::ParameterType::sparse_send_buf,
-        BufferModifiability::constant,
-        ownership,
-        BufferType::in_buffer>(std::forward<Data>(data));
-}
-
-/// @brief Generates wrapper for an callback to be called on the probed messages in \ref
-/// Communicator::alltoallv_sparse(). Its call operator has to accept a \ref kamping::ProbedMessage as sole parameter.
-template <typename Callback>
-auto on_message(Callback&& cb) {
-    using namespace internal;
-    constexpr BufferOwnership ownership =
-        std::is_rvalue_reference_v<Callback&&> ? BufferOwnership::owning : BufferOwnership::referencing;
-
-    constexpr internal::BufferModifiability modifiability = std::is_const_v<std::remove_reference_t<Callback>>
-                                                                ? internal::BufferModifiability::constant
-                                                                : internal::BufferModifiability::modifiable;
-
-    return GenericDataBuffer<
-        std::remove_reference_t<Callback>,
-        internal::ParameterType::on_message,
-        modifiability,
-        ownership,
-        BufferType::in_buffer>(std::forward<Callback>(cb));
-}
-
 /// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
 /// and the root() of the operation. This buffer type may encapsulate const data and in which case it can only be used
 /// as the send buffer. For some functions (e.g. bcast), you have to pass a send_recv_buf as the send buffer.

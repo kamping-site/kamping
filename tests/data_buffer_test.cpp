@@ -582,6 +582,7 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
             int,
+            ParameterType,
             ParameterType::send_buf,
             BufferModifiability::modifiable,
             BufferOwnership::owning,
@@ -593,6 +594,7 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
             int,
+            ParameterType,
             ParameterType::send_buf,
             BufferModifiability::modifiable,
             BufferOwnership::owning,
@@ -604,6 +606,7 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         !has_extract_v<DataBuffer<
             int,
+            ParameterType,
             ParameterType::send_buf,
             BufferModifiability::modifiable,
             BufferOwnership::referencing,
