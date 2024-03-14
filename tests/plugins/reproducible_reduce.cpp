@@ -15,6 +15,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_check.hpp"
+#include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/named_parameters_detail/status_parameters.hpp"
 #include "kamping/p2p/isend.hpp"
@@ -243,24 +244,30 @@ public:
     template <typename... Args>
     const T reproducible_reduce(Args... args) {
         using namespace kamping;
-        KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS());
+        KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS());
 
         // get send buffer
         auto&& send_buf =
             internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
+        auto&& send_recv_type = internal::determine_mpi_send_recv_datatype<send_value_type, decltype(send_buf)>(args...);
 
         static_assert(
             std::is_same_v<std::remove_const_t<send_value_type>, T>,
             "send type must be equal to the type used during Communicator initiation"
         );
 
-        return _perform_reduce(send_buf.data());
+        // Get the operation used for the reduction. The signature of the provided function is checked while building.
+        auto& operation_param = internal::select_parameter_type<internal::ParameterType::op>(args...);
+        // If you want to understand the syntax of the following line, ignore the "template " ;-)
+        auto operation = operation_param.template build_operation<send_value_type>();
+
+        return _perform_reduce(send_buf.data(), operation, send_recv_type.get_single_element());
     }
 
 private:
-    //template <typename F>
-    const T _perform_reduce(const T *buffer) {
+    template <typename F>
+    const T _perform_reduce(const T *buffer, F op, MPI_Datatype type) {
         for (auto const index: _rank_intersecting_elements) {
             if (tree_subtree_size(index) > 16) {
                 // If we are about to do some considerable amount of work, make sure
@@ -268,7 +275,8 @@ private:
                 _message_buffer.flush();
             }
             const auto target_rank = tree_rank_from_index_map(_start_indices, tree_parent(index));
-            _message_buffer.put(target_rank, index, _perform_reduce(index, buffer));
+            const T value = _perform_reduce(index, buffer, op, type);
+            _message_buffer.put(target_rank, index, value);
         }
 
         _message_buffer.flush();
@@ -276,7 +284,7 @@ private:
 
         T result;
         if (_comm.rank() == _origin_rank) {
-            result = _perform_reduce(0, buffer);
+            result = _perform_reduce(0, buffer, op, type);
         }
 
         _comm.bcast_single(kamping::send_recv_buf(result));
@@ -284,8 +292,10 @@ private:
         return result;
     }
 
-    //template <typename F>
-    const T _perform_reduce(const size_t index, const T *buffer) {
+    template <typename R> class TD {};
+    template <typename F>
+    const T _perform_reduce(const size_t index, const T *buffer, F op, MPI_Datatype type) {
+        //TD<F> a;
         if ((index & 1) == 1) {
             return buffer[index - _region_begin];
         }
@@ -309,7 +319,10 @@ private:
 
             for (size_t x = 0; x + 2 <= elements_in_buffer; x += 2) {
                 // TODO: actually apply operation from parameters.
-                destination_buffer[elements_written++] = source_buffer[x] + source_buffer[x + 1];
+                const T a = source_buffer[x];
+                T b = source_buffer[x + 1];
+                MPI_Reduce_local(&a, &b, 1, type, op.op());
+                destination_buffer[elements_written++] = b;
             }
             const size_t remaining_elements = elements_in_buffer - 2 * elements_written;
             KASSERT(0 <= remaining_elements && remaining_elements <= 1);
@@ -317,18 +330,17 @@ private:
             if (remaining_elements == 1) {
                 const auto indexA = index + (elements_in_buffer - 1) * stride;
                 const auto indexB = indexA + stride;
-                printf("[rank %li] Computed indexA = %li, indexB = %li (max_x = %li)\n", _comm.rank(), indexA, indexB, max_x);
-                fflush(stdout);
 
                 const T elementA = source_buffer[elements_in_buffer - 1];
                 if (indexB > max_x) {
                     // This element is the last because the subtree ends here
                     destination_buffer[elements_written++] = elementA;
                 } else {
+                    
                     const auto source_rank = tree_rank_from_index_map(_start_indices, indexB);
-                    printf("Getting index %li from rank %li.\n", indexB, source_rank);
-                    const T elementB = _message_buffer.get(source_rank, indexB);
-                    destination_buffer[elements_written++] = elementA + elementB;
+                    T elementB = _message_buffer.get(source_rank, indexB);
+                    MPI_Reduce_local(&elementA, &elementB, 1, type, op.op());
+                    destination_buffer[elements_written++] = elementB;
                 }
             }
 
@@ -505,8 +517,6 @@ TEST(ReproducibleReduceTest, TreeRankCalculation) {
 }
 
 
-
-
 void attach_debugger(bool);
 
 TEST(ReproducibleReduceTest, PluginInit) {
@@ -552,7 +562,8 @@ TEST(ReproducibleReduceTest, PluginInit) {
     const auto reference_val = std::reduce(test_array.begin(), test_array.end(), 0.0, std::plus<>());
     std::cout << "Reference sum: " << reference_val << "\n";
     auto v = reproducible_comm.reproducible_reduce(
-            kamping::send_buf(local_array));
+            kamping::send_buf(local_array),
+            kamping::op(kamping::ops::plus<double>{}));
     std::cout << "Computed sum: " << v << "\n";
 
     EXPECT_EQ(v, reference_val);
