@@ -1,3 +1,4 @@
+#include "gmock/gmock.h"
 #include <functional>
 #include <iostream>
 #include <map>
@@ -6,6 +7,7 @@
 #include <vector>
 #include <memory>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -16,19 +18,28 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/named_parameters_detail/status_parameters.hpp"
 #include "kamping/p2p/isend.hpp"
+#include "kamping/p2p/recv.hpp"
 #include "kamping/collectives/bcast.hpp"
+#include "kamping/collectives/scatter.hpp"
 #include "kamping/plugin/plugin_helpers.hpp"
 
 using kamping::BufferResizePolicy;
 
 // Binary Tree Reduce
+namespace repr_reduce {
 
 // MessageBuffer
 template <typename T>/*{{{*/
+
 struct MessageBufferEntry {
     size_t index;
     T      value;
 };
+
+/*
+template <typename T>
+using MessageBufferEntry = std::pair<size_t, T>;
+*/
 
 const uint8_t MAX_MESSAGE_LENGTH    = 4;
 int const     MESSAGEBUFFER_MPI_TAG = 1;
@@ -38,18 +49,22 @@ template<typename T> class TD;
 
 template <typename T, template <typename...> typename DefaultContainerType>
 class MessageBuffer {
+// TODO: how to shorten this result type
 using ResultType = kamping::NonBlockingResult<kamping::MPIResult<>, kamping::internal::DataBuffer<kamping::Request,kamping::internal::ParameterType::request, kamping::internal::BufferModifiability::modifiable, kamping::internal::BufferOwnership::owning, kamping::internal::BufferType::out_buffer, kamping::BufferResizePolicy::no_resize, kamping::internal::BufferAllocation::lib_allocated, kamping::internal::default_value_type_tag>>;
+
 public:
     MessageBuffer(kamping::Communicator<DefaultContainerType> const& comm)
         : _inbox(),
           _target_rank(-1),
+          _outbox(),
+          _buffer(),
           _awaited_numbers(0),
           _sent_messages(0),
           _sent_elements(0),
           _send_buffer_clear(true),
           _comm(comm) {
         _outbox.reserve(MAX_MESSAGE_LENGTH + 1);
-        _buffer.reserve(MAX_MESSAGE_LENGTH);
+        _buffer.reserve(MAX_MESSAGE_LENGTH + 1);
     }
 
     void receive(int const source_rank) {
@@ -57,8 +72,7 @@ public:
             kamping::recv_buf<BufferResizePolicy::resize_to_fit>(_buffer),
             kamping::tag(MESSAGEBUFFER_MPI_TAG),
             kamping::source(source_rank),
-            kamping::recv_count(sizeof(MessageBufferEntry<T>) * MAX_MESSAGE_LENGTH),
-            kamping::status_out()
+            kamping::recv_count(MAX_MESSAGE_LENGTH * sizeof(MessageBufferEntry<T>))
         );
 
         // Extract values from the message
@@ -77,8 +91,6 @@ public:
             kamping::tag(MESSAGEBUFFER_MPI_TAG),
             kamping::request()
         ));
-        //TD<decltype(m_request)> a;
-
 
         ++_sent_messages;
 
@@ -105,7 +117,10 @@ public:
             _target_rank = target_rank;
         }
 
-        _outbox.emplace_back(index, value);
+        KASSERT(_outbox.size() < _outbox.capacity());
+        KASSERT(_outbox.capacity() > 0);
+        MessageBufferEntry<T> entry { index, value };
+        _outbox.push_back(entry);
 
         if (_outbox.size() >= MAX_MESSAGE_LENGTH)
             flush();
@@ -147,6 +162,51 @@ protected:
     kamping::Communicator<DefaultContainerType> const&    _comm;
 };/*}}}*/
 
+// Helper functions
+
+inline auto tree_parent(const size_t i) {
+    KASSERT(i != 0);
+
+    // Clear least significand set bit
+    return i & (i - 1);
+}
+
+inline auto tree_subtree_size(const size_t i) {
+    auto const largest_child_index {i | (i - 1)};
+    return largest_child_index + 1 - i;
+}
+
+inline auto tree_rank_from_index_map(const std::map<size_t, size_t>& start_indices, 
+        const size_t index) {
+    // Get an iterator to the start index that is greater than index
+    auto it = start_indices.upper_bound(index);
+    KASSERT(it != start_indices.begin());
+    --it;
+
+    return kamping::asserting_cast<size_t>(it->second);
+}
+
+inline auto tree_rank_intersecting_elements(const size_t region_begin, const size_t region_end) {
+    std::vector<size_t> result;
+
+    const size_t region_size = region_end - region_begin;
+
+    if (region_begin == 0 || region_size == 0) {
+        return result;
+    }
+
+    size_t index{region_begin};
+    while (index < region_end) {
+        if (index > 0) {
+            KASSERT(tree_parent(index) < region_begin);
+        }
+        result.push_back(index);
+        index += tree_subtree_size(index);
+    }
+
+    return result;
+}
+
 template <typename T, template <typename...> typename DefaultContainerType>
 class ReproducibleCommunicator {
 public:
@@ -173,17 +233,17 @@ public:
           _region_begin{region_begin},
           _region_size{region_size},
           _region_end{region_begin + region_size},
-          _global_size{start_indices.end()->second},
-          _origin_rank{_global_size == 0 ? 0 : static_cast<int>(_rank_from_index_map(0))},
+          _global_size{(--start_indices.end())->first},
+          _origin_rank{_global_size == 0 ? 0UL : tree_rank_from_index_map(_start_indices, 0)},
           _comm{init_comm(comm)},
-          _rank_intersecting_elements(_calculate_rank_intersecting_elements()),
+          _rank_intersecting_elements(tree_rank_intersecting_elements(_region_begin, _region_end)),
           _reduce_buffer(_region_size),
           _message_buffer(_comm) {}
 
     template <typename... Args>
     const T reproducible_reduce(Args... args) {
         using namespace kamping;
-        KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS());
+        KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf), KAMPING_OPTIONAL_PARAMETERS());
 
         // get send buffer
         auto&& send_buf =
@@ -195,9 +255,6 @@ public:
             "send type must be equal to the type used during Communicator initiation"
         );
 
-        auto& operation_param = internal::select_parameter_type<internal::ParameterType::op>(args...);
-        auto operation = operation_param.template build_operation<send_value_type>();
-
         return _perform_reduce(send_buf.data());
     }
 
@@ -205,12 +262,13 @@ private:
     //template <typename F>
     const T _perform_reduce(const T *buffer) {
         for (auto const index: _rank_intersecting_elements) {
-            if (_subtree_size(index) > 16) {
+            if (tree_subtree_size(index) > 16) {
                 // If we are about to do some considerable amount of work, make sure
                 // the send buffer is empty so noone is waiting for our results
                 _message_buffer.flush();
             }
-            _message_buffer.put(_rank_from_index_map(index), index, _perform_reduce(index, buffer));
+            const auto target_rank = tree_rank_from_index_map(_start_indices, tree_parent(index));
+            _message_buffer.put(target_rank, index, _perform_reduce(index, buffer));
         }
 
         _message_buffer.flush();
@@ -233,9 +291,9 @@ private:
         }
         
         const size_t max_x = (index == 0) ? _global_size - 1
-            : std::min(_global_size - 1, index + _subtree_size(index) - 1);
+            : std::min(_global_size - 1, index + tree_subtree_size(index) - 1);
         const size_t max_y = (index == 0) ? static_cast<size_t>(ceil(log2(_global_size)))
-            : static_cast<size_t>(log2(_subtree_size(index)));
+            : static_cast<size_t>(log2(tree_subtree_size(index)));
 
         const size_t largest_local_index = std::min(max_x, _region_end - 1);
         const auto n_local_elements = largest_local_index + 1 - index;
@@ -246,6 +304,7 @@ private:
 
 
         for (size_t y = 1; y <= max_y; y += 1) {
+            const unsigned int stride = 1 << (y - 1);
             size_t elements_written = 0;
 
             for (size_t x = 0; x + 2 <= elements_in_buffer; x += 2) {
@@ -256,7 +315,21 @@ private:
             KASSERT(0 <= remaining_elements && remaining_elements <= 1);
 
             if (remaining_elements == 1) {
-                destination_buffer[elements_written++] = source_buffer[elements_in_buffer];
+                const auto indexA = index + (elements_in_buffer - 1) * stride;
+                const auto indexB = indexA + stride;
+                printf("[rank %li] Computed indexA = %li, indexB = %li (max_x = %li)\n", _comm.rank(), indexA, indexB, max_x);
+                fflush(stdout);
+
+                const T elementA = source_buffer[elements_in_buffer - 1];
+                if (indexB > max_x) {
+                    // This element is the last because the subtree ends here
+                    destination_buffer[elements_written++] = elementA;
+                } else {
+                    const auto source_rank = tree_rank_from_index_map(_start_indices, indexB);
+                    printf("Getting index %li from rank %li.\n", indexB, source_rank);
+                    const T elementB = _message_buffer.get(source_rank, indexB);
+                    destination_buffer[elements_written++] = elementA + elementB;
+                }
             }
 
             // After first iteration, read only from accumulation buffer
@@ -270,52 +343,16 @@ private:
     }
 
 
-    auto _calculate_rank_intersecting_elements(void) const {
-        std::vector<size_t> result;
-
-        if (_region_begin == 0 || _region_size == 0) {
-            return result;
-        }
-
-        size_t index{0};
-        while (index < _region_end) {
-            KASSERT(_parent(index) < _region_begin);
-            result.push_back(index);
-            index += _subtree_size(index);
-        }
-
-        return result;
-    }
-
-    auto _parent(const size_t i) const {
-        KASSERT(i != 0);
-
-        // clear least significand set bit
-        return i & (i - 1);
-    }
-
-    auto _subtree_size(const size_t i) const {
-        auto const largest_child_index{i | (i - 1)};
-        return largest_child_index + 1 - i;
-    }
-
-    auto _rank_from_index_map(const size_t index) {
-        // Get an iterator to the start index that is greater than index
-        auto it = _start_indices.upper_bound(index);
-        assert(it != _start_indices.begin());
-        --it;
-
-        return kamping::asserting_cast<int>(it->second);
-    }
 
     const std::map<size_t, size_t>                    _start_indices;
     const size_t                                      _region_begin, _region_size, _region_end, _global_size;
-    const int _origin_rank;
+    const size_t _origin_rank;
     const kamping::Communicator<DefaultContainerType> _comm;
     const std::vector<size_t>                         _rank_intersecting_elements;
     std::vector<T> _reduce_buffer;
     MessageBuffer<T, DefaultContainerType> _message_buffer;
 };
+}
 
 // Plugin Code
 template <typename Comm, template <typename...> typename DefaultContainerType>
@@ -370,6 +407,7 @@ auto const& send_counts = internal::select_parameter_type<internal::ParameterTyp
 
         KASSERT(start_indices.find(0) != start_indices.end(), "recv_displs does not have entry for index 0");
         // Verify correctness of index map
+
         for (auto it = start_indices.begin(); it != start_indices.end(); ++it) {
             auto const next = std::next(it);
             if (next == start_indices.end())
@@ -388,7 +426,7 @@ auto const& send_counts = internal::select_parameter_type<internal::ParameterTyp
             );
         }
 
-        return ReproducibleCommunicator<T, DefaultContainerType>(
+        return repr_reduce::ReproducibleCommunicator<T, DefaultContainerType>(
             this->to_communicator(),
             start_indices,
             asserting_cast<size_t>(recv_displs.data()[comm.rank()]),
@@ -397,29 +435,141 @@ auto const& send_counts = internal::select_parameter_type<internal::ParameterTyp
     }
 };
 
-TEST(ReproducibleReduceTest, PluginInit) {
-    kamping::Communicator<std::vector, ReproducibleReducePlugin> comm;
 
+// Reduction tree with 7 indices to further clarify the test cases below
+//
+// │                  
+// ├───────────┐      
+// │           │      
+// ├─────┐     ├─────┐
+// │     │     │     │
+// ├──┐  ├──┐  ├──┐  │
+// │  │  │  │  │  │  │
+// 0  1  2  3  4  5  6
+//          +--------+ region 1
+//    +-----+          region 2
+// +-----------+       region 3
+//
+// |----|-|-----------  distribution
+//    1  0      2       rank
+TEST(ReproducibleReduceTest, TreeParent) {
+    EXPECT_EQ(0, repr_reduce::tree_parent(2));
+    EXPECT_EQ(0, repr_reduce::tree_parent(4));
+    EXPECT_EQ(4, repr_reduce::tree_parent(5));
+    EXPECT_EQ(0, repr_reduce::tree_parent(4));
+    EXPECT_EQ(4, repr_reduce::tree_parent(6));
+}
+
+TEST(ReproducibleReduceTest, TreeSubtreeSize) {
+    EXPECT_EQ(2, repr_reduce::tree_subtree_size(2));
+    EXPECT_EQ(1, repr_reduce::tree_subtree_size(3));
+    EXPECT_EQ(4, repr_reduce::tree_subtree_size(4));
+}
+
+TEST(ReproducibleReduceTest, TreeRankIntersection) {
+    // region 1
+    EXPECT_THAT(
+            repr_reduce::tree_rank_intersecting_elements(3, 6),
+            ::testing::ElementsAre(3, 4));
+
+    // region 2
+    EXPECT_THAT(
+            repr_reduce::tree_rank_intersecting_elements(1, 3),
+            ::testing::ElementsAre(1, 2));
+
+    // region 3
+    EXPECT_THAT(
+            repr_reduce::tree_rank_intersecting_elements(0, 4),
+            ::testing::IsEmpty());
+}
+
+TEST(ReproducibleReduceTest, TreeRankCalculation) {
+    // See introductory comment for visualization of range
+    std::map<size_t, size_t> start_indices {{0, 1}, {2, 0}, {3, 2}, {7,3}};
+    
+    auto calc_rank = [&start_indices](auto i) { return repr_reduce::tree_rank_from_index_map(start_indices, i); };
+
+    EXPECT_EQ(1, calc_rank(0U));
+    EXPECT_EQ(1, calc_rank(1U));
+    EXPECT_EQ(0, calc_rank(2U));
+    EXPECT_EQ(2, calc_rank(3U));
+    EXPECT_EQ(2, calc_rank(4U));
+    EXPECT_EQ(2, calc_rank(5U));
+    EXPECT_EQ(2, calc_rank(6U));
+
+    for (auto i = 7UL; i < 80000; ++i) {
+        EXPECT_EQ(3, calc_rank(i));
+    }
+
+    // TODO: add test for edge cases (empty index map)
+}
+
+
+
+
+void attach_debugger(bool);
+
+TEST(ReproducibleReduceTest, PluginInit) {
     double const        epsilon = std::numeric_limits<double>::epsilon();
     std::vector<double> test_array{1, 1 + epsilon, 2 + epsilon, epsilon, 8, 9};
+
+    kamping::Communicator<std::vector, ReproducibleReducePlugin> comm;
+    if (const auto debug_rank = getenv("DEBUG_MPI_RANK"); debug_rank != nullptr) {
+        attach_debugger(comm.rank() == std::atoi(debug_rank));
+    }
+
 
     int              values_per_rank = test_array.size() / comm.size();
     std::vector<int> send_counts(comm.size(), values_per_rank);
     std::vector<int> recv_displs;
 
-    for (size_t i = 0; i < comm.size(); i++) {
-        recv_displs.push_back(i);
-        i += kamping::asserting_cast<size_t>(send_counts[i]);
+    size_t start_index = 0;
+    for (int i = 0; i < kamping::asserting_cast<int>(comm.size()); i++) {
+        recv_displs.push_back(start_index);
+        start_index += send_counts[i];
     }
+    ASSERT_EQ(recv_displs.size(), comm.size());
+
+    // Distribute test array to individual ranks
+    std::vector<double> local_array;
+    comm.scatterv(
+            kamping::send_buf(test_array),
+            kamping::recv_buf<BufferResizePolicy::resize_to_fit>(local_array),
+            kamping::send_counts(send_counts),
+            kamping::send_displs(recv_displs)
+    );
+
+    printf("Rank %li, arr = {", comm.rank());
+    for (auto v : local_array) {
+        printf("%f, ", v);
+    }
+    printf("}\n");
+
 
     auto reproducible_comm =
         comm.make_reproducible_comm<double>(kamping::recv_displs(recv_displs), kamping::send_counts(send_counts));
 
+    const auto reference_val = std::reduce(test_array.begin(), test_array.end(), 0.0, std::plus<>());
+    std::cout << "Reference sum: " << reference_val << "\n";
     auto v = reproducible_comm.reproducible_reduce(
-            kamping::send_buf(test_array), 
-            kamping::op(std::plus<double>()));
+            kamping::send_buf(local_array));
+    std::cout << "Computed sum: " << v << "\n";
 
-    EXPECT_EQ(v, std::reduce(test_array.begin(), test_array.end(), std::plus<>()));
+    EXPECT_EQ(v, reference_val);
+}
 
+#include <fstream>
+#include <unistd.h>
+void __attribute__((optimize("O0"))) attach_debugger(bool condition) {
+    if (!condition) return;
+    volatile bool attached = false;
 
+    // also write PID to a file
+    std::ofstream os("/tmp/mpi_debug.pid");
+    os << getpid() << "\n";
+    os.close();
+
+    std::cout << "Waiting for debugger to be attached, PID: "
+        << getpid() << "\n";
+    while (!attached) sleep(1);
 }
