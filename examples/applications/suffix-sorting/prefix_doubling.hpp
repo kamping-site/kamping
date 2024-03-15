@@ -1,3 +1,16 @@
+// This file is part of KaMPIng.
+//
+// Copyright 2024 The KaMPIng Authors
+//
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
 #pragma once
 
 #include <algorithm>
@@ -10,7 +23,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "../sample-sort/kamping.hpp"
+#include "./util.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/allreduce.hpp"
 #include "kamping/collectives/exscan.hpp"
@@ -21,35 +34,6 @@
 #include "kamping/p2p/recv.hpp"
 #include "kamping/plugin/sort.hpp"
 #include "kassert/kassert.hpp"
-
-template <typename IndexType>
-struct IR {
-    IndexType index;
-    IndexType rank;
-
-    IR() = default;
-
-    IR(IndexType idx, IndexType r) : index(idx), rank(r) {}
-}; // struct IR
-
-template <typename IndexType>
-struct IRR {
-    IndexType index;
-    IndexType rank1;
-    IndexType rank2;
-
-    IRR() = default;
-
-    IRR(IndexType idx, IndexType r1, IndexType r2) : index(idx), rank1(r1), rank2(r2) {}
-
-    bool operator<(IRR const& other) const {
-        return std::tie(rank1, rank2) < std::tie(other.rank1, other.rank2);
-    }
-
-    bool operator!=(IRR const& other) const {
-        return std::tie(rank1, rank2) != std::tie(other.rank1, other.rank2);
-    }
-}; // struct IRR
 
 template <typename IndexType>
 auto reduce_alphabet(
