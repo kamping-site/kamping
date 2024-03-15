@@ -462,7 +462,7 @@ template <typename Comm, template <typename...> typename DefaultContainerType>
 class GridCommunicator : public plugin::PluginBase<Comm, DefaultContainerType, GridCommunicator> {
 public:
     /// @brief Returns a \ref kamping::plugin::GridCommunicator.
-    auto make_grid_communicator() {
+    auto make_grid_communicator() const {
         return grid::GridCommunicator<DefaultContainerType>(this->to_communicator());
     }
 };

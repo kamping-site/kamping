@@ -22,6 +22,10 @@ add_executable(example_alltoallv_sparse alltoallv_sparse_example.cpp)
 target_link_libraries(example_alltoallv_sparse kamping)
 target_compile_options(example_alltoallv_sparse PRIVATE ${KAMPING_WARNING_FLAGS})
 
+add_executable(example_alltoallv_dispatch alltoallv_dispatch_example.cpp)
+target_link_libraries(example_alltoallv_dispatch kamping)
+target_compile_options(example_alltoallv_dispatch PRIVATE ${KAMPING_WARNING_FLAGS})
+
 add_executable(example_gather gather_example.cpp)
 target_link_libraries(example_gather kamping)
 target_compile_options(example_gather PRIVATE ${KAMPING_WARNING_FLAGS})

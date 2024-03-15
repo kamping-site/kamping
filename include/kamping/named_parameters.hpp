@@ -815,6 +815,7 @@ inline auto tag(EnumType value) {
 /// @param request The request handle.
 inline auto request(Request& request) {
     return internal::make_data_buffer<
+        internal::ParameterType,
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -827,6 +828,7 @@ inline auto request(Request& request) {
 template <typename IndexType>
 inline auto request(PooledRequest<IndexType> request) {
     return internal::make_data_buffer<
+        internal::ParameterType,
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -836,6 +838,7 @@ inline auto request(PooledRequest<IndexType> request) {
 /// @brief Internally allocate a request object and return it to the user.
 inline auto request() {
     return internal::make_data_buffer<
+        internal::ParameterType,
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
