@@ -20,6 +20,8 @@
 #include <random>
 #include <vector>
 
+#include <kamping/utils/flatten.hpp>
+
 #include "kamping/collectives/allgather.hpp"
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/collectives/scan.hpp"
@@ -45,9 +47,8 @@ public:
     /// @param comp Binary comparison function used to determine the order of elements.
     template <typename T, typename Compare = std::less<T>>
     void sort(std::vector<T>& data, Compare comp = Compare{}) {
-        auto&          self               = this->to_communicator();
-        size_t const   local_size         = data.size();
-        size_t const   oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + 1;
+        auto&        self               = this->to_communicator();
+        size_t const oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + (data.size() > 0 ? 1 : 0);
         std::vector<T> local_samples(oversampling_ratio);
         std::sample(
             data.begin(),
@@ -57,17 +58,10 @@ public:
             std::mt19937{self.rank() + self.size()}
         );
 
-        auto global_samples = self.allgather(send_buf(local_samples));
+        auto global_samples = self.allgatherv(send_buf(local_samples));
         pick_splitters(self.size() - 1, oversampling_ratio, global_samples, comp);
-        auto             buckets = build_buckets(data.begin(), data.end(), global_samples, comp);
-        std::vector<int> scounts;
-        data.clear();
-        data.reserve(local_size);
-        for (auto& bucket: buckets) {
-            data.insert(data.end(), bucket.begin(), bucket.end());
-            scounts.push_back(static_cast<int>(bucket.size()));
-        }
-        data = self.alltoallv(send_buf(data), send_counts(scounts));
+        auto buckets = build_buckets(data.begin(), data.end(), global_samples, comp);
+        data = with_flattened(buckets).call([&](auto... flattened) { return self.alltoallv(std::move(flattened)...); });
         std::sort(data.begin(), data.end(), comp);
     }
 
@@ -89,13 +83,13 @@ public:
     void sort(RandomIt begin, RandomIt end, OutputIt out, Compare comp = Compare{}) {
         using ValueType = typename std::iterator_traits<RandomIt>::value_type;
 
-        auto&                  self               = this->to_communicator();
-        size_t const           local_size         = asserting_cast<size_t>(std::distance(begin, end));
-        size_t const           oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + 1;
+        auto&        self               = this->to_communicator();
+        size_t const local_size         = asserting_cast<size_t>(std::distance(begin, end));
+        size_t const oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + (local_size > 0 ? 1 : 0);
         std::vector<ValueType> local_samples(oversampling_ratio);
         std::sample(begin, end, local_samples.begin(), oversampling_ratio, std::mt19937{self.rank() + self.size()});
 
-        auto global_samples = self.allgather(send_buf(local_samples));
+        auto global_samples = self.allgatherv(send_buf(local_samples));
         pick_splitters(self.size() - 1, oversampling_ratio, global_samples, comp);
         auto                   buckets = build_buckets(begin, end, global_samples, comp);
         std::vector<int>       scounts;
