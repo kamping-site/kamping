@@ -49,9 +49,8 @@ inline auto comm_volume_threshold(size_t num_bytes) {
         size_t>(std::move(num_bytes));
 }
 
-} // namespace dispatch_alltoall
-  //
-namespace internal_ {
+//
+namespace internal {
 /// @brief Predicate to check whether an argument provided to alltoallv_dispatch shall be discarded in the internal
 /// calls.
 struct PredicateDispatchAlltoall {
@@ -62,14 +61,13 @@ struct PredicateDispatchAlltoall {
     /// @return \c True (i.e. discard) iff Arg's parameter_type is `volume_threshold`, `send_counts`.
     template <typename Arg>
     static constexpr bool discard() {
-        using namespace kamping;
-        using namespace internal;
-        using ptypes_to_ignore = type_list<
+        using ptypes_to_ignore = kamping::internal::type_list<
             std::integral_constant<
                 dispatch_alltoall::ParameterType,
                 dispatch_alltoall::ParameterType::comm_volume_threshold>,
             std::integral_constant<kamping::internal::ParameterType, kamping::internal::ParameterType::send_counts>>;
-        using ptype_entry = std::integral_constant<parameter_type_t<Arg>, parameter_type_v<Arg>>;
+        using ptype_entry =
+            std::integral_constant<kamping::internal::parameter_type_t<Arg>, kamping::internal::parameter_type_v<Arg>>;
         return ptypes_to_ignore::contains<ptype_entry>;
     }
 };
@@ -82,8 +80,9 @@ auto filter_args_into_tuple(Args&&... args) {
     using ArgsToKeep = typename FilterOut<Predicate, std::tuple<Args...>>::type;
     return construct_buffer_tuple<ArgsToKeep>(args...);
 }
-} // namespace internal_
+} // namespace internal
 
+} // namespace dispatch_alltoall
 /// @brief Plugin providing an alltoallv exchange method which calls one of multiple underlying alltoallv exchange
 /// algorithms depending on the communication volume.
 /// @see \ref DispatchAlltoall::alltoallv_dispatch() for more information.
@@ -143,23 +142,27 @@ public:
         const size_t max_bottleneck_send_volume =
             self.allreduce_single(kamping::send_buf(send_buf.size()), op(ops::max<size_t>{}));
 
+        /// remove comm_volume_threshold and unpacked send_counts from caller provided argument list before forwarding
+        /// it underlying allotall exchanges
+        auto const filter_args = [&]() {
+            return dispatch_alltoall::internal::filter_args_into_tuple<
+                dispatch_alltoall::internal::PredicateDispatchAlltoall>(args...);
+        };
+
         if (max_bottleneck_send_volume * sizeof(send_value_type) < volume_threshold.get_single_element()) {
             // max bottleneck send volume is small ==> use grid exchange
             auto callable = [&](auto... argsargs) {
                 auto grid_comm = self.make_grid_communicator();
                 return grid_comm.alltoallv(kamping::send_counts(send_counts), std::move(argsargs)...);
             };
-            return std::apply(
-                callable,
-                internal_::filter_args_into_tuple<internal_::PredicateDispatchAlltoall>(args...)
-            );
+            return std::apply(callable, filter_args());
         }
 
         // otherwise resort to builtin MPI_Alltoallv.
         auto callable = [&](auto... argsargs) {
             return self.alltoallv(kamping::send_counts(send_counts), std::move(argsargs)...);
         };
-        return std::apply(callable, internal_::filter_args_into_tuple<internal_::PredicateDispatchAlltoall>(args...));
+        return std::apply(callable, filter_args());
     }
 };
 } // namespace kamping::plugin

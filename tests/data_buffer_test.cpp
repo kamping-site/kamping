@@ -1104,9 +1104,12 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         // Modifiable, single element, owning, lib_allocated
         constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
-        auto                              data_buf = internal::
-            make_data_buffer<internal::ParameterType, ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::no_resize>(alloc_new<
-                                                                                                           bool>);
+        auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
+            ptype,
+            BufferModifiability::modifiable,
+            btype,
+            BufferResizePolicy::no_resize>(alloc_new<bool>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
