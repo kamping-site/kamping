@@ -143,8 +143,8 @@ public:
         if (max_bottleneck_send_volume * sizeof(send_value_type) < volume_threshold.get_single_element()) {
             // max bottleneck send volume is small ==> use grid exchange
             auto callable = [&](auto... argsargs) {
-                auto grid_comm = self.make_grid_communicator();
-                return grid_comm.alltoallv(kamping::send_counts(send_counts), std::move(argsargs)...);
+                initialize();
+                return _grid_communicator.value().alltoallv(kamping::send_counts(send_counts), std::move(argsargs)...);
             };
             return std::apply(callable, filter_args());
         }
@@ -155,5 +155,19 @@ public:
         };
         return std::apply(callable, filter_args());
     }
+
+    /// @brief Initialized the grid communicator. If not explicitly called by the user this will be done during the
+    /// first call to alltoallv_dispatch which internally uses grid communication.
+    void initialize() const {
+        if (_grid_communicator.has_value()) {
+            return;
+        } else {
+            _grid_communicator = std::make_optional(this->to_communicator().make_grid_communicator());
+        }
+    }
+
+private:
+    mutable std::optional<grid::GridCommunicator<DefaultContainerType>>
+        _grid_communicator; ///< Grid communicator to use for grid alltoall exchange.
 };
 } // namespace kamping::plugin
