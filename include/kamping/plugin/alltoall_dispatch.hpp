@@ -37,7 +37,7 @@ enum class ParameterType {
 
 /// @brief The threshold for the maximum bottleneck communication volume in number of bytes indicating for when to
 /// switch from grid to builtin alltoall.
-/// @param count The number of elements.
+/// @param num_bytes Threshold volume in number of bytes.
 /// @return The corresponding parameter object.
 inline auto comm_volume_threshold(size_t num_bytes) {
     return internal::make_data_buffer<
