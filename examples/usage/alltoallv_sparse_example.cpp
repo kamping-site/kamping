@@ -21,9 +21,9 @@
 
 #include "helpers_for_examples.hpp"
 #include "kamping/checking_casts.hpp"
-#include "kamping/collectives/sparse_alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/plugin/alltoall_sparse.hpp"
 #include "kamping/span.hpp"
 
 auto random_comm_partners(int comm_size, size_t num_partners) {
@@ -41,8 +41,8 @@ auto random_comm_partners(int comm_size, size_t num_partners) {
 int main() {
     using namespace kamping;
 
-    kamping::Environment e;
-    Communicator         comm;
+    kamping::Environment                              e;
+    Communicator<std::vector, plugin::SparseAlltoall> comm;
 
     // generate sparse exchange messages
     using msg_type = std::vector<double>;
@@ -58,7 +58,10 @@ int main() {
         recv_buf[probed_message.source_signed()] = probed_message.recv();
     };
 
-    comm.alltoallv_sparse(sparse_send_buf(dst_msg_pairs), on_message(cb));
+    comm.alltoallv_sparse(
+        plugin::sparse_alltoall::sparse_send_buf(dst_msg_pairs),
+        plugin::sparse_alltoall::on_message(cb)
+    );
 
     if (comm.is_root()) {
         for (auto const& [source, msg]: recv_buf) {

@@ -35,6 +35,8 @@ kamping_register_test(test_operation_builder FILES operation_builder_test.cpp)
 kamping_register_test(test_has_member FILES has_member_test.cpp)
 kamping_register_test(test_rank_ranges FILES rank_ranges_test.cpp)
 kamping_register_test(test_measurement_utils FILES measurements/measurement_utils_test.cpp)
+kamping_register_test(test_traits FILES utils/traits_test.cpp)
+kamping_register_test(test_scoped_type FILES scoped_type_test.cpp)
 
 # Registering tests with MPI:
 
@@ -43,11 +45,6 @@ kamping_register_test(test_measurement_utils FILES measurements/measurement_util
 kamping_register_mpi_test(
     test_mpi_alltoall
     FILES collectives/mpi_alltoall_test.cpp
-    CORES 1 4
-)
-kamping_register_mpi_test(
-    test_mpi_alltoall_sparse
-    FILES collectives/mpi_alltoall_sparse_test.cpp
     CORES 1 4
 )
 kamping_register_mpi_test(
@@ -78,6 +75,11 @@ kamping_register_mpi_test(
 kamping_register_mpi_test(
     test_mpi_communicator
     FILES mpi_communicator_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
+    test_mpi_group
+    FILES mpi_group_test.cpp
     CORES 1 4
 )
 kamping_register_mpi_test(
@@ -214,7 +216,11 @@ kamping_register_mpi_test(
 foreach (p ${grid_test_cores})
     set_tests_properties(test_alltoall_grid.${p}cores PROPERTIES TIMEOUT 30)
 endforeach ()
-
+kamping_register_mpi_test(
+    test_alltoall_sparse
+    FILES plugins/alltoall_sparse_test.cpp
+    CORES 1 4
+)
 kamping_register_mpi_test(
     test_sort
     FILES plugins/sort_test.cpp
@@ -265,6 +271,11 @@ kamping_register_mpi_test(
     test_serialization
     FILES serialization_test.cpp
     CORES 1 2 4
+)
+kamping_register_mpi_test(
+    test_flatten
+    FILES utils/flatten_test.cpp
+    CORES 1 4
 )
 
 # Tests using C++ 20

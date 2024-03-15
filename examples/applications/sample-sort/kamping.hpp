@@ -16,6 +16,7 @@
 #include <kamping/collectives/allgather.hpp>
 #include <kamping/collectives/alltoall.hpp>
 #include <kamping/communicator.hpp>
+#include <kamping/utils/flatten.hpp>
 
 #include "./common.hpp"
 namespace kamping {
@@ -27,13 +28,8 @@ void sort(MPI_Comm comm_, std::vector<T>& data, seed_type seed) {
     std::sample(data.begin(), data.end(), local_samples.begin(), oversampling_ratio, std::mt19937{seed});
     auto global_samples = comm.allgather(send_buf(local_samples));
     pick_splitters(comm.size() - 1, oversampling_ratio, global_samples);
-    auto             buckets = build_buckets(data, global_samples);
-    std::vector<int> scounts;
-    for (auto& bucket: buckets) {
-        data.insert(data.end(), bucket.begin(), bucket.end());
-        scounts.push_back(static_cast<int>(bucket.size()));
-    }
-    data = comm.alltoallv(send_buf(data), send_counts(scounts));
+    auto buckets = build_buckets(data, global_samples);
+    data = with_flattened(buckets).call([&](auto... flattened) { return comm.alltoallv(std::move(flattened)...); });
     std::sort(data.begin(), data.end());
 }
 } // namespace kamping

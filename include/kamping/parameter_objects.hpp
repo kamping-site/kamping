@@ -61,12 +61,13 @@ struct DataBufferBuilder {
 
 private:
     Data data_;
+
+public:
     using DataBufferType =
         decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
             std::forward<Data>(data_)
-        ));
+        )); ///< The type of the constructed data buffer.
 
-public:
     /// @brief Constructs the data buffer.
     /// @tparam RebindContainerType The container to use for the data buffer (has no effect here).
     /// @tparam Flag A tag type indicating special behavior, e.g., serialization support (@see \ref
@@ -126,7 +127,7 @@ template <
     BufferResizePolicy  buffer_resize_policy>
 struct AllocNewDataBufferBuilder {
     static constexpr ParameterType parameter_type = parameter_type_param; ///< The parameter type.
-private:
+public:
     using DataBufferType =
         decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
             std::conditional_t<
@@ -135,7 +136,7 @@ private:
                                                    // used for determining is_out_buffer, is_owning, etc. and rebinding
                                                    // does not affect this.
                 AllocType>{}
-        ));
+        )); ///< The type of the constructed data buffer (potentially rebinded to std::vector).
 
 public:
     /// @brief Constructs the data buffer.
@@ -352,6 +353,7 @@ class RankDataBuffer {};
 template <ParameterType type>
 class RankDataBuffer<RankType::value, type> final : private DataBuffer<
                                                         size_t,
+                                                        ParameterType,
                                                         type,
                                                         BufferModifiability::modifiable,
                                                         BufferOwnership::owning,
@@ -361,6 +363,7 @@ class RankDataBuffer<RankType::value, type> final : private DataBuffer<
 private:
     using BaseClass = DataBuffer<
         size_t,
+        ParameterType,
         type,
         BufferModifiability::modifiable,
         BufferOwnership::owning,

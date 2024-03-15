@@ -32,6 +32,7 @@ namespace kamping::internal {
 template <typename Container, ParameterType parameter_type, BufferType buffer_type>
 using ContainerBasedConstBuffer = DataBuffer<
     Container,
+    ParameterType,
     parameter_type,
     BufferModifiability::constant,
     BufferOwnership::referencing,
@@ -49,6 +50,7 @@ using ContainerBasedConstBuffer = DataBuffer<
 template <typename Container, ParameterType parameter_type, BufferType buffer_type>
 using ContainerBasedOwningBuffer = DataBuffer<
     Container,
+    ParameterType,
     parameter_type,
     BufferModifiability::constant,
     BufferOwnership::owning,
@@ -68,6 +70,7 @@ using ContainerBasedOwningBuffer = DataBuffer<
 template <typename Container, ParameterType parameter_type, BufferType buffer_type, BufferResizePolicy resize_policy>
 using UserAllocatedContainerBasedBuffer = DataBuffer<
     Container,
+    ParameterType,
     parameter_type,
     BufferModifiability::modifiable,
     BufferOwnership::referencing,
@@ -85,6 +88,7 @@ using UserAllocatedContainerBasedBuffer = DataBuffer<
 template <typename Container, ParameterType parameter_type, BufferType buffer_type>
 using LibAllocatedContainerBasedBuffer = DataBuffer<
     Container,
+    ParameterType,
     parameter_type,
     BufferModifiability::modifiable,
     BufferOwnership::owning,
@@ -102,6 +106,7 @@ using LibAllocatedContainerBasedBuffer = DataBuffer<
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
 using SingleElementConstBuffer = DataBuffer<
     DataType,
+    ParameterType,
     parameter_type,
     BufferModifiability::constant,
     BufferOwnership::referencing,
@@ -118,6 +123,7 @@ using SingleElementConstBuffer = DataBuffer<
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
 using SingleElementOwningBuffer = DataBuffer<
     DataType,
+    ParameterType,
     parameter_type,
     BufferModifiability::constant,
     BufferOwnership::owning,
@@ -132,6 +138,7 @@ using SingleElementOwningBuffer = DataBuffer<
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
 using LibAllocatedSingleElementBuffer = DataBuffer<
     DataType,
+    ParameterType,
     parameter_type,
     BufferModifiability::modifiable,
     BufferOwnership::owning,
@@ -149,6 +156,7 @@ using LibAllocatedSingleElementBuffer = DataBuffer<
 template <typename DataType, ParameterType parameter_type, BufferType buffer_type>
 using SingleElementModifiableBuffer = DataBuffer<
     DataType,
+    ParameterType,
     parameter_type,
     BufferModifiability::modifiable,
     BufferOwnership::referencing,

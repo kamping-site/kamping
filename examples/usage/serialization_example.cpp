@@ -29,7 +29,7 @@ int main() {
     auto const& comm = kamping::comm_world();
     if (comm.rank() == 0) {
         comm.send(kamping::send_buf(kamping::as_serialized(data)), kamping::destination(0));
-        auto result = comm.recv(kamping::recv_buf(kamping::as_deserializable<dict_type>())).deserialize();
+        auto result = comm.recv(kamping::recv_buf(kamping::as_deserializable<dict_type>()));
         for (auto const& [key, value]: result) {
             std::cout << key << " -> " << value << std::endl;
         }

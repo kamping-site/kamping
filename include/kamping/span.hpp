@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <iterator>
 #include <type_traits>
 
 namespace kamping::internal {
@@ -38,23 +40,6 @@ constexpr auto to_address(T const& p) noexcept {
     return to_address(p.operator->());
 }
 } // namespace kamping::internal
-
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) // C++ 20
-
-    #include <span>
-
-namespace kamping {
-
-// std::span is only available in C++ 20 and upwards.
-template <typename T>
-using Span = std::span<T>;
-
-} // namespace kamping
-
-#else // C++ 17
-
-    #include <cstddef>
-    #include <iterator>
 
 namespace kamping {
 
@@ -214,5 +199,3 @@ Span(It, It) -> Span<std::remove_reference_t<typename std::iterator_traits<It>::
 template <typename It>
 Span(It, size_t) -> Span<std::remove_reference_t<typename std::iterator_traits<It>::reference> >;
 } // namespace kamping
-
-#endif // C++ 17
