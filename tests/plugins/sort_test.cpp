@@ -115,23 +115,26 @@ TEST(SortTest, sort_different_number_elements) {
     auto original_data = local_data;
 
     comm.sort(local_data);
-    EXPECT_TRUE(std::is_sorted(local_data.begin(), local_data.end()));
 
-    std::array<int32_t, 2> borders = {local_data.front(), local_data.back()};
+    if (local_data.size() > 0) {
+        EXPECT_TRUE(std::is_sorted(local_data.begin(), local_data.end()));
 
-    auto all_borders = comm.allgather(send_buf(borders));
-    EXPECT_TRUE(std::is_sorted(all_borders.begin(), all_borders.end()));
+        std::array<int32_t, 2> borders = {local_data.front(), local_data.back()};
 
-    auto total_expected_size = comm.allreduce_single(send_buf(local_size), op(ops::plus<>()));
-    auto total_size          = comm.allreduce_single(send_buf(local_data.size()), op(ops::plus<>()));
-    EXPECT_EQ(total_size, total_expected_size);
+        auto all_borders = comm.allgather(send_buf(borders));
+        EXPECT_TRUE(std::is_sorted(all_borders.begin(), all_borders.end()));
 
-    auto all_sorted_data   = comm.gatherv(send_buf(local_data));
-    auto all_original_data = comm.gatherv(send_buf(original_data));
-    std::sort(all_original_data.begin(), all_original_data.end());
-    ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
-    for (size_t i = 0; i < all_original_data.size(); ++i) {
-        EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
+        auto total_expected_size = comm.allreduce_single(send_buf(local_size), op(ops::plus<>()));
+        auto total_size          = comm.allreduce_single(send_buf(local_data.size()), op(ops::plus<>()));
+        EXPECT_EQ(total_size, total_expected_size);
+
+        auto all_sorted_data   = comm.gatherv(send_buf(local_data));
+        auto all_original_data = comm.gatherv(send_buf(original_data));
+        std::sort(all_original_data.begin(), all_original_data.end());
+        ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
+        for (size_t i = 0; i < all_original_data.size(); ++i) {
+            EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
+        }
     }
 }
 
