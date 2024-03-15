@@ -151,10 +151,11 @@ auto type_dispatcher() {
         // all other trivially copyable types are mapped to a sequence of bytes
         return byte_serialized<T_no_const>{};
     } else {
+        constexpr bool type_not_supported = std::is_trivially_copyable_v<T_no_const>;
         static_assert(
             // this should always evaluate to false
-            !std::is_trivially_copyable_v<T_no_const>,
-            "Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
+            type_not_supported,
+            "\n --> Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
         );
     }
 }
