@@ -12,6 +12,8 @@
 // <https://www.gnu.org/licenses/>.
 #pragma once
 
+#include <kamping/named_parameter_filtering.hpp>
+
 namespace kamping::plugin {
 
 /// @brief Helper class for using CRTP for mixins. Which are used to implement kamping plugins.
@@ -43,5 +45,14 @@ private:
     friend PluginClass<CommunicatorClass, DefaultContainerType>; // this allows only the class inheriting from \c
                                                                  // PluginBase to access the functions of this class.
 };
+
+/// @brief Filter the arguments \tparam Args for which the static member function `discard()` of \tparam Predicate
+/// returns true and pack (move) remaining arguments into a tuple.
+template <typename Predicate, typename... Args>
+auto filter_args_into_tuple(Args&&... args) {
+    using namespace kamping::internal;
+    using ArgsToKeep = typename FilterOut<Predicate, std::tuple<Args...>>::type;
+    return construct_buffer_tuple<ArgsToKeep>(args...);
+}
 
 } // namespace kamping::plugin

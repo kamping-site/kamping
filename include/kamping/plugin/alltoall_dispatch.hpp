@@ -72,14 +72,6 @@ struct PredicateDispatchAlltoall {
     }
 };
 
-/// @brief Filter the arguments \tparam Args for which the static member function `discard()` of \tparam Predicate
-/// returns true and pack (move) remaining arguments into
-template <typename Predicate, typename... Args>
-auto filter_args_into_tuple(Args&&... args) {
-    using namespace kamping::internal;
-    using ArgsToKeep = typename FilterOut<Predicate, std::tuple<Args...>>::type;
-    return construct_buffer_tuple<ArgsToKeep>(args...);
-}
 } // namespace internal
 
 } // namespace dispatch_alltoall
@@ -145,8 +137,7 @@ public:
         /// remove comm_volume_threshold and unpacked send_counts from caller provided argument list before forwarding
         /// it underlying allotall exchanges
         auto const filter_args = [&]() {
-            return dispatch_alltoall::internal::filter_args_into_tuple<
-                dispatch_alltoall::internal::PredicateDispatchAlltoall>(args...);
+            return filter_args_into_tuple<dispatch_alltoall::internal::PredicateDispatchAlltoall>(args...);
         };
 
         if (max_bottleneck_send_volume * sizeof(send_value_type) < volume_threshold.get_single_element()) {
