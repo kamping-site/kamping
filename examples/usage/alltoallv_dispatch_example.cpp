@@ -44,7 +44,7 @@ int main() {
     {
         // set another threshold for the maximal communication volume for when to switch from grid to builtin alltoall
         auto [recv_buf, recv_counts] =
-            comm.alltoallv_dispatch(send_buf(data), send_counts(counts), volume_threshold(10), recv_counts_out());
+            comm.alltoallv_dispatch(send_buf(data), send_counts(counts), comm_volume_threshold(10), recv_counts_out());
     }
     return 0;
 }

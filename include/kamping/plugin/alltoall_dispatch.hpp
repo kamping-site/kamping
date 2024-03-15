@@ -32,17 +32,17 @@ namespace dispatch_alltoall {
 
 /// @brief Parameter types used for the DispatchAlltoall plugin.
 enum class ParameterType {
-    volume_threshold ///< Tag used to the communication volume threshold to use within alltoall_dispatch.
+    comm_volume_threshold ///< Tag used to the communication volume threshold to use within alltoall_dispatch.
 };
 
 /// @brief The threshold for the maximum bottleneck communication volume in number of bytes indicating for when to
 /// switch from grid to builtin alltoall.
 /// @param count The number of elements.
 /// @return The corresponding parameter object.
-inline auto volume_threshold(size_t num_bytes) {
+inline auto comm_volume_threshold(size_t num_bytes) {
     return internal::make_data_buffer<
         ParameterType,
-        ParameterType::volume_threshold,
+        ParameterType::comm_volume_threshold,
         internal::BufferModifiability::constant,
         internal::BufferType::in_buffer,
         BufferResizePolicy::no_resize,
@@ -65,8 +65,9 @@ struct PredicateDispatchAlltoall {
         using namespace kamping;
         using namespace internal;
         using ptypes_to_ignore = type_list<
-            std::
-                integral_constant<dispatch_alltoall::ParameterType, dispatch_alltoall::ParameterType::volume_threshold>,
+            std::integral_constant<
+                dispatch_alltoall::ParameterType,
+                dispatch_alltoall::ParameterType::comm_volume_threshold>,
             std::integral_constant<kamping::internal::ParameterType, kamping::internal::ParameterType::send_counts>>;
         using ptype_entry = std::integral_constant<parameter_type_t<Arg>, parameter_type_v<Arg>>;
         return ptypes_to_ignore::contains<ptype_entry>;
@@ -103,9 +104,9 @@ public:
     /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
     ///
     /// The following buffers are optional:
-    /// - \ref dispatch_alltoall::volume_threshold() containing the threshold for the maximum bottleneck communication
-    /// volume in bytes indicating to switch from grid to builtin alltoall exchange. If ommitted, a threshold value of
-    /// 2000 bytes is used.
+    /// - \ref dispatch_alltoall::comm_volume_threshold() containing the threshold for the maximum bottleneck
+    /// communication volume in bytes indicating to switch from grid to builtin alltoall exchange. If ommitted, a
+    /// threshold value of 2000 bytes is used.
     /// - \ref kamping::recv_counts() containing the number of elements to receive from each rank.
     /// This parameter is mandatory if \ref kamping::recv_type() is given.
     ///
@@ -127,13 +128,14 @@ public:
                                       .template construct_buffer_or_rebind<DefaultContainerType>();
 
         // get send communication volume threshold for when to switch from grid to builtin alltoall
-        using volume_threshold_param_type = std::
-            integral_constant<dispatch_alltoall::ParameterType, dispatch_alltoall::ParameterType::volume_threshold>;
+        using volume_threshold_param_type = std::integral_constant<
+            dispatch_alltoall::ParameterType,
+            dispatch_alltoall::ParameterType::comm_volume_threshold>;
         constexpr size_t volume_threshold_default_value = 2000;
-        using default_volume_threshold_type =
-            decltype(dispatch_alltoall::volume_threshold(volume_threshold_default_value));
+        using default_comm_volume_threshold_type =
+            decltype(dispatch_alltoall::comm_volume_threshold(volume_threshold_default_value));
         auto const& volume_threshold =
-            internal::select_parameter_type_or_default<volume_threshold_param_type, default_volume_threshold_type>(
+            internal::select_parameter_type_or_default<volume_threshold_param_type, default_comm_volume_threshold_type>(
                 std::tuple(volume_threshold_default_value),
                 args...
             );
