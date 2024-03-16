@@ -20,9 +20,11 @@
 #include "helpers_for_examples.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/allgather.hpp"
+#include "kamping/collectives/alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/graph_communicator.hpp"
 #include "kamping/named_parameters.hpp"
 
 int main() {
@@ -32,8 +34,16 @@ int main() {
     std::vector<int>      input(comm.size(), comm.rank_signed());
     std::vector<int>      output;
 
-    comm.allgather(send_buf(input), recv_buf(output));
+    comm.allgather(send_buf(input), recv_buf<resize_to_fit>(output));
     print_result(output, comm);
+
+    std::vector<int> edges{
+        (comm.rank_signed() - 1 + comm.size_signed()) % comm.size_signed(),
+        (comm.rank_signed() + 1) % comm.size_signed()};
+    kamping::GraphCommunicator graph_comm(comm, edges);
+    std::vector<int>           data{1, 2, 3, 4};
+    auto result = graph_comm.neighbor_alltoall(send_buf({comm.rank(), comm.rank()}), send_count(1));
+    std::cout << graph_comm.rank() << " " << result.front() << std::endl;
 
     return 0;
 }
