@@ -59,7 +59,13 @@ public:
     /// @brief Constructor where an MPI communicator has to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
     /// @param take_ownership Whether the Communicator should take ownership of comm, i.e. free it in the destructor.
-    explicit Communicator(MPI_Comm comm, bool take_ownership = false) : Communicator(comm, 0, take_ownership) {}
+    explicit Communicator(MPI_Comm comm, bool take_ownership = false) : Communicator(comm, 0, take_ownership) {
+        int status;
+        MPI_Topo_test(comm, &status);
+        std::cout << rank() << "res_commmmmm: " << (status == MPI_DIST_GRAPH) << std::endl;
+        MPI_Topo_test(_comm, &status);
+        std::cout << rank() << "res__commmmmm: " << (status == MPI_DIST_GRAPH) << std::endl;
+    }
 
     /// @brief Constructor where an MPI communicator and the default root have to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
@@ -631,6 +637,7 @@ private:
         mpi_error_default_handler(error_code, callee);
     }
 
+protected:
     size_t   _rank; ///< Rank of the MPI process in this communicator.
     size_t   _size; ///< Number of MPI processes in this communicator.
     MPI_Comm _comm; ///< Corresponding MPI communicator.

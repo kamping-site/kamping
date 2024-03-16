@@ -20,9 +20,11 @@
 #include "helpers_for_examples.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/allgather.hpp"
+#include "kamping/collectives/alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/graph_communicator.hpp"
 #include "kamping/named_parameters.hpp"
 
 int main() {
