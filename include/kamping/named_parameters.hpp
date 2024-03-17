@@ -608,7 +608,7 @@ template <
     BufferResizePolicy resize_policy = BufferResizePolicy::no_resize,
     typename Container,
     typename Enable = std::enable_if_t<!internal::is_serialization_buffer_v<Container>>>
-auto recv_buf(Container&& container) {
+auto recv_buf_out(Container&& container) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
@@ -616,16 +616,43 @@ auto recv_buf(Container&& container) {
         resize_policy>(std::forward<Container>(container));
 }
 
+/// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
+/// will contain the received elements when the \c MPI call has been completed.
+/// The underlying container must provide \c data() and
+/// \c size() member functions and expose the contained \c value_type. If a resize policy other than
+/// BufferResizePolicy::do_not_resize is selected, the container must also provide a \c resize() member function.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
+/// @tparam Container Container type which contains the received elements.
+/// @param container Container which will contain the received elements.
+/// @return Object referring to the storage containing the received elements.
+/// @see Alias for \ref recv_buf_out(Container&&).
+template <
+    BufferResizePolicy resize_policy = BufferResizePolicy::no_resize,
+    typename Container,
+    typename Enable = std::enable_if_t<!internal::is_serialization_buffer_v<Container>>>
+auto recv_buf(Container&& container) {
+    return recv_buf_out<resize_policy>(std::forward<Container>(container));
+}
+
 /// @brief A recv buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_deserialized().
 template <
     typename SerializationBufferType,
     typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>
-auto recv_buf(SerializationBufferType&& buffer) {
+auto recv_buf_out(SerializationBufferType&& buffer) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         BufferResizePolicy::resize_to_fit>(std::forward<SerializationBufferType>(buffer));
+}
+
+/// @brief A recv buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_deserialized().
+/// @see Alias for \ref recv_buf_out(SerializationBufferType&&).
+template <
+    typename SerializationBufferType,
+    typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>
+auto recv_buf(SerializationBufferType&& buffer) {
+    return recv_buf_out(std::forward<SerializationBufferType>(buffer));
 }
 
 /// @brief Generates a buffer wrapper based on a library allocated container for the receive buffer.
@@ -635,7 +662,7 @@ auto recv_buf(SerializationBufferType&& buffer) {
 /// size() and \c resize() member functions and expose the contained \c value_type.
 /// @return Object referring to the storage containing the received elements.
 template <typename Data>
-auto recv_buf(AllocNewT<Data>) {
+auto recv_buf_out(AllocNewT<Data>) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
@@ -643,16 +670,37 @@ auto recv_buf(AllocNewT<Data>) {
         internal::maximum_viable_resize_policy<Data>>(alloc_new<Data>);
 }
 
+/// @brief Generates a buffer wrapper based on a library allocated container for the receive buffer.
+/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
+/// contained \c value_type
+/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
+/// size() and \c resize() member functions and expose the contained \c value_type.
+/// @return Object referring to the storage containing the received elements.
+/// @see Alias for \ref recv_buf_out(AllocNewT<Data>).
+template <typename Data>
+auto recv_buf(AllocNewT<Data> tag) {
+    return recv_buf_out(tag);
+}
+
 /// @brief Construct a recv buffer using \p ValueType as the underlying value type. The kind of container is determined
 /// by the MPI operation and usually defaults to \ref Communicator::default_container_type.
 /// @tparam ValueType The type of the elements in the buffer.
 template <typename ValueType>
-auto recv_buf(AllocContainerOfT<ValueType>) {
+auto recv_buf_out(AllocContainerOfT<ValueType>) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_buf,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         resize_to_fit>(alloc_container_of<ValueType>);
+}
+
+/// @brief Construct a recv buffer using \p ValueType as the underlying value type. The kind of container is determined
+/// by the MPI operation and usually defaults to \ref Communicator::default_container_type.
+/// @tparam ValueType The type of the elements in the buffer.
+/// @see Alias for \ref recv_buf_out(AllocContainerOfT<ValueType>).
+template <typename ValueType>
+auto recv_buf(AllocContainerOfT<ValueType> tag) {
+    return recv_buf_out(tag);
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
