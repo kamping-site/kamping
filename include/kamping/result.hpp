@@ -665,7 +665,7 @@ struct PrependParameterType {
 /// @param buffers data buffers created/filled within the wrapped MPI call.
 /// @return result object as specified above.
 ///
-/// @see \ref docs/named_parameters.md
+/// @see \ref docs/parameter_handling.md
 template <typename CallerProvidedArgs, typename... Buffers>
 auto make_mpi_result(Buffers&&... buffers) {
     // filter named parameters provided to the wrapped MPI function and keep only owning out parameters (=owning out

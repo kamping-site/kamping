@@ -66,7 +66,7 @@
 /// @param args All required and any number of the optional buffers described above.
 /// @return If no message is available return \c std::nullopt, else return a \c std::optional wrapping an \ref
 /// kamping::MPIResult. If the result object is empty, i.e. there are no owning out parameters passed to `try_recv` (see
-/// \ref docs/named_parameters.md), returns a \c bool indicating success instead of an \c std::optional.
+/// \ref docs/parameter_handling.md), returns a \c bool indicating success instead of an \c std::optional.
 template <
     template <typename...>
     typename DefaultContainerType,
