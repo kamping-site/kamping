@@ -105,7 +105,7 @@ public:
     }
 
     void put(int const target_rank, const size_t index, const T value) {
-        if (_outbox.size() >= MAX_MESSAGE_LENGTH || this->_target_rank != _target_rank) {
+        if (_outbox.size() >= MAX_MESSAGE_LENGTH || _target_rank != target_rank) {
             flush();
         }
         wait();
@@ -137,9 +137,9 @@ public:
         wait();
         receive(source_rank);
 
-        KASSERT(_inbox.find(index) != _inbox.end());
 
         auto const entry = _inbox.find(index);
+        KASSERT(entry != _inbox.end());
         const T    value = entry->second;
         _inbox.erase(entry);
         return value;
