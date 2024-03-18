@@ -59,7 +59,7 @@
 /// In-place allgather is supported by passing send_recv_buf() as parameter. This changes the requirements for the other
 /// parameters, see \ref Communicator::allgather_inplace.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional parameters described above.
 /// @return Result object wrapping the output parameters to be returned by value.
 ///
@@ -190,7 +190,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send and recv type. If omitted, the \c MPI
 /// datatype is derived automatically based on send_recv_buf's underlying \c value_type.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional parameters described above.
 /// @return Result object wrapping the output parameters to be returned by value.
 ///
@@ -307,7 +307,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
 /// - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c
 /// MPI datatype is derived automatically based on recv_buf's underlying \c value_type.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional parameters described above.
 /// @return Result object wrapping the output parameters to be returned by value.
 ///
