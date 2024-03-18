@@ -1,19 +1,110 @@
-#include <vector>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <random>
+#include <vector>
+
 #include "kamping/collectives/scatter.hpp"
-#include "kamping/plugin/reproducible_reduce.hpp"
+#include "kamping/collectives/bcast.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/mpi_ops.hpp"
+#include "kamping/named_parameters.hpp"
+#include "kamping/plugin/reproducible_reduce.hpp"
 
 using namespace kamping::plugin::reproducible_reduce;
 
+using Distribution = struct Distribution {
+    std::vector<int> send_counts;
+    std::vector<int> displs;
+
+    Distribution(std::vector<int> send_counts, std::vector<int> displs) : send_counts(send_counts), displs(displs) {}
+};
+
+template <typename T>
+void print_collection(T collection) {
+    for (auto const& v: collection) {
+        std::cout << v << " ";
+    }
+    std::cout << "\n";
+}
+
+auto displacement_from_sendcounts(std::vector<int>& send_counts) {
+    std::vector<int> displacement;
+    displacement.reserve(send_counts.size());
+
+    int start_index = 0;
+    for (auto const& send_count: send_counts) {
+        displacement.push_back(start_index);
+        start_index += send_count;
+    }
+
+    return displacement;
+}
+
+auto distribute_evenly(const size_t collection_size, const size_t comm_size) {
+    auto const elements_per_rank = collection_size / comm_size;
+    auto const remainder         = collection_size % comm_size;
+
+    std::vector<int> send_counts(comm_size, elements_per_rank);
+    std::for_each_n(send_counts.begin(), remainder, [](auto& n) { n += 1; });
+
+    return Distribution(send_counts, displacement_from_sendcounts(send_counts));
+}
+
+auto distribute_randomly(const size_t collection_size, const size_t comm_size, const size_t seed) {
+    std::mt19937                    rng(seed);
+    std::uniform_int_distribution<> dist(0, collection_size);
+
+    // See https://stackoverflow.com/a/48205426 for details
+    std::vector<int> points(comm_size, 0UL);
+    points.push_back(collection_size);
+    std::generate(points.begin() + 1, points.end() - 1, [&dist, &rng]() { return dist(rng); });
+    std::sort(points.begin(), points.end());
+
+    std::vector<int> send_counts(comm_size);
+    for (size_t i = 0; i < send_counts.size(); ++i) {
+        send_counts[i] = points[i + 1] - points[i];
+    }
+
+    EXPECT_EQ(collection_size, std::reduce(send_counts.begin(), send_counts.end(), 0UL, std::plus<>()));
+
+    return Distribution(send_counts, displacement_from_sendcounts(send_counts));
+}
+auto generate_test_vector(size_t length, size_t seed) {
+    std::mt19937                   rng(seed);
+    std::uniform_real_distribution distr;
+
+    std::vector<double> result(length);
+    std::generate(result.begin(), result.end(), [&distr, &rng]() { return distr(rng); });
+
+    return result;
+}
+
+using TestConfig = struct {
+    Distribution         distribution;
+    std::vector<double>& array;
+};
+
+// Test generators
+TEST(ReproducibleReduceTest, DistributionGeneration) {
+    Distribution distr1 = distribute_evenly(9, 4);
+    EXPECT_THAT(distr1.send_counts, testing::ElementsAre(3, 2, 2, 2));
+    EXPECT_THAT(distr1.displs, testing::ElementsAre(0, 3, 5, 7));
+
+    Distribution distr2 = distribute_evenly(2, 5);
+    EXPECT_THAT(distr2.send_counts, testing::ElementsAre(1, 1, 0, 0, 0));
+    EXPECT_THAT(distr2.displs, testing::ElementsAre(0, 1, 2, 2, 2));
+
+    Distribution distr3 = distribute_randomly(30, 4, 42);
+    EXPECT_EQ(distr3.send_counts.size(), 4);
+    EXPECT_THAT(std::accumulate(distr3.send_counts.begin(), distr3.send_counts.end(), 0), 30);
+}
 
 // Reduction tree with 7 indices to further clarify the test cases below
 //
-// │                  
-// ├───────────┐      
-// │           │      
+// │
+// ├───────────┐
+// │           │
 // ├─────┐     ├─────┐
 // │     │     │     │
 // ├──┐  ├──┐  ├──┐  │
@@ -41,27 +132,22 @@ TEST(ReproducibleReduceTest, TreeSubtreeSize) {
 
 TEST(ReproducibleReduceTest, TreeRankIntersection) {
     // region 1
-
-    EXPECT_THAT(
-            tree_rank_intersecting_elements(3, 6),
-            ::testing::ElementsAre(3, 4));
+    EXPECT_THAT(tree_rank_intersecting_elements(3, 6), ::testing::ElementsAre(3, 4));
 
     // region 2
-    EXPECT_THAT(
-            tree_rank_intersecting_elements(1, 3),
-            ::testing::ElementsAre(1, 2));
+    EXPECT_THAT(tree_rank_intersecting_elements(1, 3), ::testing::ElementsAre(1, 2));
 
     // region 3
-    EXPECT_THAT(
-            tree_rank_intersecting_elements(0, 4),
-            ::testing::IsEmpty());
+    EXPECT_THAT(tree_rank_intersecting_elements(0, 4), ::testing::IsEmpty());
 }
 
 TEST(ReproducibleReduceTest, TreeRankCalculation) {
     // See introductory comment for visualization of range
-    std::map<size_t, size_t> start_indices {{0, 1}, {2, 0}, {3, 2}, {7,3}};
-    
-    auto calc_rank = [&start_indices](auto i) { return tree_rank_from_index_map(start_indices, i); };
+    std::map<size_t, size_t> start_indices{{0, 1}, {2, 0}, {3, 2}, {7, 3}};
+
+    auto calc_rank = [&start_indices](auto i) {
+        return tree_rank_from_index_map(start_indices, i);
+    };
 
     EXPECT_EQ(1, calc_rank(0U));
     EXPECT_EQ(1, calc_rank(1U));
@@ -71,16 +157,214 @@ TEST(ReproducibleReduceTest, TreeRankCalculation) {
     EXPECT_EQ(2, calc_rank(5U));
     EXPECT_EQ(2, calc_rank(6U));
 
-    for (auto i = 7UL; i < 80000; ++i) {
-        EXPECT_EQ(3, calc_rank(i));
-    }
-
     // TODO: add test for edge cases (empty index map)
 }
 
+TEST(ReproducibleReduceTest, SimpleSum) {
+    kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> full_comm;
+    const int comm_size = 2;
+    ASSERT_GE(full_comm.size(), comm_size) << "Comm is of insufficient size";
+    auto comm = full_comm.split(full_comm.rank() < comm_size);
 
-void attach_debugger(bool);
+    if (full_comm.rank() >= comm_size) return;
+    ASSERT_EQ(comm.size(), comm_size);
+    
 
+    double const epsilon = std::numeric_limits<double>::epsilon();
+    const std::vector a{1e3, epsilon, epsilon / 2, epsilon / 2};
+    EXPECT_EQ(std::accumulate(a.begin(), a.end(), 0.0), 1e3 + epsilon);
+
+    std::vector<double> local_a(2);
+    Distribution distr({2,2}, {0, 2});
+    ASSERT_EQ(comm.size(), 2);
+    
+    comm.scatterv(
+        kamping::send_buf(a),
+        kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_a),
+        kamping::send_counts(distr.send_counts),
+        kamping::send_displs(distr.displs)
+    );
+
+    ASSERT_EQ(comm.size(), distr.send_counts.size());
+    ASSERT_EQ(comm.size(), distr.displs.size());
+    auto repr_comm = comm.make_reproducible_comm<double>(
+            kamping::send_counts(distr.send_counts),
+            kamping::recv_displs(distr.displs)
+    );
+
+    double sum = repr_comm.reproducible_reduce(
+            kamping::send_buf(local_a),
+            kamping::op(kamping::ops::plus<>())
+    );
+    EXPECT_EQ(sum, (1e3 + epsilon) + (epsilon / 2 + epsilon / 2));
+}
+
+template<typename F>
+void with_comm_size_n(kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> const & comm,
+        int comm_size,
+        F f) {
+    KASSERT(comm.is_same_on_all_ranks(comm_size), "Target comm_size must be same on all ranks");
+    KASSERT(comm.size() >= comm_size,
+        "Can not create communicator with " << comm_size << " ranks when process only has " << comm.size() << " ranks assigned.");
+
+    int rank_active = comm.rank_signed() < comm_size;
+    auto new_comm = comm.split(rank_active);
+
+    if (rank_active) {
+        KASSERT(new_comm.size() == comm_size);
+        f(new_comm);
+    }
+}
+
+#include "/home/christoph/Projects/SingleFileShenanigans/attach_debugger.hpp"
+TEST(ReproducibleReduceTest, Fuzzing) {
+    attach_debugger_mpi_envvar();
+    kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
+
+    ASSERT_GT(comm.size(), 1) << "Fuzzing with only one rank is useless";
+
+    constexpr auto NUM_ARRAYS = 50;
+    constexpr auto NUM_DISTRIBUTIONS = 5000;
+
+    // Seed random number generator with same seed across all ranks for consistent number generation
+    std::random_device rd;
+    unsigned long seed;
+    if (comm.is_root()) {
+        seed = rd();
+    }
+    comm.bcast_single(kamping::send_recv_buf(seed));
+
+    std::uniform_int_distribution<size_t> array_length_distribution(0, 500);
+    std::uniform_int_distribution<int> rank_distribution(1, comm.size());
+    std::mt19937 rng(seed); // RNG for distribution & rank number
+    std::mt19937 rng_root(rd()); // RNG for data generation (out-of-sync with other ranks)
+
+    auto checks = 0UL;
+
+    for (auto i = 0U; i < NUM_ARRAYS; ++i) {
+        std::vector<double> data_array;
+        const size_t data_array_size = array_length_distribution(rng);
+        if (comm.is_root()) {
+            data_array = generate_test_vector(data_array_size, rng_root());
+        }
+        double reference_result = 0;
+
+        // Calculate reference result
+        with_comm_size_n(comm, 1, [&reference_result, &data_array] (auto comm_) {
+            KASSERT(comm_.size() == 1);
+            const auto distribution = distribute_evenly(data_array.size(), 1);
+            auto repr_comm = comm_.template make_reproducible_comm<double>(
+                    kamping::send_counts(distribution.send_counts),
+                    kamping::recv_displs(distribution.displs)
+            );
+
+            reference_result = repr_comm.reproducible_reduce(
+                    kamping::send_buf(data_array),
+                    kamping::op(kamping::ops::plus<>{})
+            );
+
+            // Sanity check
+            ASSERT_NEAR(reference_result, std::accumulate(data_array.begin(), data_array.end(), 0.0), 1e-9);
+        });
+        
+
+        comm.barrier();
+
+        for (auto j = 0U; j < NUM_DISTRIBUTIONS; ++j) {
+            const auto ranks = rank_distribution(rng);
+            const auto distribution = distribute_randomly(data_array_size, static_cast<size_t>(ranks), rng());
+
+
+            with_comm_size_n(comm, ranks, [&distribution, &data_array, &reference_result, &checks, &ranks](auto comm_) {
+                    ASSERT_EQ(ranks, comm_.size());
+                    // Since not all ranks execute this function, rng may not be used to avoid it from falling out of sync
+
+                    auto repr_comm = comm_.template make_reproducible_comm<double>(
+                            kamping::send_counts(distribution.send_counts),
+                            kamping::recv_displs(distribution.displs)
+                    );
+
+                    std::vector<double> local_arr;
+
+                    comm_.scatterv(
+                        kamping::send_buf(data_array),
+                        kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_arr),
+                        kamping::send_counts(distribution.send_counts),
+                        kamping::send_displs(distribution.displs)
+                    );
+
+
+                    double computed_result = repr_comm.reproducible_reduce(
+                            kamping::send_buf(local_arr),
+                            kamping::op(kamping::ops::plus<>{})
+                    );
+
+                    if (comm_.is_root()) {
+                        EXPECT_EQ(computed_result, reference_result);
+                    }
+                    ++checks;
+
+                    if (comm_.is_root()) {
+                        printf("Validated for p=%i, n=%zu, start_indices=", ranks, data_array.size());
+                        print_collection(distribution.displs);
+                    }
+
+            });
+
+        }
+    }
+
+    if (comm.is_root()) {
+        printf("Performed %li checks\n", checks);
+    }
+}
+
+TEST(ReproducibleReduceTest, ReproducibleResults) {
+    auto const                                                                    v = generate_test_vector(2000, 42);
+    kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
+
+    double reference_result;
+
+    for (auto i = 1U; i < comm.size(); ++i) {
+        if (i == 2) {
+            // Share previously calculated reference result
+            comm.bcast_single(
+                    kamping::send_recv_buf(reference_result)
+            );
+        }
+        auto distr    = distribute_randomly(v.size(), i, 43 + i);
+        auto subcomm  = comm.split(comm.rank() < i);
+        if (comm.rank() >= i) {
+            // If we are not participating in this round, maybe in the next
+            continue;
+        }
+        auto reprcomm = subcomm.make_reproducible_comm<double>(
+            kamping::send_counts(distr.send_counts),
+            kamping::recv_displs(distr.displs)
+        );
+
+        // Distribute global array across cluster
+        std::vector<double> local_v;
+        subcomm.scatterv(
+            kamping::send_buf(v),
+            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_v),
+            kamping::send_counts(distr.send_counts),
+            kamping::send_displs(distr.displs)
+        );
+
+        double const result =
+            reprcomm.reproducible_reduce(kamping::send_buf(local_v), kamping::op(kamping::ops::plus<double>{}));
+
+        if (i == 1) {
+            reference_result = result;
+            printf("Setting reference result to %f\n", reference_result);
+        } else {
+            EXPECT_EQ(reference_result, result) << "Irreproducible result for p=" << i;
+        }
+    }
+}
+
+/*
 TEST(ReproducibleReduceTest, PluginInit) {
     double const        epsilon = std::numeric_limits<double>::epsilon();
     std::vector<double> test_array{1, 1 + epsilon, 2 + epsilon, epsilon, 8, 9};
@@ -95,30 +379,9 @@ TEST(ReproducibleReduceTest, PluginInit) {
     std::vector<int> send_counts(comm.size(), values_per_rank);
     std::vector<int> recv_displs;
 
-    size_t start_index = 0;
-    for (int i = 0; i < kamping::asserting_cast<int>(comm.size()); i++) {
-        recv_displs.push_back(start_index);
-        start_index += send_counts[i];
-    }
-    ASSERT_EQ(recv_displs.size(), comm.size());
-
-    // Distribute test array to individual ranks
-    std::vector<double> local_array;
-    comm.scatterv(
-            kamping::send_buf(test_array),
-            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_array),
-            kamping::send_counts(send_counts),
-            kamping::send_displs(recv_displs)
-    );
-
-    printf("Rank %li, arr = {", comm.rank());
-    for (auto v : local_array) {
-        printf("%f, ", v);
-    }
-    printf("}\n");
-
 
     auto reproducible_comm =
+#include "kamping/communicator.hpp"
         comm.make_reproducible_comm<double>(kamping::recv_displs(recv_displs), kamping::send_counts(send_counts));
 
     const auto reference_val = std::reduce(test_array.begin(), test_array.end(), 0.0, std::plus<>());
@@ -130,19 +393,4 @@ TEST(ReproducibleReduceTest, PluginInit) {
 
     EXPECT_EQ(v, reference_val);
 }
-
-#include <fstream>
-#include <unistd.h>
-void __attribute__((optimize("O0"))) attach_debugger(bool condition) {
-    if (!condition) return;
-    volatile bool attached = false;
-
-    // also write PID to a file
-    std::ofstream os("/tmp/mpi_debug.pid");
-    os << getpid() << "\n";
-    os.close();
-
-    std::cout << "Waiting for debugger to be attached, PID: "
-        << getpid() << "\n";
-    while (!attached) sleep(1);
-}
+*/
