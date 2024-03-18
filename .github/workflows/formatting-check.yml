@@ -1,0 +1,27 @@
+name: formatting-check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+jobs:
+  cmake-formatting-check:
+    name: Formatting Check
+    runs-on: self-hosted
+    container:
+      image: "ghcr.io/kamping-site/kamping-ci:2024.2"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3.0.2
+      with:
+        submodules: 'recursive'
+    - name: Silence "dubious ownership" warning from git
+      run: git config --global --add safe.directory $(pwd)
+    - name: Run CMake configure step
+      run: cmake -B build
+    - name: Check C++ formatting
+      run: cmake --build build --target check-clang-format
+    - name: Check CMake formatting
+      run: cmake --build build --target check-cmake-format

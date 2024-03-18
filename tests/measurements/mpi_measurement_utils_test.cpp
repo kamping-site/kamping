@@ -32,8 +32,8 @@ using namespace kamping::measurements::internal;
 
 TEST(TimerUtilsTest, is_string_same_on_all_ranks_basics) {
     Communicator<>    comm;
-    const std::string empty;
-    const std::string non_empty("abc");
+    std::string const empty;
+    std::string const non_empty("abc");
     EXPECT_TRUE(is_string_same_on_all_ranks(empty, comm));
     EXPECT_TRUE(is_string_same_on_all_ranks(non_empty, comm));
 }

@@ -75,7 +75,7 @@ public:
     /// @param node Root node of the TimerTree to print.
     /// @param indentation Indentation to use for the node.
     void print(AggregatedTreeNode<Duration> const& node, std::size_t indentation = 0) {
-        const std::size_t indentation_per_level = 2;
+        std::size_t const indentation_per_level = 2;
         auto              name                  = node.name();
         auto              evaluation_data       = node.aggregated_data();
         _outstream << std::string(indentation, ' ') << quote_string(name) << ": {" << std::endl;

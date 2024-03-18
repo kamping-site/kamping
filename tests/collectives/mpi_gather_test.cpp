@@ -842,7 +842,7 @@ TEST(GatherTest, different_send_and_recv_counts_without_explicit_mpi_types) {
 TEST(GatherTest, structured_bindings) {
     Communicator           comm;
     std::vector<int>       input{comm.rank_signed()};
-    const std::vector<int> expected_recv_buffer_on_root = [&]() {
+    std::vector<int> const expected_recv_buffer_on_root = [&]() {
         std::vector<int> vec(comm.size());
         std::iota(vec.begin(), vec.end(), 0);
         return vec;

@@ -42,7 +42,7 @@ TEST(ParameterFactoriesTest, sparse_send_buf_basics_with_non_container_object) {
             return std::tie(a, b, c) == std::tie(other.a, other.b, other.c);
         }
     };
-    const TestStruct st{1, 2, 3};
+    TestStruct const st{1, 2, 3};
     {
         // referencing sparse sparse send buf
         auto sparse_send_buffer = sparse_send_buf(st);
@@ -89,7 +89,7 @@ TEST(ParameterFactoriesTest, sparse_send_buf_basics_with_non_container_object) {
 
 TEST(ParameterFactoriesTest, sparse_send_buf_basics_with_unordered_map) {
     using namespace plugin::sparse_alltoall;
-    const std::unordered_map<int, std::vector<double>> input{{1, {1.0, 2.0}}};
+    std::unordered_map<int, std::vector<double>> const input{{1, {1.0, 2.0}}};
     {
         // referencing sparse sparse send buf
         auto sparse_send_buffer = sparse_send_buf(input);
@@ -241,7 +241,7 @@ TEST(ParameterFactoriesTest, on_message_basics_callable_struct) {
         int state;
     };
     int const      state = 43;
-    const Callable cb{state};
+    Callable const cb{state};
     {
         // referencing on message obj
         auto on_message     = plugin::sparse_alltoall::on_message(cb);
@@ -433,7 +433,7 @@ TEST(SparseAlltoallTest, alltoallv_sparse_one_to_all) {
     Communicator<std::vector, SparseAlltoall> comm;
 
     using msg_type        = std::vector<size_t>;
-    const size_t msg_size = 5;
+    size_t const msg_size = 5;
 
     // Prepare send buffer
     std::unordered_map<int, msg_type> input;
@@ -467,7 +467,7 @@ TEST(SparseAlltoallTest, alltoallv_sparse_one_to_all_recv_type_out) {
     Communicator<std::vector, SparseAlltoall> comm;
 
     using msg_type        = std::vector<size_t>;
-    const size_t msg_size = 5;
+    size_t const msg_size = 5;
 
     // Prepare send buffer
     std::unordered_map<int, msg_type> input;
@@ -503,7 +503,7 @@ TEST(SparseAlltoallTest, alltoallv_sparse_one_to_all_recv_type_out_other_order) 
     Communicator<std::vector, SparseAlltoall> comm;
 
     using msg_type        = std::vector<size_t>;
-    const size_t msg_size = 5;
+    size_t const msg_size = 5;
 
     // Prepare send buffer
     std::unordered_map<int, msg_type> input;
@@ -539,7 +539,7 @@ TEST(SparseAlltoallTest, alltoallv_sparse_one_to_all_owning_send_buf_and_non_own
     Communicator<std::vector, SparseAlltoall> comm;
 
     using msg_type        = std::vector<size_t>;
-    const size_t msg_size = 5;
+    size_t const msg_size = 5;
 
     // Prepare send buffer
     std::unordered_map<int, msg_type> input;

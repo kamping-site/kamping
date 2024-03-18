@@ -35,8 +35,8 @@ int main() {
     using Comm = Communicator<std::vector, plugin::SparseAlltoall, plugin::GridCommunicator, plugin::DispatchAlltoall>;
     Comm comm;
 
-    const std::vector<double> data(comm.size(), static_cast<double>(comm.rank()));
-    const std::vector<int>    counts(comm.size(), 1);
+    std::vector<double> const data(comm.size(), static_cast<double>(comm.rank()));
+    std::vector<int> const    counts(comm.size(), 1);
     {
         // the plugin decides whether to use grid or builtin alltoall
         auto [recv_buf, recv_counts] = comm.alltoallv_dispatch(send_buf(data), send_counts(counts), recv_counts_out());
