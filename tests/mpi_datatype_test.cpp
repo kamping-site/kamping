@@ -396,6 +396,7 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
     EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(datatypes[1])); // d[1] == types[1]
 
     MPI_Datatype explicit_nested_type = datatypes[2];
+    MPI_Datatype implicit_nested_type = datatypes[3];
     MPI_Type_get_envelope(explicit_nested_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
     EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
     // returned values for MPI_COMBINER_STRUCT
@@ -423,7 +424,6 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
     EXPECT_THAT(possible_mpi_datatypes<float>(), Contains(datatypes[0])); // d[0] == types[0]
     EXPECT_THAT(possible_mpi_datatypes<bool>(), Contains(datatypes[1]));  // d[1] == types[1]
 
-    MPI_Datatype implicit_nested_type = datatypes[3];
     MPI_Type_get_envelope(implicit_nested_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
     EXPECT_EQ(combiner, MPI_COMBINER_CONTIGUOUS);
     // returned values for MPI_COMBINER_CONTIGUOUS
@@ -431,6 +431,9 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
     EXPECT_EQ(num_integers, 1);
     EXPECT_EQ(num_addresses, 0);
     EXPECT_EQ(num_datatypes, 1);
+    integers.resize(static_cast<size_t>(num_integers));
+    addresses.resize(static_cast<size_t>(num_addresses));
+    datatypes.resize(static_cast<size_t>(num_datatypes));
     int          count;
     MPI_Datatype underlying_type;
     MPI_Type_get_contents(
@@ -685,6 +688,17 @@ TEST(MpiDataTypeTest, test_type_groups) {
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<int>>::category, kamping::TypeCategory::contiguous);
     EXPECT_EQ(kamping::mpi_type_traits<char>::category, kamping::TypeCategory::character);
     EXPECT_EQ(kamping::mpi_type_traits<DummyType>::category, kamping::TypeCategory::contiguous);
+}
+
+TEST(MpiDataTypeTest, has_static_type_test) {
+    struct DummyType {
+        int  a;
+        char b;
+    };
+    EXPECT_TRUE(has_static_type_v<int>);
+    EXPECT_TRUE(has_static_type_v<DummyType>);
+    EXPECT_FALSE((has_static_type_v<std::pair<int, int>>));
+    EXPECT_FALSE((has_static_type_v<std::tuple<int, int>>));
 }
 
 TEST(MpiDataTypeTest, kabool_basics) {

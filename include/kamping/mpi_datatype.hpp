@@ -103,6 +103,9 @@ struct struct_type {
     static MPI_Datatype data_type();
 };
 
+/// @brief Type tag for indicating that no static type definition exists for a type.
+struct no_matching_type {};
+
 /// @brief The type dispatcher that maps a C++ type \p T to a type trait that can be used to construct an MPI_Datatype.
 ///
 /// The mapping is as follows:
@@ -110,7 +113,8 @@ struct struct_type {
 /// - Enums are mapped to the underlying type.
 /// - C-style arrays and `std::array` are mapped to contiguous types of the underlying type.
 /// - All other trivially copyable types are mapped to a contiguous type consisting of `sizeof(T)` bytes.
-/// - All other types are not supported directly and require a specialization of `mpi_type_traits`.
+/// - All other types are not supported directly and require a specialization of `mpi_type_traits`. In this case, the
+///  trait `no_matching_type` is returned.
 ///
 /// @returns The corresponding type trait for the type \p T.
 template <typename T>
@@ -151,12 +155,7 @@ auto type_dispatcher() {
         // all other trivially copyable types are mapped to a sequence of bytes
         return byte_serialized<T_no_const>{};
     } else {
-        constexpr bool type_not_supported = std::is_trivially_copyable_v<T_no_const>;
-        static_assert(
-            // this should always evaluate to false
-            type_not_supported,
-            "\n --> Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
-        );
+        return no_matching_type{};
     }
 }
 
@@ -190,21 +189,66 @@ auto type_dispatcher() {
 /// } // namespace kamping
 /// ```
 ///
+template <typename T, typename Enable = void>
+struct mpi_type_traits {};
+
+/// @brief The type trait that maps a C++ type \p T to a type trait that can be used to construct an MPI_Datatype.
+///
+/// The default behavior is controlled by \ref type_dispatcher. If you want to support a type that is not supported by
+/// the default behavior, you can specialize this trait. For example:
+///
+/// ```cpp
+/// struct MyType {
+///    int a;
+///    double b;
+///    char c;
+///    std::array<int, 3> d;
+/// };
+/// namespace kamping {
+/// // using KaMPIng's built-in struct serializer
+/// template <>
+/// struct mpi_type_traits<MyType> : struct_type<MyType> {};
+///
+/// // or using an explicitly constructed type
+/// template <>
+/// struct mpi_type_traits<MyType> {
+///    static constexpr bool has_to_be_committed = true;
+///    static MPI_Datatype data_type() {
+///        MPI_Datatype type;
+///        MPI_Type_create_*(..., &type);
+///        return type;
+///    }
+/// };
+/// } // namespace kamping
+/// ```
+///
 template <typename T>
-struct mpi_type_traits {
+struct mpi_type_traits<T, std::enable_if_t<!std::is_same_v<decltype(type_dispatcher<T>()), no_matching_type>>> {
     /// @brief The base type of this trait obtained via \ref type_dispatcher.
-    /// This defines how the data type is constructed in \ref mpi_type_traits::data_type().
+    /// This defines how the data type is constructed in \c mpi_type_traits::data_type().
     using base = decltype(type_dispatcher<T>());
     /// @brief The category of the type.
     static constexpr TypeCategory category = base::category;
     /// @brief Whether the type has to be committed before it can be used in MPI calls.
     static constexpr bool has_to_be_committed = category_has_to_be_committed(category);
-
     /// @brief The MPI_Datatype corresponding to the type T.
     static MPI_Datatype data_type() {
         return decltype(type_dispatcher<T>())::data_type();
     }
 };
+
+///@brief Check if the type has a static type definition, i.e. \ref mpi_type_traits is defined.
+template <typename, typename Enable = void>
+struct has_static_type : std::false_type {};
+
+///@brief Check if the type has a static type definition, i.e. \ref mpi_type_traits is defined.
+template <typename T>
+struct has_static_type<T, std::void_t<decltype(mpi_type_traits<T>::data_type())>> : std::true_type {};
+
+///@brief Check if the type has a static type definition, i.e. has a corresponding \c MPI_Datatype defined following the
+/// rules from \ref type_dispatcher.
+template <typename T>
+static constexpr bool has_static_type_v = has_static_type<T>::value;
 
 /// @brief Register a new \c MPI_Datatype for \p T with the MPI environment. It will be freed when the environment is
 /// finalized.
@@ -238,6 +282,10 @@ inline MPI_Datatype construct_and_commit_type() {
 /// @tparam T The type to translate into an MPI_Datatype.
 template <typename T>
 [[nodiscard]] MPI_Datatype mpi_datatype() KAMPING_NOEXCEPT {
+    static_assert(
+        has_static_type_v<T>,
+        "\n --> Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
+    );
     if constexpr (mpi_type_traits<T>::has_to_be_committed) {
         // using static initialization to ensure that the type is only committed once
         static MPI_Datatype type = construct_and_commit_type<T>();
@@ -254,6 +302,10 @@ MPI_Datatype contiguous_type<T, N>::data_type() {
     if constexpr (std::is_same_v<T, std::byte>) {
         base_type = MPI_BYTE;
     } else {
+        static_assert(
+            has_static_type_v<T>,
+            "\n --> Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
+        );
         base_type = mpi_type_traits<T>::data_type();
     }
     int count = static_cast<int>(N);
@@ -319,7 +371,12 @@ MPI_Datatype struct_type<T>::data_type() {
     MPI_Aint     disp[internal::tuple_size<T>];
     internal::for_each_field(t, [&](auto& elem, size_t i) {
         MPI_Get_address(&elem, &disp[i]);
-        types[i]     = mpi_type_traits<std::remove_reference_t<decltype(elem)>>::data_type();
+        using elem_type = std::remove_reference_t<decltype(elem)>;
+        static_assert(
+            has_static_type_v<elem_type>,
+            "\n --> Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
+        );
+        types[i]     = mpi_type_traits<elem_type>::data_type();
         disp[i]      = MPI_Aint_diff(disp[i], base);
         blocklens[i] = 1;
     });
