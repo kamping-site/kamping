@@ -16,4 +16,4 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3.0.2
     - name: Format CMake files
-      run: cmake -B build --target check-format
+      run: cmake --build -B build --target check-format
