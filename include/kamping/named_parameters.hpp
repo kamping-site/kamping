@@ -143,7 +143,8 @@ auto send_recv_buf(SerializationBufferType&& buffer) {
 }
 
 /// @brief Indicates to use a parameter object of type \tparam Container as `send_recv_buf`.
-/// Container must provide \c data(), \c size(), \c resize(unsigned int) member functions and expose the contained \c value_type.
+/// Container must provide \c data(), \c size(), \c resize(unsigned int) member functions and expose the contained \c
+/// value_type.
 /// @return Parameter object referring to the storage containing the data elements to send or receive.
 template <typename Container>
 auto send_recv_buf(AllocNewT<Container>) {
@@ -154,9 +155,9 @@ auto send_recv_buf(AllocNewT<Container>) {
         BufferResizePolicy::resize_to_fit>(alloc_new<Container>);
 }
 
-
-/// @brief Indicates to use a parameter object with an underlying container with a \c value_type \tparam ValueType as `send_recv_buf`.
-/// The type of the underlying container is determined by the MPI operation and usually defaults to \ref Communicator::default_container_type.
+/// @brief Indicates to use a parameter object encapsulating an underlying container with a \c value_type \tparam
+/// ValueType as `send_recv_buf`. The type of the underlying container is determined by the MPI operation and usually
+/// defaults to \ref Communicator::default_container_type.
 /// @tparam ValueType The type of the elements in the buffer.
 template <typename ValueType>
 auto send_recv_buf(AllocContainerOfT<ValueType>) {
