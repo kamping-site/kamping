@@ -285,8 +285,9 @@ public:
                 std::tuple(),
                 args...
             )
-                .template construct_buffer_or_rebind<DefaultContainerType>(); 
-        constexpr bool do_calculate_recv_displs = internal::has_parameter_type<internal::ParameterType::recv_displs, Args...>();
+                .template construct_buffer_or_rebind<DefaultContainerType>();
+        constexpr bool do_calculate_recv_displs =
+            internal::has_parameter_type<internal::ParameterType::recv_displs, Args...>();
 
         if constexpr (do_calculate_recv_displs) {
             recv_displs.resize_if_requested([&]() { return _size_of_orig_comm; });
