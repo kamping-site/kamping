@@ -55,12 +55,8 @@
 /// omitted, the value of send_counts will be used.
 /// This parameter is mandatory if \ref kamping::recv_type() is given.
 ///
-/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
-/// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
-/// received from rank 1, and so on. The buffer will be resized according to the buffer's
-/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements. This requires a size of at least `recv_count *
-/// communicator size`.
+/// - \ref kamping::recv_buf() containing a buffer for the output. This requires a size of the buffer of at least
+/// `recv_count * communicator size`.
 ///
 /// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
 /// derived automatically based on send_buf's underlying \c value_type.
@@ -73,7 +69,11 @@
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @return Result type wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -208,6 +208,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
+/// @return Result type wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -315,7 +320,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(A
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer, counts and displacements if not specified as input parameter.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,

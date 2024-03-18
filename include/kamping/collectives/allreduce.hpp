@@ -58,7 +58,7 @@
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional parameters described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @return Result object wrapping the output parameters to be returned by value.
 ///
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 /// <hr>
@@ -178,7 +178,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional parameters described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @return Result object wrapping the output parameters to be returned by value.
 ///
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 /// <hr>
