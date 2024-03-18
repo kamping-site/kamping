@@ -241,7 +241,7 @@ public:
         KAMPING_CHECK_PARAMETERS(
             Args,
             KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
-            KAMPING_OPTIONAL_PARAMETERS(recv_buf, recv_counts)
+            KAMPING_OPTIONAL_PARAMETERS(recv_buf, recv_counts, recv_displs)
         );
         constexpr MessageEnvelopeLevel envelope_level = MessageEnvelopeLevel::source;
         // get send_buf
@@ -278,6 +278,24 @@ public:
             KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
         }
 
+        // Get recv displs
+        using default_recv_displs_type = decltype(kamping::recv_displs_out(alloc_new<DefaultContainerType<int>>));
+        auto&& recv_displs =
+            internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
+                std::tuple(),
+                args...
+            )
+                .template construct_buffer_or_rebind<DefaultContainerType>(); 
+        constexpr bool do_calculate_recv_displs = internal::has_parameter_type<internal::ParameterType::recv_displs, Args...>();
+
+        if constexpr (do_calculate_recv_displs) {
+            recv_displs.resize_if_requested([&]() { return _size_of_orig_comm; });
+            KASSERT(recv_displs.size() >= _size_of_orig_comm, "Recv displs buffer is not large enough.", assert::light);
+            Span recv_displs_span(recv_displs.data(), recv_displs.size());
+            Span recv_counts_span(recv_counts.data(), recv_counts.size());
+            std::exclusive_scan(recv_counts_span.begin(), recv_counts_span.end(), recv_displs_span.begin(), 0);
+        }
+
         // get recv_buf
         using default_recv_buf_type =
             decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
@@ -290,7 +308,11 @@ public:
 
         write_recv_buffer(grid_recv_buf, recv_counts, recv_buf);
 
-        return internal::make_mpi_result<std::tuple<Args...>>(std::move(recv_buf), std::move(recv_counts));
+        return internal::make_mpi_result<std::tuple<Args...>>(
+            std::move(recv_buf),
+            std::move(recv_counts),
+            std::move(recv_displs)
+        );
     }
 
 private:
@@ -366,9 +388,9 @@ private:
 
         using value_type = typename SendBuffer::value_type;
         using MsgType    = std::conditional_t<
-            envelope_level == MessageEnvelopeLevel::no_envelope,
-            MessageEnvelope<value_type, Destination>,
-            MessageEnvelope<value_type, Source, Destination>>;
+               envelope_level == MessageEnvelopeLevel::no_envelope,
+               MessageEnvelope<value_type, Destination>,
+               MessageEnvelope<value_type, Source, Destination>>;
         DefaultContainerType<MsgType> rowwise_send_buf(total_send_count);
         size_t                        cur_chunk_offset = 0;
 

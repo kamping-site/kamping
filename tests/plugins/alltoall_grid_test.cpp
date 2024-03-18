@@ -40,6 +40,24 @@ TEST(AlltoallvGridTest, alltoallv_single_element) {
     EXPECT_THAT(result, Each(comm.rank_signed()));
 }
 
+TEST(AlltoallvGridTest, alltoallv_single_element_get_recv_displs) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
+
+    std::vector<int> input(comm.size());
+    std::iota(input.begin(), input.end(), 0);
+    std::vector<int> send_counts(comm.size(), 1);
+
+    auto [result, recv_displs] =
+        grid_comm.alltoallv(send_buf(input), kamping::send_counts(send_counts), recv_displs_out());
+    EXPECT_EQ(result.size(), comm.size());
+    EXPECT_THAT(result, Each(comm.rank_signed()));
+
+    std::vector<int> expected_recv_displs(comm.size());
+    std::iota(expected_recv_displs.begin(), expected_recv_displs.end(), 0);
+    EXPECT_EQ(recv_displs, expected_recv_displs);
+}
+
 TEST(AlltoallvGridTest, alltoallv_single_element_st_binding) {
     Communicator<std::vector, plugin::GridCommunicator> comm;
     auto                                                grid_comm = comm.make_grid_communicator();
@@ -319,3 +337,4 @@ TEST(AlltoallvGridTest, alltoallv_with_envelope_all_to_last_pe_source_destinatio
         EXPECT_EQ(result.size(), 0);
     }
 }
+
