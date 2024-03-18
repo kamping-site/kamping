@@ -11,9 +11,9 @@ jobs:
     name: C++ Formatting Check
     runs-on: self-hosted
     container:
-      image: "localhost:5000/kamping-ci:2024.1"
+      image: "ghcr.io/kamping-site/kamping-ci:2024.1"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3.0.2
     - name: Check formatting
       uses: jidicula/clang-format-action@v4.4.0
       with:
