@@ -289,7 +289,10 @@ private:
             result = _perform_reduce(0, buffer, op, type);
         }
 
-        _comm.bcast_single(kamping::send_recv_buf(result));
+        _comm.bcast_single(
+                kamping::send_recv_buf(result),
+                kamping::root(_origin_rank)
+        );
 
         return result;
     }

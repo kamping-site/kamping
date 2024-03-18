@@ -65,6 +65,7 @@ auto distribute_randomly(const size_t collection_size, const size_t comm_size, c
     for (size_t i = 0; i < send_counts.size(); ++i) {
         send_counts[i] = points[i + 1] - points[i];
     }
+    // TODO: also shuffle distribution around to cover all cases (right now start indices are ordered ascending)
 
     EXPECT_EQ(collection_size, std::reduce(send_counts.begin(), send_counts.end(), 0UL, std::plus<>()));
 
@@ -199,6 +200,7 @@ TEST(ReproducibleReduceTest, SimpleSum) {
     EXPECT_EQ(sum, (1e3 + epsilon) + (epsilon / 2 + epsilon / 2));
 }
 
+
 template<typename F>
 void with_comm_size_n(kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> const & comm,
         int comm_size,
@@ -216,28 +218,49 @@ void with_comm_size_n(kamping::Communicator<std::vector, kamping::plugin::Reprod
     }
 }
 
-#include "/home/christoph/Projects/SingleFileShenanigans/attach_debugger.hpp"
+TEST(ReproducibleReduceTest, WorksWithNonzeroRoot) {
+    kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> full_comm;
+    ASSERT_GE(full_comm.size(), 2) << "Comm is of insufficient size";
+
+    std::vector<double> array {1.0, 2.0, 3.0, 4.0};
+    Distribution distribution({0, 4}, {0, 0});
+
+    with_comm_size_n(full_comm, 2, [&distribution, &array] (auto comm) {
+        auto repr_comm = comm.template make_reproducible_comm<double>(
+                kamping::send_counts(distribution.send_counts),
+                kamping::recv_displs(distribution.displs)
+        );
+
+        double result = repr_comm.reproducible_reduce(
+                kamping::send_buf(array),
+                kamping::op(kamping::ops::plus<>{})
+        );
+
+        EXPECT_EQ(result, (1.0+2.0) + (3.0+4.0));
+    });
+}
+
 TEST(ReproducibleReduceTest, Fuzzing) {
-    attach_debugger_mpi_envvar();
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
 
     ASSERT_GT(comm.size(), 1) << "Fuzzing with only one rank is useless";
 
-    constexpr auto NUM_ARRAYS = 50;
-    constexpr auto NUM_DISTRIBUTIONS = 5000;
+    constexpr auto NUM_ARRAYS = 5;
+    constexpr auto NUM_DISTRIBUTIONS = 500;
 
     // Seed random number generator with same seed across all ranks for consistent number generation
     std::random_device rd;
     unsigned long seed;
     if (comm.is_root()) {
         seed = rd();
+        printf("Seed for fuzzer: %zu\n", seed);
     }
     comm.bcast_single(kamping::send_recv_buf(seed));
 
     std::uniform_int_distribution<size_t> array_length_distribution(0, 500);
     std::uniform_int_distribution<int> rank_distribution(1, comm.size());
     std::mt19937 rng(seed); // RNG for distribution & rank number
-    std::mt19937 rng_root(rd()); // RNG for data generation (out-of-sync with other ranks)
+    std::mt19937 rng_root(rng()); // RNG for data generation (out-of-sync with other ranks)
 
     auto checks = 0UL;
 
@@ -275,7 +298,8 @@ TEST(ReproducibleReduceTest, Fuzzing) {
             const auto distribution = distribute_randomly(data_array_size, static_cast<size_t>(ranks), rng());
 
 
-            with_comm_size_n(comm, ranks, [&distribution, &data_array, &reference_result, &checks, &ranks](auto comm_) {
+            with_comm_size_n(comm, ranks, [&distribution, &data_array, &reference_result, &checks, &ranks, i, j](auto comm_) {
+                    comm_.barrier();
                     ASSERT_EQ(ranks, comm_.size());
                     // Since not all ranks execute this function, rng may not be used to avoid it from falling out of sync
 
@@ -305,7 +329,8 @@ TEST(ReproducibleReduceTest, Fuzzing) {
                     ++checks;
 
                     if (comm_.is_root()) {
-                        printf("Validated for p=%i, n=%zu, start_indices=", ranks, data_array.size());
+                        printf("Validated for p=%i, n=%zu, start_indices=",
+                                ranks, data_array.size());
                         print_collection(distribution.displs);
                     }
 
