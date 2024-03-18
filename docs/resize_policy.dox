@@ -5,4 +5,4 @@ The underlying container/storage of an out parameter encapsulating a data buffer
 - kamping::BufferResizePolicy::grow_only: resizing will only occur if the underlying storage is not large enough to hold all elements.
 - kamping::BufferResizePolicy::resize_to_fit: the underlying storage will be resized to exactly the number of elements (e.g. number of received elements for the recv_buf, etc.)
 
-If a `send_/recv_/send_recv_type` parameter is provided, kamping::BufferResizePolicy::no_resize is required, as KaMPIng can no longer ensure a 1:1 mapping between MPI_Datatype and the underlying storage's C++ type.
+If a `send_/recv_/send_recv_type` parameter is provided, kamping::BufferResizePolicy::no_resize for receive buffers is required, as KaMPIng can no longer ensure a 1:1 mapping between MPI_Datatype and the underlying storage's C++ type.
