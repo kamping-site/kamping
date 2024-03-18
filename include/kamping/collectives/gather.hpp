@@ -260,9 +260,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
             .template construct_buffer_or_rebind<DefaultContainerType>();
     using recv_counts_type = typename std::remove_reference_t<decltype(recv_counts)>::value_type;
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
-    using recv_counts_param_type         = std::remove_reference_t<decltype(recv_counts)>;
-    constexpr bool recv_counts_is_ignore = is_empty_data_buffer_v<recv_counts_param_type>
-                                           && recv_counts_param_type::buffer_type == internal::BufferType::ignore;
+    using recv_counts_param_type = std::remove_reference_t<decltype(recv_counts)>;
+    constexpr bool recv_counts_is_ignore =
+        is_empty_data_buffer_v<
+            recv_counts_param_type> && recv_counts_param_type::buffer_type == internal::BufferType::ignore;
 
     // because this check is asymmetric, we move it before any communication happens.
     KASSERT(!this->is_root(root.rank_signed()) || !recv_counts_is_ignore, "Root cannot ignore recv counts.");
