@@ -23,7 +23,7 @@ As outlined above, it is possible to pass any subset of the optional parameters,
 
 This flexibility is enabled by KaMPIng's **named parameter** approach: Each argument passed to a wrapped MPI function is identified by a name instead of its position in the complete parameter list as in plain MPI.
 
-Internally, named parameters are realized as factory functions which construct parameter objects inplace, but it's easier to think of this concept in terms of `parameter_name(buffer)`.
+Internally, named parameters are realized as factory functions which construct parameter objects inplace, but it's easier to think of this concept in terms of `parameter_name(data)`.
 | Parameter Name   | Factory Function In-Parameter | Factory Function Out-Parameter |
 | ---------------- | ----------------              | -------------                  |
 | send_buf         | send_buf(...)                 | -                              |

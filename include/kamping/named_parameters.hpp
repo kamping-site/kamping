@@ -53,16 +53,15 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
         make_empty_data_buffer_builder<Data, internal::ParameterType::send_buf, internal::BufferType::ignore>();
 }
 
-/// @brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
-/// the data element(s) to send.
+/// @brief Passes a container/single value as a send buffer to the underlying MPI call.
 ///
-/// If the underlying container provides \c data(), it is assumed that it is a container and all elements in the
+/// If data provides \c data(), it is assumed that it is a container and all elements in the
 /// container are considered for the operation. In this case, the container has to provide a \c size() member functions
-/// and expose the contained \c value_type. If no \c data() member function exists, a single element is wrapped in the
-/// send buffer.
+/// and expose the contained \c value_type. If no \c data() member function exists, a single value is assumed
 /// @tparam Data Data type representing the element(s) to send.
 /// @param data Data (either a container which contains the elements or the element directly) to send
-/// @return Object referring to the storage containing the data elements to send.
+/// @return Parameter object referring to the storage containing the data elements to send.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Data, typename Enable = std::enable_if_t<!internal::is_serialization_buffer_v<Data>>>
 auto send_buf(Data&& data) {
     return internal::make_data_buffer_builder<
@@ -72,7 +71,9 @@ auto send_buf(Data&& data) {
         BufferResizePolicy::no_resize>(std::forward<Data>(data));
 }
 
-/// @brief A send buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_serialized().
+/// @brief Passes a container/single value as a send buffer to the underlying MPI call. Additionally indicates to use
+/// serialization to transfer the data.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <
     typename SerializationBufferType,
     std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>, bool> = true>
@@ -84,11 +85,12 @@ auto send_buf(SerializationBufferType&& data) {
         BufferResizePolicy::no_resize>(std::forward<SerializationBufferType>(data));
 }
 
-/// @brief Generates a buffer taking ownership of the data pass to the send buffer as an initializer list.
+/// @brief Passes the data provided as an initializer list as a send buffer to the underlying MPI call.
 ///
 /// @tparam T The type of the elements in the initializer list.
 /// @param data An initializer list of the data elements.
-/// @return Object referring to the storage containing the data elements to send.
+/// @return Parameter object referring to the storage containing the data elements to send.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
     return internal::make_data_buffer_builder<
@@ -98,16 +100,16 @@ auto send_buf(std::initializer_list<T> data) {
         BufferResizePolicy::no_resize>(std::move(data));
 }
 
-/// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
-/// and the root() of the operation. This buffer type may encapsulate const data and in which case it can only be used
-/// as the send buffer. For some functions (e.g. bcast), you have to pass a send_recv_buf as the send buffer.
+/// @brief Passes a container/single value as a send or receive buffer to the underlying MPI call.
 ///
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. If omitted,
-/// the resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying container shall be resized. If
+/// omitted, the resize policy is BufferResizePolicy::no_resize, indicating that the container should not be resized by
+/// kamping.
 /// @tparam Data Data type representing the element(s) to send/receive.
 /// @param data Data (either a container which contains the elements or the element directly) to send or the buffer to
 /// receive into.
-/// @return Object referring to the storage containing the data elements to send / the received elements.
+/// @return Parameter object referring to the storage containing the data elements to send or receive.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <
     BufferResizePolicy resize_policy = BufferResizePolicy::no_resize,
     typename Data,
@@ -123,7 +125,9 @@ auto send_recv_buf(Data&& data) {
         resize_policy>(std::forward<Data>(data));
 }
 
-/// @brief A send/recv buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_serialized().
+/// @brief Passes a container/single value as a send or receive buffer to the underlying MPI call. Additionally
+/// indicates to use serialization to transfer the data.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <
     typename SerializationBufferType,
     typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>
@@ -138,11 +142,9 @@ auto send_recv_buf(SerializationBufferType&& buffer) {
         BufferResizePolicy::resize_to_fit>(std::forward<SerializationBufferType>(buffer));
 }
 
-/// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
-/// and the root() of the operation.
-/// @tparam Container Container type which contains the elements to send/receive. Container must provide \c data() and
-/// \c size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the data elements to send / the received elements.
+/// @brief Indicates to use a parameter object of type \tparam Container as `send_recv_buf`.
+/// Container must provide \c data(), \c size(), \c resize(unsigned int) member functions and expose the contained \c value_type.
+/// @return Parameter object referring to the storage containing the data elements to send or receive.
 template <typename Container>
 auto send_recv_buf(AllocNewT<Container>) {
     return internal::make_data_buffer_builder<
@@ -152,8 +154,9 @@ auto send_recv_buf(AllocNewT<Container>) {
         BufferResizePolicy::resize_to_fit>(alloc_new<Container>);
 }
 
-/// @brief Construct a send recv buffer using \p ValueType as the underlying value type. The kind of container is
-/// determined by the MPI operation and usually defaults to \ref Communicator::default_container_type.
+
+/// @brief Indicates to use a parameter object with an underlying container with a \c value_type \tparam ValueType as `send_recv_buf`.
+/// The type of the underlying container is determined by the MPI operation and usually defaults to \ref Communicator::default_container_type.
 /// @tparam ValueType The type of the elements in the buffer.
 template <typename ValueType>
 auto send_recv_buf(AllocContainerOfT<ValueType>) {
