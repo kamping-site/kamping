@@ -63,6 +63,7 @@ public:
           _awaited_numbers(0),
           _sent_messages(0),
           _sent_elements(0),
+          _request(nullptr),
           _send_buffer_clear(true),
           _comm(comm) {
         _outbox.reserve(MAX_MESSAGE_LENGTH + 1);
@@ -87,13 +88,7 @@ public:
         if (_target_rank == -1 || _outbox.size() == 0)
             return;
 
-        _request = std::make_unique<ResultType>(_comm.isend(
-            kamping::send_buf(_outbox),
-            kamping::destination(_target_rank),
-            kamping::tag(MESSAGEBUFFER_MPI_TAG),
-            kamping::request()
-        ));
-
+        _request = std::make_unique<ResultType>(_send());
         ++_sent_messages;
 
         _target_rank       = -1;
@@ -151,6 +146,15 @@ public:
     }
 
 protected:
+    auto _send() {
+        return this->_comm.isend(
+            kamping::send_buf(_outbox),
+            kamping::destination(_target_rank),
+            kamping::tag(MESSAGEBUFFER_MPI_TAG),
+            kamping::request()
+        );
+    }
+
     std::array<MessageBufferEntry<T>, MAX_MESSAGE_LENGTH> _entries;
     std::map<uint64_t, T>                                 _inbox;
     int                                                   _target_rank;
@@ -215,9 +219,7 @@ public:
 
     template <typename U>
     kamping::Communicator<DefaultContainerType> init_comm(U comm) {
-        // TODO: how to simply set communicator without this identity split operation (copied from alltoall plugin)
-        auto mycomm = comm.split(0);
-        return Communicator(mycomm.disown_mpi_communicator(), mycomm.root_signed(), true);
+        return Communicator(comm.disown_mpi_communicator(), comm.root_signed(), true);
     }
 
     template <
@@ -359,8 +361,8 @@ private:
     const std::vector<size_t>                         _rank_intersecting_elements;
     std::vector<T>                                    _reduce_buffer;
     MessageBuffer<T, DefaultContainerType>            _message_buffer;
-    }; // namespace kamping::plugin
-} // namespace repr_reduce
+}; // namespace kamping::plugin
+} // namespace reproducible_reduce
 
 // Plugin Code
 template <typename Comm, template <typename...> typename DefaultContainerType>
@@ -400,6 +402,16 @@ public:
             std::reduce(send_counts.data(), send_counts.data() + send_counts.size(), 0, std::plus<>())
         );
 
+        // Assert distributionm is the same on all ranks
+        for (auto i = 0U; i < send_counts.size(); ++i) {
+            KASSERT(comm.is_same_on_all_ranks(send_counts.data()[i]),
+                    "send_counts value for rank " << i << " is not uniform across the cluster",
+                    assert::light_communication);
+            KASSERT(comm.is_same_on_all_ranks(recv_displs.data()[i]),
+                    "recv_displs value for rank " << i << " is not uniform across the cluster",
+                    assert::light_communication);
+        }
+
         // Construct index map which maps global array indices to PEs
         std::map<size_t, size_t> start_indices;
         for (size_t p = 0; p < comm.size(); ++p) {
@@ -433,6 +445,8 @@ public:
                                   << next_rank << " starts at index " << next_region_start
             );
         }
+
+
 
         return reproducible_reduce::ReproducibleCommunicator<T, DefaultContainerType>(
             this->to_communicator(),
