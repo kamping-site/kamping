@@ -94,8 +94,7 @@ TEST(ScanTest, scan_no_receive_buffer) {
 
     std::vector<int> expected_result = {
         ((comm.rank_signed() + 1) * comm.rank_signed()) / 2,
-        (comm.rank_signed() + 1) * 42
-    };
+        (comm.rank_signed() + 1) * 42};
     EXPECT_EQ(result, expected_result);
 }
 
@@ -110,8 +109,7 @@ TEST(ScanTest, scan_with_receive_buffer) {
 
     std::vector<int> expected_result = {
         ((comm.rank_signed() + 1) * comm.rank_signed()) / 2,
-        (comm.rank_signed() + 1) * 42
-    };
+        (comm.rank_signed() + 1) * 42};
     EXPECT_EQ(result, expected_result);
 }
 
@@ -135,8 +133,7 @@ TEST(ScanTest, scan_builtin_op_on_non_builtin_type) {
     EXPECT_EQ(result.size(), 2);
     std::vector<MyInt> expected_result = {
         ((comm.rank_signed() + 1) * comm.rank_signed()) / 2,
-        (comm.rank_signed() + 1) * 42
-    };
+        (comm.rank_signed() + 1) * 42};
     EXPECT_EQ(result, expected_result);
 }
 
@@ -160,8 +157,7 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             (comm.rank_signed() + 1) * 0 + (comm.rank_signed()) * 42,
             (comm.rank_signed() + 1) * 17 + (comm.rank_signed()) * 42,
-            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42
-        };
+            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42};
         EXPECT_EQ(result, expected_result);
     }
 
@@ -172,8 +168,7 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             (comm.rank_signed() + 1) * 0 + (comm.rank_signed()) * 42,
             (comm.rank_signed() + 1) * 17 + (comm.rank_signed()) * 42,
-            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42
-        };
+            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42};
         EXPECT_EQ(result, expected_result);
     }
 
@@ -187,8 +182,7 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             (comm.rank_signed() + 1) * 0 + (comm.rank_signed()) * 42,
             (comm.rank_signed() + 1) * 17 + (comm.rank_signed()) * 42,
-            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42
-        };
+            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42};
         EXPECT_EQ(result, expected_result);
     }
 
@@ -204,8 +198,7 @@ TEST(ScanTest, scan_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             (comm.rank_signed() + 1) * 0 + (comm.rank_signed()) * 42,
             (comm.rank_signed() + 1) * 17 + (comm.rank_signed()) * 42,
-            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42
-        };
+            (comm.rank_signed() + 1) * 8 + (comm.rank_signed()) * 42};
         EXPECT_EQ(result, expected_result);
     }
 }
@@ -439,13 +432,12 @@ TEST(ScanTest, custom_operation_on_custom_mpi_without_matching_cpp_type) {
 
     int const        sum_of_smaller_ranks_inclusive = comm.rank_signed() * (comm.rank_signed() + 1) / 2;
     std::vector<int> expected_result                = {
-        sum_of_smaller_ranks_inclusive,
-        dont_care,
-        dont_care,
-        sum_of_smaller_ranks_inclusive + (comm.rank_signed() + 1) * 42,
-        dont_care,
-        dont_care
-    };
+                       sum_of_smaller_ranks_inclusive,
+                       dont_care,
+                       dont_care,
+                       sum_of_smaller_ranks_inclusive + (comm.rank_signed() + 1) * 42,
+                       dont_care,
+                       dont_care};
     std::vector<int> recv_buffer(6, dont_care);
 
     MPI_Op user_defined_op;

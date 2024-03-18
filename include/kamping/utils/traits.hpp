@@ -76,8 +76,9 @@ constexpr bool is_pair_like_v = is_pair_like<T>::value;
 template <typename T>
 constexpr bool is_destination_buffer_pair_v = [] {
     if constexpr (is_pair_like_v<T>) {
-        return is_contiguous_sized_range_v<std::remove_const_t<std::tuple_element_t<1, T>>>
-               && std::is_convertible_v<std::remove_const_t<std::tuple_element_t<0, T>>, int>;
+        return is_contiguous_sized_range_v<std::remove_const_t<std::tuple_element_t<
+                   1,
+                   T>>> && std::is_convertible_v<std::remove_const_t<std::tuple_element_t<0, T>>, int>;
     } else {
         return false;
     }

@@ -517,7 +517,7 @@ TEST(SparseAlltoallTest, alltoallv_sparse_one_to_all_recv_type_out_other_order) 
     std::vector<size_t> recv_buf;
     std::vector<int>    sources;
     auto                on_msg = [&](auto const& probed_msg) {
-        const int source = probed_msg.source_signed();
+        const int source                 = probed_msg.source_signed();
         const auto [recv_type, recv_msg] = probed_msg.recv(recv_type_out(), kamping::recv_buf(alloc_new<msg_type>));
 
         EXPECT_EQ(recv_msg.size(), msg_size);

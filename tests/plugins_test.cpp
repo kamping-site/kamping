@@ -115,8 +115,7 @@ TEST(PluginsTest, replace_implementation) {
 
         std::vector<int> expected_result = {
             (faultyComm.size_signed() * (faultyComm.size_signed() - 1)) / 2,
-            faultyComm.size_signed() * 42
-        };
+            faultyComm.size_signed() * 42};
         EXPECT_EQ(result, expected_result);
 
         // If you really want to, you can still access the alternative allreduce implementation like this:
@@ -146,8 +145,7 @@ TEST(PluginsTest, replace_implementation) {
 
             std::vector<int> expected_result = {
                 (faultyComm.size_signed() * (faultyComm.size_signed() - 1)) / 2,
-                faultyComm.size_signed() * 42
-            };
+                faultyComm.size_signed() * 42};
             EXPECT_EQ(result, expected_result);
         }
     }
@@ -175,8 +173,7 @@ TEST(PluginsTest, replace_implementation) {
 
         std::vector<int> expected_result = {
             (comm.size_signed() * (comm.size_signed() - 1)) / 2,
-            comm.size_signed() * 42
-        };
+            comm.size_signed() * 42};
         EXPECT_EQ(result, expected_result);
     }
 
