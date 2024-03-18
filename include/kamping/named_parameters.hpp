@@ -142,7 +142,7 @@ auto send_recv_buf(SerializationBufferType&& buffer) {
         BufferResizePolicy::resize_to_fit>(std::forward<SerializationBufferType>(buffer));
 }
 
-/// @brief Indicates to use a parameter object of type \tparam Container as `send_recv_buf`.
+/// @brief Indicates to use an object of type \tparam Container as `send_recv_buf`.
 /// Container must provide \c data(), \c size(), \c resize(unsigned int) member functions and expose the contained \c
 /// value_type.
 /// @return Parameter object referring to the storage containing the data elements to send or receive.
@@ -168,14 +168,15 @@ auto send_recv_buf(AllocContainerOfT<ValueType>) {
         BufferResizePolicy::resize_to_fit>(alloc_container_of<ValueType>);
 }
 
-/// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must
-/// contain the send counts to each relevant PE.
+/// @brief Passes a container as send counts to the underlying MPI call, i.e. the underlying storage must
+/// contain the send count to each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
+/// value_type.
 /// @tparam Container Container type which contains the send counts.
 /// @param container Container which contains the send counts.
-/// @return Object referring to the storage containing the send counts.
+/// @return Parameter object referring to the storage containing the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto send_counts(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -186,12 +187,12 @@ auto send_counts(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper for the send counts based on an initializer list, i.e. the
-/// send counts to each relevant PE.
+/// @brief Passes the data provided as an initializer list as send counts to the underlying MPI call.
 ///
 /// @tparam Type The type of the initializer list.
 /// @param counts The send counts.
-/// @return Object referring to the storage containing the send counts.
+/// @return Parameter object referring to the storage containing the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
     return internal::make_data_buffer_builder<
@@ -202,15 +203,20 @@ auto send_counts(std::initializer_list<T> counts) {
         int>(std::move(counts));
 }
 
-/// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage
-/// will contained the send counts when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
+/// @brief Passes a \p container, into which the send counts deduced by KaMPIng will be written, to the wrapped MPI call.
+/// The underlying container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function and expose the
+/// - expose \c value_type.
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a `resize(unsigned
+/// int)` member function.
+///
 /// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
-/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
-/// @tparam Container Container type which contains the send counts.
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
+/// @tparam Container Container type which will contain  the send counts.
 /// @param container Container which will contain the send counts.
-/// @return Object referring to the storage containing the send counts.
+/// @return Parameter object referring to the storage which will contain the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_counts_out(Container&& container) {
     return internal::make_data_buffer_builder<
