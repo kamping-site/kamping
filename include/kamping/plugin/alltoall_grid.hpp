@@ -389,9 +389,9 @@ private:
 
         using value_type = typename SendBuffer::value_type;
         using MsgType    = std::conditional_t<
-               envelope_level == MessageEnvelopeLevel::no_envelope,
-               MessageEnvelope<value_type, Destination>,
-               MessageEnvelope<value_type, Source, Destination>>;
+            envelope_level == MessageEnvelopeLevel::no_envelope,
+            MessageEnvelope<value_type, Destination>,
+            MessageEnvelope<value_type, Source, Destination>>;
         DefaultContainerType<MsgType> rowwise_send_buf(total_send_count);
         size_t                        cur_chunk_offset = 0;
 

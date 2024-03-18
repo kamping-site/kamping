@@ -337,4 +337,3 @@ TEST(AlltoallvGridTest, alltoallv_with_envelope_all_to_last_pe_source_destinatio
         EXPECT_EQ(result.size(), 0);
     }
 }
-
