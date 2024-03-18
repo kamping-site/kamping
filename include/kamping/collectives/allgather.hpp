@@ -60,7 +60,7 @@
 /// parameters, see \ref Communicator::allgather_inplace.
 ///
 /// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
+/// @param args All required and any number of the optional parameters described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
 ///
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
@@ -308,7 +308,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
 /// MPI datatype is derived automatically based on recv_buf's underlying \c value_type.
 ///
 /// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
+/// @param args All required and any number of the optional parameters described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
 ///
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
