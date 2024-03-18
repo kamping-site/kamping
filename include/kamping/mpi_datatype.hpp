@@ -190,8 +190,7 @@ auto type_dispatcher() {
 /// ```
 ///
 template <typename T, typename Enable = void>
-struct mpi_type_traits {
-};
+struct mpi_type_traits {};
 
 /// @brief The type trait that maps a C++ type \p T to a type trait that can be used to construct an MPI_Datatype.
 ///

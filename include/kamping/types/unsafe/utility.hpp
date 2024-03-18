@@ -18,8 +18,10 @@
 #include <kamping/mpi_datatype.hpp>
 
 namespace kamping {
-/// @brief Specialization of the `mpi_type_traits` type trait for `std::pair`, which represents the pair as a sequence of bytes.
-/// @warning This is UB, because byte serialization is only well-defined for trivially copyable types. For a safe version see \ref kamping/types/utility.hpp.
+/// @brief Specialization of the `mpi_type_traits` type trait for `std::pair`, which represents the pair as a sequence
+/// of bytes.
+/// @warning This is UB, because byte serialization is only well-defined for trivially copyable types. For a safe
+/// version see \ref kamping/types/utility.hpp.
 template <typename First, typename Second>
 struct mpi_type_traits<
     std::pair<First, Second>,
