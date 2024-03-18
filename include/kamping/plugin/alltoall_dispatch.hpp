@@ -131,7 +131,7 @@ public:
                 args...
             );
 
-        const size_t max_bottleneck_send_volume =
+        size_t const max_bottleneck_send_volume =
             self.allreduce_single(kamping::send_buf(send_buf.size()), op(ops::max<size_t>{}));
 
         /// remove comm_volume_threshold and unpacked send_counts from caller provided argument list before forwarding

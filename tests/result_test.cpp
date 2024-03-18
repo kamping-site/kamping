@@ -576,10 +576,10 @@ TEST(MakeMpiResultTest, structured_bindings_basics) {
             std::move(send_counts_buf)
         );
 
-        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, const std::vector<std::int8_t>>);
-        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, const std::vector<std::int16_t>>);
-        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, const std::vector<std::int32_t>>);
-        static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, const std::vector<std::int64_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, std::vector<std::int8_t> const>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, std::vector<std::int16_t> const>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, std::vector<std::int32_t> const>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, std::vector<std::int64_t> const>);
     }
     {
         // structured binding by const reference
@@ -599,10 +599,10 @@ TEST(MakeMpiResultTest, structured_bindings_basics) {
             std::move(send_counts_buf)
         );
 
-        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, const std::vector<std::int8_t>>);
-        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, const std::vector<std::int16_t>>);
-        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, const std::vector<std::int32_t>>);
-        static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, const std::vector<std::int64_t>>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_buffer)>, std::vector<std::int8_t> const>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_counts)>, std::vector<std::int16_t> const>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(recv_displs)>, std::vector<std::int32_t> const>);
+        static_assert(std::is_same_v<std::remove_reference_t<decltype(send_counts)>, std::vector<std::int64_t> const>);
     }
 }
 

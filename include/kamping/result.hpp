@@ -45,7 +45,7 @@ struct ResultCategoryNotUsed {};
 /// @brief Helper for implementing the extract_* functions in \ref MPIResult. Is \c true if the passed buffer type owns
 /// its underlying storage and is an output buffer.
 template <typename Buffer>
-inline constexpr bool is_extractable = Buffer::is_owning&& Buffer::is_out_buffer;
+inline constexpr bool is_extractable = Buffer::is_owning && Buffer::is_out_buffer;
 
 /// @brief Specialization of helper for implementing the extract_* functions in \ref MPIResult. Is always \c false;
 template <>

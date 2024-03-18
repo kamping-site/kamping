@@ -313,14 +313,14 @@ struct has_no_unused_parameters {
                        !has_parameter_type<std::tuple_element_t<Indices, all_available_parameters>::value, Args...>(),
                        std::tuple<std::tuple_element_t<Indices, all_available_parameters>>,
                        std::tuple<>>{}...
-               ))> + sizeof...(Args);
+               ))>
+               + sizeof...(Args);
     }
 
     /// @brief \c true if and only if no unused parameter can be found in \c Args.
     static constexpr bool assertion =
-        (std::tuple_size_v<all_available_parameters> >= number_distinct_parameters(
-             std::make_index_sequence<std::tuple_size_v<all_available_parameters>>{}
-         ));
+        (std::tuple_size_v<all_available_parameters>
+         >= number_distinct_parameters(std::make_index_sequence<std::tuple_size_v<all_available_parameters>>{}));
 
 }; // struct has_no_unused_parameters
 

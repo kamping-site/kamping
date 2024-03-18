@@ -803,7 +803,7 @@ TEST(ScattervTest, structured_bindings_explicit_owning_recv_buf_and_root_param) 
     EXPECT_EQ(recv_type, MPI_INT);
     if (comm.is_root(root)) {
         EXPECT_EQ(send_type, MPI_INT);
-        const std::vector<int> expected_send_displs = iota_container_n(comm.size(), 0);
+        std::vector<int> const expected_send_displs = iota_container_n(comm.size(), 0);
         EXPECT_EQ(send_displs, expected_send_displs);
     }
 }

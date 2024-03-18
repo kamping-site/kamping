@@ -956,7 +956,7 @@ TEST(AlltoallvTest, recv_type_is_out_parameter) {
     Communicator     comm;
     std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
-    const std::vector<int> counts(comm.size(), 1);
+    std::vector<int> const counts(comm.size(), 1);
     std::vector<int>       recv_buffer(comm.size(), 0);
 
     MPI_Datatype recv_type_value;
@@ -971,7 +971,7 @@ TEST(AlltoallvTest, send_recv_type_are_part_of_result_object) {
     Communicator     comm;
     std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
-    const std::vector<int> counts(comm.size(), 1);
+    std::vector<int> const counts(comm.size(), 1);
     std::vector<int>       recv_buffer(comm.size(), 0);
 
     auto result =
@@ -989,7 +989,7 @@ TEST(AlltoallvTest, single_element_non_trivial_send_type) {
     Communicator           comm;
     MPI_Datatype           int_padding_padding = MPI_INT_padding_padding();
     std::vector<int>       input(3 * comm.size());
-    const std::vector<int> counts(comm.size(), 1);
+    std::vector<int> const counts(comm.size(), 1);
     std::vector<int>       recv_buffer(comm.size(), 0);
     for (size_t i = 0; i < comm.size(); ++i) {
         input[3 * i] = static_cast<int>(i);
@@ -1008,7 +1008,7 @@ TEST(AlltoallvTest, single_element_non_trivial_recv_type) {
     Communicator           comm;
     MPI_Datatype           int_padding_padding = MPI_INT_padding_padding();
     std::vector<int>       input(comm.size());
-    const std::vector<int> counts(comm.size(), 1);
+    std::vector<int> const counts(comm.size(), 1);
     std::vector<int>       recv_buffer(3 * comm.size(), 0);
     std::iota(input.begin(), input.end(), 0);
 
@@ -1037,8 +1037,8 @@ TEST(AlltoallvTest, different_send_and_recv_counts) {
     MPI_Datatype int_padding_int = MPI_INT_padding_MPI_INT();
 
     std::vector<int>       input(2 * comm.size());
-    const std::vector<int> send_counts(comm.size(), 2);
-    const std::vector<int> recv_counts(comm.size(), 1);
+    std::vector<int> const send_counts(comm.size(), 2);
+    std::vector<int> const recv_counts(comm.size(), 1);
     std::vector<int>       recv_buffer(3 * comm.size(), 0);
     std::iota(input.begin(), input.end(), 0);
 
@@ -1070,8 +1070,8 @@ TEST(AlltoallvTest, different_send_and_recv_counts_without_explicitly_given_mpi_
         }
     };
     std::vector<int>              input(2 * comm.size());
-    const std::vector<int>        send_counts(comm.size(), 2);
-    const std::vector<int>        recv_counts(comm.size(), 1);
+    std::vector<int> const        send_counts(comm.size(), 2);
+    std::vector<int> const        recv_counts(comm.size(), 1);
     std::vector<CustomRecvStruct> recv_buffer(comm.size());
     std::iota(input.begin(), input.end(), 0);
 
@@ -1092,8 +1092,8 @@ TEST(AlltoallvTest, different_send_and_recv_counts_without_explicitly_given_mpi_
 TEST(AlltoallvTest, structured_bindings_explicit_recv_buffer) {
     Communicator comm;
     // each PE sends its rank to all other PEs
-    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
-    const std::vector<int>           send_counts(comm.size(), 1);
+    std::vector<std::uint64_t> const input(comm.size(), comm.rank());
+    std::vector<int> const           send_counts(comm.size(), 1);
 
     std::vector<std::uint64_t> recv_buffer(comm.size());
     // explicit recv buffer
@@ -1119,8 +1119,8 @@ TEST(AlltoallvTest, structured_bindings_explicit_recv_buffer) {
 TEST(AlltoallTest, structured_bindings_implicit_recv_buffer) {
     Communicator comm;
     // each PE sends its rank to all other PEs
-    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
-    const std::vector<int>           send_counts(comm.size(), 1);
+    std::vector<std::uint64_t> const input(comm.size(), comm.rank());
+    std::vector<int> const           send_counts(comm.size(), 1);
 
     auto [recv_buffer, send_type, recv_type, recv_counts, send_displs, recv_displs] = comm.alltoallv(
         send_type_out(),
@@ -1143,8 +1143,8 @@ TEST(AlltoallTest, structured_bindings_implicit_recv_buffer) {
 TEST(AlltoallTest, structured_bindings_explicit_owning_recv_buffer) {
     Communicator comm;
     // each PE sends its rank to all other PEs
-    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
-    const std::vector<int>           send_counts(comm.size(), 1);
+    std::vector<std::uint64_t> const input(comm.size(), comm.rank());
+    std::vector<int> const           send_counts(comm.size(), 1);
 
     auto [send_type, recv_type, recv_counts, send_displs, recv_displs, recv_buffer] = comm.alltoallv(
         send_type_out(),

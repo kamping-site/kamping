@@ -158,7 +158,8 @@ TEST_F(RequestTest, unsafe_wait_all_container) {
     std::set<MPI_Request> expected_requests{
         requests[0].mpi_request(),
         requests[1].mpi_request(),
-        requests[2].mpi_request()};
+        requests[2].mpi_request()
+    };
     kamping::requests::wait_all_with_undefined_behavior(requests);
     EXPECT_EQ(handled_requests, expected_requests);
 }
@@ -171,7 +172,8 @@ TEST_F(RequestTest, unsafe_wait_all_container_moved) {
     std::set<MPI_Request> expected_requests{
         requests[0].mpi_request(),
         requests[1].mpi_request(),
-        requests[2].mpi_request()};
+        requests[2].mpi_request()
+    };
     kamping::requests::wait_all_with_undefined_behavior(std::move(requests));
     EXPECT_EQ(handled_requests, expected_requests);
 }
@@ -184,7 +186,8 @@ TEST_F(RequestTest, wait_all_container) {
     std::set<MPI_Request> expected_requests{
         requests[0].mpi_request(),
         requests[1].mpi_request(),
-        requests[2].mpi_request()};
+        requests[2].mpi_request()
+    };
     kamping::requests::wait_all(requests);
     EXPECT_EQ(handled_requests, expected_requests);
 }
@@ -197,7 +200,8 @@ TEST_F(RequestTest, wait_all_container_moved) {
     std::set<MPI_Request> expected_requests{
         requests[0].mpi_request(),
         requests[1].mpi_request(),
-        requests[2].mpi_request()};
+        requests[2].mpi_request()
+    };
     kamping::requests::wait_all(std::move(requests));
     EXPECT_EQ(handled_requests, expected_requests);
 }

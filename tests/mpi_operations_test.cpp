@@ -95,7 +95,8 @@ struct some_values<float> {
             10,
             42,
             1.1337f,
-            4.2f};
+            4.2f
+        };
     }
 };
 
@@ -114,7 +115,8 @@ struct some_values<double> {
             10,
             42,
             1.1337,
-            4.2};
+            4.2
+        };
     }
 };
 

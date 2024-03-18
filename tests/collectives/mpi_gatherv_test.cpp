@@ -451,7 +451,7 @@ TEST(GathervTest, send_recv_count_are_part_of_result_object) {
 TEST(GathervTest, send_recv_count_are_out_param) {
     Communicator           comm;
     std::vector<int>       input(3, comm.rank_signed());
-    const std::vector<int> random_vector = {-1, 42, -2322};
+    std::vector<int> const random_vector = {-1, 42, -2322};
     std::vector<int>       recv_counts   = random_vector;
     int                    send_count    = -1;
     auto                   result =
@@ -659,7 +659,7 @@ TEST(GathervTest, different_send_and_recv_counts_without_explicit_mpi_types) {
 TEST(GathervTest, structured_bindings) {
     Communicator           comm;
     std::vector<int>       input{comm.rank_signed()};
-    const std::vector<int> expected_recv_buffer_on_root = [&]() {
+    std::vector<int> const expected_recv_buffer_on_root = [&]() {
         std::vector<int> vec(comm.size());
         std::iota(vec.begin(), vec.end(), 0);
         return vec;

@@ -233,9 +233,9 @@ private:
     TimePoint                          _start; ///< Point in time at which the current measurement has been started.
     bool                               _is_active{false}; ///< Indicates whether a time measurement is currently active.
     std::vector<Duration>              _durations;        ///< Duration(s) of the node
-    std::vector<GlobalAggregationMode> _duration_aggregation_operations{
-        GlobalAggregationMode::max}; ///< Communicator-wide aggregation operation which will be performed on the
-                                     ///< durations. @TODO replace this with a more space efficient variant
+    std::vector<GlobalAggregationMode> _duration_aggregation_operations{GlobalAggregationMode::max
+    }; ///< Communicator-wide aggregation operation which will be performed on the
+       ///< durations. @TODO replace this with a more space efficient variant
 };
 
 /// @brief Tree consisting of objects of type TimerTreeNode. The tree constitutes a hierarchy of time measurements
@@ -279,7 +279,7 @@ inline bool is_string_same_on_all_ranks(std::string const& str, Communicator con
         for (std::size_t cur_rank = 0; cur_rank < comm.size(); ++cur_rank) {
             auto              begin = recv_buf.begin() + static_cast<int>(cur_rank * str.size());
             auto              end   = begin + static_cast<int>(str.size());
-            const std::string cur_string(begin, end);
+            std::string const cur_string(begin, end);
             if (cur_string != str) {
                 result = false;
                 break;

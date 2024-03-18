@@ -199,8 +199,8 @@ namespace requests {
 template <
     typename Container,
     typename std::enable_if<
-        internal::has_data_member_v<
-            Container> && std::is_same_v<typename std::remove_reference_t<Container>::value_type, MPI_Request>,
+        internal::has_data_member_v<Container>
+            && std::is_same_v<typename std::remove_reference_t<Container>::value_type, MPI_Request>,
         bool>::type = true>
 void wait_all(Container&& requests) {
     int err = MPI_Waitall(asserting_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
@@ -214,8 +214,8 @@ void wait_all(Container&& requests) {
 template <
     typename Container,
     typename std::enable_if<
-        internal::has_data_member_v<
-            Container> && std::is_same_v<typename std::remove_reference_t<Container>::value_type, Request>,
+        internal::has_data_member_v<Container>
+            && std::is_same_v<typename std::remove_reference_t<Container>::value_type, Request>,
         bool>::type = true>
 void wait_all_with_undefined_behavior(Container&& requests) {
     static_assert(
@@ -236,8 +236,8 @@ void wait_all_with_undefined_behavior(Container&& requests) {
 template <
     typename Container,
     typename std::enable_if<
-        internal::has_data_member_v<
-            Container> && std::is_same_v<typename std::remove_reference_t<Container>::value_type, Request>,
+        internal::has_data_member_v<Container>
+            && std::is_same_v<typename std::remove_reference_t<Container>::value_type, Request>,
         bool>::type = true>
 void wait_all(Container&& requests) {
     std::vector<MPI_Request> mpi_requests(requests.size());

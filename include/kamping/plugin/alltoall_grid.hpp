@@ -157,14 +157,14 @@ public:
         : _size_of_orig_comm{comm.size()},
           _rank_in_orig_comm{comm.rank()} {
         double const sqrt       = std::sqrt(comm.size());
-        const size_t floor_sqrt = static_cast<size_t>(std::floor(sqrt));
-        const size_t ceil_sqrt  = static_cast<size_t>(std::ceil(sqrt));
+        size_t const floor_sqrt = static_cast<size_t>(std::floor(sqrt));
+        size_t const ceil_sqrt  = static_cast<size_t>(std::ceil(sqrt));
         // We want to ensure that #columns + 1 >= #rows >= #columns.
         // Therefore, use floor(sqrt(comm.size())) columns unless we have enough PEs to begin another row when using
         // ceil(sqrt(comm.size()) columns.
-        const size_t threshold                      = floor_sqrt * ceil_sqrt;
+        size_t const threshold                      = floor_sqrt * ceil_sqrt;
         _num_columns                                = (comm.size() >= threshold) ? ceil_sqrt : floor_sqrt;
-        const size_t num_ranks_in_incomplete_column = comm.size() / _num_columns;
+        size_t const num_ranks_in_incomplete_column = comm.size() / _num_columns;
         auto [row, col]          = pos_in_complete_grid(comm.rank()); // assume that we have a complete grid,
         _size_complete_rectangle = _num_columns * num_ranks_in_incomplete_column;
         if (comm.rank() >= _size_complete_rectangle) {
@@ -321,7 +321,7 @@ private:
         Span recv_buf_span(recv_buf.data(), recv_buf.size());
         Span grid_recv_buf_span(grid_recv_buffer.data(), grid_recv_buffer.size());
         for (auto const& elem: grid_recv_buf_span) {
-            const size_t pos   = asserting_cast<size_t>(write_pos_span[elem.get_source()]++);
+            size_t const pos   = asserting_cast<size_t>(write_pos_span[elem.get_source()]++);
             recv_buf_span[pos] = std::move(elem.get_payload());
         }
     }

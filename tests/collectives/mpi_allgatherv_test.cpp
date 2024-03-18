@@ -198,7 +198,7 @@ TEST(AllgathervTest, allgatherv_all_empty_but_rank_in_the_middle_with_different_
 
 TEST(AllgathervTest, allgather_single_element_with_given_buffers_bigger_than_required) {
     Communicator           comm;
-    const std::vector<int> data{comm.rank_signed()};
+    std::vector<int> const data{comm.rank_signed()};
     std::vector<int>       expected_recv_buffer(comm.size());
     std::iota(expected_recv_buffer.begin(), expected_recv_buffer.end(), 0);
     std::vector<int> expected_recv_counts(comm.size(), 1);
@@ -281,7 +281,7 @@ TEST(AllgathervTest, allgather_single_element_with_given_buffers_bigger_than_req
 
 TEST(AllgathervTest, allgather_single_element_with_given_buffers_smaller_than_required) {
     Communicator           comm;
-    const std::vector<int> data{comm.rank_signed()};
+    std::vector<int> const data{comm.rank_signed()};
     std::vector<int>       expected_recv_buffer(comm.size());
     std::iota(expected_recv_buffer.begin(), expected_recv_buffer.end(), 0);
     std::vector<int> expected_recv_counts(comm.size(), 1);
@@ -442,7 +442,7 @@ TEST(AllgathervTest, non_monotonically_increasing_recv_displacements) {
 
 TEST(AllgathervTest, send_recv_type_is_out_parameter) {
     Communicator           comm;
-    const std::vector<int> data(1, comm.rank_signed());
+    std::vector<int> const data(1, comm.rank_signed());
     MPI_Datatype           send_type;
     MPI_Datatype           recv_type;
     auto recv_buf = comm.allgatherv(send_buf(data), send_type_out(send_type), recv_type_out(recv_type));
@@ -455,7 +455,7 @@ TEST(AllgathervTest, send_recv_type_is_out_parameter) {
 
 TEST(AllgathervTest, send_recv_type_part_of_result_object) {
     Communicator           comm;
-    const std::vector<int> data(1, comm.rank_signed());
+    std::vector<int> const data(1, comm.rank_signed());
     auto [recv_buf, send_type, recv_type] = comm.allgatherv(send_buf(data), send_type_out(), recv_type_out());
 
     EXPECT_EQ(send_type, MPI_INT);
@@ -571,14 +571,14 @@ TEST(AllgathervTest, structured_bindings) {
     // each PE contributes its rank rank times.
     Communicator           comm;
     std::vector<int>       input(comm.rank(), comm.rank_signed());
-    const std::vector<int> expected_recv_buffer = [&]() {
+    std::vector<int> const expected_recv_buffer = [&]() {
         std::vector<int> vec;
         for (size_t i = 0; i < comm.size(); ++i) {
             std::fill_n(std::back_inserter(vec), i, static_cast<int>(i));
         }
         return vec;
     }();
-    const std::vector<int> expected_recv_counts = [&]() {
+    std::vector<int> const expected_recv_counts = [&]() {
         std::vector<int> vec(comm.size());
         std::iota(vec.begin(), vec.end(), 0);
         return vec;

@@ -326,7 +326,8 @@ TEST(ReduceTest, reduce_with_receive_buffer_on_root) {
         EXPECT_EQ(result.size(), 2);
         std::vector<int> expected_result = {
             (comm.size_signed() * (comm.size_signed() - 1)) / 2,
-            comm.size_signed() * 42};
+            comm.size_signed() * 42
+        };
         EXPECT_EQ(result, expected_result);
     } else {
         auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}));
@@ -354,7 +355,8 @@ TEST(ReduceTest, reduce_builtin_op_on_non_builtin_type) {
         EXPECT_EQ(result.size(), 2);
         std::vector<MyInt> expected_result = {
             (comm.size_signed() * (comm.size_signed() - 1)) / 2,
-            comm.size_signed() * 42};
+            comm.size_signed() * 42
+        };
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
@@ -382,7 +384,8 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
+        };
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
@@ -396,7 +399,8 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
+        };
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
@@ -413,7 +417,8 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
+        };
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
@@ -432,7 +437,8 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
+        };
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
@@ -604,7 +610,7 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_type) {
 
     Aggregate                    agg1_expected   = {0, dont_care, comm.size_signed() - 1};
     Aggregate                    agg2_expected   = {42, dont_care, comm.size_signed() - 1 + 42};
-    const std::vector<Aggregate> expected_result = {agg1_expected, agg2_expected};
+    std::vector<Aggregate> const expected_result = {agg1_expected, agg2_expected};
     std::vector<Aggregate>       recv_buffer(2);
     int const                    root_rank = 0;
 
@@ -641,7 +647,7 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_without_matching_cpp_type
     std::vector<int> input = {comm.rank_signed(), dont_care, dont_care, comm.rank_signed() + 42, dont_care, dont_care};
 
     int const              sum_of_ranks = comm.size_signed() * (comm.size_signed() - 1) / 2;
-    const std::vector<int> expected_result =
+    std::vector<int> const expected_result =
         {sum_of_ranks, dont_care, dont_care, sum_of_ranks + comm.size_signed() * 42, dont_care, dont_care};
     std::vector<int> recv_buffer(6, dont_care);
     int const        root_rank = 0;
@@ -666,7 +672,7 @@ TEST(ReduceTest, reduce_custom_operation_on_custom_mpi_without_matching_cpp_type
 }
 TEST(ReduceTest, send_recv_type_is_out_parameter) {
     Communicator           comm;
-    const std::vector<int> data{1};
+    std::vector<int> const data{1};
     MPI_Datatype           send_type;
     int const              root_rank = 0;
     auto                   recv_buf =
@@ -683,7 +689,7 @@ TEST(ReduceTest, send_recv_type_is_out_parameter) {
 
 TEST(ReduceTest, send_type_part_of_result_object) {
     Communicator           comm;
-    const std::vector<int> data{1};
+    std::vector<int> const data{1};
     int const              root_rank = 0;
     auto result = comm.reduce(send_buf(data), send_recv_type_out(), op(kamping::ops::plus<>{}), root(root_rank));
 
@@ -756,7 +762,7 @@ TEST(ReduceTest, structured_bindings_explicit_recv_buffer) {
     Communicator comm;
 
     std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
-    const std::vector<std::uint64_t> expected_recv_buffer_on_root(2, comm.size() * (comm.size() - 1) / 2);
+    std::vector<std::uint64_t> const expected_recv_buffer_on_root(2, comm.size() * (comm.size() - 1) / 2);
     std::vector<std::uint64_t>       recv_buffer;
     int const                        root        = comm.size_signed() - 1;
     auto const [send_recv_type, send_recv_count] = comm.reduce(
@@ -781,7 +787,7 @@ TEST(ReduceTest, structured_bindings_explicit_owning_recv_buffer) {
     Communicator comm;
 
     std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
-    const std::vector<std::uint64_t> expected_recv_buffer_on_root(2, comm.size() * (comm.size() - 1) / 2);
+    std::vector<std::uint64_t> const expected_recv_buffer_on_root(2, comm.size() * (comm.size() - 1) / 2);
     auto const [send_recv_type, send_recv_count, recv_buffer] = comm.reduce(
         send_recv_type_out(),
         send_recv_count_out(),
@@ -803,7 +809,7 @@ TEST(ReduceTest, structured_bindings_implicit_recv_buffer) {
     Communicator comm;
 
     std::vector<std::uint64_t>       values{comm.rank(), comm.rank()};
-    const std::vector<std::uint64_t> expected_recv_buffer_on_root(2, comm.size() * (comm.size() - 1) / 2);
+    std::vector<std::uint64_t> const expected_recv_buffer_on_root(2, comm.size() * (comm.size() - 1) / 2);
     {
         std::vector<std::uint64_t> tmp(2);
         auto const [recv_buffer, send_recv_type, send_recv_count] =
