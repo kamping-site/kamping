@@ -11,7 +11,7 @@ jobs:
     name: CMake Formatting Check
     runs-on: self-hosted
     container:
-      image: "localhost:5000/kamping-ci:2024.1"
+      image: "ghcr.io/kamping-site/kamping-ci:2024.1"
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
