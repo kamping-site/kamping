@@ -12,7 +12,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 10
     container:
-      image: "ghcr.io/kamping-site/kamping-ci:2024.1"
+      image: "ghcr.io/kamping-site/kamping-ci:2024.2"
     continue-on-error: true
     strategy:
       matrix:
