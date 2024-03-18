@@ -15,5 +15,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3.0.2
-    - name: Format CMake files
-      run: cmake --build -B build --target check-format
+    - name: Check C++ formatting
+      run: cmake --build build --target check-clang-format
+    - name: Check CMake formatting
+      run: cmake --build build --target check-cmake-format
