@@ -1,0 +1,19 @@
+name: formatting-check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+jobs:
+  cmake-formatting-check:
+    name: Formatting Check
+    runs-on: self-hosted
+    container:
+      image: "ghcr.io/kamping-site/kamping-ci:2024.1"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3.0.2
+    - name: Format CMake files
+      run: cmake -B build --target check-format
