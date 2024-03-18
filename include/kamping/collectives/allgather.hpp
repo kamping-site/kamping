@@ -44,17 +44,14 @@
 /// - \ref kamping::send_count() specifying how many elements are sent. If
 /// omitted, the size of the send buffer is used. This parameter is mandatory if \ref kamping::send_type() is given.
 ///
+/// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
+/// derived automatically based on send_buf's underlying \c value_type.
+///
 /// - \ref kamping::recv_count() specifying how many elements are received. If
 /// omitted, the value of send_counts will be used. This parameter is mandatory if \ref kamping::recv_type() is given.
 ///
-/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
-/// all data from all send buffers. The buffer will be resized according to the buffer's
-/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements. This requires a size of at least `recv_counts *
-/// communicator size`.
-///
-/// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
-/// derived automatically based on send_buf's underlying \c value_type.
+/// - \ref kamping::recv_buf() specifying a buffer for the output. Afterwards, this buffer will contain
+/// all data from all send buffers. This requires a size of the buffer of at least `recv_counts * communicator size`.
 ///
 /// - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
 /// derived automatically based on recv_buf's underlying \c value_type.
@@ -65,6 +62,9 @@
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Result type wrapping the output buffer if not specified as input parameter.
+///
+/// ### __Additional Remarks:__
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -294,15 +294,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
 /// storage must be large enough to store all received elements. This requires a size of at least  `max(recv_counts[i] +
 /// recv_displs[i])` for \c i in `[0, communicator size)`.
 ///
-/// - kamping::recv_displs()/recv_displs_out() containing the offsets of the messages in recv_buf. The `recv_counts[i]` elements
-/// starting at `recv_buf[recv_displs[i]]` will be received from rank `i`. If omitted, this is calculated as the
-/// exclusive prefix-sum of `recv_counts`.
+/// - kamping::recv_displs()/recv_displs_out() containing the offsets of the messages in recv_buf. The `recv_counts[i]`
+/// elements starting at `recv_buf[recv_displs[i]]` will be received from rank `i`. If omitted, this is calculated as
+/// the exclusive prefix-sum of `recv_counts`.
 ///
-/// - \ref kamping::send_type()/send_type_out() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
-/// derived automatically based on send_buf's underlying \c value_type.
+/// - \ref kamping::send_type()/send_type_out() specifying the \c MPI datatype to use as send type. If omitted, the \c
+/// MPI datatype is derived automatically based on send_buf's underlying \c value_type.
 ///
-/// - \ref kamping::recv_type()/recv_type_out() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
-/// derived automatically based on recv_buf's underlying \c value_type.
+/// - \ref kamping::recv_type()/recv_type_out() specifying the \c MPI datatype to use as recv type. If omitted, the \c
+/// MPI datatype is derived automatically based on recv_buf's underlying \c value_type.
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional buffers described above.
