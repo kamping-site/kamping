@@ -42,16 +42,40 @@ template <typename UnderlyingContainer>
 void test_recv_buffer_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_buffer = recv_buf(kamping::alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
-    static_assert(std::is_integral_v<typename decltype(recv_buffer)::value_type>, "Use integral Types in this test.");
+    auto construct_recv_buffer = []() {
+        auto recv_buffer = recv_buf(kamping::alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
+        static_assert(
+            std::is_integral_v<typename decltype(recv_buffer)::value_type>,
+            "Use integral Types in this test."
+        );
 
-    recv_buffer.resize(10);
-    int* ptr = recv_buffer.data();
-    std::iota(ptr, ptr + 10, 0);
-    MPIResult           mpi_result{std::make_tuple(std::move(recv_buffer))};
-    UnderlyingContainer underlying_container = mpi_result.extract_recv_buffer();
-    for (size_t i = 0; i < 10; ++i) {
-        EXPECT_EQ(underlying_container[i], i);
+        recv_buffer.resize(10);
+        int* ptr = recv_buffer.data();
+        std::iota(ptr, ptr + 10, 0);
+        return recv_buffer;
+    };
+
+    {
+        MPIResult           mpi_result{std::make_tuple(construct_recv_buffer())};
+        UnderlyingContainer underlying_container = mpi_result.extract_recv_buffer();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult            mpi_result{std::make_tuple(construct_recv_buffer())};
+        UnderlyingContainer& underlying_container = mpi_result.get_recv_buffer();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const mpi_result{std::make_tuple(construct_recv_buffer())};
+        mpi_result.get_recv_buffer();
+        UnderlyingContainer const& underlying_container = mpi_result.get_recv_buffer();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
     }
 }
 
@@ -60,16 +84,38 @@ template <typename UnderlyingContainer>
 void test_recv_counts_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_counts = recv_counts_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
-    static_assert(std::is_integral_v<typename decltype(recv_counts)::value_type>, "Use integral Types in this test.");
+    auto construct_recv_counts = []() {
+        auto recv_counts = recv_counts_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
+        static_assert(
+            std::is_integral_v<typename decltype(recv_counts)::value_type>,
+            "Use integral Types in this test."
+        );
 
-    recv_counts.resize(10);
-    int* ptr = recv_counts.data();
-    std::iota(ptr, ptr + 10, 0);
-    MPIResult           mpi_result{std::make_tuple(std::move(recv_counts))};
-    UnderlyingContainer underlying_container = mpi_result.extract_recv_counts();
-    for (size_t i = 0; i < 10; ++i) {
-        EXPECT_EQ(underlying_container[i], i);
+        recv_counts.resize(10);
+        int* ptr = recv_counts.data();
+        std::iota(ptr, ptr + 10, 0);
+        return recv_counts;
+    };
+    {
+        MPIResult           mpi_result{std::make_tuple(construct_recv_counts())};
+        UnderlyingContainer underlying_container = mpi_result.extract_recv_counts();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult            mpi_result{std::make_tuple(construct_recv_counts())};
+        UnderlyingContainer& underlying_container = mpi_result.get_recv_counts();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const            mpi_result{std::make_tuple(construct_recv_counts())};
+        UnderlyingContainer const& underlying_container = mpi_result.get_recv_counts();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
     }
 }
 
@@ -90,16 +136,38 @@ template <typename UnderlyingContainer>
 void test_recv_displs_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_displs = recv_displs_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
-    static_assert(std::is_integral_v<typename decltype(recv_displs)::value_type>, "Use integral Types in this test.");
+    auto construct_recv_displs = []() {
+        auto recv_displs = recv_displs_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
+        static_assert(
+            std::is_integral_v<typename decltype(recv_displs)::value_type>,
+            "Use integral Types in this test."
+        );
 
-    recv_displs.resize(10);
-    int* ptr = recv_displs.data();
-    std::iota(ptr, ptr + 10, 0);
-    MPIResult           mpi_result{std::make_tuple(std::move(recv_displs))};
-    UnderlyingContainer underlying_container = mpi_result.extract_recv_displs();
-    for (size_t i = 0; i < 10; ++i) {
-        EXPECT_EQ(underlying_container[i], i);
+        recv_displs.resize(10);
+        int* ptr = recv_displs.data();
+        std::iota(ptr, ptr + 10, 0);
+        return recv_displs;
+    };
+    {
+        MPIResult           mpi_result{std::make_tuple(construct_recv_displs())};
+        UnderlyingContainer underlying_container = mpi_result.extract_recv_displs();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult            mpi_result{std::make_tuple(construct_recv_displs())};
+        UnderlyingContainer& underlying_container = mpi_result.get_recv_displs();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const            mpi_result{std::make_tuple(construct_recv_displs())};
+        UnderlyingContainer const& underlying_container = mpi_result.get_recv_displs();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
     }
 }
 
@@ -108,30 +176,66 @@ template <typename UnderlyingContainer>
 void test_send_counts_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_counts = send_counts_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
-    static_assert(std::is_integral_v<typename decltype(send_counts)::value_type>, "Use integral Types in this test.");
+    auto construct_send_counts = []() {
+        auto send_counts = send_counts_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
+        static_assert(
+            std::is_integral_v<typename decltype(send_counts)::value_type>,
+            "Use integral Types in this test."
+        );
 
-    send_counts.resize(10);
-    int* ptr = send_counts.data();
-    std::iota(ptr, ptr + 10, 0);
-    MPIResult           mpi_result{std::make_tuple(std::move(send_counts))};
-    UnderlyingContainer underlying_container = mpi_result.extract_send_counts();
-    for (size_t i = 0; i < 10; ++i) {
-        EXPECT_EQ(underlying_container[i], i);
+        send_counts.resize(10);
+        int* ptr = send_counts.data();
+        std::iota(ptr, ptr + 10, 0);
+        return send_counts;
+    };
+    {
+        MPIResult           mpi_result{std::make_tuple(construct_send_counts())};
+        UnderlyingContainer underlying_container = mpi_result.extract_send_counts();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult            mpi_result{std::make_tuple(construct_send_counts())};
+        UnderlyingContainer& underlying_container = mpi_result.get_send_counts();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const            mpi_result{std::make_tuple(construct_send_counts())};
+        UnderlyingContainer const& underlying_container = mpi_result.get_send_counts();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
     }
 }
 
 // Test that send count can be moved into and extracted from a MPIResult object.
-template <typename UnderlyingContainer>
 void test_send_count_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    LibAllocatedSingleElementBuffer<int, ParameterType::send_count, BufferType::out_buffer> send_count_wrapper{};
-    send_count_wrapper.underlying() = 42;
+    auto const construct_send_count = []() {
+        LibAllocatedSingleElementBuffer<int, ParameterType::send_count, BufferType::out_buffer> send_count_wrapper{};
+        send_count_wrapper.underlying() = 42;
+        return send_count_wrapper;
+    };
 
-    MPIResult mpi_result{std::make_tuple(std::move(send_count_wrapper))};
-    int       send_count = mpi_result.extract_send_count();
-    EXPECT_EQ(send_count, 42);
+    {
+        MPIResult mpi_result{std::make_tuple(construct_send_count())};
+        int       send_count = mpi_result.extract_send_count();
+        EXPECT_EQ(send_count, 42);
+    }
+    {
+        MPIResult mpi_result{std::make_tuple(construct_send_count())};
+        int&      send_count = mpi_result.get_send_count();
+        EXPECT_EQ(send_count, 42);
+    }
+    {
+        const MPIResult mpi_result{std::make_tuple(construct_send_count())};
+        int const&      send_count = mpi_result.get_send_count();
+        EXPECT_EQ(send_count, 42);
+    }
 }
 
 // Test that send displs can be moved into and extracted from a MPIResult object.
@@ -203,6 +307,10 @@ TEST(MpiResultTest, extract_recv_displs_basics_own_container) {
 
 TEST(MpiResultTest, extract_send_counts_basics) {
     ::testing::test_send_counts_in_MPIResult<std::vector<int>>();
+}
+
+TEST(MpiResultTest, extract_send_count_basics) {
+    ::testing::test_send_count_in_MPIResult();
 }
 
 TEST(MpiResultTest, extract_send_counts_basics_own_container) {
