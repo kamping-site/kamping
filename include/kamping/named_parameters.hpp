@@ -1256,7 +1256,7 @@ inline auto recv_type_out(MPI_Datatype& recv_type) {
 /// @brief Passes \p send_recv_type as send/recv type to the underlying call.
 /// (This parameter is in \c MPI routines such as \c MPI_Bcast, ... .)
 ///
-/// @param send_type MPI_Datatype to use in the wrapped \c MPI operation.
+/// @param send_recv_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_type(MPI_Datatype send_recv_type) {
@@ -1287,7 +1287,7 @@ inline auto send_recv_type_out() {
 /// call. The type will be stored at the location referred to by the provided reference. (This parameter is used in \c
 /// MPI routines such as \c MPI_Bcast, ... .)
 ///
-/// @param send_type Reference to the location at which the deduced MPI_Datatype will be stored.
+/// @param send_recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_type_out(MPI_Datatype& send_recv_type) {
