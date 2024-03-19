@@ -950,94 +950,115 @@ auto recv_buf(AllocContainerOfT<ValueType> tag) {
     return recv_buf_out(tag);
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
-/// \c MPI_Gather.
+/// @brief Passes \p rank as root rank to the underlying call.
+/// This parameter is needed in functions like \c MPI_Gather.
 ///
-/// @param rank Rank of the root PE.
-/// @returns Root Object containing the rank information of the root PE.
+/// @param rank The root rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto root(int rank) {
     return internal::RootDataBuffer(rank);
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
-/// \c MPI_Gather.
+/// @brief Passes \p rank as root rank to the underlying call.
+/// This parameter is needed in functions like \c MPI_Gather.
 ///
-/// @param rank Rank of the root PE.
-/// @returns Root Object containing the rank information of the root PE.
+/// @param rank The root rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto root(size_t rank) {
     return root(asserting_cast<int>(rank));
 }
 
-/// @brief Generates an object encapsulating the rank of the destination PE in point
-/// to point communication.
+/// @brief Passes \p rank as destination rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Send.
 ///
-/// @param rank The rank.
-/// @returns The destination parameter.
+/// @param rank The destination rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto destination(int rank) {
     return internal::RankDataBuffer<internal::RankType::value, internal::ParameterType::destination>(rank);
 }
 
-/// @brief Generates an object encapsulating the rank of the destination PE in point to point communication.
+/// @brief Passes \p rank as destination rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Send.
 ///
-/// @param rank The rank.
-/// @returns The destination parameter.
+/// @param rank The destination rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto destination(size_t rank) {
     return destination(asserting_cast<int>(rank));
 }
 
-/// @brief Generates an object encapsulating the dummy rank \c MPI_PROC_NULL for the destination PE in point to point
-/// communication.
+/// @brief Passes \c MPI_PROC_NULL as destination rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Send.
 ///
-/// @returns The destination parameter.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto destination(internal::rank_null_t) {
     return internal::RankDataBuffer<internal::RankType::null, internal::ParameterType::destination>{};
 }
 
-/// @brief Generates an object encapsulating the rank of the source PE in
-/// point to point communication.
+/// @brief Passes \p rank as source rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Recv.
 ///
-/// @param rank The rank.
-/// @returns The source parameter.
+/// @param rank The source rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto source(int rank) {
     return internal::RankDataBuffer<internal::RankType::value, internal::ParameterType::source>(rank);
 }
 
-/// @brief Generates an object encapsulating the rank of the source PE in
-/// point to point communication.
+/// @brief Passes \p rank as source rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Recv.
 ///
-/// @param rank The rank.
-/// @returns The source parameter.
+/// @param rank The source rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto source(size_t rank) {
     return source(asserting_cast<int>(rank));
 }
 
-/// @brief Use an arbitrary rank as source in a point to point communication.
+/// @brief Indicates to use \c MPI_ANY_SOURCE as source rank in the underlying call, i.e. accepting any rank as source
+/// rank. This parameter is needed in point-to-point exchange routines like \c MPI_Recv.
+///
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto source(internal::rank_any_t) {
     return internal::RankDataBuffer<internal::RankType::any, internal::ParameterType::source>{};
 }
 
-/// @brief Use the dummy rank \c MPI_PROC_NULL as source in a point to point communication.
+/// @brief Passes \c MPI_PROC_NULL as source rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Recv.
+///
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto source(internal::rank_null_t) {
     return internal::RankDataBuffer<internal::RankType::null, internal::ParameterType::source>{};
 }
 
-/// @brief Use an arbitrary message tag for \c kamping::Communicator::probe() or \c kamping::Communicator::recv().
+/// @brief Indicates to use \c MPI_ANY_TAG as tag in the underlying call.
+///
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto tag(internal::any_tag_t) {
     return internal::TagParam<internal::TagType::any>{};
 }
 
-/// @brief Generates a parameter object encapsulating a tag.
-/// @param value the tag value.
-/// @returns The tag wrapper.
+/// @brief Passes \p value as tag to the underlying call.
+///
+/// @param value The tag value.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto tag(int value) {
     return internal::TagParam<internal::TagType::value>{value};
 }
 
-/// @brief Generates a parameter object encapsulating a tag from an enum type.
-/// The underlying type of the enum must be convertible to \c int.
-/// @tparam EnumType type of the tag enum.
-/// @param value the tag value.
-/// @returns The tag wrapper.
+/// @brief Converts the passed enum \p value to its integer representaiton and passes this value to the underlying call.
+///
+/// @param value The tag value.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename EnumType, typename = std::enable_if_t<std::is_enum_v<EnumType>>>
 inline auto tag(EnumType value) {
     static_assert(
@@ -1047,8 +1068,9 @@ inline auto tag(EnumType value) {
     return tag(static_cast<int>(value));
 }
 
-/// @brief Pass a request handle to the underlying MPI call.
+/// @brief Passes a request handle to the underlying MPI call.
 /// @param request The request handle.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto request(Request& request) {
     return internal::make_data_buffer<
         internal::ParameterType,
@@ -1058,9 +1080,10 @@ inline auto request(Request& request) {
         BufferResizePolicy::no_resize>(request);
 }
 
-/// @brief Pass a request from a \ref RequestPool to the underlying MPI call.
+/// @brief Passes a request from a \ref RequestPool to the underlying MPI call.
 /// @param request The request handle.
 /// @tparam IndexType The type of the index used by the \ref RequestPool for requests.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename IndexType>
 inline auto request(PooledRequest<IndexType> request) {
     return internal::make_data_buffer<
@@ -1072,6 +1095,7 @@ inline auto request(PooledRequest<IndexType> request) {
 }
 
 /// @brief Internally allocate a request object and return it to the user.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto request() {
     return internal::make_data_buffer<
         internal::ParameterType,
@@ -1081,8 +1105,10 @@ inline auto request() {
         BufferResizePolicy::no_resize>(alloc_new<Request>);
 }
 
-/// @brief Send mode parameter for point to point communication.
+/// @brief Passes the send mode parameter for point to point communication to the underlying call.
 /// Pass any of the tags from the \c kamping::send_modes namespace.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename SendModeTag>
 inline auto send_mode(SendModeTag) {
     return internal::SendModeParameter<SendModeTag>{};
