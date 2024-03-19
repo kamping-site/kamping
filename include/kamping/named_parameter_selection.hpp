@@ -232,6 +232,7 @@ decltype(auto) select_parameter_type_or_default(std::tuple<DefaultArguments...> 
         constexpr size_t selected_index = find_pos<ParameterTypeConstant, 0, Args...>();
         return std::get<selected_index>(std::forward_as_tuple(args...));
     } else {
+        static_assert(!std::is_reference_v<DefaultParameterType>, "DefaultParameterType must not be a reference.");
         return std::make_from_tuple<DefaultParameterType>(std::move(default_arguments));
     }
 }
