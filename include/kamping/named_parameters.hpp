@@ -168,7 +168,7 @@ auto send_recv_buf(AllocContainerOfT<ValueType>) {
         BufferResizePolicy::resize_to_fit>(alloc_container_of<ValueType>);
 }
 
-/// @brief Passes a container as send counts to the underlying MPI call, i.e. the underlying storage must
+/// @brief Passes a container as send counts to the underlying call, i.e. the container's storage must
 /// contain the send count to each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
@@ -187,7 +187,7 @@ auto send_counts(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Passes the data provided as an initializer list as send counts to the underlying MPI call.
+/// @brief Passes the initializer list as send counts to the underlying call.
 ///
 /// @tparam Type The type of the initializer list.
 /// @param counts The send counts.
@@ -203,20 +203,21 @@ auto send_counts(std::initializer_list<T> counts) {
         int>(std::move(counts));
 }
 
-/// @brief Passes a \p container, into which the send counts deduced by KaMPIng will be written, to the wrapped MPI
-/// call. The underlying container must satisfy the following constraints:
+/// @brief Passes a \p container, into which the send counts deduced by KaMPIng will be written, to the underlying call.
+/// The container must satisfy the following constraints:
 /// - provide a \c data() member function
-/// - provide a \c size() member function and expose the
-/// - expose \c value_type.
+/// - provide a \c size() member function
+/// - expose \c value_type (which must be int).
 /// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
 /// `resize(unsigned int)` member function.
+///
+/// The send counts container will be part of the  underlying call's result object if it is moved/passed by value (e.g.
+/// `send_counts_out(std::move(container))`).
 ///
 /// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
 /// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
 /// @tparam Container Container type which will contain  the send counts.
 /// @param container Container which will contain the send counts.
-/// @return Parameter object referring to the storage which will contain the send counts.
-/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_counts_out(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -227,11 +228,18 @@ auto send_counts_out(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
-/// counts.
-/// @tparam Container Container type which contains the send counts. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
-/// @return Object referring to the storage containing the send counts.
+/// @brief Indicates to construct an object of type \p Container, into which the send counts deduced by KaMPIng will be
+/// written, in the underlying call. counts. The container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(usng) member function
+/// - expose \c value_type (which must be int).
+///
+/// The send counts container will be part of underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send counts.
+/// @return Parameter object referring to the storage which will contain the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto send_counts_out(AllocNewT<Container>) {
     return internal::make_data_buffer_builder<
@@ -242,11 +250,20 @@ auto send_counts_out(AllocNewT<Container>) {
         int>(alloc_new<Container>);
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
-/// counts.
-/// @tparam Container Container type which contains the send counts. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the send counts.
+/// @brief Indicates to construct a container with type \p Container<int>, into which the send counts deduced by KaMPIng
+/// will be written, in the underlying call.
+///
+/// Container<int> must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(using) member function
+/// - expose \c value_type.
+///
+/// The send counts container will be part of underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send counts.
+/// @return Parameter object referring to the storage which will contain the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <template <typename...> typename Container>
 auto send_counts_out(AllocNewUsingT<Container>) {
     return internal::make_data_buffer_builder<
@@ -257,8 +274,20 @@ auto send_counts_out(AllocNewUsingT<Container>) {
         int>(alloc_new_using<Container>);
 }
 
-/// @brief Generates a wrapper for a send counts output parameter without any user input.
-/// @return Wrapper for the send counts that can be retrieved as structured binding.
+/// @brief Indicates to construct a container with type kamping::Communicator::default_container_type<int>, into which
+/// the send counts deduced by KaMPIng will be written, in the underlying call.
+///
+/// The communicator's default container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(using) member function
+/// - expose \c value_type.
+///
+/// The send counts container will be part of underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send counts.
+/// @return Parameter object referring to the storage which will contain the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_counts_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
