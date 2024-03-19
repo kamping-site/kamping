@@ -218,6 +218,7 @@ auto send_counts(std::initializer_list<T> counts) {
 /// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
 /// @tparam Container Container type which will contain  the send counts.
 /// @param container Container which will contain the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_counts_out(Container&& container) {
     return internal::make_data_buffer_builder<
