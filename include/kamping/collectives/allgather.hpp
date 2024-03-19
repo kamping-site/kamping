@@ -38,20 +38,19 @@
 ///
 /// The following arguments are required:
 /// - \ref kamping::send_buf() containing the data that is sent to the root. This buffer has to be the same size at
-/// each rank. See allgather_v if the amounts differ.
+/// each rank. See \ref Communicator::allgatherv if the amounts differ.
 ///
 /// The following buffers are optional:
-/// - \ref kamping::send_count() specifying how many elements are sent. If
-/// omitted, the size of the send buffer is used. This parameter is mandatory if \ref kamping::send_type() is given.
+/// - \ref kamping::send_count() specifying how many elements are sent. If omitted, the size of the send buffer is used.
+/// This parameter is mandatory if \ref kamping::send_type() is given.
 ///
-/// - \ref kamping::recv_count() specifying how many elements are received. If
-/// omitted, the value of send_counts will be used. This parameter is mandatory if \ref kamping::recv_type() is given.
+/// - \ref kamping::recv_count() specifying how many elements are received. If omitted, the value of send_counts will be
+/// used. This parameter is mandatory if \ref kamping::recv_type() is given.
 ///
-/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
-/// all data from all send buffers. The buffer will be resized according to the buffer's
-/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements. This requires a size of at least `recv_counts *
-/// communicator size`.
+/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain all data from
+/// all send buffers. The buffer will be resized according to the buffer's kamping::BufferResizePolicy. If this is
+/// kamping::BufferResizePolicy::no_resize, the buffer's underlying storage must be large enough to hold all received
+/// elements. This requires a size of at least `recv_counts * communicator size`.
 ///
 /// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
 /// derived automatically based on send_buf's underlying \c value_type.
