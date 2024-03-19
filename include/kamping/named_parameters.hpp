@@ -211,8 +211,8 @@ auto send_counts(std::initializer_list<T> counts) {
 /// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
 /// `resize(unsigned int)` member function.
 ///
-/// The send counts container will be part of the  underlying call's result object if it is moved/passed by value (e.g.
-/// `send_counts_out(std::move(container))`).
+/// The send counts container will be returned as part of the underlying call's result object if it is moved/passed by
+/// value (e.g. `send_counts_out(std::move(container))`).
 ///
 /// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
 /// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
@@ -234,10 +234,10 @@ auto send_counts_out(Container&& container) {
 /// \p Container must satisfy the following constraints:
 /// - provide a \c data() member function
 /// - provide a \c size() member function
-/// - provide a \c resize(using) member function
+/// - provide a \c resize(unsigned int) member function
 /// - expose \c value_type (which must be int).
 ///
-/// The send counts container will be part of underlying call's result object.
+/// The send counts container will be returned as part of the underlying call's result object.
 ///
 /// @tparam Container Container type which will contains the send counts.
 /// @return Parameter object referring to the storage which will contain the send counts.
@@ -258,10 +258,10 @@ auto send_counts_out(AllocNewT<Container>) {
 /// \p Container<int> must satisfy the following constraints:
 /// - provide a \c data() member function
 /// - provide a \c size() member function
-/// - provide a \c resize(using) member function
+/// - provide a \c resize(unsigned int) member function
 /// - expose \c value_type.
 ///
-/// The send counts container will be part of underlying call's result object.
+/// The send counts container will be returned as part of the underlying call's result object.
 ///
 /// @tparam Container Container type which will contains the send counts.
 /// @return Parameter object referring to the storage which will contain the send counts.
@@ -279,7 +279,7 @@ auto send_counts_out(AllocNewUsingT<Container>) {
 /// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<int>, into
 /// which the send counts deduced by KaMPIng will be written, in the underlying call.
 ///
-/// The send counts container will be part of underlying call's result object.
+/// The send counts container will be returned as part of the underlying call's result object.
 ///
 /// @tparam Container Container type which will contains the send counts.
 /// @return Parameter object referring to the storage which will contain the send counts.
@@ -328,14 +328,15 @@ inline auto send_count_out(int& count) {
         BufferResizePolicy::no_resize,
         int>(count);
 }
-/// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must
-/// contain the recv counts from each relevant PE.
+/// @brief Passes a container as recv counts to the underlying call, i.e. the container's storage must
+/// contain the recv count from each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
-/// @tparam Container Container type which contains the recv counts.
+/// value_type.
+/// @tparam Container Container type which contains the send counts.
 /// @param container Container which contains the recv counts.
-/// @return Object referring to the storage containing the recv counts.
+/// @return Parameter object referring to the storage containing the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto recv_counts(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -346,12 +347,12 @@ auto recv_counts(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper for the recv counts based on an initializer list, i.e. the
-/// recv counts from each relevant PE.
+/// @brief Passes the initializer list as recv counts to the underlying call.
 ///
 /// @tparam Type The type of the initializer list.
 /// @param counts The recv counts.
-/// @return Object referring to the storage containing the recv counts.
+/// @return Parameter object referring to the storage containing the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
     return internal::make_data_buffer_builder<
@@ -362,22 +363,28 @@ auto recv_counts(std::initializer_list<T> counts) {
         int>(std::move(counts));
 }
 
-/// @brief Indicate that the recv counts are ignored.
+/// @brief Indicates that the recv counts are ignored.
 inline auto recv_counts(internal::ignore_t<void> ignore [[maybe_unused]]) {
     return internal::
         make_empty_data_buffer_builder<int, internal::ParameterType::recv_counts, internal::BufferType::ignore>();
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
-/// will contained the receive counts when the \c MPI call has been completed.
-/// The underlying container must provide \c data() and
-/// \c size() member functions and expose the contained \c value_type. If a resize policy other than
-/// BufferResizePolicy::no_resize is selected, the container must also provide a \c resize() member function.
+/// @brief Passes a \p container, into which the recv counts deduced by KaMPIng will be written, to the underlying call.
+/// \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - expose \c value_type (which must be int).
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
+/// `resize(unsigned int)` member function.
+///
+/// The recv counts container will be returned as part of the underlying call's result object if it is moved/passed by
+/// value (e.g. `recv_counts_out(std::move(container))`).
+///
 /// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
-/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
-/// @tparam Container Container type which contains the receive counts.
-/// @param container Container which will contain the receive counts.
-/// @return Object referring to the storage containing the receive counts.
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
+/// @tparam Container Container type which will contain the recv counts.
+/// @param container Container which will contain the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_counts_out(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -388,11 +395,19 @@ auto recv_counts_out(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
-/// counts.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
-/// @return Object referring to the storage containing the recv counts.
+/// @brief Indicates to construct an object of type \p Container, into which the recv counts deduced by KaMPIng will be
+/// written, in the underlying call.
+/// \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type (which must be int).
+///
+/// The recv counts container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the recv counts.
+/// @return Parameter object referring to the storage which will contain the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Data>
 auto recv_counts_out(AllocNewT<Data> container) {
     return internal::make_data_buffer_builder<
@@ -403,11 +418,20 @@ auto recv_counts_out(AllocNewT<Data> container) {
         int>(container);
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
-/// counts.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the recv counts.
+/// @brief Indicates to construct a container with type \p Container<int>, into which the recv counts deduced by KaMPIng
+/// will be written, in the underlying call.
+///
+/// \p Container<int> must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type.
+///
+/// The recv counts container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the recv counts.
+/// @return Parameter object referring to the storage which will contain the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <template <typename...> typename Data>
 auto recv_counts_out(AllocNewUsingT<Data> container) {
     return internal::make_data_buffer_builder<
@@ -418,8 +442,14 @@ auto recv_counts_out(AllocNewUsingT<Data> container) {
         int>(container);
 }
 
-/// @brief Generates a wrapper for a recv counts output parameter without any user input.
-/// @return Wrapper for the recv counts that can be retrieved as structured binding.
+/// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<int>, into
+/// which the recv counts deduced by KaMPIng will be written, in the underlying call.
+///
+/// The recv counts container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the recv counts.
+/// @return Parameter object referring to the storage which will contain the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_counts_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
