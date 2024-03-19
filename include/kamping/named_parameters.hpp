@@ -461,9 +461,10 @@ inline auto recv_counts_out() {
         resize_to_fit>(alloc_container_of<int>);
 }
 
-/// @brief The number of elements to received.
-/// @param count The number of elements.
+/// @brief Passes \p count as recv count to the underlying call.
+/// @param count The recv count.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_count(int count) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_count,
@@ -473,22 +474,10 @@ inline auto recv_count(int count) {
         int>(std::move(count));
 }
 
-/// @brief Output parameter for the number of elements received.
-/// The value will be returned as part of the result of the MPI call.
+/// @brief Passes \p count, into which the recv count deduced by KaMPIng will be written, to the underlying call.
+/// @param count Reference to the location at which the recv count will be stored.
 /// @return The corresponding parameter object.
-inline auto recv_count_out() {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::recv_count,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        BufferResizePolicy::no_resize,
-        int>(alloc_new<int>);
-}
-
-/// @brief Output parameter for the number of elements received.
-/// The value will be stored in the provided reference.
-/// @param count Reference to the location to story the count at.
-/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_count_out(int& count) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_count,
@@ -498,9 +487,23 @@ inline auto recv_count_out(int& count) {
         int>(count);
 }
 
-/// @brief The number of elements to send or receive.
-/// @param count The number of elements.
+/// @brief Indicates to deduce the recv count and return it to the caller as part of the underlying call's result
+/// object.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto recv_count_out() {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(alloc_new<int>);
+}
+
+/// @brief Passes \p count as send/recv count to the underlying call.
+/// @param count The send/recv count.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_count(int count) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_count,
@@ -510,22 +513,10 @@ inline auto send_recv_count(int count) {
         int>(std::move(count));
 }
 
-/// @brief Output parameter for the number of elements sent or received.
-/// The value will be returned as part of the result of the MPI call.
+/// @brief Passes \p count, into which the send/recv count deduced by KaMPIng will be written, to the underlying call.
+/// @param count Reference to the location at which the send/recv count will be stored.
 /// @return The corresponding parameter object.
-inline auto send_recv_count_out() {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::send_recv_count,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        BufferResizePolicy::no_resize,
-        int>(alloc_new<int>);
-}
-
-/// @brief Output parameter for the number of elements sent or received.
-/// The value will be stored in the provided reference.
-/// @param count Reference to the location to story the count at.
-/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_count_out(int& count) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_count,
@@ -533,6 +524,19 @@ inline auto send_recv_count_out(int& count) {
         internal::BufferType::out_buffer,
         BufferResizePolicy::no_resize,
         int>(count);
+}
+
+/// @brief Indicates to deduce the send/recv count and return it to the caller as part of the underlying call's result
+/// object.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto send_recv_count_out() {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_recv_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(alloc_new<int>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
