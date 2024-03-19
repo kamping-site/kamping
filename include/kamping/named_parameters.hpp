@@ -204,7 +204,7 @@ auto send_counts(std::initializer_list<T> counts) {
 }
 
 /// @brief Passes a \p container, into which the send counts deduced by KaMPIng will be written, to the underlying call.
-/// The container must satisfy the following constraints:
+/// \p Container must satisfy the following constraints:
 /// - provide a \c data() member function
 /// - provide a \c size() member function
 /// - expose \c value_type (which must be int).
@@ -230,10 +230,11 @@ auto send_counts_out(Container&& container) {
 }
 
 /// @brief Indicates to construct an object of type \p Container, into which the send counts deduced by KaMPIng will be
-/// written, in the underlying call. counts. The container must satisfy the following constraints:
+/// written, in the underlying call.
+/// \p Container must satisfy the following constraints:
 /// - provide a \c data() member function
 /// - provide a \c size() member function
-/// - provide a \c resize(usng) member function
+/// - provide a \c resize(using) member function
 /// - expose \c value_type (which must be int).
 ///
 /// The send counts container will be part of underlying call's result object.
@@ -254,7 +255,7 @@ auto send_counts_out(AllocNewT<Container>) {
 /// @brief Indicates to construct a container with type \p Container<int>, into which the send counts deduced by KaMPIng
 /// will be written, in the underlying call.
 ///
-/// Container<int> must satisfy the following constraints:
+/// \p Container<int> must satisfy the following constraints:
 /// - provide a \c data() member function
 /// - provide a \c size() member function
 /// - provide a \c resize(using) member function
@@ -275,14 +276,8 @@ auto send_counts_out(AllocNewUsingT<Container>) {
         int>(alloc_new_using<Container>);
 }
 
-/// @brief Indicates to construct a container with type kamping::Communicator::default_container_type<int>, into which
-/// the send counts deduced by KaMPIng will be written, in the underlying call.
-///
-/// The communicator's default container must satisfy the following constraints:
-/// - provide a \c data() member function
-/// - provide a \c size() member function
-/// - provide a \c resize(using) member function
-/// - expose \c value_type.
+/// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<int>, into
+/// which the send counts deduced by KaMPIng will be written, in the underlying call.
 ///
 /// The send counts container will be part of underlying call's result object.
 ///
