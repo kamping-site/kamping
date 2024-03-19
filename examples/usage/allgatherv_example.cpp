@@ -81,5 +81,15 @@ int main() {
         auto const recv_displs = result.extract_recv_displs();
     }
 
+    { // You can also use views to send parts of the data.
+        input.resize(comm.rank() + 1, comm.rank_signed());
+
+        // Note, if you're on C++ >= 20 you can use std::span instead.
+        comm.allgatherv(send_buf(kamping::Span(input).subspan(0, comm.rank())));
+
+        // Alternatively
+        comm.allgatherv(send_buf(input), send_count(comm.rank_signed()));
+    }
+
     return 0;
 }
