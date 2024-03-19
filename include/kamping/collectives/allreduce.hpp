@@ -56,7 +56,7 @@
 /// In-place allreduce is supported by providing `send_recv_buf()` instead of `send_buf()` and `recv_buf()`. For details
 /// on the in-place version, see \ref Communicator::allreduce_inplace().
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional parameters described above.
 /// @return Result object wrapping the output parameters to be returned by value.
 ///
@@ -176,7 +176,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype
 /// is derived automatically based on `send_recv_buf`'s underlying \c value_type.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional parameters described above.
 /// @return Result object wrapping the output parameters to be returned by value.
 ///
@@ -263,7 +263,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_inplace(
 /// on each rank.
 /// - \ref kamping::op() wrapping the operation to apply to the input.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional parameters described above.
 /// @return The single output value.
 template <
