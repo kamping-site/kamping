@@ -40,6 +40,24 @@ TEST(AlltoallvGridTest, alltoallv_single_element) {
     EXPECT_THAT(result, Each(comm.rank_signed()));
 }
 
+TEST(AlltoallvGridTest, alltoallv_single_element_get_send_displs) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
+
+    std::vector<int> input(comm.size());
+    std::iota(input.begin(), input.end(), 0);
+    std::vector<int> send_counts(comm.size(), 1);
+
+    auto [result, send_displs] =
+        grid_comm.alltoallv(send_buf(input), kamping::send_counts(send_counts), send_displs_out());
+    EXPECT_EQ(result.size(), comm.size());
+    EXPECT_THAT(result, Each(comm.rank_signed()));
+
+    std::vector<int> expected_send_displs(comm.size());
+    std::iota(expected_send_displs.begin(), expected_send_displs.end(), 0);
+    EXPECT_EQ(send_displs, expected_send_displs);
+}
+
 TEST(AlltoallvGridTest, alltoallv_single_element_get_recv_displs) {
     Communicator<std::vector, plugin::GridCommunicator> comm;
     auto                                                grid_comm = comm.make_grid_communicator();
@@ -56,6 +74,22 @@ TEST(AlltoallvGridTest, alltoallv_single_element_get_recv_displs) {
     std::vector<int> expected_recv_displs(comm.size());
     std::iota(expected_recv_displs.begin(), expected_recv_displs.end(), 0);
     EXPECT_EQ(recv_displs, expected_recv_displs);
+}
+
+TEST(AlltoallvGridTest, alltoallv_single_element_provide_send_displs) {
+    Communicator<std::vector, plugin::GridCommunicator> comm;
+    auto                                                grid_comm = comm.make_grid_communicator();
+
+    size_t const     send_displs_offset = 10;
+    std::vector<int> input(send_displs_offset + comm.size());
+    std::iota(input.begin() + send_displs_offset, input.end(), 0);
+    std::vector<int> send_displs(comm.size());
+    std::iota(send_displs.begin(), send_displs.end(), send_displs_offset);
+    std::vector<int> send_counts(comm.size(), 1);
+    auto             result =
+        grid_comm.alltoallv(send_buf(input), kamping::send_counts(send_counts), kamping::send_displs(send_displs));
+    EXPECT_EQ(result.size(), comm.size());
+    EXPECT_THAT(Span(result.begin(), result.end()), Each(comm.rank_signed()));
 }
 
 TEST(AlltoallvGridTest, alltoallv_single_element_provide_recv_displs) {
