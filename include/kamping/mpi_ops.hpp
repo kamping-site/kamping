@@ -58,7 +58,7 @@ struct max_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T operator()(T const& lhs, T const& rhs) const {
+    constexpr auto operator()(T const& lhs, T const& rhs) const {
         return std::max(lhs, rhs);
     }
 };
@@ -92,7 +92,7 @@ struct min_impl<void> {
     /// @tparam T the type of the operands
     /// @return the maximum
     template <typename T>
-    constexpr T operator()(T const& lhs, T const& rhs) const {
+    constexpr auto operator()(T const& lhs, T const& rhs) const {
         return std::min(lhs, rhs);
     }
 };
@@ -451,7 +451,7 @@ public:
     /// @param op the functor to call for reduction.
     ///  this has to be a binary function applicable to two arguments of type \c T which return a result of type  \c
     ///  T
-    UserOperationWrapper(Op&& op [[maybe_unused]]) {
+    UserOperationWrapper(Op&& op [[maybe_unused]]) : _operation(std::forward<Op>(op)) {
         static_assert(std::is_invocable_r_v<T, Op, T const&, T const&>, "Type of custom operation does not match.");
         MPI_Op_create(UserOperationWrapper<is_commutative, T, Op>::execute, is_commutative, &_mpi_op);
     }
@@ -462,6 +462,11 @@ public:
         T* inoutvec_ = static_cast<T*>(inoutvec);
         Op op{};
         std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, op);
+    }
+
+    /// @brief Call the wrapped operation.
+    T operator()(T const& lhs, T const& rhs) const {
+        return _operation(lhs, rhs);
     }
 
     ~UserOperationWrapper() {
@@ -477,7 +482,8 @@ public:
     }
 
 private:
-    MPI_Op _mpi_op; ///< the \c MPI_Op referencing the user defined operation
+    Op     _operation; ///< the functor to call for reduction
+    MPI_Op _mpi_op;    ///< the \c MPI_Op referencing the user defined operation
 };
 
 /// @brief Wrapper for a user defined reduction operation based on a function pointer.
@@ -560,6 +566,9 @@ public:
     ///  @returns the \c MPI_Op associated with this operation
     MPI_Op op();
 
+    /// @brief Call the underlying operation with the provided arguments.
+    T operator()(T const& lhs, T const& rhs) const;
+
     /// @returns the identity element for this operation and data type.
     T identity();
 };
@@ -581,6 +590,10 @@ public:
     static constexpr bool is_builtin  = false;
     static constexpr bool commutative = std::is_same_v<Commutative, kamping::ops::internal::commutative_tag>;
 
+    T operator()(T const& lhs, T const& rhs) const {
+        return _operation(lhs, rhs);
+    }
+
     MPI_Op op() {
         return _operation.get_mpi_op();
     }
@@ -596,6 +609,18 @@ public:
     ReduceOperation(MPI_Op op, ops::internal::undefined_commutative_tag = {}) : _op(op) {}
     static constexpr bool is_builtin = false; // set to false, because we can not decide that at compile time and don't
                                               // need this information for a native \c MPI_Op
+
+    T operator()(T const& lhs, T const& rhs) const {
+        KASSERT(_op != MPI_OP_NULL, "Cannot call MPI_OP_NULL.");
+        T result;
+        internal::with_operation_functor(_op, [&result, lhs, rhs](auto operation) {
+            // ops::null has no call operator, but the KASSERT above should handle that
+            if constexpr (!std::is_same_v<decltype(operation), ops::null<> >) {
+                result = operation(lhs, rhs);
+            }
+        });
+        return result;
+    }
 
     MPI_Op op() {
         return _op;
@@ -621,6 +646,10 @@ public:
         return mpi_operation_traits<Op, T>::op();
     }
 
+    T operator()(T const& lhs, T const& rhs) const {
+        return Op{}(lhs, rhs);
+    }
+
     T identity() {
         return mpi_operation_traits<Op, T>::identity;
     }
@@ -637,11 +666,11 @@ class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_defau
     );
 
 public:
-    ReduceOperation(Op&& op, Commutative) : _operation() {
+    ReduceOperation(Op&& op, Commutative) : _op(op), _operation() {
         // A lambda is may not be default constructed nor copied, so we need some hacks to deal with them.
         // Because each lambda has a distinct type we initiate the static Op here and can access it from the static
         // context of function pointer created afterwards.
-        static Op func = op;
+        static Op func = _op;
 
         mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
             T* invec_    = static_cast<T*>(invec);
@@ -657,11 +686,16 @@ public:
         return _operation.get_mpi_op();
     }
 
+    T operator()(T const& lhs, T const& rhs) const {
+        return _op(lhs, rhs);
+    }
+
     T identity() {
         return _operation.identity();
     }
 
 private:
+    Op                                   _op;
     UserOperationPtrWrapper<commutative> _operation;
 };
 #endif

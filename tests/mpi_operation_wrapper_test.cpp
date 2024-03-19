@@ -122,11 +122,15 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
         WrappedInt operator+(WrappedInt const& a) const noexcept {
             return {this->value + a.value};
         }
+        bool operator==(WrappedInt const& a) const noexcept {
+            return this->value == a.value;
+        }
     };
     // builtin operation
     {
         auto op = make_op<int>(std::plus<>{}, kamping::ops::internal::undefined_commutative_tag{});
         EXPECT_EQ(op.op(), MPI_SUM);
+        EXPECT_EQ(op(3, 4), 7);
         EXPECT_TRUE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -144,6 +148,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<WrappedInt>(std::plus<>{}, kamping::ops::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(WrappedInt{3}, WrappedInt{4}), WrappedInt{7});
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -161,6 +166,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<WrappedInt>(std::plus<>{}, kamping::ops::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(WrappedInt{3}, WrappedInt{4}), WrappedInt{7});
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -178,12 +184,14 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<int>(MPI_SUM, kamping::ops::internal::undefined_commutative_tag{});
         EXPECT_EQ(op.op(), MPI_SUM);
+        EXPECT_EQ(op(3, 4), 7);
         EXPECT_FALSE(decltype(op)::is_builtin);
     }
     // lambda on builtin type commutative
     {
         auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::ops::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(3, 4), 7);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -201,6 +209,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::ops::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(3, 4), 7);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -218,6 +227,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::ops::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(WrappedInt{3}, WrappedInt{4}), WrappedInt{7});
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -235,6 +245,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::ops::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(WrappedInt{3}, WrappedInt{4}), WrappedInt{7});
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
