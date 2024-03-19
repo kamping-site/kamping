@@ -203,13 +203,13 @@ auto send_counts(std::initializer_list<T> counts) {
         int>(std::move(counts));
 }
 
-/// @brief Passes a \p container, into which the send counts deduced by KaMPIng will be written, to the wrapped MPI call.
-/// The underlying container must satisfy the following constraints:
+/// @brief Passes a \p container, into which the send counts deduced by KaMPIng will be written, to the wrapped MPI
+/// call. The underlying container must satisfy the following constraints:
 /// - provide a \c data() member function
 /// - provide a \c size() member function and expose the
 /// - expose \c value_type.
-/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a `resize(unsigned
-/// int)` member function.
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
+/// `resize(unsigned int)` member function.
 ///
 /// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
 /// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
