@@ -65,16 +65,29 @@ auto distribute_randomly(const size_t collection_size, const size_t comm_size, c
     for (size_t i = 0; i < send_counts.size(); ++i) {
         send_counts[i] = points[i + 1] - points[i];
     }
-    // TODO: also shuffle distribution around to cover all cases (right now start indices are ordered ascending)
 
-    EXPECT_EQ(collection_size, std::reduce(send_counts.begin(), send_counts.end(), 0UL, std::plus<>()));
+    // Shuffle to generate distributions where start indices are not monotonically increasing
+    std::vector<size_t> indices(send_counts.size(), 0);
+    std::iota(indices.begin(), indices.end(), 0);
+    std::shuffle(indices.begin(), indices.end(), rng);
 
-    return Distribution(send_counts, displacement_from_sendcounts(send_counts));
+    auto displacement = displacement_from_sendcounts(send_counts);
+    EXPECT_EQ(send_counts.size(), displacement.size());
+
+    decltype(send_counts) shuffled_send_counts(send_counts.size(), 0);
+    decltype(displacement)  shuffled_displacement(displacement.size(), 0);
+    for (auto i = 0UL; i < send_counts.size(); ++i) {
+        shuffled_send_counts[i] = send_counts[indices[i]];
+        shuffled_displacement[i] = displacement[indices[i]];
+    }
+
+    EXPECT_EQ(collection_size, std::reduce(shuffled_send_counts.begin(), shuffled_send_counts.end(), 0UL, std::plus<>()));
+
+    return Distribution(shuffled_send_counts, shuffled_displacement);
 }
 auto generate_test_vector(size_t length, size_t seed) {
     std::mt19937                   rng(seed);
     std::uniform_real_distribution distr;
-
     std::vector<double> result(length);
     std::generate(result.begin(), result.end(), [&distr, &rng]() { return distr(rng); });
 
@@ -245,8 +258,8 @@ TEST(ReproducibleReduceTest, Fuzzing) {
 
     ASSERT_GT(comm.size(), 1) << "Fuzzing with only one rank is useless";
 
-    constexpr auto NUM_ARRAYS = 5;
-    constexpr auto NUM_DISTRIBUTIONS = 500;
+    constexpr auto NUM_ARRAYS = 15;
+    constexpr auto NUM_DISTRIBUTIONS = 5000;
 
     // Seed random number generator with same seed across all ranks for consistent number generation
     std::random_device rd;
@@ -296,6 +309,12 @@ TEST(ReproducibleReduceTest, Fuzzing) {
         for (auto j = 0U; j < NUM_DISTRIBUTIONS; ++j) {
             const auto ranks = rank_distribution(rng);
             const auto distribution = distribute_randomly(data_array_size, static_cast<size_t>(ranks), rng());
+            
+
+            if(comm.is_root()) {
+                printf("send_counts = "); print_collection(distribution.send_counts);
+                printf("displs = "); print_collection(distribution.displs);
+            }
 
 
             with_comm_size_n(comm, ranks, [&distribution, &data_array, &reference_result, &checks, &ranks, i, j](auto comm_) {
