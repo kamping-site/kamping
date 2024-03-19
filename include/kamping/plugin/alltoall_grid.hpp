@@ -286,8 +286,7 @@ public:
                 args...
             )
                 .template construct_buffer_or_rebind<DefaultContainerType>();
-        constexpr bool do_calculate_recv_displs =
-            internal::has_parameter_type<internal::ParameterType::recv_displs, Args...>();
+        constexpr bool do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
 
         if constexpr (do_calculate_recv_displs) {
             recv_displs.resize_if_requested([&]() { return _size_of_orig_comm; });
@@ -307,7 +306,7 @@ public:
             )
                 .template construct_buffer_or_rebind<DefaultContainerType>();
 
-        write_recv_buffer(grid_recv_buf, recv_counts, recv_buf);
+        write_recv_buffer(grid_recv_buf, recv_buf, recv_counts, recv_displs);
 
         return internal::make_mpi_result<std::tuple<Args...>>(
             std::move(recv_buf),
@@ -324,12 +323,16 @@ private:
         return write_pos;
     }
 
-    template <typename GridRecvBuffer, typename RecvCounts, typename RecvBuffer>
-    void write_recv_buffer(GridRecvBuffer const& grid_recv_buffer, RecvCounts const& recv_counts, RecvBuffer& recv_buf)
-        const {
-        DefaultContainerType<int> write_pos = compute_write_positions(recv_counts);
-        Span                      write_pos_span(write_pos.data(), write_pos.size());
-        auto                      compute_required_recv_buf_size = [&]() {
+    template <typename GridRecvBuffer, typename RecvBuffer, typename RecvCounts, typename RecvDispls>
+    void write_recv_buffer(
+        GridRecvBuffer const& grid_recv_buffer,
+        RecvBuffer&           recv_buf,
+        RecvCounts const&     recv_counts,
+        RecvDispls const&     recv_displs
+    ) const {
+        auto write_pos = recv_displs.underlying();
+        Span write_pos_span(write_pos.data(), write_pos.size());
+        auto compute_required_recv_buf_size = [&]() {
             Span recv_counts_span(recv_counts.data(), recv_counts.size());
             return asserting_cast<size_t>(write_pos_span.back() + recv_counts_span.back());
         };
