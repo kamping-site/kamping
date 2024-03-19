@@ -241,7 +241,7 @@ public:
         KAMPING_CHECK_PARAMETERS(
             Args,
             KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
-            KAMPING_OPTIONAL_PARAMETERS(recv_buf, recv_counts)
+            KAMPING_OPTIONAL_PARAMETERS(recv_buf, recv_counts, recv_displs)
         );
         constexpr MessageEnvelopeLevel envelope_level = MessageEnvelopeLevel::source;
         // get send_buf
@@ -278,6 +278,24 @@ public:
             KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
         }
 
+        // Get recv displs
+        using default_recv_displs_type = decltype(kamping::recv_displs_out(alloc_new<DefaultContainerType<int>>));
+        auto&& recv_displs =
+            internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
+                std::tuple(),
+                args...
+            )
+                .template construct_buffer_or_rebind<DefaultContainerType>();
+        constexpr bool do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
+
+        if constexpr (do_calculate_recv_displs) {
+            recv_displs.resize_if_requested([&]() { return _size_of_orig_comm; });
+            KASSERT(recv_displs.size() >= _size_of_orig_comm, "Recv displs buffer is not large enough.", assert::light);
+            Span recv_displs_span(recv_displs.data(), recv_displs.size());
+            Span recv_counts_span(recv_counts.data(), recv_counts.size());
+            std::exclusive_scan(recv_counts_span.begin(), recv_counts_span.end(), recv_displs_span.begin(), 0);
+        }
+
         // get recv_buf
         using default_recv_buf_type =
             decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
@@ -288,25 +306,26 @@ public:
             )
                 .template construct_buffer_or_rebind<DefaultContainerType>();
 
-        write_recv_buffer(grid_recv_buf, recv_counts, recv_buf);
+        write_recv_buffer(grid_recv_buf, recv_buf, recv_counts, recv_displs);
 
-        return internal::make_mpi_result<std::tuple<Args...>>(std::move(recv_buf), std::move(recv_counts));
+        return internal::make_mpi_result<std::tuple<Args...>>(
+            std::move(recv_buf),
+            std::move(recv_counts),
+            std::move(recv_displs)
+        );
     }
 
 private:
-    template <typename RecvCounts>
-    DefaultContainerType<int> compute_write_positions(RecvCounts const& recv_counts) const {
-        DefaultContainerType<int> write_pos(_size_of_orig_comm);
-        std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), write_pos.data(), int(0));
-        return write_pos;
-    }
-
-    template <typename GridRecvBuffer, typename RecvCounts, typename RecvBuffer>
-    void write_recv_buffer(GridRecvBuffer const& grid_recv_buffer, RecvCounts const& recv_counts, RecvBuffer& recv_buf)
-        const {
-        DefaultContainerType<int> write_pos = compute_write_positions(recv_counts);
-        Span                      write_pos_span(write_pos.data(), write_pos.size());
-        auto                      compute_required_recv_buf_size = [&]() {
+    template <typename GridRecvBuffer, typename RecvBuffer, typename RecvCounts, typename RecvDispls>
+    void write_recv_buffer(
+        GridRecvBuffer const& grid_recv_buffer,
+        RecvBuffer&           recv_buf,
+        RecvCounts const&     recv_counts,
+        RecvDispls const&     recv_displs
+    ) const {
+        auto write_pos = recv_displs.underlying();
+        Span write_pos_span(write_pos.data(), write_pos.size());
+        auto compute_required_recv_buf_size = [&]() {
             Span recv_counts_span(recv_counts.data(), recv_counts.size());
             return asserting_cast<size_t>(write_pos_span.back() + recv_counts_span.back());
         };
