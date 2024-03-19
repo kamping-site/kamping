@@ -292,9 +292,10 @@ inline auto send_counts_out() {
         resize_to_fit>(alloc_container_of<int>);
 }
 
-/// @brief The number of elements to send.
-/// @param count The number of elements.
+/// @brief Passes \p count as send count to the underlying call.
+/// @param count The send count.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_count(int count) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_count,
@@ -304,9 +305,23 @@ inline auto send_count(int count) {
         int>(std::move(count));
 }
 
-/// @brief Output parameter for the number of elements sent.
-/// The value will be returned as part of the result of the MPI call.
+/// @brief Passes \p count, into which the send count deduced by KaMPIng will be written, to the underlying call.
+/// @param count Reference to the location at which the send count will be stored.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto send_count_out(int& count) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(count);
+}
+
+/// @brief Indicates to deduce the send count and return it to the caller as part of the underlying call's result
+/// object.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_count_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_count,
@@ -316,18 +331,6 @@ inline auto send_count_out() {
         int>(alloc_new<int>);
 }
 
-/// @brief Output parameter for the number of elements sent.
-/// The value will be stored in the provided reference.
-/// @param count Reference to the location to story the count at.
-/// @return The corresponding parameter object.
-inline auto send_count_out(int& count) {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::send_count,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        BufferResizePolicy::no_resize,
-        int>(count);
-}
 /// @brief Passes a container as recv counts to the underlying call, i.e. the container's storage must
 /// contain the recv count from each relevant PE.
 ///
