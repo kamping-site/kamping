@@ -36,9 +36,7 @@ int main() {
         print_result_on_root(output, comm);
     }
 
-    if (comm.is_root()) {
-        std::cout << "-----" << std::endl;
-    }
+    print_on_root("------", comm);
 
     { // We can also send only parts of the input and specify an explicit receive buffer.
         std::vector<int> output;
