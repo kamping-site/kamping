@@ -1253,8 +1253,10 @@ inline auto recv_type_out(MPI_Datatype& recv_type) {
         MPI_Datatype>(recv_type);
 }
 
-/// @brief The send_recv type to use in the respective \c MPI operation.
-/// @param send_recv_type MPI_Datatype to use in the wrapped \c MPI operation.
+/// @brief Passes \p send_recv_type as send/recv type to the underlying call.
+/// (This parameter is in \c MPI routines such as \c MPI_Bcast, ... .)
+///
+/// @param send_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_type(MPI_Datatype send_recv_type) {
@@ -1266,8 +1268,12 @@ inline auto send_recv_type(MPI_Datatype send_recv_type) {
         MPI_Datatype>(std::move(send_recv_type));
 }
 
-/// @brief Output parameter for the send_recv type.
+/// @brief Indicates to deduce the send/recv type in the underlying call and return it as part of underlying call's
+/// result object.
+/// (This parameter is used in \c MPI routines such as \c MPI_Bcast, ... .)
+///
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_type_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
@@ -1277,10 +1283,13 @@ inline auto send_recv_type_out() {
         MPI_Datatype>(alloc_new<MPI_Datatype>);
 }
 
-/// @brief Output parameter for the send_recv type.
-/// The type will be stored at the location referred to by the provided reference.
-/// @param send_recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
+/// @brief Passes \p send_recv_type, into which the send/recv type deduced by KaMPIng will be written, to the underlying
+/// call. The type will be stored at the location referred to by the provided reference. (This parameter is used in \c
+/// MPI routines such as \c MPI_Bcast, ... .)
+///
+/// @param send_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_type_out(MPI_Datatype& send_recv_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
