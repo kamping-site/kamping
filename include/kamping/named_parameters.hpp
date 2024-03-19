@@ -539,14 +539,15 @@ inline auto send_recv_count_out() {
         int>(alloc_new<int>);
 }
 
-/// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
-/// must contain the send displacements to each relevant PE.
+/// @brief Passes a container as send displacements to the underlying call, i.e. the container's storage must
+/// contain the send displacement for each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
+/// value_type.
 /// @tparam Container Container type which contains the send displacements.
 /// @param container Container which contains the send displacements.
-/// @return Object referring to the storage containing the send displacements.
+/// @return Parameter object referring to the storage containing the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto send_displs(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -557,12 +558,12 @@ auto send_displs(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper for the send displacements based on an initializer list, i.e. the
-/// send displacements from each relevant PE.
+/// @brief Passes the initializer list as send displacements to the underlying call.
 ///
 /// @tparam Type The type of the initializer list.
 /// @param displs The send displacements.
-/// @return Object referring to the storage containing the send displacements.
+/// @return Parameter object referring to the storage containing the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 auto send_displs(std::initializer_list<T> displs) {
     return internal::make_data_buffer_builder<
@@ -573,16 +574,22 @@ auto send_displs(std::initializer_list<T> displs) {
         int>(std::move(displs));
 }
 
-/// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
-/// will contain the send displacements when the \c MPI call has been completed.
-/// The underlying container must provide \c data() and
-/// \c size() member functions and expose the contained \c value_type. If a resize policy other than
-/// BufferResizePolicy::do_not_resize is selected, the container must also provide a \c resize() member function.
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer should be resized. The
-/// default resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
-/// @tparam Container Container type which contains the send displacements.
+/// @brief Passes a \p container, into which the send displacements deduced by KaMPIng will be written, to the
+/// underlying call. \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - expose \c value_type (which must be int).
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
+/// `resize(unsigned int)` member function.
+///
+/// The send displacements container will be returned as part of the underlying call's result object if it is
+/// moved/passed by value (e.g. `send_counts_out(std::move(container))`).
+///
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
+/// @tparam Container Container type which will contain  the send displacements.
 /// @param container Container which will contain the send displacements.
-/// @return Object referring to the storage containing the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_displs_out(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -593,11 +600,18 @@ auto send_displs_out(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
-/// displacements.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
-/// @return Object referring to the storage containing the send displacements.
+/// @brief Indicates to construct an object of type \p Container, into which the send displacements deduced by KaMPIng
+/// will be written, in the underlying call. \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type (which must be int).
+///
+/// The send displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send displacements.
+/// @return Parameter object referring to the storage which will contain the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto send_displs_out(AllocNewT<Container>) {
     return internal::make_data_buffer_builder<
@@ -608,11 +622,20 @@ auto send_displs_out(AllocNewT<Container>) {
         int>(alloc_new<Container>);
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
-/// displacements.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the send displacements.
+/// @brief Indicates to construct a container with type \p Container<int>, into which the send displacements deduced by
+/// KaMPIng will be written, in the underlying call.
+///
+/// \p Container<int> must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type.
+///
+/// The send displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send displacements.
+/// @return Parameter object referring to the storage which will contain the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <template <typename...> typename Container>
 auto send_displs_out(AllocNewUsingT<Container>) {
     return internal::make_data_buffer_builder<
@@ -623,8 +646,14 @@ auto send_displs_out(AllocNewUsingT<Container>) {
         int>(alloc_new_using<Container>);
 }
 
-/// @brief Generates a wrapper for a send displs output parameter without any user input.
-/// @return Wrapper for the send displs that can be retrieved as structured binding.
+/// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<int>, into
+/// which the send displacements deduced by KaMPIng will be written, in the underlying call.
+///
+/// The send displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send displacements.
+/// @return Parameter object referring to the storage which will contain the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_displs_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
@@ -633,14 +662,15 @@ inline auto send_displs_out() {
         resize_to_fit>(alloc_container_of<int>);
 }
 
-/// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage
-/// must contain the recv displacements from each relevant PE.
+/// @brief Passes a container as receive displacements to the underlying call, i.e. the container's storage must
+/// contain the receive displacement for each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
-/// @tparam Container Container type which contains the recv displacements.
-/// @param container Container type which contains the recv displacements.
-/// @return Object referring to the storage containing the recv displacements.
+/// value_type.
+/// @tparam Container Container type which contains the receive displacements.
+/// @param container Container which contains the receive displacements.
+/// @return Parameter object referring to the storage containing the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto recv_displs(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -651,12 +681,12 @@ auto recv_displs(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper for the receive displacements based on an initializer list, i.e. the
-/// receive displacements from each relevant PE.
+/// @brief Passes the initializer list as receive displacements to the underlying call.
 ///
 /// @tparam Type The type of the initializer list.
 /// @param displs The receive displacements.
-/// @return Object referring to the storage containing the receive displacements.
+/// @return Parameter object referring to the storage containing the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 auto recv_displs(std::initializer_list<T> displs) {
     return internal::make_data_buffer_builder<
@@ -665,6 +695,94 @@ auto recv_displs(std::initializer_list<T> displs) {
         internal::BufferType::in_buffer,
         BufferResizePolicy::no_resize,
         int>(std::move(displs));
+}
+
+/// @brief Passes a \p container, into which the receive displacements deduced by KaMPIng will be written, to the
+/// underlying call. \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - expose \c value_type (which must be int).
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
+/// `resize(unsigned int)` member function.
+///
+/// The receive displacements container will be returned as part of the underlying call's result object if it is
+/// moved/passed by value (e.g. `receive_counts_out(std::move(container))`).
+///
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
+/// @tparam Container Container type which will contain  the receive displacements.
+/// @param container Container which will contain the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
+auto recv_displs_out(Container&& container) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_policy,
+        int>(std::forward<Container>(container));
+}
+
+/// @brief Indicates to construct an object of type \p Container, into which the receive displacements deduced by
+/// KaMPIng will be written, in the underlying call. \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type (which must be int).
+///
+/// The receive displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the receive displacements.
+/// @return Parameter object referring to the storage which will contain the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <typename Container>
+auto recv_displs_out(AllocNewT<Container>) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::resize_to_fit,
+        int>(alloc_new<Container>);
+}
+
+/// @brief Indicates to construct a container with type \p Container<int>, into which the receive displacements deduced
+/// by KaMPIng will be written, in the underlying call.
+///
+/// \p Container<int> must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type.
+///
+/// The receive displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the receive displacements.
+/// @return Parameter object referring to the storage which will contain the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <template <typename...> typename Container>
+auto recv_displs_out(AllocNewUsingT<Container>) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::resize_to_fit,
+        int>(alloc_new_using<Container>);
+}
+
+/// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<int>, into
+/// which the receive displacements deduced by KaMPIng will be written, in the underlying call.
+///
+/// The receive displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the receive displacements.
+/// @return Parameter object referring to the storage which will contain the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto recv_displs_out() {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_displs,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<int>);
 }
 
 /// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
@@ -773,65 +891,6 @@ auto recv_buf_out(AllocContainerOfT<ValueType>) {
 template <typename ValueType>
 auto recv_buf(AllocContainerOfT<ValueType> tag) {
     return recv_buf_out(tag);
-}
-
-/// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
-/// storage will contained the receive displacements when the \c MPI call has been completed. The underlying
-/// container must provide a \c data(), \c resize() and \c size() member function and expose the contained \c
-/// value_type
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
-/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
-/// @tparam Container Container type which contains the receive displacements.
-/// @param container Container which will contain the receive displacements.
-/// @return Object referring to the storage containing the receive displacements.
-template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
-auto recv_displs_out(Container&& container) {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::recv_displs,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        resize_policy,
-        int>(std::forward<Container>(container));
-}
-
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
-/// displacements.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
-/// @return Object referring to the storage containing the recv displacements.
-template <typename Data>
-auto recv_displs_out(AllocNewT<Data>) {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::recv_displs,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        BufferResizePolicy::resize_to_fit,
-        int>(alloc_new<Data>);
-}
-
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
-/// displacements.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the recv displacements.
-template <template <typename...> typename Container>
-auto recv_displs_out(AllocNewUsingT<Container>) {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::recv_displs,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        BufferResizePolicy::resize_to_fit,
-        int>(alloc_new_using<Container>);
-}
-
-/// @brief Generates a wrapper for a recv displs output parameter without any user input.
-/// @return Wrapper for the recv displs that can be retrieved as structured binding.
-inline auto recv_displs_out() {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::recv_displs,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        resize_to_fit>(alloc_container_of<int>);
 }
 
 /// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
