@@ -1172,7 +1172,6 @@ inline auto values_on_rank_0(std::initializer_list<T> values) {
 /// @param send_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
-template <typename T>
 inline auto send_type(MPI_Datatype send_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
