@@ -1070,6 +1070,7 @@ inline auto tag(EnumType value) {
 
 /// @brief Passes a request handle to the underlying MPI call.
 /// @param request The request handle.
+/// @return The corresponding parameter object.
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto request(Request& request) {
     return internal::make_data_buffer<
@@ -1083,6 +1084,7 @@ inline auto request(Request& request) {
 /// @brief Passes a request from a \ref RequestPool to the underlying MPI call.
 /// @param request The request handle.
 /// @tparam IndexType The type of the index used by the \ref RequestPool for requests.
+/// @return The corresponding parameter object.
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename IndexType>
 inline auto request(PooledRequest<IndexType> request) {
@@ -1095,6 +1097,7 @@ inline auto request(PooledRequest<IndexType> request) {
 }
 
 /// @brief Internally allocate a request object and return it to the user.
+/// @return The corresponding parameter object.
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto request() {
     return internal::make_data_buffer<
@@ -1108,13 +1111,14 @@ inline auto request() {
 /// @brief Passes the send mode parameter for point to point communication to the underlying call.
 /// Pass any of the tags from the \c kamping::send_modes namespace.
 ///
+/// @return The corresponding parameter object.
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename SendModeTag>
 inline auto send_mode(SendModeTag) {
     return internal::SendModeParameter<SendModeTag>{};
 }
 
-/// @brief generates a parameter object for a reduce operation. Accepts function objects, lambdas, function pointers or
+/// @brief Passes a reduction operation to ther underlying call. Accepts function objects, lambdas, function pointers or
 /// native \c MPI_Op as argument.
 ///
 /// @tparam Op the type of the operation
@@ -1124,16 +1128,21 @@ inline auto send_mode(SendModeTag) {
 ///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
 ///     supported for builtin and native operations. This is used to streamline the interface so that the use does not
 ///     have to provide commutativity info when the operation is builtin.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Op, typename Commutative = ops::internal::undefined_commutative_tag>
 internal::OperationBuilder<Op, Commutative>
 op(Op&& op, Commutative commute = ops::internal::undefined_commutative_tag{}) {
     return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);
 }
 
-/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+/// @brief Passes a container containing the value(s) to return on the first rank to \ref
+/// kamping::Communicator::exscan().
 ///
+/// @tparam Container Container type.
 /// @param container Value(s) to return on the first rank.
-/// @returns OnRank0 Object containing the information which value to return on the first rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 inline auto values_on_rank_0(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -1143,11 +1152,12 @@ inline auto values_on_rank_0(Container&& container) {
         BufferResizePolicy::no_resize>(std::forward<Container>(container));
 }
 
-/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+/// @brief Passes the data to be returned on the first rank in \c MPI_Exscan which is provided as an initializer list to
+/// \ref kamping::Communicator::exscan().
 ///
 /// @param values Value(s) to return on the first rank.
-/// @returns OnRank0 Object containing the information which value to return on the first rank.
-// TODO zero-overhead
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 inline auto values_on_rank_0(std::initializer_list<T> values) {
     return internal::make_data_buffer_builder<
@@ -1157,9 +1167,12 @@ inline auto values_on_rank_0(std::initializer_list<T> values) {
         BufferResizePolicy::no_resize>(std::move(values));
 }
 
-/// @brief The send type to use in the respective \c MPI operation.
+/// @brief Passes \p send_type as send type to the underlying call.
+///
 /// @param send_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <typename T>
 inline auto send_type(MPI_Datatype send_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
@@ -1169,8 +1182,11 @@ inline auto send_type(MPI_Datatype send_type) {
         MPI_Datatype>(std::move(send_type));
 }
 
-/// @brief Output parameter for the send type.
+/// @brief Indicates to deduce the send type in the underlying call and return it as part of underlying call's result
+/// object.
+///
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_type_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
@@ -1180,10 +1196,12 @@ inline auto send_type_out() {
         MPI_Datatype>(alloc_new<MPI_Datatype>);
 }
 
-/// @brief Output parameter for the send type.
+/// @brief Passes \p send_type, into which the send type deduced by KaMPIng will be written, to the underlying call.
 /// The type will be stored at the location referred to by the provided reference.
+///
 /// @param send_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_type_out(MPI_Datatype& send_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
@@ -1193,9 +1211,11 @@ inline auto send_type_out(MPI_Datatype& send_type) {
         MPI_Datatype>(send_type);
 }
 
-/// @brief The recv type to use in the respective \c MPI operation.
-/// @param recv_type MPI_Datatype to use in the wrapped \c MPI operation.
+/// @brief Passes \p recv_type as recv type to the underlying call.
+///
+/// @param recv_type MPI_Datatype to use in the wrapped \c MPI function.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_type(MPI_Datatype recv_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
@@ -1205,8 +1225,11 @@ inline auto recv_type(MPI_Datatype recv_type) {
         MPI_Datatype>(std::move(recv_type));
 }
 
-/// @brief Output parameter for the recv type.
+/// @brief Indicates to deduce the receive type in the underlying call and return it as part of underlying call's result
+/// object.
+///
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_type_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
@@ -1216,10 +1239,12 @@ inline auto recv_type_out() {
         MPI_Datatype>(alloc_new<MPI_Datatype>);
 }
 
-/// @brief Output parameter for the recv type.
+/// @brief Passes \p recv_type, into which the recv type deduced by KaMPIng will be written, to the underlying call.
 /// The type will be stored at the location referred to by the provided reference.
+///
 /// @param recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_type_out(MPI_Datatype& recv_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
@@ -1232,6 +1257,7 @@ inline auto recv_type_out(MPI_Datatype& recv_type) {
 /// @brief The send_recv type to use in the respective \c MPI operation.
 /// @param send_recv_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_type(MPI_Datatype send_recv_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
