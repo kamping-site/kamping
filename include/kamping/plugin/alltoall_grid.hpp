@@ -316,13 +316,6 @@ public:
     }
 
 private:
-    template <typename RecvCounts>
-    DefaultContainerType<int> compute_write_positions(RecvCounts const& recv_counts) const {
-        DefaultContainerType<int> write_pos(_size_of_orig_comm);
-        std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), write_pos.data(), int(0));
-        return write_pos;
-    }
-
     template <typename GridRecvBuffer, typename RecvBuffer, typename RecvCounts, typename RecvDispls>
     void write_recv_buffer(
         GridRecvBuffer const& grid_recv_buffer,
