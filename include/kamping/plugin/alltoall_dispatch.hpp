@@ -125,7 +125,7 @@ public:
         constexpr size_t volume_threshold_default_value = 2000;
         using default_comm_volume_threshold_type =
             decltype(dispatch_alltoall::comm_volume_threshold(volume_threshold_default_value));
-        auto const& volume_threshold =
+        auto&& volume_threshold =
             internal::select_parameter_type_or_default<volume_threshold_param_type, default_comm_volume_threshold_type>(
                 std::tuple(volume_threshold_default_value),
                 args...
