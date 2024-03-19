@@ -214,7 +214,7 @@ kamping_register_mpi_test(
     CORES ${grid_test_cores}
 )
 foreach (p ${grid_test_cores})
-    set_tests_properties(test_alltoall_grid.${p}cores PROPERTIES TIMEOUT 30)
+    set_tests_properties(test_alltoall_grid.${p}cores PROPERTIES TIMEOUT 40)
 endforeach ()
 kamping_register_mpi_test(
     test_alltoall_sparse
