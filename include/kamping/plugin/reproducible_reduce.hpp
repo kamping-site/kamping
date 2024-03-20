@@ -214,14 +214,14 @@ inline auto tree_rank_intersecting_elements(const size_t region_begin, const siz
 
 template <typename T, template <typename...> typename DefaultContainerType>
 class ReproducibleCommunicator {
-public:
     using Communicator = kamping::Communicator<DefaultContainerType>;
 
+private:
     template <typename U>
     kamping::Communicator<DefaultContainerType> init_comm(U comm) {
         return Communicator(comm.disown_mpi_communicator(), comm.root_signed(), true);
     }
-
+public:
     template <
         template <typename...> typename = DefaultContainerType,
         template <typename, template <typename...> typename>
@@ -429,8 +429,8 @@ public:
         start_indices[global_array_length] = comm.size(); // guardian element
 
         KASSERT(start_indices.find(0) != start_indices.end(), "recv_displs does not have entry for index 0");
-        // Verify correctness of index map
 
+        // Verify correctness of index map
         for (auto it = start_indices.begin(); it != start_indices.end(); ++it) {
             auto const next = std::next(it);
             if (next == start_indices.end())
