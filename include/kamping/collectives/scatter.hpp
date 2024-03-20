@@ -57,19 +57,23 @@
 /// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
 /// derived automatically based on send_buf's underlying \c value_type. This parameter is ignored on non-root ranks.
 ///
+/// - kamping::recv_buf() containing the received data.
+///
 /// - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
 /// derived automatically based on recv_buf's underlying \c value_type.
 ///
 /// - kamping::root() specifying the rank of the root PE. If omitted, the default root PE of the communicator
 /// is used instead.
 ///
-/// - kamping::recv_buf() containing the received data. If omitted, a new buffer is allocated and returned.
-///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::send_buf() and no \ref
 /// kamping::recv_buf() is given.
-/// @tparam Args Deduced template parameters.
-/// @param args Required and optionally optional parameters.
-/// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -290,23 +294,28 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter_single(Arg
 /// exclusive prefix sum of the send_counts is used.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::root() [on all PEs] specifying the rank of the root PE. If omitted, the default root PE of the
-/// communicator is used instead.
 /// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
 /// derived automatically based on send_buf's underlying \c value_type. This parameter is ignored on non-root ranks.
-///
-/// - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
-/// derived automatically based on recv_buf's underlying \c value_type.
 ///
 /// - \ref kamping::recv_buf() [on all PEs] containing the received data. The buffer will be resized according to the
 /// buffer's kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
 /// storage must be large enough to hold all received elements.
 ///
+/// - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
+/// derived automatically based on recv_buf's underlying \c value_type.
+///
+/// - \ref kamping::root() [on all PEs] specifying the rank of the root PE. If omitted, the default root PE of the
+/// communicator is used instead.
+///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no kamping::send_buf() and no
 /// kamping::recv_buf() is given.
-/// @tparam Args Deduced template parameters.
-/// @param args Required and optionally optional parameters.
-/// @return kamping::MPIResult wrapping the output buffer if not specified as an input parameter.
+/// /// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,

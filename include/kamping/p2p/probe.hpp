@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022 The KaMPIng Authors
+// Copyright 2022-2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -33,17 +33,17 @@
 /// This wraps \c MPI_Probe. This operation probes for a message and returns a
 /// status object with info about the probe message. The following parameters
 /// are optional:
-/// - \ref kamping::tag() probe for messages with this tag. Defaults to probing
-/// for an arbitrary tag, i.e. \c tag(tags::any).
 /// - \ref kamping::source() probe for messages sent from this source rank.
 /// Defaults to probing for an arbitrary source, i.e. \c source(rank::any).
+/// - \ref kamping::tag() probe for messages with this tag. Defaults to probing
+/// for an arbitrary tag, i.e. \c tag(tags::any).
 /// - \c kamping::status(ignore<>) or \ref kamping::status_out(). Returns info about
 /// the probed message by setting the appropriate fields in the status object
 /// passed by the user. If \ref kamping::status_out() is passed, constructs a
 /// status object which may be retrieved by the user.
 /// The status can be ignored by passing \c kamping::status(kamping::ignore<>). This is the default.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described
 /// above.
 template <
