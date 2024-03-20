@@ -119,18 +119,6 @@ void test_recv_counts_in_MPIResult() {
     }
 }
 
-// Test that the receive count can be moved into and extracted from a MPIResult object.
-void test_recv_count_in_MPIResult() {
-    using namespace kamping;
-    using namespace kamping::internal;
-
-    LibAllocatedSingleElementBuffer<int, ParameterType::recv_count, BufferType::out_buffer> recv_count_wrapper{};
-    recv_count_wrapper.underlying() = 42;
-    MPIResult mpi_result{std::make_tuple(std::move(recv_count_wrapper))};
-    int       recv_count_value = mpi_result.extract_recv_count();
-    EXPECT_EQ(recv_count_value, 42);
-}
-
 // Test that receive displs can be moved into and extracted from a MPIResult object.
 template <typename UnderlyingContainer>
 void test_recv_displs_in_MPIResult() {
@@ -211,48 +199,43 @@ void test_send_counts_in_MPIResult() {
     }
 }
 
-// Test that send count can be moved into and extracted from a MPIResult object.
-void test_send_count_in_MPIResult() {
-    using namespace kamping;
-    using namespace kamping::internal;
-    auto const construct_send_count = []() {
-        LibAllocatedSingleElementBuffer<int, ParameterType::send_count, BufferType::out_buffer> send_count_wrapper{};
-        send_count_wrapper.underlying() = 42;
-        return send_count_wrapper;
-    };
-
-    {
-        MPIResult mpi_result{std::make_tuple(construct_send_count())};
-        int       send_count = mpi_result.extract_send_count();
-        EXPECT_EQ(send_count, 42);
-    }
-    {
-        MPIResult mpi_result{std::make_tuple(construct_send_count())};
-        int&      send_count = mpi_result.get_send_count();
-        EXPECT_EQ(send_count, 42);
-    }
-    {
-        const MPIResult mpi_result{std::make_tuple(construct_send_count())};
-        int const&      send_count = mpi_result.get_send_count();
-        EXPECT_EQ(send_count, 42);
-    }
-}
-
 // Test that send displs can be moved into and extracted from a MPIResult object.
 template <typename UnderlyingContainer>
 void test_send_displs_in_MPIResult() {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_displs = send_displs_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
-    static_assert(std::is_integral_v<typename decltype(send_displs)::value_type>, "Use integral Types in this test.");
+    auto construct_send_displs = []() {
+        auto send_displs = send_displs_out(alloc_new<UnderlyingContainer>).construct_buffer_or_rebind();
+        static_assert(
+            std::is_integral_v<typename decltype(send_displs)::value_type>,
+            "Use integral Types in this test."
+        );
 
-    send_displs.resize(10);
-    int* ptr = send_displs.data();
-    std::iota(ptr, ptr + 10, 0);
-    MPIResult           mpi_result{std::make_tuple(std::move(send_displs))};
-    UnderlyingContainer underlying_container = mpi_result.extract_send_displs();
-    for (size_t i = 0; i < 10; ++i) {
-        EXPECT_EQ(underlying_container[i], i);
+        send_displs.resize(10);
+        int* ptr = send_displs.data();
+        std::iota(ptr, ptr + 10, 0);
+        return send_displs;
+    };
+    {
+        MPIResult           mpi_result{std::make_tuple(construct_send_displs())};
+        UnderlyingContainer underlying_container = mpi_result.extract_send_displs();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult            mpi_result{std::make_tuple(construct_send_displs())};
+        UnderlyingContainer& underlying_container = mpi_result.get_send_displs();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const            mpi_result{std::make_tuple(construct_send_displs())};
+        UnderlyingContainer const& underlying_container = mpi_result.get_send_displs();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
     }
 }
 
@@ -293,10 +276,6 @@ TEST(MpiResultTest, extract_recv_counts_basics_own_container) {
     ::testing::test_recv_counts_in_MPIResult<::testing::OwnContainer<int>>();
 }
 
-TEST(MpiResultTest, extract_recv_count_basics) {
-    ::testing::test_recv_count_in_MPIResult();
-}
-
 TEST(MpiResultTest, extract_recv_displs_basics) {
     ::testing::test_recv_displs_in_MPIResult<std::vector<int>>();
 }
@@ -307,10 +286,6 @@ TEST(MpiResultTest, extract_recv_displs_basics_own_container) {
 
 TEST(MpiResultTest, extract_send_counts_basics) {
     ::testing::test_send_counts_in_MPIResult<std::vector<int>>();
-}
-
-TEST(MpiResultTest, extract_send_count_basics) {
-    ::testing::test_send_count_in_MPIResult();
 }
 
 TEST(MpiResultTest, extract_send_counts_basics_own_container) {
@@ -325,51 +300,178 @@ TEST(MpiResultTest, extract_send_displs_basics_own_container) {
     ::testing::test_send_displs_in_MPIResult<::testing::OwnContainer<int>>();
 }
 
+TEST(MpiResultTest, extract_send_count) {
+    using namespace kamping;
+    using namespace kamping::internal;
+    auto const construct_send_count = []() {
+        LibAllocatedSingleElementBuffer<int, ParameterType::send_count, BufferType::out_buffer> send_count_wrapper{};
+        send_count_wrapper.underlying() = 42;
+        return send_count_wrapper;
+    };
+
+    {
+        MPIResult mpi_result{std::make_tuple(construct_send_count())};
+        int       send_count = mpi_result.extract_send_count();
+        EXPECT_EQ(send_count, 42);
+    }
+    {
+        MPIResult mpi_result{std::make_tuple(construct_send_count())};
+        int&      send_count = mpi_result.get_send_count();
+        EXPECT_EQ(send_count, 42);
+    }
+    {
+        MPIResult const mpi_result{std::make_tuple(construct_send_count())};
+        int const&      send_count = mpi_result.get_send_count();
+        EXPECT_EQ(send_count, 42);
+    }
+}
+
+TEST(MpiResultTest, extract_recv_count) {
+    using namespace kamping;
+    using namespace kamping::internal;
+    auto const construct_recv_count = []() {
+        LibAllocatedSingleElementBuffer<int, ParameterType::recv_count, BufferType::out_buffer> recv_count_wrapper{};
+        recv_count_wrapper.underlying() = 42;
+        return recv_count_wrapper;
+    };
+
+    {
+        MPIResult mpi_result{std::make_tuple(construct_recv_count())};
+        int       recv_count = mpi_result.extract_recv_count();
+        EXPECT_EQ(recv_count, 42);
+    }
+    {
+        MPIResult mpi_result{std::make_tuple(construct_recv_count())};
+        int&      recv_count = mpi_result.get_recv_count();
+        EXPECT_EQ(recv_count, 42);
+    }
+    {
+        MPIResult const mpi_result{std::make_tuple(construct_recv_count())};
+        int const&      recv_count = mpi_result.get_recv_count();
+        EXPECT_EQ(recv_count, 42);
+    }
+}
+
 TEST(MpiResultTest, extract_send_recv_count) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_recv_count         = kamping::send_recv_count_out().construct_buffer_or_rebind();
-    send_recv_count.underlying() = 42;
-    MPIResult mpi_result{std::make_tuple(std::move(send_recv_count))};
-    EXPECT_EQ(mpi_result.extract_send_recv_count(), 42);
+    auto construct_send_recv_count = []() {
+        auto send_recv_count         = kamping::send_recv_count_out().construct_buffer_or_rebind();
+        send_recv_count.underlying() = 42;
+        return send_recv_count;
+    };
+    {
+        MPIResult mpi_result{std::make_tuple(construct_send_recv_count())};
+        EXPECT_EQ(mpi_result.extract_send_recv_count(), 42);
+    }
+    {
+        MPIResult mpi_result{std::make_tuple(construct_send_recv_count())};
+        int&      send_recv_count = mpi_result.get_send_recv_count();
+        EXPECT_EQ(send_recv_count, 42);
+    }
+    {
+        MPIResult const mpi_result{std::make_tuple(construct_send_recv_count())};
+        int const&      send_recv_count = mpi_result.get_send_recv_count();
+        EXPECT_EQ(send_recv_count, 42);
+    }
 }
 
 TEST(MpiResultTest, extract_send_type) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_type         = kamping::send_type_out().construct_buffer_or_rebind();
-    send_type.underlying() = MPI_DOUBLE;
-    MPIResult mpi_result{std::make_tuple(std::move(send_type))};
-    EXPECT_EQ(mpi_result.extract_send_type(), MPI_DOUBLE);
+    auto construct_send_type = []() {
+        auto send_type         = kamping::send_type_out().construct_buffer_or_rebind();
+        send_type.underlying() = MPI_DOUBLE;
+        return send_type;
+    };
+    {
+        MPIResult mpi_result{std::make_tuple(construct_send_type())};
+        EXPECT_EQ(mpi_result.extract_send_type(), MPI_DOUBLE);
+    }
+    {
+        MPIResult     mpi_result{std::make_tuple(construct_send_type())};
+        MPI_Datatype& send_type = mpi_result.get_send_type();
+        EXPECT_EQ(send_type, MPI_DOUBLE);
+    }
+    {
+        MPIResult const     mpi_result{std::make_tuple(construct_send_type())};
+        MPI_Datatype const& send_type = mpi_result.get_send_type();
+        EXPECT_EQ(send_type, MPI_DOUBLE);
+    }
 }
 
 TEST(MpiResultTest, extract_recv_type) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto recv_type         = kamping::recv_type_out().construct_buffer_or_rebind();
-    recv_type.underlying() = MPI_CHAR;
-    MPIResult mpi_result{std::tuple(std::move(recv_type))};
-    EXPECT_EQ(mpi_result.extract_recv_type(), MPI_CHAR);
+    auto construct_recv_type = []() {
+        auto recv_type         = kamping::recv_type_out().construct_buffer_or_rebind();
+        recv_type.underlying() = MPI_CHAR;
+        return recv_type;
+    };
+    {
+        MPIResult mpi_result{std::tuple(construct_recv_type())};
+        EXPECT_EQ(mpi_result.extract_recv_type(), MPI_CHAR);
+    }
+    {
+        MPIResult     mpi_result{std::tuple(construct_recv_type())};
+        MPI_Datatype& recv_type = mpi_result.get_recv_type();
+        EXPECT_EQ(recv_type, MPI_CHAR);
+    }
+    {
+        MPIResult const     mpi_result{std::tuple(construct_recv_type())};
+        MPI_Datatype const& recv_type = mpi_result.get_recv_type();
+        EXPECT_EQ(recv_type, MPI_CHAR);
+    }
 }
 
 TEST(MpiResultTest, extract_send_recv_type) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto send_recv_type         = kamping::send_recv_type_out().construct_buffer_or_rebind();
-    send_recv_type.underlying() = MPI_CHAR;
-    MPIResult mpi_result{std::make_tuple(std::move(send_recv_type))};
-    EXPECT_EQ(mpi_result.extract_send_recv_type(), MPI_CHAR);
+    auto construct_send_recv_type = []() {
+        auto send_recv_type         = kamping::send_recv_type_out().construct_buffer_or_rebind();
+        send_recv_type.underlying() = MPI_CHAR;
+        return send_recv_type;
+    };
+    {
+        MPIResult mpi_result{std::tuple(construct_send_recv_type())};
+        EXPECT_EQ(mpi_result.extract_send_recv_type(), MPI_CHAR);
+    }
+    {
+        MPIResult     mpi_result{std::tuple(construct_send_recv_type())};
+        MPI_Datatype& recv_type = mpi_result.get_send_recv_type();
+        EXPECT_EQ(recv_type, MPI_CHAR);
+    }
+    {
+        MPIResult const     mpi_result{std::tuple(construct_send_recv_type())};
+        MPI_Datatype const& recv_type = mpi_result.get_send_recv_type();
+        EXPECT_EQ(recv_type, MPI_CHAR);
+    }
 }
 
 TEST(MpiResultTest, extract_status_basics) {
     using namespace kamping;
     using namespace kamping::internal;
-    auto status = status_out().construct_buffer_or_rebind();
+    auto construct_status = []() {
+        auto status = status_out().construct_buffer_or_rebind();
 
-    status_param_to_native_ptr(status)->MPI_TAG = 42;
-    MPIResult mpi_result{std::make_tuple(std::move(status))};
-    auto      underlying_status = mpi_result.extract_status();
-    EXPECT_EQ(underlying_status.tag(), 42);
+        status_param_to_native_ptr(status)->MPI_TAG = 42;
+        return status;
+    };
+    {
+        MPIResult mpi_result{std::make_tuple(construct_status())};
+        auto      underlying_status = mpi_result.extract_status();
+        EXPECT_EQ(underlying_status.tag(), 42);
+    }
+    {
+        MPIResult mpi_result{std::make_tuple(construct_status())};
+        auto&     underlying_status = mpi_result.get_status();
+        EXPECT_EQ(underlying_status.tag(), 42);
+    }
+    {
+        MPIResult const mpi_result{std::make_tuple(construct_status())};
+        auto const&     underlying_status = mpi_result.get_status();
+        EXPECT_EQ(underlying_status.tag(), 42);
+    }
 }
 
 KAMPING_MAKE_HAS_MEMBER(extract_status)
