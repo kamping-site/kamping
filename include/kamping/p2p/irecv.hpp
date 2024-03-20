@@ -46,10 +46,8 @@
 /// accessing the result the user has to complete the request.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::recv_buf() the buffer to receive the message into.  The buffer will be resized according to the
-/// buffer's kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements. If \ref kamping::recv_type() is given the resize policy
-/// has to be BufferResizePolicy::no_resize. If no \ref kamping::recv_buf() is provided, the \c value_type of the recv
+/// - \ref kamping::recv_buf() the buffer to receive the message into.
+/// If no \ref kamping::recv_buf() is provided, the \c value_type of the recv
 /// buffer has to be passed as a template parameter to \c recv().
 ///
 /// - \ref kamping::tag() recv message with this tag. Defaults to receiving for an arbitrary tag, i.e. \c
@@ -68,11 +66,13 @@
 /// - \ref kamping::recv_count() the number of elements to receive. Will be probed before receiving if not given.
 /// Keep in mind that this introduces an additional blocking operation call.
 ///
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
 ///
-/// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::recv_buf() is given.
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described
-/// above.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,

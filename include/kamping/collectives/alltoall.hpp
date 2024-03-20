@@ -55,12 +55,8 @@
 /// omitted, the value of send_counts will be used.
 /// This parameter is mandatory if \ref kamping::recv_type() is given.
 ///
-/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
-/// the data received as specified for send_buf. The data received from rank 0 comes first, followed by the data
-/// received from rank 1, and so on. The buffer will be resized according to the buffer's
-/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements. This requires a size of at least `recv_count *
-/// communicator size`.
+/// - \ref kamping::recv_buf() specifying a buffer for the output. A buffer of at least
+/// `recv_count * communicator size` is required.
 ///
 /// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
 /// derived automatically based on send_buf's underlying \c value_type.
@@ -71,9 +67,13 @@
 /// Inplace alltoall is supported by passing send_recv_buf as parameter. This changes the requirements for the other
 /// parameters, see \ref Communicator::alltoall_inplace.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @return Result type wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -206,8 +206,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
 /// \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send and recv type. If omitted, the \c MPI
 /// datatype is derived automatically based on send_recv_buf's underlying \c value_type.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described above.
+/// @return Result type wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -293,11 +298,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(A
 /// This parameter is mandatory if \ref kamping::recv_type() is given.
 ///
 /// The following buffers are optional:
-/// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
-/// the data received as specified for send_buf. The buffer will be resized according to the buffer's
-/// kamping::BufferResizePolicy. If resize policy is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to store all received elements. This requires a size of at least  `max(recv_counts[i] +
-/// recv_displs[i])` for \c i in `[0, communicator size)`.
+/// - \ref kamping::recv_buf() specifying a buffer for the output. Afterwards, this buffer will contain
+/// the data received as specified for send_buf. A buffer size of at least  `max(recv_counts[i] +
+/// recv_displs[i])` for \c i in `[0, communicator size)` elements is required.
 ///
 /// - \ref kamping::send_displs() containing the offsets of the messages in send_buf. The `send_counts[i]` elements
 /// starting at `send_buf[send_displs[i]]` will be sent to rank `i`. If omitted, this is calculated as the exclusive
@@ -313,9 +316,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(A
 /// - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
 /// derived automatically based on recv_buf's underlying \c value_type.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer, counts and displacements if not specified as input parameter.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,

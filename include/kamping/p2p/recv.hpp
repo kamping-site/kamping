@@ -42,34 +42,35 @@
 /// If the \ref kamping::recv_counts() parameter is not specified, this first performs a probe, followed by a receive of
 /// the probed message with the probed message size.
 ///
-/// The following parameters are optional:
-/// - \ref kamping::recv_buf() the buffer to receive the message into.  The buffer will be resized according to the
-/// buffer's kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements. If \ref kamping::recv_type() is given the resize policy
-/// has to be BufferResizePolicy::no_resize. If no \ref kamping::recv_buf() is provided, the \c value_type of the recv
-/// buffer has to be passed as a template parameter to \c recv().
+/// The following parameter is optional, but leads to an additional call to \c MPI_Probe if not present:
+/// - \ref kamping::recv_count() the number of elements to receive. Will be probed before receiving if not given.
 ///
-/// - \ref kamping::tag() recv message with this tag. Defaults to receiving for an arbitrary tag, i.e. \c
-/// tag(tags::any).
+/// The following parameters are optional:
+/// - \ref kamping::recv_buf() the buffer to receive the message into.  The buffer's underlying
+/// storage must be large enough to hold all received elements. If no \ref kamping::recv_buf() is provided, the \c
+/// value_type of the recv buffer has to be passed as a template parameter to \c recv().
+///
+//  - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
+/// derived automatically based on recv_buf's underlying \c value_type.
 ///
 /// - \ref kamping::source() receive a message sent from this source rank. Defaults to probing for an arbitrary source,
 /// i.e. \c source(rank::any).
+///
+/// - \ref kamping::tag() recv message with this tag. Defaults to receiving for an arbitrary tag, i.e. \c
+/// tag(tags::any).
 ///
 /// - \c kamping::status(ignore<>) or \ref kamping::status_out(). Returns info about the received message by setting the
 /// appropriate fields in the status object passed by the user. If \ref kamping::status_out() is passed, constructs a
 /// status object which may be retrieved by the user. The status can be ignored by passing \c
 /// kamping::status(kamping::ignore<>). This is the default.
 ///
-//  - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
-/// derived automatically based on recv_buf's underlying \c value_type.
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
 ///
-/// The following parameter is optional, but leads to an additional call to \c MPI_Probe if not present:
-/// - \ref kamping::recv_count() the number of elements to receive. Will be probed before receiving if not given.
-///
-/// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::recv_buf() is given.
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described
-/// above.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -196,16 +197,16 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
 /// the received value.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::tag() recv message with this tag. Defaults to receiving for an arbitrary tag, i.e.
-/// <code>tag(tags::any)</code>.
 /// - \ref kamping::source() receive a message sent from this source rank. Defaults to
 /// <code>kamping::source(kamping::rank::any)</code>.
+/// - \ref kamping::tag() recv message with this tag. Defaults to receiving for an arbitrary tag, i.e.
+/// <code>tag(tags::any)</code>.
 /// - \ref kamping::status()  Returns info about the received message by setting the appropriate fields in the status
 /// object passed by the user. The status can be ignored by passing \c kamping::status(kamping::ignore<>). This is the
 /// default.
 ///
 /// @tparam recv_value_type_tparam The type of the message to be received.
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return The received value of type \c recv_value_type_tparam.
 template <

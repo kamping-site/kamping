@@ -33,7 +33,7 @@
 /// - \ref kamping::request() The request object to associate this operation with. Defaults to a library allocated
 /// request object, which can be accessed via the returned result.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described above.
 template <
     template <typename...>
