@@ -47,7 +47,7 @@ int main() {
 
     { // We can also request the number of elements received from each rank. The recv_buf will always be the first out
       // parameter. After that, the output parameters are ordered as they appear in the function call.
-      // Communicating KaMPIng calls like allgatherv return a result object which can be decomposed using structured
+      // KaMPIng calls like allgatherv return a result object which can be decomposed using structured
       // bindings (here) or explicit extract_*() calls (see below).
         auto [recv_buffer, recv_counts] = comm.allgatherv(send_buf(input), recv_counts_out());
     }
