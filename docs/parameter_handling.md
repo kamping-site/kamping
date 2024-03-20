@@ -1,6 +1,6 @@
 # Passing Parameters in KaMPIng
 
-A core feature of KaMPIng is the flexible named parameters concept allowing the caller to name and pass parameters in arbitrary order and even omit certain parameters when the library is able to infer them (at the cost of additional computation/communication).
+A core feature of KaMPIng is the flexible named parameters concept, allowing the caller to name and pass parameters in arbitrary order and even omit certain parameters when the library is able to infer them (at the cost of additional computation/communication).
 With this approach, KaMPIng allows the user a fine-grained control over the parameter set which will be explained in greater detail in this document.
 
 To illustrate the concept, we first look at the function signature of `MPI_Alltoallv` as defined in MPI-4.0 which takes a `sendbuf` of variable
@@ -13,10 +13,10 @@ MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
               MPI_Datatype recvtype, MPI_Comm comm)
 ```
 
-In contrast to plain MPI, where 9 parameters have to be passed to `MPI_Alltoallv`, KaMPIng requires the caller to pass only the `sendbuf` and `sendcounts` parameter explicitly.
+In contrast to plain MPI, where the caller has to pass nine parameters to `MPI_Alltoallv`, KaMPIng requires only the `sendbuf` and `sendcounts` parameters.
 All other parameters are optional and are computed as follows (if omitted):
 - `recvcounts` are inferred through an additional call to `MPI_Alltoall` over the `sendcounts`.
-- `sdispls` and `rdispls` are just defaulted to an exclusive prefix sum of the `sendcounts` and `recvcounts`, respectively.
+- `sdispls` and `rdispls` are defaulted to an exclusive prefix sum of the `sendcounts` and `recvcounts`, respectively.
 - `sendtype` and `recvtype` are inferred from the container's `value_type` storing the data to be sent (or received).
 
 As outlined above, it is possible to pass any subset of the optional parameters, in any arbitrary order, to the wrapped function call.
@@ -49,7 +49,7 @@ See the following examples for an illustration of the different options
   std::vector<int> send_counts = ...; // initialize send counts
   
   {
-    // only (implicit) out parameter: recv buffer
+    // a single (implicit) out parameter: recv buffer
     auto recv_buf = comm.alltoallv(send_buf(data), send_counts(counts));
   }
   {
@@ -82,8 +82,8 @@ See the following examples for an illustration of the different options
 
 To summarize, there are three ways to pass parameters to KaMPIng:
 1. **in** parameter: the caller directly provides the parameter required by the MPI call such as the `sendbuf`, `sendcounts`, `recvcounts` etc.
-2. **out** parameter: the caller does not provide the parameter, asks KaMPIng to internally compute/infer the parameter and return the value to the caller.
-3. **omitted** parameter: the caller does not provide the parameter, (implicitly) asks KaMPIng to internally compute/infer the parameter but is not interested in its value. Therefore it is discared once the wrapped MPI call has completed.
+2. **out** parameter: the caller does not provide the parameter but asks KaMPIng to internally compute/infer the parameter and return the value to the caller.
+3. **omitted** parameter: the caller does not provide the parameter and (implicitly) asks KaMPIng to internally compute/infer the parameter but is not interested in its value. Therefore it is discared once the wrapped MPI call has completed.
 
 **Note**: KaMPIng will show an error message at compile time if any required parameter is missing.
 
@@ -91,8 +91,8 @@ Internally, a call to a named parameter factory function (`send_buf(...), send_c
 all passed data/memory and user request regarding potential output strategies.
 
 ## Named Parameters and DataBuffers
-To fully benefit from KaMPIng's parameter flexibility, we briefly present the most important concepts of the DataBuffer class.
-A DataBuffer wraps either a single value or an whole underlying C++ container. In the latter case, KaMPIng requires the container to 
+To fully benefit from KaMPIng's parameter flexibility, we briefly present the most important concepts of the `DataBuffer` class.
+A `DataBuffer` wraps either a single value or a whole underlying C++ container. In the latter case, KaMPIng requires the container to 
 - have contiguous memory,
 - expose its `value_type`
 - have a member function `data()` returning a pointer to the start of its memory
@@ -100,25 +100,27 @@ A DataBuffer wraps either a single value or an whole underlying C++ container. I
 
 If resizing of the container is requested, KaMPIng additionally requires the container to expose a `resize(unsigned int)` member function (see [Resize Policy](named_parameters.md#Resize Policy)).
 
-Futhermore, DataBuffer has multiple (orthogonal) properties with which the caller can control the behavior of corresponding parameter inside the wrapped MPI call:
+Futhermore, `DataBuffer` has multiple (orthogonal) properties with which the caller can control the behavior of corresponding parameter inside the wrapped MPI call:
 - type: <in, out, (inout)>
 - ownership: <owning, non-owning>
 - resize-policy: <no-resize, grow-only, resize-to-fit>
 
 ### Parameter Type
 
-Let us start with the type property. Named parameters like `send_counts(...)`, `recv_counts(...)` , ... generate DataBuffers with type property *in*.
+Named parameters factory functions like `send_counts(...)`, `recv_counts(...)` , ... generate `DataBuffers` with type property *in*.
 This signals that they wrap a container with meaningful *input* data which can be used by the MPI call directly, e.g. the send counts wrapped by `send_counts(...)`.
 
-The corresponding `*_out` named parameters instantiates DataBuffer objects with type property *out*.
+The corresponding `*_out` named parameters instantiates `DataBuffer` objects with type property *out*.
 They do not contain meaningful data yet and will be filled with values during the wrapped MPI call.
 
-DataBuffers with type *inout* correspond to named parameters like `sendrecv_buf(...)` used in `MPI_Bcast` where data is sent on one root rank (in parameter) and received (out parameter) on all other ranks.
+`DataBuffers` with type *inout* correspond to named parameters like `send_recv_buf(...)` used in `MPI_Bcast` where data is sent on one root rank (in parameter) and received (out parameter) on all other ranks.
+Furthermore, passing `send_recv_buf(...)` to wrapped MPI routines such as `MPI_Allreduce, MPI_Allgather,...` indicates that the *inplace* version (`MPI_INPLACE`) will be used.
+See the corresponding Doxygen documentation for more information.
 
 ### Ownership
-This property simply determines whether a DataBuffer owns its underlying data following the corresponding C++ ownership concept and is most important for out parameters.
-A DataBuffer *references* (*non*-owns) its container if the latter has been passed to the named parameter as an lvalue as in `send_buf(data)` or `recv_buf_out(recv_buffer)`.
-Otherwise a DataBuffer is *owning*, e.g. for `recv_buf_out()`, `recv_buf_out(std::move(recv_buffer))`.
+This property simply determines whether a `DataBuffer` owns its underlying data following the corresponding C++ ownership concept and is most important for out parameters.
+A `DataBuffer` *references* (*non*-owns) its container if the latter has been passed to the named parameter as an lvalue as in `send_buf(data)` or `recv_buf_out(recv_buffer)`.
+Otherwise a `DataBuffer` is *owning*, e.g. for `recv_buf_out()`, `recv_buf_out(std::move(recv_buffer))`.
 
 Note that a named (out) parameter without associated underlying container (such as `recv_buf_out()`) implies that the caller asks KaMPIng to allocate the memory to hold the computed/infered values.
 This results in an owning container, which is allocated by KaMPIng and ownership is transferred to the caller upon return.
@@ -126,7 +128,7 @@ This results in an owning container, which is allocated by KaMPIng and ownership
 Furthermore, the ownership of an out parameter is important as it specifies how the computed data will be returned to the caller.
 Owning out parameters are moved to a result object which is returned by value.
 Non-owning out parameters write their data directly to their associated underlying container.
-Therefore, the DataBuffer object corresponding to this named parameter will not be part of the result object.
+Therefore, the `DataBuffer` object corresponding to this named parameter will not be part of the result object.
 The following code provides some example for owning and non-owning out parameters:
 
 ```cpp
@@ -164,8 +166,8 @@ The following code provides some example for owning and non-owning out parameter
 For more information about the result object, we refer to its doxygen documentation.
 
 ### Resize Policy
-Resize policies are only important for out parameters. They control if/how the underlying memory/container are resized if the provided memory is not large enough to hold the computed values.
-- `no_resize`: the underlying container are not resized and the caller has to ensure that it is large enough to hold all data.
+Resize policies are important only for out parameters. They control if and how the underlying memory/container are resized if the provided memory is not large enough to hold the computed values.
+- `no_resize`: the underlying container is not resized and the caller has to ensure that it is large enough to hold all data.
 - `grow_only`: KaMPIng will resize the underlying container if its initial size is too small. However, a container's size will never be reduced.
 - `resize_to_fit`: KaMPIng will resize the underlying container to have exactly the size required to hold all data.
 
