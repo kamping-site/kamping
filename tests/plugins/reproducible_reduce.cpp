@@ -2,9 +2,11 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <chrono>
 #include <random>
 #include <vector>
 
+#include "kamping/checking_casts.hpp"
 #include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/bcast.hpp"
 #include "kamping/collectives/scatter.hpp"
@@ -19,7 +21,9 @@ using Distribution = struct Distribution {
     std::vector<int> send_counts;
     std::vector<int> displs;
 
-    Distribution(std::vector<int> send_counts, std::vector<int> displs) : send_counts(send_counts), displs(displs) {}
+    Distribution(std::vector<int> _send_counts, std::vector<int> recv_displs)
+        : send_counts(_send_counts),
+          displs(recv_displs) {}
 };
 
 template <typename T>
@@ -47,7 +51,7 @@ auto distribute_evenly(size_t const collection_size, size_t const comm_size) {
     auto const elements_per_rank = collection_size / comm_size;
     auto const remainder         = collection_size % comm_size;
 
-    std::vector<int> send_counts(comm_size, elements_per_rank);
+    std::vector<int> send_counts(comm_size, kamping::asserting_cast<int>(elements_per_rank));
     std::for_each_n(send_counts.begin(), remainder, [](auto& n) { n += 1; });
 
     return Distribution(send_counts, displacement_from_sendcounts(send_counts));
@@ -55,11 +59,11 @@ auto distribute_evenly(size_t const collection_size, size_t const comm_size) {
 
 auto distribute_randomly(size_t const collection_size, size_t const comm_size, size_t const seed) {
     std::mt19937                    rng(seed);
-    std::uniform_int_distribution<> dist(0, collection_size);
+    std::uniform_int_distribution<> dist(0, kamping::asserting_cast<int>(collection_size));
 
     // See https://stackoverflow.com/a/48205426 for details
     std::vector<int> points(comm_size, 0UL);
-    points.push_back(collection_size);
+    points.push_back(kamping::asserting_cast<int>(collection_size));
     std::generate(points.begin() + 1, points.end() - 1, [&dist, &rng]() { return dist(rng); });
     std::sort(points.begin(), points.end());
 
@@ -98,15 +102,6 @@ auto generate_test_vector(size_t length, size_t seed) {
 
     return result;
 }
-
-template <typename T>
-struct TestConfig {
-    Distribution   distribution;
-    std::vector<T> array;
-
-public:
-    TestConfig(Distribution distribution, std::vector<T> array) : distribution(distribution), array(array) {}
-};
 
 // Test generators
 TEST(ReproducibleReduceTest, DistributionGeneration) {
@@ -183,24 +178,62 @@ TEST(ReproducibleReduceTest, TreeRankCalculation) {
     // TODO: add test for edge cases (empty index map)
 }
 
-/*
-class SimpleSumTest : public ReprTest {};
-TEST_P(SimpleSumTest, SimpleSum) {
-    const auto local_array = get_local_array();
+TEST(ReproducibleReduceTest, Log2l) {
+    using kamping::plugin::reproducible_reduce::log2l;
 
-    if(!rank_participates()) return;
-
-    double sum = get_reproducible_comm().reproducible_reduce(
-            kamping::send_buf(local_array),
-            kamping::op(kamping::ops::plus<>())
-    );
-    EXPECT_EQ(sum, (1e3 + epsilon) + (epsilon / 2 + epsilon / 2));
+    EXPECT_EQ(log2l(1), 0);
+    EXPECT_EQ(log2l(2), 1);
+    EXPECT_EQ(log2l(3), 1);
+    EXPECT_EQ(log2l(4), 2);
+    EXPECT_EQ(log2l(5), 2);
+    EXPECT_EQ(log2l(8), 3);
+    EXPECT_EQ(log2l(9), 3);
+    EXPECT_EQ(log2l(15), 3);
+    EXPECT_EQ(log2l(16), 4);
+    EXPECT_EQ(log2l(17), 4);
 }
-INSTANTIATE_TEST_CASE_P(
-        simpleSumParams,
-        SimpleSumTest,
-        ::testing::Values(TestConfig<double>(Distribution({2,2},{0,2}), std::vector<double>({1e3, epsilon, epsilon / 2,
-epsilon / 2 }))));*/
+
+TEST(ReproducibleReduceTest, TreeLevelCalculation) {
+    EXPECT_EQ(tree_height(5), 3); // Tree with 5 elements has 3 layers
+
+    EXPECT_EQ(tree_height(0), 0);
+    EXPECT_EQ(tree_height(1), 0);
+    EXPECT_EQ(tree_height(2), 1);
+    EXPECT_EQ(tree_height(3), 2);
+    EXPECT_EQ(tree_height(4), 2);
+    EXPECT_EQ(tree_height(5), 3);
+    EXPECT_EQ(tree_height(15), 4);
+    EXPECT_EQ(tree_height(16), 4);
+    EXPECT_EQ(tree_height(17), 5);
+
+    EXPECT_KASSERT_FAILS(subtree_height(0), "");
+
+    // Randomized testing
+    std::random_device rd;
+    size_t             seed = rd();
+    printf("Seed for TreeLevelCalculation: %zu\n", seed);
+    std::mt19937 rng(seed);
+
+    std::uniform_int_distribution<size_t> size_distribution;
+
+    auto checks = 0UL;
+    for (auto i = 0UL; i < 50000; ++i) {
+        auto generated = size_distribution(rng);
+
+        // Compare to expressions from previous implementation
+        auto root_val = ceil(log2(static_cast<double>(generated)));
+        EXPECT_EQ(root_val, tree_height(generated));
+
+        if (generated != 0) {
+            auto subtree_val = log2(static_cast<double>(tree_subtree_size(generated)));
+            EXPECT_EQ(subtree_val, subtree_height(generated));
+        }
+
+        ++checks;
+    }
+
+    printf("Performed %zu checks\n", checks);
+}
 
 constexpr double const epsilon = std::numeric_limits<double>::epsilon();
 TEST(ReproducibleReduceTest, SimpleSum) {
@@ -240,7 +273,7 @@ TEST(ReproducibleReduceTest, SimpleSum) {
 
 template <typename F>
 void with_comm_size_n(
-    kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> const& comm, int comm_size, F f
+    kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> const& comm, size_t comm_size, F f
 ) {
     KASSERT(comm.is_same_on_all_ranks(comm_size), "Target comm_size must be same on all ranks");
     KASSERT(
@@ -249,7 +282,7 @@ void with_comm_size_n(
                                             << " ranks assigned."
     );
 
-    int  rank_active = comm.rank_signed() < comm_size;
+    int  rank_active = comm.rank() < comm_size;
     auto new_comm    = comm.split(rank_active);
 
     if (rank_active) {
@@ -279,6 +312,7 @@ TEST(ReproducibleReduceTest, WorksWithNonzeroRoot) {
 
 TEST(ReproducibleReduceTest, Fuzzing) {
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
+    comm.barrier();
 
     ASSERT_GT(comm.size(), 1) << "Fuzzing with only one rank is useless";
 
@@ -295,7 +329,7 @@ TEST(ReproducibleReduceTest, Fuzzing) {
     comm.bcast_single(kamping::send_recv_buf(seed));
 
     std::uniform_int_distribution<size_t> array_length_distribution(0, 500);
-    std::uniform_int_distribution<int>    rank_distribution(1, comm.size());
+    std::uniform_int_distribution<size_t> rank_distribution(1, comm.size());
     std::mt19937                          rng(seed);       // RNG for distribution & rank number
     std::mt19937                          rng_root(rng()); // RNG for data generation (out-of-sync with other ranks)
 
@@ -359,7 +393,7 @@ TEST(ReproducibleReduceTest, Fuzzing) {
                 ++checks;
 
                 if (comm_.is_root()) {
-                    printf("Validated for p=%i, n=%zu, start_indices=", ranks, data_array.size());
+                    printf("Validated for p=%lu, n=%zu, start_indices=", ranks, data_array.size());
                     print_collection(distribution.displs);
                 }
             });
@@ -513,5 +547,59 @@ TEST(ReproducibleReduceTest, OtherOperations) {
         const auto product =
             repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(kamping::ops::multiplies<>{}));
         EXPECT_EQ(product, 5.0 * 2.0 * 3.0 * 1.0 * 7.0);
+    });
+}
+
+TEST(ReproducibleReduceTest, Microbenchmark) {
+    kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
+
+    std::vector<double> array;
+    constexpr auto      array_size = 10000U;
+
+    size_t seed;
+    if (comm.is_root()) {
+        std::random_device rd;
+        seed = rd();
+        printf("Seed for microbenchmark: %zu\n", seed);
+        array = generate_test_vector(array_size, seed);
+    }
+    comm.bcast_single(kamping::send_recv_buf(seed));
+
+    std::mt19937 rng(seed); // RNG for distribution & rank number
+
+    with_comm_size_n(comm, 4, [&rng, &array](auto sub_comm) {
+        const auto distr = distribute_evenly(array_size, sub_comm.size());
+
+        std::vector<double> local_array;
+        sub_comm.scatterv(
+            kamping::send_buf(array),
+            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_array),
+            kamping::send_counts(distr.send_counts),
+            kamping::send_displs(distr.displs)
+        );
+
+        auto repr_comm = sub_comm.template make_reproducible_comm<double>(
+            kamping::send_counts(distr.send_counts),
+            kamping::recv_displs(distr.displs)
+        );
+
+        auto   start = std::chrono::system_clock::now();
+        double result;
+        for (auto i = 0U; i < 10; ++i) {
+            result = repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(kamping::ops::plus<>{}));
+        }
+        auto end = std::chrono::system_clock::now();
+
+        if (sub_comm.is_root()) {
+            EXPECT_NEAR(result, std::accumulate(array.begin(), array.end(), 0.0), 1e-9);
+
+            auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            printf(
+                "Took %zu µs to sum %zu elements over %zu ranks (avg of 10 runs)\n",
+                elapsed.count() / 10,
+                array.size(),
+                sub_comm.size()
+            );
+        }
     });
 }

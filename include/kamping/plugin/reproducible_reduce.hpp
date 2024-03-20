@@ -54,14 +54,15 @@ class MessageBuffer {
 
 public:
     MessageBuffer(kamping::Communicator<DefaultContainerType> const& comm)
-        : _inbox(),
+        : _entries(),
+          _inbox(),
           _target_rank(-1),
           _outbox(),
           _buffer(),
+          _request(nullptr),
           _awaited_numbers(0),
           _sent_messages(0),
           _sent_elements(0),
-          _request(nullptr),
           _send_buffer_clear(true),
           _comm(comm) {
         _outbox.reserve(MAX_MESSAGE_LENGTH + 1);
@@ -209,6 +210,36 @@ inline auto tree_rank_intersecting_elements(size_t const region_begin, size_t co
     return result;
 }
 
+inline auto log2l(size_t const value) {
+    // See https://stackoverflow.com/a/994623
+    size_t       i            = value;
+    unsigned int target_value = 0;
+    while (i >>= 1)
+        ++target_value;
+
+    return target_value;
+}
+
+size_t subtree_height(size_t const index) {
+    KASSERT(index != 0);
+
+    return log2l(tree_subtree_size(index));
+}
+
+size_t tree_height(size_t const global_size) {
+    if (global_size == 0) {
+        return 0U;
+    }
+
+    unsigned int result = log2l(global_size);
+
+    if (global_size > (1UL << result)) {
+        return result + 1;
+    } else {
+        return result;
+    }
+}
+
 template <typename T, template <typename...> typename DefaultContainerType>
 class ReproducibleCommunicator {
     using Communicator = kamping::Communicator<DefaultContainerType>;
@@ -276,7 +307,7 @@ private:
             }
             auto const target_rank = tree_rank_from_index_map(_start_indices, tree_parent(index));
             T const    value       = _perform_reduce(index, buffer, op, type);
-            _message_buffer.put(target_rank, index, value);
+            _message_buffer.put(asserting_cast<int>(target_rank), index, value);
         }
 
         _message_buffer.flush();
@@ -303,8 +334,9 @@ private:
 
         size_t const max_x =
             (index == 0) ? _global_size - 1 : std::min(_global_size - 1, index + tree_subtree_size(index) - 1);
-        size_t const max_y = (index == 0) ? static_cast<size_t>(ceil(log2(_global_size)))
-                                          : static_cast<size_t>(log2(tree_subtree_size(index)));
+        size_t const max_y = (index == 0) ? tree_height(_global_size) : subtree_height(index);
+
+        KASSERT(max_y < 64, "Unreasonably large max_y");
 
         size_t const largest_local_index = std::min(max_x, _region_end - 1);
         auto const   n_local_elements    = largest_local_index + 1 - index;
@@ -314,8 +346,8 @@ private:
         T const* source_buffer      = static_cast<T const*>(buffer + (index - _region_begin));
 
         for (size_t y = 1; y <= max_y; y += 1) {
-            unsigned int const stride           = 1 << (y - 1);
-            size_t             elements_written = 0;
+            size_t const stride           = 1UL << (y - 1);
+            size_t       elements_written = 0;
 
             for (size_t x = 0; x + 2 <= elements_in_buffer; x += 2) {
                 // TODO: actually apply operation from parameters.
@@ -325,7 +357,7 @@ private:
                 destination_buffer[elements_written++] = b;
             }
             size_t const remaining_elements = elements_in_buffer - 2 * elements_written;
-            KASSERT(0 <= remaining_elements && remaining_elements <= 1);
+            KASSERT(remaining_elements <= 1);
 
             if (remaining_elements == 1) {
                 auto const indexA = index + (elements_in_buffer - 1) * stride;
@@ -337,7 +369,7 @@ private:
                     destination_buffer[elements_written++] = elementA;
                 } else {
                     auto const source_rank = tree_rank_from_index_map(_start_indices, indexB);
-                    T          elementB    = _message_buffer.get(source_rank, indexB);
+                    T          elementB    = _message_buffer.get(asserting_cast<int>(source_rank), indexB);
                     MPI_Reduce_local(&elementA, &elementB, 1, type, op.op());
                     destination_buffer[elements_written++] = elementB;
                 }
