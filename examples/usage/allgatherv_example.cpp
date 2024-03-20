@@ -43,7 +43,6 @@ int main() {
     { // Basic use case; gather the inputs across all ranks to all ranks.
         auto const output = comm.allgatherv(send_buf(input));
         print_result_on_root(output, comm);
-        print_on_root("-----", comm);
     }
 
     { // We can also request the number of elements received from each rank. The recv_buf will always be the first out
@@ -61,7 +60,7 @@ int main() {
         // We can also re-use already allocated containers for the other output parameters, e.g. recv_counts.
         std::vector<int> output_counts(comm.size());
         std::iota(output_counts.begin(), output_counts.end(), 0);
-        comm.allgatherv(send_buf(input), recv_buf<resize_to_fit>(output), output_counts(output_counts));
+        comm.allgatherv(send_buf(input), recv_buf<resize_to_fit>(output), recv_counts(output_counts));
 
         std::vector<int> displacements(comm.size());
         std::exclusive_scan(output_counts.begin(), output_counts.end(), displacements.begin(), 0);
