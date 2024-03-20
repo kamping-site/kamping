@@ -34,9 +34,6 @@ struct MessageBufferEntry {
 uint8_t const MAX_MESSAGE_LENGTH    = 4;
 int const     MESSAGEBUFFER_MPI_TAG = 1;
 
-template <typename T>
-class TD;
-
 template <typename T, template <typename...> typename DefaultContainerType>
 class MessageBuffer {
     // TODO: how to shorten this result type
@@ -327,7 +324,6 @@ private:
     class TD {};
     template <typename F>
     T const _perform_reduce(size_t const index, T const* buffer, F op, MPI_Datatype type) {
-        // TD<F> a;
         if ((index & 1) == 1) {
             return buffer[index - _region_begin];
         }
@@ -350,7 +346,6 @@ private:
             size_t       elements_written = 0;
 
             for (size_t x = 0; x + 2 <= elements_in_buffer; x += 2) {
-                // TODO: actually apply operation from parameters.
                 T const a = source_buffer[x];
                 T       b = source_buffer[x + 1];
                 MPI_Reduce_local(&a, &b, 1, type, op.op());
@@ -432,7 +427,7 @@ public:
             std::reduce(send_counts.data(), send_counts.data() + send_counts.size(), 0, std::plus<>())
         );
 
-        // Assert distributionm is the same on all ranks
+        // Assert distribution is the same on all ranks
         for (auto i = 0U; i < send_counts.size(); ++i) {
             KASSERT(
                 comm.is_same_on_all_ranks(send_counts.data()[i]),
