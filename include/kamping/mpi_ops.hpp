@@ -613,10 +613,13 @@ public:
     T operator()(T const& lhs, T const& rhs) const {
         KASSERT(_op != MPI_OP_NULL, "Cannot call MPI_OP_NULL.");
         T result;
-        internal::with_operation_functor(_op, [&result, lhs, rhs](auto operation) {
-            // ops::null has no call operator, but the KASSERT above should handle that
+        internal::with_operation_functor(_op, [&result, lhs, rhs, this](auto operation) {
             if constexpr (!std::is_same_v<decltype(operation), ops::null<> >) {
                 result = operation(lhs, rhs);
+            } else {
+                // ops::null indicates that this does not map to a functor, so we use the MPI_Op directly
+                result = rhs;
+                MPI_Reduce_local(&lhs, &result, 1, mpi_datatype<T>(), _op);
             }
         });
         return result;
