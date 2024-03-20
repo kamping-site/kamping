@@ -87,9 +87,8 @@ public:
     ///
     /// This function is only available if the underlying status is owned by the
     /// MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying status object.
     template <
         typename T = std::tuple<Args...>,
@@ -102,9 +101,8 @@ public:
     ///
     /// This function is only available if the underlying status is owned by the
     /// MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying status object.
     template <
         typename T = std::tuple<Args...>,
@@ -117,14 +115,13 @@ public:
     ///
     /// This function is only available if the underlying status is owned by the
     /// MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying status object.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::status, T>(), bool> = true>
-    decltype(auto) extract_status() {
+    auto extract_status() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::status>(_data).extract();
     }
 
@@ -132,9 +129,8 @@ public:
     ///
     /// This function is only available if the underlying memory is owned by the
     /// MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the received elements.
     template <
         typename T = std::tuple<Args...>,
@@ -147,9 +143,8 @@ public:
     ///
     /// This function is only available if the underlying memory is owned by the
     /// MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the received elements.
     template <
         typename T = std::tuple<Args...>,
@@ -162,14 +157,13 @@ public:
     ///
     /// This function is only available if the underlying memory is owned by the
     /// MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the received elements.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::recv_buf, T>(), bool> = true>
-    decltype(auto) extract_recv_buffer() {
+    auto extract_recv_buffer() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_buf>(_data).extract();
     }
 
@@ -177,9 +171,8 @@ public:
     ///
     /// This function is only available if the underlying memory is owned by the
     /// MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the received elements.
     template <
         typename T = std::tuple<Args...>,
@@ -193,9 +186,8 @@ public:
     ///
     /// This function is only available if the underlying memory is owned by the
     /// MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the received elements.
     template <
         typename T = std::tuple<Args...>,
@@ -209,24 +201,22 @@ public:
     ///
     /// This function is only available if the underlying memory is owned by the
     /// MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the received elements.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_recv_buf, T>(), bool> =
             true>
-    decltype(auto) extract_recv_buffer() {
+    auto extract_recv_buffer() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_recv_buf>(_data).extract();
     }
 
     /// @brief Get the \c recv_counts from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the receive counts.
     template <
         typename T = std::tuple<Args...>,
@@ -237,10 +227,9 @@ public:
 
     /// @brief Get the \c recv_counts from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the receive counts.
     template <
         typename T = std::tuple<Args...>,
@@ -251,24 +240,22 @@ public:
 
     /// @brief Extracts the \c recv_counts from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the receive counts.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::recv_counts, T>(), bool> = true>
-    decltype(auto) extract_recv_counts() {
+    auto extract_recv_counts() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_counts>(_data).extract();
     }
 
     /// @brief Gets the \c recv_count from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the recv count.
     template <
         typename T = std::tuple<Args...>,
@@ -279,10 +266,9 @@ public:
 
     /// @brief Gets the \c recv_count from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the recv count.
     template <
         typename T = std::tuple<Args...>,
@@ -293,24 +279,22 @@ public:
 
     /// @brief Extracts the \c recv_count from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the recv count.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::recv_count, T>(), bool> = true>
-    decltype(auto) extract_recv_count() {
+    auto extract_recv_count() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_count>(_data).extract();
     }
 
     /// @brief Gets the \c recv_displs from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the receive displacements.
     template <
         typename T = std::tuple<Args...>,
@@ -321,10 +305,9 @@ public:
 
     /// @brief Gets the \c recv_displs from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the receive displacements.
     template <
         typename T = std::tuple<Args...>,
@@ -335,24 +318,22 @@ public:
 
     /// @brief Extracts the \c recv_displs from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the receive displacements.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::recv_displs, T>(), bool> = true>
-    decltype(auto) extract_recv_displs() {
+    auto extract_recv_displs() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_displs>(_data).extract();
     }
 
     /// @brief Gets the \c send_counts from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send counts.
     template <
         typename T = std::tuple<Args...>,
@@ -363,10 +344,9 @@ public:
 
     /// @brief Gets the \c send_counts from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send counts.
     template <
         typename T = std::tuple<Args...>,
@@ -377,24 +357,22 @@ public:
 
     /// @brief Extracts the \c send_counts from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the send counts.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_counts, T>(), bool> = true>
-    decltype(auto) extract_send_counts() {
+    auto extract_send_counts() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_counts>(_data).extract();
     }
 
     /// @brief Gets the \c send_count from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send counts.
     template <
         typename T = std::tuple<Args...>,
@@ -405,10 +383,9 @@ public:
 
     /// @brief Gets the \c send_count from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send counts.
     template <
         typename T = std::tuple<Args...>,
@@ -419,24 +396,22 @@ public:
 
     /// @brief Extracts the \c send_count from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the send counts.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_count, T>(), bool> = true>
-    decltype(auto) extract_send_count() {
+    auto extract_send_count() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_count>(_data).extract();
     }
 
     /// @brief Gets the \c send_displs from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send displacements.
     template <
         typename T = std::tuple<Args...>,
@@ -447,10 +422,9 @@ public:
 
     /// @brief Gets the \c send_displs from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send displacements.
     template <
         typename T = std::tuple<Args...>,
@@ -461,24 +435,22 @@ public:
 
     /// @brief Extracts the \c send_displs from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the send displacements.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_displs, T>(), bool> = true>
-    decltype(auto) extract_send_displs() {
+    auto extract_send_displs() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_displs>(_data).extract();
     }
 
     /// @brief Gets the \c send_recv_count from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send_recv_count.
     template <
         typename T = std::tuple<Args...>,
@@ -490,10 +462,9 @@ public:
 
     /// @brief Gets the \c send_recv_count from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send_recv_count.
     template <
         typename T = std::tuple<Args...>,
@@ -505,25 +476,23 @@ public:
 
     /// @brief Extracts the \c send_recv_count from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the send_recv_count.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_recv_count, T>(), bool> =
             true>
-    decltype(auto) extract_send_recv_count() {
+    auto extract_send_recv_count() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_recv_count>(_data).extract();
     }
 
     /// @brief Gets the \c send_type from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send_type.
     template <
         typename T = std::tuple<Args...>,
@@ -534,10 +503,9 @@ public:
 
     /// @brief Gets the \c send_type from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send_type.
     template <
         typename T = std::tuple<Args...>,
@@ -548,24 +516,22 @@ public:
 
     /// @brief Extracts the \c send_type from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the send_type.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_type, T>(), bool> = true>
-    decltype(auto) extract_send_type() {
+    auto extract_send_type() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_type>(_data).extract();
     }
 
     /// @brief Gets the \c recv_type from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send_type.
     template <
         typename T = std::tuple<Args...>,
@@ -576,10 +542,9 @@ public:
 
     /// @brief Gets the \c recv_type from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns a reference to the underlying storage containing the send_type.
     template <
         typename T = std::tuple<Args...>,
@@ -590,24 +555,22 @@ public:
 
     /// @brief Extracts the \c recv_type from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the send_type.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::recv_type, T>(), bool> = true>
-    decltype(auto) extract_recv_type() {
+    auto extract_recv_type() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_type>(_data).extract();
     }
 
     /// @brief Gets the \c send_recv_type from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the send_recv_type.
     template <
         typename T = std::tuple<Args...>,
@@ -619,10 +582,9 @@ public:
 
     /// @brief Gets the \c send_recv_type from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the send_recv_type.
     template <
         typename T = std::tuple<Args...>,
@@ -634,16 +596,15 @@ public:
 
     /// @brief Extracts the \c send_recv_type from the MPIResult object.
     ///
-    /// This function is only available if the underlying memory is owned by the MPIResult object.
-    /// @tparam T Template parameter helper only needed to remove this
-    /// function if the corresponding buffer does not exist or exists but does not possess a member function \c
-    /// extract().
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
     /// @return Returns the underlying storage containing the send_recv_type.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_recv_type, T>(), bool> =
             true>
-    decltype(auto) extract_send_recv_type() {
+    auto extract_send_recv_type() {
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_recv_type>(_data).extract();
     }
 
