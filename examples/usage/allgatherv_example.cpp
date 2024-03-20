@@ -98,22 +98,5 @@ int main() {
         comm.allgatherv(send_buf(input), send_count(comm.rank_signed()));
     }
 
-    { // KaMPIng also provides serialization/deserialization using Cereal
-        using dict_type = std::unordered_map<std::string, uint64_t>;
-        dict_type data  = {{"rank", comm.rank()}};
-        if (comm.root()) {
-            data.insert({"size", comm.size()});
-            data.insert({"root", comm.root()});
-        }
-
-        auto const output = comm.allgatherv(send_buf(as_serialized(data)), recv_buf(as_deserializable<dict_type>()));
-
-        if (comm.root()) {
-            for (auto const& [key, value]: output) {
-                std::cout << key << " -> " << value << std::endl;
-            }
-        }
-    }
-
     return 0;
 }
