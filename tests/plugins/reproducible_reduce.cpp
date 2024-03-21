@@ -5,6 +5,7 @@
 #include <chrono>
 #include <random>
 #include <vector>
+#include <cmath>
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/barrier.hpp"
@@ -555,11 +556,23 @@ TEST(ReproducibleReduceTest, OtherOperations) {
     });
 }
 
+
+auto compute_mean_stddev(std::vector<double>& array) {
+    const auto size = static_cast<double>(array.size());
+    const auto mean = std::accumulate(array.begin(), array.end(), 0.0) / size;
+
+    auto const variance = std::accumulate(array.begin(), array.end(), 0.0, [&mean, size](auto accumulator, const auto& v) {
+            return (accumulator + ((v - mean) * (v - mean) / (static_cast<double>(size) - 1.0)));
+    });
+
+    return std::make_pair(mean, std::sqrt(variance));
+}
 TEST(ReproducibleReduceTest, Microbenchmark) {
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
 
     std::vector<double> array;
-    constexpr auto      array_size = 10000U;
+    constexpr auto      array_size = 100000U;
+    constexpr auto      repetitions = 15000;
 
     size_t seed;
     if (comm.is_root()) {
@@ -572,39 +585,45 @@ TEST(ReproducibleReduceTest, Microbenchmark) {
 
     std::mt19937 rng(seed); // RNG for distribution & rank number
 
-    with_comm_size_n(comm, 4, [&rng, &array](auto sub_comm) {
-        const auto distr = distribute_evenly(array_size, sub_comm.size());
+    std::vector<std::chrono::time_point<std::chrono::system_clock>> timings;
+    timings.reserve(repetitions + 1);
 
-        std::vector<double> local_array;
-        sub_comm.scatterv(
-            kamping::send_buf(array),
-            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_array),
-            kamping::send_counts(distr.send_counts),
-            kamping::send_displs(distr.displs)
-        );
+    const auto distr = distribute_evenly(array_size, comm.size());
 
-        auto repr_comm = sub_comm.template make_reproducible_comm<double>(
-            kamping::send_counts(distr.send_counts),
-            kamping::recv_displs(distr.displs)
-        );
+    std::vector<double> local_array;
+    comm.scatterv(
+        kamping::send_buf(array),
+        kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_array),
+        kamping::send_counts(distr.send_counts),
+        kamping::send_displs(distr.displs)
+    );
 
-        auto   start = std::chrono::system_clock::now();
-        double result;
-        for (auto i = 0U; i < 10; ++i) {
-            result = repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(kamping::ops::plus<>{}));
+    auto repr_comm = comm.template make_reproducible_comm<double>(
+        kamping::send_counts(distr.send_counts),
+        kamping::recv_displs(distr.displs)
+    );
+
+
+    double result;
+    timings.push_back(std::chrono::system_clock::now());
+    for (auto i = 0U; i < repetitions; ++i) {
+        result = repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(kamping::ops::plus<>{}));
+        timings.push_back(std::chrono::system_clock::now());
+    }
+
+    if (comm.is_root()) {
+        EXPECT_NEAR(result, std::accumulate(array.begin(), array.end(), 0.0), 1e-9);
+
+        std::vector<double> iteration_time(repetitions);
+
+        for (auto i = 0U; i < repetitions; ++i) {
+            iteration_time[i] = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(timings[i+1] - timings[i]).count());
         }
-        auto end = std::chrono::system_clock::now();
+        printf("Timings (ns): "); print_collection(iteration_time);
 
-        if (sub_comm.is_root()) {
-            EXPECT_NEAR(result, std::accumulate(array.begin(), array.end(), 0.0), 1e-9);
 
-            auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            printf(
-                "Took %zu µs to sum %zu elements over %zu ranks (avg of 10 runs)\n",
-                elapsed.count() / 10,
-                array.size(),
-                sub_comm.size()
-            );
-        }
-    });
+        auto const r = compute_mean_stddev(iteration_time);
+
+        printf("mean = %f, stddev = %f\n", r.first, r.second);
+    }
 }
