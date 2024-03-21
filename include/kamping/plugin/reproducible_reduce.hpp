@@ -41,6 +41,7 @@ class MessageBuffer {
         kamping::MPIResult<>,
         kamping::internal::DataBuffer<
             kamping::Request,
+            kamping::internal::ParameterType,
             kamping::internal::ParameterType::request,
             kamping::internal::BufferModifiability::modifiable,
             kamping::internal::BufferOwnership::owning,
@@ -84,7 +85,7 @@ public:
         if (_target_rank == -1 || _outbox.size() == 0)
             return;
 
-        _request = std::make_unique<ResultType>(_send());
+        _request = std::make_unique<ResultType>(send());
         ++_sent_messages;
 
         _target_rank       = -1;
@@ -140,9 +141,9 @@ public:
         return value;
     }
 
-protected:
-    auto _send() {
-        return this->_comm.isend(
+private:
+    auto send() {
+        return _comm.isend(
             kamping::send_buf(_outbox),
             kamping::destination(_target_rank),
             kamping::tag(MESSAGEBUFFER_MPI_TAG),
@@ -150,6 +151,7 @@ protected:
         );
     }
 
+private:
     std::array<MessageBufferEntry<T>, MAX_MESSAGE_LENGTH> _entries;
     std::map<uint64_t, T>                                 _inbox;
     int                                                   _target_rank;
@@ -346,10 +348,9 @@ private:
             size_t       elements_written = 0;
 
             for (size_t x = 0; x + 2 <= elements_in_buffer; x += 2) {
-                T const a = source_buffer[x];
-                T       b = source_buffer[x + 1];
-                MPI_Reduce_local(&a, &b, 1, type, op.op());
-                destination_buffer[elements_written++] = b;
+                T const a                              = source_buffer[x];
+                T const b                              = source_buffer[x + 1];
+                destination_buffer[elements_written++] = op(a, b);
             }
             size_t const remaining_elements = elements_in_buffer - 2 * elements_written;
             KASSERT(remaining_elements <= 1);
@@ -365,8 +366,7 @@ private:
                 } else {
                     auto const source_rank = tree_rank_from_index_map(_start_indices, indexB);
                     T          elementB    = _message_buffer.get(asserting_cast<int>(source_rank), indexB);
-                    MPI_Reduce_local(&elementA, &elementB, 1, type, op.op());
-                    destination_buffer[elements_written++] = elementB;
+                    destination_buffer[elements_written++] = op(elementA, elementB);
                 }
             }
 

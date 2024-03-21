@@ -311,6 +311,7 @@ TEST(ReproducibleReduceTest, WorksWithNonzeroRoot) {
 }
 
 TEST(ReproducibleReduceTest, Fuzzing) {
+
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
     comm.barrier();
 
@@ -406,45 +407,49 @@ TEST(ReproducibleReduceTest, Fuzzing) {
 }
 
 TEST(ReproducibleReduceTest, ReproducibleResults) {
-    auto const                                                                    v = generate_test_vector(2000, 42);
+    auto const v_size = 2000;
+    auto const                                                                    v = generate_test_vector(v_size, 42);
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
 
-    double reference_result;
+    double reference_result = 0.0;
 
-    for (auto i = 1U; i < comm.size(); ++i) {
-        if (i == 2) {
-            // Share previously calculated reference result
-            comm.bcast_single(kamping::send_recv_buf(reference_result));
-        }
-        auto distr   = distribute_randomly(v.size(), i, 43 + i);
-        auto subcomm = comm.split(comm.rank() < i);
-        if (comm.rank() >= i) {
-            // If we are not participating in this round, maybe in the next
-            continue;
-        }
-        auto reprcomm = subcomm.make_reproducible_comm<double>(
-            kamping::send_counts(distr.send_counts),
-            kamping::recv_displs(distr.displs)
-        );
+    // Calculate reference
+    with_comm_size_n(comm, 1, [&reference_result, v_size, &v](auto sub_comm) {
+            auto repr_comm = sub_comm.template make_reproducible_comm<double>(
+                kamping::send_counts({kamping::asserting_cast<int>(v_size)}),
+                kamping::recv_displs({0})
+            );
 
-        // Distribute global array across cluster
-        std::vector<double> local_v;
-        subcomm.scatterv(
-            kamping::send_buf(v),
-            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_v),
-            kamping::send_counts(distr.send_counts),
-            kamping::send_displs(distr.displs)
-        );
+            reference_result = repr_comm.template reproducible_reduce(
+                kamping::send_buf(v),
+                kamping::op(kamping::ops::plus<double>{})
+            );
+    });
 
-        double const result =
-            reprcomm.reproducible_reduce(kamping::send_buf(local_v), kamping::op(kamping::ops::plus<double>{}));
+    comm.bcast_single(kamping::send_recv_buf(reference_result));
 
-        if (i == 1) {
-            reference_result = result;
-            printf("Setting reference result to %f\n", reference_result);
-        } else {
+    for (auto i = 2U; i <= comm.size(); ++i) {
+        with_comm_size_n(comm, i, [&v, i, reference_result](auto subcomm){
+            auto distr   = distribute_randomly(v.size(), i, 43 + i);
+            auto reprcomm = subcomm.template make_reproducible_comm<double>(
+                kamping::send_counts(distr.send_counts),
+                kamping::recv_displs(distr.displs)
+            );
+
+            // Distribute global array across cluster
+            std::vector<double> local_v;
+            subcomm.scatterv(
+                kamping::send_buf(v),
+                kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_v),
+                kamping::send_counts(distr.send_counts),
+                kamping::send_displs(distr.displs)
+            );
+
+            double const result =
+                reprcomm.reproducible_reduce(kamping::send_buf(local_v), kamping::op(kamping::ops::plus<double>{}));
+
             EXPECT_EQ(reference_result, result) << "Irreproducible result for p=" << i;
-        }
+        });
     }
 }
 
