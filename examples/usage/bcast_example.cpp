@@ -26,63 +26,19 @@ using namespace ::kamping;
 
 int main() {
     using namespace kamping;
+
     kamping::Environment  e;
     kamping::Communicator comm;
 
-    /// @todo Expand these examples, once we have send_recv_buf as unnamed first parameter.
-
+    // Broadcast `value` from the root rank to all other ranks.
     size_t value = comm.rank();
     comm.bcast(send_recv_buf(value));
-    print_result(value, comm);
 
-    comm.barrier();
-    if (comm.is_root()) {
-        std::cout << "-------------------" << std::endl;
-    }
-    comm.barrier();
-
-    value = comm.rank();
-    comm.bcast_single(send_recv_buf(value));
-    print_result(value, comm);
-
-    comm.barrier();
-    if (comm.is_root()) {
-        std::cout << "-------------------" << std::endl;
-    }
-    comm.barrier();
-
+    // Broadcast a vector of values from the root rank to all other ranks. If we do not provide `send_recv_count`,
+    // KaMPIng automatically performs the second broadcast necessary to provideall ranks with the correct receive count.
+    // This is useful if some ranks do not know how many elements they will receive.
+    // Additionally, use rank 1 as the root rank here.
     std::vector<int> values(4);
     std::fill(values.begin(), values.end(), comm.rank());
     comm.bcast(send_recv_buf(values), send_recv_count(4), root(1));
-    print_result(values, comm);
-
-    // The expected output on 4 ranks is a permutation of the following lines:
-    /// @todo Update expected output, once we have the logger which collects output on the root rank to avoid
-    /// interleaving output.
-    // [PE 0] 0
-    // [PE 1] 0
-    // [PE 2] 0
-    // [PE 3] 0
-    // -------------------
-    // [PE 0] 0
-    // [PE 1] 0
-    // [PE 2] 0
-    // [PE 3] 0
-    // -------------------
-    // [PE 0] 1
-    // [PE 0] 1
-    // [PE 0] 1
-    // [PE 0] 1
-    // [PE 1] 1
-    // [PE 1] 1
-    // [PE 1] 1
-    // [PE 1] 1
-    // [PE 2] 1
-    // [PE 2] 1
-    // [PE 2] 1
-    // [PE 2] 1
-    // [PE 3] 1
-    // [PE 3] 1
-    // [PE 3] 1
-    // [PE 3] 1
 }
