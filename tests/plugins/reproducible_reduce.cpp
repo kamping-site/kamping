@@ -26,6 +26,20 @@ using Distribution = struct Distribution {
           displs(recv_displs) {}
 };
 
+template <typename C, typename T>
+std::vector<T> scatter_array(C comm, const std::vector<T>& global_array, const Distribution d) {
+    std::vector<T> result;
+
+    comm.scatterv(
+        kamping::send_buf(global_array),
+        kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(result),
+        kamping::send_counts(d.send_counts),
+        kamping::send_displs(d.displs)
+    );
+
+    return result;
+}
+
 template <typename T>
 void print_collection(T collection) {
     for (auto const& v: collection) {
@@ -249,16 +263,10 @@ TEST(ReproducibleReduceTest, SimpleSum) {
     std::vector const a{1e3, epsilon, epsilon / 2, epsilon / 2};
     EXPECT_EQ(std::accumulate(a.begin(), a.end(), 0.0), 1e3 + epsilon);
 
-    std::vector<double> local_a(2);
     Distribution        distr({2, 2}, {0, 2});
     ASSERT_EQ(comm.size(), 2);
 
-    comm.scatterv(
-        kamping::send_buf(a),
-        kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_a),
-        kamping::send_counts(distr.send_counts),
-        kamping::send_displs(distr.displs)
-    );
+    auto local_a = scatter_array(comm, a, distr);
 
     ASSERT_EQ(comm.size(), distr.send_counts.size());
     ASSERT_EQ(comm.size(), distr.displs.size());
@@ -375,14 +383,7 @@ TEST(ReproducibleReduceTest, Fuzzing) {
                     kamping::recv_displs(distribution.displs)
                 );
 
-                std::vector<double> local_arr;
-
-                comm_.scatterv(
-                    kamping::send_buf(data_array),
-                    kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_arr),
-                    kamping::send_counts(distribution.send_counts),
-                    kamping::send_displs(distribution.displs)
-                );
+                std::vector<double> local_arr = scatter_array(comm_, data_array, distribution);
 
                 double computed_result =
                     repr_comm.reproducible_reduce(kamping::send_buf(local_arr), kamping::op(kamping::ops::plus<>{}));
@@ -428,13 +429,7 @@ TEST(ReproducibleReduceTest, ReproducibleResults) {
         );
 
         // Distribute global array across cluster
-        std::vector<double> local_v;
-        subcomm.scatterv(
-            kamping::send_buf(v),
-            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_v),
-            kamping::send_counts(distr.send_counts),
-            kamping::send_displs(distr.displs)
-        );
+        std::vector<double> local_v = scatter_array(subcomm, v, distr);
 
         double const result =
             reprcomm.reproducible_reduce(kamping::send_buf(local_v), kamping::op(kamping::ops::plus<double>{}));
@@ -452,6 +447,8 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
     // Test error messages on communicator with 3 ranks
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
     with_comm_size_n(comm, 3, [](auto sub_comm) {
+        EXPECT_EQ(sub_comm.size(), 3);
+
         // Correct distribution
         EXPECT_NO_THROW(sub_comm.template make_reproducible_comm<double>(
             kamping::send_counts({5, 5, 5}),
@@ -523,13 +520,7 @@ TEST(ReproducibleReduceTest, OtherOperations) {
     with_comm_size_n(comm, 3, [&rng, &array](auto sub_comm) {
         const auto distr = distribute_randomly(array.size(), sub_comm.size(), rng());
 
-        std::vector<double> local_array;
-        sub_comm.scatterv(
-            kamping::send_buf(array),
-            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_array),
-            kamping::send_counts(distr.send_counts),
-            kamping::send_displs(distr.displs)
-        );
+        std::vector<double> local_array = scatter_array(sub_comm, array, distr);
 
         auto repr_comm = sub_comm.template make_reproducible_comm<double>(
             kamping::send_counts(distr.send_counts),
@@ -570,13 +561,7 @@ TEST(ReproducibleReduceTest, Microbenchmark) {
     with_comm_size_n(comm, 4, [&rng, &array](auto sub_comm) {
         const auto distr = distribute_evenly(array_size, sub_comm.size());
 
-        std::vector<double> local_array;
-        sub_comm.scatterv(
-            kamping::send_buf(array),
-            kamping::recv_buf<kamping::BufferResizePolicy::resize_to_fit>(local_array),
-            kamping::send_counts(distr.send_counts),
-            kamping::send_displs(distr.displs)
-        );
+        std::vector<double> local_array = scatter_array(sub_comm, array, distr);
 
         auto repr_comm = sub_comm.template make_reproducible_comm<double>(
             kamping::send_counts(distr.send_counts),
