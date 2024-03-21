@@ -219,13 +219,13 @@ inline auto log2l(size_t const value) {
     return target_value;
 }
 
-size_t subtree_height(size_t const index) {
+inline size_t subtree_height(size_t const index) {
     KASSERT(index != 0);
 
     return log2l(tree_subtree_size(index));
 }
 
-size_t tree_height(size_t const global_size) {
+inline size_t tree_height(size_t const global_size) {
     if (global_size == 0) {
         return 0U;
     }
