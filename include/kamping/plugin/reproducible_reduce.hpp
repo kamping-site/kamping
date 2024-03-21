@@ -166,7 +166,6 @@ private:
 };
 
 // Helper functions
-
 inline auto tree_parent(size_t const i) {
     KASSERT(i != 0);
 
@@ -279,8 +278,6 @@ public:
         auto&& send_buf =
             internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
-        auto&& send_recv_type =
-            internal::determine_mpi_send_recv_datatype<send_value_type, decltype(send_buf)>(args...);
 
         static_assert(
             std::is_same_v<std::remove_const_t<send_value_type>, T>,
@@ -292,12 +289,12 @@ public:
         // If you want to understand the syntax of the following line, ignore the "template " ;-)
         auto operation = operation_param.template build_operation<send_value_type>();
 
-        return _perform_reduce(send_buf.data(), operation, send_recv_type.get_single_element());
+        return _perform_reduce(send_buf.data(), operation);
     }
 
 private:
     template <typename F>
-    T const _perform_reduce(T const* buffer, F op, MPI_Datatype type) {
+    T const _perform_reduce(T const* buffer, F op) {
         for (auto const index: _rank_intersecting_elements) {
             if (tree_subtree_size(index) > 16) {
                 // If we are about to do some considerable amount of work, make sure
@@ -305,7 +302,7 @@ private:
                 _message_buffer.flush();
             }
             auto const target_rank = tree_rank_from_index_map(_start_indices, tree_parent(index));
-            T const    value       = _perform_reduce(index, buffer, op, type);
+            T const    value       = _perform_reduce(index, buffer, op);
             _message_buffer.put(asserting_cast<int>(target_rank), index, value);
         }
 
@@ -314,7 +311,7 @@ private:
 
         T result;
         if (_comm.rank() == _origin_rank) {
-            result = _perform_reduce(0, buffer, op, type);
+            result = _perform_reduce(0, buffer, op);
         }
 
         _comm.bcast_single(kamping::send_recv_buf(result), kamping::root(_origin_rank));
@@ -325,7 +322,7 @@ private:
     template <typename R>
     class TD {};
     template <typename F>
-    T const _perform_reduce(size_t const index, T const* buffer, F op, MPI_Datatype type) {
+    T const _perform_reduce(size_t const index, T const* buffer, F op) {
         if ((index & 1) == 1) {
             return buffer[index - _region_begin];
         }
@@ -454,7 +451,8 @@ public:
         }
         start_indices[global_array_length] = comm.size(); // guardian element
 
-        KASSERT(start_indices.find(0) != start_indices.end(), "recv_displs does not have entry for index 0");
+        KASSERT(start_indices.begin()->first >= 0UL, "recv_displs must not contain negative displacements");
+        KASSERT(start_indices.begin()->first == 0UL, "recv_displs must have entry for index 0");
 
         // Verify correctness of index map
         for (auto it = start_indices.begin(); it != start_indices.end(); ++it) {

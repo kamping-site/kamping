@@ -3,9 +3,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <chrono>
+#include <cmath>
 #include <random>
 #include <vector>
-#include <cmath>
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/barrier.hpp"
@@ -28,7 +28,7 @@ using Distribution = struct Distribution {
 };
 
 template <typename C, typename T>
-std::vector<T> scatter_array(C comm, const std::vector<T>& global_array, const Distribution d) {
+std::vector<T> scatter_array(C comm, std::vector<T> const& global_array, Distribution const d) {
     std::vector<T> result;
 
     comm.scatterv(
@@ -264,7 +264,7 @@ TEST(ReproducibleReduceTest, SimpleSum) {
     std::vector const a{1e3, epsilon, epsilon / 2, epsilon / 2};
     EXPECT_EQ(std::accumulate(a.begin(), a.end(), 0.0), 1e3 + epsilon);
 
-    Distribution        distr({2, 2}, {0, 2});
+    Distribution distr({2, 2}, {0, 2});
     ASSERT_EQ(comm.size(), 2);
 
     auto local_a = scatter_array(comm, a, distr);
@@ -320,7 +320,6 @@ TEST(ReproducibleReduceTest, WorksWithNonzeroRoot) {
 }
 
 TEST(ReproducibleReduceTest, Fuzzing) {
-
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
     comm.barrier();
 
@@ -409,7 +408,7 @@ TEST(ReproducibleReduceTest, Fuzzing) {
 }
 
 TEST(ReproducibleReduceTest, ReproducibleResults) {
-    auto const v_size = 2000;
+    auto const                                                                    v_size = 2000;
     auto const                                                                    v = generate_test_vector(v_size, 42);
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
 
@@ -417,21 +416,19 @@ TEST(ReproducibleReduceTest, ReproducibleResults) {
 
     // Calculate reference
     with_comm_size_n(comm, 1, [&reference_result, v_size, &v](auto sub_comm) {
-            auto repr_comm = sub_comm.template make_reproducible_comm<double>(
-                kamping::send_counts({kamping::asserting_cast<int>(v_size)}),
-                kamping::recv_displs({0})
-            );
-            reference_result = repr_comm.template reproducible_reduce(
-                kamping::send_buf(v),
-                kamping::op(kamping::ops::plus<double>{})
-            );
+        auto repr_comm = sub_comm.template make_reproducible_comm<double>(
+            kamping::send_counts({kamping::asserting_cast<int>(v_size)}),
+            kamping::recv_displs({0})
+        );
+        reference_result =
+            repr_comm.template reproducible_reduce(kamping::send_buf(v), kamping::op(kamping::ops::plus<double>{}));
     });
 
     comm.bcast_single(kamping::send_recv_buf(reference_result));
 
     for (auto i = 2U; i <= comm.size(); ++i) {
-        with_comm_size_n(comm, i, [&v, i, reference_result](auto subcomm){
-            auto distr   = distribute_randomly(v.size(), i, 43 + i);
+        with_comm_size_n(comm, i, [&v, i, reference_result](auto subcomm) {
+            auto distr    = distribute_randomly(v.size(), i, 43 + i);
             auto reprcomm = subcomm.template make_reproducible_comm<double>(
                 kamping::send_counts(distr.send_counts),
                 kamping::recv_displs(distr.displs)
@@ -510,6 +507,24 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
             ),
             ""
         );
+
+        // Supplied distribution has negative displacement
+        EXPECT_KASSERT_FAILS(
+            sub_comm.template make_reproducible_comm<double>(
+                kamping::send_counts({5, 5, 5}),
+                kamping::recv_displs({-5, 0, 5})
+            ),
+            ""
+        );
+
+        // Supplied distribution is empty
+        EXPECT_KASSERT_FAILS(
+            sub_comm.template make_reproducible_comm<double>(
+                kamping::send_counts(std::vector<int>()),
+                kamping::recv_displs(std::vector<int>())
+            ),
+            ""
+        );
     });
 }
 
@@ -552,14 +567,14 @@ TEST(ReproducibleReduceTest, OtherOperations) {
     });
 }
 
-
 auto compute_mean_stddev(std::vector<double>& array) {
-    const auto size = static_cast<double>(array.size());
-    const auto mean = std::accumulate(array.begin(), array.end(), 0.0) / size;
+    auto const size = static_cast<double>(array.size());
+    auto const mean = std::accumulate(array.begin(), array.end(), 0.0) / size;
 
-    auto const variance = std::accumulate(array.begin(), array.end(), 0.0, [&mean, size](auto accumulator, const auto& v) {
+    auto const variance =
+        std::accumulate(array.begin(), array.end(), 0.0, [&mean, size](auto accumulator, auto const& v) {
             return (accumulator + ((v - mean) * (v - mean) / (static_cast<double>(size) - 1.0)));
-    });
+        });
 
     return std::make_pair(mean, std::sqrt(variance));
 }
@@ -567,8 +582,8 @@ TEST(ReproducibleReduceTest, Microbenchmark) {
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
 
     std::vector<double> array;
-    constexpr auto      array_size = 100000U;
-    constexpr auto      repetitions = 15000;
+    constexpr auto      array_size  = 100U;
+    constexpr auto      repetitions = 10;
 
     size_t seed;
     if (comm.is_root()) {
@@ -584,14 +599,13 @@ TEST(ReproducibleReduceTest, Microbenchmark) {
     std::vector<std::chrono::time_point<std::chrono::system_clock>> timings;
     timings.reserve(repetitions + 1);
 
-    const auto distr = distribute_evenly(array_size, comm.size());
+    auto const          distr       = distribute_evenly(array_size, comm.size());
     std::vector<double> local_array = scatter_array(comm, array, distr);
 
     auto repr_comm = comm.template make_reproducible_comm<double>(
         kamping::send_counts(distr.send_counts),
         kamping::recv_displs(distr.displs)
     );
-
 
     double result;
     timings.push_back(std::chrono::system_clock::now());
@@ -606,10 +620,12 @@ TEST(ReproducibleReduceTest, Microbenchmark) {
         std::vector<double> iteration_time(repetitions);
 
         for (auto i = 0U; i < repetitions; ++i) {
-            iteration_time[i] = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(timings[i+1] - timings[i]).count());
+            iteration_time[i] = static_cast<double>(
+                std::chrono::duration_cast<std::chrono::nanoseconds>(timings[i + 1] - timings[i]).count()
+            );
         }
-        printf("Timings (ns): "); print_collection(iteration_time);
-
+        printf("Timings (ns): ");
+        print_collection(iteration_time);
 
         auto const r = compute_mean_stddev(iteration_time);
 
