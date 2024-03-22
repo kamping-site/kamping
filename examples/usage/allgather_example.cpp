@@ -41,7 +41,8 @@ int main() {
     { // We can also send only parts of the input and specify an explicit receive buffer.
         std::vector<int> output;
 
-        comm.allgather(send_buf(input), recv_buf<resize_to_fit>(output), send_count(2));
+        // this can also be achieved with `kamping::Span`
+        comm.allgather(send_buf(Span(input.begin(), 2)), recv_buf<resize_to_fit>(output));
         print_result_on_root(output, comm);
         return 0;
     }
