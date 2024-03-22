@@ -221,7 +221,9 @@ TEST(ReproducibleReduceTest, TreeLevelCalculation) {
     EXPECT_EQ(tree_height(16), 4);
     EXPECT_EQ(tree_height(17), 5);
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     EXPECT_KASSERT_FAILS(subtree_height(0), "");
+#endif
 
     // Randomized testing
     std::random_device rd;
@@ -454,6 +456,7 @@ TEST(ReproducibleReduceTest, ReproducibleResults) {
     }
 }
 
+#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(ReproducibleReduceTest, ErrorChecking) {
     // Test error messages on communicator with 3 ranks
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
@@ -530,6 +533,7 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
         );
     });
 }
+#endif
 
 double multiply(double const& lhs, double const& rhs) {
     return lhs * rhs;
