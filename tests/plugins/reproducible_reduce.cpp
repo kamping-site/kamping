@@ -255,7 +255,7 @@ TEST(ReproducibleReduceTest, TreeLevelCalculation) {
 constexpr double const epsilon = std::numeric_limits<double>::epsilon();
 TEST(ReproducibleReduceTest, SimpleSum) {
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> full_comm;
-    int const                                                                     comm_size = 2;
+    constexpr int                                                                 comm_size = 2;
     ASSERT_GE(full_comm.size(), comm_size) << "Comm is of insufficient size";
     auto comm = full_comm.split(full_comm.rank() < comm_size);
 

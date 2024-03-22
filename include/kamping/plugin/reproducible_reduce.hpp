@@ -18,12 +18,11 @@
 
 namespace kamping::plugin {
 
-using kamping::BufferResizePolicy;
-
 // Binary Tree Reduce
 namespace reproducible_reduce {
 
 /// @brief Encapsulates a single intermediate result (value) and its index
+/// @tparam T Type of the stored value.
 template <typename T>
 struct MessageBufferEntry {
     /// @brief Global index according to reduction order
@@ -32,32 +31,35 @@ struct MessageBufferEntry {
     T value;
 };
 
-uint8_t const MAX_MESSAGE_LENGTH    = 4;
-int const     MESSAGEBUFFER_MPI_TAG = 1;
+constexpr uint8_t MAX_MESSAGE_LENGTH    = 4;
+constexpr int     MESSAGEBUFFER_MPI_TAG = 0xb586772;
 
 /// @brief Responsible for storing and communicating intermediate results between PEs.
-template <typename T, template <typename...> typename DefaultContainerType>
+/// @tparam T Type of the stored values.
+/// @tparam Communicator Type of the underlying communicator.
+template <typename T, typename Communicator>
 class MessageBuffer {
     // TODO: how to shorten this result type
-    using ResultType = kamping::NonBlockingResult<
-        kamping::MPIResult<>,
-        kamping::internal::DataBuffer<
-            kamping::Request,
-            kamping::internal::ParameterType,
-            kamping::internal::ParameterType::request,
-            kamping::internal::BufferModifiability::modifiable,
-            kamping::internal::BufferOwnership::owning,
-            kamping::internal::BufferType::out_buffer,
-            kamping::BufferResizePolicy::no_resize,
-            kamping::internal::BufferAllocation::lib_allocated,
-            kamping::internal::default_value_type_tag>>;
+    using ResultType = NonBlockingResult<
+        MPIResult<>,
+        internal::DataBuffer<
+            Request,
+            internal::ParameterType,
+            internal::ParameterType::request,
+            internal::BufferModifiability::modifiable,
+            internal::BufferOwnership::owning,
+            internal::BufferType::out_buffer,
+            BufferResizePolicy::no_resize,
+            internal::BufferAllocation::lib_allocated,
+            internal::default_value_type_tag>>;
 
 public:
     /// @brief Construct a new message buffer utilizing the given communicator \p comm
-    MessageBuffer(kamping::Communicator<DefaultContainerType> const& comm)
+    /// @param comm Underlying communicator used to send the messages.
+    MessageBuffer(Communicator const& comm)
         : _entries(),
           _inbox(),
-          _target_rank(-1),
+          _target_rank(),
           _outbox(),
           _buffer(),
           _request(nullptr),
@@ -75,10 +77,10 @@ public:
     /// @param source_rank Rank of the sender.
     void receive(int const source_rank) {
         _comm.recv(
-            kamping::recv_buf<BufferResizePolicy::resize_to_fit>(_buffer),
-            kamping::tag(MESSAGEBUFFER_MPI_TAG),
-            kamping::source(source_rank),
-            kamping::recv_count(MAX_MESSAGE_LENGTH * sizeof(MessageBufferEntry<T>))
+            recv_buf<BufferResizePolicy::resize_to_fit>(_buffer),
+            tag(MESSAGEBUFFER_MPI_TAG),
+            source(source_rank),
+            recv_count(MAX_MESSAGE_LENGTH * sizeof(MessageBufferEntry<T>))
         );
 
         // Extract values from the message
@@ -91,20 +93,21 @@ public:
     ///
     /// If there are none, no message is dispatched.
     void flush(void) {
-        if (_target_rank == -1 || _outbox.size() == 0)
+        if (!_target_rank.has_value() || _outbox.empty())
             return;
 
         _request = std::make_unique<ResultType>(send());
         ++_sent_messages;
 
-        _target_rank       = -1;
+        _target_rank.reset();
         _send_buffer_clear = false;
     }
 
-    /// @brief Wait until the message dispatched by flush() is actually sent.
+    /// @brief Wait until the message dispatched by flush() is actually sent and clear any stored values.
     void wait(void) {
-        if (_send_buffer_clear)
+        if (_send_buffer_clear) {
             return;
+        }
 
         _request->wait();
         _outbox.clear();
@@ -122,22 +125,26 @@ public:
     /// @param index Global index of the value being sent.
     /// @param value Actual value that must be sent.
     void put(int const target_rank, size_t const index, T const value) {
-        if (_outbox.size() >= MAX_MESSAGE_LENGTH || _target_rank != target_rank) {
+        bool const outbox_full                        = _outbox.size() >= MAX_MESSAGE_LENGTH;
+        bool const buffer_addressed_to_different_rank = _target_rank.has_value() && _target_rank != target_rank;
+        if (outbox_full || buffer_addressed_to_different_rank) {
             flush();
         }
         wait();
 
-        if (_target_rank == -1) {
-            _target_rank = target_rank;
-        }
+        // We can now overwrite target rank because either
+        // A) it was previously different but flush() has reset it or
+        // B) it already has the same value.
+        _target_rank = target_rank;
 
         KASSERT(_outbox.size() < _outbox.capacity());
         KASSERT(_outbox.capacity() > 0);
         MessageBufferEntry<T> entry{index, value};
         _outbox.push_back(entry);
 
-        if (_outbox.size() >= MAX_MESSAGE_LENGTH)
+        if (_outbox.size() >= MAX_MESSAGE_LENGTH) {
             flush();
+        }
         ++_sent_elements;
     }
 
@@ -145,40 +152,41 @@ public:
     ///
     /// If the value has been received beforehand, it is immediately returned.
     /// Otherwise the method blocks until the message from \p source_rank containing the value arrives.
+    ///
+    /// @param source_rank Rank of the PE that holds the desired intermediate result.
+    /// @param index Global index of the intermediate result.
     T const get(int const source_rank, size_t const index) {
-        // If we have the number in our inbox, directly return it
-        if (auto const entry = _inbox.find(index); entry != _inbox.end()) {
-            T const value = entry->second;
+        auto const entry = _inbox.find(index);
+        T          value;
+
+        if (entry != _inbox.end()) {
+            // If we have the number in our inbox, directly return it.
+            value = entry->second;
             _inbox.erase(entry);
-            return value;
+        } else {
+            // If not, we will wait for a message, but make sure no one is waiting for our results.
+            flush();
+            wait();
+            receive(source_rank);
+
+            auto const new_entry = _inbox.find(index);
+            KASSERT(new_entry != _inbox.end());
+            value = new_entry->second;
+            _inbox.erase(new_entry);
         }
 
-        // If not, we will wait for a message, but make sure no one is waiting for our results.
-        flush();
-        wait();
-        receive(source_rank);
-
-        auto const entry = _inbox.find(index);
-        KASSERT(entry != _inbox.end());
-        T const value = entry->second;
-        _inbox.erase(entry);
         return value;
     }
 
 private:
     auto send() {
-        return _comm.isend(
-            kamping::send_buf(_outbox),
-            kamping::destination(_target_rank),
-            kamping::tag(MESSAGEBUFFER_MPI_TAG),
-            kamping::request()
-        );
+        return _comm.isend(send_buf(_outbox), destination(*_target_rank), tag(MESSAGEBUFFER_MPI_TAG), request());
     }
 
 private:
     std::array<MessageBufferEntry<T>, MAX_MESSAGE_LENGTH> _entries;
     std::map<uint64_t, T>                                 _inbox;
-    int                                                   _target_rank;
+    std::optional<int>                                    _target_rank;
     std::vector<MessageBufferEntry<T>>                    _outbox;
     std::vector<MessageBufferEntry<T>>                    _buffer;
     std::unique_ptr<ResultType>                           _request;
@@ -186,7 +194,7 @@ private:
     size_t                                                _sent_messages;
     size_t                                                _sent_elements;
     bool                                                  _send_buffer_clear;
-    kamping::Communicator<DefaultContainerType> const&    _comm;
+    Communicator const&                                   _comm;
 };
 
 // Helper functions
@@ -285,16 +293,8 @@ inline size_t tree_height(size_t const global_size) {
 ///
 /// @tparam T Type of the elements that are to be reduced.
 /// @tparam DefaultContainerType Container type of the original communicator.
-template <typename T, template <typename...> typename DefaultContainerType>
+template <typename T, typename Communicator>
 class ReproducibleCommunicator {
-    using Communicator = kamping::Communicator<DefaultContainerType>;
-
-private:
-    template <typename U>
-    kamping::Communicator<DefaultContainerType> init_comm(U comm) {
-        return Communicator(comm.disown_mpi_communicator(), comm.root_signed(), true);
-    }
-
 public:
     /// @brief Create a new reproducible communicator.
     /// @tparam Comm Type of the communicator.
@@ -303,15 +303,11 @@ public:
     /// at index 0 and contain a sentinel element at the end.
     /// @param region_begin Index of the first element that is held locally.
     /// @param region_size Number of elements assigned to the current rank.
-    template <
-        template <typename...> typename = DefaultContainerType,
-        template <typename, template <typename...> typename>
-        typename... Plugins>
     ReproducibleCommunicator(
-        kamping::Communicator<DefaultContainerType, Plugins...> const& comm,
-        std::map<size_t, size_t> const                                 start_indices,
-        size_t const                                                   region_begin,
-        size_t const                                                   region_size
+        Communicator const&            comm,
+        std::map<size_t, size_t> const start_indices,
+        size_t const                   region_begin,
+        size_t const                   region_size
     )
         : _start_indices{start_indices},
           _region_begin{region_begin},
@@ -319,7 +315,7 @@ public:
           _region_end{region_begin + region_size},
           _global_size{(--start_indices.end())->first},
           _origin_rank{_global_size == 0 ? 0UL : tree_rank_from_index_map(_start_indices, 0)},
-          _comm{init_comm(comm)},
+          _comm{comm},
           _rank_intersecting_elements(tree_rank_intersecting_elements(_region_begin, _region_end)),
           _reduce_buffer(_region_size),
           _message_buffer(_comm) {}
@@ -362,8 +358,8 @@ public:
     }
 
 private:
-    template <typename F>
-    T const _perform_reduce(T const* buffer, F&& op) {
+    template <typename Func>
+    T const _perform_reduce(T const* buffer, Func&& op) {
         for (auto const index: _rank_intersecting_elements) {
             if (tree_subtree_size(index) > 16) {
                 // If we are about to do some considerable amount of work, make sure
@@ -388,10 +384,8 @@ private:
         return result;
     }
 
-    template <typename R>
-    class TD {};
-    template <typename F>
-    T const _perform_reduce(size_t const index, T const* buffer, F&& op) {
+    template <typename Func>
+    T const _perform_reduce(size_t const index, T const* buffer, Func&& op) {
         if ((index & 1) == 1) {
             return buffer[index - _region_begin];
         }
@@ -445,13 +439,13 @@ private:
         return destination_buffer[0];
     }
 
-    std::map<size_t, size_t> const                    _start_indices;
-    size_t const                                      _region_begin, _region_size, _region_end, _global_size;
-    size_t const                                      _origin_rank;
-    kamping::Communicator<DefaultContainerType> const _comm;
-    std::vector<size_t> const                         _rank_intersecting_elements;
-    std::vector<T>                                    _reduce_buffer;
-    MessageBuffer<T, DefaultContainerType>            _message_buffer;
+    std::map<size_t, size_t> const _start_indices;
+    size_t const                   _region_begin, _region_size, _region_end, _global_size;
+    size_t const                   _origin_rank;
+    Communicator const&            _comm;
+    std::vector<size_t> const      _rank_intersecting_elements;
+    std::vector<T>                 _reduce_buffer;
+    MessageBuffer<T, Communicator> _message_buffer;
 }; // namespace kamping::plugin
 } // namespace reproducible_reduce
 
@@ -486,6 +480,11 @@ public:
     /// - \ref kamping::recv_displs() containing the displacement (a.k.a. starting index) for each rank.
     ///
     /// For further details, see documentation of the \ref ReproducibleReducePlugin
+    ///
+    /// Note that the reduce operation sends messages with the tag `0xb586772`.
+    /// During the reduce, no messages shall be sent on the underlying
+    /// communicator with this tag to avoid interference and potential
+    /// deadlocks.
     ///
     /// @tparam T Type of the elements that are to be reduced.
     /// @param args All required arguments as specified above.
@@ -543,8 +542,9 @@ public:
             KASSERT(send_counts.data()[p] >= 0, "send_count for rank " << p << " is negative");
             KASSERT(recv_displs.data()[p] >= 0, "displacement for rank " << p << " is negative");
 
-            if (send_counts.data()[p] == 0)
+            if (send_counts.data()[p] == 0) {
                 continue;
+            }
 
             start_indices[asserting_cast<size_t>(recv_displs.data()[p])] = p;
         }
@@ -572,7 +572,7 @@ public:
             );
         }
 
-        return reproducible_reduce::ReproducibleCommunicator<T, DefaultContainerType>(
+        return reproducible_reduce::ReproducibleCommunicator<T, Comm>(
             this->to_communicator(),
             start_indices,
             asserting_cast<size_t>(recv_displs.data()[comm.rank()]),
