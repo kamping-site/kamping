@@ -355,7 +355,7 @@ public:
 
 private:
     template <typename F>
-    T const _perform_reduce(T const* buffer, F op) {
+    T const _perform_reduce(T const* buffer, F&& op) {
         for (auto const index: _rank_intersecting_elements) {
             if (tree_subtree_size(index) > 16) {
                 // If we are about to do some considerable amount of work, make sure
@@ -383,7 +383,7 @@ private:
     template <typename R>
     class TD {};
     template <typename F>
-    T const _perform_reduce(size_t const index, T const* buffer, F op) {
+    T const _perform_reduce(size_t const index, T const* buffer, F&& op) {
         if ((index & 1) == 1) {
             return buffer[index - _region_begin];
         }
