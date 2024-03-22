@@ -64,11 +64,18 @@ int main() {
         // Rank i sends it own rank to all others
         std::fill(input.begin(), input.end(), comm.rank());
 
-        { // Exchange the data; compute and return the recv counts automatically.
+        { // Exchange the data; compute the recv counts automatically.
+            auto output = comm.alltoallv(send_buf(input), send_counts(counts_per_rank));
+            print_on_root(" --- alltoallv I --- ", comm);
+            print_result_on_root(output, comm);
+        }
+
+        { // Exchange the data; compute /and return/ the recv counts automatically.
             auto [output, receive_counts] =
                 comm.alltoallv(send_buf(input), send_counts(counts_per_rank), recv_counts_out());
-            print_on_root(" --- alltoallv --- ", comm);
+            print_on_root(" --- alltoallv II output --- ", comm);
             print_result_on_root(output, comm);
+            print_on_root(" --- alltoallv II receive counts --- ", comm);
             print_result_on_root(receive_counts, comm);
         }
     }
