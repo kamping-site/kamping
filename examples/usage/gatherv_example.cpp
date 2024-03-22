@@ -22,21 +22,33 @@
 
 int main() {
     using namespace kamping;
+
     kamping::Environment  e;
     kamping::Communicator comm;
-    std::vector<int>      input(comm.rank(), comm.rank_signed());
 
-    {
+    std::vector<int> input(comm.rank() + 2, comm.rank_signed());
+
+    { // Gather the data (of different lengths) from all ranks to rank 0
         // simply return received data
-        auto output = comm.gatherv(send_buf(input), root(0));
-        print_result_on_root(output, comm);
+        [[maybe_unused]] auto const output = comm.gatherv(send_buf(input), root(0));
     }
 
-    {
-        // write received data to exisiting container
+    { // Gather the first rank() + 1 elements from all ranks to an existing container on rank 1.
+        // Additionally, output the receive counts and displacements.
         std::vector<int> output;
-        comm.gatherv(send_buf(input), recv_buf<resize_to_fit>(output), root(0));
-        print_result_on_root(output, comm);
+
+        auto result = comm.gatherv(
+            send_buf(input),
+            recv_buf<resize_to_fit>(output),
+            root(1),
+            recv_counts_out(),
+            recv_displs_out(),
+            send_count(comm.rank_signed() + 1)
+        );
+        [[maybe_unused]] auto const receive_counts = result.extract_recv_counts();
+        [[maybe_unused]] auto const receive_displs = result.extract_recv_displs();
+        // Compile time error, as the recv buffer is not owned by KaMPIng, as it was provided via an in parameter.
+        // [[maybe_unused]] auto const recv_buf       = result.extract_recv_buffer();
     }
 
     return 0;
