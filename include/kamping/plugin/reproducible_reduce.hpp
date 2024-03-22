@@ -29,7 +29,7 @@ struct MessageBufferEntry {
     /// @brief Global index according to reduction order
     size_t index;
     /// @brief Intermediate value during calculation
-    T      value;
+    T value;
 };
 
 uint8_t const MAX_MESSAGE_LENGTH    = 4;
@@ -205,7 +205,8 @@ inline auto tree_subtree_size(size_t const i) {
     return largest_child_index + 1 - i;
 }
 
-/// @brief Return the rank of the PE that holds the intermediate result with the specified \p index according to a \p start_indices map.
+/// @brief Return the rank of the PE that holds the intermediate result with the specified \p index according to a \p
+/// start_indices map.
 inline auto tree_rank_from_index_map(std::map<size_t, size_t> const& start_indices, size_t const index) {
     // Get an iterator to the start index that is greater than index
     auto it = start_indices.upper_bound(index);
@@ -257,7 +258,8 @@ inline auto log2l(size_t const value) {
     return target_value;
 }
 
-/// @brief Return the number of necessary passes through the array to fully reduce the subtree with the specified \p index.
+/// @brief Return the number of necessary passes through the array to fully reduce the subtree with the specified \p
+/// index.
 inline size_t subtree_height(size_t const index) {
     KASSERT(index != 0);
 
@@ -297,7 +299,8 @@ public:
     /// @brief Create a new reproducible communicator.
     /// @tparam Comm Type of the communicator.
     /// @param comm Underlying communicator to transport messages.
-    /// @param start_indices Map from global array indices onto ranks on which they are held. Must have no gaps, start at index 0 and contain a sentinel element at the end.
+    /// @param start_indices Map from global array indices onto ranks on which they are held. Must have no gaps, start
+    /// at index 0 and contain a sentinel element at the end.
     /// @param region_begin Index of the first element that is held locally.
     /// @param region_size Number of elements assigned to the current rank.
     template <
@@ -323,11 +326,13 @@ public:
 
     /// @brief Reproducible reduction according to pre-initialized scheme.
     /// The following parameters are required:
-    /// - \ref kamping::send_buf() containing the local elements that are reduced. This buffer has to match the size specified during creation of the \ref ReproducibleCommunicator.
+    /// - \ref kamping::send_buf() containing the local elements that are reduced. This buffer has to match the size
+    /// specified during creation of the \ref ReproducibleCommunicator.
     /// - \ref kamping::op() wrapping the operation to apply to the input.
     ///
     /// @param args All required arguments as described above.
-    /// @return Final reduction result obtained by applying the operation in a fixed order to all input elements across PEs.
+    /// @return Final reduction result obtained by applying the operation in a fixed order to all input elements across
+    /// PEs.
     template <typename... Args>
     T const reproducible_reduce(Args... args) {
         KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(send_buf, op), KAMPING_OPTIONAL_PARAMETERS());
@@ -337,8 +342,11 @@ public:
             internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
-        KASSERT(send_buf.size() == _region_size, "send_buf must have the same size as specified during creation of the reproducible communicator. "
-                << "Is " << send_buf.size() << " but should be " << _region_size << " on rank " << _comm.rank());
+        KASSERT(
+            send_buf.size() == _region_size,
+            "send_buf must have the same size as specified during creation of the reproducible communicator. "
+                << "Is " << send_buf.size() << " but should be " << _region_size << " on rank " << _comm.rank()
+        );
 
         static_assert(
             std::is_same_v<std::remove_const_t<send_value_type>, T>,
@@ -447,11 +455,11 @@ private:
 }; // namespace kamping::plugin
 } // namespace reproducible_reduce
 
-
 /// @brief Reproducible reduction of distributed arrays.
 ///
-/// To make a reduction operation reproducible independent of communicator size and operation associativity, the computation order must be fixed.
-/// We assign a global index to each element and let a binary tree dictate the computation as seen in the figure below:
+/// To make a reduction operation reproducible independent of communicator size and operation associativity, the
+/// computation order must be fixed. We assign a global index to each element and let a binary tree dictate the
+/// computation as seen in the figure below:
 ///
 /// \image html tree_reduction.svg "Reduction of 16 elements distributed over 4 PEs"
 ///
@@ -463,14 +471,15 @@ private:
 /// the first element of rank 0 has index 8, the first element of rank 1 has
 /// index 4 and so on.
 ///
-/// More background of reproducible reduction is provided [here](https://cme.h-its.org/exelixis/pubs/bachelorChristop.pdf).
-/// 
+/// More background of reproducible reduction is provided
+/// [here](https://cme.h-its.org/exelixis/pubs/bachelorChristop.pdf).
+///
 template <typename Comm, template <typename...> typename DefaultContainerType>
 class ReproducibleReducePlugin
     : public kamping::plugin::PluginBase<Comm, DefaultContainerType, ReproducibleReducePlugin> {
 public:
-
-    /// @brief Create a communicator with a fixed distribution of a global array that can perform reductions in the same reduction order.
+    /// @brief Create a communicator with a fixed distribution of a global array that can perform reductions in the same
+    /// reduction order.
     ///
     /// The following parameters are required:
     /// - \ref kamping::send_counts() containing the number of elements each rank holds locally.

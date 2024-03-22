@@ -315,7 +315,8 @@ TEST(ReproducibleReduceTest, WorksWithNonzeroRoot) {
 
         auto local_array = scatter_array(comm, array, distribution);
 
-        double result = repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(kamping::ops::plus<>{}));
+        double result =
+            repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(kamping::ops::plus<>{}));
 
         EXPECT_EQ(result, (1.0 + 2.0) + (3.0 + 4.0));
     });
@@ -530,7 +531,7 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
     });
 }
 
-double multiply(double const &lhs, double const &rhs) {
+double multiply(double const& lhs, double const& rhs) {
     return lhs * rhs;
 }
 
@@ -549,7 +550,7 @@ TEST(ReproducibleReduceTest, OtherOperations) {
 
     std::mt19937 rng(seed); // RNG for distribution & rank number
 
-    const auto distr = distribute_randomly(array.size(), comm.size(), rng());
+    auto const distr = distribute_randomly(array.size(), comm.size(), rng());
 
     std::vector<double> local_array = scatter_array(comm, array, distr);
 
@@ -558,33 +559,32 @@ TEST(ReproducibleReduceTest, OtherOperations) {
         kamping::recv_displs(distr.displs)
     );
 
-    const auto max_val =
+    auto const max_val =
         repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(kamping::ops::max<>{}));
     EXPECT_EQ(max_val, 7.0);
 
-    const auto min_val =
+    auto const min_val =
         repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(kamping::ops::min<>{}));
     EXPECT_EQ(min_val, 1.0);
 
-    const auto product =
+    auto const product =
         repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(kamping::ops::multiplies<>{}));
     EXPECT_EQ(product, 5.0 * 2.0 * 3.0 * 1.0 * 7.0);
-
 
     // Use lambda
     auto add_plus_42_lambda = [](auto const& lhs, auto const& rhs) {
         return lhs + rhs + 42;
     };
     auto result = repr_comm.reproducible_reduce(
-            kamping::send_buf(local_array),
-            kamping::op(std::move(add_plus_42_lambda), kamping::ops::commutative)
+        kamping::send_buf(local_array),
+        kamping::op(std::move(add_plus_42_lambda), kamping::ops::commutative)
     );
     EXPECT_EQ(result, array[0] + array[1] + array[2] + array[3] + array[4] + 4 * 42);
 
     // Inline lambda
     auto subtracted = repr_comm.reproducible_reduce(
-            kamping::send_buf(local_array),
-            kamping::op([](auto const& lhs, auto const& rhs) { return lhs - rhs; }, kamping::ops::non_commutative)
+        kamping::send_buf(local_array),
+        kamping::op([](auto const& lhs, auto const& rhs) { return lhs - rhs; }, kamping::ops::non_commutative)
     );
     EXPECT_EQ(subtracted, ((array[0] - array[1]) - (array[2] - array[3])) - array[4]);
 
@@ -595,18 +595,13 @@ TEST(ReproducibleReduceTest, OtherOperations) {
         }
     };
     EXPECT_EQ(Plus3{}(1.0, 2.0), 1.0 + 2.0 + 3.0);
-    auto plus3_result = repr_comm.reproducible_reduce(
-            kamping::send_buf(local_array),
-            kamping::op(Plus3{}, kamping::ops::commutative)
-    );
+    auto plus3_result =
+        repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(Plus3{}, kamping::ops::commutative));
     EXPECT_EQ(plus3_result, array[0] + array[1] + array[2] + array[3] + array[4] + 4 * 3);
 
-
     // function pointer
-    auto multiply_ptr = repr_comm.reproducible_reduce(
-            kamping::send_buf(local_array),
-            kamping::op(multiply, kamping::ops::commutative)
-    );
+    auto multiply_ptr =
+        repr_comm.reproducible_reduce(kamping::send_buf(local_array), kamping::op(multiply, kamping::ops::commutative));
     EXPECT_EQ(multiply_ptr, product);
 }
 
