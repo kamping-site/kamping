@@ -220,7 +220,7 @@ TEST(ReproducibleReduceTest, TreeLevelCalculation) {
     // Randomized testing
     std::random_device rd;
     size_t             seed = rd();
-    std::mt19937 rng(seed);
+    std::mt19937       rng(seed);
 
     std::uniform_int_distribution<size_t> size_distribution;
 
@@ -239,7 +239,6 @@ TEST(ReproducibleReduceTest, TreeLevelCalculation) {
 
         ++checks;
     }
-
 }
 
 constexpr double const epsilon = std::numeric_limits<double>::epsilon();
@@ -612,7 +611,7 @@ TEST(ReproducibleReduceTest, Microbenchmark) {
     size_t seed;
     if (comm.is_root()) {
         std::random_device rd;
-        seed = rd();
+        seed  = rd();
         array = generate_test_vector(array_size, seed);
     }
     comm.bcast_single(kamping::send_recv_buf(seed));
