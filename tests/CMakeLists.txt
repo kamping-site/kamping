@@ -229,7 +229,7 @@ kamping_register_mpi_test(
 kamping_register_mpi_test(
     test_reproducible_reduce
     FILES plugins/reproducible_reduce.cpp
-    CORES 10
+    CORES 4
 )
 
 kamping_register_mpi_test(

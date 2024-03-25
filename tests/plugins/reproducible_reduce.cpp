@@ -41,14 +41,6 @@ std::vector<T> scatter_array(C comm, std::vector<T> const& global_array, Distrib
     return result;
 }
 
-template <typename T>
-void print_collection(T collection) {
-    for (auto const& v: collection) {
-        std::cout << v << " ";
-    }
-    std::cout << "\n";
-}
-
 auto displacement_from_sendcounts(std::vector<int>& send_counts) {
     std::vector<int> displacement;
     displacement.reserve(send_counts.size());
@@ -228,7 +220,6 @@ TEST(ReproducibleReduceTest, TreeLevelCalculation) {
     // Randomized testing
     std::random_device rd;
     size_t             seed = rd();
-    printf("Seed for TreeLevelCalculation: %zu\n", seed);
     std::mt19937 rng(seed);
 
     std::uniform_int_distribution<size_t> size_distribution;
@@ -249,7 +240,6 @@ TEST(ReproducibleReduceTest, TreeLevelCalculation) {
         ++checks;
     }
 
-    printf("Performed %zu checks\n", checks);
 }
 
 constexpr double const epsilon = std::numeric_limits<double>::epsilon();
@@ -338,7 +328,6 @@ TEST(ReproducibleReduceTest, Fuzzing) {
     unsigned long      seed;
     if (comm.is_root()) {
         seed = rd();
-        printf("Seed for fuzzer: %zu\n", seed);
     }
     comm.bcast_single(kamping::send_recv_buf(seed));
 
@@ -398,17 +387,11 @@ TEST(ReproducibleReduceTest, Fuzzing) {
                     EXPECT_EQ(computed_result, reference_result);
                 }
                 ++checks;
-
-                if (comm_.is_root()) {
-                    printf("Validated for p=%lu, n=%zu, start_indices=", ranks, data_array.size());
-                    print_collection(distribution.displs);
-                }
             });
         }
     }
 
     if (comm.is_root()) {
-        printf("Performed %li checks\n", checks);
     }
 }
 
@@ -548,7 +531,6 @@ TEST(ReproducibleReduceTest, OtherOperations) {
     if (comm.is_root()) {
         std::random_device rd;
         seed = rd();
-        printf("Seed for distribution: %zu\n", seed);
     }
     comm.bcast_single(kamping::send_recv_buf(seed));
 
@@ -631,7 +613,6 @@ TEST(ReproducibleReduceTest, Microbenchmark) {
     if (comm.is_root()) {
         std::random_device rd;
         seed = rd();
-        printf("Seed for microbenchmark: %zu\n", seed);
         array = generate_test_vector(array_size, seed);
     }
     comm.bcast_single(kamping::send_recv_buf(seed));
@@ -666,11 +647,6 @@ TEST(ReproducibleReduceTest, Microbenchmark) {
                 std::chrono::duration_cast<std::chrono::nanoseconds>(timings[i + 1] - timings[i]).count()
             );
         }
-        printf("Timings (ns): ");
-        print_collection(iteration_time);
-
         auto const r = compute_mean_stddev(iteration_time);
-
-        printf("mean = %f, stddev = %f\n", r.first, r.second);
     }
 }
