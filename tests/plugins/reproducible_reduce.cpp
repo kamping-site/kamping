@@ -647,5 +647,7 @@ TEST(ReproducibleReduceTest, Microbenchmark) {
             );
         }
         auto const r = compute_mean_stddev(iteration_time);
+        RecordProperty("Mean", static_cast<int>(r.first));
+        RecordProperty("Stddev", static_cast<int>(r.second));
     }
 }
