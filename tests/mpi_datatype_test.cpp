@@ -42,6 +42,35 @@ int MPI_Type_free(MPI_Datatype* type) {
     return PMPI_Type_free(type);
 }
 
+MATCHER_P3(ResizedType, inner, lb, extend, "") {
+    int num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(arg, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    if (combiner != MPI_COMBINER_RESIZED) {
+        *result_listener << "not a resized type";
+        return false;
+    }
+    MPI_Datatype            underlying_type;
+    std::array<MPI_Aint, 2> type_bounds;
+    MPI_Type_get_contents(
+        arg,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        nullptr,
+        type_bounds.data(),
+        &underlying_type
+    );
+    if (type_bounds[0] != static_cast<MPI_Aint>(lb)) {
+        *result_listener << "wrong lb";
+        return false;
+    }
+    if (type_bounds[1] != static_cast<MPI_Aint>(extend)) {
+        *result_listener << "wrong extend";
+        return false;
+    }
+    return ExplainMatchResult(inner, underlying_type, result_listener);
+}
+
 MATCHER_P2(ContiguousType, type, n, "") {
     int num_integers, num_addresses, num_datatypes, combiner;
     MPI_Type_get_envelope(arg, &num_integers, &num_addresses, &num_datatypes, &combiner);
@@ -296,8 +325,28 @@ TEST(MpiDataTypeTest, struct_type_works_with_struct) {
         uint8_t  a;
         uint64_t b;
     };
-    MPI_Datatype struct_type = kamping::struct_type<TestStruct>::data_type();
+    MPI_Datatype resized_type = kamping::struct_type<TestStruct>::data_type();
     int          num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(resized_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_RESIZED);
+    // returned values for MPI_COMBINER_RESIZED
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 0);
+    EXPECT_EQ(num_addresses, 2);
+    EXPECT_EQ(num_datatypes, 1);
+    std::array<MPI_Aint, 2> type_bounds;
+    MPI_Datatype            struct_type;
+    MPI_Type_get_contents(
+        resized_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        nullptr,
+        type_bounds.data(),
+        &struct_type
+    );
+    EXPECT_EQ(type_bounds[0], 0);                  // lb
+    EXPECT_EQ(type_bounds[1], sizeof(TestStruct)); // extent
     MPI_Type_get_envelope(struct_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
     EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
     // returned values for MPI_COMBINER_STRUCT
@@ -362,8 +411,28 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
         ExplicitNestedStruct nested;          // should use the explicit struct MPI type declaration
         ImplicitNestedStruct implicit_nested; // should use byte serialized type
     };
-    MPI_Datatype struct_type = kamping::struct_type<TestStruct>::data_type();
+    MPI_Datatype resized_type = kamping::struct_type<TestStruct>::data_type();
     int          num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(resized_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_RESIZED);
+    // returned values for MPI_COMBINER_RESIZED
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 0);
+    EXPECT_EQ(num_addresses, 2);
+    EXPECT_EQ(num_datatypes, 1);
+    std::array<MPI_Aint, 2> type_bounds;
+    MPI_Datatype            struct_type;
+    MPI_Type_get_contents(
+        resized_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        nullptr,
+        type_bounds.data(),
+        &struct_type
+    );
+    EXPECT_EQ(type_bounds[0], 0);                  // lb
+    EXPECT_EQ(type_bounds[1], sizeof(TestStruct)); // extent
     MPI_Type_get_envelope(struct_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
     EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
     // returned values for MPI_COMBINER_STRUCT
@@ -398,6 +467,26 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
     MPI_Datatype explicit_nested_type = datatypes[2];
     MPI_Datatype implicit_nested_type = datatypes[3];
     MPI_Type_get_envelope(explicit_nested_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+
+    EXPECT_EQ(combiner, MPI_COMBINER_RESIZED);
+    // returned values for MPI_COMBINER_RESIZED
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 0);
+    EXPECT_EQ(num_addresses, 2);
+    EXPECT_EQ(num_datatypes, 1);
+    MPI_Datatype explicit_nested_type_inner_struct;
+    MPI_Type_get_contents(
+        explicit_nested_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        nullptr,
+        type_bounds.data(),
+        &explicit_nested_type_inner_struct
+    );
+    EXPECT_EQ(type_bounds[0], 0);                            // lb
+    EXPECT_EQ(type_bounds[1], sizeof(ExplicitNestedStruct)); // extent
+    MPI_Type_get_envelope(explicit_nested_type_inner_struct, &num_integers, &num_addresses, &num_datatypes, &combiner);
     EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
     // returned values for MPI_COMBINER_STRUCT
     // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
@@ -408,7 +497,7 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
     addresses.resize(static_cast<size_t>(num_addresses));
     datatypes.resize(static_cast<size_t>(num_datatypes));
     MPI_Type_get_contents(
-        explicit_nested_type,
+        explicit_nested_type_inner_struct,
         num_integers,
         num_addresses,
         num_datatypes,
@@ -469,8 +558,28 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
 }
 
 TEST(MpiDataTypeTest, struct_type_works_with_pair) {
-    MPI_Datatype struct_type = kamping::struct_type<std::pair<uint8_t, uint64_t>>::data_type();
+    MPI_Datatype resized_type = kamping::struct_type<std::pair<uint8_t, uint64_t>>::data_type();
     int          num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(resized_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_RESIZED);
+    // returned values for MPI_COMBINER_RESIZED
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 0);
+    EXPECT_EQ(num_addresses, 2);
+    EXPECT_EQ(num_datatypes, 1);
+    std::array<MPI_Aint, 2> type_bounds;
+    MPI_Datatype            struct_type;
+    MPI_Type_get_contents(
+        resized_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        nullptr,
+        type_bounds.data(),
+        &struct_type
+    );
+    EXPECT_EQ(type_bounds[0], 0);                                    // lb
+    EXPECT_EQ(type_bounds[1], sizeof(std::pair<uint8_t, uint64_t>)); // extent
     MPI_Type_get_envelope(struct_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
     EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
     // returned values for MPI_COMBINER_STRUCT
@@ -516,9 +625,29 @@ TEST(MpiDataTypeTest, struct_type_works_with_pair) {
 }
 
 TEST(MpiDataTypeTest, struct_type_works_with_tuple) {
-    using Tuple              = std::tuple<uint8_t, uint64_t>;
-    MPI_Datatype struct_type = kamping::struct_type<Tuple>::data_type();
+    using Tuple               = std::tuple<uint8_t, uint64_t>;
+    MPI_Datatype resized_type = kamping::struct_type<Tuple>::data_type();
     int          num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(resized_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    EXPECT_EQ(combiner, MPI_COMBINER_RESIZED);
+    // returned values for MPI_COMBINER_RESIZED
+    // according to section 5.1.13 of the MPI standard (Decoding a Datatype)
+    EXPECT_EQ(num_integers, 0);
+    EXPECT_EQ(num_addresses, 2);
+    EXPECT_EQ(num_datatypes, 1);
+    std::array<MPI_Aint, 2> type_bounds;
+    MPI_Datatype            struct_type;
+    MPI_Type_get_contents(
+        resized_type,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        nullptr,
+        type_bounds.data(),
+        &struct_type
+    );
+    EXPECT_EQ(type_bounds[0], 0);             // lb
+    EXPECT_EQ(type_bounds[1], sizeof(Tuple)); // extent
     MPI_Type_get_envelope(struct_type, &num_integers, &num_addresses, &num_datatypes, &combiner);
     EXPECT_EQ(combiner, MPI_COMBINER_STRUCT);
     // returned values for MPI_COMBINER_STRUCT
@@ -613,14 +742,22 @@ TEST(MpiDataTypeTest, mpi_datatype_struct) {
 
     EXPECT_THAT(
         (mpi_type_traits<std::tuple<int, double, std::complex<float>>>::data_type()),
-        StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX})
+        ResizedType(
+            StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX}),
+            0,
+            sizeof(std::tuple<int, double, std::complex<float>>)
+        )
     );
 
     // struct is no trivially copyable, but we defined a struct_type trait for it explicitly.
     EXPECT_EQ((mpi_type_traits<std::tuple<int, double, std::complex<float>>>::category), TypeCategory::struct_like);
     EXPECT_THAT(
         (mpi_type_traits<std::tuple<int, double, std::complex<float>>>::data_type()),
-        StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX})
+        ResizedType(
+            StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX}),
+            0,
+            sizeof(std::tuple<int, double, std::complex<float>>)
+        )
     );
 }
 
