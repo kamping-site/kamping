@@ -226,7 +226,6 @@ kamping_register_mpi_test(
     FILES plugins/sort_test.cpp
     CORES 1 4
 )
-
 kamping_register_mpi_test(
     test_alltoall_dispatch
     FILES plugins/alltoall_dispatch_test.cpp
@@ -237,7 +236,6 @@ kamping_register_mpi_test(
     FILES plugins/reproducible_reduce.cpp
     CORES 4
 )
-
 kamping_register_mpi_test(
     test_hooks
     FILES hooks_test.cpp

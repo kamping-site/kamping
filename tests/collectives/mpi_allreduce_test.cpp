@@ -144,7 +144,8 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
+        };
         EXPECT_EQ(result, expected_result);
     }
 
@@ -155,7 +156,8 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
+        };
         EXPECT_EQ(result, expected_result);
     }
 
@@ -169,7 +171,8 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
+        };
         EXPECT_EQ(result, expected_result);
     }
 
@@ -185,7 +188,8 @@ TEST(AllreduceTest, allreduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
+        };
         EXPECT_EQ(result, expected_result);
     }
 }
@@ -464,7 +468,8 @@ TEST(AllreduceTest, inplace_basic) {
 
     std::vector<int> expected_recv_buffer = {
         comm.size_signed() * (comm.size_signed() - 1) / 2,
-        comm.size_signed() * (comm.size_signed() - 1) / 2};
+        comm.size_signed() * (comm.size_signed() - 1) / 2
+    };
     EXPECT_EQ(values, expected_recv_buffer);
 }
 
@@ -480,7 +485,8 @@ TEST(AllreduceTest, inplace_out_parameters) {
 
     std::vector<int> expected_recv_buffer = {
         comm.size_signed() * (comm.size_signed() - 1) / 2,
-        comm.size_signed() * (comm.size_signed() - 1) / 2};
+        comm.size_signed() * (comm.size_signed() - 1) / 2
+    };
     EXPECT_EQ(values, expected_recv_buffer);
 }
 
@@ -492,7 +498,8 @@ TEST(AllreduceTest, inplace_rvalue_buffer) {
 
     std::vector<int> expected_recv_buffer = {
         comm.size_signed() * (comm.size_signed() - 1) / 2,
-        comm.size_signed() * (comm.size_signed() - 1) / 2};
+        comm.size_signed() * (comm.size_signed() - 1) / 2
+    };
     EXPECT_EQ(result, expected_recv_buffer);
 }
 
@@ -526,6 +533,7 @@ TEST(AllreduceTest, inplace_explicit_type) {
     MPI_Type_free(&type);
 
     std::vector<std::pair<int, int>> expected_recv_buffer = {
-        {comm.size_signed() * (comm.size_signed() - 1) / 2, comm.size_signed() * (comm.size_signed() - 1) / 2}};
+        {comm.size_signed() * (comm.size_signed() - 1) / 2, comm.size_signed() * (comm.size_signed() - 1) / 2}
+    };
     EXPECT_EQ(values, expected_recv_buffer);
 }
