@@ -735,11 +735,12 @@ TEST_F(ISendTest, non_trivial_send_type_irsend) {
 TEST_F(ISendTest, send_buf_ownership) {
     Communicator     comm;
     std::vector<int> values{42, 3, 8, 7};
-    auto             req = comm.isend(send_buf(std::move(values)), destination(comm.root()));
+    auto             req = comm.isend(send_buf_out(std::move(values)), destination(comm.root()));
+    EXPECT_EQ(values.size(), 0);
     if (comm.is_root()) {
-      auto recv_buf = comm.recv<int>();
-      EXPECT_THAT(recv_buf, ElementsAre(42, 3, 8, 7));
+        auto recv_buf = comm.recv<int>();
+        EXPECT_THAT(recv_buf, ElementsAre(42, 3, 8, 7));
     }
-    values               = req.wait();
+    values = req.wait();
     EXPECT_THAT(values, ElementsAre(42, 3, 8, 7));
 }
