@@ -16,6 +16,7 @@
 #include "../test_assertions.hpp"
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <mpi.h>
 
 #include "../helpers_for_testing.hpp"
@@ -562,5 +563,23 @@ TEST_F(IrecvTest, non_trivial_recv_type) {
     }
     // ensure that we have received all inflight messages
     MPI_Wait(&req, MPI_STATUS_IGNORE);
+    comm.barrier();
+}
+
+TEST_F(IrecvTest, recv_buf_passthrough) {
+    using namespace ::testing;
+    Communicator comm;
+    if (comm.size() < 2) {
+        return;
+    }
+    if (comm.rank() == 0) {
+        std::vector<int> v{{42, 1, 7, 5}};
+        MPI_Send(v.data(), 4, MPI_INT, 1, 0, comm.mpi_communicator());
+    } else if (comm.rank() == 1) {
+        // std::vector<int> r
+        auto req    = comm.irecv<int>(recv_count(4));
+        auto result = req.wait();
+        EXPECT_THAT(result, ElementsAre(42, 1, 7, 5));
+    }
     comm.barrier();
 }

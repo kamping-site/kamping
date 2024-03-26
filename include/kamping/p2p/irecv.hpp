@@ -166,21 +166,36 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::irecv(Args... args
         );
     }
 
-    [[maybe_unused]] int err = MPI_Irecv(
-        recv_buf.data(),                          // buf
-        recv_count_param.get_single_element(),    // count
-        recv_type.get_single_element(),           // datatype
-        source,                                   // source
-        tag,                                      // tag
-        this->mpi_communicator(),                 // comm
-        &request_param.underlying().mpi_request() // request
-    );
-    this->mpi_error_hook(err, "MPI_Irecv");
-
-    return internal::make_nonblocking_result<std::tuple<Args...>>(
+    auto result = internal::make_nonblocking_result<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(recv_count_param),
         std::move(recv_type),
         std::move(request_param)
     );
+
+    auto recv_buf_ptr = [&] {
+        if constexpr (std::remove_reference_t<decltype(recv_buf)>::is_owning) {
+            auto& result_ = result.get_result();
+            if constexpr (internal::has_data_member_v<decltype(result_)>) {
+                return result_.data();
+            } else {
+                return result_.get_recv_buffer().data();
+            }
+        } else {
+            return recv_buf.data();
+        };
+    };
+
+    [[maybe_unused]] int err = MPI_Irecv(
+        recv_buf_ptr(),                        // buf
+        recv_count_param.get_single_element(), // count
+        recv_type.get_single_element(),        // datatype
+        source,                                // source
+        tag,                                   // tag
+        this->mpi_communicator(),              // comm
+        result.get_request_ptr()               // request
+    );
+    this->mpi_error_hook(err, "MPI_Irecv");
+
+    return result;
 }
