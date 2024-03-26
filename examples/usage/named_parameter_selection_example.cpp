@@ -39,10 +39,10 @@ int main() {
     using SendBuffer_Arg = Argument<internal::ParameterType::send_buf>;
     using SendCounts_Arg = Argument<internal::ParameterType::send_counts>;
 
-    const SendBuffer_Arg arg_id_1(1);
-    const SendBuffer_Arg arg_id_2(2);
-    const SendCounts_Arg arg_id_3(3);
-    const SendCounts_Arg arg_id_4(4);
+    SendBuffer_Arg const arg_id_1(1);
+    SendBuffer_Arg const arg_id_2(2);
+    SendCounts_Arg const arg_id_3(3);
+    SendCounts_Arg const arg_id_4(4);
 
     {
         // first argument within parameter list with ParameterType send_buf is selected

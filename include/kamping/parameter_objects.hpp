@@ -64,9 +64,13 @@ private:
 
 public:
     using DataBufferType =
-        decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
-            std::forward<Data>(data_)
-        )); ///< The type of the constructed data buffer.
+        decltype(make_data_buffer<
+                 ParameterType,
+                 parameter_type,
+                 modifiability,
+                 buffer_type,
+                 buffer_resize_policy,
+                 ValueType>(std::forward<Data>(data_))); ///< The type of the constructed data buffer.
 
     /// @brief Constructs the data buffer.
     /// @tparam RebindContainerType The container to use for the data buffer (has no effect here).
@@ -83,9 +87,13 @@ public:
         if constexpr (is_empty_data_buffer_v<Data_no_ref>) {
             return internal::EmptyDataBuffer<ValueType, parameter_type, buffer_type>{};
         } else {
-            return make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
-                std::forward<Data>(data_)
-            );
+            return make_data_buffer<
+                ParameterType,
+                parameter_type,
+                modifiability,
+                buffer_type,
+                buffer_resize_policy,
+                ValueType>(std::forward<Data>(data_));
         }
     }
     static constexpr bool is_out_buffer =
@@ -128,15 +136,20 @@ template <
 struct AllocNewDataBufferBuilder {
     static constexpr ParameterType parameter_type = parameter_type_param; ///< The parameter type.
 public:
-    using DataBufferType =
-        decltype(make_data_buffer<parameter_type, modifiability, buffer_type, buffer_resize_policy, ValueType>(
-            std::conditional_t<
-                is_alloc_container_of_v<AllocType>,
-                AllocNewT<std::vector<ValueType>>, // we rebind to std::vector here, because this DataBufferType is only
-                                                   // used for determining is_out_buffer, is_owning, etc. and rebinding
-                                                   // does not affect this.
-                AllocType>{}
-        )); ///< The type of the constructed data buffer (potentially rebinded to std::vector).
+    using DataBufferType = decltype(make_data_buffer<
+                                    ParameterType,
+                                    parameter_type,
+                                    modifiability,
+                                    buffer_type,
+                                    buffer_resize_policy,
+                                    ValueType>(
+        std::conditional_t<
+            is_alloc_container_of_v<AllocType>,
+            AllocNewT<std::vector<ValueType>>, // we rebind to std::vector here, because this DataBufferType is only
+                                               // used for determining is_out_buffer, is_owning, etc. and rebinding
+                                               // does not affect this.
+            AllocType>{}
+    )); ///< The type of the constructed data buffer (potentially rebinded to std::vector).
 
 public:
     /// @brief Constructs the data buffer.
@@ -149,6 +162,7 @@ public:
     auto construct_buffer_or_rebind() {
         if constexpr (is_alloc_new_v<AllocType>) {
             return make_data_buffer<
+                ParameterType,
                 parameter_type,
                 modifiability,
                 buffer_type,
@@ -156,6 +170,7 @@ public:
                 ValueType>(alloc_new<typename AllocType::container_type>);
         } else if constexpr (is_alloc_new_using_v<AllocType>) {
             return make_data_buffer<
+                ParameterType,
                 parameter_type,
                 modifiability,
                 buffer_type,
@@ -167,6 +182,7 @@ public:
                 "RebindContainerType is required."
             );
             return make_data_buffer<
+                ParameterType,
                 parameter_type,
                 modifiability,
                 buffer_type,

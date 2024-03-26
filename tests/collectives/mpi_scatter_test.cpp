@@ -131,9 +131,9 @@ TEST(ScatterTest, scatter_single_with_explicit_root) {
 TEST(ScatterTest, scatter_single_with_too_small_send_buf) {
     Communicator comm;
 
-    const std::vector<int> input = create_input_vector_on_root(comm, 1);
+    std::vector<int> const input = create_input_vector_on_root(comm, 1);
     if (comm.is_root()) {
-        const std::vector<int> input_too_small(input.begin(), std::next(input.begin(), comm.size_signed() / 2));
+        std::vector<int> const input_too_small(input.begin(), std::next(input.begin(), comm.size_signed() / 2));
         EXPECT_KASSERT_FAILS(
             comm.scatter_single(send_buf(input_too_small)),
             "send_buf of size equal to comm.size() must be provided on the root rank."
@@ -149,9 +149,9 @@ TEST(ScatterTest, scatter_single_with_too_small_send_buf_and_explicit_root) {
     Communicator comm;
 
     int const              root  = comm.size_signed() - 1;
-    const std::vector<int> input = create_input_vector_on_root(comm, 1, root);
+    std::vector<int> const input = create_input_vector_on_root(comm, 1, root);
     if (comm.is_root(root)) {
-        const std::vector<int> input_too_small(input.begin(), std::next(input.begin(), comm.size_signed() / 2));
+        std::vector<int> const input_too_small(input.begin(), std::next(input.begin(), comm.size_signed() / 2));
         EXPECT_KASSERT_FAILS(
             comm.scatter_single(send_buf(input_too_small), kamping::root(root)),
             "send_buf of size equal to comm.size() must be provided on the root rank."

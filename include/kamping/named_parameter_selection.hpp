@@ -154,6 +154,19 @@ auto& select_parameter_type_in_tuple(std::tuple<Args...>& tuple) {
     return std::get<selected_index>(tuple);
 }
 
+/// @brief Returns parameter with requested parameter type.
+///
+/// @tparam parameter_type The parameter type with which a parameter should be found.
+/// @tparam Args All parameter types to be searched for type `parameter_type`.
+/// @param tuple std::tuple with containing all parameters from which a parameter with the correct type is selected.
+/// @returns The first parameter whose type has the requested parameter type.
+template <ParameterType parameter_type, typename... Args>
+auto const& select_parameter_type_in_tuple(std::tuple<Args...> const& tuple) {
+    constexpr size_t selected_index = find_pos<std::integral_constant<ParameterType, parameter_type>, 0, Args...>();
+    static_assert(selected_index < sizeof...(Args), "Could not find the requested parameter type.");
+    return std::get<selected_index>(tuple);
+}
+
 /// @brief Type of Buffer with requested \tparam parameter_type
 ///
 /// @tparam TParameterType Type of the parameter type (required for parameter selection within plugins).
@@ -232,6 +245,7 @@ decltype(auto) select_parameter_type_or_default(std::tuple<DefaultArguments...> 
         constexpr size_t selected_index = find_pos<ParameterTypeConstant, 0, Args...>();
         return std::get<selected_index>(std::forward_as_tuple(args...));
     } else {
+        static_assert(!std::is_reference_v<DefaultParameterType>, "DefaultParameterType must not be a reference.");
         return std::make_from_tuple<DefaultParameterType>(std::move(default_arguments));
     }
 }

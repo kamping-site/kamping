@@ -22,8 +22,7 @@
 ///
 /// Barrier takes no parameters. Any parameters passed will cause a compilation error.
 ///
-/// The parameter pack prohibits the compiler form compiling this
-/// function even when it's not used.
+/// The parameter pack prohibits the compiler from compiling this function when it's not used.
 template <
     template <typename...>
     typename DefaultContainerType,

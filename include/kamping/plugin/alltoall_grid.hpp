@@ -1,3 +1,19 @@
+// This file is part of KaMPIng.
+//
+// Copyright 2024 The KaMPIng Authors
+//
+// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+// for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
+// <https://www.gnu.org/licenses/>.
+
+/// @file
+/// @brief Plugin to enable grid communication.
+
 #include <numeric>
 
 #include "kamping/checking_casts.hpp"
@@ -5,6 +21,8 @@
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/plugin/plugin_helpers.hpp"
+
+#pragma once
 
 namespace kamping::plugin {
 
@@ -139,14 +157,14 @@ public:
         : _size_of_orig_comm{comm.size()},
           _rank_in_orig_comm{comm.rank()} {
         double const sqrt       = std::sqrt(comm.size());
-        const size_t floor_sqrt = static_cast<size_t>(std::floor(sqrt));
-        const size_t ceil_sqrt  = static_cast<size_t>(std::ceil(sqrt));
+        size_t const floor_sqrt = static_cast<size_t>(std::floor(sqrt));
+        size_t const ceil_sqrt  = static_cast<size_t>(std::ceil(sqrt));
         // We want to ensure that #columns + 1 >= #rows >= #columns.
         // Therefore, use floor(sqrt(comm.size())) columns unless we have enough PEs to begin another row when using
         // ceil(sqrt(comm.size()) columns.
-        const size_t threshold                      = floor_sqrt * ceil_sqrt;
+        size_t const threshold                      = floor_sqrt * ceil_sqrt;
         _num_columns                                = (comm.size() >= threshold) ? ceil_sqrt : floor_sqrt;
-        const size_t num_ranks_in_incomplete_column = comm.size() / _num_columns;
+        size_t const num_ranks_in_incomplete_column = comm.size() / _num_columns;
         auto [row, col]          = pos_in_complete_grid(comm.rank()); // assume that we have a complete grid,
         _size_complete_rectangle = _num_columns * num_ranks_in_incomplete_column;
         if (comm.rank() >= _size_complete_rectangle) {
@@ -168,6 +186,12 @@ public:
     /// - \ref kamping::send_buf() containing the data that is sent to each rank. The size of this buffer has to be at
     /// least the sum of the send_counts argument.
     /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
+    /// - \ref kamping::send_displs() containing the number of elements to send to each rank.
+    ///
+    /// The following parameters are optional:
+    /// - \ref kamping::send_displs() containing the offsets of the messages in send_buf. The `send_counts[i]` elements
+    /// starting at `send_buf[send_displs[i]]` will be sent to rank `i`. If omitted, this is calculated as the exclusive
+    /// prefix-sum of `send_counts`.
     ///
     /// Internally, each element in the send buffer is wrapped in an envelope to facilitate the indirect routing. The
     /// envelope consists at least of the destination PE of each element but can be extended to also hold the
@@ -185,7 +209,7 @@ public:
         KAMPING_CHECK_PARAMETERS(
             Args,
             KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
-            KAMPING_OPTIONAL_PARAMETERS()
+            KAMPING_OPTIONAL_PARAMETERS(send_displs)
         );
         // Get send_buf
         auto const& send_buf =
@@ -193,7 +217,21 @@ public:
         // Get send_counts
         auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...)
                                       .template construct_buffer_or_rebind<DefaultContainerType>();
-        auto rowwise_recv_buf = rowwise_exchange<envelope_level>(send_buf, send_counts);
+
+        using default_send_displs_type = decltype(kamping::send_displs_out(alloc_new<DefaultContainerType<int>>));
+        auto&& send_displs =
+            internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
+                std::tuple(),
+                args...
+            )
+                .template construct_buffer_or_rebind<DefaultContainerType>();
+        // Calculate send_displs if necessary
+        constexpr bool do_calculate_send_displs = internal::has_to_be_computed<decltype(send_displs)>;
+        if constexpr (do_calculate_send_displs) {
+            send_displs.resize_if_requested([&]() { return _size_of_orig_comm; });
+            std::exclusive_scan(send_counts.data(), send_counts.data() + _size_of_orig_comm, send_displs.data(), 0);
+        }
+        auto rowwise_recv_buf = rowwise_exchange<envelope_level>(send_buf, send_counts, send_displs);
         return columnwise_exchange<envelope_level>(std::move(rowwise_recv_buf));
     }
 
@@ -201,11 +239,18 @@ public:
     /// The following parameters are required:
     /// - \ref kamping::send_buf() containing the data that is sent to each rank. The size of this buffer has to be at
     /// least the sum of the send_counts argument.
+    ///
     /// - \ref kamping::send_counts() containing the number of elements to send to each rank.
     ///
     /// The following parameters are optional:
+    /// - \ref kamping::send_displs() containing the offsets of the messages in send_buf. The `send_counts[i]` elements
+    /// starting at `send_buf[send_displs[i]]` will be sent to rank `i`. If omitted, this is calculated as the exclusive
+    /// prefix-sum of `send_counts`.
+    ///
     /// - \ref kamping::recv_counts() containing the number of elements to receive from each rank.
+    ///
     /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, this buffer will contain
+    ///
     /// the data received as specified for send_buf. The buffer will be resized according to the buffer's
     /// kamping::BufferResizePolicy. If resize policy is kamping::BufferResizePolicy::no_resize, the buffer's underlying
     /// storage must be large enough to store all received elements.
@@ -223,7 +268,7 @@ public:
         KAMPING_CHECK_PARAMETERS(
             Args,
             KAMPING_REQUIRED_PARAMETERS(send_buf, send_counts),
-            KAMPING_OPTIONAL_PARAMETERS(recv_buf, recv_counts)
+            KAMPING_OPTIONAL_PARAMETERS(send_displs, recv_buf, recv_counts, recv_displs)
         );
         constexpr MessageEnvelopeLevel envelope_level = MessageEnvelopeLevel::source;
         // get send_buf
@@ -231,10 +276,29 @@ public:
         using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
         using default_recv_value_type = std::remove_const_t<send_value_type>;
         // get send_counts
-        auto& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...);
+        auto const& send_counts = internal::select_parameter_type<internal::ParameterType::send_counts>(args...)
+                                      .template construct_buffer_or_rebind<DefaultContainerType>();
+
+        using default_send_displs_type = decltype(kamping::send_displs_out(alloc_new<DefaultContainerType<int>>));
+        auto&& send_displs =
+            internal::select_parameter_type_or_default<internal::ParameterType::send_displs, default_send_displs_type>(
+                std::tuple(),
+                args...
+            )
+                .template construct_buffer_or_rebind<DefaultContainerType>();
+        // Calculate send_displs if necessary
+        constexpr bool do_calculate_send_displs = internal::has_to_be_computed<decltype(send_displs)>;
+        if constexpr (do_calculate_send_displs) {
+            send_displs.resize_if_requested([&]() { return _size_of_orig_comm; });
+            std::exclusive_scan(send_counts.data(), send_counts.data() + _size_of_orig_comm, send_displs.data(), 0);
+        }
 
         // perform the actual message exchange
-        auto grid_recv_buf = alltoallv_with_envelope<envelope_level>(std::move(send_buf), std::move(send_counts));
+        auto grid_recv_buf = alltoallv_with_envelope<envelope_level>(
+            std::move(send_buf),
+            kamping::send_counts(send_counts.underlying()),
+            kamping::send_displs(send_displs.underlying())
+        );
 
         // post-processing (fixing ordering problems etc.)
         // Get recv counts
@@ -260,6 +324,24 @@ public:
             KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
         }
 
+        // Get recv displs
+        using default_recv_displs_type = decltype(kamping::recv_displs_out(alloc_new<DefaultContainerType<int>>));
+        auto&& recv_displs =
+            internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
+                std::tuple(),
+                args...
+            )
+                .template construct_buffer_or_rebind<DefaultContainerType>();
+        constexpr bool do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
+
+        if constexpr (do_calculate_recv_displs) {
+            recv_displs.resize_if_requested([&]() { return _size_of_orig_comm; });
+            KASSERT(recv_displs.size() >= _size_of_orig_comm, "Recv displs buffer is not large enough.", assert::light);
+            Span recv_displs_span(recv_displs.data(), recv_displs.size());
+            Span recv_counts_span(recv_counts.data(), recv_counts.size());
+            std::exclusive_scan(recv_counts_span.begin(), recv_counts_span.end(), recv_displs_span.begin(), 0);
+        }
+
         // get recv_buf
         using default_recv_buf_type =
             decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
@@ -270,25 +352,27 @@ public:
             )
                 .template construct_buffer_or_rebind<DefaultContainerType>();
 
-        write_recv_buffer(grid_recv_buf, recv_counts, recv_buf);
+        write_recv_buffer(grid_recv_buf, recv_buf, recv_counts, recv_displs);
 
-        return internal::make_mpi_result<std::tuple<Args...>>(std::move(recv_buf), std::move(recv_counts));
+        return internal::make_mpi_result<std::tuple<Args...>>(
+            std::move(send_displs),
+            std::move(recv_buf),
+            std::move(recv_counts),
+            std::move(recv_displs)
+        );
     }
 
 private:
-    template <typename RecvCounts>
-    DefaultContainerType<int> compute_write_positions(RecvCounts const& recv_counts) const {
-        DefaultContainerType<int> write_pos(_size_of_orig_comm);
-        std::exclusive_scan(recv_counts.data(), recv_counts.data() + recv_counts.size(), write_pos.data(), int(0));
-        return write_pos;
-    }
-
-    template <typename GridRecvBuffer, typename RecvCounts, typename RecvBuffer>
-    void write_recv_buffer(GridRecvBuffer const& grid_recv_buffer, RecvCounts const& recv_counts, RecvBuffer& recv_buf)
-        const {
-        DefaultContainerType<int> write_pos = compute_write_positions(recv_counts);
-        Span                      write_pos_span(write_pos.data(), write_pos.size());
-        auto                      compute_required_recv_buf_size = [&]() {
+    template <typename GridRecvBuffer, typename RecvBuffer, typename RecvCounts, typename RecvDispls>
+    void write_recv_buffer(
+        GridRecvBuffer const& grid_recv_buffer,
+        RecvBuffer&           recv_buf,
+        RecvCounts const&     recv_counts,
+        RecvDispls const&     recv_displs
+    ) const {
+        auto write_pos = recv_displs.underlying();
+        Span write_pos_span(write_pos.data(), write_pos.size());
+        auto compute_required_recv_buf_size = [&]() {
             Span recv_counts_span(recv_counts.data(), recv_counts.size());
             return asserting_cast<size_t>(write_pos_span.back() + recv_counts_span.back());
         };
@@ -303,7 +387,7 @@ private:
         Span recv_buf_span(recv_buf.data(), recv_buf.size());
         Span grid_recv_buf_span(grid_recv_buffer.data(), grid_recv_buffer.size());
         for (auto const& elem: grid_recv_buf_span) {
-            const size_t pos   = asserting_cast<size_t>(write_pos_span[elem.get_source()]++);
+            size_t const pos   = asserting_cast<size_t>(write_pos_span[elem.get_source()]++);
             recv_buf_span[pos] = std::move(elem.get_payload());
         }
     }
@@ -330,8 +414,9 @@ private:
         return pos_in_complete_grid(destination_rank).row_index;
     }
 
-    template <MessageEnvelopeLevel envelope_level, typename SendBuffer, typename SendCounts>
-    auto rowwise_exchange(SendBuffer const& send_buf, SendCounts const& send_counts) const {
+    template <MessageEnvelopeLevel envelope_level, typename SendBuffer, typename SendCounts, typename SendDispls>
+    auto
+    rowwise_exchange(SendBuffer const& send_buf, SendCounts const& send_counts, SendDispls const& send_displs) const {
         using namespace grid_plugin_helpers;
         auto const                row_send_counts = compute_row_send_counts(send_counts.underlying());
         DefaultContainerType<int> row_send_displs(_row_comm.size());
@@ -352,14 +437,17 @@ private:
             MessageEnvelope<value_type, Destination>,
             MessageEnvelope<value_type, Source, Destination>>;
         DefaultContainerType<MsgType> rowwise_send_buf(total_send_count);
-        size_t                        cur_chunk_offset = 0;
 
         for (size_t i = 0; i < send_counts.size(); ++i) {
+            size_t const send_count = asserting_cast<size_t>(send_counts.underlying().data()[i]);
+            if (send_count == 0) {
+                continue;
+            }
             int const    destination        = asserting_cast<int>(i);
             auto const   destination_in_row = get_destination_in_rowwise_exchange(asserting_cast<size_t>(i));
-            size_t const send_count         = asserting_cast<size_t>(send_counts.underlying().data()[i]);
+            size_t const cur_displacement   = asserting_cast<size_t>(send_displs.data()[i]);
             for (std::size_t ii = 0; ii < send_count; ++ii) {
-                auto       elem  = send_buf.data()[cur_chunk_offset + ii];
+                auto       elem  = send_buf.data()[cur_displacement + ii];
                 auto const idx   = index_displacements[destination_in_row]++;
                 auto&      entry = rowwise_send_buf[static_cast<size_t>(idx)];
                 entry            = MsgType(std::move(elem));
@@ -370,12 +458,11 @@ private:
                     entry.set_source(asserting_cast<int>(_rank_in_orig_comm));
                 }
             }
-            cur_chunk_offset += send_count;
         }
         return _row_comm.alltoallv(
             kamping::send_buf(rowwise_send_buf),
             kamping::send_counts(row_send_counts),
-            send_displs(row_send_displs)
+            kamping::send_displs(row_send_displs)
         );
     }
 
@@ -462,7 +549,7 @@ template <typename Comm, template <typename...> typename DefaultContainerType>
 class GridCommunicator : public plugin::PluginBase<Comm, DefaultContainerType, GridCommunicator> {
 public:
     /// @brief Returns a \ref kamping::plugin::GridCommunicator.
-    auto make_grid_communicator() {
+    auto make_grid_communicator() const {
         return grid::GridCommunicator<DefaultContainerType>(this->to_communicator());
     }
 };

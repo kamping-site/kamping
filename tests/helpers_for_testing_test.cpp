@@ -170,7 +170,7 @@ TYPED_TEST(OwnContainerTest, data_works) {
         EXPECT_EQ(container.copy_count(), 0);
     }
     {
-        const testing::OwnContainer<typename TestFixture::value_type> container(10, value);
+        testing::OwnContainer<typename TestFixture::value_type> const container(10, value);
         EXPECT_EQ(container.data(), container.begin());
         EXPECT_EQ(container.data(), &container[0]);
         EXPECT_EQ(container.copy_count(), 0);

@@ -36,31 +36,34 @@
 /// @brief Wrapper for \c MPI_Reduce.
 ///
 /// This wraps \c MPI_Reduce. The operation combines the elements in the input buffer provided via \c
-/// kamping::send_buf() and returns the combined value on the root rank. The following parameters are required:
+/// kamping::send_buf() and returns the combined value on the root rank.
+///
+/// The following parameters are required:
 /// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
 /// each rank.
 ///
-/// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided
-/// explicitly, the compatibility of the type and operation has to be ensured by the user.
+/// - \ref kamping::recv_buf() specifying a buffer for the output. This parameter is only required on the root rank.
+///
+/// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided,
+/// the compatibility of the type and operation has to be ensured by the user.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::send_recv_count() specifying how many elements of the buffer take part in the reduction.
-/// If omitted, the size of the send buffer is used as a default.
-///
-/// - \ref kamping::recv_buf() containing a buffer for the output. This parameter is only required on the root rank.
-/// The buffer will be resized according to the buffer's kamping::BufferResizePolicy. If this is
-/// \ref kamping::BufferResizePolicy::no_resize, the buffer's underlying storage must be large enough to hold all
-/// received elements. If the send_recv_type is user provided, the buffer's resize policy has to be \ref
-/// kamping::BufferResizePolicy::no_resize.
-///
-/// - \ref kamping::root() the root rank. If not set, the default root process of the communicator will be used.
+/// If omitted, the size of the send buffer is used as a default. This parameter is mandatory if \ref
+/// kamping::send_type() is given.
 ///
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send_recv type. If omitted, the \c MPI
 /// datatype is derived automatically based on send_buf's underlying \c value_type.
 ///
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// - \ref kamping::root() the root rank. If not set, the default root process of the communicator will be used.
+///
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -175,7 +178,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
 /// The following parameters are optional:
 /// - \ref kamping::root() the root rank. If not set, the default root process of the communicator will be used.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return Returns an std::optional object encapsulating the reduced value on the root rank and an empty std::optional
 /// object on all non-root ranks.

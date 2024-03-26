@@ -147,8 +147,8 @@ static constexpr bool is_vector_bool_v<
 template <typename T>
 static constexpr bool
     is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
-        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
-            std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
+        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value
+        && std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
 
 KAMPING_MAKE_HAS_MEMBER(resize)
 
@@ -730,6 +730,7 @@ constexpr bool is_empty_data_buffer_v<EmptyDataBuffer<T, type, buffer_type_param
 /// Creates a user allocated DataBuffer with the given template parameters and ownership based on whether an rvalue or
 /// lvalue reference is passed.
 ///
+/// @tparam TParameterType type of parameter type represented by this buffer.
 /// @tparam parameter_type parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -742,7 +743,8 @@ constexpr bool is_empty_data_buffer_v<EmptyDataBuffer<T, type, buffer_type_param
 ///
 /// @return A user allocated DataBuffer with the given template parameters and matching ownership.
 template <
-    ParameterType       parameter_type,
+    typename TParameterType,
+    TParameterType      parameter_type,
     BufferModifiability modifiability,
     BufferType          buffer_type,
     BufferResizePolicy  buffer_resize_policy,
@@ -760,7 +762,7 @@ auto make_data_buffer(Data&& data) {
     static_assert(!is_const_data_type || is_const_buffer);
     return DataBuffer<
         std::remove_const_t<std::remove_reference_t<Data>>,
-        ParameterType,
+        TParameterType,
         parameter_type,
         modifiability,
         ownership,
@@ -774,6 +776,7 @@ auto make_data_buffer(Data&& data) {
 ///
 /// Creates a library allocated DataBuffer with the given template parameters.
 ///
+/// @tparam TParameterType type of parameter type represented by this buffer.
 /// @tparam parameter_type parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -785,7 +788,8 @@ auto make_data_buffer(Data&& data) {
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
 template <
-    ParameterType       parameter_type,
+    typename TParameterType,
+    TParameterType      parameter_type,
     BufferModifiability modifiability,
     BufferType          buffer_type,
     BufferResizePolicy  buffer_resize_policy,
@@ -794,7 +798,7 @@ template <
 auto make_data_buffer(AllocNewT<Data>) {
     return DataBuffer<
         Data,
-        ParameterType,
+        TParameterType,
         parameter_type,
         BufferModifiability::modifiable, // something library allocated is always modifiable
         BufferOwnership::owning,
@@ -808,6 +812,7 @@ auto make_data_buffer(AllocNewT<Data>) {
 /// type.
 ///
 ///
+/// @tparam TParameterType type of parameter type represented by this buffer.
 /// @tparam parameter_type parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -819,6 +824,7 @@ auto make_data_buffer(AllocNewT<Data>) {
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
 template <
+    typename TParameterType,
     ParameterType       parameter_type,
     BufferModifiability modifiability,
     BufferType          buffer_type,
@@ -834,7 +840,7 @@ auto make_data_buffer(AllocNewUsingT<Data>) {
     );
     return DataBuffer<
         Data<ValueType>,
-        ParameterType,
+        TParameterType,
         parameter_type,
         BufferModifiability::modifiable, // something library allocated is always modifiable
         BufferOwnership::owning,

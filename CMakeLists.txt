@@ -36,6 +36,8 @@ if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     else ()
         message(STATUS "Doxygen not found, not building docs")
     endif ()
+
+    add_subdirectory(cmake/Format.cmake)
 endif ()
 
 # Require out-of-source builds

@@ -101,8 +101,8 @@ TEST(AlltoallTest, given_recv_buffer_is_bigger_than_required) {
         comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::grow_only>(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
         // first half of result buffer contains recv buffer, second half remains untouched
-        const std::vector<int> first_half(recv_buffer.begin(), recv_buffer.begin() + comm.size_signed());
-        const std::vector<int> second_half(recv_buffer.begin() + comm.size_signed(), recv_buffer.end());
+        std::vector<int> const first_half(recv_buffer.begin(), recv_buffer.begin() + comm.size_signed());
+        std::vector<int> const second_half(recv_buffer.begin() + comm.size_signed(), recv_buffer.end());
         EXPECT_EQ(first_half, expected_result);
         EXPECT_EQ(second_half, std::vector<int>(comm.size(), default_init_value));
     }
@@ -112,8 +112,8 @@ TEST(AlltoallTest, given_recv_buffer_is_bigger_than_required) {
         comm.alltoall(send_buf(input), recv_buf<BufferResizePolicy::no_resize>(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
         // first half of result buffer contains recv buffer, second half remains untouched
-        const std::vector<int> first_half(recv_buffer.begin(), recv_buffer.begin() + comm.size_signed());
-        const std::vector<int> second_half(recv_buffer.begin() + comm.size_signed(), recv_buffer.end());
+        std::vector<int> const first_half(recv_buffer.begin(), recv_buffer.begin() + comm.size_signed());
+        std::vector<int> const second_half(recv_buffer.begin() + comm.size_signed(), recv_buffer.end());
         EXPECT_EQ(first_half, expected_result);
         EXPECT_EQ(second_half, std::vector<int>(comm.size(), default_init_value));
     }
@@ -123,8 +123,8 @@ TEST(AlltoallTest, given_recv_buffer_is_bigger_than_required) {
         comm.alltoall(send_buf(input), recv_buf(recv_buffer));
         EXPECT_EQ(recv_buffer.size(), 2 * comm.size());
         // first half of result buffer contains recv buffer, second half remains untouched
-        const std::vector<int> first_half(recv_buffer.begin(), recv_buffer.begin() + comm.size_signed());
-        const std::vector<int> second_half(recv_buffer.begin() + comm.size_signed(), recv_buffer.end());
+        std::vector<int> const first_half(recv_buffer.begin(), recv_buffer.begin() + comm.size_signed());
+        std::vector<int> const second_half(recv_buffer.begin() + comm.size_signed(), recv_buffer.end());
         EXPECT_EQ(first_half, expected_result);
         EXPECT_EQ(second_half, std::vector<int>(comm.size(), default_init_value));
     }
@@ -442,7 +442,7 @@ TEST(AlltoallTest, different_send_and_recv_counts_without_explicit_mpi_types) {
 TEST(AlltoallTest, structured_bindings_explicit_recv_buffer) {
     Communicator comm;
     // each PE sends its rank to all other PEs
-    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
+    std::vector<std::uint64_t> const input(comm.size(), comm.rank());
     std::vector<std::uint64_t>       recv_buffer(comm.size());
     // explicit recv buffer
     auto [send_type, recv_type, send_count, recv_count] = comm.alltoall(
@@ -464,7 +464,7 @@ TEST(AlltoallTest, structured_bindings_explicit_recv_buffer) {
 TEST(AlltoallTest, structured_bindings_implicit_recv_buffer) {
     Communicator comm;
     // each PE sends its rank to all other PEs
-    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
+    std::vector<std::uint64_t> const input(comm.size(), comm.rank());
     auto [recv_buffer, send_type, recv_type, send_count, recv_count] =
         comm.alltoall(send_type_out(), send_buf(input), recv_type_out(), send_count_out(), recv_count_out());
 
@@ -478,7 +478,7 @@ TEST(AlltoallTest, structured_bindings_implicit_recv_buffer) {
 TEST(AlltoallTest, structured_bindings_explicit_owning_recv_buffer) {
     Communicator comm;
     // each PE sends its rank to all other PEs
-    const std::vector<std::uint64_t> input(comm.size(), comm.rank());
+    std::vector<std::uint64_t> const input(comm.size(), comm.rank());
     auto [send_type, recv_buffer, recv_type, send_count, recv_count] = comm.alltoall(
         send_type_out(),
         send_buf(input),

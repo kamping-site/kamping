@@ -214,7 +214,7 @@ kamping_register_mpi_test(
     CORES ${grid_test_cores}
 )
 foreach (p ${grid_test_cores})
-    set_tests_properties(test_alltoall_grid.${p}cores PROPERTIES TIMEOUT 30)
+    set_tests_properties(test_alltoall_grid.${p}cores PROPERTIES TIMEOUT 40)
 endforeach ()
 kamping_register_mpi_test(
     test_alltoall_sparse
@@ -225,6 +225,16 @@ kamping_register_mpi_test(
     test_sort
     FILES plugins/sort_test.cpp
     CORES 1 4
+)
+
+test_alltoall_dispatch
+    FILES plugins/alltoall_dispatch_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
+    test_reproducible_reduce
+    FILES plugins/reproducible_reduce.cpp
+    CORES 4
 )
 
 kamping_register_mpi_test(

@@ -13,3 +13,6 @@
 [submodule "extern/cereal"]
 	path = extern/cereal
 	url = https://github.com/USCiLab/cereal
+[submodule "cmake/Format.cmake"]
+	path = cmake/Format.cmake
+	url = https://github.com/TheLartians/Format.cmake

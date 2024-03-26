@@ -23,8 +23,8 @@ int main(int /*argc*/, char** /*argv*/) {
     Communicator           comm;
     std::vector<int>       input(comm.size(), 0);
     std::vector<int>       recv_buffer(comm.size());
-    const std::vector<int> send_count_values(comm.size(), 1);
-    const std::vector<int> recv_count_values(comm.size(), 1);
+    std::vector<int> const send_count_values(comm.size(), 1);
+    std::vector<int> const recv_count_values(comm.size(), 1);
 
 #if defined(SEND_TYPE_GIVEN_BUT_NO_SEND_COUNTS)
     comm.alltoallv(send_buf(input), send_type(MPI_INT));

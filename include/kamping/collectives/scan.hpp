@@ -45,9 +45,8 @@
 /// explicitly, the compatibility of the type and operation has to be ensured by the user.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::recv_buf() containing a buffer for the output. The buffer will be resized according to the buffer's
-/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements. This requires a size of at least `send_recv_count`.
+/// - \ref kamping::recv_buf() containing a buffer for the output. A buffer size of at least `send_recv_count` elements
+/// is required.
 ///
 /// - \ref kamping::send_recv_count() containing the number of elements to be processed in this operation. This
 /// parameter has to be the same at each rank. If omitted, the size of the send buffer will be used as send_recv_count.
@@ -58,9 +57,13 @@
 /// In-place scan is supported by providing `send_recv_buf()` instead of `send_buf()` and `recv_buf()`. For details
 /// on the in-place version, see \ref Communicator::scan_inplace().
 ///
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -156,7 +159,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 ///
 /// The following parameters are required:
 /// - \ref kamping::send_recv_buf() containing the data for which to perform the scan and will store the result
-/// of the scan. This buffer will be resized according to the buffer's kamping::BufferResizePolicy.
+/// of the scan.
 ///
 /// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided
 /// explicitly, the compatibility of the type and operation has to be ensured by the user.
@@ -168,9 +171,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as data type in this operation. If omitted,
 /// the \c MPI datatype is derived automatically based on send_recv_buf's underlying \c value_type.
 ///
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -256,7 +263,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_inplace(Args.
 /// each rank.
 /// - kamping::op() wrapping the operation to apply to the input.
 ///
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return The single element result of the scan.
 template <

@@ -126,14 +126,6 @@ struct PredicateForSparseAlltoall {
     }
 };
 
-/// @brief Filter the arguments \tparam Args for which the static member function `discard()` of \tparam Predicate
-/// returns true and pack (move) remaining arguments into
-template <typename Predicate, typename... Args>
-auto filter_args_into_tuple(Args&&... args) {
-    using namespace kamping::internal;
-    using ArgsToKeep = typename FilterOut<Predicate, std::tuple<Args...>>::type;
-    return construct_buffer_tuple<ArgsToKeep>(args...);
-}
 } // namespace internal
 
 /// @brief Generates buffer wrapper based on the data in the sparse send buffer.
@@ -264,8 +256,7 @@ void SparseAlltoall<Comm, DefaultContainerType>::alltoallv_sparse(Args... args) 
             };
             std::apply(
                 callable,
-                sparse_alltoall::internal::filter_args_into_tuple<
-                    sparse_alltoall::internal::PredicateForSparseAlltoall>(args...)
+                filter_args_into_tuple<sparse_alltoall::internal::PredicateForSparseAlltoall>(args...)
             );
         }
     }

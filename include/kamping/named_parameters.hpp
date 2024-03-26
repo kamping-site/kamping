@@ -53,16 +53,15 @@ auto send_buf(internal::ignore_t<Data> ignore [[maybe_unused]]) {
         make_empty_data_buffer_builder<Data, internal::ParameterType::send_buf, internal::BufferType::ignore>();
 }
 
-/// @brief Generates buffer wrapper based on the data in the send buffer, i.e. the underlying storage must contain
-/// the data element(s) to send.
+/// @brief Passes a container/single value as a send buffer to the underlying MPI call.
 ///
-/// If the underlying container provides \c data(), it is assumed that it is a container and all elements in the
+/// If data provides \c data(), it is assumed that it is a container and all elements in the
 /// container are considered for the operation. In this case, the container has to provide a \c size() member functions
-/// and expose the contained \c value_type. If no \c data() member function exists, a single element is wrapped in the
-/// send buffer.
+/// and expose the contained \c value_type. If no \c data() member function exists, a single value is assumed
 /// @tparam Data Data type representing the element(s) to send.
 /// @param data Data (either a container which contains the elements or the element directly) to send
-/// @return Object referring to the storage containing the data elements to send.
+/// @return Parameter object referring to the storage containing the data elements to send.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Data, typename Enable = std::enable_if_t<!internal::is_serialization_buffer_v<Data>>>
 auto send_buf(Data&& data) {
     return internal::make_data_buffer_builder<
@@ -72,7 +71,9 @@ auto send_buf(Data&& data) {
         BufferResizePolicy::no_resize>(std::forward<Data>(data));
 }
 
-/// @brief A send buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_serialized().
+/// @brief Passes a container/single value as a send buffer to the underlying MPI call. Additionally indicates to use
+/// serialization to transfer the data.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <
     typename SerializationBufferType,
     std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>, bool> = true>
@@ -84,11 +85,12 @@ auto send_buf(SerializationBufferType&& data) {
         BufferResizePolicy::no_resize>(std::forward<SerializationBufferType>(data));
 }
 
-/// @brief Generates a buffer taking ownership of the data pass to the send buffer as an initializer list.
+/// @brief Passes the data provided as an initializer list as a send buffer to the underlying MPI call.
 ///
 /// @tparam T The type of the elements in the initializer list.
 /// @param data An initializer list of the data elements.
-/// @return Object referring to the storage containing the data elements to send.
+/// @return Parameter object referring to the storage containing the data elements to send.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 auto send_buf(std::initializer_list<T> data) {
     return internal::make_data_buffer_builder<
@@ -98,16 +100,16 @@ auto send_buf(std::initializer_list<T> data) {
         BufferResizePolicy::no_resize>(std::move(data));
 }
 
-/// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
-/// and the root() of the operation. This buffer type may encapsulate const data and in which case it can only be used
-/// as the send buffer. For some functions (e.g. bcast), you have to pass a send_recv_buf as the send buffer.
+/// @brief Passes a container/single value as a send or receive buffer to the underlying MPI call.
 ///
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. If omitted,
-/// the resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying container shall be resized. If
+/// omitted, the resize policy is BufferResizePolicy::no_resize, indicating that the container should not be resized by
+/// kamping.
 /// @tparam Data Data type representing the element(s) to send/receive.
 /// @param data Data (either a container which contains the elements or the element directly) to send or the buffer to
 /// receive into.
-/// @return Object referring to the storage containing the data elements to send / the received elements.
+/// @return Parameter object referring to the storage containing the data elements to send or receive.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <
     BufferResizePolicy resize_policy = BufferResizePolicy::no_resize,
     typename Data,
@@ -123,7 +125,9 @@ auto send_recv_buf(Data&& data) {
         resize_policy>(std::forward<Data>(data));
 }
 
-/// @brief A send/recv buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_serialized().
+/// @brief Passes a container/single value as a send or receive buffer to the underlying MPI call. Additionally
+/// indicates to use serialization to transfer the data.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <
     typename SerializationBufferType,
     typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>
@@ -138,11 +142,10 @@ auto send_recv_buf(SerializationBufferType&& buffer) {
         BufferResizePolicy::resize_to_fit>(std::forward<SerializationBufferType>(buffer));
 }
 
-/// @brief Generates a buffer wrapper encapsulating a buffer used for sending or receiving based on this processes rank
-/// and the root() of the operation.
-/// @tparam Container Container type which contains the elements to send/receive. Container must provide \c data() and
-/// \c size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the data elements to send / the received elements.
+/// @brief Indicates to use an object of type \tparam Container as `send_recv_buf`.
+/// Container must provide \c data(), \c size(), \c resize(unsigned int) member functions and expose the contained \c
+/// value_type.
+/// @return Parameter object referring to the storage containing the data elements to send or receive.
 template <typename Container>
 auto send_recv_buf(AllocNewT<Container>) {
     return internal::make_data_buffer_builder<
@@ -152,9 +155,12 @@ auto send_recv_buf(AllocNewT<Container>) {
         BufferResizePolicy::resize_to_fit>(alloc_new<Container>);
 }
 
-/// @brief Construct a send recv buffer using \p ValueType as the underlying value type. The kind of container is
-/// determined by the MPI operation and usually defaults to \ref Communicator::default_container_type.
+/// @brief Indicates to use a parameter object encapsulating an underlying container with a \c value_type \tparam
+/// ValueType as `send_recv_buf`. The type of the underlying container is determined by the MPI operation and usually
+/// defaults to \ref Communicator::default_container_type.
 /// @tparam ValueType The type of the elements in the buffer.
+/// @return Parameter object referring to the storage containing the data elements to send or receive.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename ValueType>
 auto send_recv_buf(AllocContainerOfT<ValueType>) {
     return internal::make_data_buffer_builder<
@@ -164,14 +170,15 @@ auto send_recv_buf(AllocContainerOfT<ValueType>) {
         BufferResizePolicy::resize_to_fit>(alloc_container_of<ValueType>);
 }
 
-/// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage must
-/// contain the send counts to each relevant PE.
+/// @brief Passes a container as send counts to the underlying call, i.e. the container's storage must
+/// contain the send count to each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
+/// value_type.
 /// @tparam Container Container type which contains the send counts.
 /// @param container Container which contains the send counts.
-/// @return Object referring to the storage containing the send counts.
+/// @return Parameter object referring to the storage containing the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto send_counts(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -182,12 +189,12 @@ auto send_counts(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper for the send counts based on an initializer list, i.e. the
-/// send counts to each relevant PE.
+/// @brief Passes the initializer list as send counts to the underlying call.
 ///
 /// @tparam Type The type of the initializer list.
 /// @param counts The send counts.
-/// @return Object referring to the storage containing the send counts.
+/// @return Parameter object referring to the storage containing the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 auto send_counts(std::initializer_list<T> counts) {
     return internal::make_data_buffer_builder<
@@ -198,15 +205,22 @@ auto send_counts(std::initializer_list<T> counts) {
         int>(std::move(counts));
 }
 
-/// @brief Generates buffer wrapper based on a container for the send counts, i.e. the underlying storage
-/// will contained the send counts when the \c MPI call has been completed.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
+/// @brief Passes a \p container, into which the send counts deduced by KaMPIng will be written, to the underlying call.
+/// \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - expose \c value_type (which must be int).
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
+/// `resize(unsigned int)` member function.
+///
+/// The send counts container will be returned as part of the underlying call's result object if it is moved/passed by
+/// value (e.g. `send_counts_out(std::move(container))`).
+///
 /// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
-/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
-/// @tparam Container Container type which contains the send counts.
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
+/// @tparam Container Container type which will contain  the send counts.
 /// @param container Container which will contain the send counts.
-/// @return Object referring to the storage containing the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_counts_out(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -217,11 +231,19 @@ auto send_counts_out(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
-/// counts.
-/// @tparam Container Container type which contains the send counts. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
-/// @return Object referring to the storage containing the send counts.
+/// @brief Indicates to construct an object of type \p Container, into which the send counts deduced by KaMPIng will be
+/// written, in the underlying call.
+/// \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type (which must be int).
+///
+/// The send counts container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send counts.
+/// @return Parameter object referring to the storage which will contain the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto send_counts_out(AllocNewT<Container>) {
     return internal::make_data_buffer_builder<
@@ -232,11 +254,20 @@ auto send_counts_out(AllocNewT<Container>) {
         int>(alloc_new<Container>);
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
-/// counts.
-/// @tparam Container Container type which contains the send counts. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the send counts.
+/// @brief Indicates to construct a container with type \p Container<int>, into which the send counts deduced by KaMPIng
+/// will be written, in the underlying call.
+///
+/// \p Container<int> must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type.
+///
+/// The send counts container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send counts.
+/// @return Parameter object referring to the storage which will contain the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <template <typename...> typename Container>
 auto send_counts_out(AllocNewUsingT<Container>) {
     return internal::make_data_buffer_builder<
@@ -247,8 +278,14 @@ auto send_counts_out(AllocNewUsingT<Container>) {
         int>(alloc_new_using<Container>);
 }
 
-/// @brief Generates a wrapper for a send counts output parameter without any user input.
-/// @return Wrapper for the send counts that can be retrieved as structured binding.
+/// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<int>, into
+/// which the send counts deduced by KaMPIng will be written, in the underlying call.
+///
+/// The send counts container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send counts.
+/// @return Parameter object referring to the storage which will contain the send counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_counts_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_counts,
@@ -257,9 +294,10 @@ inline auto send_counts_out() {
         resize_to_fit>(alloc_container_of<int>);
 }
 
-/// @brief The number of elements to send.
-/// @param count The number of elements.
+/// @brief Passes \p count as send count to the underlying call.
+/// @param count The send count.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_count(int count) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_count,
@@ -269,9 +307,23 @@ inline auto send_count(int count) {
         int>(std::move(count));
 }
 
-/// @brief Output parameter for the number of elements sent.
-/// The value will be returned as part of the result of the MPI call.
+/// @brief Passes \p count, into which the send count deduced by KaMPIng will be written, to the underlying call.
+/// @param count Reference to the location at which the send count will be stored.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto send_count_out(int& count) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(count);
+}
+
+/// @brief Indicates to deduce the send count and return it to the caller as part of the underlying call's result
+/// object.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_count_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_count,
@@ -281,26 +333,15 @@ inline auto send_count_out() {
         int>(alloc_new<int>);
 }
 
-/// @brief Output parameter for the number of elements sent.
-/// The value will be stored in the provided reference.
-/// @param count Reference to the location to story the count at.
-/// @return The corresponding parameter object.
-inline auto send_count_out(int& count) {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::send_count,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        BufferResizePolicy::no_resize,
-        int>(count);
-}
-/// @brief Generates buffer wrapper based on a container for the recv counts, i.e. the underlying storage must
-/// contain the recv counts from each relevant PE.
+/// @brief Passes a container as recv counts to the underlying call, i.e. the container's storage must
+/// contain the recv count from each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
-/// @tparam Container Container type which contains the recv counts.
+/// value_type.
+/// @tparam Container Container type which contains the send counts.
 /// @param container Container which contains the recv counts.
-/// @return Object referring to the storage containing the recv counts.
+/// @return Parameter object referring to the storage containing the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto recv_counts(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -311,12 +352,12 @@ auto recv_counts(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper for the recv counts based on an initializer list, i.e. the
-/// recv counts from each relevant PE.
+/// @brief Passes the initializer list as recv counts to the underlying call.
 ///
 /// @tparam Type The type of the initializer list.
 /// @param counts The recv counts.
-/// @return Object referring to the storage containing the recv counts.
+/// @return Parameter object referring to the storage containing the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 auto recv_counts(std::initializer_list<T> counts) {
     return internal::make_data_buffer_builder<
@@ -327,22 +368,28 @@ auto recv_counts(std::initializer_list<T> counts) {
         int>(std::move(counts));
 }
 
-/// @brief Indicate that the recv counts are ignored.
+/// @brief Indicates that the recv counts are ignored.
 inline auto recv_counts(internal::ignore_t<void> ignore [[maybe_unused]]) {
     return internal::
         make_empty_data_buffer_builder<int, internal::ParameterType::recv_counts, internal::BufferType::ignore>();
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive counts, i.e. the underlying storage
-/// will contained the receive counts when the \c MPI call has been completed.
-/// The underlying container must provide \c data() and
-/// \c size() member functions and expose the contained \c value_type. If a resize policy other than
-/// BufferResizePolicy::no_resize is selected, the container must also provide a \c resize() member function.
+/// @brief Passes a \p container, into which the recv counts deduced by KaMPIng will be written, to the underlying call.
+/// \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - expose \c value_type (which must be int).
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
+/// `resize(unsigned int)` member function.
+///
+/// The recv counts container will be returned as part of the underlying call's result object if it is moved/passed by
+/// value (e.g. `recv_counts_out(std::move(container))`).
+///
 /// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
-/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
-/// @tparam Container Container type which contains the receive counts.
-/// @param container Container which will contain the receive counts.
-/// @return Object referring to the storage containing the receive counts.
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
+/// @tparam Container Container type which will contain the recv counts.
+/// @param container Container which will contain the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_counts_out(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -353,11 +400,19 @@ auto recv_counts_out(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
-/// counts.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
-/// @return Object referring to the storage containing the recv counts.
+/// @brief Indicates to construct an object of type \p Container, into which the recv counts deduced by KaMPIng will be
+/// written, in the underlying call.
+/// \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type (which must be int).
+///
+/// The recv counts container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the recv counts.
+/// @return Parameter object referring to the storage which will contain the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Data>
 auto recv_counts_out(AllocNewT<Data> container) {
     return internal::make_data_buffer_builder<
@@ -368,11 +423,20 @@ auto recv_counts_out(AllocNewT<Data> container) {
         int>(container);
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
-/// counts.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the recv counts.
+/// @brief Indicates to construct a container with type \p Container<int>, into which the recv counts deduced by KaMPIng
+/// will be written, in the underlying call.
+///
+/// \p Container<int> must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type.
+///
+/// The recv counts container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the recv counts.
+/// @return Parameter object referring to the storage which will contain the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <template <typename...> typename Data>
 auto recv_counts_out(AllocNewUsingT<Data> container) {
     return internal::make_data_buffer_builder<
@@ -383,8 +447,14 @@ auto recv_counts_out(AllocNewUsingT<Data> container) {
         int>(container);
 }
 
-/// @brief Generates a wrapper for a recv counts output parameter without any user input.
-/// @return Wrapper for the recv counts that can be retrieved as structured binding.
+/// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<int>, into
+/// which the recv counts deduced by KaMPIng will be written, in the underlying call.
+///
+/// The recv counts container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the recv counts.
+/// @return Parameter object referring to the storage which will contain the recv counts.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_counts_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_counts,
@@ -393,9 +463,10 @@ inline auto recv_counts_out() {
         resize_to_fit>(alloc_container_of<int>);
 }
 
-/// @brief The number of elements to received.
-/// @param count The number of elements.
+/// @brief Passes \p count as recv count to the underlying call.
+/// @param count The recv count.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_count(int count) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_count,
@@ -405,22 +476,10 @@ inline auto recv_count(int count) {
         int>(std::move(count));
 }
 
-/// @brief Output parameter for the number of elements received.
-/// The value will be returned as part of the result of the MPI call.
+/// @brief Passes \p count, into which the recv count deduced by KaMPIng will be written, to the underlying call.
+/// @param count Reference to the location at which the recv count will be stored.
 /// @return The corresponding parameter object.
-inline auto recv_count_out() {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::recv_count,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        BufferResizePolicy::no_resize,
-        int>(alloc_new<int>);
-}
-
-/// @brief Output parameter for the number of elements received.
-/// The value will be stored in the provided reference.
-/// @param count Reference to the location to story the count at.
-/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_count_out(int& count) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_count,
@@ -430,9 +489,23 @@ inline auto recv_count_out(int& count) {
         int>(count);
 }
 
-/// @brief The number of elements to send or receive.
-/// @param count The number of elements.
+/// @brief Indicates to deduce the recv count and return it to the caller as part of the underlying call's result
+/// object.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto recv_count_out() {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(alloc_new<int>);
+}
+
+/// @brief Passes \p count as send/recv count to the underlying call.
+/// @param count The send/recv count.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_count(int count) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_count,
@@ -442,22 +515,10 @@ inline auto send_recv_count(int count) {
         int>(std::move(count));
 }
 
-/// @brief Output parameter for the number of elements sent or received.
-/// The value will be returned as part of the result of the MPI call.
+/// @brief Passes \p count, into which the send/recv count deduced by KaMPIng will be written, to the underlying call.
+/// @param count Reference to the location at which the send/recv count will be stored.
 /// @return The corresponding parameter object.
-inline auto send_recv_count_out() {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::send_recv_count,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        BufferResizePolicy::no_resize,
-        int>(alloc_new<int>);
-}
-
-/// @brief Output parameter for the number of elements sent or received.
-/// The value will be stored in the provided reference.
-/// @param count Reference to the location to story the count at.
-/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_count_out(int& count) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_count,
@@ -467,14 +528,28 @@ inline auto send_recv_count_out(int& count) {
         int>(count);
 }
 
-/// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
-/// must contain the send displacements to each relevant PE.
+/// @brief Indicates to deduce the send/recv count and return it to the caller as part of the underlying call's result
+/// object.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto send_recv_count_out() {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_recv_count,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::no_resize,
+        int>(alloc_new<int>);
+}
+
+/// @brief Passes a container as send displacements to the underlying call, i.e. the container's storage must
+/// contain the send displacement for each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
+/// value_type.
 /// @tparam Container Container type which contains the send displacements.
 /// @param container Container which contains the send displacements.
-/// @return Object referring to the storage containing the send displacements.
+/// @return Parameter object referring to the storage containing the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto send_displs(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -485,12 +560,12 @@ auto send_displs(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper for the send displacements based on an initializer list, i.e. the
-/// send displacements from each relevant PE.
+/// @brief Passes the initializer list as send displacements to the underlying call.
 ///
 /// @tparam Type The type of the initializer list.
 /// @param displs The send displacements.
-/// @return Object referring to the storage containing the send displacements.
+/// @return Parameter object referring to the storage containing the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 auto send_displs(std::initializer_list<T> displs) {
     return internal::make_data_buffer_builder<
@@ -501,16 +576,22 @@ auto send_displs(std::initializer_list<T> displs) {
         int>(std::move(displs));
 }
 
-/// @brief Generates buffer wrapper based on a container for the send displacements, i.e. the underlying storage
-/// will contain the send displacements when the \c MPI call has been completed.
-/// The underlying container must provide \c data() and
-/// \c size() member functions and expose the contained \c value_type. If a resize policy other than
-/// BufferResizePolicy::do_not_resize is selected, the container must also provide a \c resize() member function.
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer should be resized. The
-/// default resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
-/// @tparam Container Container type which contains the send displacements.
+/// @brief Passes a \p container, into which the send displacements deduced by KaMPIng will be written, to the
+/// underlying call. \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - expose \c value_type (which must be int).
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
+/// `resize(unsigned int)` member function.
+///
+/// The send displacements container will be returned as part of the underlying call's result object if it is
+/// moved/passed by value (e.g. `send_displs_out(std::move(container))`).
+///
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
+/// @tparam Container Container type which will contain  the send displacements.
 /// @param container Container which will contain the send displacements.
-/// @return Object referring to the storage containing the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto send_displs_out(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -521,11 +602,18 @@ auto send_displs_out(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
-/// displacements.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
-/// @return Object referring to the storage containing the send displacements.
+/// @brief Indicates to construct an object of type \p Container, into which the send displacements deduced by KaMPIng
+/// will be written, in the underlying call. \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type (which must be int).
+///
+/// The send displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send displacements.
+/// @return Parameter object referring to the storage which will contain the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto send_displs_out(AllocNewT<Container>) {
     return internal::make_data_buffer_builder<
@@ -536,11 +624,20 @@ auto send_displs_out(AllocNewT<Container>) {
         int>(alloc_new<Container>);
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the send
-/// displacements.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the send displacements.
+/// @brief Indicates to construct a container with type \p Container<int>, into which the send displacements deduced by
+/// KaMPIng will be written, in the underlying call.
+///
+/// \p Container<int> must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type.
+///
+/// The send displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send displacements.
+/// @return Parameter object referring to the storage which will contain the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <template <typename...> typename Container>
 auto send_displs_out(AllocNewUsingT<Container>) {
     return internal::make_data_buffer_builder<
@@ -551,8 +648,14 @@ auto send_displs_out(AllocNewUsingT<Container>) {
         int>(alloc_new_using<Container>);
 }
 
-/// @brief Generates a wrapper for a send displs output parameter without any user input.
-/// @return Wrapper for the send displs that can be retrieved as structured binding.
+/// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<int>, into
+/// which the send displacements deduced by KaMPIng will be written, in the underlying call.
+///
+/// The send displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send displacements.
+/// @return Parameter object referring to the storage which will contain the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_displs_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_displs,
@@ -561,14 +664,15 @@ inline auto send_displs_out() {
         resize_to_fit>(alloc_container_of<int>);
 }
 
-/// @brief Generates buffer wrapper based on a container for the recv displacements, i.e. the underlying storage
-/// must contain the recv displacements from each relevant PE.
+/// @brief Passes a container as receive displacements to the underlying call, i.e. the container's storage must
+/// contain the receive displacement for each relevant PE.
 ///
 /// The underlying container must provide \c data() and \c size() member functions and expose the contained \c
-/// value_type
-/// @tparam Container Container type which contains the recv displacements.
-/// @param container Container type which contains the recv displacements.
-/// @return Object referring to the storage containing the recv displacements.
+/// value_type.
+/// @tparam Container Container type which contains the receive displacements.
+/// @param container Container which contains the receive displacements.
+/// @return Parameter object referring to the storage containing the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 auto recv_displs(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -579,12 +683,12 @@ auto recv_displs(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper for the receive displacements based on an initializer list, i.e. the
-/// receive displacements from each relevant PE.
+/// @brief Passes the initializer list as receive displacements to the underlying call.
 ///
 /// @tparam Type The type of the initializer list.
 /// @param displs The receive displacements.
-/// @return Object referring to the storage containing the receive displacements.
+/// @return Parameter object referring to the storage containing the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 auto recv_displs(std::initializer_list<T> displs) {
     return internal::make_data_buffer_builder<
@@ -595,75 +699,22 @@ auto recv_displs(std::initializer_list<T> displs) {
         int>(std::move(displs));
 }
 
-/// @brief Generates buffer wrapper based on a container for the receive buffer, i.e. the underlying storage
-/// will contain the received elements when the \c MPI call has been completed.
-/// The underlying container must provide \c data() and
-/// \c size() member functions and expose the contained \c value_type. If a resize policy other than
-/// BufferResizePolicy::do_not_resize is selected, the container must also provide a \c resize() member function.
-/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized.
-/// @tparam Container Container type which contains the received elements.
-/// @param container Container which will contain the received elements.
-/// @return Object referring to the storage containing the received elements.
-template <
-    BufferResizePolicy resize_policy = BufferResizePolicy::no_resize,
-    typename Container,
-    typename Enable = std::enable_if_t<!internal::is_serialization_buffer_v<Container>>>
-auto recv_buf(Container&& container) {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::recv_buf,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        resize_policy>(std::forward<Container>(container));
-}
-
-/// @brief A recv buffer wrapper based on a serialization buffer. Create one by using \c kamping::as_deserialized().
-template <
-    typename SerializationBufferType,
-    typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>
-auto recv_buf(SerializationBufferType&& buffer) {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::recv_buf,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        BufferResizePolicy::resize_to_fit>(std::forward<SerializationBufferType>(buffer));
-}
-
-/// @brief Generates a buffer wrapper based on a library allocated container for the receive buffer.
-/// The underlying container must provide a \c data(), \c resize() and \c size() member function and expose the
-/// contained \c value_type
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the received elements.
-template <typename Data>
-auto recv_buf(AllocNewT<Data>) {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::recv_buf,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        internal::maximum_viable_resize_policy<Data>>(alloc_new<Data>);
-}
-
-/// @brief Construct a recv buffer using \p ValueType as the underlying value type. The kind of container is determined
-/// by the MPI operation and usually defaults to \ref Communicator::default_container_type.
-/// @tparam ValueType The type of the elements in the buffer.
-template <typename ValueType>
-auto recv_buf(AllocContainerOfT<ValueType>) {
-    return internal::make_data_buffer_builder<
-        internal::ParameterType::recv_buf,
-        internal::BufferModifiability::modifiable,
-        internal::BufferType::out_buffer,
-        resize_to_fit>(alloc_container_of<ValueType>);
-}
-
-/// @brief Generates buffer wrapper based on a container for the receive displacements, i.e. the underlying
-/// storage will contained the receive displacements when the \c MPI call has been completed. The underlying
-/// container must provide a \c data(), \c resize() and \c size() member function and expose the contained \c
-/// value_type
+/// @brief Passes a \p container, into which the receive displacements deduced by KaMPIng will be written, to the
+/// underlying call. \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - expose \c value_type (which must be int).
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
+/// `resize(unsigned int)` member function.
+///
+/// The receive displacements container will be returned as part of the underlying call's result object if it is
+/// moved/passed by value (e.g. `receive_displs_out(std::move(container))`).
+///
 /// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
-/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by kamping.
-/// @tparam Container Container type which contains the receive displacements.
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
+/// @tparam Container Container type which will contain  the receive displacements.
 /// @param container Container which will contain the receive displacements.
-/// @return Object referring to the storage containing the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <BufferResizePolicy resize_policy = BufferResizePolicy::no_resize, typename Container>
 auto recv_displs_out(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -674,26 +725,42 @@ auto recv_displs_out(Container&& container) {
         int>(std::forward<Container>(container));
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
-/// displacements.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type. Its \c value_type must be \c int.
-/// @return Object referring to the storage containing the recv displacements.
-template <typename Data>
-auto recv_displs_out(AllocNewT<Data>) {
+/// @brief Indicates to construct an object of type \p Container, into which the receive displacements deduced by
+/// KaMPIng will be written, in the underlying call. \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type (which must be int).
+///
+/// The receive displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the receive displacements.
+/// @return Parameter object referring to the storage which will contain the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <typename Container>
+auto recv_displs_out(AllocNewT<Container>) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         BufferResizePolicy::resize_to_fit,
-        int>(alloc_new<Data>);
+        int>(alloc_new<Container>);
 }
 
-/// @brief Generates a buffer wrapper based on a library allocated container (of type Container) for the recv
-/// displacements.
-/// @tparam Container Container type which contains the send displacements. Container must provide \c data() and \c
-/// size() and \c resize() member functions and expose the contained \c value_type.
-/// @return Object referring to the storage containing the recv displacements.
+/// @brief Indicates to construct a container with type \p Container<int>, into which the receive displacements deduced
+/// by KaMPIng will be written, in the underlying call.
+///
+/// \p Container<int> must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type.
+///
+/// The receive displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the receive displacements.
+/// @return Parameter object referring to the storage which will contain the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <template <typename...> typename Container>
 auto recv_displs_out(AllocNewUsingT<Container>) {
     return internal::make_data_buffer_builder<
@@ -704,8 +771,14 @@ auto recv_displs_out(AllocNewUsingT<Container>) {
         int>(alloc_new_using<Container>);
 }
 
-/// @brief Generates a wrapper for a recv displs output parameter without any user input.
-/// @return Wrapper for the recv displs that can be retrieved as structured binding.
+/// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<int>, into
+/// which the receive displacements deduced by KaMPIng will be written, in the underlying call.
+///
+/// The receive displacements container will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the receive displacements.
+/// @return Parameter object referring to the storage which will contain the receive displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_displs_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_displs,
@@ -714,94 +787,278 @@ inline auto recv_displs_out() {
         resize_to_fit>(alloc_container_of<int>);
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
-/// \c MPI_Gather.
+/// @brief Passes a \p container, into which the received elements will be written, to the
+/// underlying call. \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - expose \c value_type (which must be int).
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
+/// `resize(unsigned int)` member function.
 ///
-/// @param rank Rank of the root PE.
-/// @returns Root Object containing the rank information of the root PE.
+/// The receive buffer will be returned as part of the underlying call's result object if it is
+/// moved/passed by value (e.g. `recv_buf_out(std::move(container))`).
+///
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
+/// @tparam Container Container type which will contain  the send displacements.
+/// @param container Container which will contain the send displacements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <
+    BufferResizePolicy resize_policy = BufferResizePolicy::no_resize,
+    typename Container,
+    typename Enable = std::enable_if_t<!internal::is_serialization_buffer_v<Container>>>
+auto recv_buf_out(Container&& container) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_policy>(std::forward<Container>(container));
+}
+
+/// @brief Passes a \p container, into which the received elements will be written, to the
+/// underlying call. \p Container must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - expose \c value_type (which must be int).
+/// - if \p resize_policy is not BufferResizePolicy::no_resize, \p container additionally has to expose a
+/// `resize(unsigned int)` member function.
+///
+/// The receive buffer will be returned as part of the underlying call's result object if it is
+/// moved/passed by value (e.g. `recv_buf(std::move(container))`).
+///
+/// @tparam resize_policy Policy specifying whether (and if so, how) the underlying buffer shall be resized. The default
+/// resize policy is BufferResizePolicy::no_resize, indicating that the buffer should not be resized by KaMPIng.
+/// @tparam Container Container type which will contain  the send displacements.
+/// @param container Container which will contain the send displacements.
+/// @see Alias for \ref recv_buf_out(Container&&).
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <
+    BufferResizePolicy resize_policy = BufferResizePolicy::no_resize,
+    typename Container,
+    typename Enable = std::enable_if_t<!internal::is_serialization_buffer_v<Container>>>
+auto recv_buf(Container&& container) {
+    return recv_buf_out<resize_policy>(std::forward<Container>(container));
+}
+
+/// @brief Indicates to deserialize the received elements in the underlying call.
+///
+/// Example usage:
+/// ```cpp
+///   using dict_type = std::unordered_map<int, double>;
+///   recv_buf_out(kamping::as_deserializable<dict_type>());
+/// ```
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <
+    typename SerializationBufferType,
+    typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>
+auto recv_buf_out(SerializationBufferType&& buffer) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        BufferResizePolicy::resize_to_fit>(std::forward<SerializationBufferType>(buffer));
+}
+
+/// @brief Indicates to deserialize the received elements in the underlying call.
+///
+/// Example usage:
+/// ```cpp
+///   using dict_type = std::unordered_map<int, double>;
+///   recv_buf(kamping::as_deserializable<dict_type>());
+/// ```
+///
+/// @see Alias for \ref recv_buf_out(Container&&).
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <
+    typename SerializationBufferType,
+    typename Enable = std::enable_if_t<internal::is_serialization_buffer_v<SerializationBufferType>>>
+auto recv_buf(SerializationBufferType&& buffer) {
+    return recv_buf_out(std::forward<SerializationBufferType>(buffer));
+}
+
+/// @brief Indicates to construct a container of type \p Container, into which the received elements
+/// will be written, in the underlying call.
+///
+/// \p Container<int> must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type.
+///
+/// The receive buffer will be returned as part of the underlying call's result object
+///
+/// @tparam Container Container type which will contains the send displacements.
+/// @return Parameter object referring to the storage which will contain the received elements.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <typename Container>
+auto recv_buf_out(AllocNewT<Container>) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        internal::maximum_viable_resize_policy<Container>>(alloc_new<Container>);
+}
+
+/// @brief Indicates to construct a container of type \p Container, into which the received elements
+/// will be written, in the underlying call.
+///
+/// \p Container<int> must satisfy the following constraints:
+/// - provide a \c data() member function
+/// - provide a \c size() member function
+/// - provide a \c resize(unsigned int) member function
+/// - expose \c value_type.
+///
+/// The receive buffer will be returned as part of the underlying call's result object.
+///
+/// @tparam Container Container type which will contains the send displacements.
+/// @return Parameter object referring to the storage which will contain the received elements.
+/// @see Alias for \ref recv_buf_out(Container&&).
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <typename Container>
+auto recv_buf(AllocNewT<Container> tag) {
+    return recv_buf_out(tag);
+}
+
+/// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<\p
+/// ValueType>, into which the received elements will be written, in the underlying call.
+///
+/// The receive buffer will be returned as part of the underlying call's result object.
+///
+/// defaults to \ref Communicator::default_container_type.
+/// @tparam ValueType The type of the elements in the buffer.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <typename ValueType>
+auto recv_buf_out(AllocContainerOfT<ValueType>) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::recv_buf,
+        internal::BufferModifiability::modifiable,
+        internal::BufferType::out_buffer,
+        resize_to_fit>(alloc_container_of<ValueType>);
+}
+
+/// @brief Indicates to construct a container with type \ref kamping::Communicator::default_container_type<\p
+/// ValueType>, into which the received elements will be written, in the underlying call.
+///
+/// The receive buffer will be returned as part of the underlying call's result object.
+///
+/// defaults to \ref Communicator::default_container_type.
+/// @tparam ValueType The type of the elements in the buffer.
+/// @see Alias for \ref recv_buf_out(Container&&).
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <typename ValueType>
+auto recv_buf(AllocContainerOfT<ValueType> tag) {
+    return recv_buf_out(tag);
+}
+
+/// @brief Passes \p rank as root rank to the underlying call.
+/// This parameter is needed in functions like \c MPI_Gather.
+///
+/// @param rank The root rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto root(int rank) {
     return internal::RootDataBuffer(rank);
 }
 
-/// @brief Generates an object encapsulating the rank of the root PE. This is useful for \c MPI functions like
-/// \c MPI_Gather.
+/// @brief Passes \p rank as root rank to the underlying call.
+/// This parameter is needed in functions like \c MPI_Gather.
 ///
-/// @param rank Rank of the root PE.
-/// @returns Root Object containing the rank information of the root PE.
+/// @param rank The root rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto root(size_t rank) {
     return root(asserting_cast<int>(rank));
 }
 
-/// @brief Generates an object encapsulating the rank of the destination PE in point
-/// to point communication.
+/// @brief Passes \p rank as destination rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Send.
 ///
-/// @param rank The rank.
-/// @returns The destination parameter.
+/// @param rank The destination rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto destination(int rank) {
     return internal::RankDataBuffer<internal::RankType::value, internal::ParameterType::destination>(rank);
 }
 
-/// @brief Generates an object encapsulating the rank of the destination PE in point to point communication.
+/// @brief Passes \p rank as destination rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Send.
 ///
-/// @param rank The rank.
-/// @returns The destination parameter.
+/// @param rank The destination rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto destination(size_t rank) {
     return destination(asserting_cast<int>(rank));
 }
 
-/// @brief Generates an object encapsulating the dummy rank \c MPI_PROC_NULL for the destination PE in point to point
-/// communication.
+/// @brief Passes \c MPI_PROC_NULL as destination rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Send.
 ///
-/// @returns The destination parameter.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto destination(internal::rank_null_t) {
     return internal::RankDataBuffer<internal::RankType::null, internal::ParameterType::destination>{};
 }
 
-/// @brief Generates an object encapsulating the rank of the source PE in
-/// point to point communication.
+/// @brief Passes \p rank as source rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Recv.
 ///
-/// @param rank The rank.
-/// @returns The source parameter.
+/// @param rank The source rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto source(int rank) {
     return internal::RankDataBuffer<internal::RankType::value, internal::ParameterType::source>(rank);
 }
 
-/// @brief Generates an object encapsulating the rank of the source PE in
-/// point to point communication.
+/// @brief Passes \p rank as source rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Recv.
 ///
-/// @param rank The rank.
-/// @returns The source parameter.
+/// @param rank The source rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto source(size_t rank) {
     return source(asserting_cast<int>(rank));
 }
 
-/// @brief Use an arbitrary rank as source in a point to point communication.
+/// @brief Indicates to use \c MPI_ANY_SOURCE as source rank in the underlying call, i.e. accepting any rank as source
+/// rank. This parameter is needed in point-to-point exchange routines like \c MPI_Recv.
+///
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto source(internal::rank_any_t) {
     return internal::RankDataBuffer<internal::RankType::any, internal::ParameterType::source>{};
 }
 
-/// @brief Use the dummy rank \c MPI_PROC_NULL as source in a point to point communication.
+/// @brief Passes \c MPI_PROC_NULL as source rank to the underlying call.
+/// This parameter is needed in point-to-point exchange routines like \c MPI_Recv.
+///
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto source(internal::rank_null_t) {
     return internal::RankDataBuffer<internal::RankType::null, internal::ParameterType::source>{};
 }
 
-/// @brief Use an arbitrary message tag for \c kamping::Communicator::probe() or \c kamping::Communicator::recv().
+/// @brief Indicates to use \c MPI_ANY_TAG as tag in the underlying call.
+///
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto tag(internal::any_tag_t) {
     return internal::TagParam<internal::TagType::any>{};
 }
 
-/// @brief Generates a parameter object encapsulating a tag.
-/// @param value the tag value.
-/// @returns The tag wrapper.
+/// @brief Passes \p value as tag to the underlying call.
+///
+/// @param value The tag value.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto tag(int value) {
     return internal::TagParam<internal::TagType::value>{value};
 }
 
-/// @brief Generates a parameter object encapsulating a tag from an enum type.
-/// The underlying type of the enum must be convertible to \c int.
-/// @tparam EnumType type of the tag enum.
-/// @param value the tag value.
-/// @returns The tag wrapper.
+/// @brief Converts the passed enum \p value to its integer representaiton and passes this value to the underlying call.
+///
+/// @param value The tag value.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename EnumType, typename = std::enable_if_t<std::is_enum_v<EnumType>>>
 inline auto tag(EnumType value) {
     static_assert(
@@ -811,22 +1068,28 @@ inline auto tag(EnumType value) {
     return tag(static_cast<int>(value));
 }
 
-/// @brief Pass a request handle to the underlying MPI call.
+/// @brief Passes a request handle to the underlying MPI call.
 /// @param request The request handle.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto request(Request& request) {
     return internal::make_data_buffer<
+        internal::ParameterType,
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         BufferResizePolicy::no_resize>(request);
 }
 
-/// @brief Pass a request from a \ref RequestPool to the underlying MPI call.
+/// @brief Passes a request from a \ref RequestPool to the underlying MPI call.
 /// @param request The request handle.
 /// @tparam IndexType The type of the index used by the \ref RequestPool for requests.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename IndexType>
 inline auto request(PooledRequest<IndexType> request) {
     return internal::make_data_buffer<
+        internal::ParameterType,
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
@@ -834,22 +1097,28 @@ inline auto request(PooledRequest<IndexType> request) {
 }
 
 /// @brief Internally allocate a request object and return it to the user.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto request() {
     return internal::make_data_buffer<
+        internal::ParameterType,
         internal::ParameterType::request,
         internal::BufferModifiability::modifiable,
         internal::BufferType::out_buffer,
         BufferResizePolicy::no_resize>(alloc_new<Request>);
 }
 
-/// @brief Send mode parameter for point to point communication.
+/// @brief Passes the send mode parameter for point to point communication to the underlying call.
 /// Pass any of the tags from the \c kamping::send_modes namespace.
+///
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename SendModeTag>
 inline auto send_mode(SendModeTag) {
     return internal::SendModeParameter<SendModeTag>{};
 }
 
-/// @brief generates a parameter object for a reduce operation. Accepts function objects, lambdas, function pointers or
+/// @brief Passes a reduction operation to ther underlying call. Accepts function objects, lambdas, function pointers or
 /// native \c MPI_Op as argument.
 ///
 /// @tparam Op the type of the operation
@@ -859,16 +1128,21 @@ inline auto send_mode(SendModeTag) {
 ///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
 ///     supported for builtin and native operations. This is used to streamline the interface so that the use does not
 ///     have to provide commutativity info when the operation is builtin.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Op, typename Commutative = ops::internal::undefined_commutative_tag>
 internal::OperationBuilder<Op, Commutative>
 op(Op&& op, Commutative commute = ops::internal::undefined_commutative_tag{}) {
     return internal::OperationBuilder<Op, Commutative>(std::forward<Op>(op), commute);
 }
 
-/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+/// @brief Passes a container containing the value(s) to return on the first rank to \ref
+/// kamping::Communicator::exscan().
 ///
+/// @tparam Container Container type.
 /// @param container Value(s) to return on the first rank.
-/// @returns OnRank0 Object containing the information which value to return on the first rank.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename Container>
 inline auto values_on_rank_0(Container&& container) {
     return internal::make_data_buffer_builder<
@@ -878,11 +1152,12 @@ inline auto values_on_rank_0(Container&& container) {
         BufferResizePolicy::no_resize>(std::forward<Container>(container));
 }
 
-/// @brief Generates an object encapsulating the value to return on the first rank in \c exscan().
+/// @brief Passes the data to be returned on the first rank in \c MPI_Exscan which is provided as an initializer list to
+/// \ref kamping::Communicator::exscan().
 ///
 /// @param values Value(s) to return on the first rank.
-/// @returns OnRank0 Object containing the information which value to return on the first rank.
-// TODO zero-overhead
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename T>
 inline auto values_on_rank_0(std::initializer_list<T> values) {
     return internal::make_data_buffer_builder<
@@ -892,9 +1167,11 @@ inline auto values_on_rank_0(std::initializer_list<T> values) {
         BufferResizePolicy::no_resize>(std::move(values));
 }
 
-/// @brief The send type to use in the respective \c MPI operation.
+/// @brief Passes \p send_type as send type to the underlying call.
+///
 /// @param send_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_type(MPI_Datatype send_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
@@ -904,8 +1181,11 @@ inline auto send_type(MPI_Datatype send_type) {
         MPI_Datatype>(std::move(send_type));
 }
 
-/// @brief Output parameter for the send type.
+/// @brief Indicates to deduce the send type in the underlying call and return it as part of underlying call's result
+/// object.
+///
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_type_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
@@ -915,10 +1195,12 @@ inline auto send_type_out() {
         MPI_Datatype>(alloc_new<MPI_Datatype>);
 }
 
-/// @brief Output parameter for the send type.
+/// @brief Passes \p send_type, into which the send type deduced by KaMPIng will be written, to the underlying call.
 /// The type will be stored at the location referred to by the provided reference.
+///
 /// @param send_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_type_out(MPI_Datatype& send_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_type,
@@ -928,9 +1210,11 @@ inline auto send_type_out(MPI_Datatype& send_type) {
         MPI_Datatype>(send_type);
 }
 
-/// @brief The recv type to use in the respective \c MPI operation.
-/// @param recv_type MPI_Datatype to use in the wrapped \c MPI operation.
+/// @brief Passes \p recv_type as recv type to the underlying call.
+///
+/// @param recv_type MPI_Datatype to use in the wrapped \c MPI function.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_type(MPI_Datatype recv_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
@@ -940,8 +1224,11 @@ inline auto recv_type(MPI_Datatype recv_type) {
         MPI_Datatype>(std::move(recv_type));
 }
 
-/// @brief Output parameter for the recv type.
+/// @brief Indicates to deduce the receive type in the underlying call and return it as part of underlying call's result
+/// object.
+///
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_type_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
@@ -951,10 +1238,12 @@ inline auto recv_type_out() {
         MPI_Datatype>(alloc_new<MPI_Datatype>);
 }
 
-/// @brief Output parameter for the recv type.
+/// @brief Passes \p recv_type, into which the recv type deduced by KaMPIng will be written, to the underlying call.
 /// The type will be stored at the location referred to by the provided reference.
+///
 /// @param recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto recv_type_out(MPI_Datatype& recv_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::recv_type,
@@ -964,9 +1253,12 @@ inline auto recv_type_out(MPI_Datatype& recv_type) {
         MPI_Datatype>(recv_type);
 }
 
-/// @brief The send_recv type to use in the respective \c MPI operation.
+/// @brief Passes \p send_recv_type as send/recv type to the underlying call.
+/// (This parameter is in \c MPI routines such as \c MPI_Bcast, ... .)
+///
 /// @param send_recv_type MPI_Datatype to use in the wrapped \c MPI operation.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_type(MPI_Datatype send_recv_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
@@ -976,8 +1268,12 @@ inline auto send_recv_type(MPI_Datatype send_recv_type) {
         MPI_Datatype>(std::move(send_recv_type));
 }
 
-/// @brief Output parameter for the send_recv type.
+/// @brief Indicates to deduce the send/recv type in the underlying call and return it as part of underlying call's
+/// result object.
+/// (This parameter is used in \c MPI routines such as \c MPI_Bcast, ... .)
+///
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_type_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
@@ -987,10 +1283,13 @@ inline auto send_recv_type_out() {
         MPI_Datatype>(alloc_new<MPI_Datatype>);
 }
 
-/// @brief Output parameter for the send_recv type.
-/// The type will be stored at the location referred to by the provided reference.
+/// @brief Passes \p send_recv_type, into which the send/recv type deduced by KaMPIng will be written, to the underlying
+/// call. The type will be stored at the location referred to by the provided reference. (This parameter is used in \c
+/// MPI routines such as \c MPI_Bcast, ... .)
+///
 /// @param send_recv_type Reference to the location at which the deduced MPI_Datatype will be stored.
 /// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 inline auto send_recv_type_out(MPI_Datatype& send_recv_type) {
     return internal::make_data_buffer_builder<
         internal::ParameterType::send_recv_type,
