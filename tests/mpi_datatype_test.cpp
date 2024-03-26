@@ -42,6 +42,35 @@ int MPI_Type_free(MPI_Datatype* type) {
     return PMPI_Type_free(type);
 }
 
+MATCHER_P3(ResizedType, inner, lb, extend, "") {
+    int num_integers, num_addresses, num_datatypes, combiner;
+    MPI_Type_get_envelope(arg, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    if (combiner != MPI_COMBINER_RESIZED) {
+        *result_listener << "not a resized type";
+        return false;
+    }
+    MPI_Datatype            underlying_type;
+    std::array<MPI_Aint, 2> type_bounds;
+    MPI_Type_get_contents(
+        arg,
+        num_integers,
+        num_addresses,
+        num_datatypes,
+        nullptr,
+        type_bounds.data(),
+        &underlying_type
+    );
+    if (type_bounds[0] != static_cast<MPI_Aint>(lb)) {
+        *result_listener << "wrong lb";
+        return false;
+    }
+    if (type_bounds[1] != static_cast<MPI_Aint>(extend)) {
+        *result_listener << "wrong extend";
+        return false;
+    }
+    return ExplainMatchResult(inner, underlying_type, result_listener);
+}
+
 MATCHER_P2(ContiguousType, type, n, "") {
     int num_integers, num_addresses, num_datatypes, combiner;
     MPI_Type_get_envelope(arg, &num_integers, &num_addresses, &num_datatypes, &combiner);
@@ -713,14 +742,22 @@ TEST(MpiDataTypeTest, mpi_datatype_struct) {
 
     EXPECT_THAT(
         (mpi_type_traits<std::tuple<int, double, std::complex<float>>>::data_type()),
-        StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX})
+        ResizedType(
+            StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX}),
+            0,
+            sizeof(std::tuple<int, double, std::complex<float>>)
+        )
     );
 
     // struct is no trivially copyable, but we defined a struct_type trait for it explicitly.
     EXPECT_EQ((mpi_type_traits<std::tuple<int, double, std::complex<float>>>::category), TypeCategory::struct_like);
     EXPECT_THAT(
         (mpi_type_traits<std::tuple<int, double, std::complex<float>>>::data_type()),
-        StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX})
+        ResizedType(
+            StructType({MPI_INT, MPI_DOUBLE, MPI_CXX_FLOAT_COMPLEX}),
+            0,
+            sizeof(std::tuple<int, double, std::complex<float>>)
+        )
     );
 }
 
