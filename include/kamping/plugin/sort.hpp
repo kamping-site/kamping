@@ -119,7 +119,6 @@ private:
         for (size_t i = 0; i < num_splitters; i++) {
             global_samples[i] = global_samples[oversampling_ratio * (i + 1)];
         }
-
         global_samples.resize(num_splitters);
     }
 

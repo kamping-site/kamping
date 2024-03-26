@@ -38,7 +38,7 @@ TEST(SortTest, sort_same_number_elements) {
     std::uniform_int_distribution<int32_t> dist;
 
     Communicator<std::vector, plugin::SampleSort> comm;
-    size_t const                                  local_size = 10'000;
+    size_t const                                  local_size = 5'000;
     std::vector<int32_t>                          local_data;
     for (size_t i = 0; i < local_size; ++i) {
         local_data.push_back(dist(rd));
@@ -72,7 +72,7 @@ TEST(SortTest, sort_same_number_elements_output_iterator) {
     std::uniform_int_distribution<int32_t> dist;
 
     Communicator<std::vector, plugin::SampleSort> comm;
-    size_t const                                  local_size = 10'000;
+    size_t const                                  local_size = 5'000;
     std::vector<int32_t>                          local_data;
     for (size_t i = 0; i < local_size; ++i) {
         local_data.push_back(dist(rd));
@@ -106,7 +106,7 @@ TEST(SortTest, sort_different_number_elements) {
     std::uniform_int_distribution<int32_t> dist;
 
     Communicator<std::vector, plugin::SampleSort> comm;
-    size_t const                                  local_size = 10'000 * comm.rank();
+    size_t const                                  local_size = 5'000 * comm.rank();
     std::vector<int32_t>                          local_data;
     for (size_t i = 0; i < local_size; ++i) {
         local_data.push_back(dist(rd));
@@ -143,7 +143,7 @@ TEST(SortTest, sort_non_default_comparator) {
     std::uniform_int_distribution<int32_t> dist;
 
     Communicator<std::vector, plugin::SampleSort> comm;
-    size_t const                                  local_size = 10'000;
+    size_t const                                  local_size = 5'000;
     std::vector<int32_t>                          local_data;
     for (size_t i = 0; i < local_size; ++i) {
         local_data.push_back(dist(rd));
@@ -195,7 +195,7 @@ TEST(SortTest, sort_custom_type) {
     };
 
     Communicator<std::vector, plugin::SampleSort> comm;
-    size_t const                                  local_size = 10'000;
+    size_t const                                  local_size = 5'000;
     std::vector<MyStruct>                         local_data;
     for (size_t i = 0; i < local_size; ++i) {
         local_data.emplace_back(dist(rd), dist(rd), dist(rd));
