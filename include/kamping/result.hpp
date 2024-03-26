@@ -153,6 +153,20 @@ public:
         return internal::select_parameter_type_in_tuple<internal::ParameterType::recv_buf>(_data).underlying();
     }
 
+    /// @brief Get the \c send_buffer from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the
+    /// MPIResult object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
+    /// @return Returns a reference to the underlying storage containing the elements to send.
+    template <
+        typename T = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_buf, T>(), bool> = true>
+    auto const& get_send_buffer() const {
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::send_buf>(_data).underlying();
+    }
+
     /// @brief Extracts the \c recv_buffer from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the
@@ -685,7 +699,7 @@ public:
     /// @brief Constructor for \c NonBlockingResult.
     /// @param result The underlying \ref kamping::MPIResult.
     /// @param request A \ref kamping::internal::DataBuffer containing the associated \ref kamping::Request.
-    NonBlockingResult(MPIResultType result, RequestDataBuffer request)
+    NonBlockingResult(std::unique_ptr<MPIResultType> result, RequestDataBuffer request)
         : _mpi_result(std::move(result)),
           _request(std::move(request)) {}
 
@@ -812,11 +826,22 @@ public:
         }
     }
 
+    /// @brief Provides access to the underlying result object.
+    MPIResultType& get_result() {
+        kassert_not_extracted("The result of this request has already been extracted.");
+        return *_mpi_result;
+    }
+
+    /// @brief Returns a pointer to the underlying request.
+    MPI_Request* get_request_ptr() {
+        return _request.underlying().request_ptr();
+    }
+
 private:
     /// @brief Moves the wrapped \ref MPIResult out of this object.
     MPIResultType extract_result() {
         kassert_not_extracted("The result of this request has already been extracted.");
-        auto extracted = std::move(_mpi_result);
+        auto extracted = std::move(*_mpi_result);
         set_extracted();
         return extracted;
     }
@@ -835,8 +860,8 @@ private:
         KASSERT(!is_extracted, message, assert::normal);
 #endif
     }
-    MPIResultType     _mpi_result; ///< The wrapped \ref MPIResult.
-    RequestDataBuffer _request;    ///< DataBuffer containing the wrapped \ref Request.
+    std::unique_ptr<MPIResultType> _mpi_result; ///< The wrapped \ref MPIResult.
+    RequestDataBuffer              _request;    ///< DataBuffer containing the wrapped \ref Request.
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     bool is_extracted = false; ///< Has the status been extracted and is therefore in an invalid state?
 #endif
@@ -859,6 +884,18 @@ constexpr bool return_recv_or_send_recv_buffer_only() {
         return true;
     } else if constexpr (num_caller_provided_owning_out_buffers == 1 && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::send_recv_buf) {
         return true;
+    } else {
+        return false;
+    }
+}
+
+/// @brief Determines whether only the send buffer should be returned.
+/// This may happen if ownership of the send buffer is transfered to the call.
+template <typename CallerProvidedOwningOutBuffers>
+constexpr bool return_send_buf_out_only() {
+    constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutBuffers>;
+    if constexpr (num_caller_provided_owning_out_buffers == 1) {
+        return std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::send_buf;
     } else {
         return false;
     }
@@ -1013,7 +1050,10 @@ auto make_mpi_result(Buffers&&... buffers) {
         typename internal::FilterOut<DiscardSerializationBuffers, CallerProvidedArgs>::type;
     constexpr std::size_t num_caller_provided_owning_out_buffers =
         std::tuple_size_v<CallerProvidedOwningOutParametersWithoutSerializationBuffers>;
-    if constexpr (!has_recv_or_send_recv_buf<Buffers...>()) {
+    if constexpr (return_send_buf_out_only<CallerProvidedOwningOutParameters>()) {
+        auto& send_buffer = internal::select_parameter_type<ParameterType::send_buf>(buffers...);
+        return send_buffer.extract();
+    } else if constexpr (!has_recv_or_send_recv_buf<Buffers...>()) {
         // do no special handling for receive buffer at all, since there is none.
         return MPIResult(construct_buffer_tuple<CallerProvidedOwningOutParameters>(buffers...));
     } else {
@@ -1071,14 +1111,15 @@ auto make_mpi_result(Buffers&&... buffers) {
 /// @return \ref kamping::NonBlockingResult encapsulating all passed parameters.
 template <typename CallerProvidedArgsInTuple, typename... Args>
 auto make_nonblocking_result(Args... args) {
-    auto&& request                 = internal::select_parameter_type<internal::ParameterType::request>(args...);
-    auto   construct_result_object = [&]() {
-        return make_mpi_result<CallerProvidedArgsInTuple>(std::forward<Args>(args)...);
-    };
-    using result_type = decltype(construct_result_object());
+    auto&& request    = internal::select_parameter_type<internal::ParameterType::request>(args...);
+    using result_type = decltype(make_mpi_result<CallerProvidedArgsInTuple>(std::forward<Args>(args)...));
     if constexpr (is_result_empty_v<result_type>) {
-        return NonBlockingResult(MPIResult{std::tuple<>{}}, std::move(request));
+        return NonBlockingResult(std::make_unique<MPIResult<>>(std::tuple<>{}), std::move(request));
     } else {
+        auto construct_result_object = [&]() {
+            auto result = make_mpi_result<CallerProvidedArgsInTuple>(std::forward<Args>(args)...);
+            return std::make_unique<decltype(result)>(std::move(result));
+        };
         return NonBlockingResult(construct_result_object(), std::move(request));
     }
 }

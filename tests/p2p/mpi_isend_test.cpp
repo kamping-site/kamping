@@ -731,3 +731,11 @@ TEST_F(ISendTest, non_trivial_send_type_irsend) {
     }
     MPI_Type_free(&int_padding_padding);
 }
+
+TEST_F(ISendTest, send_buf_ownership) {
+    Communicator     comm;
+    std::vector<int> values{42, 3, 8, 7};
+    auto             req = comm.isend(send_buf_out(std::move(values)), destination(rank::null));
+    values               = req.wait();
+    EXPECT_THAT(values, ElementsAre(42, 3, 8, 7));
+}
