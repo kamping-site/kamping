@@ -439,9 +439,12 @@ private:
         DefaultContainerType<MsgType> rowwise_send_buf(total_send_count);
 
         for (size_t i = 0; i < send_counts.size(); ++i) {
+            size_t const send_count = asserting_cast<size_t>(send_counts.underlying().data()[i]);
+            if (send_count == 0) {
+                continue;
+            }
             int const    destination        = asserting_cast<int>(i);
             auto const   destination_in_row = get_destination_in_rowwise_exchange(asserting_cast<size_t>(i));
-            size_t const send_count         = asserting_cast<size_t>(send_counts.underlying().data()[i]);
             size_t const cur_displacement   = asserting_cast<size_t>(send_displs.data()[i]);
             for (std::size_t ii = 0; ii < send_count; ++ii) {
                 auto       elem  = send_buf.data()[cur_displacement + ii];

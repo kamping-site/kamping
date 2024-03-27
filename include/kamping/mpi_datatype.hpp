@@ -383,7 +383,10 @@ MPI_Datatype struct_type<T>::data_type() {
     MPI_Datatype type;
     int          err = MPI_Type_create_struct(static_cast<int>(internal::tuple_size<T>), blocklens, disp, types, &type);
     THROW_IF_MPI_ERROR(err, MPI_Type_create_struct);
-    return type;
+    MPI_Datatype resized_type;
+    err = MPI_Type_create_resized(type, 0, sizeof(T), &resized_type);
+    THROW_IF_MPI_ERROR(err, MPI_Type_create_resized);
+    return resized_type;
 }
 
 /// @brief A scoped MPI_Datatype that commits the type on construction and frees it on destruction.

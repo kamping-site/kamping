@@ -34,7 +34,14 @@ int main() {
     std::vector<int> input(2u * comm.size(), comm.rank_signed());
     std::vector<int> output;
 
-    { // Automatically deduce send/recv counts; resize the receive buffer to fit the received data.
+    { // Basic alltoall example. Automatically deduce the send/recv counts and allocate a receive buffer.
+        output = comm.alltoall(send_buf(input));
+        print_result_on_root(output, comm);
+    }
+
+    print_on_root("------", comm);
+
+    { // Use an existing recv buffer but resize it to fit the received data.
         comm.alltoall(send_buf(input), recv_buf<resize_to_fit>(output));
         print_result_on_root(output, comm);
     }
