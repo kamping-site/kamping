@@ -646,6 +646,14 @@ private:
     std::tuple<Args...> _data; ///< tuple storing the data buffers
 };
 
+/// @brief Trait for checking whether a type is an \ref MPIResult.
+template <typename>
+constexpr bool is_result_v = false;
+
+/// @brief Trait for checking whether a type is an \ref MPIResult.
+template <typename... Args>
+constexpr bool is_result_v<MPIResult<Args...>> = true;
+
 /// @brief Primary template for result trait indicates whether the result object is empty.
 template <typename T>
 constexpr bool is_result_empty_v = false;

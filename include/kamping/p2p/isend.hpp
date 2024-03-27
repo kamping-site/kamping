@@ -143,10 +143,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
     auto send_buf_ptr = [&]() {
         if constexpr (std::remove_reference_t<decltype(send_buf)>::buffer_type == BufferType::in_out_buffer) {
             auto const& result_ = result.get_result();
-            if constexpr (has_data_member_v<decltype(result_)>) {
-                return result_.data();
-            } else {
+            using result_type   = std::remove_reference_t<decltype(result_)>;
+            if constexpr (is_result_v<result_type>) {
                 return result_.get_send_buffer().data();
+            } else {
+                if constexpr (has_data_member_v<decltype(result_)>) {
+                    return result_.data();
+                } else {
+                    return &result_;
+                }
             }
         } else {
             return send_buf.data();
