@@ -40,33 +40,34 @@
 /// - \ref kamping::send_buf() containing the data that is sent to the root.
 ///
 /// The following buffers are optional:
-/// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator
-/// is used, see root().
+/// - \ref kamping::send_count() [on all PEs] specifying the number of elements to send to the root PE. If not given,
+/// the size of the kamping::send_buf() will be used. This parameter is mandatory if \ref kamping::send_type() is given.
+///
+/// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
+/// derived automatically based on send_buf's underlying \c value_type. This parameter is ignored on non-root ranks.
 ///
 /// - \ref kamping::recv_buf() containing a buffer for the output.
 /// On the root rank, the buffer will contain all data from all send buffers.
-/// The buffer will be resized according to the buffer's kamping::BufferResizePolicy. If this is
-/// kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements.
 /// At all other ranks, the buffer will not be modified and the parameter is ignored.
-///
-/// - \ref kamping::send_count() [on all PEs] specifying the number of elements to send to the root PE. If not given,
-/// the size of the kamping::send_buf() will be used. This parameter is mandatory if \ref kamping::send_type() is given.
 ///
 /// - \ref kamping::recv_count() [on root PE] specifying the number of elements to receive from each PE. On non-root
 /// ranks, this parameter is ignored. If not specified, defaults to the value of \ref kamping::send_count() on the
 /// root. PE. In total, comm.size() * recv_counts elements will be received into the receiver buffer.
 /// This parameter is mandatory if \ref kamping::recv_type() is given.
 ///
-/// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
-/// derived automatically based on send_buf's underlying \c value_type. This parameter is ignored on non-root ranks.
-///
 /// - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
 /// derived automatically based on recv_buf's underlying \c value_type.
 ///
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator
+/// is used, see root().
+///
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -189,22 +190,26 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
 /// send counts. This parameter is mandatory (as an in-parameter) if \ref kamping::recv_type() is given.
 ///
 /// The following buffers are optional:
-/// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator
-/// is used, see root().
+/// - \ref kamping::send_count() [on all PEs] specifying the number of elements to send to the root rank. If not given,
+/// the size of the kamping::send_buf() will be used. This parameter is mandatory if \ref kamping::send_type() is given.
 ///
 /// - \ref kamping::recv_buf() containing a buffer for the output. Afterwards, at the root, this buffer will contain
 /// all data from all send buffers. At all other ranks, the buffer will have size 0.
-///
-/// - \ref kamping::send_count() [on all PEs] specifying the number of elements to send to the root rank. If not given,
-/// the size of the kamping::send_buf() will be used. This parameter is mandatory if \ref kamping::send_type() is given.
 ///
 /// - \ref kamping::recv_displs() containing the offsets of the messages in recv_buf. The `recv_counts[i]` elements
 /// starting at `recv_buf[recv_displs[i]]` will be received from rank `i`. If omitted, this is calculated as the
 /// exclusive prefix-sum of `recv_counts`.
 ///
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c Communicator
+/// is used, see root().
+///
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,

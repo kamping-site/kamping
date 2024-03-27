@@ -285,7 +285,7 @@ TEST(TimerTest, stop_nested_complex_scenario) {
 }
 
 TEST(TimerTest, print) {
-    const size_t      repetitions           = 5u;
+    size_t const      repetitions           = 5u;
     auto              timer1                = setup_complex_scenario(repetitions);
     auto              timer2                = setup_complex_scenario(repetitions);
     auto              aggregated_timer_tree = timer1.aggregate();
@@ -347,7 +347,7 @@ TEST(TimerTest, aggregate_and_print_non_trivial_communicator) {
 
 TEST(TimerTest, clear) {
     Communicator<> comm;
-    const size_t   repetitions = 5u;
+    size_t const   repetitions = 5u;
     auto           timer       = setup_complex_scenario(repetitions);
     timer.clear();
     ValidationPrinter printer;

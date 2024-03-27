@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include "kamping/collectives/bcast.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/p2p/recv.hpp"
 #include "kamping/p2p/send.hpp"
@@ -39,12 +40,12 @@ TEST(SerializationTest, basic) {
             comm.send(kamping::send_buf(as_serialized(data)), destination(dst));
         }
     } else {
-        auto recv_data = comm.recv(recv_buf(as_deserializable<dict_type>())).deserialize();
+        auto recv_data = comm.recv(recv_buf(as_deserializable<dict_type>()));
         EXPECT_EQ(recv_data, data);
     }
 }
 
-TEST(SerializationTest, no_explicit_deserialization_type) {
+TEST(SerializationTest, basic_recv_to_ref) {
     kamping::Communicator comm;
     dict_type             data{{"key1", "value1"}, {"key2", "value2"}};
     if (comm.is_root()) {
@@ -55,7 +56,27 @@ TEST(SerializationTest, no_explicit_deserialization_type) {
             comm.send(kamping::send_buf(as_serialized(data)), destination(dst));
         }
     } else {
-        auto recv_data = comm.recv(recv_buf(as_deserializable())).deserialize<dict_type>();
+        dict_type recv_data;
+        comm.recv(recv_buf(as_deserializable(recv_data)));
+        bool returns_nothing = std::is_same_v<decltype(comm.recv(recv_buf(as_deserializable(recv_data)))), void>;
+        EXPECT_TRUE(returns_nothing);
+        EXPECT_EQ(recv_data, data);
+    }
+}
+
+TEST(SerializationTest, basic_recv_move_in_out) {
+    kamping::Communicator comm;
+    dict_type             data{{"key1", "value1"}, {"key2", "value2"}};
+    if (comm.is_root()) {
+        for (size_t dst = 0; dst < comm.size(); dst++) {
+            if (comm.is_root(dst)) {
+                continue;
+            }
+            comm.send(kamping::send_buf(as_serialized(data)), destination(dst));
+        }
+    } else {
+        dict_type recv_data;
+        recv_data = comm.recv(recv_buf(as_deserializable(std::move(recv_data))));
         EXPECT_EQ(recv_data, data);
     }
 }
@@ -71,9 +92,35 @@ TEST(SerializationTest, no_explicit_non_default_archive) {
             comm.send(kamping::send_buf(as_serialized<cereal::JSONOutputArchive>(data)), destination(dst));
         }
     } else {
-        auto recv_data = comm.recv(recv_buf(as_deserializable<dict_type, cereal::JSONInputArchive>())).deserialize();
+        auto recv_data = comm.recv(recv_buf(as_deserializable<dict_type, cereal::JSONInputArchive>()));
         EXPECT_EQ(recv_data, data);
     }
+}
+
+TEST(SerializationTest, basic_bcast) {
+    kamping::Communicator comm;
+    dict_type             data;
+    if (comm.is_root()) {
+        data = {{"key1", "value1"}, {"key2", "value2"}};
+    }
+    comm.bcast(send_recv_buf(as_serialized(data)));
+    bool returns_nothing = std::is_same_v<decltype(comm.bcast(send_recv_buf(as_serialized(data)))), void>;
+    EXPECT_TRUE(returns_nothing);
+
+    auto expected_data = dict_type{{"key1", "value1"}, {"key2", "value2"}};
+    EXPECT_EQ(data, expected_data);
+}
+
+TEST(SerializationTest, basic_bcast_passthrough) {
+    kamping::Communicator comm;
+    dict_type             data;
+    if (comm.is_root()) {
+        data = {{"key1", "value1"}, {"key2", "value2"}};
+    }
+    data = comm.bcast(send_recv_buf(as_serialized(std::move(data))));
+
+    auto expected_data = dict_type{{"key1", "value1"}, {"key2", "value2"}};
+    EXPECT_EQ(data, expected_data);
 }
 
 struct Foo {
@@ -99,7 +146,7 @@ TEST(SerializationTest, custom_serialization_functions) {
             comm.send(kamping::send_buf(as_serialized(data)), destination(dst));
         }
     } else {
-        auto recv_data = comm.recv(recv_buf(as_deserializable<Foo>())).deserialize();
+        auto recv_data = comm.recv(recv_buf(as_deserializable<Foo>()));
         EXPECT_EQ(recv_data, data);
     }
 }

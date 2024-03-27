@@ -46,9 +46,6 @@
 /// - \ref kamping::destination() the receiving rank.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref
-/// Communicator::default_tag()) if not present.
-///
 /// - \ref kamping::send_count() specifying how many elements of the buffer are sent.
 /// If omitted, the size of the send buffer is used as a default. This parameter is mandatory if \ref
 /// kamping::send_type() is given.
@@ -56,12 +53,21 @@
 ///  - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
 /// derived automatically based on send_buf's underlying \c value_type.
 ///
-/// - \ref kamping::send_mode() the send mode to use. Defaults to standard MPI_Send.
+/// - \ref kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref
+/// Communicator::default_tag()) if not present.
 ///
 /// - \ref kamping::request() The request object to associate this operation with. Defaults to a library allocated
 /// request object, which can be access via the returned result.
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
+///
+/// - \ref kamping::send_mode() the send mode to use. Defaults to standard MPI_Send.
+///
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,

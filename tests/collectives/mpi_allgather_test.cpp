@@ -82,7 +82,7 @@ TEST(AllgatherTest, allgather_single_element_with_receive_buffer) {
 
 TEST(AllgatherTest, allgather_single_element_with_explicit_send_and_recv_count) {
     Communicator           comm;
-    const std::vector<int> data(5, comm.rank_signed());
+    std::vector<int> const data(5, comm.rank_signed());
     int const              send_count_value = 1;
     int const              recv_count_value = 1;
 
@@ -107,7 +107,7 @@ TEST(AllgatherTest, allgather_single_element_with_explicit_send_and_recv_count) 
 
 TEST(AllgatherTest, allgather_single_element_with_r_values_in_send_and_recv_count_out) {
     Communicator           comm;
-    const std::vector<int> data{comm.rank_signed()};
+    std::vector<int> const data{comm.rank_signed()};
     // the values in send_counts_out, recv_counts_out should be ignored as they merely provide "storage" for the
     // values computed by kamping. (A mechanism which is not that useful for plain integers)
     std::vector<int> expected_recv_buf(comm.size());
@@ -132,7 +132,7 @@ TEST(AllgatherTest, allgather_single_element_with_r_values_in_send_and_recv_coun
 
 TEST(AllgatherTest, allgather_single_element_with_l_values_in_send_and_recv_count_out) {
     Communicator           comm;
-    const std::vector<int> data{comm.rank_signed()};
+    std::vector<int> const data{comm.rank_signed()};
     {
         // the values in send_counts_out, recv_counts_out should be ignored
         int  send_count = -1;
@@ -148,7 +148,7 @@ TEST(AllgatherTest, allgather_single_element_with_l_values_in_send_and_recv_coun
 
 TEST(AllgatherTest, allgather_single_element_with_given_recv_buf_bigger_than_required) {
     Communicator           comm;
-    const std::vector<int> data{comm.rank_signed()};
+    std::vector<int> const data{comm.rank_signed()};
     std::vector<int>       expected_recv_buffer(comm.size());
     std::iota(expected_recv_buffer.begin(), expected_recv_buffer.end(), 0);
 
@@ -184,7 +184,7 @@ TEST(AllgatherTest, allgather_single_element_with_given_recv_buf_bigger_than_req
 
 TEST(AllgatherTest, given_recv_buffer_smaller_than_required) {
     Communicator           comm;
-    const std::vector<int> data{comm.rank_signed()};
+    std::vector<int> const data{comm.rank_signed()};
     std::vector<int>       expected_recv_buffer(comm.size());
     std::iota(expected_recv_buffer.begin(), expected_recv_buffer.end(), 0);
 
@@ -379,7 +379,7 @@ TEST(AllgatherTest, allgather_default_container_type) {
 
 TEST(AllgatherTest, send_recv_type_is_out_parameter) {
     Communicator           comm;
-    const std::vector<int> data(1, comm.rank_signed());
+    std::vector<int> const data(1, comm.rank_signed());
     MPI_Datatype           send_type;
     MPI_Datatype           recv_type;
     auto recv_buf = comm.allgather(send_buf(data), send_type_out(send_type), recv_type_out(recv_type));
@@ -393,7 +393,7 @@ TEST(AllgatherTest, send_recv_type_is_out_parameter) {
 
 TEST(AllgatherTest, send_recv_type_part_of_result_object) {
     Communicator           comm;
-    const std::vector<int> data(1, comm.rank_signed());
+    std::vector<int> const data(1, comm.rank_signed());
     auto                   result = comm.allgather(send_buf(data), send_type_out(), recv_type_out());
 
     EXPECT_EQ(result.extract_send_type(), MPI_INT);
@@ -500,7 +500,7 @@ TEST(AllgatherTest, different_send_and_recv_counts_without_explicit_mpi_types) {
 TEST(AllgatherTest, structured_bindings) {
     Communicator           comm;
     std::vector<int>       input{comm.rank_signed()};
-    const std::vector<int> expected_recv_buffer = [&]() {
+    std::vector<int> const expected_recv_buffer = [&]() {
         std::vector<int> vec(comm.size());
         std::iota(vec.begin(), vec.end(), 0);
         return vec;

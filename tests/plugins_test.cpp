@@ -40,6 +40,9 @@ public:
 };
 
 TEST(PluginsTest, additional_function) {
+    if (kamping::comm_world().size() < 2) {
+        return;
+    }
     // Create a new communicator. The first template argument is the default container type (has to be provided when
     // using plugins). The following template arguments are plugin classes.
     kamping::Communicator<std::vector, Send42Plugin> comm;
@@ -87,6 +90,9 @@ public:
 };
 
 TEST(PluginsTest, replace_implementation) {
+    if (kamping::comm_world().size() < 2) {
+        return;
+    }
     // First, a quick example of how NOT to overwrite an existing function:
     {
         // This communicator will still use the original allreduce implementation. If we want to use the alternative
@@ -214,6 +220,9 @@ TEST(PluginsTest, additional_function_with_double_template) {
     // `SendDefaultConstructed` of the outer class `SendDefaultConstructedOuterClass<double>` to send a
     // default constructed `double`.
     kamping::Communicator<std::vector, SendDefaultConstructedOuterClass<double>::SendDefaultConstructed> comm;
+    if (comm.size() < 2) {
+        return;
+    }
 
     auto other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {
@@ -274,6 +283,9 @@ TEST(PluginsTest, plugins_with_data_member) {
     // Create a new communicator. The first template argument is the default container type (has to be provided when
     // using plugins). The following template arguments are plugin classes.
     kamping::Communicator<std::vector, IncrementalSend, DecrementalSend> comm;
+    if (comm.size() < 2) {
+        return;
+    }
 
     auto other_rank = (comm.root() + 1) % comm.size();
     if (comm.is_root()) {

@@ -39,8 +39,7 @@
 /// - \ref kamping::send_recv_buf() containing the data that is sent to the other ranks. Non-root ranks must allocate
 /// and provide this buffer or provide the receive type as a template parameter to \c bcast() as
 /// it's used for deducing the value type. The buffer will be resized on non-root ranks according to the buffer's
-/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received element
+/// kamping::BufferResizePolicy.
 ///
 /// The following parameter is optional but causes additional communication if not present.
 /// - \ref kamping::send_recv_count() specifying how many elements are broadcasted. This parameter must be given either
@@ -48,20 +47,22 @@
 /// root and broadcasted to all other ranks. This parameter is mandatory if \ref kamping::send_recv_type() is given.
 ///
 /// The following parameter are optional:
-/// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c
-/// Communicator is used, see root().
-///
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send type on the root PE and recv type on
 /// all non-root PEs. If omitted, the \c MPI datatype is derived automatically based on send_recv_buf's underlying \c
 /// value_type.
 ///
-/// @todo Add support for unnamed first parameter send_recv_buf.
+/// - \ref kamping::root() specifying an alternative root. If not present, the default root of the \c
+/// Communicator is used, see root().
 ///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::send_recv_buf() is
 /// given.
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -95,7 +96,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
             std::tuple(),
             args...
         )
-            .template construct_buffer_or_rebind<DefaultContainerType>();
+            .template construct_buffer_or_rebind<DefaultContainerType, serialization_support_tag>();
+    constexpr bool is_serialization_used = internal::buffer_uses_serialization<decltype(send_recv_buf)>;
+    if constexpr (is_serialization_used) {
+        KAMPING_UNSUPPORTED_PARAMETER(Args, send_recv_count, when using serialization);
+        KAMPING_UNSUPPORTED_PARAMETER(Args, send_recv_type, when using serialization);
+        if (this->is_root(root.rank_signed())) {
+            send_recv_buf.underlying().serialize();
+        }
+    }
 
     using value_type = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
     static_assert(
@@ -197,7 +206,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     this->mpi_error_hook(err, "MPI_Bcast");
 
     return make_mpi_result<std::tuple<Args...>>(
-        std::move(send_recv_buf),
+        deserialization_repack<is_serialization_used>(std::move(send_recv_buf)),
         std::move(count_param),
         std::move(send_recv_type)
     );
@@ -222,7 +231,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
 ///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::send_recv_buf() is
 /// given.
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return The single broadcasted value.
 template <

@@ -36,16 +36,16 @@
 /// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
 ///
 /// This wraps \c MPI_Allreduce. The operation combines the elements in the input buffer provided via \c
-/// kamping::send_buf() and returns the combined value on all ranks. The following parameters are required:
-/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
+/// kamping::send_buf() and returns the combined value on all ranks.
+///
+/// The following parameters are required:
+/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to have the same size at
 /// each rank.
 /// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided
 /// explicitly, the compatibility of the type and operation has to be ensured by the user.
 ///
 /// The following parameters are optional:
-/// - \ref kamping::recv_buf() containing a buffer for the output. The buffer will be resized according to the buffer's
-/// kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements.
+/// - \ref kamping::recv_buf() containing a buffer for the output.
 ///
 /// - \ref kamping::send_recv_count() specifying how many elements of the send buffer take part in the reduction. If
 /// omitted, the size of send buffer is used. This parameter is mandatory if \ref kamping::send_recv_type() is given.
@@ -56,9 +56,13 @@
 /// In-place allreduce is supported by providing `send_recv_buf()` instead of `send_buf()` and `recv_buf()`. For details
 /// on the in-place version, see \ref Communicator::allreduce_inplace().
 ///
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -159,7 +163,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
 ///
 /// The following parameters are required:
 /// - \ref kamping::send_recv_buf() containing the data that is sent to each rank and will store the result of the
-/// reduction. This buffer will be resized according to the buffer's kamping::BufferResizePolicy.
+/// reduction.
 ///
 /// - \ref kamping::op() wrapping the operation to apply to the input. If \ref kamping::send_recv_type() is provided
 /// explicitly, the compatibility of the type and operation has to be ensured by the user.
@@ -172,9 +176,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce(Args... 
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype
 /// is derived automatically based on `send_recv_buf`'s underlying \c value_type.
 ///
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
-/// @return Result type wrapping the output buffer if not specified as input parameter.
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+/// @return Result object wrapping the output parameters to be returned by value.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -255,8 +263,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_inplace(
 /// on each rank.
 /// - \ref kamping::op() wrapping the operation to apply to the input.
 ///
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
 /// @return The single output value.
 template <
     template <typename...>

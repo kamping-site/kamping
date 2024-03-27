@@ -116,17 +116,28 @@ auto make_op(Op&& op, Commutative commutative) {
     return kamping::internal::ReduceOperation<T, Op, Commutative>(std::move(op), commutative);
 }
 
+void my_plus(void* invec, void* inoutvec, int* len, MPI_Datatype* type) {
+    KASSERT(*type == MPI_INT);
+    int* invec_    = static_cast<int*>(invec);
+    int* inoutvec_ = static_cast<int*>(inoutvec);
+    std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, std::plus<>{});
+}
+
 TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) {
     struct WrappedInt {
         int        value;
         WrappedInt operator+(WrappedInt const& a) const noexcept {
             return {this->value + a.value};
         }
+        bool operator==(WrappedInt const& a) const noexcept {
+            return this->value == a.value;
+        }
     };
     // builtin operation
     {
         auto op = make_op<int>(std::plus<>{}, kamping::ops::internal::undefined_commutative_tag{});
         EXPECT_EQ(op.op(), MPI_SUM);
+        EXPECT_EQ(op(3, 4), 7);
         EXPECT_TRUE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -144,6 +155,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<WrappedInt>(std::plus<>{}, kamping::ops::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(WrappedInt{3}, WrappedInt{4}), WrappedInt{7});
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -161,6 +173,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<WrappedInt>(std::plus<>{}, kamping::ops::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(WrappedInt{3}, WrappedInt{4}), WrappedInt{7});
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -178,12 +191,25 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<int>(MPI_SUM, kamping::ops::internal::undefined_commutative_tag{});
         EXPECT_EQ(op.op(), MPI_SUM);
+        EXPECT_EQ(op(3, 4), 7);
+        EXPECT_FALSE(decltype(op)::is_builtin);
+    }
+    // custom native operation
+    {
+        MPI_Op native_op;
+        MPI_Op_create(my_plus, true, &native_op);
+        auto op =
+            kamping::internal::ReduceOperation<int, MPI_Op, kamping::ops::internal::undefined_commutative_tag>(native_op
+            );
+        EXPECT_EQ(op.op(), native_op);
+        EXPECT_EQ(op(3, 4), 7);
         EXPECT_FALSE(decltype(op)::is_builtin);
     }
     // lambda on builtin type commutative
     {
         auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::ops::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(3, 4), 7);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -201,6 +227,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<int>([](auto a, auto b) { return a + b; }, kamping::ops::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(3, 4), 7);
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -218,6 +245,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::ops::commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(WrappedInt{3}, WrappedInt{4}), WrappedInt{7});
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};
@@ -235,6 +263,7 @@ TEST(ReduceOperationTest, test_dispatch_for_builtin_function_object_and_lambda) 
     {
         auto op = make_op<WrappedInt>([](auto a, auto b) { return a + b; }, kamping::ops::non_commutative);
         EXPECT_NE(op.op(), MPI_SUM);
+        EXPECT_EQ(op(WrappedInt{3}, WrappedInt{4}), WrappedInt{7});
         EXPECT_FALSE(decltype(op)::is_builtin);
 
         std::array<int, 2> a = {42, 69};

@@ -27,3 +27,6 @@ ARG CMAKE_VERSION=3.28.3
 RUN wget https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION-linux-x86_64.sh && \
     sh ./cmake-$CMAKE_VERSION-linux-x86_64.sh --skip-license --prefix=/usr/local && \
     rm cmake-$CMAKE_VERSION-linux-x86_64.sh
+
+# Formatting dependencies
+RUN apt-get install clang-format cmake-format -y

@@ -194,6 +194,12 @@ public:
         THROW_IF_MPI_ERROR(err, MPI_Type_commit);
     }
 
+    /// @brief Free an MPI data type.
+    static void free(MPI_Datatype type) {
+        int err = MPI_Type_free(&type);
+        THROW_IF_MPI_ERROR(err, MPI_Type_free);
+    }
+
     /// @brief Commit an MPI data type and register it with KaMPIng.
     /// @see commit()
     /// @see register_type()
@@ -215,8 +221,8 @@ public:
         internal::registered_mpi_types.clear();
     }
 
-    static size_t const bsend_overhead = MPI_BSEND_OVERHEAD; ///< Provides an upper bound on the additional memory
-                                                             ///< required by buffered send operations.
+    static inline size_t const bsend_overhead = MPI_BSEND_OVERHEAD; ///< Provides an upper bound on the additional
+                                                                    ///< memory required by buffered send operations.
 
     /// @brief Attach a buffer to use for buffered send operations to the environment.
     ///

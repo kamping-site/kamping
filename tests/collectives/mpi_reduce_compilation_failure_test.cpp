@@ -21,7 +21,7 @@ using namespace ::testing;
 int main(int /*argc*/, char** /*argv*/) {
     using namespace ::kamping;
     Communicator           comm;
-    const std::vector<int> input{1};
+    std::vector<int> const input{1};
     std::vector<int>       recv_buffer(1);
 
 #if defined(SEND_TYPE_GIVEN_BUT_NO_SEND_COUNT)

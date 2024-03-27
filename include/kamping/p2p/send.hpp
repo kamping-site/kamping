@@ -38,21 +38,24 @@
 /// The following parameters are required:
 /// - \ref kamping::send_buf() containing the data that is sent.
 ///
-/// - \ref kamping::destination() the receiving rank.
-///
-/// The following parameters are optional:
-/// - \ref kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref
-/// Communicator::default_tag()) if not present.
-///
 /// - \ref kamping::send_count() specifying how many elements of the buffer are sent. If omitted, the size of the send
 /// buffer is used as a default. This parameter is mandatory if \ref kamping::send_type() is given.
 ///
 //  - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
 /// derived automatically based on send_buf's underlying \c value_type.
 ///
-/// - \ref kamping::send_mode() the send mode to use. Defaults to standard MPI_Send.
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All required and any number of the optional buffers described above.
+/// - \ref kamping::destination() the receiving rank.
+///
+/// The following parameters are optional:
+/// - \ref kamping::tag() the tag added to the message. Defaults to the communicator's default tag (\ref
+/// Communicator::default_tag()) if not present.
+///
+/// @tparam Args Automatically deduced template parameters.
+/// @param args All required and any number of the optional parameters described above.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,
@@ -73,6 +76,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
     if constexpr (is_serialization_used) {
         KAMPING_UNSUPPORTED_PARAMETER(Args, send_count, when using serialization);
         KAMPING_UNSUPPORTED_PARAMETER(Args, send_type, when using serialization);
+        send_buf.underlying().serialize();
     }
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 

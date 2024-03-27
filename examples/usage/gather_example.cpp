@@ -27,21 +27,21 @@
 
 int main() {
     using namespace kamping;
+
     kamping::Environment  e;
     kamping::Communicator comm;
-    std::vector<int>      input(comm.size());
+
+    std::vector<int> input(comm.size());
     std::iota(input.begin(), input.end(), 0);
-    {
-        // simply return received data
-        auto output = comm.gather(send_buf(input), root(0));
-        print_result_on_root(output, comm);
-    }
-    {
-        // write received data to exisiting container
-        std::vector<int> output;
-        comm.gather(send_buf(input), recv_buf<resize_to_fit>(output), root(0));
-        print_result_on_root(output, comm);
+
+    { // Gather all inputs on rank 0.
+        [[maybe_unused]] auto output = comm.gather(send_buf(input));
     }
 
-    return 0;
+    { // Receive the gathered data in an existing container on rank 1.
+        std::vector<int> output;
+        comm.gather(send_buf(input), recv_buf<resize_to_fit>(output), root(0));
+    }
+
+    return EXIT_SUCCESS;
 }

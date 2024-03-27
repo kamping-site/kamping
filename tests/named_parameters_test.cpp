@@ -18,7 +18,6 @@
 #include <mpi.h>
 
 #include "helpers_for_testing.hpp"
-#include "kamping/collectives/sparse_alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/named_parameter_types.hpp"
@@ -385,260 +384,6 @@ TEST(ParameterFactoriesTest, send_buf_ignored) {
     EXPECT_EQ(ignored_send_buf.get().size(), 0);
 }
 
-TEST(ParameterFactoriesTest, sparse_send_buf_basics_with_non_container_object) {
-    struct TestStruct {
-        int  a;
-        int  b;
-        int  c;
-        bool operator==(TestStruct const& other) const {
-            return std::tie(a, b, c) == std::tie(other.a, other.b, other.c);
-        }
-    };
-    const TestStruct st{1, 2, 3};
-    {
-        // referencing sparse sparse send buf
-        auto sparse_send_buffer = sparse_send_buf(st);
-        using DataBufferType    = decltype(sparse_send_buffer);
-        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
-        EXPECT_FALSE(DataBufferType::is_owning);
-        EXPECT_FALSE(DataBufferType::is_out_buffer);
-        EXPECT_FALSE(DataBufferType::is_modifiable);
-        EXPECT_EQ(sparse_send_buffer.underlying(), st);
-    }
-    {
-        // referencing sparse sparse send buf initialized from non-const object
-        TestStruct st_copy            = st;
-        auto       sparse_send_buffer = sparse_send_buf(st_copy);
-        using DataBufferType          = decltype(sparse_send_buffer);
-        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
-        EXPECT_FALSE(DataBufferType::is_owning);
-        EXPECT_FALSE(DataBufferType::is_out_buffer);
-        EXPECT_FALSE(DataBufferType::is_modifiable);
-        EXPECT_EQ(sparse_send_buffer.underlying(), st);
-    }
-    {
-        // owning sparse sparse send buf
-        TestStruct st_copy            = st;
-        auto       sparse_send_buffer = sparse_send_buf(std::move(st_copy));
-        using DataBufferType          = decltype(sparse_send_buffer);
-        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
-        EXPECT_TRUE(DataBufferType::is_owning);
-        EXPECT_FALSE(DataBufferType::is_out_buffer);
-        EXPECT_FALSE(DataBufferType::is_modifiable);
-        EXPECT_EQ(sparse_send_buffer.underlying(), st);
-    }
-    {
-        // owning sparse sparse send buf via temporary
-        auto sparse_send_buffer = sparse_send_buf(TestStruct{1, 2, 3});
-        using DataBufferType    = decltype(sparse_send_buffer);
-        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
-        EXPECT_TRUE(DataBufferType::is_owning);
-        EXPECT_FALSE(DataBufferType::is_out_buffer);
-        EXPECT_FALSE(DataBufferType::is_modifiable);
-        EXPECT_EQ(sparse_send_buffer.underlying(), st);
-    }
-}
-
-TEST(ParameterFactoriesTest, sparse_send_buf_basics_with_unordered_map) {
-    const std::unordered_map<int, std::vector<double>> input{{1, {1.0, 2.0}}};
-    {
-        // referencing sparse sparse send buf
-        auto sparse_send_buffer = sparse_send_buf(input);
-        using DataBufferType    = decltype(sparse_send_buffer);
-        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
-        EXPECT_FALSE(DataBufferType::is_owning);
-        EXPECT_FALSE(DataBufferType::is_out_buffer);
-        EXPECT_FALSE(DataBufferType::is_modifiable);
-        EXPECT_EQ(sparse_send_buffer.underlying(), input);
-    }
-    {
-        // referencing sparse sparse send buf initialized from non-const object
-        auto input_copy         = input;
-        auto sparse_send_buffer = sparse_send_buf(input_copy);
-        using DataBufferType    = decltype(sparse_send_buffer);
-        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
-        EXPECT_FALSE(DataBufferType::is_owning);
-        EXPECT_FALSE(DataBufferType::is_out_buffer);
-        EXPECT_FALSE(DataBufferType::is_modifiable);
-        EXPECT_EQ(sparse_send_buffer.underlying(), input);
-    }
-    {
-        // owning sparse sparse send buf
-        auto input_copy         = input;
-        auto sparse_send_buffer = sparse_send_buf(std::move(input_copy));
-        using DataBufferType    = decltype(sparse_send_buffer);
-        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
-        EXPECT_TRUE(DataBufferType::is_owning);
-        EXPECT_FALSE(DataBufferType::is_out_buffer);
-        EXPECT_FALSE(DataBufferType::is_modifiable);
-        EXPECT_EQ(sparse_send_buffer.underlying(), input);
-    }
-    {
-        // owning sparse send buf via temporary
-        auto sparse_send_buffer = sparse_send_buf(std::unordered_map<int, std::vector<double>>{{1, {1.0, 2.0}}});
-        using DataBufferType    = decltype(sparse_send_buffer);
-        EXPECT_EQ(DataBufferType::parameter_type, ParameterType::sparse_send_buf);
-        EXPECT_TRUE(DataBufferType::is_owning);
-        EXPECT_FALSE(DataBufferType::is_out_buffer);
-        EXPECT_FALSE(DataBufferType::is_modifiable);
-        EXPECT_EQ(sparse_send_buffer.underlying(), input);
-    }
-}
-
-TEST(ParameterFactoriesTest, on_message_basics_lambda) {
-    int  state     = 0;
-    auto add_value = [state](int val) mutable {
-        state += val;
-        return state;
-    };
-    {
-        // referencing on message obj from non-const lvalue
-        auto add_value_copy = add_value;
-        auto on_message     = kamping::on_message(add_value_copy);
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(42), 42);
-        EXPECT_EQ(on_message.underlying()(1), 43);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_FALSE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_TRUE(OnMessageType::is_modifiable);
-    }
-    {
-        // owning on message obj
-        auto add_value_copy = add_value;
-        auto on_message     = kamping::on_message(std::move(add_value_copy));
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(42), 42);
-        EXPECT_EQ(on_message.underlying()(1), 43);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_TRUE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_TRUE(OnMessageType::is_modifiable);
-    }
-    {
-        // owning on message obj via temporary
-        auto on_message     = kamping::on_message([state](int val) mutable {
-            state += val;
-            return state;
-        });
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(42), 42);
-        EXPECT_EQ(on_message.underlying()(1), 43);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_TRUE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_TRUE(OnMessageType::is_modifiable);
-    }
-}
-
-TEST(ParameterFactoriesTest, on_message_basics_mutable_lambda) {
-    auto const cb = [](auto const&) {
-        return 42;
-    };
-    {
-        // referencing on message obj
-        auto on_message     = kamping::on_message(cb);
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(std::ignore), 42);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_FALSE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_FALSE(OnMessageType::is_modifiable);
-    }
-    {
-        // referencing on message obj from non-const lvalue
-        auto cb_copy        = cb;
-        auto on_message     = kamping::on_message(cb_copy);
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(std::ignore), 42);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_FALSE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_TRUE(OnMessageType::is_modifiable);
-    }
-    {
-        // owning on message obj
-        auto cb_copy        = cb;
-        auto on_message     = kamping::on_message(std::move(cb_copy));
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(std::ignore), 42);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_TRUE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_TRUE(OnMessageType::is_modifiable);
-    }
-    {
-        // owning on message obj via temporary
-        auto on_message     = kamping::on_message([](auto const&) { return 42; });
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(std::ignore), 42);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_TRUE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_TRUE(OnMessageType::is_modifiable);
-    }
-}
-
-TEST(ParameterFactoriesTest, on_message_basics_callable_struct) {
-    struct Callable {
-        auto operator()() {
-            return "nonconst-operator";
-        }
-        auto operator()() const {
-            return "const-operator";
-        }
-        int state;
-    };
-    int const      state = 43;
-    const Callable cb{state};
-    {
-        // referencing on message obj
-        auto on_message     = kamping::on_message(cb);
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(), "const-operator");
-        EXPECT_EQ(on_message.underlying().state, state);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_FALSE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_FALSE(OnMessageType::is_modifiable);
-    }
-    {
-        // referencing on message obj from non-const lvalue
-        auto cb_copy        = cb;
-        auto on_message     = kamping::on_message(cb_copy);
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(), "nonconst-operator");
-        EXPECT_EQ(on_message.underlying().state, state);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_FALSE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_TRUE(OnMessageType::is_modifiable);
-    }
-    {
-        // owning on message obj
-        auto cb_copy        = cb;
-        auto on_message     = kamping::on_message(std::move(cb_copy));
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(), "nonconst-operator");
-        EXPECT_EQ(on_message.underlying().state, state);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_TRUE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_TRUE(OnMessageType::is_modifiable);
-    }
-    {
-        // owning on message obj via temporary
-        auto on_message     = kamping::on_message(Callable{state});
-        using OnMessageType = decltype(on_message);
-        EXPECT_EQ(on_message.underlying()(), "nonconst-operator");
-        EXPECT_EQ(on_message.underlying().state, state);
-        EXPECT_EQ(OnMessageType::parameter_type, ParameterType::on_message);
-        EXPECT_TRUE(OnMessageType::is_owning);
-        EXPECT_FALSE(OnMessageType::is_out_buffer);
-        EXPECT_TRUE(OnMessageType::is_modifiable);
-    }
-}
-
 TEST(ParameterFactoriesTest, send_counts_basics_int_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto             gen_via_int_vec = send_counts(int_vec).construct_buffer_or_rebind();
@@ -845,7 +590,7 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_initializer_list) {
 }
 
 TEST(ParameterFactoriesTest, recv_buf_basics_user_alloc) {
-    const size_t     size = 10;
+    size_t const     size = 10;
     std::vector<int> int_vec(size);
     auto             buffer_on_user_alloc_vector = recv_buf(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                      = int;
@@ -918,7 +663,7 @@ TEST(ParameterFactoriesTest, recv_buf_basics_library_alloc_container_of_with_own
 }
 
 TEST(ParameterFactoriesTest, send_counts_out_basics_user_alloc) {
-    const size_t     size = 10;
+    size_t const     size = 10;
     std::vector<int> int_vec(size);
     auto             buffer_based_on_user_alloc_vector = send_counts_out(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                            = int;
@@ -933,7 +678,7 @@ TEST(ParameterFactoriesTest, send_counts_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, always_resizing_send_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    BufferResizePolicy const resize_policy = BufferResizePolicy::resize_to_fit;
     auto buffer_based_on_user_alloc_vector = send_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -947,7 +692,7 @@ TEST(ParameterFactoriesTest, always_resizing_send_counts_out_basics_user_alloc) 
 
 TEST(ParameterFactoriesTest, resizing_if_required_send_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy = BufferResizePolicy::grow_only;
+    BufferResizePolicy const resize_policy = BufferResizePolicy::grow_only;
     auto buffer_based_on_user_alloc_vector = send_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -982,7 +727,7 @@ TEST(ParameterFactoriesTest, send_counts_out_basics_library_alloc_without_explic
 }
 
 TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
-    const size_t     size = 10;
+    size_t const     size = 10;
     std::vector<int> int_vec(size);
     auto             buffer_based_on_user_alloc_vector = send_displs_out(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                            = int;
@@ -997,7 +742,7 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_send_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    BufferResizePolicy const resize_policy = BufferResizePolicy::resize_to_fit;
     auto buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -1011,7 +756,7 @@ TEST(ParameterFactoriesTest, resizing_send_displs_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_send_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy = BufferResizePolicy::grow_only;
+    BufferResizePolicy const resize_policy = BufferResizePolicy::grow_only;
     auto buffer_based_on_user_alloc_vector = send_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -1046,7 +791,7 @@ TEST(ParameterFactoriesTest, send_displs_out_basics_library_alloc_without_explic
 }
 
 TEST(ParameterFactoriesTest, recv_counts_out_basics_user_alloc) {
-    const size_t     size = 10;
+    size_t const     size = 10;
     std::vector<int> int_vec(size);
     auto             buffer_based_on_user_alloc_buffer = recv_counts_out(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                            = int;
@@ -1061,7 +806,7 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_recv_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    BufferResizePolicy const resize_policy = BufferResizePolicy::resize_to_fit;
     auto buffer_based_on_user_alloc_buffer = recv_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -1075,7 +820,7 @@ TEST(ParameterFactoriesTest, resizing_recv_counts_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_recv_counts_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy = BufferResizePolicy::grow_only;
+    BufferResizePolicy const resize_policy = BufferResizePolicy::grow_only;
     auto buffer_based_on_user_alloc_buffer = recv_counts_out<resize_policy>(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -1110,7 +855,7 @@ TEST(ParameterFactoriesTest, recv_counts_out_basics_library_alloc_without_explic
 }
 
 TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
-    const size_t     size = 10;
+    size_t const     size = 10;
     std::vector<int> int_vec(size);
     auto             buffer_based_on_user_alloc_vector = recv_displs_out(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                            = int;
@@ -1125,7 +870,7 @@ TEST(ParameterFactoriesTest, recv_displs_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_recv_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    BufferResizePolicy const resize_policy = BufferResizePolicy::resize_to_fit;
     auto buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -1139,7 +884,7 @@ TEST(ParameterFactoriesTest, resizing_recv_displs_out_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_recv_displs_out_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy = BufferResizePolicy::grow_only;
+    BufferResizePolicy const resize_policy = BufferResizePolicy::grow_only;
     auto buffer_based_on_user_alloc_vector = recv_displs_out<resize_policy>(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -1505,7 +1250,7 @@ TEST(ParameterFactoriesTest, send_recv_buf_single_element) {
         );
     }
     {
-        const uint32_t value                     = 4096;
+        uint32_t const value                     = 4096;
         auto           gen_single_element_buffer = send_recv_buf(value).construct_buffer_or_rebind();
         testing::test_single_element_buffer(
             gen_single_element_buffer,
@@ -1516,7 +1261,7 @@ TEST(ParameterFactoriesTest, send_recv_buf_single_element) {
         );
     }
     {
-        const uint64_t value                     = 555555;
+        uint64_t const value                     = 555555;
         auto           gen_single_element_buffer = send_recv_buf(value).construct_buffer_or_rebind();
         testing::test_single_element_buffer(
             gen_single_element_buffer,
@@ -1549,8 +1294,8 @@ TEST(ParameterFactoriesTest, send_recv_buf_single_element) {
 }
 
 TEST(ParameterFactoriesTest, single_and_multiple_element_const_send_recv_buffer_type) {
-    const uint8_t              value  = 0;
-    const std::vector<uint8_t> values = {0, 0, 0, 0, 0, 0};
+    uint8_t const              value  = 0;
+    std::vector<uint8_t> const values = {0, 0, 0, 0, 0, 0};
 
     auto gen_single_element_buffer = send_recv_buf(value).construct_buffer_or_rebind();
     auto gen_int_vec_buffer        = send_recv_buf(values).construct_buffer_or_rebind();
@@ -1587,7 +1332,7 @@ TEST(ParameterFactoriesTest, single_and_multiple_element_modifiable_send_recv_bu
 }
 
 TEST(ParameterFactoriesTest, send_recv_buf_basics_user_alloc) {
-    const size_t     size = 10;
+    size_t const     size = 10;
     std::vector<int> int_vec(size);
     auto             buffer_on_user_alloc_vector = send_recv_buf(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                      = int;
@@ -1602,7 +1347,7 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_send_recv_buf_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy = BufferResizePolicy::resize_to_fit;
+    BufferResizePolicy const resize_policy = BufferResizePolicy::resize_to_fit;
     auto buffer_on_user_alloc_vector       = send_recv_buf<resize_policy>(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(
@@ -1616,7 +1361,7 @@ TEST(ParameterFactoriesTest, resizing_send_recv_buf_basics_user_alloc) {
 
 TEST(ParameterFactoriesTest, resizing_if_required_send_recv_buf_basics_user_alloc) {
     std::vector<int>         int_vec;
-    const BufferResizePolicy resize_policy = BufferResizePolicy::grow_only;
+    BufferResizePolicy const resize_policy = BufferResizePolicy::grow_only;
     auto buffer_on_user_alloc_vector       = send_recv_buf<resize_policy>(int_vec).construct_buffer_or_rebind();
     using ExpectedValueType                = int;
     testing::test_user_allocated_buffer<ExpectedValueType>(

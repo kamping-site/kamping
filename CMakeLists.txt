@@ -36,6 +36,8 @@ if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     else ()
         message(STATUS "Doxygen not found, not building docs")
     endif ()
+
+    add_subdirectory(cmake/Format.cmake)
 endif ()
 
 # Require out-of-source builds
@@ -51,6 +53,7 @@ endif ()
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
+option(KAMPING_ENABLE_ULFM "Enable User-Level Failure-Mitigation (ULFM)" OFF)
 
 # Enable compilation with ccache. Defaults to ON if this is the main project.
 if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)

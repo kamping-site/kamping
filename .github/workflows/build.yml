@@ -12,7 +12,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 10
     container:
-      image: "localhost:5000/kamping-ci:2024.1"
+      image: "ghcr.io/kamping-site/kamping-ci:2024.2"
     continue-on-error: true
     strategy:
       matrix:
@@ -57,7 +57,7 @@ jobs:
             run-tests: OFF
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3.0.2
       with:
         submodules: 'recursive'
     - name: export-compiler
@@ -71,7 +71,7 @@ jobs:
     - name: print-mpicxx-flags
       run: mpicxx -show
     - name: cmake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DKAMPING_WARNINGS_ARE_ERRORS=ON -DKAMPING_EXCEPTION_MODE=${{ matrix.exception-mode }} -DKAMPING_ASSERTION_LEVEL=${{ matrix.assertion-level }} -DKAMPING_TESTS_DISCOVER=OFF -DKAMPING_TEST_ENABLE_SANITIZERS=ON
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DKAMPING_WARNINGS_ARE_ERRORS=ON -DKAMPING_EXCEPTION_MODE=${{ matrix.exception-mode }} -DKAMPING_ASSERTION_LEVEL=${{ matrix.assertion-level }} -DKAMPING_TESTS_DISCOVER=OFF -DKAMPING_TEST_ENABLE_SANITIZERS=ON -DKAMPING_TEST_TIMEOUT=40
     - name: build
       run: cmake --build build/ --parallel
     - name: Allow-running-mpi

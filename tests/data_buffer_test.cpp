@@ -582,6 +582,7 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
             int,
+            ParameterType,
             ParameterType::send_buf,
             BufferModifiability::modifiable,
             BufferOwnership::owning,
@@ -593,6 +594,7 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         has_extract_v<DataBuffer<
             int,
+            ParameterType,
             ParameterType::send_buf,
             BufferModifiability::modifiable,
             BufferOwnership::owning,
@@ -604,6 +606,7 @@ TEST(DataBufferTest, has_extract) {
     static_assert(
         !has_extract_v<DataBuffer<
             int,
+            ParameterType,
             ParameterType::send_buf,
             BufferModifiability::modifiable,
             BufferOwnership::referencing,
@@ -808,10 +811,14 @@ TEST(DataBufferTest, make_data_buffer) {
     {
         // Constant, container, referencing, user allocated
         std::vector<int>                  vec;
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(vec);
+        constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
+        constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
+        auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
+            ptype,
+            BufferModifiability::constant,
+            btype,
+            BufferResizePolicy::no_resize>(vec);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -828,11 +835,14 @@ TEST(DataBufferTest, make_data_buffer) {
     {
         // Modifiable, container, referencing, user allocated
         std::vector<int>                  vec;
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::grow_only>(vec
-            );
+        constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
+        constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
+        auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
+            ptype,
+            BufferModifiability::modifiable,
+            btype,
+            BufferResizePolicy::grow_only>(vec);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -849,12 +859,14 @@ TEST(DataBufferTest, make_data_buffer) {
     {
         // Constant, single element, referencing, user allocated
         int                               single_int;
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
-                single_int
-            );
+        constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
+        constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
+        auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
+            ptype,
+            BufferModifiability::constant,
+            btype,
+            BufferResizePolicy::no_resize>(single_int);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
@@ -871,12 +883,14 @@ TEST(DataBufferTest, make_data_buffer) {
     {
         // Constant, container, owning, user allocated
         std::vector<int>                  vec;
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
-                std::move(vec)
-            );
+        constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
+        constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
+        auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
+            ptype,
+            BufferModifiability::constant,
+            btype,
+            BufferResizePolicy::no_resize>(std::move(vec));
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -894,6 +908,7 @@ TEST(DataBufferTest, make_data_buffer) {
         constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
         auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
             ptype,
             BufferModifiability::modifiable,
             btype,
@@ -913,9 +928,12 @@ TEST(DataBufferTest, make_data_buffer) {
         // Modifiable, single element, owning, lib_allocated
         constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
-        auto                              data_buf = internal::
-            make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::no_resize>(alloc_new<
-                                                                                                           int>);
+        auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
+            ptype,
+            BufferModifiability::modifiable,
+            btype,
+            BufferResizePolicy::no_resize>(alloc_new<int>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
@@ -959,7 +977,7 @@ TEST(DataBufferTest, make_data_buffer) {
         EXPECT_FALSE(data_buf.is_single_element);
         EXPECT_EQ(data_buf.resize_policy, resize_policy);
         static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<int>>,
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<int> const>,
             "Owning buffers must hold their data directly."
         );
         // extract() as proxy for lib allocated DataBuffers
@@ -975,7 +993,8 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         constexpr internal::ParameterType ptype         = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype         = internal::BufferType::in_buffer;
         constexpr BufferResizePolicy      resize_policy = BufferResizePolicy::no_resize;
-        auto data_buf = internal::make_data_buffer<ptype, BufferModifiability::constant, btype, resize_policy>(vec);
+        auto                              data_buf      = internal::
+            make_data_buffer<internal::ParameterType, ptype, BufferModifiability::constant, btype, resize_policy>(vec);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -994,8 +1013,12 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         ::testing::OwnContainer<bool>     vec      = {true, false};
         constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
-        auto                              data_buf = internal::
-            make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::resize_to_fit>(vec);
+        auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
+            ptype,
+            BufferModifiability::modifiable,
+            btype,
+            BufferResizePolicy::resize_to_fit>(vec);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -1012,12 +1035,14 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
     {
         // Constant, single element, referencing, user allocated
         bool                              single_bool;
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
-                single_bool
-            );
+        constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
+        constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
+        auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
+            ptype,
+            BufferModifiability::constant,
+            btype,
+            BufferResizePolicy::no_resize>(single_bool);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
@@ -1033,13 +1058,15 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
     }
     {
         // Constant, container, owning, user allocated
-        ::testing::OwnContainer<bool>     vec   = {true, false};
-        constexpr internal::ParameterType ptype = internal::ParameterType::send_buf;
-        constexpr internal::BufferType    btype = internal::BufferType::in_buffer;
-        auto                              data_buf =
-            internal::make_data_buffer<ptype, BufferModifiability::constant, btype, BufferResizePolicy::no_resize>(
-                std::move(vec)
-            );
+        ::testing::OwnContainer<bool>     vec      = {true, false};
+        constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
+        constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
+        auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
+            ptype,
+            BufferModifiability::constant,
+            btype,
+            BufferResizePolicy::no_resize>(std::move(vec));
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_FALSE(data_buf.is_modifiable);
         EXPECT_FALSE(data_buf.is_single_element);
@@ -1057,6 +1084,7 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
         auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
             ptype,
             BufferModifiability::modifiable,
             btype,
@@ -1076,9 +1104,12 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         // Modifiable, single element, owning, lib_allocated
         constexpr internal::ParameterType ptype    = internal::ParameterType::send_buf;
         constexpr internal::BufferType    btype    = internal::BufferType::in_buffer;
-        auto                              data_buf = internal::
-            make_data_buffer<ptype, BufferModifiability::modifiable, btype, BufferResizePolicy::no_resize>(alloc_new<
-                                                                                                           bool>);
+        auto                              data_buf = internal::make_data_buffer<
+            internal::ParameterType,
+            ptype,
+            BufferModifiability::modifiable,
+            btype,
+            BufferResizePolicy::no_resize>(alloc_new<bool>);
         EXPECT_EQ(data_buf.parameter_type, ptype);
         EXPECT_TRUE(data_buf.is_modifiable);
         EXPECT_TRUE(data_buf.is_single_element);
@@ -1126,7 +1157,7 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         EXPECT_FALSE(data_buf.is_single_element);
         EXPECT_EQ(data_buf.resize_policy, BufferResizePolicy::no_resize);
         static_assert(
-            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, const std::vector<kabool>>,
+            std::is_same_v<decltype(data_buf)::MemberTypeWithConstAndRef, std::vector<kabool> const>,
             "Initializer lists of type bool have to be converted to std::vector<kabool>."
         );
         // extract() as proxy for lib allocated DataBuffers

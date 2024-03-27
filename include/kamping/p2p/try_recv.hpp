@@ -41,10 +41,8 @@
 /// message is available. If a message is available, it will be received using a matched receive (\c MPI_Mrecv).
 ///
 /// The following parameters are optional:
-/// - \ref kamping::recv_buf() the buffer to receive the message into.  The buffer will be resized according to the
-/// buffer's kamping::BufferResizePolicy. If this is kamping::BufferResizePolicy::no_resize, the buffer's underlying
-/// storage must be large enough to hold all received elements. If \ref kamping::recv_type() is given the resize policy
-/// has to be BufferResizePolicy::no_resize. If no \ref kamping::recv_buf() is provided, the \c value_type of the recv
+/// - \ref kamping::recv_buf() the buffer to receive the message into. The buffer's underlying storage must be large
+/// enough to hold all received elements. If no \ref kamping::recv_buf() is provided, the \c value_type of the recv
 /// buffer has to be passed as a template parameter to \c recv().
 ///
 /// - \ref kamping::tag() receive message with the given tag. Defaults to receiving for an arbitrary tag, i.e. \c
@@ -57,16 +55,19 @@
 /// appropriate fields in the status object. The status can be obtained by using \c kamping::status_out and ignored by
 /// passing \c kamping::ignore<>. This is the default.
 ///
-//  - \ref kamping::recv_type() specifying the \c MPI datatype to use as the recv type. If omitted, the \c MPI datatype
-//  is
-/// derived automatically based on <code>recv_buf</code>'s underlying \c value_type.
+/// - \ref kamping::recv_type() specifying the \c MPI datatype to use as the recv type. If omitted, the \c MPI datatype
+/// is derived automatically based on `recv_buf`'s underlying \c value_type.
 ///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no \ref kamping::recv_buf() is given.
-/// @tparam Args Automatically deducted template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described above.
 /// @return If no message is available return \c std::nullopt, else return a \c std::optional wrapping an \ref
 /// kamping::MPIResult. If the result object is empty, i.e. there are no owning out parameters passed to `try_recv` (see
-/// \ref docs/named_parameters.md), returns a \c bool indicating success instead of an \c std::optional.
+/// \ref docs/parameter_handling.md), returns a \c bool indicating success instead of an \c std::optional.
+///
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+/// <hr>
+/// \include{doc} docs/resize_policy.dox
 template <
     template <typename...>
     typename DefaultContainerType,

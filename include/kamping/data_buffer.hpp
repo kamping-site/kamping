@@ -316,6 +316,7 @@ constexpr BufferResizePolicy maximum_viable_resize_policy = [] {
 /// DataBuffer wraps all buffer storages provided by an std-like container like std::vector or single values. A
 /// Container type must provide \c data(), \c size() and expose the type definition \c value_type.
 /// @tparam MemberType Container or data type on which this buffer is based.
+/// @tparam TParameterType Type of the parameter_type_param (required for parameter selection within plugins).
 /// @tparam parameter_type_param Parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -330,7 +331,8 @@ constexpr BufferResizePolicy maximum_viable_resize_policy = [] {
 /// container, without any checking `user_allocated` if it was allocated by the user.
 template <
     typename MemberType,
-    ParameterType       parameter_type_param,
+    typename TParameterType,
+    TParameterType      parameter_type_param,
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param,
@@ -339,7 +341,7 @@ template <
     typename ValueType             = default_value_type_tag>
 class DataBuffer : private ParameterObjectBase {
 public:
-    static constexpr ParameterType parameter_type =
+    static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
 
     static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
@@ -577,6 +579,7 @@ private:
 /// expose neither \c data(), \c resize() nor \c value_type.
 ///
 /// @tparam MemberType Type of the wrapped object.
+/// @tparam TParameterType Type of the parameter_type_param (required for parameter selection within plugins).
 /// @tparam parameter_type_param Parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -585,13 +588,14 @@ private:
 /// @tparam buffer_type_param Type of buffer, i.e., \c in_buffer, \c out_buffer, or \c in_out_buffer.
 template <
     typename MemberType,
-    ParameterType       parameter_type_param,
+    typename TParameterType,
+    TParameterType      parameter_type_param,
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param>
 class GenericDataBuffer : private ParameterObjectBase {
 public:
-    static constexpr ParameterType parameter_type =
+    static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
 
     static constexpr BufferType buffer_type = buffer_type_param; ///< The type of the buffer, i.e., in, out, or in_out.
@@ -606,6 +610,8 @@ public:
 
     static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
+
+    using value_type = MemberType; ///< Value type of the buffer.
 
     using MemberTypeWithConst =
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or
@@ -724,6 +730,7 @@ constexpr bool is_empty_data_buffer_v<EmptyDataBuffer<T, type, buffer_type_param
 /// Creates a user allocated DataBuffer with the given template parameters and ownership based on whether an rvalue or
 /// lvalue reference is passed.
 ///
+/// @tparam TParameterType type of parameter type represented by this buffer.
 /// @tparam parameter_type parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -736,7 +743,8 @@ constexpr bool is_empty_data_buffer_v<EmptyDataBuffer<T, type, buffer_type_param
 ///
 /// @return A user allocated DataBuffer with the given template parameters and matching ownership.
 template <
-    ParameterType       parameter_type,
+    typename TParameterType,
+    TParameterType      parameter_type,
     BufferModifiability modifiability,
     BufferType          buffer_type,
     BufferResizePolicy  buffer_resize_policy,
@@ -754,6 +762,7 @@ auto make_data_buffer(Data&& data) {
     static_assert(!is_const_data_type || is_const_buffer);
     return DataBuffer<
         std::remove_const_t<std::remove_reference_t<Data>>,
+        TParameterType,
         parameter_type,
         modifiability,
         ownership,
@@ -767,6 +776,7 @@ auto make_data_buffer(Data&& data) {
 ///
 /// Creates a library allocated DataBuffer with the given template parameters.
 ///
+/// @tparam TParameterType type of parameter type represented by this buffer.
 /// @tparam parameter_type parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -778,7 +788,8 @@ auto make_data_buffer(Data&& data) {
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
 template <
-    ParameterType       parameter_type,
+    typename TParameterType,
+    TParameterType      parameter_type,
     BufferModifiability modifiability,
     BufferType          buffer_type,
     BufferResizePolicy  buffer_resize_policy,
@@ -787,6 +798,7 @@ template <
 auto make_data_buffer(AllocNewT<Data>) {
     return DataBuffer<
         Data,
+        TParameterType,
         parameter_type,
         BufferModifiability::modifiable, // something library allocated is always modifiable
         BufferOwnership::owning,
@@ -800,6 +812,7 @@ auto make_data_buffer(AllocNewT<Data>) {
 /// type.
 ///
 ///
+/// @tparam TParameterType type of parameter type represented by this buffer.
 /// @tparam parameter_type parameter type represented by this buffer.
 /// @tparam modifiability `modifiable` if a KaMPIng operation is allowed to
 /// modify the underlying container. `constant` otherwise.
@@ -811,6 +824,7 @@ auto make_data_buffer(AllocNewT<Data>) {
 ///
 /// @return A library allocated DataBuffer with the given template parameters.
 template <
+    typename TParameterType,
     ParameterType       parameter_type,
     BufferModifiability modifiability,
     BufferType          buffer_type,
@@ -826,6 +840,7 @@ auto make_data_buffer(AllocNewUsingT<Data>) {
     );
     return DataBuffer<
         Data<ValueType>,
+        TParameterType,
         parameter_type,
         BufferModifiability::modifiable, // something library allocated is always modifiable
         BufferOwnership::owning,

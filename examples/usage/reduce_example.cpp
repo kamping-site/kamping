@@ -24,64 +24,61 @@
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameters.hpp"
 
-struct my_plus {
-    template <typename T>
-    auto operator()(T a, T b) {
-        return a + b;
-    }
-};
-
 int main() {
     using namespace kamping;
 
-    Environment         e;
-    Communicator        comm;
+    Environment  e;
+    Communicator comm;
+
     std::vector<double> input = {1, 2, 3};
 
-    auto result0 = comm.reduce(send_buf(input), op(ops::plus<>()), root(0));
+    // Compute the sum of all elements scattered across all ranks and store it on the root rank.
+    auto const result0 = comm.reduce(send_buf(input), op(ops::plus<>()));
+
+    if (comm.rank() == 0) {
+        std::cout << " --- basic --- " << std::endl;
+    }
     print_result_on_root(result0, comm);
-    auto result1 = comm.reduce(send_buf(input), op(ops::plus<double>()));
-    print_result_on_root(result1, comm);
-    auto result2 = comm.reduce(send_buf(input), op(my_plus{}, ops::commutative));
+    // MPI_SUM (with performance penalty) and std::plus<> are also valid predefined operators.
+
+    // Provide a custom commutative reduction function; store the result in a preallocated container.
+    std::vector<double> result2(3, 0);
+    comm.reduce(send_buf(input), recv_buf(result2), op([](auto a, auto b) { return a + b; }, ops::non_commutative));
+
+    if (comm.rank() == 0) {
+        std::cout << " --- custom reduction function --- " << std::endl;
+    }
     print_result_on_root(result2, comm);
 
-    std::vector<double> result3;
-    /*auto result3 = */ comm.reduce(
-        send_buf({1.0, 2.0, 3.0}),
-        recv_buf<resize_to_fit>(result3),
-        op([](auto a, auto b) { return a + b; }, ops::non_commutative)
-    );
-    print_result_on_root(result3, comm);
-
+    // Compute the reduction over a custom datatype using a custom operation.
     struct Bar {
         int    first;
         double second;
     };
     std::vector<Bar> input2 = {{3, 0.25}};
 
-    auto result4 = comm.reduce(
+    [[maybe_unused]] auto const result4 = comm.reduce(
         send_buf(input2),
         op(
             [](auto a, auto b) {
-                // dummy
                 return Bar{a.first + b.first, a.second + b.second};
             },
             ops::commutative
         )
     );
+
     if (comm.rank() == 0) {
+        std::cout << " --- custom datatype, custom function --- " << std::endl;
         for (auto& elem: result4) {
             std::cout << elem.first << " " << elem.second << std::endl;
         }
     }
+
+    // Custom types can also be used with predefined operations given they overload the required members.
     struct Point {
         int           x;
         double        y;
         unsigned long z;
-
-        Point operator+(Point& rhs) const {
-            return {x + rhs.x, y + rhs.y, z + rhs.z};
-        }
 
         bool operator<(Point const& rhs) const {
             return x < rhs.x || (x == rhs.x && y < rhs.y) || (x == rhs.x && y == rhs.y && z < rhs.z);
@@ -93,12 +90,13 @@ int main() {
         input5[1].y = 0.75;
     }
 
-    auto result5 = comm.reduce(send_buf(input5), op(ops::max<>(), ops::commutative));
+    [[maybe_unused]] auto result5 = comm.reduce(send_buf(input5), op(ops::max<>(), ops::commutative));
     if (comm.rank() == 0) {
+        std::cout << " --- custom datatype, predefined function --- " << std::endl;
         for (auto& elem: result5) {
             std::cout << elem.x << " " << elem.y << " " << elem.z << std::endl;
         }
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

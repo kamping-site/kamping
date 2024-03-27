@@ -65,16 +65,16 @@ template <typename Predicate, typename Head, typename... Tail>
 struct FilterOut<Predicate, Head, Tail...> {
     using non_ref_first = std::remove_reference_t<Head>; ///< Remove potential reference from Head.
     static constexpr bool discard_elem =
-        Predicate::template discard<non_ref_first>(); ///< Predicate which Head has to fulfill to be kept.
-    static constexpr internal::ParameterType ptype =
-        non_ref_first::parameter_type; ///< ParameterType stored as a static variable in Head.
-    using type = std::conditional_t<
+        Predicate::template discard<non_ref_first>();     ///< Predicate which Head has to fulfill to be kept.
+    static constexpr auto ptype = parameter_type_v<Head>; ///< ParameterType stored as a static variable in Head.
+    using type                  = std::conditional_t<
         discard_elem,
         typename FilterOut<Predicate, Tail...>::type,
-        typename PrependType<ParameterTypeEntry<ptype>, typename FilterOut<Predicate, Tail...>::type>::
-            type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are
-                   ///< those types among Head, Tail... which fulfill the
-                   ///< predicate.
+        typename PrependType<
+            std::integral_constant<parameter_type_t<Head>, ptype>,
+            typename FilterOut<Predicate, Tail...>::type>::type>; ///< A std::tuple<T1, ..., Tn> where T1, ..., Tn are
+                                                                  ///< those types among Head, Tail... which fulfill the
+                                                                  ///< predicate.
 };
 
 /// @brief Specialisation of template class for types stored in a std::tuple<...> that is used to filter these types and
@@ -112,9 +112,7 @@ template <typename ParameterTypeTuple, typename... Buffers, std::size_t... i>
 auto construct_buffer_tuple_impl(
     std::tuple<Buffers...>& buffers, std::index_sequence<i...> /*index_sequence*/
 ) {
-    return std::make_tuple(
-        std::move(retrieve_buffer<std::tuple_element_t<i, ParameterTypeTuple>::parameter_type>(buffers))...
-    );
+    return std::make_tuple(std::move(retrieve_buffer<std::tuple_element_t<i, ParameterTypeTuple>::value>(buffers))...);
 }
 
 /// @brief Construct tuple containing all buffers specified in \tparam ParamterTypeTuple.

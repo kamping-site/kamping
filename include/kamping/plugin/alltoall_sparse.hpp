@@ -1,32 +1,26 @@
-// This file is part of KaMPIng.
-//
-// Copyright 2022-2024 The KaMPIng Authors
-//
-// KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-// version. KaMPIng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-// for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
-// <https://www.gnu.org/licenses/>.
-
-#pragma once
-
+#include "kamping/checking_casts.hpp"
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/ibarrier.hpp"
+#include "kamping/communicator.hpp"
+#include "kamping/environment.hpp"
 #include "kamping/named_parameter_filtering.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/p2p/iprobe.hpp"
 #include "kamping/p2p/isend.hpp"
 #include "kamping/p2p/recv.hpp"
+#include "kamping/plugin/plugin_helpers.hpp"
 #include "kamping/request_pool.hpp"
 #include "kamping/result.hpp"
 
-namespace kamping {
+/// @file
+/// @brief File containing the SparseAlltoall plugin.
 
+#pragma once
+namespace kamping::plugin {
+
+namespace sparse_alltoall {
 /// @brief Class encapsulating a probed message that is ready to be received in a sparse alltoall exchange.
 template <typename T, typename Communicator>
 class ProbedMessage {
@@ -102,11 +96,19 @@ private:
     Communicator const& _comm;
 };
 
+/// @brief Parameter types used for the SparseAlltoall plugin.
+enum class ParameterType {
+    sparse_send_buf, ///< Tag used to represent a sparse send buffer, i.e. a buffer containing destination-message
+                     ///< pairs.
+    on_message ///< Tag used to represent a call back function operation on a \ref sparse_alltoall::ProbedMessage object
+               ///< in alltoallv_sparse.
+};
+
 namespace internal {
 /// @brief Predicate to check whether an argument provided to sparse_alltoall shall be discarded in the internal calls
 /// to \ref Communicator::issend().
 struct PredicateForSparseAlltoall {
-    /// @brief Function to check whether an argument provided to \ref Communicator::alltoallv_sparse() shall be
+    /// @brief Function to check whether an argument provided to \ref SparseAlltoall::alltoallv_sparse() shall be
     /// discarded in the send call.
     ///
     /// @tparam Arg Argument to be checked.
@@ -115,24 +117,70 @@ struct PredicateForSparseAlltoall {
     static constexpr bool discard() {
         using namespace kamping::internal;
         using ptypes_to_ignore = type_list<
-            ParameterTypeEntry<ParameterType::sparse_send_buf>,
-            ParameterTypeEntry<ParameterType::on_message>,
-            ParameterTypeEntry<ParameterType::tag>,
-            ParameterTypeEntry<ParameterType::destination>>;
-        using ptype_entry = ParameterTypeEntry<Arg::parameter_type>;
+            std::integral_constant<sparse_alltoall::ParameterType, sparse_alltoall::ParameterType::sparse_send_buf>,
+            std::integral_constant<sparse_alltoall::ParameterType, sparse_alltoall::ParameterType::on_message>,
+            std::integral_constant<kamping::internal::ParameterType, kamping::internal::ParameterType::tag>,
+            std::integral_constant<kamping::internal::ParameterType, kamping::internal::ParameterType::destination>>;
+        using ptype_entry = std::integral_constant<parameter_type_t<Arg>, parameter_type_v<Arg>>;
         return ptypes_to_ignore::contains<ptype_entry>;
     }
 };
 
-/// @brief Filter the arguments \tparam Args for which the static member function `discard()` of \tparam Predicate
-/// returns true and pack (move) remaining arguments into
-template <typename Predicate, typename... Args>
-auto filter_args_into_tuple(Args&&... args) {
-    using ArgsToKeep = typename FilterOut<Predicate, std::tuple<Args...>>::type;
-    return construct_buffer_tuple<ArgsToKeep>(args...);
-}
 } // namespace internal
-} // namespace kamping
+
+/// @brief Generates buffer wrapper based on the data in the sparse send buffer.
+/// \param data is a container consisting of destination-message pairs. Each
+/// such pair has to be decomposable via structured bindings with the first parameter being convertible to int and the
+/// second parameter being the actual message to be sent for which we require the usual send_buf properties (i.e.,
+/// either scalar types or existance  of a `data()` and `size()` member function and the exposure of a `value_type`))
+///
+/// @tparam Data Data type representing the element(s) to send.
+/// @return Object referring to the storage containing the data elements to send.
+template <typename Data>
+auto sparse_send_buf(Data&& data) {
+    using namespace kamping::internal;
+    constexpr BufferOwnership ownership =
+        std::is_rvalue_reference_v<Data&&> ? BufferOwnership::owning : BufferOwnership::referencing;
+
+    return GenericDataBuffer<
+        std::remove_reference_t<Data>,
+        sparse_alltoall::ParameterType,
+        sparse_alltoall::ParameterType::sparse_send_buf,
+        BufferModifiability::constant,
+        ownership,
+        BufferType::in_buffer>(std::forward<Data>(data));
+}
+
+/// @brief Generates wrapper for an callback to be called on the probed messages in \ref
+/// SparseAlltoall::alltoallv_sparse(). Its call operator has to accept a \ref ProbedMessage as sole parameter.
+template <typename Callback>
+auto on_message(Callback&& cb) {
+    using namespace kamping::internal;
+    constexpr BufferOwnership ownership =
+        std::is_rvalue_reference_v<Callback&&> ? BufferOwnership::owning : BufferOwnership::referencing;
+
+    constexpr BufferModifiability modifiability = std::is_const_v<std::remove_reference_t<Callback>>
+                                                      ? BufferModifiability::constant
+                                                      : BufferModifiability::modifiable;
+
+    return GenericDataBuffer<
+        std::remove_reference_t<Callback>,
+        sparse_alltoall::ParameterType,
+        sparse_alltoall::ParameterType::on_message,
+        modifiability,
+        ownership,
+        BufferType::in_buffer>(std::forward<Callback>(cb));
+}
+} // namespace sparse_alltoall
+
+/// @brief Plugin providing a sparse alltoall exchange method.
+/// @see \ref SparseAlltoall::alltoallv_sparse() for more information.
+template <typename Comm, template <typename...> typename DefaultContainerType>
+class SparseAlltoall : public plugin::PluginBase<Comm, DefaultContainerType, SparseAlltoall> {
+public:
+    template <typename... Args>
+    void alltoallv_sparse(Args... args) const;
+};
 
 /// @brief Sparse alltoall exchange using the NBX algorithm(Hoefler et al., "Scalable communication protocols for
 /// dynamic sparse data", ACM Sigplan Noctices 45.5, 2010.)
@@ -144,16 +192,16 @@ auto filter_args_into_tuple(Args&&... args) {
 /// counts. Instead we use a sparse representation of the data to be sent.
 ///
 /// The following parameters are required:
-/// - \ref kamping::sparse_send_buf() containing the messages to be sent to other ranks. Differently from plain
-/// alltoallv, in alltoallv_sparse \c send_buf() encapsulates a container consisting of destination-message pairs. Each
-/// such pair has to be decomposable via structured bindings with the first parameter being convertible to int and the
-/// second parameter being the actual message to be sent for which we require the usual send_buf properties (i.e.,
-/// either scalar types or existance `data()` and `size()` member function and the exposure of a `value_type`)).
-/// Messages of size 0 are not sent.
-/// - \ref kamping::on_message() containing a callback function `cb` which is responsible to process the received
-/// messages via a \ref kamping::ProbedMessage object. The callback function `cb` gets called for each probed message
-/// ready to be received via `cb(probed_message)`. See \ref kamping::ProbedMessage for the member functions to be called
-/// on the object.
+/// - \ref sparse_alltoall::sparse_send_buf() containing the messages to be sent to other ranks.
+/// Differently from plain alltoallv, in alltoallv_sparse \c send_buf() encapsulates a container consisting of
+/// destination-message pairs. Each such pair has to be decomposable via structured bindings with the first parameter
+/// being convertible to int and the second parameter being the actual message to be sent for which we require the usual
+/// send_buf properties (i.e., either scalar types or existance `data()` and `size()` member function and the exposure
+/// of a `value_type`)). Messages of size 0 are not sent.
+/// - \ref sparse_alltoall::on_message() containing a callback function `cb` which is responsible to
+/// process the received messages via a \ref sparse_alltoall::ProbedMessage object. The callback function `cb` gets
+/// called for each probed message ready to be received via `cb(probed_message)`. See \ref
+/// sparse_alltoall::ProbedMessage for the member functions to be called on the object.
 ///
 /// The following buffers are optional:
 /// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
@@ -163,40 +211,31 @@ auto filter_args_into_tuple(Args&&... args) {
 ///
 /// @tparam Args Automatically deducted template parameters.
 /// @param args All required and any number of the optional parameters described above.
-template <
-    template <typename...>
-    typename DefaultContainerType,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
+template <typename Comm, template <typename...> typename DefaultContainerType>
 template <typename... Args>
-void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(Args... args) const {
-    // Get all parameter objects
-    using SelfType = kamping::Communicator<DefaultContainerType, Plugins...>;
-    KAMPING_CHECK_PARAMETERS(
-        Args,
-        KAMPING_REQUIRED_PARAMETERS(sparse_send_buf, on_message),
-        KAMPING_OPTIONAL_PARAMETERS(send_type, tag)
-    );
+void SparseAlltoall<Comm, DefaultContainerType>::alltoallv_sparse(Args... args) const {
+    auto& self = this->to_communicator();
     // Get send_buf
-    auto const& dst_message_container =
-        internal::select_parameter_type<internal::ParameterType::sparse_send_buf>(args...);
+    using send_buf_param_type =
+        std::integral_constant<sparse_alltoall::ParameterType, sparse_alltoall::ParameterType::sparse_send_buf>;
+    auto const& dst_message_container = kamping::internal::select_parameter_type<send_buf_param_type>(args...);
     using dst_message_container_type =
         typename std::remove_reference_t<decltype(dst_message_container.underlying())>::value_type;
     using message_type = typename std::tuple_element_t<1, dst_message_container_type>;
     // support message_type being a single element.
-    using message_value_type =
-        typename internal::ValueTypeWrapper<internal::has_data_member_v<message_type>, message_type>::value_type;
+    using message_value_type = typename kamping::internal::
+        ValueTypeWrapper<kamping::internal::has_data_member_v<message_type>, message_type>::value_type;
 
     // Get tag
-    using default_tag_buf_type = decltype(kamping::tag(this->default_tag()));
-    auto const&& tag_param =
-        internal::select_parameter_type_or_default<internal::ParameterType::tag, default_tag_buf_type>(
-            std::tuple(this->default_tag()),
-            args...
-        );
+    using default_tag_buf_type = decltype(kamping::tag(self.default_tag()));
+    auto const&& tag_param     = kamping::internal::select_parameter_type_or_default<
+        kamping::internal::ParameterType::tag,
+        default_tag_buf_type>(std::tuple(self.default_tag()), args...);
 
-    // Get callback
-    auto const& on_message_cb = internal::select_parameter_type<internal::ParameterType::on_message>(args...);
+    //// Get callback
+    using on_message_param_type =
+        std::integral_constant<sparse_alltoall::ParameterType, sparse_alltoall::ParameterType::on_message>;
+    auto const& on_message_cb = kamping::internal::select_parameter_type<on_message_param_type>(args...);
 
     RequestPool<DefaultContainerType> request_pool;
     for (auto const& [dst, msg]: dst_message_container.underlying()) {
@@ -206,7 +245,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(A
             int       dst_       = dst; // cannot capture structured binding variable
             int const send_count = asserting_cast<int>(send_buf.size());
             auto      callable   = [&](auto... argsargs) {
-                issend(
+                self.issend(
                     std::move(send_buf),
                     kamping::send_count(send_count),
                     destination(dst_),
@@ -215,16 +254,19 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(A
                     std::move(argsargs)...
                 );
             };
-            std::apply(callable, internal::filter_args_into_tuple<internal::PredicateForSparseAlltoall>(args...));
+            std::apply(
+                callable,
+                filter_args_into_tuple<sparse_alltoall::internal::PredicateForSparseAlltoall>(args...)
+            );
         }
     }
 
     Status  status;
     Request barrier_request(MPI_REQUEST_NULL);
     while (true) {
-        bool const got_message = iprobe(status_out(status), tag(tag_param.tag()));
+        bool const got_message = self.iprobe(status_out(status), tag(tag_param.tag()));
         if (got_message) {
-            ProbedMessage<message_value_type, SelfType> probed_message{std::move(status), *this};
+            sparse_alltoall::ProbedMessage<message_value_type, Comm> probed_message{std::move(status), self};
             on_message_cb.underlying()(probed_message);
         }
         if (!barrier_request.is_null()) {
@@ -233,9 +275,11 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv_sparse(A
             }
         } else {
             if (request_pool.test_all()) {
-                ibarrier(request(barrier_request));
+                self.ibarrier(request(barrier_request));
             }
         }
     }
-    barrier();
+    self.barrier();
 }
+
+} // namespace kamping::plugin
