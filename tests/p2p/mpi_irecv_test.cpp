@@ -15,6 +15,7 @@
 
 #include "../test_assertions.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -562,5 +563,41 @@ TEST_F(IrecvTest, non_trivial_recv_type) {
     }
     // ensure that we have received all inflight messages
     MPI_Wait(&req, MPI_STATUS_IGNORE);
+    comm.barrier();
+}
+
+TEST_F(IrecvTest, recv_buf_passthrough) {
+    using namespace ::testing;
+    Communicator comm;
+    if (comm.size() < 2) {
+        return;
+    }
+    if (comm.rank() == 0) {
+        std::vector<int> v{{42, 1, 7, 5}};
+        MPI_Send(v.data(), 4, MPI_INT, 1, 0, comm.mpi_communicator());
+    } else if (comm.rank() == 1) {
+        std::vector<int> buf(4);
+        auto             req    = comm.irecv<int>(recv_buf(std::move(buf)), recv_count(4));
+        auto             result = req.wait();
+        EXPECT_THAT(result, ElementsAre(42, 1, 7, 5));
+    }
+    comm.barrier();
+}
+
+TEST_F(IrecvTest, recv_buf_passthrough_single_element) {
+    using namespace ::testing;
+    Communicator comm;
+    if (comm.size() < 2) {
+        return;
+    }
+    if (comm.rank() == 0) {
+        int value = 43;
+        MPI_Send(&value, 1, MPI_INT, 1, 0, comm.mpi_communicator());
+    } else if (comm.rank() == 1) {
+        int  value = 27;
+        auto req   = comm.irecv(recv_count(1), recv_buf_out(std::move(value)));
+        value      = req.wait();
+        EXPECT_EQ(value, 43);
+    }
     comm.barrier();
 }

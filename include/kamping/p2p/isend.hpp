@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2023 The KaMPIng Authors
+// Copyright 2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -137,53 +137,76 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
 
     // RankType::null is valid, RankType::any is not.
     KASSERT(is_valid_rank_in_comm(destination, *this, true, false), "Invalid destination rank.");
+    auto result = make_nonblocking_result<std::tuple<Args...>>(std::move(send_buf), std::move(request_param));
+
+    // quick and dirty access to the underlying send_buf
+    auto send_buf_ptr = [&]() {
+        if constexpr (std::remove_reference_t<decltype(send_buf)>::buffer_type == BufferType::in_out_buffer) {
+            auto const& result_ = result.get_result();
+            using result_type   = std::remove_reference_t<decltype(result_)>;
+            if constexpr (is_mpi_result_v<result_type>) {
+                return result_.get_send_buffer().data();
+            } else {
+                // this branch is taken if make_result directly returns a buffer, i.e. when the user only provided
+                // send_buf_out. then we access the data directly
+                if constexpr (has_data_member_v<decltype(result_)>) {
+                    return result_.data();
+                } else {
+                    // if it is a single element, we do not have .data()
+                    return &result_;
+                }
+            }
+        } else {
+            return send_buf.data();
+        }
+    };
 
     if constexpr (std::is_same_v<send_mode, internal::standard_mode_t>) {
         [[maybe_unused]] int err = MPI_Isend(
-            send_buf.data(),                          // send_buf
-            send_count.get_single_element(),          // send_count
-            send_type.get_single_element(),           // send_type
-            destination.rank_signed(),                // destination
-            tag,                                      // tag
-            this->mpi_communicator(),                 // comm
-            &request_param.underlying().mpi_request() // request
+            send_buf_ptr(),                  // send_buf
+            send_count.get_single_element(), // send_count
+            send_type.get_single_element(),  // send_type
+            destination.rank_signed(),       // destination
+            tag,                             // tag
+            this->mpi_communicator(),        // comm
+            result.get_request_ptr()         // request
         );
         this->mpi_error_hook(err, "MPI_Isend");
     } else if constexpr (std::is_same_v<send_mode, internal::buffered_mode_t>) {
         [[maybe_unused]] int err = MPI_Ibsend(
-            send_buf.data(),                          // send_buf
-            send_count.get_single_element(),          // send_count
-            send_type.get_single_element(),           // send_type
-            destination.rank_signed(),                // destination
-            tag,                                      // tag
-            this->mpi_communicator(),                 // comm
-            &request_param.underlying().mpi_request() // request
+            send_buf_ptr(),                  // send_buf
+            send_count.get_single_element(), // send_count
+            send_type.get_single_element(),  // send_type
+            destination.rank_signed(),       // destination
+            tag,                             // tag
+            this->mpi_communicator(),        // comm
+            result.get_request_ptr()         // request
         );
         this->mpi_error_hook(err, "MPI_Ibsend");
     } else if constexpr (std::is_same_v<send_mode, internal::synchronous_mode_t>) {
         [[maybe_unused]] int err = MPI_Issend(
-            send_buf.data(),                          // send_buf
-            send_count.get_single_element(),          // send_count
-            send_type.get_single_element(),           // send_type
-            destination.rank_signed(),                // destination
-            tag,                                      // tag
-            this->mpi_communicator(),                 // comm
-            &request_param.underlying().mpi_request() // request
+            send_buf_ptr(),                  // send_buf
+            send_count.get_single_element(), // send_count
+            send_type.get_single_element(),  // send_type
+            destination.rank_signed(),       // destination
+            tag,                             // tag
+            this->mpi_communicator(),        // comm
+            result.get_request_ptr()         // request
         );
         this->mpi_error_hook(err, "MPI_Issend");
     } else if constexpr (std::is_same_v<send_mode, internal::ready_mode_t>) {
         [[maybe_unused]] int err = MPI_Irsend(
-            send_buf.data(),                          // send_buf
-            send_count.get_single_element(),          // send_count
-            send_type.get_single_element(),           // send_type
-            destination.rank_signed(),                // destination
-            tag,                                      // tag
-            this->mpi_communicator(),                 // comm
-            &request_param.underlying().mpi_request() // request
+            send_buf_ptr(),                  // send_buf
+            send_count.get_single_element(), // send_count
+            send_type.get_single_element(),  // send_type
+            destination.rank_signed(),       // destination
+            tag,                             // tag
+            this->mpi_communicator(),        // comm
+            result.get_request_ptr()         // request
         );
         this->mpi_error_hook(err, "MPI_Irsend");
     }
-    return make_nonblocking_result<std::tuple<Args...>>(std::move(request_param));
+    return result;
 }
 
 /// @brief Convenience wrapper for MPI_Ibsend. Calls \ref kamping::Communicator::isend() with the appropriate send mode

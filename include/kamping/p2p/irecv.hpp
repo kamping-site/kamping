@@ -166,21 +166,44 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::irecv(Args... args
         );
     }
 
-    [[maybe_unused]] int err = MPI_Irecv(
-        recv_buf.data(),                          // buf
-        recv_count_param.get_single_element(),    // count
-        recv_type.get_single_element(),           // datatype
-        source,                                   // source
-        tag,                                      // tag
-        this->mpi_communicator(),                 // comm
-        &request_param.underlying().mpi_request() // request
-    );
-    this->mpi_error_hook(err, "MPI_Irecv");
-
-    return internal::make_nonblocking_result<std::tuple<Args...>>(
+    auto result = internal::make_nonblocking_result<std::tuple<Args...>>(
         std::move(recv_buf),
         std::move(recv_count_param),
         std::move(recv_type),
         std::move(request_param)
     );
+
+    auto recv_buf_ptr = [&] {
+        if constexpr (std::remove_reference_t<decltype(recv_buf)>::is_owning) {
+            auto& result_     = result.get_result();
+            using result_type = std::remove_reference_t<decltype(result_)>;
+            if constexpr (is_mpi_result_v<result_type>) {
+                return result_.get_recv_buffer().data();
+            } else {
+                // this branch is taken if make_result directly returns a buffer, i.e. when only the recv_buf is
+                // returned then we access the data directly
+                if constexpr (internal::has_data_member_v<decltype(result_)>) {
+                    return result_.data();
+                } else {
+                    // if it is a single element, we do not have .data()
+                    return &result_;
+                }
+            }
+        } else {
+            return recv_buf.data();
+        }
+    };
+
+    [[maybe_unused]] int err = MPI_Irecv(
+        recv_buf_ptr(),                        // buf
+        recv_count_param.get_single_element(), // count
+        recv_type.get_single_element(),        // datatype
+        source,                                // source
+        tag,                                   // tag
+        this->mpi_communicator(),              // comm
+        result.get_request_ptr()               // request
+    );
+    this->mpi_error_hook(err, "MPI_Irecv");
+
+    return result;
 }

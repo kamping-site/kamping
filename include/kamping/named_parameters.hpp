@@ -100,6 +100,26 @@ auto send_buf(std::initializer_list<T> data) {
         BufferResizePolicy::no_resize>(std::move(data));
 }
 
+/// @brief Passes a container/single value as rvalue as a send buffer to the underlying MPI call.
+/// This transfers ownership of the data to the call and re-returns ownership to the caller as part of the result
+/// object.
+///
+/// If data provides \c data(), it is assumed that it is a container and all elements in the
+/// container are considered for the operation. In this case, the container has to provide a \c size() member functions
+/// and expose the contained \c value_type. If no \c data() member function exists, a single value is assumed
+/// @tparam Data Data type representing the element(s) to send.
+/// @param data Data (either a container which contains the elements or the element directly) to send
+/// @return Parameter object referring to the storage containing the data elements to send.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <typename Data, typename Enable = std::enable_if_t<std::is_rvalue_reference_v<Data&&>>>
+auto send_buf_out(Data&& data) {
+    return internal::make_data_buffer_builder<
+        internal::ParameterType::send_buf,
+        internal::BufferModifiability::constant,
+        internal::BufferType::in_out_buffer,
+        BufferResizePolicy::no_resize>(std::forward<Data>(data));
+}
+
 /// @brief Passes a container/single value as a send or receive buffer to the underlying MPI call.
 ///
 /// @tparam resize_policy Policy specifying whether (and if so, how) the underlying container shall be resized. If
