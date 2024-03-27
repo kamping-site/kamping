@@ -648,11 +648,11 @@ private:
 
 /// @brief Trait for checking whether a type is an \ref MPIResult.
 template <typename>
-constexpr bool is_result_v = false;
+constexpr bool is_mpi_result_v = false;
 
 /// @brief Trait for checking whether a type is an \ref MPIResult.
 template <typename... Args>
-constexpr bool is_result_v<MPIResult<Args...>> = true;
+constexpr bool is_mpi_result_v<MPIResult<Args...>> = true;
 
 /// @brief Primary template for result trait indicates whether the result object is empty.
 template <typename T>

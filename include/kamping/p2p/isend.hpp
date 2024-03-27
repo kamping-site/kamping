@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2023 The KaMPIng Authors
+// Copyright 2024 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -144,12 +144,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
         if constexpr (std::remove_reference_t<decltype(send_buf)>::buffer_type == BufferType::in_out_buffer) {
             auto const& result_ = result.get_result();
             using result_type   = std::remove_reference_t<decltype(result_)>;
-            if constexpr (is_result_v<result_type>) {
+            if constexpr (is_mpi_result_v<result_type>) {
                 return result_.get_send_buffer().data();
             } else {
+                // this branch is taken if make_result directly returns a buffer, i.e. when the user only provided
+                // send_buf_out. then we access the data directly
                 if constexpr (has_data_member_v<decltype(result_)>) {
                     return result_.data();
                 } else {
+                    // if it is a single element, we do not have .data()
                     return &result_;
                 }
             }
