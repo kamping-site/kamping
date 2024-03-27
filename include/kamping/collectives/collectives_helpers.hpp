@@ -83,9 +83,9 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
     constexpr bool is_recv_type_given_as_in_param = is_parameter_given_as_in_buffer<ParameterType::recv_type, Args...>;
     if constexpr (is_send_type_given_as_in_param) {
         constexpr bool is_send_count_info_given =
-            is_parameter_given_as_in_buffer<ParameterType::send_count, Args...>
-            || is_parameter_given_as_in_buffer<ParameterType::send_counts, Args...>
-            || is_parameter_given_as_in_buffer<ParameterType::send_recv_count, Args...>;
+            is_parameter_given_as_in_buffer<
+                ParameterType::send_count,
+                Args...> || is_parameter_given_as_in_buffer<ParameterType::send_counts, Args...> || is_parameter_given_as_in_buffer<ParameterType::send_recv_count, Args...>;
         static_assert(
             is_send_count_info_given,
             "If a custom send type is provided, send count(s) have to be provided, too."
@@ -93,9 +93,9 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
     }
     if constexpr (is_recv_type_given_as_in_param) {
         constexpr bool is_recv_count_info_given =
-            is_parameter_given_as_in_buffer<ParameterType::recv_count, Args...>
-            || is_parameter_given_as_in_buffer<ParameterType::recv_counts, Args...>
-            || is_parameter_given_as_in_buffer<ParameterType::send_recv_count, Args...>;
+            is_parameter_given_as_in_buffer<
+                ParameterType::recv_count,
+                Args...> || is_parameter_given_as_in_buffer<ParameterType::recv_counts, Args...> || is_parameter_given_as_in_buffer<ParameterType::send_recv_count, Args...>;
         static_assert(
             is_recv_count_info_given,
             "If a custom recv type is provided, send count(s) have to be provided, too."

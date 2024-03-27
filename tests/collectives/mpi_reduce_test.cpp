@@ -326,8 +326,7 @@ TEST(ReduceTest, reduce_with_receive_buffer_on_root) {
         EXPECT_EQ(result.size(), 2);
         std::vector<int> expected_result = {
             (comm.size_signed() * (comm.size_signed() - 1)) / 2,
-            comm.size_signed() * 42
-        };
+            comm.size_signed() * 42};
         EXPECT_EQ(result, expected_result);
     } else {
         auto result = comm.reduce(send_buf(input), op(kamping::ops::plus<>{}));
@@ -355,8 +354,7 @@ TEST(ReduceTest, reduce_builtin_op_on_non_builtin_type) {
         EXPECT_EQ(result.size(), 2);
         std::vector<MyInt> expected_result = {
             (comm.size_signed() * (comm.size_signed() - 1)) / 2,
-            comm.size_signed() * 42
-        };
+            comm.size_signed() * 42};
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
@@ -384,8 +382,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
-        };
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
@@ -399,8 +396,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
-        };
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
@@ -417,8 +413,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
-        };
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
@@ -437,8 +432,7 @@ TEST(ReduceTest, reduce_custom_operation_on_builtin_type) {
         std::vector<int> expected_result = {
             comm.size_signed() * 0 + (comm.size_signed() - 1) * 42,
             comm.size_signed() * 17 + (comm.size_signed() - 1) * 42,
-            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42
-        };
+            comm.size_signed() * 8 + (comm.size_signed() - 1) * 42};
         EXPECT_EQ(result, expected_result);
     } else {
         EXPECT_EQ(result.size(), 0);
