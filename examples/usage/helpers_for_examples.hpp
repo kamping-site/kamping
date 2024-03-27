@@ -55,8 +55,8 @@ void print_result(T const& result, Communicator<ContainerType, Plugins...> const
 /// @tparam T Type of the elements contained in the container.
 /// @param result The container whose elements are printed on the root PE.
 /// @param comm KaMPIng communicator to determine which PE is the root PE.
-template <template <typename...> typename ContainerType, typename T>
-void print_result_on_root(ContainerType<T> const& result, Communicator<ContainerType> const& comm) {
+template <template <typename...> typename ContainerType, typename T, typename Comm>
+void print_result_on_root(ContainerType<T> const& result, Comm const& comm) {
     if (comm.is_root()) {
         print_result(result, comm);
     }
