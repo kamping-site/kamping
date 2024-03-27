@@ -175,15 +175,20 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::irecv(Args... args
 
     auto recv_buf_ptr = [&] {
         if constexpr (std::remove_reference_t<decltype(recv_buf)>::is_owning) {
-            auto& result_ = result.get_result();
-            if constexpr (internal::has_data_member_v<decltype(result_)>) {
-                return result_.data();
-            } else {
+            auto& result_     = result.get_result();
+            using result_type = std::remove_reference_t<decltype(result_)>;
+            if constexpr (is_result_v<result_type>) {
                 return result_.get_recv_buffer().data();
+            } else {
+                if constexpr (internal::has_data_member_v<decltype(result_)>) {
+                    return result_.data();
+                } else {
+                    return &result_;
+                }
             }
         } else {
             return recv_buf.data();
-        };
+        }
     };
 
     [[maybe_unused]] int err = MPI_Irecv(
