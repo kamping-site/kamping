@@ -35,8 +35,6 @@
 #include "kamping/plugin/sort.hpp"
 #include "kassert/kassert.hpp"
 
-#include <tuple>
-
 template <typename IndexType>
 struct IR {
     IndexType index;
@@ -74,11 +72,10 @@ struct SATuple {
 
 template <typename IndexType, typename SymbolType>
 struct RRC {
-    IndexType rank1;
-    IndexType rank2;
+    IndexType  rank1;
+    IndexType  rank2;
     SymbolType symbol;
 }; // struct RRC
-
 
 template <typename IndexType>
 auto reduce_alphabet(
