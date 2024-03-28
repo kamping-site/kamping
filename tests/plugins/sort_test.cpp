@@ -35,13 +35,14 @@ using namespace ::plugin;
 
 TEST(SortTest, sort_same_number_elements) {
     std::random_device                     rd;
+    std::mt19937                           gen(rd());
     std::uniform_int_distribution<int32_t> dist;
 
     Communicator<std::vector, plugin::SampleSort> comm;
     size_t const                                  local_size = 2'000;
     std::vector<int32_t>                          local_data;
     for (size_t i = 0; i < local_size; ++i) {
-        local_data.push_back(dist(rd));
+        local_data.push_back(dist(gen));
     }
 
     auto original_data = local_data;
@@ -62,20 +63,19 @@ TEST(SortTest, sort_same_number_elements) {
     auto all_original_data = comm.gatherv(send_buf(original_data));
     std::sort(all_original_data.begin(), all_original_data.end());
     ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
-    for (size_t i = 0; i < all_original_data.size(); ++i) {
-        EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
-    }
+    EXPECT_EQ(all_sorted_data, all_original_data);
 }
 
 TEST(SortTest, sort_same_number_elements_output_iterator) {
     std::random_device                     rd;
+    std::mt19937                           gen(rd());
     std::uniform_int_distribution<int32_t> dist;
 
     Communicator<std::vector, plugin::SampleSort> comm;
     size_t const                                  local_size = 2'000;
     std::vector<int32_t>                          local_data;
     for (size_t i = 0; i < local_size; ++i) {
-        local_data.push_back(dist(rd));
+        local_data.push_back(dist(gen));
     }
 
     auto                 original_data = local_data;
@@ -96,20 +96,19 @@ TEST(SortTest, sort_same_number_elements_output_iterator) {
     auto all_original_data = comm.gatherv(send_buf(original_data));
     std::sort(all_original_data.begin(), all_original_data.end());
     ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
-    for (size_t i = 0; i < all_original_data.size(); ++i) {
-        EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
-    }
+    EXPECT_EQ(all_sorted_data, all_original_data);
 }
 
 TEST(SortTest, sort_different_number_elements) {
     std::random_device                     rd;
+    std::mt19937                           gen(rd());
     std::uniform_int_distribution<int32_t> dist;
 
     Communicator<std::vector, plugin::SampleSort> comm;
     size_t const                                  local_size = 2'000 * comm.rank();
     std::vector<int32_t>                          local_data;
     for (size_t i = 0; i < local_size; ++i) {
-        local_data.push_back(dist(rd));
+        local_data.push_back(dist(gen));
     }
 
     auto original_data = local_data;
@@ -132,21 +131,20 @@ TEST(SortTest, sort_different_number_elements) {
         auto all_original_data = comm.gatherv(send_buf(original_data));
         std::sort(all_original_data.begin(), all_original_data.end());
         ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
-        for (size_t i = 0; i < all_original_data.size(); ++i) {
-            EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
-        }
+        EXPECT_EQ(all_sorted_data, all_original_data);
     }
 }
 
 TEST(SortTest, sort_non_default_comparator) {
     std::random_device                     rd;
+    std::mt19937                           gen(rd());
     std::uniform_int_distribution<int32_t> dist;
 
     Communicator<std::vector, plugin::SampleSort> comm;
     size_t const                                  local_size = 2'000;
     std::vector<int32_t>                          local_data;
     for (size_t i = 0; i < local_size; ++i) {
-        local_data.push_back(dist(rd));
+        local_data.push_back(dist(gen));
     }
 
     auto original_data = local_data;
@@ -167,13 +165,12 @@ TEST(SortTest, sort_non_default_comparator) {
     auto all_original_data = comm.gatherv(send_buf(original_data));
     std::sort(all_original_data.begin(), all_original_data.end(), std::greater<int32_t>());
     ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
-    for (size_t i = 0; i < all_original_data.size(); ++i) {
-        EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
-    }
+    EXPECT_EQ(all_sorted_data, all_original_data);
 }
 
 TEST(SortTest, sort_custom_type) {
     std::random_device                     rd;
+    std::mt19937                           gen(rd());
     std::uniform_int_distribution<int32_t> dist;
 
     struct MyStruct {
@@ -198,7 +195,7 @@ TEST(SortTest, sort_custom_type) {
     size_t const                                  local_size = 2'000;
     std::vector<MyStruct>                         local_data;
     for (size_t i = 0; i < local_size; ++i) {
-        local_data.emplace_back(dist(rd), dist(rd), dist(rd));
+        local_data.emplace_back(dist(gen), dist(gen), dist(gen));
     }
 
     auto original_data = local_data;
@@ -219,7 +216,5 @@ TEST(SortTest, sort_custom_type) {
     auto all_original_data = comm.gatherv(send_buf(original_data));
     std::sort(all_original_data.begin(), all_original_data.end());
     ASSERT_EQ(all_sorted_data.size(), all_original_data.size());
-    for (size_t i = 0; i < all_original_data.size(); ++i) {
-        EXPECT_EQ(all_sorted_data[i], all_original_data[i]);
-    }
+    EXPECT_EQ(all_sorted_data, all_original_data);
 }

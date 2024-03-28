@@ -33,21 +33,22 @@
 namespace kamping::plugin {
 
 /// @brief Plugin that adds a canonical sample sort to the communicator.
-/// @tparam Type of the communicator that is extended by the pluging.
+/// @tparam Type of the communicator that is extended by the plugin.
 /// @tparam DefaultContainerType Default container type of the original communicator.
 template <typename Comm, template <typename...> typename DefaultContainerType>
 class SampleSort : public plugin::PluginBase<Comm, DefaultContainerType, SampleSort> {
 public:
-    /// @brief Sort the vector based on a binary comparison function (operator< by default).
+    /// @brief Sort the vector based on a binary comparison function (std::less by default).
     ///
     /// The order of equal elements is not guaranteed to be preserved. The binary comparison function has to be \c true
     /// if the first argument is less than the second.
     /// @tparam T Type of elements to be sorted.
+    /// @tparam Allocator Allocator of the vector.
     /// @tparam Compare Type of the binary comparison function (\c std::less<T> by default).
     /// @param data Vector containing the data to be sorted.
     /// @param comp Binary comparison function used to determine the order of elements.
-    template <typename T, typename Compare = std::less<T>>
-    void sort(std::vector<T>& data, Compare comp = Compare{}) {
+    template <typename T, typename Allocator, typename Compare = std::less<T>>
+    void sort(std::vector<T, Allocator>& data, Compare comp = Compare{}) {
         auto&        self               = this->to_communicator();
         size_t const oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + (data.size() > 0 ? 1 : 0);
         std::vector<T> local_samples(oversampling_ratio);
@@ -66,7 +67,7 @@ public:
         std::sort(data.begin(), data.end(), comp);
     }
 
-    /// @brief Sort the elements in [begin, end) using a binary comparison function (operator< by default).
+    /// @brief Sort the elements in [begin, end) using a binary comparison function (std::less by default).
     ///
     /// The order of equal elements in not guaranteed to be preserved. The binary comparison function has to be \c true
     /// if the first argument is less than the second.
@@ -88,19 +89,19 @@ public:
         size_t const local_size         = asserting_cast<size_t>(std::distance(begin, end));
         size_t const oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + (local_size > 0 ? 1 : 0);
         std::vector<ValueType> local_samples(oversampling_ratio);
-        std::sample(begin, end, local_samples.begin(), oversampling_ratio, std::mt19937{self.rank() + self.size()});
+        std::sample(
+            begin,
+            end,
+            local_samples.begin(),
+            oversampling_ratio,
+            std::mt19937{asserting_cast<std::mt19937::result_type>(self.rank() + self.size())}
+        );
 
         auto global_samples = self.allgatherv(send_buf(local_samples));
         pick_splitters(self.size() - 1, oversampling_ratio, global_samples, comp);
-        auto                   buckets = build_buckets(begin, end, global_samples, comp);
-        std::vector<int>       scounts;
-        std::vector<ValueType> data;
-        data.reserve(local_size);
-        for (auto& bucket: buckets) {
-            data.insert(data.end(), bucket.begin(), bucket.end());
-            scounts.push_back(static_cast<int>(bucket.size()));
-        }
-        data = self.alltoallv(send_buf(data), send_counts(scounts));
+        auto buckets = build_buckets(begin, end, global_samples, comp);
+        auto data =
+            with_flattened(buckets).call([&](auto... flattened) { return self.alltoallv(std::move(flattened)...); });
         std::sort(data.begin(), data.end(), comp);
         std::copy(data.begin(), data.end(), out);
     }
@@ -110,7 +111,7 @@ private:
     /// @tparam T Type of elements to be sorted (and of splitters)
     /// @tparam Compare Type of the binary comparison function used to determine order of elements.
     /// @param num_splitters Number of splitters that should be selected.
-    /// @param oversampling_ratio Ration at which local splitters are sampled.
+    /// @param oversampling_ratio Ratio at which local splitters are sampled.
     /// @param global_samples List of all (global) samples. Functions as out parameter where the picked samples are
     /// stored in.
     /// @param comp Binary comparison function used to determine order of elements.
