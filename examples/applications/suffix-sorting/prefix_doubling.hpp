@@ -215,7 +215,7 @@ prefix_doubling(std::vector<uint8_t>&& input, kamping::Communicator<std::vector,
 
         irrs.clear();
         irrs.reserve(local_size);
-        IndexType const index_distance = 1ULL << iteration;
+        IndexType const index_distance = IndexType{1} << iteration;
 
         for (size_t i = 0; i < local_size; ++i) {
             IndexType second_rank{0};
