@@ -14,7 +14,7 @@ Using template-metaprogramming, only code paths required for computing
 parameters not provided by the user are generated at compile time, which results in (near) zero-overhead
 bindings.
 
-**:running: Quick Start:** We provide a wide range of [usage](./examples/usage) and [simple applications](./examples/application) examples.
+**:running: Quick Start:** We provide a wide range of [usage](./examples/usage) and [simple applications](./examples/applications) examples.
 
 KaMPIng is developed at the [Algorithm Engineering
 Group](https://ae.iti.kit.edu/english/index.php) at Karlsruhe Institute of
