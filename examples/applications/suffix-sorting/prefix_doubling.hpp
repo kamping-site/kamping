@@ -20,10 +20,10 @@
 #include <cstdint>
 #include <limits>
 #include <random>
+#include <tuple>
 #include <type_traits>
 #include <vector>
 
-#include "./util.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/allreduce.hpp"
 #include "kamping/collectives/exscan.hpp"
@@ -34,6 +34,51 @@
 #include "kamping/p2p/recv.hpp"
 #include "kamping/plugin/sort.hpp"
 #include "kassert/kassert.hpp"
+
+#include <tuple>
+
+template <typename IndexType>
+struct IR {
+    IndexType index;
+    IndexType rank;
+
+    IR() = default;
+
+    IR(IndexType idx, IndexType r) : index(idx), rank(r) {}
+}; // struct IR
+
+template <typename IndexType>
+struct IRR {
+    IndexType index;
+    IndexType rank1;
+    IndexType rank2;
+
+    IRR() = default;
+
+    IRR(IndexType idx, IndexType r1, IndexType r2) : index(idx), rank1(r1), rank2(r2) {}
+
+    bool operator<(IRR const& other) const {
+        return std::tie(rank1, rank2) < std::tie(other.rank1, other.rank2);
+    }
+
+    bool operator!=(IRR const& other) const {
+        return std::tie(rank1, rank2) != std::tie(other.rank1, other.rank2);
+    }
+}; // struct IRR
+
+template <typename IndexType>
+struct SATuple {
+    IndexType rank;
+    IndexType sa;
+}; // struct SATuple
+
+template <typename IndexType, typename SymbolType>
+struct RRC {
+    IndexType rank1;
+    IndexType rank2;
+    SymbolType symbol;
+}; // struct RRC
+
 
 template <typename IndexType>
 auto reduce_alphabet(
