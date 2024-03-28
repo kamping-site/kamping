@@ -136,8 +136,9 @@ template <typename IndexType>
 std::vector<IndexType>
 prefix_doubling(std::vector<uint8_t>&& input, kamping::Communicator<std::vector, kamping::plugin::SampleSort>& comm) {
     auto [start_iteration, irrs] = reduce_alphabet<IndexType>(std::move(input), comm);
-    IndexType iteration = kamping::asserting_cast<IndexType>(start_iteration); // clang does not allow to capture structured bindings in lambdas
-    
+    IndexType iteration          = kamping::asserting_cast<IndexType>(start_iteration
+    ); // clang does not allow to capture structured bindings in lambdas
+
     size_t                     local_size = irrs.size();
     size_t                     offset     = 0;
     std::vector<IR<IndexType>> irs;
