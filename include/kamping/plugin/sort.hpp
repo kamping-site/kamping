@@ -46,8 +46,8 @@ public:
     /// @tparam Compare Type of the binary comparison function (\c std::less<T> by default).
     /// @param data Vector containing the data to be sorted.
     /// @param comp Binary comparison function used to determine the order of elements.
-  template <typename T, typename Allocator, typename Compare = std::less<T>>
-  void sort(std::vector<T, Allocator>& data, Compare comp = Compare{}) {
+    template <typename T, typename Allocator, typename Compare = std::less<T>>
+    void sort(std::vector<T, Allocator>& data, Compare comp = Compare{}) {
         auto&        self               = this->to_communicator();
         size_t const oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + (data.size() > 0 ? 1 : 0);
         std::vector<T> local_samples(oversampling_ratio);
@@ -88,12 +88,19 @@ public:
         size_t const local_size         = asserting_cast<size_t>(std::distance(begin, end));
         size_t const oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + (local_size > 0 ? 1 : 0);
         std::vector<ValueType> local_samples(oversampling_ratio);
-        std::sample(begin, end, local_samples.begin(), oversampling_ratio, std::mt19937{asserting_cast<std::mt19937::result_type>(self.rank() + self.size())});
+        std::sample(
+            begin,
+            end,
+            local_samples.begin(),
+            oversampling_ratio,
+            std::mt19937{asserting_cast<std::mt19937::result_type>(self.rank() + self.size())}
+        );
 
         auto global_samples = self.allgatherv(send_buf(local_samples));
         pick_splitters(self.size() - 1, oversampling_ratio, global_samples, comp);
-        auto                   buckets = build_buckets(begin, end, global_samples, comp);
-        auto data = with_flattened(buckets).call([&](auto... flattened) { return self.alltoallv(std::move(flattened)...); });
+        auto buckets = build_buckets(begin, end, global_samples, comp);
+        auto data =
+            with_flattened(buckets).call([&](auto... flattened) { return self.alltoallv(std::move(flattened)...); });
         std::sort(data.begin(), data.end(), comp);
         std::copy(data.begin(), data.end(), out);
     }
