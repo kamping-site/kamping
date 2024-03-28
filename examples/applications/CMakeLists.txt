@@ -20,8 +20,8 @@ target_compile_options(sample_sort PRIVATE ${KAMPING_WARNING_FLAGS})
 
 # Suffix Sorting Example
 add_executable(example_suffix_sorting suffix-sorting/suffix_sorting.cpp)
-target_link_libraries(suffix_sorting PUBLIC kamping)
-target_compile_options(suffix_sorting PRIVATE ${KAMPING_WARNING_FLAGS})
+target_link_libraries(example_suffix_sorting PUBLIC kamping)
+target_compile_options(example_suffix_sorting PRIVATE ${KAMPING_WARNING_FLAGS})
 
 # Example using the fault-tolerance plugin
 if (KAMPING_ENABLE_ULFM)
