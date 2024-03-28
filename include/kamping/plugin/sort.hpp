@@ -93,14 +93,7 @@ public:
         auto global_samples = self.allgatherv(send_buf(local_samples));
         pick_splitters(self.size() - 1, oversampling_ratio, global_samples, comp);
         auto                   buckets = build_buckets(begin, end, global_samples, comp);
-        std::vector<int>       scounts;
-        std::vector<ValueType> data;
-        data.reserve(local_size);
-        for (auto& bucket: buckets) {
-            data.insert(data.end(), bucket.begin(), bucket.end());
-            scounts.push_back(static_cast<int>(bucket.size()));
-        }
-        data = self.alltoallv(send_buf(data), send_counts(scounts));
+        auto data = with_flattened(buckets).call([&](auto... flattened) { return self.alltoallv(std::move(flattened)...); });
         std::sort(data.begin(), data.end(), comp);
         std::copy(data.begin(), data.end(), out);
     }
@@ -110,7 +103,7 @@ private:
     /// @tparam T Type of elements to be sorted (and of splitters)
     /// @tparam Compare Type of the binary comparison function used to determine order of elements.
     /// @param num_splitters Number of splitters that should be selected.
-    /// @param oversampling_ratio Ration at which local splitters are sampled.
+    /// @param oversampling_ratio Ratio at which local splitters are sampled.
     /// @param global_samples List of all (global) samples. Functions as out parameter where the picked samples are
     /// stored in.
     /// @param comp Binary comparison function used to determine order of elements.
