@@ -32,21 +32,22 @@
 namespace kamping::plugin {
 
 /// @brief Plugin that adds a canonical sample sort to the communicator.
-/// @tparam Type of the communicator that is extended by the pluging.
+/// @tparam Type of the communicator that is extended by the plugin.
 /// @tparam DefaultContainerType Default container type of the original communicator.
 template <typename Comm, template <typename...> typename DefaultContainerType>
 class SampleSort : public plugin::PluginBase<Comm, DefaultContainerType, SampleSort> {
 public:
-    /// @brief Sort the vector based on a binary comparison function (operator< by default).
+    /// @brief Sort the vector based on a binary comparison function (std::less by default).
     ///
     /// The order of equal elements is not guaranteed to be preserved. The binary comparison function has to be \c true
     /// if the first argument is less than the second.
     /// @tparam T Type of elements to be sorted.
+    /// @tparam Allocator Allocator of the vector.
     /// @tparam Compare Type of the binary comparison function (\c std::less<T> by default).
     /// @param data Vector containing the data to be sorted.
     /// @param comp Binary comparison function used to determine the order of elements.
-    template <typename T, typename Compare = std::less<T>>
-    void sort(std::vector<T>& data, Compare comp = Compare{}) {
+  template <typename T, typename Allocator, typename Compare = std::less<T>>
+  void sort(std::vector<T, Allocator>& data, Compare comp = Compare{}) {
         auto&        self               = this->to_communicator();
         size_t const oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + (data.size() > 0 ? 1 : 0);
         std::vector<T> local_samples(oversampling_ratio);
@@ -65,7 +66,7 @@ public:
         std::sort(data.begin(), data.end(), comp);
     }
 
-    /// @brief Sort the elements in [begin, end) using a binary comparison function (operator< by default).
+    /// @brief Sort the elements in [begin, end) using a binary comparison function (std::less by default).
     ///
     /// The order of equal elements in not guaranteed to be preserved. The binary comparison function has to be \c true
     /// if the first argument is less than the second.
@@ -87,7 +88,7 @@ public:
         size_t const local_size         = asserting_cast<size_t>(std::distance(begin, end));
         size_t const oversampling_ratio = 16 * static_cast<size_t>(std::log2(self.size())) + (local_size > 0 ? 1 : 0);
         std::vector<ValueType> local_samples(oversampling_ratio);
-        std::sample(begin, end, local_samples.begin(), oversampling_ratio, std::mt19937{self.rank() + self.size()});
+        std::sample(begin, end, local_samples.begin(), oversampling_ratio, std::mt19937{asserting_cast<std::mt19937::result_type>(self.rank() + self.size())});
 
         auto global_samples = self.allgatherv(send_buf(local_samples));
         pick_splitters(self.size() - 1, oversampling_ratio, global_samples, comp);
