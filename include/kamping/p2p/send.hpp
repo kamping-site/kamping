@@ -31,7 +31,10 @@
 #include "kamping/p2p/helpers.hpp"
 #include "kamping/parameter_objects.hpp"
 
-/// @brief Wrapper for \c MPI_Send.
+///// @addtogroup kamping_p2p
+/// @{
+
+// @brief Wrapper for \c MPI_Send.
 ///
 /// This wraps \c MPI_Send. This operation sends the elements in the input buffer provided via \c
 /// kamping::send_buf() to the specified receiver rank using standard send mode.
@@ -204,3 +207,4 @@ template <typename... Args>
 void kamping::Communicator<DefaultContainerType, Plugins...>::rsend(Args... args) const {
     this->send(std::forward<Args>(args)..., send_mode(send_modes::ready));
 }
+/// @}

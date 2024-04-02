@@ -8,7 +8,8 @@ namespace kamping {
   - \subpage parameter_handling
 
   ## Functionality
-  - \ref kamping_collectives : advanced \ref asserting_cast() and \ref throwing_cast()
+  - \ref kamping_p2p
+  - \ref kamping_collectives
   - \ref kamping_utility : advanced \ref asserting_cast() and \ref throwing_cast()
   - \ref kamping_mpi_utility : \ref mpi_datatype() "automatic C++ to MPI type conversion"
 
@@ -24,6 +25,9 @@ namespace kamping {
   */
 
 /**
+  \defgroup kamping_p2p Point-to-Point communcation
+  \brief KaMPIng's point-to-point communication wrappers
+
   \defgroup kamping_collectives Collectives
   \brief KaMPIng's collective wrappers
 
