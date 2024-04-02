@@ -4,7 +4,11 @@ namespace kamping {
 
   <img width="920" height="200" src="logo.svg">
 
-  ## Functionallity
+  ## Overview and Design
+  - \subpage parameter_handling
+
+  ## Functionality
+  - \ref kamping_collectives : advanced \ref asserting_cast() and \ref throwing_cast()
   - \ref kamping_utility : advanced \ref asserting_cast() and \ref throwing_cast()
   - \ref kamping_mpi_utility : \ref mpi_datatype() "automatic C++ to MPI type conversion"
 
@@ -20,6 +24,9 @@ namespace kamping {
   */
 
 /**
+  \defgroup kamping_collectives Collectives
+  \brief KaMPIng's collective wrappers
+
   \defgroup kamping_utility Utility
   \brief Quality of life features that make coding with (and within) KaMPIng easier
 

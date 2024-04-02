@@ -1,4 +1,4 @@
-# Passing Parameters in KaMPIng
+# Passing Parameters in KaMPIng {#parameter_handling}
 
 A core feature of KaMPIng is the flexible named parameters concept, allowing the caller to name and pass parameters in arbitrary order and even omit certain parameters when the library is able to infer them (at the cost of additional computation/communication).
 With this approach, KaMPIng allows the user a fine-grained control over the parameter set which will be explained in greater detail in this document.
