@@ -8,10 +8,13 @@ namespace kamping {
   - \subpage parameter_handling
 
   ## Functionality
+  - \ref Environment
+  - \ref Communicator
   - \ref kamping_p2p
   - \ref kamping_collectives
-  - \ref kamping_utility : advanced \ref asserting_cast() and \ref throwing_cast()
-  - \ref kamping_mpi_utility : \ref mpi_datatype() "automatic C++ to MPI type conversion"
+  - \ref kamping_named_parameters
+  - \ref kamping_utility
+  - \ref kamping_mpi_utility
 
   ## Dependencies
   - Building this documentation requires `Doxygen 1.9.2`.
@@ -30,6 +33,10 @@ namespace kamping {
 
   \defgroup kamping_collectives Collectives
   \brief KaMPIng's collective wrappers
+
+  \defgroup kamping_named_parameters Named Parameters
+  \brief KaMPIng's named paramter approach is enabled by factory function which construct lightweight parameter objects encapsulating the parameter type
+  (i.e., send buffer, send counts, ...) and the corresponding data.
 
   \defgroup kamping_utility Utility
   \brief Quality of life features that make coding with (and within) KaMPIng easier
