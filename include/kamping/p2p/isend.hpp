@@ -33,7 +33,10 @@
 #include "kamping/request.hpp"
 #include "kamping/result.hpp"
 
-/// @brief Wrapper for \c MPI_Isend.
+///// @addtogroup kamping_p2p
+/// @{
+
+// @brief Wrapper for \c MPI_Isend.
 ///
 /// This wraps \c MPI_Isend. This operation sends the elements in the input buffer provided via \c
 /// kamping::send_buf() to the specified receiver rank using standard send mode without blocking. The call is associated
@@ -244,3 +247,4 @@ template <typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::irsend(Args... args) const {
     return this->isend(std::forward<Args>(args)..., send_mode(send_modes::ready));
 }
+/// @}

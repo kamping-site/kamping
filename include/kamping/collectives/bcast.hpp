@@ -31,6 +31,9 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
+/// @addtogroup kamping_collectives
+/// @{
+
 /// @brief Wrapper for \c MPI_Bcast
 ///
 /// This wrapper for \c MPI_Bcast sends data from the root to all other ranks.
@@ -273,3 +276,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
         return *this->bcast<recv_value_type_tparam>(std::forward<Args>(args)..., send_recv_count(1)).data();
     }
 }
+/// @}

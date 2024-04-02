@@ -38,6 +38,9 @@
 #include "kamping/request_pool.hpp"
 #include "kamping/result.hpp"
 
+/// @addtogroup kamping_collectives
+/// @{
+
 /// @brief Wrapper for \c MPI_Alltoall.
 ///
 /// This wrapper for \c MPI_Alltoall sends the same amount of data from each rank to each rank. The following
@@ -500,3 +503,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         std::move(recv_type)    // recv_type
     );
 }
+/// @}

@@ -34,7 +34,10 @@
 #include "kamping/result.hpp"
 #include "kamping/status.hpp"
 
-/// @brief Receives a message if one is available.
+///// @addtogroup kamping_p2p
+/// @{
+
+// @brief Receives a message if one is available.
 ///
 /// In contrast to \ref kamping::Communicator::recv(), this method does not block if no message is available. Instead,
 /// it will return a empty \c std::optional. Internally, this first does a matched probe (\c MPI_Improbe) to check if a
@@ -189,3 +192,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         }
     }
 }
+/// @}

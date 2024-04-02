@@ -28,7 +28,10 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-/// @brief Wrapper for \c MPI_Iprobe.
+//// @addtogroup kamping_p2p
+/// @{
+
+// @brief Wrapper for \c MPI_Iprobe.
 ///
 /// This wraps \c MPI_Iprobe. This operation checks if there is a message matching the (optionally) specified source
 /// and tag that can be received, and returns a \c bool indicating whether a message matched by default.
@@ -114,3 +117,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
         return static_cast<bool>(flag);
     }
 }
+/// @}

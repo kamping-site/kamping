@@ -33,7 +33,10 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-/// @brief Wrapper for \c MPI_Reduce.
+//// @addtogroup kamping_collectives
+/// @{
+
+// @brief Wrapper for \c MPI_Reduce.
 ///
 /// This wraps \c MPI_Reduce. The operation combines the elements in the input buffer provided via \c
 /// kamping::send_buf() and returns the combined value on the root rank.
@@ -213,3 +216,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce_single(Args
         return std::optional<value_type>{};
     }
 }
+/// @}

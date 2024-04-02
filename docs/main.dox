@@ -4,9 +4,46 @@ namespace kamping {
 
   <img width="920" height="200" src="logo.svg">
 
-  ## Functionallity
-  - \ref kamping_utility : advanced \ref asserting_cast() and \ref throwing_cast()
-  - \ref kamping_mpi_utility : \ref mpi_datatype() "automatic C++ to MPI type conversion"
+This is KaMPIng [kampɪŋ], a (near) zero-overhead MPI wrapper for modern C++.
+
+It covers the whole range of abstraction levels from low-level MPI calls to
+convenient STL-style bindings, where most parameters are inferred from a small
+subset of the full parameter set. This allows for both rapid prototyping and
+fine-tuning of distributed code with predictable runtime behavior and memory
+management.
+
+Using template-metaprogramming, only code paths required for computing
+parameters not provided by the user are generated at compile time, which results in (near) zero-overhead
+bindings.
+
+KaMPIng is developed at the [Algorithm Engineering
+Group](https://ae.iti.kit.edu/english/index.php) at Karlsruhe Institute of
+Technology.
+
+## First Example: (All)gathering an `std::vector`
+```cpp
+    #include "kamping/communicator.hpp"
+    #include "kamping/collectives/allgather.hpp"
+
+    kamping::Environment e;
+    kamping::Communicator comm;
+ 
+    std::vector<int> input(comm.rank(), comm.rank_signed());
+    auto const result = comm.allgatherv(send_buf(input));
+```
+See `allgatherv_example.cpp` and the other files in `examples` directory for more details.
+
+  ## Overview and Design
+  - \subpage parameter_handling
+
+  ## Functionality
+  - \ref Environment
+  - \ref Communicator
+  - \ref kamping_p2p
+  - \ref kamping_collectives
+  - \ref kamping_named_parameters
+  - \ref kamping_utility
+  - \ref kamping_mpi_utility
 
   ## Dependencies
   - Building this documentation requires `Doxygen 1.9.2`.
@@ -20,6 +57,16 @@ namespace kamping {
   */
 
 /**
+  \defgroup kamping_p2p Point-to-Point communcation
+  \brief KaMPIng's point-to-point communication wrappers
+
+  \defgroup kamping_collectives Collectives
+  \brief KaMPIng's collective wrappers
+
+  \defgroup kamping_named_parameters Named Parameters
+  \brief KaMPIng's named paramter approach is enabled by factory function which construct lightweight parameter objects encapsulating the parameter type
+  (i.e., send buffer, send counts, ...) and the corresponding data.
+
   \defgroup kamping_utility Utility
   \brief Quality of life features that make coding with (and within) KaMPIng easier
 

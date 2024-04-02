@@ -36,7 +36,10 @@
 #include "kamping/result.hpp"
 #include "kamping/status.hpp"
 
-/// @brief Wrapper for \c MPI_Recv.
+///// @addtogroup kamping_p2p
+/// @{
+
+// @brief Wrapper for \c MPI_Recv.
 ///
 /// This wraps \c MPI_Recv. This operation performs a standard blocking receive.
 /// If the \ref kamping::recv_counts() parameter is not specified, this first performs a probe, followed by a receive of
@@ -238,3 +241,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args..
     );
     return recv(recv_count(1), recv_buf(alloc_new<recv_value_type_tparam>), std::forward<Args>(args)...);
 }
+/// @}

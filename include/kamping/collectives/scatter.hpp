@@ -34,7 +34,10 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-/// @brief Wrapper for \c MPI_Scatter.
+//// @addtogroup kamping_collectives
+/// @{
+
+// @brief Wrapper for \c MPI_Scatter.
 ///
 /// This wrapper for \c MPI_Scatter distributes data on the root PE evenly across all PEs in the current
 /// communicator.
@@ -481,3 +484,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         std::move(recv_type)
     );
 }
+/// @}

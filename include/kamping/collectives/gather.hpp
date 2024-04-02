@@ -32,6 +32,9 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
+/// @addtogroup kamping_collectives
+/// @{
+
 /// @brief Wrapper for \c MPI_Gather.
 ///
 /// This wrapper for \c MPI_Gather collects the same amount of data from each rank to a root.
@@ -393,3 +396,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         std::move(recv_type)
     );
 }
+/// @}

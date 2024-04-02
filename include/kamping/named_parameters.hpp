@@ -36,7 +36,7 @@ namespace internal {
 struct unused_tparam {};
 } // namespace internal
 
-/// @addtogroup kamping_mpi_utility
+//// @addtogroup kamping_named_parameters
 /// @{
 
 /// @brief Generates a dummy send buf that wraps a \c nullptr.

@@ -28,7 +28,10 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-/// @brief Wrapper for \c MPI_Probe.
+///// @addtogroup kamping_p2p
+/// @{
+
+// @brief Wrapper for \c MPI_Probe.
 ///
 /// This wraps \c MPI_Probe. This operation probes for a message and returns a
 /// status object with info about the probe message. The following parameters
@@ -98,3 +101,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::probe(Args... args
 
     return internal::make_mpi_result<std::tuple<Args...>>(std::move(status));
 }
+/// @}
