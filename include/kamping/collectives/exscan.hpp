@@ -30,6 +30,9 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
+/// @addtogroup kamping_collectives
+/// @{
+
 /// @brief Wrapper for \c MPI_Exscan.
 ///
 /// \c exscan() wraps \c MPI_Exscan, which is used to perform an exclusive prefix reduction on data distributed across
@@ -393,3 +396,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_single(Args
     using value_type = typename send_buf_type::value_type;
     return this->exscan(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...);
 }
+/// @}

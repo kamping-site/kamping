@@ -31,6 +31,9 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
+/// @addtogroup kamping_collectives
+/// @{
+
 /// @brief Wrapper for \c MPI_Allgather.
 ///
 /// This wrapper for \c MPI_Allgather collects the same amount of data from each rank to all ranks. It is semantically
@@ -451,3 +454,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
         std::move(recv_type)
     );
 }
+/// @}

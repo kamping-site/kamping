@@ -33,6 +33,9 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
+/// @addtogroup kamping_collectives
+/// @{
+
 /// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
 ///
 /// This wraps \c MPI_Allreduce. The operation combines the elements in the input buffer provided via \c
@@ -286,3 +289,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allreduce_single(A
         decltype(select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind())>::value_type;
     return this->allreduce(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...);
 }
+/// @}

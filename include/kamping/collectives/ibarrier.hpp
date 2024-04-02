@@ -25,6 +25,9 @@
 #include "kamping/request.hpp"
 #include "kamping/result.hpp"
 
+/// @addtogroup kamping_collectives
+/// @{
+
 /// @brief Perform a non-blocking barrier synchronization on this communicator using \c MPI_Ibarrier. The call is
 /// associated with a \ref kamping::Request (either allocated by KaMPIng or provided by the user). Only when the request
 /// has completed, it is guaranteed that all ranks have reached the barrier.
@@ -60,3 +63,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::ibarrier(Args... a
 
     return internal::make_nonblocking_result<std::tuple<Args...>>(std::move(request_param));
 }
+/// @}

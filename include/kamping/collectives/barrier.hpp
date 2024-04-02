@@ -17,6 +17,8 @@
 
 #include "kamping/communicator.hpp"
 #include "kamping/error_handling.hpp"
+/// @addtogroup kamping_collectives
+/// @{
 
 /// @brief Perform a \c MPI_Barrier on this communicator.
 ///
@@ -36,3 +38,4 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::barrier(Args... ar
     [[maybe_unused]] int err = MPI_Barrier(mpi_communicator());
     this->mpi_error_hook(err, "MPI_Barrier");
 }
+/// @}

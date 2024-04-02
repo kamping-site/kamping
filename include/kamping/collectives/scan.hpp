@@ -31,7 +31,10 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-/// @brief Wrapper for \c MPI_Scan.
+//// @addtogroup kamping_collectives
+/// @{
+
+// @brief Wrapper for \c MPI_Scan.
 ///
 /// This wraps \c MPI_Scan, which is used to perform an inclusive prefix reduction on data distributed across the
 /// calling processes. / \c scan() returns in \c recv_buf of the process with rank \c i, the reduction (calculated
@@ -290,3 +293,4 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_single(Args..
     using value_type = typename send_buf_type::value_type;
     return this->scan(recv_buf(alloc_new<value_type>), std::forward<Args>(args)...);
 }
+/// @}
