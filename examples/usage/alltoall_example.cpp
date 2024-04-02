@@ -30,34 +30,28 @@ int main() {
 
     kamping::Environment e;
     Communicator         comm;
-    std::vector<int>     input(2u * comm.size(), comm.rank_signed());
-    std::vector<int>     output;
 
-    {
-        // send/recv counts are automatically deduced
+    std::vector<int> input(2u * comm.size(), comm.rank_signed());
+    std::vector<int> output;
+
+    { // Basic alltoall example. Automatically deduce the send/recv counts and allocate a receive buffer.
+        output = comm.alltoall(send_buf(input));
+        print_result_on_root(output, comm);
+    }
+
+    print_on_root("------", comm);
+
+    { // Use an existing recv buffer but resize it to fit the received data.
         comm.alltoall(send_buf(input), recv_buf<resize_to_fit>(output));
         print_result_on_root(output, comm);
-        print_on_root("------", comm);
-        output.clear();
     }
-    {
-        // send and recv count can also be explicitly given
-        comm.alltoall(send_buf(input), send_count(2), recv_count(2), recv_buf<resize_to_fit>(output));
-        print_result_on_root(output, comm);
-        print_on_root("------", comm);
-        output.clear();
 
-        comm.alltoall(send_buf(input), send_count(1), recv_count(1), recv_buf<resize_to_fit>(output));
-        print_result_on_root(output, comm);
-        print_on_root("------", comm);
-        output.clear();
-    }
-    {
-        // inplace
-        comm.alltoall(send_recv_buf(input));
+    print_on_root("------", comm);
+
+    { // When the send and receive counts are known, we can provide them explicitly. Additionally, we can use a single
+      // buffer for sending and receiving (inplace).
+        comm.alltoall(send_recv_buf(input), send_recv_count(2));
         print_result_on_root(input, comm);
-        print_on_root("------", comm);
-        output.clear();
     }
 
     return 0;

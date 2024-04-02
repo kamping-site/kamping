@@ -18,6 +18,7 @@
 #include <mpi.h>
 
 #include "../helpers_for_testing.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/isend.hpp"
@@ -730,4 +731,38 @@ TEST_F(ISendTest, non_trivial_send_type_irsend) {
         MPI_Barrier(comm.mpi_communicator());
     }
     MPI_Type_free(&int_padding_padding);
+}
+
+TEST_F(ISendTest, send_buf_ownership) {
+    Communicator comm;
+    if (comm.size() < 2) {
+        return;
+    }
+    if (comm.rank() == 1) {
+        std::vector<int> values{42, 3, 8, 7};
+        auto             req = comm.isend(send_buf_out(std::move(values)), destination(0));
+        EXPECT_EQ(values.size(), 0);
+        values = req.wait();
+        EXPECT_THAT(values, ElementsAre(42, 3, 8, 7));
+    } else if (comm.rank() == 0) {
+        auto recv_buf = comm.recv<int>();
+        EXPECT_THAT(recv_buf, ElementsAre(42, 3, 8, 7));
+    }
+    comm.barrier();
+}
+TEST_F(ISendTest, send_buf_ownership_single_element) {
+    Communicator comm;
+    if (comm.size() < 2) {
+        return;
+    }
+    if (comm.rank() == 1) {
+        int  value = 42;
+        auto req   = comm.isend(send_buf_out(std::move(value)), destination(0));
+        value      = req.wait();
+        EXPECT_EQ(value, 42);
+    } else if (comm.rank() == 0) {
+        auto recv_buf = comm.recv_single<int>();
+        EXPECT_EQ(recv_buf, 42);
+    }
+    comm.barrier();
 }

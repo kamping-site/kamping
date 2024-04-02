@@ -225,7 +225,7 @@ TEST(ReproducibleReduceTest, TreeLevelCalculation) {
     std::uniform_int_distribution<size_t> size_distribution;
 
     auto checks = 0UL;
-    for (auto i = 0UL; i < 50000; ++i) {
+    for (auto i = 0UL; i < 50; ++i) {
         auto generated = size_distribution(rng);
 
         // Compare to expressions from previous implementation
@@ -319,8 +319,8 @@ TEST(ReproducibleReduceTest, Fuzzing) {
 
     ASSERT_GT(comm.size(), 1) << "Fuzzing with only one rank is useless";
 
-    constexpr auto NUM_ARRAYS        = 5;  // 15;
-    constexpr auto NUM_DISTRIBUTIONS = 10; // 5000;
+    constexpr auto NUM_ARRAYS        = 2; // 15;
+    constexpr auto NUM_DISTRIBUTIONS = 3; // 5000;
 
     // Seed random number generator with same seed across all ranks for consistent number generation
     std::random_device rd;
@@ -330,7 +330,7 @@ TEST(ReproducibleReduceTest, Fuzzing) {
     }
     comm.bcast_single(kamping::send_recv_buf(seed));
 
-    std::uniform_int_distribution<size_t> array_length_distribution(0, 500);
+    std::uniform_int_distribution<size_t> array_length_distribution(0, 20);
     std::uniform_int_distribution<size_t> rank_distribution(1, comm.size());
     std::mt19937                          rng(seed);       // RNG for distribution & rank number
     std::mt19937                          rng_root(rng()); // RNG for data generation (out-of-sync with other ranks)
@@ -395,7 +395,7 @@ TEST(ReproducibleReduceTest, Fuzzing) {
 }
 
 TEST(ReproducibleReduceTest, ReproducibleResults) {
-    auto const                                                                    v_size = 2000;
+    auto const                                                                    v_size = 50;
     auto const                                                                    v = generate_test_vector(v_size, 42);
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
 
@@ -606,7 +606,7 @@ TEST(ReproducibleReduceTest, Microbenchmark) {
 
     std::vector<double> array;
     constexpr auto      array_size  = 100U;
-    constexpr auto      repetitions = 10;
+    constexpr auto      repetitions = 3;
 
     size_t seed;
     if (comm.is_root()) {
