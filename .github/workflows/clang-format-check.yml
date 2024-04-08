@@ -9,7 +9,7 @@ on:
 jobs:
   cpp-formatting-check:
     name: C++ Formatting Check
-    runs-on: self-hosted
+    # runs-on: self-hosted
     container:
       image: "ghcr.io/kamping-site/kamping-ci:2024.2"
     steps:
