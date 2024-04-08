@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  pull_request:
 
 jobs:
   build-documentation:
@@ -20,7 +21,7 @@ jobs:
       with:
           doxyfile-path: docs/Doxyfile
           working-directory: .
-          additional-packages: perl build-base biblatex ghostscript
+          additional-packages: perl build-base texlive-full biblatex ghostscript
     
     # Deploy the HTML documentation to GitHub Pages
     - name: GH Pages Deployment
