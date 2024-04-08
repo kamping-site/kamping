@@ -72,7 +72,7 @@ jobs:
     - name: cmake
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build-mode }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} -DKAMPING_WARNINGS_ARE_ERRORS=ON -DKAMPING_EXCEPTION_MODE=${{ matrix.exception-mode }} -DKAMPING_ASSERTION_LEVEL=${{ matrix.assertion-level }} -DKAMPING_TESTS_DISCOVER=OFF -DKAMPING_TEST_ENABLE_SANITIZERS=ON -DKAMPING_TEST_TIMEOUT=40
     - name: build
-      run: cmake --build build/ --parallel
+      run: cmake --build build/ --parallel 4
     - name: Allow-running-mpi
       run: |
         echo OMPI_ALLOW_RUN_AS_ROOT=1 >> $GITHUB_ENV
