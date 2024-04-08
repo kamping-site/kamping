@@ -10,7 +10,6 @@ jobs:
   doxygen-check:
     name: Doxygen Check
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     container:
       image: "ghcr.io/kamping-site/kamping-ci:2024.2"
     steps:
