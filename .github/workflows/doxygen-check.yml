@@ -9,7 +9,7 @@ on:
 jobs:
   doxygen-check:
     name: Doxygen Check
-    runs-on: self-hosted
+    # runs-on: self-hosted
     timeout-minutes: 10
     container:
       image: "ghcr.io/kamping-site/kamping-ci:2024.2"

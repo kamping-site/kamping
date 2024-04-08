@@ -9,9 +9,6 @@ on:
 jobs:
   cpp-formatting-check:
     name: C++ Formatting Check
-    # runs-on: self-hosted
-    container:
-      image: "ghcr.io/kamping-site/kamping-ci:2024.2"
     steps:
     - uses: actions/checkout@v3.0.2
     - name: Check formatting
