@@ -9,7 +9,7 @@ on:
 jobs:
   cmake-formatting-check:
     name: Formatting Check
-    # runs-on: self-hosted
+    runs-on: ubuntu-latest
     container:
       image: "ghcr.io/kamping-site/kamping-ci:2024.2"
     steps:
