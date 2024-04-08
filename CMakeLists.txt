@@ -7,6 +7,7 @@ project(
     kamping
     DESCRIPTION "An MPI wrapper which makes using MPI feel like C++"
     LANGUAGES CXX
+    VERSION 1.0.0
 )
 
 if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
