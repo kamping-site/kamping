@@ -7,7 +7,7 @@ project(
     kamping
     DESCRIPTION "An MPI wrapper which makes using MPI feel like C++"
     LANGUAGES CXX
-    VERSION 1.0.0
+    VERSION 0.1.0
 )
 
 if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
@@ -37,6 +37,7 @@ if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     else ()
         message(STATUS "Doxygen not found, not building docs")
     endif ()
+    configure_file(${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile.in ${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile @ONLY)
 
     add_subdirectory(cmake/Format.cmake)
 endif ()
