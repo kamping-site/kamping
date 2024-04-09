@@ -330,7 +330,7 @@ TEST(ReproducibleReduceTest, Fuzzing) {
     }
     comm.bcast_single(kamping::send_recv_buf(seed));
 
-    std::uniform_int_distribution<size_t> array_length_distribution(0, 20);
+    std::uniform_int_distribution<size_t> array_length_distribution(1, 20);
     std::uniform_int_distribution<size_t> rank_distribution(1, comm.size());
     std::mt19937                          rng(seed);       // RNG for distribution & rank number
     std::mt19937                          rng_root(rng()); // RNG for data generation (out-of-sync with other ranks)
@@ -340,6 +340,7 @@ TEST(ReproducibleReduceTest, Fuzzing) {
     for (auto i = 0U; i < NUM_ARRAYS; ++i) {
         std::vector<double> data_array;
         size_t const        data_array_size = array_length_distribution(rng);
+        ASSERT_NE(0, data_array_size);
         if (comm.is_root()) {
             data_array = generate_test_vector(data_array_size, rng_root());
         }
@@ -510,6 +511,15 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
             sub_comm.template make_reproducible_comm<double>(
                 kamping::send_counts(std::vector<int>()),
                 kamping::recv_displs(std::vector<int>())
+            ),
+            ""
+        );
+
+        // Empty array, send_counts all zero
+        EXPECT_KASSERT_FAILS(
+            sub_comm.template make_reproducible_comm<double>(
+                kamping::send_counts({0, 0, 0}),
+                kamping::recv_displs({0, 0, 0})
             ),
             ""
         );
