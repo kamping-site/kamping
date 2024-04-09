@@ -20,6 +20,19 @@ KaMPIng is developed at the [Algorithm Engineering
 Group](https://ae.iti.kit.edu/english/index.php) at Karlsruhe Institute of
 Technology.
 
+If you use KaMPIng in the context of an academic publication, we kindly ask you to cite [our technical report](https://arxiv.org/abs/2404.05610):
+
+``` bibtex
+@misc{kamping2024,
+  title={KaMPIng: Flexible and (Near) Zero-overhead C++ Bindings for MPI},
+  author={Demian Hespe and Lukas Hübner and Florian Kurpicz and Peter Sanders and Matthias Schimek and Daniel Seemaier and Christoph Stelz and Tim Niklas Uhl},
+  year={2024},
+  eprint={2404.05610},
+  archivePrefix={arXiv},
+  primaryClass={cs.DC}
+}
+```
+
 ## Features :sparkles:
 ### Named Parameters :speech_balloon:
 Using plain MPI, operations like `MPI_Allgatherv` often lead to verbose and error-prone boilerplate code:
