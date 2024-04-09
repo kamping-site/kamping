@@ -4,16 +4,21 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-documentation:
     runs-on: ubuntu-latest
+    container:
+      image: "ghcr.io/kamping-site/kamping-ci:2024.2"
 
     steps:
     - uses: actions/checkout@v3
       with:
           submodules: true
-    
+    # This generates a Doxyfile with the appropriate library version
+    - name: Configure version
+      run: cmake -B build
     # Build the HTML documentation
     - name: Doxygen Action
       uses: mattnotmitt/doxygen-action@edge
