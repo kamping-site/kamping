@@ -1,0 +1,8 @@
+@misc{hespe2024kamping,
+      title={KaMPIng: Flexible and (Near) Zero-overhead C++ Bindings for MPI}, 
+      author={Demian Hespe and Lukas Hübner and Florian Kurpicz and Peter Sanders and Matthias Schimek and Daniel Seemaier and Christoph Stelz and Tim Niklas Uhl},
+      year={2024},
+      eprint={2404.05610},
+      archivePrefix={arXiv},
+      primaryClass={cs.DC}
+}
