@@ -536,6 +536,8 @@ public:
             );
         }
 
+        KASSERT(global_array_length > 0, "The array must not be empty");
+
         // Construct index map which maps global array indices to PEs
         std::map<size_t, size_t> start_indices;
         for (size_t p = 0; p < comm.size(); ++p) {
