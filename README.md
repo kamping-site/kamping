@@ -1,3 +1,5 @@
+[![C/C++ CI](https://github.com/kamping-site/kamping/actions/workflows/build.yml/badge.svg)](https://github.com/kamping-site/kamping/actions/workflows/build.yml)
+![GitHub](https://img.shields.io/github/license/kamping-site/kamping)
 # KaMPIng: Karlsruhe MPI next generation :rocket:
 
 ![KaMPIng logo](./docs/images/logo.svg)
