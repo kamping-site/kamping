@@ -1,3 +1,5 @@
+[![C/C++ CI](https://github.com/kamping-site/kamping/actions/workflows/build.yml/badge.svg)](https://github.com/kamping-site/kamping/actions/workflows/build.yml)
+![GitHub](https://img.shields.io/github/license/kamping-site/kamping)
 # KaMPIng: Karlsruhe MPI next generation :rocket:
 
 ![KaMPIng logo](./docs/images/logo.svg)
@@ -14,11 +16,24 @@ Using template-metaprogramming, only code paths required for computing
 parameters not provided by the user are generated at compile time, which results in (near) zero-overhead
 bindings.
 
-**:running: Quick Start:** We provide a wide range of [usage](./examples/usage) and [simple applications](./examples/applications) examples (start with [`allgatherv`](./examples/usage/allgatherv_example.cpp)).
+**:running: Quick Start:** We provide a wide range of [usage](./examples/usage) and [simple applications](./examples/applications) examples (start with [`allgatherv`](./examples/usage/allgatherv_example.cpp)). Or checkout the [documentation](https://kamping-site.github.io/kamping/) for a description of KaMPIng's core concepts and a full reference.
 
 KaMPIng is developed at the [Algorithm Engineering
 Group](https://ae.iti.kit.edu/english/index.php) at Karlsruhe Institute of
 Technology.
+
+If you use KaMPIng in the context of an academic publication, we kindly ask you to cite [our technical report](https://arxiv.org/abs/2404.05610):
+
+``` bibtex
+@misc{kamping2024,
+  title={KaMPIng: Flexible and (Near) Zero-overhead C++ Bindings for MPI},
+  author={Demian Hespe and Lukas Hübner and Florian Kurpicz and Peter Sanders and Matthias Schimek and Daniel Seemaier and Christoph Stelz and Tim Niklas Uhl},
+  year={2024},
+  eprint={2404.05610},
+  archivePrefix={arXiv},
+  primaryClass={cs.DC}
+}
+```
 
 ## Features :sparkles:
 ### Named Parameters :speech_balloon:
@@ -79,12 +94,12 @@ comm.recv<int>(recv_buf<kamping::no_resize>(v_out), recv_count(i_know_already_kn
 - Flexible core library for a new toolbox :toolbox: of distributed datastructures and algorithms
 
 ### And much more ... :arrow_upper_right:
-- Easy non-blocking communication via request pools.
+- Safety guarantees for non-blocking communication and easy handling of multiple requests via request pools
 - Compile time and runtime error checking (which can be completely deactivated).
 - Collective hierarchical timers to speed up your evaluation workflow.
 - ...
 
-Dive into the documentation or tests to find out more ...
+Dive into the [documentation](https://kamping-site.github.io/kamping/) or [tests](https://github.com/kamping-site/kamping/tree/main/tests) to find out more ...
 
 ### (Near) zero overhead - for development and performance :chart_with_upwards_trend:
 Using template-metaprogramming, KaMPIng only generates the code paths required for computing parameters not provided by the user. 
