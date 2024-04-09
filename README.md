@@ -14,7 +14,7 @@ Using template-metaprogramming, only code paths required for computing
 parameters not provided by the user are generated at compile time, which results in (near) zero-overhead
 bindings.
 
-**:running: Quick Start:** We provide a wide range of [usage](./examples/usage) and [simple applications](./examples/applications) examples (start with [`allgatherv`](./examples/usage/allgatherv_example.cpp)).
+**:running: Quick Start:** We provide a wide range of [usage](./examples/usage) and [simple applications](./examples/applications) examples (start with [`allgatherv`](./examples/usage/allgatherv_example.cpp)). Or checkout the [documentation](https://kamping-site.github.io/kamping/) for a description of KaMPIng's core concepts and a full reference.
 
 KaMPIng is developed at the [Algorithm Engineering
 Group](https://ae.iti.kit.edu/english/index.php) at Karlsruhe Institute of
@@ -92,12 +92,12 @@ comm.recv<int>(recv_buf<kamping::no_resize>(v_out), recv_count(i_know_already_kn
 - Flexible core library for a new toolbox :toolbox: of distributed datastructures and algorithms
 
 ### And much more ... :arrow_upper_right:
-- Easy non-blocking communication via request pools.
+- Safety guarantees for non-blocking communication and easy handling of multiple requests via request pools
 - Compile time and runtime error checking (which can be completely deactivated).
 - Collective hierarchical timers to speed up your evaluation workflow.
 - ...
 
-Dive into the documentation or tests to find out more ...
+Dive into the [documentation](https://kamping-site.github.io/kamping/) or [tests](https://github.com/kamping-site/kamping/tree/main/tests) to find out more ...
 
 ### (Near) zero overhead - for development and performance :chart_with_upwards_trend:
 Using template-metaprogramming, KaMPIng only generates the code paths required for computing parameters not provided by the user. 
