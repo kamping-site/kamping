@@ -14,7 +14,7 @@ authors:
 - family-names: Uhl
   given-names: Tim Niklas
 title: "KaMPIng"
-version: 1.0.0
+version: 0.1.0
 date-released: 2024-04-09
 url: "https://github.com/kamping-site/kamping"
 preferred-citation:
