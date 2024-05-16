@@ -189,9 +189,8 @@ public:
     /// @return Root of the aggregation tree which encapsulated the aggregated data in a tree structure representing the
     /// measurements.
     auto aggregate() {
-        AggregatedTreeNode<Duration> root("root");
-        aggregate(root, _timer_tree.root);
-        return root;
+        AggregatedTree<Duration> aggregated_tree(_timer_tree.root, _comm);
+        return aggregated_tree;
     }
 
     /// @brief Clears all stored measurements.
@@ -221,14 +220,14 @@ public:
     /// @param printer Printer object used to output the aggregated timing data.
     template <typename Printer>
     void aggregate_and_print(Printer&& printer) {
-        auto evaluation_tree_root = aggregate();
+        auto const aggregated_tree = aggregate();
         if (_comm.is_root()) {
-            printer.print(evaluation_tree_root);
+            printer.print(aggregated_tree.root());
         }
     }
 
 private:
-    internal::TimerTree<double, Duration>
+    internal::Tree<internal::TimerTreeNode<double, Duration>>
                             _timer_tree;       ///< Timer tree used to represent the hierarchical time measurements.
     CommunicatorType const& _comm;             ///< Communicator in which the time measurements take place.
     bool                    _is_timer_enabled; ///< Flag indicating whether start/stop operations are enabled.
@@ -269,7 +268,7 @@ private:
         auto startpoint = _timer_tree.current_node->startpoint();
         _timer_tree.current_node->aggregate_measurements_locally(endpoint - startpoint, local_aggregation_mode);
         if (!global_aggregation_modes.empty()) {
-            _timer_tree.current_node->duration_aggregation_operations() = global_aggregation_modes;
+            _timer_tree.current_node->measurements_aggregation_operations() = global_aggregation_modes;
         }
         _timer_tree.current_node = _timer_tree.current_node->parent_ptr();
     }
@@ -288,7 +287,7 @@ private:
             assert::heavy_communication
         );
         KASSERT(
-            _comm.is_same_on_all_ranks(timer_tree_node.durations().size()),
+            _comm.is_same_on_all_ranks(timer_tree_node.measurements().size()),
             "Currently processed TimerTreeNode has not the same number of measurements on all ranks -> timers have "
             "diverged",
             assert::light_communication
@@ -296,8 +295,8 @@ private:
 
         // gather all durations at once as gathering all durations individually may deteriorate
         // the performance of the evaluation operation significantly.
-        auto       recv_buf      = _comm.gatherv(send_buf(timer_tree_node.durations()));
-        auto const num_durations = timer_tree_node.durations().size();
+        auto       recv_buf      = _comm.gatherv(send_buf(timer_tree_node.measurements()));
+        auto const num_durations = timer_tree_node.measurements().size();
         for (size_t duration_idx = 0; duration_idx < num_durations; ++duration_idx) {
             if (!_comm.is_root()) {
                 continue;
@@ -309,7 +308,7 @@ private:
                 cur_durations.push_back(recv_buf[duration_idx + rank * num_durations]);
             }
 
-            for (auto const& aggregation_mode: timer_tree_node.duration_aggregation_operations()) {
+            for (auto const& aggregation_mode: timer_tree_node.measurements_aggregation_operations()) {
                 aggregate_measurements_globally(aggregation_mode, cur_durations, evaluation_tree_node);
             }
         }

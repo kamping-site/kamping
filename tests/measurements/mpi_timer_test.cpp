@@ -126,7 +126,7 @@ TEST(TimerTest, basics) {
     timer.stop();
     auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(aggregated_timer_tree);
+    printer.print(aggregated_timer_tree.root());
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -144,7 +144,7 @@ TEST(TimerTest, basics_append) {
     timer.stop_and_append();
     auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(aggregated_timer_tree);
+    printer.print(aggregated_timer_tree.root());
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -162,7 +162,7 @@ TEST(TimerTest, basics_accumulate) {
     timer.stop_and_add();
     auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(aggregated_timer_tree);
+    printer.print(aggregated_timer_tree.root());
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -180,7 +180,7 @@ TEST(TimerTest, stop_and_append_multiple_operations) {
     timer.stop_and_append({GlobalAggregationMode::max, GlobalAggregationMode::min, GlobalAggregationMode::gather});
     auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(aggregated_timer_tree);
+    printer.print(aggregated_timer_tree.root());
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -202,7 +202,7 @@ TEST(TimerTest, stop_and_add_multiple_operations) {
     timer.stop_and_add({GlobalAggregationMode::max, GlobalAggregationMode::min, GlobalAggregationMode::gather});
     auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(aggregated_timer_tree);
+    printer.print(aggregated_timer_tree.root());
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -227,7 +227,7 @@ TEST(TimerTest, stop_nested_scenario) {
     timer.stop();
     auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(aggregated_timer_tree);
+    printer.print(aggregated_timer_tree.root());
 
     if (comm.is_root()) {
         auto const expected_summary = AggregatedDataSummary{}.set_num_entries(1).set_num_values(1).set_is_scalar(true);
@@ -266,7 +266,7 @@ TEST(TimerTest, stop_nested_complex_scenario) {
     auto              timer                 = setup_complex_scenario(repetitions);
     auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(aggregated_timer_tree);
+    printer.print(aggregated_timer_tree.root());
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -290,7 +290,7 @@ TEST(TimerTest, print) {
     auto              timer2                = setup_complex_scenario(repetitions);
     auto              aggregated_timer_tree = timer1.aggregate();
     ValidationPrinter printer1;
-    printer1.print(aggregated_timer_tree);
+    printer1.print(aggregated_timer_tree.root());
     ValidationPrinter printer2;
     timer2.aggregate_and_print(printer2);
     EXPECT_EQ(printer1.output, printer2.output);
@@ -317,7 +317,7 @@ TEST(TimerTest, aggregate_non_trivial_communicator) {
         timer.stop();
         auto              aggregated_timer_tree = timer.aggregate();
         ValidationPrinter printer;
-        printer.print(aggregated_timer_tree);
+        printer.print(aggregated_timer_tree.root());
 
         if (split_comm.is_root()) {
             std::unordered_map<std::string, AggregatedDataSummary> expected_output{
@@ -365,7 +365,7 @@ TEST(TimerTest, singleton) {
     timer.stop();
     auto              aggregated_timer_tree = timer.aggregate();
     ValidationPrinter printer;
-    printer.print(aggregated_timer_tree);
+    printer.print(aggregated_timer_tree.root());
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary> expected_output{

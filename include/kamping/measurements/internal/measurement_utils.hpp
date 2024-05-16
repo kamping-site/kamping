@@ -162,6 +162,54 @@ private:
     std::vector<std::unique_ptr<DerivedNode>> _children_storage; ///< Owns the node's children.
 };
 
+template <typename T>
+class NodeMeasurements {
+public:
+    /// @brief Add the result of a time measurement (i.e. a duration) to the node.
+    ///
+    /// @param duration Duration which is added to the node.
+    /// @param mode The kamping::measurements::KeyAggregationMode parameter determines how multiple time measurements
+    /// shall be handled. They can either be accumulated (the durations are added together) or appended (the durations
+    /// are stored in a list).
+    void aggregate_measurements_locally(T const& datapoint, LocalAggregationMode const& mode) {
+        switch (mode) {
+            case LocalAggregationMode::accumulate:
+                if (_datapoints.empty()) {
+                    _datapoints.push_back(datapoint);
+                } else {
+                    _datapoints.back() += datapoint;
+                }
+                break;
+            case LocalAggregationMode::append:
+                _datapoints.push_back(datapoint);
+        }
+    }
+
+    /// @brief Access to stored duration(s).
+    /// @return Return a reference to duration(s).
+    auto const& measurements() const {
+        return _datapoints;
+    }
+
+    /// @brief Access to the data aggregation operations (used during the evaluation).
+    /// @return Return a reference to data aggregation operations.
+    auto& measurements_aggregation_operations() {
+        return _datapoint_aggregation_operations;
+    }
+
+    /// @brief Access to the data aggregation operations (used during the evaluation).
+    /// @return Return a reference to data aggregation operations.
+    auto const& measurements_aggregation_operations() const {
+        return _datapoint_aggregation_operations;
+    }
+
+private:
+    std::vector<T>                     _datapoints; ///< Datapoints stored at the node
+    std::vector<GlobalAggregationMode> _datapoint_aggregation_operations{GlobalAggregationMode::max
+    }; ///< Communicator-wide aggregation operation which will be performed on the
+       ///< measurements. @TODO replace this with a more space efficient variant
+};
+
 /// @brief Class representing a node in the timer tree. Each node represents a time measurement (or multiple with
 /// the same key). A node can have multiple children which represent nested time measurements. The measurements
 ///  associated with a node's children are executed while the node's measurement is still active.
@@ -169,7 +217,7 @@ private:
 /// @tparam TimePoint Type of a point in time.
 /// @tparam Duration  Type of a duration.
 template <typename TimePoint, typename Duration>
-class TimerTreeNode : public TreeNode<TimerTreeNode<TimePoint, Duration>> {
+class TimerTreeNode : public TreeNode<TimerTreeNode<TimePoint, Duration>>, public NodeMeasurements<Duration> {
 public:
     using TreeNode<TimerTreeNode<TimePoint, Duration>>::TreeNode;
 
@@ -185,38 +233,6 @@ public:
         _start = start;
     }
 
-    /// @brief Add the result of a time measurement (i.e. a duration) to the node.
-    ///
-    /// @param duration Duration which is added to the node.
-    /// @param mode The kamping::measurements::KeyAggregationMode parameter determines how multiple time measurements
-    /// shall be handled. They can either be accumulated (the durations are added together) or appended (the durations
-    /// are stored in a list).
-    void aggregate_measurements_locally(Duration const& duration, LocalAggregationMode const& mode) {
-        switch (mode) {
-            case LocalAggregationMode::accumulate:
-                if (_durations.empty()) {
-                    _durations.push_back(duration);
-                } else {
-                    _durations.back() += duration;
-                }
-                break;
-            case LocalAggregationMode::append:
-                _durations.push_back(duration);
-        }
-    }
-
-    /// @brief Access to stored duration(s).
-    /// @return Return a reference to duration(s).
-    auto const& durations() const {
-        return _durations;
-    }
-
-    /// @brief Access to the data aggregation operations (used during the evaluation).
-    /// @return Return a reference to data aggregation operations.
-    auto& duration_aggregation_operations() {
-        return _duration_aggregation_operations;
-    }
-
     /// @brief Sets the activity status of this node (i.e. is there a currently active measurement).
     /// @param is_active Activity status to set.
     void is_active(bool is_active) {
@@ -230,33 +246,75 @@ public:
     }
 
 private:
-    TimePoint                          _start; ///< Point in time at which the current measurement has been started.
-    bool                               _is_active{false}; ///< Indicates whether a time measurement is currently active.
-    std::vector<Duration>              _durations;        ///< Duration(s) of the node
-    std::vector<GlobalAggregationMode> _duration_aggregation_operations{
-        GlobalAggregationMode::max}; ///< Communicator-wide aggregation operation which will be performed on the
-                                     ///< durations. @TODO replace this with a more space efficient variant
+    TimePoint _start;            ///< Point in time at which the current measurement has been started.
+    bool      _is_active{false}; ///< Indicates whether a time measurement is currently active.
 };
 
-/// @brief Tree consisting of objects of type TimerTreeNode. The tree constitutes a hierarchy of time measurements
-/// such that each node correspond to one (or multiple) time measurement(s) with the same name and the time
-/// measurements corresponding to the node's children are all started and stopped while the node's current time
-/// measurement is running.
-template <typename TimePoint, typename Duration>
-struct TimerTree {
+/// @brief Class representing a node in the counter tree. Each node represents a measurement (or multiple with
+/// the same key). A node can have multiple children which represent nested measurements. The measurements
+///  associated with a node's children are executed while the node's measurement is still active.
+///
+/// @tparam TimePoint Type of a point in time.
+/// @tparam Duration  Type of a duration.
+template <typename DataType>
+class CounterTreeNode : public TreeNode<CounterTreeNode<DataType>>, public NodeMeasurements<DataType> {};
+
+/// @brief Tree consisting of objects of type \c NodeType. The tree constitutes a hierarchy of measurements
+/// such that each node correspond to one (or multiple) measurement(s) with the same name.
+/// For timer tree, the measurements corresponding to the node's children are all started and stopped while the node's
+/// current time measurement is running.
+///
+/// @tparam NodeType Underlying node type.
+template <typename NodeType>
+struct Tree {
     /// @brief Construct a TimerTree consisting only of a root node.
-    TimerTree() : root{"root"}, current_node(&root) {
+    Tree() : root{"root"}, current_node(&root) {
         root.parent_ptr() = &root;
     }
-
     /// @brief Resets the root node (i.e. deletes and assigns a new empty node).
     void reset() {
-        root         = TimerTreeNode<TimePoint, Duration>{"root"};
+        root         = NodeType{"root"};
         current_node = &root;
     }
+    NodeType  root;         ///< Root node of the tree.
+    NodeType* current_node; ///< Pointer to the currently active node of the tree.
+};
 
-    TimerTreeNode<TimePoint, Duration>  root;         ///< Root node of the tree.
-    TimerTreeNode<TimePoint, Duration>* current_node; ///< Pointer to the currently active node of the tree.
+template <typename Duration>
+class EvaluationTreeNode : public internal::TreeNode<EvaluationTreeNode<Duration>> {
+public:
+    using internal::TreeNode<EvaluationTreeNode<Duration>>::TreeNode;
+
+    ///@brief Type into which the aggregated data is stored together with the applied aggregation
+    /// operation.
+    using StorageType = std::unordered_map<std::string, std::vector<ScalarOrContainer<Duration>>>;
+
+    /// @brief Access to stored aggregated data.
+    /// @return Reference to aggregated data.
+    auto const& aggregated_data() const {
+        return _aggregated_data;
+    }
+
+    /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied
+    /// aggregation operation.
+    /// @param aggregation_operation Applied aggregation operations.
+    /// @param data Scalar resulted from applying the given aggregation operation.
+    void add(std::string const& aggregation_operation, std::optional<Duration> data) {
+        if (data) {
+            _aggregated_data[aggregation_operation].emplace_back(data.value());
+        }
+    }
+
+    /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied
+    /// aggregation operation.
+    /// @param aggregation_operation Applied aggregation operations.
+    /// @param data Vector of Scalars resulted from applying the given aggregation operation.
+    void add(std::string const aggregation_operation, std::vector<Duration> const& data) {
+        _aggregated_data[aggregation_operation].emplace_back(data);
+    }
+
+public:
+    StorageType _aggregated_data; ///< Storage of the aggregated data.
 };
 
 /// @brief Checks that the given string is equal on all ranks in the given communicator.
