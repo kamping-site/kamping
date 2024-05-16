@@ -67,7 +67,7 @@ struct VisitorReturningSizeAndCategory {
         return std::make_pair(vec.size(), false);
     }
 };
-// Traverses the evaluation tree and returns a smmary of the aggregated data that can be used to verify to some degree
+// Traverses the evaluation tree and returns a summary of the aggregated data that can be used to verify to some degree
 // the executed timings
 struct ValidationPrinter {
     void print(measurements::AggregatedTreeNode<double> const& node) {
@@ -372,4 +372,42 @@ TEST(TimerTest, singleton) {
             {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(1).set_num_values(1).set_is_scalar(true)}};
         EXPECT_EQ(printer.output, expected_output);
     }
+}
+
+TEST(TimerTest, enable_disable) {
+    Communicator<> comm;
+    Timer<>        timer;
+    timer.disable();
+    timer.start("measurement1");
+    timer.enable();
+    {
+        timer.start("measurement11");
+        timer.stop({measurements::GlobalAggregationMode::gather, measurements::GlobalAggregationMode::max});
+        timer.start("measurement12");
+        {
+            timer.synchronize_and_start("measurement121");
+            timer.stop();
+        }
+        timer.stop();
+        timer.start("measurement11");
+        timer.stop();
+    }
+    timer.disable();
+    timer.stop_and_append();
+    timer.enable();
+    ValidationPrinter printer;
+    timer.aggregate_and_print(printer);
+    if (comm.is_root()) {
+        std::unordered_map<std::string, AggregatedDataSummary> expected_output{
+            {"root.measurement11:gather",
+             AggregatedDataSummary{}.set_is_scalar(false).set_num_entries(1).set_num_values(comm.size())},
+            {"root.measurement12:max",
+             AggregatedDataSummary{}.set_is_scalar(true).set_num_entries(1).set_num_values(1)},
+            {"root.measurement12.measurement121:max",
+             AggregatedDataSummary{}.set_is_scalar(true).set_num_entries(1).set_num_values(1)},
+            {"root.measurement11:max",
+             AggregatedDataSummary{}.set_is_scalar(true).set_num_entries(1).set_num_values(1)},
+        };
+        EXPECT_EQ(printer.output, expected_output);
+    };
 }

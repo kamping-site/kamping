@@ -128,7 +128,7 @@ public:
     /// @brief Constructs a timer using a given communicator.
     ///
     /// @param comm Communicator in which the time measurements are executed.
-    Timer(CommunicatorType const& comm) : _timer_tree{}, _comm{comm} {}
+    Timer(CommunicatorType const& comm) : _timer_tree{}, _comm{comm}, _is_timer_enabled{true} {}
 
     /// @brief Synchronizes all ranks in the underlying communicator via a barrier and then start the measurement with
     /// the given key.
@@ -199,6 +199,15 @@ public:
         _timer_tree.reset();
     }
 
+    /// @brief (Re-)Enable start/stop operations.
+    void enable() {
+        _is_timer_enabled = true;
+    }
+    /// @brief Disable start/stop operations, i.e., start()/stop() operations do not have any effect.
+    void disable() {
+        _is_timer_enabled = false;
+    }
+
     /// @brief Aggregates and outputs the executed measurements. The output is done via the print()
     /// method of a given Printer object.
     ///
@@ -220,11 +229,15 @@ public:
 
 private:
     internal::TimerTree<double, Duration>
-                            _timer_tree; ///< Timer tree used to represent the hierarchical time measurements.
-    CommunicatorType const& _comm;       ///< Communicator in which the time measurements take place.
+                            _timer_tree;       ///< Timer tree used to represent the hierarchical time measurements.
+    CommunicatorType const& _comm;             ///< Communicator in which the time measurements take place.
+    bool                    _is_timer_enabled; ///< Flag indicating whether start/stop operations are enabled.
 
     /// @brief Starts a time measurement.
     void start_impl(std::string const& key, bool use_barrier) {
+        if (!_is_timer_enabled) {
+            return;
+        }
         auto& node = _timer_tree.current_node->find_or_insert(key);
         node.is_active(true);
         if (use_barrier) {
@@ -243,6 +256,9 @@ private:
     void stop_impl(
         LocalAggregationMode local_aggregation_mode, std::vector<GlobalAggregationMode> const& global_aggregation_modes
     ) {
+        if (!_is_timer_enabled) {
+            return;
+        }
         auto endpoint = Environment<>::wtime();
         KASSERT(
             _timer_tree.current_node->is_active(),
