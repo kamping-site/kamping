@@ -186,7 +186,7 @@ public:
     /// TimerTreeNode::data_aggregation_operations().
     /// The durations are aggregated node by node.
     ///
-    /// @return Root of the aggregation tree which encapsulated the aggregated data in a tree structure representing the
+    /// @return AggregatedTree object which encapsulated the aggregated data in a tree structure representing the
     /// measurements.
     auto aggregate() {
         AggregatedTree<Duration> aggregated_tree(_timer_tree.root, _comm);
@@ -271,85 +271,6 @@ private:
             _timer_tree.current_node->measurements_aggregation_operations() = global_aggregation_modes;
         }
         _timer_tree.current_node = _timer_tree.current_node->parent_ptr();
-    }
-
-    /// @brief Traverses and evaluates the given TimerTreeNode and stores the result in the corresponding
-    /// AggregatedTreeNode
-    ///
-    /// param evaluation_tree_node Node where the aggregated durations are stored.
-    /// param timer_tree_node Node where the raw durations are stored.
-    void aggregate(
-        AggregatedTreeNode<Duration>& evaluation_tree_node, internal::TimerTreeNode<double, Duration>& timer_tree_node
-    ) {
-        KASSERT(
-            internal::is_string_same_on_all_ranks(timer_tree_node.name(), _comm),
-            "Currently processed TimerTreeNode has not the same name on all ranks -> timers have diverged",
-            assert::heavy_communication
-        );
-        KASSERT(
-            _comm.is_same_on_all_ranks(timer_tree_node.measurements().size()),
-            "Currently processed TimerTreeNode has not the same number of measurements on all ranks -> timers have "
-            "diverged",
-            assert::light_communication
-        );
-
-        // gather all durations at once as gathering all durations individually may deteriorate
-        // the performance of the evaluation operation significantly.
-        auto       recv_buf      = _comm.gatherv(send_buf(timer_tree_node.measurements()));
-        auto const num_durations = timer_tree_node.measurements().size();
-        for (size_t duration_idx = 0; duration_idx < num_durations; ++duration_idx) {
-            if (!_comm.is_root()) {
-                continue;
-            }
-            std::vector<Duration> cur_durations;
-            cur_durations.reserve(_comm.size());
-            // gather the durations belonging to the same measurement
-            for (size_t rank = 0; rank < _comm.size(); ++rank) {
-                cur_durations.push_back(recv_buf[duration_idx + rank * num_durations]);
-            }
-
-            for (auto const& aggregation_mode: timer_tree_node.measurements_aggregation_operations()) {
-                aggregate_measurements_globally(aggregation_mode, cur_durations, evaluation_tree_node);
-            }
-        }
-        for (auto& timer_tree_child: timer_tree_node.children()) {
-            auto& evaluation_tree_child = evaluation_tree_node.find_or_insert(timer_tree_child->name());
-            aggregate(evaluation_tree_child, *timer_tree_child.get());
-        }
-    }
-
-    /// @brief Computes the specified aggregation operation on an already gathered range of durations.
-    ///
-    /// @param mode Aggregation operation to perform.
-    /// @param gathered_data Durations gathered from all participating ranks.
-    /// @param evaluation_node Object where the aggregated and evaluated durations are stored.
-    void aggregate_measurements_globally(
-        GlobalAggregationMode                              mode,
-        std::vector<Duration> const&                       gathered_data,
-        kamping::measurements::AggregatedTreeNode<double>& evaluation_node
-    ) {
-        switch (mode) {
-            case GlobalAggregationMode::max: {
-                using Operation = internal::Max;
-                evaluation_node.add(mode, Operation::compute(gathered_data));
-                break;
-            }
-            case GlobalAggregationMode::min: {
-                using Operation = internal::Min;
-                evaluation_node.add(mode, Operation::compute(gathered_data));
-                break;
-            }
-            case GlobalAggregationMode::sum: {
-                using Operation = internal::Sum;
-                evaluation_node.add(mode, Operation::compute(gathered_data));
-                break;
-            }
-            case GlobalAggregationMode::gather: {
-                using Operation = internal::Gather;
-                evaluation_node.add(mode, Operation::compute(gathered_data));
-                break;
-            }
-        }
     }
 };
 
