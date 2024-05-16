@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['abort_0',['abort',['../classkamping_1_1Communicator.html#a4fc1c257333478b479eca57c6d59d48d',1,'kamping::Communicator']]],
+  ['ack_5fall_5ffailed_1',['ack_all_failed',['../classkamping_1_1plugin_1_1UserLevelFailureMitigation.html#a045182f6f5fdff79f2d5d54fff315c6e',1,'kamping::plugin::UserLevelFailureMitigation']]],
+  ['ack_5ffailed_2',['ack_failed',['../classkamping_1_1plugin_1_1UserLevelFailureMitigation.html#acf1be7977e19d5bbdd31f82faab58150',1,'kamping::plugin::UserLevelFailureMitigation']]],
+  ['add_3',['add',['../classkamping_1_1measurements_1_1AggregatedTreeNode.html#a39229fde914388642c077f59909bd4af',1,'kamping::measurements::AggregatedTreeNode::add(GlobalAggregationMode aggregation_mode, std::optional&lt; Duration &gt; data)'],['../classkamping_1_1measurements_1_1AggregatedTreeNode.html#a222af37e5992a8eb619c20d633159afc',1,'kamping::measurements::AggregatedTreeNode::add(GlobalAggregationMode aggregation_mode, std::vector&lt; Duration &gt; const &amp;data)']]],
+  ['aggregate_4',['aggregate',['../classkamping_1_1measurements_1_1Timer.html#ae92080207c6e89680db71ce93b5be86f',1,'kamping::measurements::Timer']]],
+  ['aggregate_5fand_5fprint_5',['aggregate_and_print',['../classkamping_1_1measurements_1_1Timer.html#a2699fdfaf5c759322fe27f2c039d9af5',1,'kamping::measurements::Timer']]],
+  ['aggregate_5fmeasurements_5flocally_6',['aggregate_measurements_locally',['../classkamping_1_1measurements_1_1internal_1_1TimerTreeNode.html#a7776f00b73da97c22dab1f5f85da468b',1,'kamping::measurements::internal::TimerTreeNode']]],
+  ['aggregated_5fdata_7',['aggregated_data',['../classkamping_1_1measurements_1_1AggregatedTreeNode.html#a7c8b5d354f2b3b308dd58ab11a28b5ea',1,'kamping::measurements::AggregatedTreeNode']]],
+  ['agree_8',['agree',['../classkamping_1_1plugin_1_1UserLevelFailureMitigation.html#ab65c341563edb1f54a1e2f0107d19095',1,'kamping::plugin::UserLevelFailureMitigation::agree(int flag)'],['../classkamping_1_1plugin_1_1UserLevelFailureMitigation.html#a1dbb4e15d62724afc64d3a99a21cd11c',1,'kamping::plugin::UserLevelFailureMitigation::agree(bool flag)']]],
+  ['allgather_9',['allgather',['../group__kamping__collectives.html#gabb03bc6d570ceaa94f4d13ce17252490',1,'kamping::Communicator']]],
+  ['allgather_5finplace_10',['allgather_inplace',['../group__kamping__collectives.html#ga430b7198caafb7e41fa3c1f197f96334',1,'kamping::Communicator']]],
+  ['allgatherv_11',['allgatherv',['../group__kamping__collectives.html#gabfcbc6c435e82bd879c405c25c66b039',1,'kamping::Communicator']]],
+  ['allocate_12',['allocate',['../classkamping_1_1MPIAllocator.html#a544f61e9825a7c34b3074e279abe6629',1,'kamping::MPIAllocator']]],
+  ['allreduce_13',['allreduce',['../group__kamping__collectives.html#gaa1c33a6dbc2ce2ff09edd8c1958c4ecb',1,'kamping::Communicator']]],
+  ['allreduce_5finplace_14',['allreduce_inplace',['../group__kamping__collectives.html#ga81c608b09a2a6922ebded3b11e0520c7',1,'kamping::Communicator']]],
+  ['allreduce_5fsingle_15',['allreduce_single',['../group__kamping__collectives.html#gafc3d96a67d4eb2480991eb7d688f464a',1,'kamping::Communicator']]],
+  ['alltoall_16',['alltoall',['../group__kamping__collectives.html#gabef88854ed88de425249bf8ea2f40af1',1,'kamping::Communicator']]],
+  ['alltoall_5finplace_17',['alltoall_inplace',['../group__kamping__collectives.html#gacb440d15089adcb62c910f1e5d62c694',1,'kamping::Communicator']]],
+  ['alltoallv_18',['alltoallv',['../group__kamping__collectives.html#gad486218bec33ad12fa1f81057dc8dfd5',1,'kamping::Communicator::alltoallv()'],['../classkamping_1_1plugin_1_1grid_1_1GridCommunicator.html#a1c148d56a2644e443fbdc2b0031cede5',1,'kamping::plugin::grid::GridCommunicator::alltoallv()']]],
+  ['alltoallv_5fdispatch_19',['alltoallv_dispatch',['../classkamping_1_1plugin_1_1DispatchAlltoall.html#a2852772cc6c6796831e52e5d93376bba',1,'kamping::plugin::DispatchAlltoall']]],
+  ['alltoallv_5fsparse_20',['alltoallv_sparse',['../classkamping_1_1plugin_1_1SparseAlltoall.html#a6363f4b1482a60bc1eb86a20132a2af7',1,'kamping::plugin::SparseAlltoall']]],
+  ['alltoallv_5fwith_5fenvelope_21',['alltoallv_with_envelope',['../classkamping_1_1plugin_1_1grid_1_1GridCommunicator.html#ada97134509de6b53eec8bb1c93719501',1,'kamping::plugin::grid::GridCommunicator']]],
+  ['asserting_5fcast_22',['asserting_cast',['../group__kamping__utility.html#ga6b259b6a769414f677399b27ec3a2c2c',1,'kamping']]]
+];

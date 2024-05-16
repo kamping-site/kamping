@@ -1,0 +1,26 @@
+var result_8hpp =
+[
+    [ "kamping::internal::ResultCategoryNotUsed", "structkamping_1_1internal_1_1ResultCategoryNotUsed.html", null ],
+    [ "kamping::MPIResult< Args >", "classkamping_1_1MPIResult.html", "classkamping_1_1MPIResult" ],
+    [ "std::tuple_size< kamping::MPIResult< Args... > >", "structstd_1_1tuple__size_3_01kamping_1_1MPIResult_3_01Args_8_8_8_01_4_01_4.html", "structstd_1_1tuple__size_3_01kamping_1_1MPIResult_3_01Args_8_8_8_01_4_01_4" ],
+    [ "std::tuple_element< index, kamping::MPIResult< Args... > >", "structstd_1_1tuple__element_3_01index_00_01kamping_1_1MPIResult_3_01Args_8_8_8_01_4_01_4.html", "structstd_1_1tuple__element_3_01index_00_01kamping_1_1MPIResult_3_01Args_8_8_8_01_4_01_4" ],
+    [ "kamping::NonBlockingResult< MPIResultType, RequestDataBuffer >", "classkamping_1_1NonBlockingResult.html", "classkamping_1_1NonBlockingResult" ],
+    [ "kamping::internal::PredicateForResultObject", "structkamping_1_1internal_1_1PredicateForResultObject.html", "structkamping_1_1internal_1_1PredicateForResultObject" ],
+    [ "kamping::internal::DiscardSerializationBuffers", "structkamping_1_1internal_1_1DiscardSerializationBuffers.html", "structkamping_1_1internal_1_1DiscardSerializationBuffers" ],
+    [ "kamping::internal::PrependParameterType< ptype, Tuple >", "structkamping_1_1internal_1_1PrependParameterType.html", "structkamping_1_1internal_1_1PrependParameterType" ],
+    [ "parameter_types_to_ignore_for_result_object", "result_8hpp.html#ab81881f12c019fd84319745122dcc690", null ],
+    [ "determine_recv_buffer_type", "result_8hpp.html#aba60758aade132dbc657ddf0bda0847f", null ],
+    [ "has_recv_or_send_recv_buf", "result_8hpp.html#ab44243e36be64b625b69be8b54a770b7", null ],
+    [ "make_mpi_result", "result_8hpp.html#aad256a920b44aef089a398b516864694", null ],
+    [ "make_nonblocking_result", "result_8hpp.html#aa97507847d664ea50c879aafd563c1f4", null ],
+    [ "return_recv_or_send_recv_buffer_only", "result_8hpp.html#a21bfaf5c0eed09eb3529ea2c05806455", null ],
+    [ "return_send_buf_out_only", "result_8hpp.html#a9c067a352ff4dca1463322422dd7387d", null ],
+    [ "has_data_buffer_type_member", "result_8hpp.html#a84207557ad8ce39c4bfa004c74383ead", null ],
+    [ "has_extract_v", "result_8hpp.html#a5d9331d266530a941f5884b0926b4875", null ],
+    [ "is_extractable", "result_8hpp.html#a03058951f31ece097f30c8cade4c0a20", null ],
+    [ "is_mpi_result_v", "result_8hpp.html#a72b658c1bb5bacd82250496e6ec8698a", null ],
+    [ "is_mpi_result_v< MPIResult< Args... > >", "result_8hpp.html#a43e9832b35087da3b8c7b522004761ab", null ],
+    [ "is_result_empty_v", "result_8hpp.html#aee520f2c9798d018bd68724bd8df5caf", null ],
+    [ "is_result_empty_v< MPIResult< Args... > >", "result_8hpp.html#aa20af21183e6a6d57ca9a16bcf64e55f", null ],
+    [ "is_result_empty_v< void >", "result_8hpp.html#a0ac01558fd90611a93d9cdcd8516eb96", null ]
+];
