@@ -151,17 +151,17 @@ TEST(GatherTest, compute_basics) {
     EXPECT_EQ(Gather::compute(vec), vec);
 }
 
-TEST(TimerTreeNodeTest, aggregate_measurements_locally_basic_appending) {
+TEST(TreeNodeTest, aggregate_measurements_locally_basic_appending) {
     TimerTreeNode<int, int> node;
     int const               duration1 = 2;
     int const               duration2 = 1;
     int const               duration3 = 3;
-    EXPECT_EQ(node.durations().size(), 0u);
+    EXPECT_EQ(node.measurements().size(), 0u);
     node.aggregate_measurements_locally(duration1, LocalAggregationMode::append);
-    EXPECT_EQ(node.durations(), std::vector<int>{duration1});
+    EXPECT_EQ(node.measurements(), std::vector<int>{duration1});
     node.aggregate_measurements_locally(duration2, LocalAggregationMode::append);
     node.aggregate_measurements_locally(duration3, LocalAggregationMode::append);
-    EXPECT_EQ(node.durations(), (std::vector<int>{duration1, duration2, duration3}));
+    EXPECT_EQ(node.measurements(), (std::vector<int>{duration1, duration2, duration3}));
 }
 
 TEST(TimerTreeNodeTest, aggregate_measurements_locally_basic_accumulate) {
@@ -169,12 +169,12 @@ TEST(TimerTreeNodeTest, aggregate_measurements_locally_basic_accumulate) {
     int const               duration1 = 2;
     int const               duration2 = 1;
     int const               duration3 = 3;
-    EXPECT_EQ(node.durations().size(), 0u);
+    EXPECT_EQ(node.measurements().size(), 0u);
     node.aggregate_measurements_locally(duration1, LocalAggregationMode::accumulate);
-    EXPECT_EQ(node.durations(), std::vector<int>{duration1});
+    EXPECT_EQ(node.measurements(), std::vector<int>{duration1});
     node.aggregate_measurements_locally(duration2, LocalAggregationMode::accumulate);
     node.aggregate_measurements_locally(duration3, LocalAggregationMode::accumulate);
-    EXPECT_EQ(node.durations(), (std::vector<int>{duration1 + duration2 + duration3}));
+    EXPECT_EQ(node.measurements(), (std::vector<int>{duration1 + duration2 + duration3}));
 }
 
 TEST(TimerTreeNodeTest, aggregate_measurements_locally_basic_interleaved) {
@@ -182,16 +182,16 @@ TEST(TimerTreeNodeTest, aggregate_measurements_locally_basic_interleaved) {
     int const               duration1 = 2;
     int const               duration2 = 1;
     int const               duration3 = 3;
-    EXPECT_EQ(node.durations().size(), 0u);
+    EXPECT_EQ(node.measurements().size(), 0u);
     node.aggregate_measurements_locally(duration1, LocalAggregationMode::accumulate);
-    EXPECT_EQ(node.durations(), std::vector<int>{duration1});
+    EXPECT_EQ(node.measurements(), std::vector<int>{duration1});
     node.aggregate_measurements_locally(duration2, LocalAggregationMode::append);
     node.aggregate_measurements_locally(duration3, LocalAggregationMode::accumulate);
-    EXPECT_EQ(node.durations(), (std::vector<int>{duration1, duration2 + duration3}));
+    EXPECT_EQ(node.measurements(), (std::vector<int>{duration1, duration2 + duration3}));
 }
 
-TEST(TimerTreeTest, constructor) {
-    TimerTree<int, std::size_t> timer_tree;
+TEST(TreeTest, constructor) {
+    Tree<TimerTreeNode<int, std::size_t>> timer_tree;
     EXPECT_EQ(timer_tree.current_node, &timer_tree.root);
     EXPECT_EQ(timer_tree.root.name(), "root");
     EXPECT_EQ(timer_tree.root.children().size(), 0u);
