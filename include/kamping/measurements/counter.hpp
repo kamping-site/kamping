@@ -51,10 +51,10 @@ public:
     /// @param global_aggregation_modi Specify how the measurement entry is aggregated over all participationg PEs when
     /// Counter::aggregate() is called.
     void
-    add(std::string const&                      name,
-        DataType const&                         data,
-        std::vector<DataAggregationMode> const& global_aggregation_modi = std::vector<DataAggregationMode>{}) {
-        add_impl(name, data, KeyAggregationMode::accumulate, global_aggregation_modi);
+    add(std::string const&                        name,
+        DataType const&                           data,
+        std::vector<GlobalAggregationMode> const& global_aggregation_modi = std::vector<GlobalAggregationMode>{}) {
+        add_measurement(name, data, LocalAggregationMode::accumulate, global_aggregation_modi);
     }
 
     /// @brief Looks for a measurement entry with name \param name and appends \param data to the list of previously
@@ -63,11 +63,11 @@ public:
     /// @param global_aggregation_modi Specify how the measurement entry is aggregated over all participationg PEs when
     /// Counter::aggregate() is called.
     void append(
-        std::string const&                      name,
-        DataType const&                         data,
-        std::vector<DataAggregationMode> const& global_aggregation_modi = std::vector<DataAggregationMode>{}
+        std::string const&                        name,
+        DataType const&                           data,
+        std::vector<GlobalAggregationMode> const& global_aggregation_modi = std::vector<GlobalAggregationMode>{}
     ) {
-        add_impl(name, data, KeyAggregationMode::append, global_aggregation_modi);
+        add_measurement(name, data, LocalAggregationMode::append, global_aggregation_modi);
     }
 
     /// @brief Aggregate the measurement entries globally.
@@ -112,23 +112,23 @@ private:
                ///< defining different phase within your algorithm.
     CommunicatorType const& _comm; ///< Communicator in which the time measurements take place.
 
-    /// @brief Stops the currently active measurement and store the result.
-    /// @param key_aggregation_mode Specifies how the measurement duration is
+    /// @brief Adds a new measurement to the tree
+    /// @param local_aggregation_mode Specifies how the measurement duration is
     /// locally aggregated when there are multiple measurements at the same level
     /// with identical key.
-    /// @param data_aggregation_modi Specifies how the measurement data is
+    /// @param global_aggregation_modi Specifies how the measurement data is
     /// aggregated over all participationg ranks when Timer::aggregate() is
     /// called.
-    void add_impl(
+    void add_measurement(
         std::string const&                        name,
         DataType const&                           data,
-        LocalAggregationMode                      key_aggregation_mode,
-        std::vector<GlobalAggregationMode> const& data_aggreation_modi
+        LocalAggregationMode                      local_aggregation_mode,
+        std::vector<GlobalAggregationMode> const& global_aggreation_modi
     ) {
-        auto child = _tree.current_node->find_or_insert(name);
-        child.aggregate_measurements_locally(data, key_aggregation_mode);
-        if (!data_aggreation_modi.empty()) {
-            child.measurements_aggregation_operations() = data_aggreation_modi;
+        auto& child = _tree.current_node->find_or_insert(name);
+        child.aggregate_measurements_locally(data, local_aggregation_mode);
+        if (!global_aggreation_modi.empty()) {
+            child.measurements_aggregation_operations() = global_aggreation_modi;
         }
     }
 };

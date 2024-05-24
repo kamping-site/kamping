@@ -19,16 +19,27 @@
 
 namespace testing {
 
+template <typename T = double>
 struct AggregatedDataSummary {
     bool   is_scalar{true};
     bool   are_entries_consistent{true}; // number of values and value category are the same for all entries.
-    size_t num_entries{0u};
-    size_t num_values_per_entry{0u};
-    bool   operator==(AggregatedDataSummary const& other) const {
-          bool const result =
-              std::tie(is_scalar, are_entries_consistent, num_entries, num_values_per_entry)
-              == std::tie(other.is_scalar, other.are_entries_consistent, other.num_entries, other.num_values_per_entry);
-          return result;
+    size_t num_entries{0u}; // number of entries per measurement node, might be greater then one if for example
+                            // counter/timer.append() has been called multiple times.
+    size_t num_values_per_entry{
+        0u}; // number of values per entry, might be greater than one if global aggregation mode "Gather" is executed.
+    std::optional<std::vector<std::vector<T>>> aggregated_data;
+
+    bool operator==(AggregatedDataSummary<T> const& other) const {
+        bool const result =
+            std::tie(is_scalar, are_entries_consistent, num_entries, num_values_per_entry, aggregated_data)
+            == std::tie(
+                other.is_scalar,
+                other.are_entries_consistent,
+                other.num_entries,
+                other.num_values_per_entry,
+                other.aggregated_data
+            );
+        return result;
     }
     auto& set_num_entries(size_t num_entries_) {
         num_entries = num_entries_;
@@ -42,6 +53,12 @@ struct AggregatedDataSummary {
         is_scalar = is_scalar_;
         return *this;
     }
+
+    auto& set_aggregated_data(std::vector<std::vector<T>> param_aggregated_data) {
+        aggregated_data = param_aggregated_data;
+        return *this;
+    }
+
     friend std::ostream& operator<<(std::ostream& out, AggregatedDataSummary const& summary) {
         return out << "is_scalar: " << std::boolalpha << summary.is_scalar
                    << ", entries_consistent: " << summary.are_entries_consistent
@@ -58,42 +75,64 @@ struct VisitorReturningSizeAndCategory {
         return std::make_pair(vec.size(), false);
     }
 };
+
+template <typename T>
+struct VisitorReturningAlwaysVector {
+    auto operator()(T const& elem) const {
+        return std::vector<T>{elem};
+    }
+    auto operator()(std::vector<T> const& vec) const {
+        return vec;
+    }
+};
 // Traverses the evaluation tree and returns a summary of the aggregated data that can be used to verify to some degree
 // the executed timings
+template <typename T = double>
 struct ValidationPrinter {
-    void print(kamping::measurements::AggregatedTreeNode<double> const& node) {
+    void print(kamping::measurements::AggregatedTreeNode<T> const& node, bool store_only_metadata = true) {
         key_stack.push_back(node.name());
         for (auto const& [operation, aggregated_data]: node.aggregated_data()) {
-            AggregatedDataSummary summary;
+            AggregatedDataSummary<T> summary;
             summary.num_entries = aggregated_data.size();
             if (aggregated_data.empty()) {
                 continue;
             }
-            auto visitor = VisitorReturningSizeAndCategory<double>{};
             {
+                auto visitor                 = VisitorReturningSizeAndCategory<T>{};
                 auto [size, is_scalar]       = std::visit(visitor, aggregated_data.front());
                 summary.num_values_per_entry = size;
                 summary.is_scalar            = is_scalar;
             }
             // check consistency of the entries if there are multiple
-            summary.are_entries_consistent =
-                std::all_of(aggregated_data.begin(), aggregated_data.end(), [&](auto const& entry) {
-                    auto [size, is_scalar] = std::visit(visitor, entry);
-                    return size == summary.num_values_per_entry && is_scalar == summary.is_scalar;
-                });
+            {
+                auto visitor = VisitorReturningSizeAndCategory<T>{};
+                summary.are_entries_consistent =
+                    std::all_of(aggregated_data.begin(), aggregated_data.end(), [&](auto const& entry) {
+                        auto [size, is_scalar] = std::visit(visitor, entry);
+                        return size == summary.num_values_per_entry && is_scalar == summary.is_scalar;
+                    });
+            }
+            if (!store_only_metadata) {
+                // is deactivated by default as measurements for timer events are not reproducible
+                auto visitor            = VisitorReturningAlwaysVector<T>{};
+                summary.aggregated_data = std::vector<std::vector<T>>{};
+                for (auto const& entry: aggregated_data) {
+                    summary.aggregated_data->push_back(std::visit(visitor, entry));
+                }
+            }
 
             output[concatenate_key_stack() + ":" + get_string(operation)] = summary;
         }
 
         for (auto const& child: node.children()) {
             if (child) {
-                print(*child);
+                print(*child, store_only_metadata);
             }
         }
         key_stack.pop_back();
     }
 
-    std::unordered_map<std::string, AggregatedDataSummary> output;
+    std::unordered_map<std::string, AggregatedDataSummary<T>> output;
 
 private:
     std::vector<std::string> key_stack;

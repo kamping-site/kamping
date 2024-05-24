@@ -268,6 +268,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_counter
+    FILES measurements/mpi_counter_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_mpi_helpers_for_testing
     FILES helpers_for_testing_mpi_test.cpp
     CORES 1 4

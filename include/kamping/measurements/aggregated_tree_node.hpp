@@ -94,28 +94,32 @@ private:
     /// @brief Traverses and evaluates the given (Measurement)TreeNode and stores the result in the corresponding
     /// AggregatedTreeNode
     ///
-    /// param aggregation_tree_node Node where the aggregated durations are stored.
-    /// param timer_tree_node Node where the raw durations are stored.
+    /// param aggregation_tree_node Node where the aggregated data points are stored.
+    /// param measurement_tree_node Node where the raw (not aggregated) data points are stored.
     template <typename MeasurementNode, typename Communciator>
     void aggregate(
-        AggregatedTreeNode<DataType>& aggregation_tree_node, MeasurementNode& timer_tree_node, Communciator const& comm
+        AggregatedTreeNode<DataType>& aggregation_tree_node,
+        MeasurementNode&              measurement_tree_node,
+        Communciator const&           comm
     ) {
         KASSERT(
-            internal::is_string_same_on_all_ranks(timer_tree_node.name(), comm),
-            "Currently processed TimerTreeNode has not the same name on all ranks -> timers have diverged",
+            internal::is_string_same_on_all_ranks(measurement_tree_node.name(), comm),
+            "Currently processed MeasurementTreeNode has not the same name on all ranks -> measurement trees have "
+            "diverged",
             assert::heavy_communication
         );
         KASSERT(
-            comm.is_same_on_all_ranks(timer_tree_node.measurements().size()),
-            "Currently processed TimerTreeNode has not the same number of measurements on all ranks -> timers have "
+            comm.is_same_on_all_ranks(measurement_tree_node.measurements().size()),
+            "Currently processed MeasurementTreeNode has not the same number of measurements on all ranks -> "
+            "measurement trees have "
             "diverged",
             assert::light_communication
         );
 
         // gather all durations at once as gathering all durations individually may deteriorate
         // the performance of the evaluation operation significantly.
-        auto       recv_buf      = comm.gatherv(send_buf(timer_tree_node.measurements()));
-        auto const num_durations = timer_tree_node.measurements().size();
+        auto       recv_buf      = comm.gatherv(send_buf(measurement_tree_node.measurements()));
+        auto const num_durations = measurement_tree_node.measurements().size();
         for (size_t duration_idx = 0; duration_idx < num_durations; ++duration_idx) {
             if (!comm.is_root()) {
                 continue;
@@ -127,11 +131,11 @@ private:
                 cur_durations.push_back(recv_buf[duration_idx + rank * num_durations]);
             }
 
-            for (auto const& aggregation_mode: timer_tree_node.measurements_aggregation_operations()) {
+            for (auto const& aggregation_mode: measurement_tree_node.measurements_aggregation_operations()) {
                 aggregate_measurements_globally(aggregation_mode, cur_durations, aggregation_tree_node);
             }
         }
-        for (auto& measurement_tree_child: timer_tree_node.children()) {
+        for (auto& measurement_tree_child: measurement_tree_node.children()) {
             auto& aggregation_tree_child = aggregation_tree_node.find_or_insert(measurement_tree_child->name());
             aggregate(aggregation_tree_child, *measurement_tree_child.get(), comm);
         }
@@ -143,9 +147,9 @@ private:
     /// @param gathered_data Durations gathered from all participating ranks.
     /// @param evaluation_node Object where the aggregated and evaluated measurements are stored.
     void aggregate_measurements_globally(
-        GlobalAggregationMode                              mode,
-        std::vector<DataType> const&                       gathered_data,
-        kamping::measurements::AggregatedTreeNode<double>& evaluation_node
+        GlobalAggregationMode                                mode,
+        std::vector<DataType> const&                         gathered_data,
+        kamping::measurements::AggregatedTreeNode<DataType>& evaluation_node
     ) {
         switch (mode) {
             case GlobalAggregationMode::max: {

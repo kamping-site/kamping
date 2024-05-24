@@ -260,7 +260,10 @@ private:
 /// @tparam TimePoint Type of a point in time.
 /// @tparam Duration  Type of a duration.
 template <typename DataType>
-class CounterTreeNode : public TreeNode<CounterTreeNode<DataType>>, public NodeMeasurements<DataType> {};
+class CounterTreeNode : public TreeNode<CounterTreeNode<DataType>>, public NodeMeasurements<DataType> {
+public:
+    using TreeNode<CounterTreeNode<DataType>>::TreeNode;
+};
 
 /// @brief Tree consisting of objects of type \c NodeType. The tree constitutes a hierarchy of measurements
 /// such that each node correspond to one (or multiple) measurement(s) with the same name.
