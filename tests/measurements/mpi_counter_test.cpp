@@ -42,7 +42,7 @@ TEST(CounterTest, basics) {
             {"root.measurement:max",
              AggregatedDataSummary<DataType>{}
                  .set_num_entries(1)
-                 .set_num_values(1)
+                 .set_num_values_per_entry(1)
                  .set_is_scalar(true)
                  .set_aggregated_data(expected_data)}};
         EXPECT_EQ(printer.output, expected_output);
@@ -63,7 +63,7 @@ TEST(CounterTest, max_aggregation) {
             {"root.measurement:max",
              AggregatedDataSummary<DataType>{}
                  .set_num_entries(1)
-                 .set_num_values(1)
+                 .set_num_values_per_entry(1)
                  .set_is_scalar(true)
                  .set_aggregated_data(expected_data)}};
         EXPECT_EQ(printer.output, expected_output);
@@ -84,7 +84,7 @@ TEST(CounterTest, min_aggregation) {
             {"root.measurement:min",
              AggregatedDataSummary<DataType>{}
                  .set_num_entries(1)
-                 .set_num_values(1)
+                 .set_num_values_per_entry(1)
                  .set_is_scalar(true)
                  .set_aggregated_data(expected_data)}};
         EXPECT_EQ(printer.output, expected_output);
@@ -105,7 +105,7 @@ TEST(CounterTest, sum_aggregation) {
             {"root.measurement:sum",
              AggregatedDataSummary<DataType>{}
                  .set_num_entries(1)
-                 .set_num_values(1)
+                 .set_num_values_per_entry(1)
                  .set_is_scalar(true)
                  .set_aggregated_data(expected_data)}};
         EXPECT_EQ(printer.output, expected_output);
@@ -128,7 +128,7 @@ TEST(CounterTest, gather_aggregation) {
             {"root.measurement:gather",
              AggregatedDataSummary<DataType>{}
                  .set_num_entries(1)
-                 .set_num_values(comm.size())
+                 .set_num_values_per_entry(comm.size())
                  .set_is_scalar(false)
                  .set_aggregated_data(expected_data)}};
         EXPECT_EQ(printer.output, expected_output);
@@ -154,7 +154,7 @@ TEST(CounterTest, repeated_add_gather_aggregation) {
             {"root.measurement:gather",
              AggregatedDataSummary<DataType>{}
                  .set_num_entries(1)
-                 .set_num_values(comm.size())
+                 .set_num_values_per_entry(comm.size())
                  .set_is_scalar(false)
                  .set_aggregated_data(expected_data)}};
         EXPECT_EQ(printer.output, expected_output);
@@ -181,7 +181,7 @@ TEST(CounterTest, repeated_append_gather_aggregation) {
             {"root.measurement:gather",
              AggregatedDataSummary<DataType>{}
                  .set_num_entries(3)
-                 .set_num_values(comm.size())
+                 .set_num_values_per_entry(comm.size())
                  .set_is_scalar(false)
                  .set_aggregated_data(expected_data)}};
         EXPECT_EQ(printer.output, expected_output);

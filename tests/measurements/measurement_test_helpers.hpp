@@ -23,10 +23,10 @@ template <typename T = double>
 struct AggregatedDataSummary {
     bool   is_scalar{true};
     bool   are_entries_consistent{true}; // number of values and value category are the same for all entries.
-    size_t num_entries{0u}; // number of entries per measurement node, might be greater then one if for example
-                            // counter/timer.append() has been called multiple times.
-    size_t num_values_per_entry{
-        0u}; // number of values per entry, might be greater than one if global aggregation mode "Gather" is executed.
+    size_t num_entries{0u};              // number of entries per measurement, might be greater then one if for example
+                                         // counter/timer.append() has been called multiple times.
+    size_t                                     num_values_per_entry{0u
+    }; // number of values per entry, might be greater than one if global aggregation mode "Gather" is executed.
     std::optional<std::vector<std::vector<T>>> aggregated_data;
 
     bool operator==(AggregatedDataSummary<T> const& other) const {
@@ -45,7 +45,7 @@ struct AggregatedDataSummary {
         num_entries = num_entries_;
         return *this;
     }
-    auto& set_num_values(size_t num_values) {
+    auto& set_num_values_per_entry(size_t num_values) {
         num_values_per_entry = num_values;
         return *this;
     }
