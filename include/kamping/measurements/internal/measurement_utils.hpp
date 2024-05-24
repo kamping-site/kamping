@@ -165,7 +165,8 @@ private:
 /// @brief Class to store measurement data points associated with a node in a measurement tree, e.g., a timer-tree.
 ///
 /// @tparam T Type of the data point.
-template <typename T>
+/// @tparam default_global_aggregation_mode Default mode to use for global aggregation when not further specified.
+template <typename T, GlobalAggregationMode default_global_aggregation_mode>
 class NodeMeasurements {
 public:
     /// @brief Add the result of a time measurement (i.e. a duration) to the node.
@@ -209,8 +210,8 @@ public:
 private:
     std::vector<T>                     _datapoints; ///< Datapoints stored at the node
     std::vector<GlobalAggregationMode> _datapoint_aggregation_operations{
-        GlobalAggregationMode::max}; ///< Communicator-wide aggregation operation which will be performed on the
-                                     ///< measurements. @TODO replace this with a more space efficient variant
+        default_global_aggregation_mode}; ///< Communicator-wide aggregation operation which will be performed on the
+                                          ///< measurements. @TODO replace this with a more space efficient variant
 };
 
 /// @brief Class representing a node in the timer tree. Each node represents a time measurement (or multiple with
@@ -220,7 +221,8 @@ private:
 /// @tparam TimePoint Type of a point in time.
 /// @tparam Duration  Type of a duration.
 template <typename TimePoint, typename Duration>
-class TimerTreeNode : public TreeNode<TimerTreeNode<TimePoint, Duration>>, public NodeMeasurements<Duration> {
+class TimerTreeNode : public TreeNode<TimerTreeNode<TimePoint, Duration>>,
+                      public NodeMeasurements<Duration, GlobalAggregationMode::max> {
 public:
     using TreeNode<TimerTreeNode<TimePoint, Duration>>::TreeNode;
 
@@ -260,7 +262,8 @@ private:
 /// @tparam TimePoint Type of a point in time.
 /// @tparam Duration  Type of a duration.
 template <typename DataType>
-class CounterTreeNode : public TreeNode<CounterTreeNode<DataType>>, public NodeMeasurements<DataType> {
+class CounterTreeNode : public TreeNode<CounterTreeNode<DataType>>,
+                        public NodeMeasurements<DataType, GlobalAggregationMode::sum> {
 public:
     using TreeNode<CounterTreeNode<DataType>>::TreeNode;
 };

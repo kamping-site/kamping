@@ -40,7 +40,7 @@ public:
 
     /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied aggregation
     /// operation.
-    /// @param aggregation_mode Aggregation mode that has been applied to the duration data.
+    /// @param aggregation_mode Aggregation mode that has been applied to the data.
     /// @param data Scalar resulted from applying the given aggregation operation.
     void add(GlobalAggregationMode aggregation_mode, std::optional<DataType> data) {
         if (data) {
@@ -67,8 +67,8 @@ public:
 template <typename DataType>
 class AggregatedTree {
 public:
-    /// @brief Globally aggregates the measurement tree provided with /param measurement_root_node across all ranks in
-    /// /param comm.
+    /// @brief Globally aggregates the measurement tree provided with \param measurement_root_node across all ranks in
+    /// \param comm.
     ///
     /// @tparam MeasurementNode Type of the measurement tree to aggregate.
     /// @tparam Communicator Communicator defining the scope for the global aggregation.

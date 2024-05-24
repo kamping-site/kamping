@@ -11,11 +11,6 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include "gmock/gmock.h"
-#include <algorithm>
-#include <cstddef>
-#include <stack>
-#include <tuple>
 #include <unordered_map>
 
 #include <gtest/gtest.h>
@@ -37,9 +32,9 @@ TEST(CounterTest, basics) {
     ValidationPrinter<DataType> printer;
     printer.print(aggregated_counter_tree.root(), false);
     if (comm.is_root()) {
-        std::vector<std::vector<DataType>> const                         expected_data{{42}};
+        std::vector<std::vector<DataType>> const                         expected_data{{42 * comm.size_signed()}};
         std::unordered_map<std::string, AggregatedDataSummary<DataType>> expected_output{
-            {"root.measurement:max",
+            {"root.measurement:sum",
              AggregatedDataSummary<DataType>{}
                  .set_num_entries(1)
                  .set_num_values_per_entry(1)
@@ -53,7 +48,7 @@ TEST(CounterTest, max_aggregation) {
     auto const& comm = comm_world();
     Counter     counter;
     using DataType = decltype(counter)::DataType;
-    counter.add("measurement", comm.rank_signed() + 1);
+    counter.add("measurement", comm.rank_signed() + 1, {GlobalAggregationMode::max});
     auto                        aggregated_counter_tree = counter.aggregate();
     ValidationPrinter<DataType> printer;
     printer.print(aggregated_counter_tree.root(), false);
