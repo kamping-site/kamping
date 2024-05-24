@@ -68,7 +68,7 @@ template <typename DataType>
 class AggregatedTree {
 public:
     /// @brief Globally aggregates the measurement tree provided with \param measurement_root_node across all ranks in
-    /// \param comm.
+    /// \param comm .
     ///
     /// @tparam MeasurementNode Type of the measurement tree to aggregate.
     /// @tparam Communicator Communicator defining the scope for the global aggregation.
