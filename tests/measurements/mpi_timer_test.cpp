@@ -39,7 +39,8 @@ TEST(TimerTest, basics) {
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary<>> expected_output{
-            {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)}};
+            {"root.measurement:max",
+             AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)}};
         EXPECT_EQ(printer.output, expected_output);
     }
 }
@@ -57,7 +58,8 @@ TEST(TimerTest, basics_append) {
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary<>> expected_output{
-            {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(2).set_num_values_per_entry(1).set_is_scalar(true)}};
+            {"root.measurement:max",
+             AggregatedDataSummary{}.set_num_entries(2).set_num_values_per_entry(1).set_is_scalar(true)}};
         EXPECT_EQ(printer.output, expected_output);
     }
 }
@@ -75,7 +77,8 @@ TEST(TimerTest, basics_accumulate) {
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary<>> expected_output{
-            {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)}};
+            {"root.measurement:max",
+             AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)}};
         EXPECT_EQ(printer.output, expected_output);
     }
 }
@@ -93,8 +96,10 @@ TEST(TimerTest, stop_and_append_multiple_operations) {
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary<>> expected_output{
-            {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(2).set_num_values_per_entry(1).set_is_scalar(true)},
-            {"root.measurement:min", AggregatedDataSummary{}.set_num_entries(2).set_num_values_per_entry(1).set_is_scalar(true)},
+            {"root.measurement:max",
+             AggregatedDataSummary{}.set_num_entries(2).set_num_values_per_entry(1).set_is_scalar(true)},
+            {"root.measurement:min",
+             AggregatedDataSummary{}.set_num_entries(2).set_num_values_per_entry(1).set_is_scalar(true)},
             {"root.measurement:gather",
              AggregatedDataSummary{}.set_num_entries(2).set_num_values_per_entry(comm.size()).set_is_scalar(false)}};
 
@@ -115,8 +120,10 @@ TEST(TimerTest, stop_and_add_multiple_operations) {
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary<>> expected_output{
-            {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)},
-            {"root.measurement:min", AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)},
+            {"root.measurement:max",
+             AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)},
+            {"root.measurement:min",
+             AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)},
             {"root.measurement:gather",
              AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(comm.size()).set_is_scalar(false)}};
         EXPECT_EQ(printer.output, expected_output);
@@ -139,7 +146,8 @@ TEST(TimerTest, stop_nested_scenario) {
     printer.print(aggregated_timer_tree.root());
 
     if (comm.is_root()) {
-        auto const expected_summary = AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true);
+        auto const expected_summary =
+            AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true);
         std::unordered_map<std::string, AggregatedDataSummary<>> expected_output{
             {"root.measurement1:max", expected_summary},
             {"root.measurement1.measurement11:max", expected_summary},
@@ -249,7 +257,8 @@ TEST(TimerTest, aggregate_and_print_non_trivial_communicator) {
 
     if (split_comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary<>> expected_output{
-            {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)}};
+            {"root.measurement:max",
+             AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)}};
         EXPECT_EQ(printer.output, expected_output);
     }
 }
@@ -278,7 +287,8 @@ TEST(TimerTest, singleton) {
 
     if (comm.is_root()) {
         std::unordered_map<std::string, AggregatedDataSummary<>> expected_output{
-            {"root.measurement:max", AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)}};
+            {"root.measurement:max",
+             AggregatedDataSummary{}.set_num_entries(1).set_num_values_per_entry(1).set_is_scalar(true)}};
         EXPECT_EQ(printer.output, expected_output);
     }
 }
