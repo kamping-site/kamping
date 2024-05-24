@@ -162,12 +162,15 @@ private:
     std::vector<std::unique_ptr<DerivedNode>> _children_storage; ///< Owns the node's children.
 };
 
+/// @brief Class to store measurement data points associated with a node in a measurement tree, e.g., a timer-tree.
+///
+/// @tparam T Type of the data point.
 template <typename T>
 class NodeMeasurements {
 public:
     /// @brief Add the result of a time measurement (i.e. a duration) to the node.
     ///
-    /// @param duration Duration which is added to the node.
+    /// @param datapoint Data point which is added to the node.
     /// @param mode The kamping::measurements::KeyAggregationMode parameter determines how multiple time measurements
     /// shall be handled. They can either be accumulated (the durations are added together) or appended (the durations
     /// are stored in a list).
@@ -205,9 +208,9 @@ public:
 
 private:
     std::vector<T>                     _datapoints; ///< Datapoints stored at the node
-    std::vector<GlobalAggregationMode> _datapoint_aggregation_operations{GlobalAggregationMode::max
-    }; ///< Communicator-wide aggregation operation which will be performed on the
-       ///< measurements. @TODO replace this with a more space efficient variant
+    std::vector<GlobalAggregationMode> _datapoint_aggregation_operations{
+        GlobalAggregationMode::max}; ///< Communicator-wide aggregation operation which will be performed on the
+                                     ///< measurements. @TODO replace this with a more space efficient variant
 };
 
 /// @brief Class representing a node in the timer tree. Each node represents a time measurement (or multiple with
@@ -280,43 +283,6 @@ struct Tree {
     NodeType* current_node; ///< Pointer to the currently active node of the tree.
 };
 
-template <typename Duration>
-class EvaluationTreeNode : public internal::TreeNode<EvaluationTreeNode<Duration>> {
-public:
-    using internal::TreeNode<EvaluationTreeNode<Duration>>::TreeNode;
-
-    ///@brief Type into which the aggregated data is stored together with the applied aggregation
-    /// operation.
-    using StorageType = std::unordered_map<std::string, std::vector<ScalarOrContainer<Duration>>>;
-
-    /// @brief Access to stored aggregated data.
-    /// @return Reference to aggregated data.
-    auto const& aggregated_data() const {
-        return _aggregated_data;
-    }
-
-    /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied
-    /// aggregation operation.
-    /// @param aggregation_operation Applied aggregation operations.
-    /// @param data Scalar resulted from applying the given aggregation operation.
-    void add(std::string const& aggregation_operation, std::optional<Duration> data) {
-        if (data) {
-            _aggregated_data[aggregation_operation].emplace_back(data.value());
-        }
-    }
-
-    /// @brief Add scalar of type T to aggregated data storage together with the name of the  applied
-    /// aggregation operation.
-    /// @param aggregation_operation Applied aggregation operations.
-    /// @param data Vector of Scalars resulted from applying the given aggregation operation.
-    void add(std::string const aggregation_operation, std::vector<Duration> const& data) {
-        _aggregated_data[aggregation_operation].emplace_back(data);
-    }
-
-public:
-    StorageType _aggregated_data; ///< Storage of the aggregated data.
-};
-
 /// @brief Checks that the given string is equal on all ranks in the given communicator.
 ///
 /// @todo this function should be once superseded by a more general Communicator::is_same_on_all_ranks().
@@ -330,6 +296,7 @@ inline bool is_string_same_on_all_ranks(std::string const& str, Communicator con
     if (!has_same_size) {
         return false;
     }
+
     // std::vector<char> name_as_char_vector;
     auto recv_buf = comm.gatherv(send_buf(str));
     auto result   = true;

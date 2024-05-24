@@ -60,18 +60,37 @@ public:
     StorageType _aggregated_data; ///< Storage of the aggregated data.
 };
 
+/// @brief Class representing an aggregated measurement tree, i.e., a measurement tree for which the global aggregation
+/// has been performed.
+///
+/// @tparam DataType Type of interanlly stored data.
 template <typename DataType>
 class AggregatedTree {
 public:
+    /// @brief Globally aggregates the measurement tree provided with /param measurement_root_node across all ranks in
+    /// /param comm.
+    ///
+    /// @tparam MeasurementNode Type of the measurement tree to aggregate.
+    /// @tparam Communicator Communicator defining the scope for the global aggregation.
     template <typename MeasurementNode, typename Communicator>
     AggregatedTree(MeasurementNode const& measurement_root_node, Communicator const& comm) : _root{"root"} {
         aggregate(_root, measurement_root_node, comm);
     }
-    auto& root() { return _root; }
-    auto const& root() const { return _root; }
+
+    /// @brief Access to the root of the aggregated tree.
+    /// @return Reference to root node of aggregated tree.
+    auto& root() {
+        return _root;
+    }
+
+    /// @brief Access to the root of the aggregated tree.
+    /// @return Reference to root node of aggregated tree.
+    auto const& root() const {
+        return _root;
+    }
 
 private:
-    AggregatedTreeNode<DataType> _root;
+    AggregatedTreeNode<DataType> _root; ///< Root node of aggregated tree.
     /// @brief Traverses and evaluates the given (Measurement)TreeNode and stores the result in the corresponding
     /// AggregatedTreeNode
     ///

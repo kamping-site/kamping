@@ -36,7 +36,7 @@ namespace kamping::measurements {
 template <typename CommunicatorType = Communicator<>>
 class Counter {
 public:
-    using DataType = std::int64_t;
+    using DataType = std::int64_t; ///< Data type of the stored measurements.
     /// @brief Constructs a timer using the \c MPI_COMM_WORLD communicator.
     Counter() : _tree{}, _comm{comm_world()} {}
 
@@ -45,32 +45,33 @@ public:
     /// @param comm Communicator in which the time measurements are executed.
     Counter(CommunicatorType const& comm) : _tree{}, _comm{comm} {}
 
-    /// @brief Stops the currently active measurement and store the result.
-    /// @param duration_aggregation_modi Specify how the measurement duration is
-    /// aggregated over all participationg PEs when Timer::aggregate() is called.
+    /// @brief Creates a measurement entry with name \param name and stores \param data therein. If such an entry
+    /// already exists with associated data entry `data_prev`, \c data will be added to it, i.e. `data_prev +
+    /// data`.
+    /// @param global_aggregation_modi Specify how the measurement entry is aggregated over all participationg PEs when
+    /// Counter::aggregate() is called.
     void
     add(std::string const&                      name,
         DataType const&                         data,
-        std::vector<DataAggregationMode> const& data_aggregation_modi = std::vector<DataAggregationMode>{}) {
-        add_impl(name, data, KeyAggregationMode::accumulate, data_aggregation_modi);
+        std::vector<DataAggregationMode> const& global_aggregation_modi = std::vector<DataAggregationMode>{}) {
+        add_impl(name, data, KeyAggregationMode::accumulate, global_aggregation_modi);
     }
 
-    /// @brief Stops the currently active measurement and store the result. If the
-    /// key associated with the measurement that is stopped has already been used
-    /// at the current hierarchy level the duration is append to a list of
-    /// previously measured durations at this hierarchy level with the same key.
-    /// @param duration_aggregation_modi Specify how the measurement duration is
-    /// aggregated over all participationg PEs when Timer::aggregate() is called.
+    /// @brief Looks for a measurement entry with name \param name and appends \param data to the list of previously
+    /// stored data. If no such entry exists, a new measurement entry with \c data as first entry will be created. entry
+    /// `data_prev`, \c data will be added to it, i.e. `data_prev + data`.
+    /// @param global_aggregation_modi Specify how the measurement entry is aggregated over all participationg PEs when
+    /// Counter::aggregate() is called.
     void append(
         std::string const&                      name,
         DataType const&                         data,
-        std::vector<DataAggregationMode> const& add_aggregation_modi = std::vector<DataAggregationMode>{}
+        std::vector<DataAggregationMode> const& global_aggregation_modi = std::vector<DataAggregationMode>{}
     ) {
-        add_impl(name, data, KeyAggregationMode::append, add_aggregation_modi);
+        add_impl(name, data, KeyAggregationMode::append, global_aggregation_modi);
     }
 
-    /// @brief Aggregated the counted numbers globally.
-    /// @return AggregatedTree object which encapsulated the aggregated data in a tree structure representing the
+    /// @brief Aggregate the measurement entries globally.
+    /// @return AggregatedTree object which encapsulates the aggregated data in a tree structure representing the
     /// measurements.
     auto aggregate() {
         AggregatedTree<DataType> aggregated_tree(_tree.root, _comm);
