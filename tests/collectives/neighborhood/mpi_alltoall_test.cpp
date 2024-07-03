@@ -75,9 +75,9 @@ TEST(NeighborhoodAlltoallTest, single_element_no_receive_buffer_for_edges_to_suc
 
 TEST(NeighborhoodAlltoallTest, single_element_no_receive_buffer_for_multi_edges_to_successor) {
     Communicator                 comm;
-    const size_t edge_multiplicity = 3;
-    const std::vector<size_t>          in_edges(edge_multiplicity, comm.rank_shifted_cyclic(-1));
-    const std::vector<size_t>          out_edges(edge_multiplicity, comm.rank_shifted_cyclic(1));
+    const size_t                 edge_multiplicity = 3;
+    const std::vector<size_t>    in_edges(edge_multiplicity, comm.rank_shifted_cyclic(-1));
+    const std::vector<size_t>    out_edges(edge_multiplicity, comm.rank_shifted_cyclic(1));
     CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
     DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
 
