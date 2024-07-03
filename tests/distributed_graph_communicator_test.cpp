@@ -30,26 +30,32 @@ using namespace ::kamping;
 using namespace ::testing;
 using ::testing::AllOf;
 
-namespace kamping {
-// need to define them here for ADL
-template <typename T>
-bool operator==(kamping::Span<T> const& lhs, kamping::Span<T> const& rhs) {
-    if (lhs.size() != rhs.size()) {
-        return false;
-    }
-    for (size_t i = 0; i < lhs.size(); ++i) {
-        if (lhs[i] != rhs[i]) {
+bool are_equal(CommunicationGraphView const& lhs, CommunicationGraphView const& rhs) {
+    auto compare_span = [](auto const& lhs_, auto const& rhs_) {
+        if (lhs_.size() != rhs_.size()) {
             return false;
         }
-    }
-    return true;
-}
+        for (size_t i = 0; i < lhs_.size(); ++i) {
+            if (lhs_[i] != rhs_[i]) {
+                return false;
+            }
+        }
+        return true;
+    };
+    auto compare_optional_span = [&compare_span](auto const& lhs_, auto const& rhs_) {
+        if (!lhs_.has_value() && !rhs_.has_value()) {
+            return true;
+        }
+        if (lhs_.has_value() != rhs_.has_value()) {
+            return false;
+        }
+        return compare_span(lhs_.value(), rhs_.value());
+    };
 
-bool operator==(CommunicationGraphView const& lhs, CommunicationGraphView const& rhs) {
-    return std::make_tuple(lhs.in_ranks(), lhs.out_ranks(), lhs.in_weights(), lhs.out_weights())
-           == std::make_tuple(rhs.in_ranks(), rhs.out_ranks(), rhs.in_weights(), rhs.out_weights());
+    return compare_span(lhs.in_ranks(), rhs.in_ranks()) && compare_span(lhs.out_ranks(), rhs.out_ranks())
+           && compare_optional_span(lhs.in_weights(), rhs.in_weights())
+           && compare_optional_span(lhs.out_weights(), rhs.out_weights());
 }
-} // namespace kamping
 
 struct DistributedGraphCommunicatorTest : Test {
     void SetUp() override {
@@ -66,37 +72,6 @@ struct DistributedGraphCommunicatorTest : Test {
     int size;
     int mpi_tag_ub;
 };
-
-TEST_F(DistributedGraphCommunicatorTest, _empty_constructor) {
-    Communicator                 comm;
-    size_t const                 prev_rank = (comm.rank() + comm.size() - 1) % comm.size();
-    size_t const                 succ_rank = (comm.rank() + 1) % comm.size();
-    std::vector<size_t>          edges{prev_rank, succ_rank};
-    CommunicationGraph           comm_graph(edges);
-    DistributedGraphCommunicator graph_comm(comm, comm_graph);
-    // Communicator<>* comm_ptr = &graph_comm;
-    std::stringstream ss;
-    ss << "rank: " << comm.rank() << ": " << graph_comm.in_degree() << "\n";
-
-    auto comm_graph2 = graph_comm.get_communication_graph();
-    auto mapping     = comm_graph2.get_rank_to_out_edge_idx_mapping();
-    if (graph_comm.rank() == 0) {
-        ss << "mapping: \n";
-        for (auto const& [rank_, idx]: mapping) {
-            ss << "rank: " << rank_ << " idx: " << idx << "\n";
-        }
-    }
-    std::cout << ss.str() << std::endl;
-
-    // EXPECT_FALSE(true);
-    // EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_WORLD);
-    // EXPECT_EQ(comm.rank(), rank);
-    // EXPECT_EQ(comm.rank_signed(), rank);
-    // EXPECT_EQ(comm.size_signed(), size);
-    // EXPECT_EQ(comm.size(), size);
-    // EXPECT_EQ(comm.root(), 0);
-    // EXPECT_EQ(comm.root_signed(), 0);
-}
 
 TEST_F(DistributedGraphCommunicatorTest, empty_communication_graph) {
     Communicator comm;
@@ -153,7 +128,7 @@ TEST_F(DistributedGraphCommunicatorTest, get_communication_graph_for_edge_to_pre
 
     auto const comm_graph      = graph_comm.get_communication_graph();
     auto const comm_graph_view = comm_graph.get_view();
-    EXPECT_EQ(input_comm_graph.get_view(), comm_graph_view);
+    EXPECT_TRUE(are_equal(input_comm_graph.get_view(), comm_graph_view));
     EXPECT_FALSE(comm_graph_view.is_weighted());
     EXPECT_EQ(comm_graph_view.in_degree(), 2);
     EXPECT_EQ(comm_graph_view.out_degree(), 2);
@@ -191,7 +166,7 @@ TEST_F(DistributedGraphCommunicatorTest, get_communication_graph_for_edge_to_suc
 
     auto const comm_graph      = graph_comm.get_communication_graph();
     auto const comm_graph_view = comm_graph.get_view();
-    EXPECT_EQ(input_comm_graph.get_view(), comm_graph_view);
+    EXPECT_TRUE(are_equal(input_comm_graph.get_view(), comm_graph_view));
     EXPECT_FALSE(comm_graph_view.is_weighted());
     EXPECT_EQ(comm_graph_view.in_degree(), 2);
     EXPECT_EQ(comm_graph_view.out_degree(), 2);
@@ -230,7 +205,7 @@ TEST_F(DistributedGraphCommunicatorTest, get_communication_graph_for_edge_to_suc
 
     auto const comm_graph      = graph_comm.get_communication_graph();
     auto const comm_graph_view = comm_graph.get_view();
-    EXPECT_EQ(input_comm_graph.get_view(), comm_graph_view);
+    EXPECT_TRUE(are_equal(input_comm_graph.get_view(), comm_graph_view));
     EXPECT_TRUE(comm_graph_view.is_weighted());
     EXPECT_EQ(comm_graph_view.in_degree(), 2);
     EXPECT_EQ(comm_graph_view.out_degree(), 2);
@@ -255,7 +230,7 @@ TEST_F(DistributedGraphCommunicatorTest, root_to_all_others_from_graph_view) {
 
     auto const comm_graph      = graph_comm.get_communication_graph();
     auto const comm_graph_view = comm_graph.get_view();
-    EXPECT_EQ(input_comm_graph.get_view(), comm_graph_view);
+    EXPECT_TRUE(are_equal(input_comm_graph.get_view(), comm_graph_view));
     EXPECT_FALSE(comm_graph_view.is_weighted());
     EXPECT_FALSE(graph_comm.is_weighted());
     EXPECT_EQ(comm_graph_view.in_degree(), 1);
