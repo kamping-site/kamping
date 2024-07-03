@@ -13,6 +13,7 @@
 
 #include "test_assertions.hpp"
 
+#include "gmock/gmock.h"
 #include <limits>
 #include <numeric>
 #include <vector>
@@ -27,6 +28,28 @@
 
 using namespace ::kamping;
 using namespace ::testing;
+using ::testing::AllOf;
+
+namespace kamping {
+// need to define them here for ADL
+template <typename T>
+bool operator==(kamping::Span<T> const& lhs, kamping::Span<T> const& rhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (lhs[i] != rhs[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool operator==(CommunicationGraphView const& lhs, CommunicationGraphView const& rhs) {
+    return std::make_tuple(lhs.in_ranks(), lhs.out_ranks(), lhs.in_weights(), lhs.out_weights())
+           == std::make_tuple(rhs.in_ranks(), rhs.out_ranks(), rhs.in_weights(), rhs.out_weights());
+}
+} // namespace kamping
 
 struct DistributedGraphCommunicatorTest : Test {
     void SetUp() override {
@@ -44,33 +67,204 @@ struct DistributedGraphCommunicatorTest : Test {
     int mpi_tag_ub;
 };
 
-TEST_F(DistributedGraphCommunicatorTest, empty_constructor) {
-    Communicator comm;
-    const size_t prev_rank = (comm.rank() + comm.size() - 1) % comm.size();
-    const size_t succ_rank = (comm.rank() + 1) % comm.size();
-    std::vector<size_t> edges{prev_rank, succ_rank};
-    CommunicationGraph comm_graph(edges);
+TEST_F(DistributedGraphCommunicatorTest, _empty_constructor) {
+    Communicator                 comm;
+    size_t const                 prev_rank = (comm.rank() + comm.size() - 1) % comm.size();
+    size_t const                 succ_rank = (comm.rank() + 1) % comm.size();
+    std::vector<size_t>          edges{prev_rank, succ_rank};
+    CommunicationGraph           comm_graph(edges);
     DistributedGraphCommunicator graph_comm(comm, comm_graph);
-    //Communicator<>* comm_ptr = &graph_comm;
+    // Communicator<>* comm_ptr = &graph_comm;
     std::stringstream ss;
     ss << "rank: " << comm.rank() << ": " << graph_comm.in_degree() << "\n";
 
     auto comm_graph2 = graph_comm.get_communication_graph();
-    auto mapping = comm_graph2.get_rank_to_out_edge_idx_mapping();
+    auto mapping     = comm_graph2.get_rank_to_out_edge_idx_mapping();
     if (graph_comm.rank() == 0) {
-            ss << "mapping: \n";
-        for(const auto& [rank_, idx] : mapping) {
+        ss << "mapping: \n";
+        for (auto const& [rank_, idx]: mapping) {
             ss << "rank: " << rank_ << " idx: " << idx << "\n";
         }
     }
     std::cout << ss.str() << std::endl;
 
-    EXPECT_FALSE(true);
-    //EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_WORLD);
-    //EXPECT_EQ(comm.rank(), rank);
-    //EXPECT_EQ(comm.rank_signed(), rank);
-    //EXPECT_EQ(comm.size_signed(), size);
-    //EXPECT_EQ(comm.size(), size);
-    //EXPECT_EQ(comm.root(), 0);
-    //EXPECT_EQ(comm.root_signed(), 0);
+    // EXPECT_FALSE(true);
+    // EXPECT_EQ(comm.mpi_communicator(), MPI_COMM_WORLD);
+    // EXPECT_EQ(comm.rank(), rank);
+    // EXPECT_EQ(comm.rank_signed(), rank);
+    // EXPECT_EQ(comm.size_signed(), size);
+    // EXPECT_EQ(comm.size(), size);
+    // EXPECT_EQ(comm.root(), 0);
+    // EXPECT_EQ(comm.root_signed(), 0);
+}
+
+TEST_F(DistributedGraphCommunicatorTest, empty_communication_graph) {
+    Communicator comm;
+
+    CommunicationGraph<>         comm_graph{};
+    DistributedGraphCommunicator graph_comm(comm, comm_graph);
+
+    EXPECT_EQ(graph_comm.compare(kamping::comm_world()), CommunicatorComparisonResult::congruent);
+    EXPECT_EQ(graph_comm.rank(), rank);
+    EXPECT_EQ(graph_comm.rank_signed(), rank);
+    EXPECT_EQ(graph_comm.size_signed(), size);
+    EXPECT_EQ(graph_comm.size(), size);
+    EXPECT_EQ(graph_comm.root(), 0);
+    EXPECT_EQ(graph_comm.root_signed(), 0);
+    EXPECT_FALSE(graph_comm.is_weighted());
+    EXPECT_EQ(graph_comm.in_degree(), 0);
+    EXPECT_EQ(graph_comm.in_degree_signed(), 0);
+    EXPECT_EQ(graph_comm.out_degree(), 0);
+    EXPECT_EQ(graph_comm.out_degree_signed(), 0);
+}
+
+TEST_F(DistributedGraphCommunicatorTest, basics_for_edge_to_predecessor_and_successor_rank) {
+    Communicator                 comm;
+    std::vector<size_t>          edges{comm.rank_shifted_cyclic(-1), comm.rank_shifted_cyclic(1)};
+    CommunicationGraph<>         input_comm_graph(edges);
+    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+
+    int queried_in_degree, queried_out_degree, queried_is_weighted;
+    MPI_Dist_graph_neighbors_count(
+        graph_comm.mpi_communicator(),
+        &queried_in_degree,
+        &queried_out_degree,
+        &queried_is_weighted
+    );
+    EXPECT_EQ(graph_comm.compare(kamping::comm_world()), CommunicatorComparisonResult::congruent);
+    EXPECT_EQ(graph_comm.rank(), rank);
+    EXPECT_EQ(graph_comm.rank_signed(), rank);
+    EXPECT_EQ(graph_comm.size_signed(), size);
+    EXPECT_EQ(graph_comm.size(), size);
+    EXPECT_EQ(graph_comm.root(), 0);
+    EXPECT_EQ(graph_comm.root_signed(), 0);
+    EXPECT_FALSE(graph_comm.is_weighted());
+    EXPECT_EQ(graph_comm.in_degree(), 2);
+    EXPECT_EQ(graph_comm.in_degree_signed(), 2);
+    EXPECT_EQ(graph_comm.out_degree(), 2);
+    EXPECT_EQ(graph_comm.out_degree_signed(), 2);
+}
+
+TEST_F(DistributedGraphCommunicatorTest, get_communication_graph_for_edge_to_predecessor_and_successor_rank) {
+    Communicator                 comm;
+    std::vector<size_t>          edges{comm.rank_shifted_cyclic(-1), comm.rank_shifted_cyclic(1)};
+    CommunicationGraph<>         input_comm_graph(edges);
+    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+
+    auto const comm_graph      = graph_comm.get_communication_graph();
+    auto const comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(input_comm_graph.get_view(), comm_graph_view);
+    EXPECT_FALSE(comm_graph_view.is_weighted());
+    EXPECT_EQ(comm_graph_view.in_degree(), 2);
+    EXPECT_EQ(comm_graph_view.out_degree(), 2);
+    EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(comm.rank_shifted_cyclic(-1), comm.rank_shifted_cyclic(1)));
+    EXPECT_THAT(comm_graph_view.out_ranks(), ElementsAre(comm.rank_shifted_cyclic(-1), comm.rank_shifted_cyclic(1)));
+}
+
+TEST_F(DistributedGraphCommunicatorTest, out_edge_to_successor_rank) {
+    Communicator                 comm;
+    std::vector<size_t>          out_edges{comm.rank_shifted_cyclic(1)};
+    std::vector<size_t>          in_edges{comm.rank_shifted_cyclic(-1)};
+    CommunicationGraph<>         input_comm_graph(out_edges, in_edges);
+    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+
+    EXPECT_EQ(graph_comm.compare(kamping::comm_world()), CommunicatorComparisonResult::congruent);
+    EXPECT_EQ(graph_comm.rank(), rank);
+    EXPECT_EQ(graph_comm.rank_signed(), rank);
+    EXPECT_EQ(graph_comm.size_signed(), size);
+    EXPECT_EQ(graph_comm.size(), size);
+    EXPECT_EQ(graph_comm.root(), 0);
+    EXPECT_EQ(graph_comm.root_signed(), 0);
+    EXPECT_FALSE(graph_comm.is_weighted());
+    EXPECT_EQ(graph_comm.in_degree(), 1);
+    EXPECT_EQ(graph_comm.in_degree_signed(), 1);
+    EXPECT_EQ(graph_comm.out_degree(), 1);
+    EXPECT_EQ(graph_comm.out_degree_signed(), 1);
+}
+
+TEST_F(DistributedGraphCommunicatorTest, get_communication_graph_for_edge_to_successor_rank_and_oneself) {
+    Communicator                 comm;
+    std::vector<size_t>          in_edges{comm.rank_shifted_cyclic(-1), comm.rank()};
+    std::vector<size_t>          out_edges{comm.rank_shifted_cyclic(1), comm.rank()};
+    CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
+    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+
+    auto const comm_graph      = graph_comm.get_communication_graph();
+    auto const comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(input_comm_graph.get_view(), comm_graph_view);
+    EXPECT_FALSE(comm_graph_view.is_weighted());
+    EXPECT_EQ(comm_graph_view.in_degree(), 2);
+    EXPECT_EQ(comm_graph_view.out_degree(), 2);
+    EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(comm.rank_shifted_cyclic(-1), comm.rank()));
+    EXPECT_THAT(comm_graph_view.out_ranks(), ElementsAre(comm.rank_shifted_cyclic(1), comm.rank()));
+}
+
+TEST_F(DistributedGraphCommunicatorTest, basics_for_edge_to_successor_rank_and_oneself_with_weights) {
+    Communicator                        comm;
+    std::vector<std::pair<size_t, int>> in_edges{{comm.rank_shifted_cyclic(-1), 42}, {comm.rank(), 0}};
+    std::vector<std::pair<size_t, int>> out_edges{{comm.rank_shifted_cyclic(1), 42}, {comm.rank(), 0}};
+    CommunicationGraph<>                input_comm_graph(in_edges, out_edges);
+    DistributedGraphCommunicator        graph_comm(comm, input_comm_graph);
+
+    EXPECT_EQ(graph_comm.compare(kamping::comm_world()), CommunicatorComparisonResult::congruent);
+    EXPECT_EQ(graph_comm.rank(), rank);
+    EXPECT_EQ(graph_comm.rank_signed(), rank);
+    EXPECT_EQ(graph_comm.size_signed(), size);
+    EXPECT_EQ(graph_comm.size(), size);
+    EXPECT_EQ(graph_comm.root(), 0);
+    EXPECT_EQ(graph_comm.root_signed(), 0);
+    EXPECT_TRUE(graph_comm.is_weighted());
+    EXPECT_EQ(graph_comm.in_degree(), 2);
+    EXPECT_EQ(graph_comm.in_degree_signed(), 2);
+    EXPECT_EQ(graph_comm.out_degree(), 2);
+    EXPECT_EQ(graph_comm.out_degree_signed(), 2);
+}
+
+TEST_F(DistributedGraphCommunicatorTest, get_communication_graph_for_edge_to_successor_rank_and_oneself_with_weights) {
+    Communicator                        comm;
+    std::vector<std::pair<size_t, int>> in_edges{{comm.rank_shifted_cyclic(-1), 42}, {comm.rank(), 0}};
+    std::vector<std::pair<size_t, int>> out_edges{{comm.rank_shifted_cyclic(1), 42}, {comm.rank(), 0}};
+
+    CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
+    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+
+    auto const comm_graph      = graph_comm.get_communication_graph();
+    auto const comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(input_comm_graph.get_view(), comm_graph_view);
+    EXPECT_TRUE(comm_graph_view.is_weighted());
+    EXPECT_EQ(comm_graph_view.in_degree(), 2);
+    EXPECT_EQ(comm_graph_view.out_degree(), 2);
+    EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(comm.rank_shifted_cyclic(-1), comm.rank()));
+    EXPECT_THAT(comm_graph_view.out_ranks(), ElementsAre(comm.rank_shifted_cyclic(1), comm.rank()));
+    EXPECT_THAT(comm_graph_view.in_weights().value(), ElementsAre(42, 0));
+    EXPECT_THAT(comm_graph_view.out_weights().value(), ElementsAre(42, 0));
+}
+
+TEST_F(DistributedGraphCommunicatorTest, root_to_all_others_from_graph_view) {
+    Communicator        comm;
+    std::vector<size_t> in_edges{comm.root()};
+    std::vector<size_t> out_edges;
+    if (comm.is_root()) {
+        out_edges.resize(comm.size());
+        std::iota(out_edges.begin(), out_edges.end(), 0);
+    }
+    auto const expected_out_edges = out_edges;
+
+    CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
+    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+
+    auto const comm_graph      = graph_comm.get_communication_graph();
+    auto const comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(input_comm_graph.get_view(), comm_graph_view);
+    EXPECT_FALSE(comm_graph_view.is_weighted());
+    EXPECT_FALSE(graph_comm.is_weighted());
+    EXPECT_EQ(comm_graph_view.in_degree(), 1);
+    if (comm.is_root()) {
+        EXPECT_EQ(comm_graph_view.out_degree(), comm.size());
+        for (size_t i = 0; i < comm.size(); ++i) {
+            EXPECT_EQ(comm_graph_view.out_ranks()[i], i);
+        }
+    } else {
+        EXPECT_EQ(comm_graph_view.out_degree(), comm.root());
+    }
 }

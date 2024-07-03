@@ -115,6 +115,8 @@ constexpr bool are_edges_weighted() {
 template <template <typename...> typename DefaultContainer = std::vector>
 class CommunicationGraph {
 public:
+    CommunicationGraph() = default;
+
     template <typename InEdgeRange, typename OutEdgeRange>
     CommunicationGraph(InEdgeRange const& in_edges, OutEdgeRange const& out_edges) {
         constexpr bool are_in_edges_weighted  = internal::are_edges_weighted<InEdgeRange>();
@@ -166,18 +168,12 @@ public:
     CommunicationGraph(EdgeRange const& edges) : CommunicationGraph(edges, edges) {}
 
     CommunicationGraphView get_view() const {
-        if (is_weighted()) {
+        if (_in_weights.has_value()) {
             return CommunicationGraphView(_in_ranks, _out_ranks, _in_weights.value(), _out_weights.value());
         } else {
             return CommunicationGraphView(_in_ranks, _out_ranks);
         }
     }
-
-    bool is_weighted() const {
-        return _in_weights.has_value();
-    }
-
-    void add_in_edge(int /*rank*/) {}
 
     template <typename Map = std::unordered_map<size_t, size_t>>
     auto get_rank_to_out_edge_idx_mapping() {
@@ -218,16 +214,6 @@ class DistributedGraphCommunicator
     : public TopologyCommunicator<DefaultContainerType>,
       public Plugins<DistributedGraphCommunicator<DefaultContainerType, Plugins...>, DefaultContainerType>... {
 public:
-    struct Edges {
-        Edges(bool is_weighted, size_t size) : ranks(size) {
-            if (is_weighted) {
-                weights = DefaultContainerType<int>(size);
-            }
-        }
-        DefaultContainerType<int>                ranks;
-        std::optional<DefaultContainerType<int>> weights;
-    };
-
     /// @brief Type of the default container type to use for containers created inside operations of this
     /// communicator.
     /// @tparam Args Arguments to the container type.
@@ -237,14 +223,14 @@ public:
     template <typename Communicator>
     DistributedGraphCommunicator(Communicator const& comm, CommunicationGraphView comm_graph_view)
         : TopologyCommunicator<DefaultContainerType>(
-              comm_graph_view.create_mpi_graph_communicator(comm.mpi_communicator())
-          ),
+            comm_graph_view.create_mpi_graph_communicator(comm.mpi_communicator())
+        ),
           _in_degree(comm_graph_view.in_degree()),
           _out_degree(comm_graph_view.out_degree()),
-          _is_weighted(comm_graph_view.out_degree()) {}
+          _is_weighted(comm_graph_view.is_weighted()) {}
 
     template <typename Communicator>
-    DistributedGraphCommunicator(Communicator const& comm, CommunicationGraph<DefaultContainerType> comm_graph)
+    DistributedGraphCommunicator(Communicator const& comm, CommunicationGraph<DefaultContainerType> const& comm_graph)
         : DistributedGraphCommunicator(comm, comm_graph.get_view()) {}
 
     auto get_communication_graph() {
@@ -263,10 +249,10 @@ public:
             this->_comm,
             in_degree_signed(),
             in_ranks.data(),
-            in_weights.data(),
+            is_weighted() ? in_weights.data() : MPI_UNWEIGHTED,
             out_degree_signed(),
             out_ranks.data(),
-            out_weights.data()
+            is_weighted() ? out_weights.data() : MPI_UNWEIGHTED
         );
         if (is_weighted()) {
             return CommunicationGraph<DefaultContainerType>(

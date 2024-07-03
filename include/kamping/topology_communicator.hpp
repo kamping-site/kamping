@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include <kamping/communicator.hpp>
 #include <kamping/collectives/collectives_helpers.hpp>
+#include <kamping/communicator.hpp>
 
 namespace kamping {
 /// @brief Wrapper for an MPI communicator with topology providing access to \c rank() and \c size() of the
