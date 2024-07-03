@@ -178,7 +178,7 @@ public:
     template <typename Map = std::unordered_map<size_t, size_t>>
     auto get_rank_to_out_edge_idx_mapping() {
         Map mapping;
-        for (size_t i = 0; i < _in_ranks.size(); ++i) {
+        for (size_t i = 0; i < _out_ranks.size(); ++i) {
             size_t rank = static_cast<size_t>(_out_ranks.data()[i]);
             mapping.emplace(rank, i);
         }
@@ -223,10 +223,10 @@ public:
     template <typename Communicator>
     DistributedGraphCommunicator(Communicator const& comm, CommunicationGraphView comm_graph_view)
         : TopologyCommunicator<DefaultContainerType>(
+            comm_graph_view.in_degree(),
+            comm_graph_view.out_degree(),
             comm_graph_view.create_mpi_graph_communicator(comm.mpi_communicator())
         ),
-          _in_degree(comm_graph_view.in_degree()),
-          _out_degree(comm_graph_view.out_degree()),
           _is_weighted(comm_graph_view.is_weighted()) {}
 
     template <typename Communicator>
@@ -235,22 +235,22 @@ public:
 
     auto get_communication_graph() {
         DefaultContainerType<int> in_ranks;
-        in_ranks.resize(in_degree());
+        in_ranks.resize(this->in_degree());
         DefaultContainerType<int> out_ranks;
-        out_ranks.resize(out_degree());
+        out_ranks.resize(this->out_degree());
         DefaultContainerType<int> in_weights;
         DefaultContainerType<int> out_weights;
         if (is_weighted()) {
-            in_weights.resize(in_degree());
-            out_weights.resize(out_degree());
+            in_weights.resize(this->in_degree());
+            out_weights.resize(this->out_degree());
         }
 
         MPI_Dist_graph_neighbors(
             this->_comm,
-            in_degree_signed(),
+            this->in_degree_signed(),
             in_ranks.data(),
             is_weighted() ? in_weights.data() : MPI_UNWEIGHTED,
-            out_degree_signed(),
+            this->out_degree_signed(),
             out_ranks.data(),
             is_weighted() ? out_weights.data() : MPI_UNWEIGHTED
         );
@@ -268,22 +268,6 @@ public:
 
     bool is_weighted() const {
         return _is_weighted;
-    }
-
-    size_t in_degree() const {
-        return _in_degree;
-    }
-
-    int in_degree_signed() const {
-        return asserting_cast<int>(_in_degree);
-    }
-
-    size_t out_degree() const {
-        return _out_degree;
-    }
-
-    int out_degree_signed() const {
-        return asserting_cast<int>(_out_degree);
     }
 
 private:

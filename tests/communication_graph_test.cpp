@@ -22,6 +22,7 @@
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "helpers_for_testing.hpp"
 #include "kamping/comm_helper/num_numa_nodes.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/distributed_graph_communicator.hpp"
@@ -30,48 +31,124 @@ using namespace ::kamping;
 using namespace ::testing;
 
 TEST(CommunicationGraphTest, empty) {
-    uint8_t u8val = 200;
-    EXPECT_TRUE(in_range<uint8_t>(u8val));
-    EXPECT_TRUE(in_range<uint16_t>(u8val));
-    EXPECT_TRUE(in_range<uint32_t>(u8val));
-    EXPECT_TRUE(in_range<uint64_t>(u8val));
-    EXPECT_FALSE(in_range<int8_t>(u8val));
-    EXPECT_TRUE(in_range<int16_t>(u8val));
-    EXPECT_TRUE(in_range<int32_t>(u8val));
-    EXPECT_TRUE(in_range<int64_t>(u8val));
-    u8val = 10;
-    EXPECT_TRUE(in_range<int8_t>(u8val));
+    CommunicationGraph<> comm_graph{};
+    auto                 comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(comm_graph_view.in_degree(), 0);
+    EXPECT_EQ(comm_graph_view.in_ranks().size(), 0);
+    EXPECT_EQ(comm_graph_view.in_weights(), std::nullopt);
+    EXPECT_EQ(comm_graph_view.out_degree(), 0);
+    EXPECT_EQ(comm_graph_view.out_ranks().size(), 0);
+    EXPECT_EQ(comm_graph_view.out_weights(), std::nullopt);
+    EXPECT_FALSE(comm_graph_view.is_weighted());
+}
 
-    auto intMax = std::numeric_limits<int>::max();
-    EXPECT_TRUE(in_range<long int>(intMax));
-    EXPECT_TRUE(in_range<uintmax_t>(intMax));
-    EXPECT_TRUE(in_range<intmax_t>(intMax));
+TEST(CommunicationGraphTest, unweighted_symmetric_edges) {
+    std::vector<size_t>  edges{1, 2, 3};
+    CommunicationGraph<> comm_graph{edges};
+    auto                 comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(comm_graph_view.in_degree(), 3);
+    EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3));
+    EXPECT_EQ(comm_graph_view.in_weights(), std::nullopt);
+    EXPECT_EQ(comm_graph_view.out_degree(), 3);
+    EXPECT_THAT(comm_graph_view.out_ranks(), ElementsAre(1, 2, 3));
+    EXPECT_EQ(comm_graph_view.out_weights(), std::nullopt);
+    EXPECT_FALSE(comm_graph_view.is_weighted());
+}
 
-    auto intNeg = -1;
-    EXPECT_TRUE(in_range<long int>(intNeg));
-    EXPECT_FALSE(in_range<uintmax_t>(intNeg));
-    EXPECT_TRUE(in_range<intmax_t>(intNeg));
-    EXPECT_FALSE(in_range<size_t>(intNeg));
-    EXPECT_TRUE(in_range<short int>(intNeg));
+TEST(CommunicationGraphTest, unweighted_asymmetric_edges) {
+    std::vector<size_t>  in_edges{1, 2, 3, 4};
+    std::vector<size_t>  out_edges{5, 6, 7};
+    CommunicationGraph<> comm_graph{in_edges, out_edges};
+    auto                 comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(comm_graph_view.in_degree(), 4);
+    EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3, 4));
+    EXPECT_EQ(comm_graph_view.in_weights(), std::nullopt);
+    EXPECT_EQ(comm_graph_view.out_degree(), 3);
+    EXPECT_THAT(comm_graph_view.out_ranks(), ElementsAre(5, 6, 7));
+    EXPECT_EQ(comm_graph_view.out_weights(), std::nullopt);
+    EXPECT_FALSE(comm_graph_view.is_weighted());
+}
 
-    size_t sizeT = 10000;
-    EXPECT_TRUE(in_range<int>(sizeT));
-    sizeT = std::numeric_limits<size_t>::max() - 1000;
-    EXPECT_FALSE(in_range<int>(sizeT));
-    EXPECT_TRUE(in_range<uintmax_t>(sizeT));
+TEST(CommunicationGraphTest, weighted_asymmetric_edges) {
+    std::vector<std::pair<size_t, int>> in_edges{{1, 4}, {2, 3}, {3, 2}, {4, 1}};
+    std::vector<std::pair<size_t, int>> out_edges{{5, 7}, {6, 6}, {7, 5}};
+    CommunicationGraph<>                comm_graph{in_edges, out_edges};
+    auto                                comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(comm_graph_view.in_degree(), 4);
+    EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3, 4));
+    EXPECT_THAT(comm_graph_view.in_weights().value(), ElementsAre(4, 3, 2, 1));
+    EXPECT_EQ(comm_graph_view.out_degree(), 3);
+    EXPECT_THAT(comm_graph_view.out_ranks(), ElementsAre(5, 6, 7));
+    EXPECT_THAT(comm_graph_view.out_weights().value(), ElementsAre(7, 6, 5));
+    EXPECT_TRUE(comm_graph_view.is_weighted());
+}
 
-    unsigned long a = 16;
-    EXPECT_TRUE(in_range<unsigned char>(a));
+struct OwnEdge {
+    int rank;
+    int weight;
+};
 
-    // Cast large values into narrower types.
-    EXPECT_FALSE(in_range<uint8_t>(std::numeric_limits<uint16_t>::max()));
-    EXPECT_FALSE(in_range<uint16_t>(std::numeric_limits<uint32_t>::max() - 1000));
-    EXPECT_FALSE(in_range<uint32_t>(std::numeric_limits<uint64_t>::max() - 133742));
+TEST(CommunicationGraphTest, weighted_asymmetric_edges_with_custom_edge_type) {
+    std::vector<OwnEdge> in_edges{{1, 4}, {2, 3}, {3, 2}, {4, 1}};
+    std::vector<OwnEdge> out_edges{{5, 7}, {6, 6}, {7, 5}};
+    CommunicationGraph<> comm_graph{in_edges, out_edges};
+    auto                 comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(comm_graph_view.in_degree(), 4);
+    EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3, 4));
+    EXPECT_THAT(comm_graph_view.in_weights().value(), ElementsAre(4, 3, 2, 1));
+    EXPECT_EQ(comm_graph_view.out_degree(), 3);
+    EXPECT_THAT(comm_graph_view.out_ranks(), ElementsAre(5, 6, 7));
+    EXPECT_THAT(comm_graph_view.out_weights().value(), ElementsAre(7, 6, 5));
+    EXPECT_TRUE(comm_graph_view.is_weighted());
+}
 
-    EXPECT_FALSE(in_range<int8_t>(std::numeric_limits<int16_t>::max()));
-    EXPECT_FALSE(in_range<int8_t>(std::numeric_limits<int16_t>::min()));
-    EXPECT_FALSE(in_range<int16_t>(std::numeric_limits<int32_t>::max()));
-    EXPECT_FALSE(in_range<int16_t>(std::numeric_limits<int32_t>::min()));
-    EXPECT_FALSE(in_range<int32_t>(std::numeric_limits<int64_t>::max()));
-    EXPECT_FALSE(in_range<int32_t>(std::numeric_limits<int64_t>::min()));
+TEST(CommunicationGraphTest, unweighted_asymmetric_edges_with_move_construction) {
+    std::vector<int>     in_edges{1, 2, 3, 4};
+    std::vector<int>     out_edges{5, 6, 7};
+    CommunicationGraph<> comm_graph{std::move(in_edges), std::move(out_edges)};
+    auto                 comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(comm_graph_view.in_degree(), 4);
+    EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3, 4));
+    EXPECT_EQ(comm_graph_view.in_weights(), std::nullopt);
+    EXPECT_EQ(comm_graph_view.out_degree(), 3);
+    EXPECT_THAT(comm_graph_view.out_ranks(), ElementsAre(5, 6, 7));
+    EXPECT_EQ(comm_graph_view.out_weights(), std::nullopt);
+    EXPECT_FALSE(comm_graph_view.is_weighted());
+}
+
+TEST(CommunicationGraphTest, weighted_asymmetric_edges_with_move_construction) {
+    std::vector<int>     in_edges{1, 2, 3, 4};
+    std::vector<int>     in_weights{4, 3, 2, 1};
+    std::vector<int>     out_edges{5, 6, 7};
+    std::vector<int>     out_weights{7, 6, 5};
+    CommunicationGraph<> comm_graph{
+        std::move(in_edges),
+        std::move(out_edges),
+        std::move(in_weights),
+        std::move(out_weights)};
+    auto comm_graph_view = comm_graph.get_view();
+    EXPECT_EQ(comm_graph_view.in_degree(), 4);
+    EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3, 4));
+    EXPECT_THAT(comm_graph_view.in_weights().value(), ElementsAre(4, 3, 2, 1));
+    EXPECT_EQ(comm_graph_view.out_degree(), 3);
+    EXPECT_THAT(comm_graph_view.out_ranks(), ElementsAre(5, 6, 7));
+    EXPECT_THAT(comm_graph_view.out_weights().value(), ElementsAre(7, 6, 5));
+    EXPECT_TRUE(comm_graph_view.is_weighted());
+}
+
+TEST(CommunicationGraphTest, rank_to_out_edge_mapping_for_unweighted_asymmetric_edges) {
+    std::vector<int>     in_edges{1, 2, 3, 4};
+    std::vector<int>     out_edges{5, 6, 7};
+    CommunicationGraph<> comm_graph{std::move(in_edges), std::move(out_edges)};
+    auto                 mapping = comm_graph.get_rank_to_out_edge_idx_mapping();
+    EXPECT_EQ(mapping.size(), 3);
+    auto it1 = mapping.find(5);
+    EXPECT_NE(it1, mapping.end());
+    EXPECT_EQ(it1->second, 0);
+    auto it2 = mapping.find(6);
+    EXPECT_NE(it2, mapping.end());
+    EXPECT_EQ(it2->second, 1);
+    auto it3 = mapping.find(7);
+    EXPECT_NE(it3, mapping.end());
+    EXPECT_EQ(it3->second, 2);
 }

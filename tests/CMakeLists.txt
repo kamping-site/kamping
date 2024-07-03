@@ -49,6 +49,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_mpi_neighbor_alltoall
+    FILES collectives/neighborhood/mpi_alltoall_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_mpi_alltoallv
     FILES collectives/mpi_alltoallv_test.cpp
     CORES 1 4

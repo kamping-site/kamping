@@ -22,40 +22,13 @@
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 
+#include "helpers_for_testing.hpp"
 #include "kamping/comm_helper/num_numa_nodes.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/distributed_graph_communicator.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
-using ::testing::AllOf;
-
-bool are_equal(CommunicationGraphView const& lhs, CommunicationGraphView const& rhs) {
-    auto compare_span = [](auto const& lhs_, auto const& rhs_) {
-        if (lhs_.size() != rhs_.size()) {
-            return false;
-        }
-        for (size_t i = 0; i < lhs_.size(); ++i) {
-            if (lhs_[i] != rhs_[i]) {
-                return false;
-            }
-        }
-        return true;
-    };
-    auto compare_optional_span = [&compare_span](auto const& lhs_, auto const& rhs_) {
-        if (!lhs_.has_value() && !rhs_.has_value()) {
-            return true;
-        }
-        if (lhs_.has_value() != rhs_.has_value()) {
-            return false;
-        }
-        return compare_span(lhs_.value(), rhs_.value());
-    };
-
-    return compare_span(lhs.in_ranks(), rhs.in_ranks()) && compare_span(lhs.out_ranks(), rhs.out_ranks())
-           && compare_optional_span(lhs.in_weights(), rhs.in_weights())
-           && compare_optional_span(lhs.out_weights(), rhs.out_weights());
-}
 
 struct DistributedGraphCommunicatorTest : Test {
     void SetUp() override {
@@ -99,13 +72,6 @@ TEST_F(DistributedGraphCommunicatorTest, basics_for_edge_to_predecessor_and_succ
     CommunicationGraph<>         input_comm_graph(edges);
     DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
 
-    int queried_in_degree, queried_out_degree, queried_is_weighted;
-    MPI_Dist_graph_neighbors_count(
-        graph_comm.mpi_communicator(),
-        &queried_in_degree,
-        &queried_out_degree,
-        &queried_is_weighted
-    );
     EXPECT_EQ(graph_comm.compare(kamping::comm_world()), CommunicatorComparisonResult::congruent);
     EXPECT_EQ(graph_comm.rank(), rank);
     EXPECT_EQ(graph_comm.rank_signed(), rank);
