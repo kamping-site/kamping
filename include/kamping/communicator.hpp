@@ -59,13 +59,7 @@ public:
     /// @brief Constructor where an MPI communicator has to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
     /// @param take_ownership Whether the Communicator should take ownership of comm, i.e. free it in the destructor.
-    explicit Communicator(MPI_Comm comm, bool take_ownership = false) : Communicator(comm, 0, take_ownership) {
-        int status;
-        MPI_Topo_test(comm, &status);
-        std::cout << rank() << "res_commmmmm: " << (status == MPI_DIST_GRAPH) << std::endl;
-        MPI_Topo_test(_comm, &status);
-        std::cout << rank() << "res__commmmmm: " << (status == MPI_DIST_GRAPH) << std::endl;
-    }
+    explicit Communicator(MPI_Comm comm, bool take_ownership = false) : Communicator(comm, 0, take_ownership) {}
 
     /// @brief Constructor where an MPI communicator and the default root have to be specified.
     /// @param comm MPI communicator that is wrapped by this \c Communicator.
@@ -109,7 +103,7 @@ public:
     }
 
     /// @brief Destructor that frees the contained \c MPI_Comm if it is owned by the Communicator.
-    ~Communicator() {
+    virtual ~Communicator() {
         if (_owns_mpi_comm) {
             MPI_Comm_free(&_comm);
         }

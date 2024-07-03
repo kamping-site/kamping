@@ -24,7 +24,6 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/graph_communicator.hpp"
 #include "kamping/named_parameters.hpp"
 
 int main() {

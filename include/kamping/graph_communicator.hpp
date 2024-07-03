@@ -28,8 +28,8 @@ template <
     template <typename...> typename DefaultContainerType = std::vector,
     template <typename, template <typename...> typename>
     typename... Plugins>
-class GraphCommunicator : public TopologyCommunicator<DefaultContainerType>,
-                          public Plugins<GraphCommunicator<DefaultContainerType, Plugins...>, DefaultContainerType>... {
+class DistributedGraphCommunicator : public TopologyCommunicator<DefaultContainerType>,
+                          public Plugins<DistributedGraphCommunicator<DefaultContainerType, Plugins...>, DefaultContainerType>... {
 public:
     /// @brief Type of the default container type to use for containers created inside operations of this communicator.
     /// @tparam Args Arguments to the container type.
@@ -37,15 +37,19 @@ public:
     using default_container_type = DefaultContainerType<Args...>;
 
     template <typename Communicator, typename EdgeContainer>
-    GraphCommunicator(Communicator const& comm, EdgeContainer const& in_edges, EdgeContainer const& out_edges)
+    DistributedGraphCommunicator(Communicator const& comm, EdgeContainer const& in_edges, EdgeContainer const& out_edges)
         : TopologyCommunicator<DefaultContainerType>(creation_helper(comm, in_edges, out_edges)),
           _in_degree(in_edges.size()),
           _out_degree(out_edges.size()) {
+        static_assert(false);
         auto get_rank = [&](auto const& edge) {
             using edge_value_type        = typename EdgeContainer::value_type;
-            constexpr bool is_unweighted = std::is_same_v<edge_value_type, int>;
+
+            static_assert(std::is_same_v<edge_value_type, void>);
+            //constexpr bool is_unweighted = std::is_same_v<edge_value_type, int>;
+            constexpr bool is_unweighted = std::is_integral_v<edge_value_type>;
             if constexpr (is_unweighted) {
-                return edge;
+                return static_cast<int>(edge);
             } else {
                 const auto& [rank, weight] = edge;
                 return rank;
@@ -64,7 +68,7 @@ public:
     }
 
     template <typename Communicator, typename Edges>
-    GraphCommunicator(Communicator const& comm, Edges const& edges) : GraphCommunicator(comm, edges, edges) {}
+    DistributedGraphCommunicator(Communicator const& comm, Edges const& edges) : DistributedGraphCommunicator(comm, edges, edges) {}
 
     size_t in_degree() const {
         return _in_degree;
@@ -105,19 +109,27 @@ private:
     class EdgeConverter {
     public:
         using edge_value_type               = typename EdgeContainer::value_type;
-        static constexpr bool is_unweighted = std::is_same_v<edge_value_type, int>;
+        static constexpr bool is_unweighted = std::is_integral_v<edge_value_type>;
 
         EdgeConverter(EdgeContainer const& edges) : _size{edges.size()} {
             if constexpr (is_unweighted) {
-                _ranks   = edges.data();
+                constexpr bool is_int = std::is_same_v<edge_value_type, int>;
+                if constexpr (is_int) {
+                    _ranks   = edges.data();
+                } else {
+                    _ranks.resize(edges.size());
+                    for (size_t i = 0; i < edges.size(); ++i) {
+                        _ranks.data()[i] = static_cast<int>(edges.data()[i]);
+                    }
+                }
                 _weights = MPI_UNWEIGHTED;
             } else {
                 _ranks.resize(edges.size());
                 _weights.resize(edges.size());
                 for (size_t i = 0; i < edges.size(); ++i) {
                     auto const [rank, weight] = edges.data()[i];
-                    _ranks.data()[i]          = rank;
-                    _weights()[i]             = weight;
+                    _ranks.data()[i]          = static_cast<int>(rank);
+                    _weights()[i]             = static_cast<int>(weight);
                 }
             }
         }

@@ -78,6 +78,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_distributed_graph_communicator
+    FILES distributed_graph_communicator_test.cpp
+    CORES 4
+)
+kamping_register_mpi_test(
     test_mpi_group
     FILES mpi_group_test.cpp
     CORES 1 4
