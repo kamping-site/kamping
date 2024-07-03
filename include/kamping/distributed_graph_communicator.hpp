@@ -104,19 +104,21 @@ private:
     std::optional<SpanType> _out_weights;
 };
 
+namespace internal {
 template <typename EdgeRange>
 constexpr bool are_edges_weighted() {
     using EdgeType = typename EdgeRange::value_type;
     return !std::is_integral_v<EdgeType>;
 }
+} // namespace internal
 
 template <template <typename...> typename DefaultContainer = std::vector>
 class CommunicationGraph {
 public:
     template <typename InEdgeRange, typename OutEdgeRange>
     CommunicationGraph(InEdgeRange const& in_edges, OutEdgeRange const& out_edges) {
-        constexpr bool are_in_edges_weighted  = are_edges_weighted<InEdgeRange>();
-        constexpr bool are_out_edges_weighted = are_edges_weighted<OutEdgeRange>();
+        constexpr bool are_in_edges_weighted  = internal::are_edges_weighted<InEdgeRange>();
+        constexpr bool are_out_edges_weighted = internal::are_edges_weighted<OutEdgeRange>();
         static_assert(
             are_in_edges_weighted == are_out_edges_weighted,
             "Weight status of in and out edges is different!"
@@ -151,7 +153,7 @@ public:
 
     CommunicationGraph(
         DefaultContainer<int>&& in_ranks,
-        DefaultContainer<int>&&  out_ranks,
+        DefaultContainer<int>&& out_ranks,
         DefaultContainer<int>&& in_weights,
         DefaultContainer<int>&& out_weights
     )
@@ -200,75 +202,6 @@ private:
     std::optional<DefaultContainer<int>> _in_weights;
     std::optional<DefaultContainer<int>> _out_weights;
 };
-
-// template <bool is_weighted, bool ranks_need_conversion, typename IntContainer>
-// class EdgeAdapter {
-// public:
-//     template <typename EdgeContainer>
-//     EdgeAdapter(EdgeContainer const& edges) : _size{edges.size()} {
-//         auto get_rank = [](auto const& edge) {
-//             auto const& [rank, _] = edge;
-//             return static_cast<int>(rank);
-//         };
-//         auto get_weight = [](auto const& edge) {
-//             auto const& [_, weight] = edge;
-//             return static_cast<int>(weight);
-//         };
-//         if constexpr (is_weighted) {
-//             convert_elements_to_int(edges, _ranks, get_rank);
-//             convert_elements_to_int(edges, _weights, get_weight);
-//         } else {
-//             if constexpr (ranks_need_conversion) {
-//                 convert_elements_to_int(edges, _ranks, [](auto const& edge) { return static_cast<int>(edge); });
-//             } else {
-//                 _ranks = edges.data();
-//             }
-//             _weights = MPI_UNWEIGHTED;
-//         }
-//     }
-//
-//     int const* get_ranks_ptr() const {
-//         if constexpr (std::is_pointer_v<std::remove_reference_t<decltype(_ranks)>>) {
-//             return _ranks;
-//         } else {
-//             return _ranks.data();
-//         }
-//     }
-//
-//     int const* get_weights_ptr() const {
-//         if constexpr (std::is_pointer_v<std::remove_reference_t<decltype(_weights)>>) {
-//             return _weights;
-//         } else {
-//             return _weights.data();
-//         }
-//     }
-//
-//     int size_signed() const {
-//         return asserting_cast<int>(_size);
-//     }
-//
-// private:
-//     template <typename ReadFromContainer, typename WriteToContainer, typename GetElem>
-//     void convert_elements_to_int(ReadFromContainer const& input, WriteToContainer& output, GetElem&& get_elem) {
-//         output.resize(input.size());
-//         for (size_t i = 0; i < input.size(); ++i) {
-//             output.data()[i] = get_elem(input.data()[i]);
-//         }
-//     }
-//
-// private:
-//     size_t                                                               _size;
-//     std::conditional_t<!ranks_need_conversion, int const*, IntContainer> _ranks;
-//     std::conditional_t<!is_weighted, int const*, IntContainer>           _weights;
-// };
-//
-// template <typename IntContainer, typename EdgeContainer>
-// auto dispatch_edge_adapter(EdgeContainer const& edges) {
-//     using EdgeType                       = typename EdgeContainer::value_type;
-//     constexpr bool is_weighted           = are_edges_weighted<EdgeContainer>();
-//     constexpr bool ranks_need_conversion = !std::is_same_v<EdgeType, int>;
-//     return EdgeAdapter<is_weighted, ranks_need_conversion, IntContainer>(edges);
-// }
 
 /// @brief Wrapper for an MPI communicator with topology providing access to \c rank() and \c size() of the
 /// communicator. The \ref Communicator is also access point to all MPI communications provided by KaMPIng.
