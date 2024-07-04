@@ -19,9 +19,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "kamping/collectives/neighborhood/alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/distributed_graph_communicator.hpp"
-#include "kamping/collectives/neighborhood/alltoall.hpp"
 #include "kamping/named_parameters.hpp"
 
 using namespace ::kamping;
@@ -94,48 +94,48 @@ TEST(NeighborhoodAlltoallTest, single_element_no_receive_buffer_for_multi_edges_
 }
 
 /// @todo reactivate once the correct handling of send/recv count has been clarified
-//TEST(NeighborhoodAlltoallTest, single_element_with_isolated_root) {
-//    Communicator comm;
-//    // root rank is isolated but all others have edge to successor
-//    size_t              predecessor = comm.rank_shifted_cyclic(-1);
-//    size_t              successor   = comm.rank_shifted_cyclic(1);
-//    std::vector<size_t> in_edges{predecessor};
-//    std::vector<size_t> out_edges{successor};
-//    if (comm.is_root()) {
-//        in_edges.clear();
-//        out_edges.clear();
-//    }
-//    bool is_pred_of_root = comm.root() == successor;
-//    bool is_succ_of_root = comm.root() == predecessor;
-//    if (is_pred_of_root) {
-//        out_edges.clear();
-//    }
-//    if (is_succ_of_root) {
-//        in_edges.clear();
-//    }
-//    CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
-//    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+// TEST(NeighborhoodAlltoallTest, single_element_with_isolated_root) {
+//     Communicator comm;
+//     // root rank is isolated but all others have edge to successor
+//     size_t              predecessor = comm.rank_shifted_cyclic(-1);
+//     size_t              successor   = comm.rank_shifted_cyclic(1);
+//     std::vector<size_t> in_edges{predecessor};
+//     std::vector<size_t> out_edges{successor};
+//     if (comm.is_root()) {
+//         in_edges.clear();
+//         out_edges.clear();
+//     }
+//     bool is_pred_of_root = comm.root() == successor;
+//     bool is_succ_of_root = comm.root() == predecessor;
+//     if (is_pred_of_root) {
+//         out_edges.clear();
+//     }
+//     if (is_succ_of_root) {
+//         in_edges.clear();
+//     }
+//     CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
+//     DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
 //
-//    std::vector<size_t> input{comm.rank()};
-//    if (comm.is_root() || is_pred_of_root) {
-//        input.clear();
-//    }
+//     std::vector<size_t> input{comm.rank()};
+//     if (comm.is_root() || is_pred_of_root) {
+//         input.clear();
+//     }
 //
-//    if (comm.is_root()) {
-//        auto recv_buf = graph_comm.neighbor_alltoall(send_buf(input), send_count(0), recv_count(0));
-//        EXPECT_EQ(recv_buf.size(), 0);
-//    } else if (is_succ_of_root) {
-//        auto [recv_buf, recv_count] = graph_comm.neighbor_alltoall(send_buf(input), send_count(1), recv_count_out());
-//        EXPECT_EQ(recv_count, 1);
-//        EXPECT_EQ(recv_buf.size(), 0);
-//    } else if (is_pred_of_root) {
-//        auto mpi_result = graph_comm.neighbor_alltoall(send_buf(input), send_count(1), recv_count(1));
-//        EXPECT_THAT(mpi_result, ElementsAre(predecessor));
-//    } else {
-//        auto [recv_buf, send_count, recv_count] =
-//            graph_comm.neighbor_alltoall(send_buf(input), send_count_out(), recv_count_out());
-//        EXPECT_EQ(send_count, 1);
-//        EXPECT_EQ(recv_count, 1);
-//        EXPECT_THAT(recv_buf, ElementsAre(predecessor));
-//    }
-//}
+//     if (comm.is_root()) {
+//         auto recv_buf = graph_comm.neighbor_alltoall(send_buf(input), send_count(0), recv_count(0));
+//         EXPECT_EQ(recv_buf.size(), 0);
+//     } else if (is_succ_of_root) {
+//         auto [recv_buf, recv_count] = graph_comm.neighbor_alltoall(send_buf(input), send_count(1), recv_count_out());
+//         EXPECT_EQ(recv_count, 1);
+//         EXPECT_EQ(recv_buf.size(), 0);
+//     } else if (is_pred_of_root) {
+//         auto mpi_result = graph_comm.neighbor_alltoall(send_buf(input), send_count(1), recv_count(1));
+//         EXPECT_THAT(mpi_result, ElementsAre(predecessor));
+//     } else {
+//         auto [recv_buf, send_count, recv_count] =
+//             graph_comm.neighbor_alltoall(send_buf(input), send_count_out(), recv_count_out());
+//         EXPECT_EQ(send_count, 1);
+//         EXPECT_EQ(recv_count, 1);
+//         EXPECT_THAT(recv_buf, ElementsAre(predecessor));
+//     }
+// }

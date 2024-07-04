@@ -290,10 +290,10 @@ public:
     template <typename Communicator>
     DistributedGraphCommunicator(Communicator const& comm, CommunicationGraphView comm_graph_view)
         : TopologyCommunicator<DefaultContainerType>(
-              comm_graph_view.in_degree(),
-              comm_graph_view.out_degree(),
-              comm_graph_view.create_mpi_graph_communicator(comm.mpi_communicator())
-          ),
+            comm_graph_view.in_degree(),
+            comm_graph_view.out_degree(),
+            comm_graph_view.create_mpi_graph_communicator(comm.mpi_communicator())
+        ),
           _is_weighted(comm_graph_view.is_weighted()) {}
 
     /// @brief Construtor based on a given communicator and a communication graph.
