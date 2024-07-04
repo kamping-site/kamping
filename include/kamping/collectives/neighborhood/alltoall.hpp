@@ -41,17 +41,17 @@
 /// @addtogroup kamping_collectives
 /// @{
 
-/// @brief Wrapper for \c MPI_Alltoall.
+/// @brief Wrapper for \c MPI_Neighbor_alltoall.
 ///
-/// This wrapper for \c MPI_Alltoall sends the same amount of data from each rank to each rank. The following
-/// buffers are required:
-/// - \ref kamping::send_buf() containing the data that is sent to each rank. This buffer has to be the same size at
-/// each rank and divisible by the size of the communicator unless a send_count or a send_type is explicitly given as
-/// parameter. Each rank receives the same number of elements from this buffer.
+/// This wrapper for \c MPI_Neighbor_alltoall sends the same amount of data from a rank i to each of its neighbour j for
+/// which an edge (i,j) in the communication graph exists. The following buffers are required:
+/// - \ref kamping::send_buf() containing the data that is sent to each neighbor. This buffer has to be divisible by the
+/// size of the communicator unless a send_count or a send_type is explicitly given as parameter.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::send_count() specifying how many elements are sent. If
-/// omitted, the size of send buffer divided by communicator size is used.
+/// omitted, the size of send buffer divided by number of neighbors is used.
+/// This has to be the same on all ranks.
 /// This parameter is mandatory if \ref kamping::send_type() is given.
 ///
 /// - \ref kamping::recv_count() specifying how many elements are received. If
@@ -122,7 +122,8 @@ auto kamping::TopologyCommunicator<DefaultContainerType, Plugins...>::neighbor_a
             .construct_buffer_or_rebind();
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
-        send_count.underlying() = asserting_cast<int>(send_buf.size() / this->out_degree());
+        send_count.underlying() =
+            this->out_degree() == 0 ? 0 : asserting_cast<int>(send_buf.size() / this->out_degree());
     }
     // Get the recv counts
     using default_recv_count_type = decltype(kamping::recv_count_out());
@@ -139,11 +140,11 @@ auto kamping::TopologyCommunicator<DefaultContainerType, Plugins...>::neighbor_a
     }
 
     KASSERT(
-        (!do_compute_send_count || send_buf.size() % this->in_degree() == 0lu),
+        // @todo check this condition once we know the exact intended semantics of neighbor_alltoall
+        (!do_compute_send_count || this->out_degree() == 0 || send_buf.size() % this->out_degree() == 0lu),
         "There are no send counts given and the number of elements in send_buf is not divisible by the number "
         "of "
-        "ranks "
-        "in the communicator.",
+        "(out) neighbors.",
         assert::light
     );
 
@@ -182,3 +183,4 @@ auto kamping::TopologyCommunicator<DefaultContainerType, Plugins...>::neighbor_a
         std::move(recv_type)   // recv_type
     );
 }
+/// @}
