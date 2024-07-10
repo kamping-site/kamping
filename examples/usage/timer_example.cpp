@@ -84,7 +84,7 @@ int main() {
     }
     t.stop();
     // Evaluates the timer and prints the aggregated duration using the print() method from SimpleJsonPrinter.
-    t.aggregate_and_print(kamping::measurements::SimpleJsonPrinter{});
+    t.aggregate_and_print(kamping::measurements::SimpleJsonPrinter{std::cout, {std::pair("first_config_key", "first_config_value")}});
     std::cout << std::endl;
     t.aggregate_and_print(kamping::measurements::FlatPrinter{});
     std::cout << std::endl;
