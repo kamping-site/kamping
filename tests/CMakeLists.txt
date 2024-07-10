@@ -37,6 +37,7 @@ kamping_register_test(test_rank_ranges FILES rank_ranges_test.cpp)
 kamping_register_test(test_measurement_utils FILES measurements/measurement_utils_test.cpp)
 kamping_register_test(test_traits FILES utils/traits_test.cpp)
 kamping_register_test(test_scoped_type FILES scoped_type_test.cpp)
+kamping_register_test(test_communication_graph FILES communication_graph_test.cpp)
 
 # Registering tests with MPI:
 
@@ -45,6 +46,11 @@ kamping_register_test(test_scoped_type FILES scoped_type_test.cpp)
 kamping_register_mpi_test(
     test_mpi_alltoall
     FILES collectives/mpi_alltoall_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
+    test_mpi_neighbor_alltoall
+    FILES collectives/neighborhood/mpi_alltoall_test.cpp
     CORES 1 4
 )
 kamping_register_mpi_test(
@@ -76,6 +82,11 @@ kamping_register_mpi_test(
     test_mpi_communicator
     FILES mpi_communicator_test.cpp
     CORES 1 4
+)
+kamping_register_mpi_test(
+    test_distributed_graph_communicator
+    FILES distributed_graph_communicator_test.cpp
+    CORES 4
 )
 kamping_register_mpi_test(
     test_mpi_group

@@ -103,7 +103,7 @@ public:
     }
 
     /// @brief Destructor that frees the contained \c MPI_Comm if it is owned by the Communicator.
-    ~Communicator() {
+    virtual ~Communicator() {
         if (_owns_mpi_comm) {
             MPI_Comm_free(&_comm);
         }
@@ -631,6 +631,7 @@ private:
         mpi_error_default_handler(error_code, callee);
     }
 
+protected:
     size_t   _rank; ///< Rank of the MPI process in this communicator.
     size_t   _size; ///< Number of MPI processes in this communicator.
     MPI_Comm _comm; ///< Corresponding MPI communicator.

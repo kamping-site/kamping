@@ -28,6 +28,7 @@
 #include <mpi.h>
 
 #include "kamping/data_buffer.hpp"
+#include "kamping/distributed_graph_communicator.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -448,6 +449,35 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
 
     assert(possible_mpi_datatypes.size() > 0);
     return possible_mpi_datatypes;
+}
+
+/// @brief Compares two CommunicationGraphViews objects for equality
+inline bool
+are_equal(kamping::CommunicationGraphLocalView const& lhs, kamping::CommunicationGraphLocalView const& rhs) {
+    auto compare_span = [](auto const& lhs_, auto const& rhs_) {
+        if (lhs_.size() != rhs_.size()) {
+            return false;
+        }
+        for (size_t i = 0; i < lhs_.size(); ++i) {
+            if (lhs_[i] != rhs_[i]) {
+                return false;
+            }
+        }
+        return true;
+    };
+    auto compare_optional_span = [&compare_span](auto const& lhs_, auto const& rhs_) {
+        if (!lhs_.has_value() && !rhs_.has_value()) {
+            return true;
+        }
+        if (lhs_.has_value() != rhs_.has_value()) {
+            return false;
+        }
+        return compare_span(lhs_.value(), rhs_.value());
+    };
+
+    return compare_span(lhs.in_ranks(), rhs.in_ranks()) && compare_span(lhs.out_ranks(), rhs.out_ranks())
+           && compare_optional_span(lhs.in_weights(), rhs.in_weights())
+           && compare_optional_span(lhs.out_weights(), rhs.out_weights());
 }
 
 /// @}
