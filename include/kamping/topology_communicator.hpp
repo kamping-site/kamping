@@ -17,12 +17,11 @@
 #include <kamping/communicator.hpp>
 
 namespace kamping {
-/// @brief Wrapper for an MPI communicator with topology providing access to \c rank() and \c size() of the
-/// communicator. The \ref Communicator is also access point to all MPI communications provided by KaMPIng. A topolgy
-/// communicator possess an additional `virtual` topology, i.e., a graph which defines frequent communication patterns.
-/// Each MPI rank corresponds to a vertex in the graph and an edge (i,j) defines a (directed) communication link from
-/// rank i to rank j. Such a topolgy can be used to model frequent (sparse) communication patterns and there are
-/// specialized collective operations, e.g., MPI_Neighbor_alltoall etc., exploiting this structure.
+/// @brief  A \ref Communicator which possesses an additional virtual topology and supports neighborhood collectives (on
+/// the topology). A virtual topology can be defined by a communication graph: each MPI rank corresponds to a vertex in
+/// the graph and an edge (i,j) defines a (directed) communication link from rank i to rank j. Such a topolgy can be
+/// used to model frequent (sparse) communication patterns and there are specialized (neighborhood) collective
+/// operations, e.g., MPI_Neighbor_alltoall etc., exploiting this structure.
 ///
 /// @tparam DefaultContainerType The default container type to use for containers created by KaMPIng. Defaults to
 /// std::vector.

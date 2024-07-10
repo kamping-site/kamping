@@ -19,24 +19,25 @@
 
 namespace kamping {
 
-/// @brief View on a a distributed communication graph. Each vertex is a rank and the edge define possible communication
-/// links between the vertices. This view of a distributed communication graph contains views on the (potentially
-/// weighted) in- and outgoing edges which are basically a sequence of neighboring ranks. Note that MPI allow this to be
-/// a multi-graph.
-class CommunicationGraphView {
+/// @brief Local view on a a distributed communication graph. Each vertex is a rank and the edges define possible
+/// communication links between the vertices. This view of a distributed communication graph contains views on the
+/// (potentially weighted) in- and outgoing edges which are basically a sequence of neighboring ranks. Note that MPI
+/// allows this to be a multi-graph. This view is local as it only provides a view on the neighboring ranks of this
+/// process' rank.
+class CommunicationGraphLocalView {
 public:
     using SpanType = kamping::Span<int const>; ///< type to be used for views on ranks and weights
 
-    /// @brief Construct a view of an unweighted communication graph.
+    /// @brief Constructs a view of an unweighted communication graph.
     ///
     /// @tparam ContiguousRange Type of the input range for in and out ranks.
     /// @param in_ranks Neighboring in ranks, i.e., ranks i for which there is an edge (i,own_rank).
     /// @param out_ranks Neighboring out ranks, i.e., ranks i for which there is an edge (own_rank, i).
     template <typename ContiguousRange>
-    CommunicationGraphView(ContiguousRange const& in_ranks, ContiguousRange const& out_ranks)
+    CommunicationGraphLocalView(ContiguousRange const& in_ranks, ContiguousRange const& out_ranks)
         : _in_ranks{in_ranks.data(), in_ranks.size()},
           _out_ranks{out_ranks.data(), out_ranks.size()} {}
-    /// @brief Construct a view of an unweighted communication graph.
+    /// @brief Constructs a view of an unweighted communication graph.
     ///
     /// @tparam ContiguousRange Type of the input range for in and out ranks.
     /// @param in_ranks Neighboring in ranks, i.e., ranks i for which there is an edge (i,own_rank).
@@ -44,7 +45,7 @@ public:
     /// @param in_weights Weights associcated to neighboring in ranks.
     /// @param out_weights Weights associcated to neighboring out ranks.
     template <typename ContiguousRange>
-    CommunicationGraphView(
+    CommunicationGraphLocalView(
         ContiguousRange const& in_ranks,
         ContiguousRange const& out_ranks,
         ContiguousRange const& in_weights,
@@ -126,7 +127,7 @@ public:
             out_ranks().data(),
             out_weights,
             MPI_INFO_NULL,
-            false,
+            false, // do not reorder ranks
             &mpi_graph_comm
         );
         return mpi_graph_comm;
@@ -140,73 +141,80 @@ private:
 };
 
 namespace internal {
-/// @brief Returns whether a given range of edges is weighted or not at compile time
-/// @tparam EdgeRange Range type to be checked.
-template <typename EdgeRange>
-constexpr bool are_edges_weighted() {
-    using EdgeType = typename EdgeRange::value_type;
-    return !std::is_integral_v<EdgeType>;
+/// @brief Returns whether a given range of neighbors is weighted or not at compile time
+/// @tparam NeighborhoodRange Range type to be checked.
+template <typename NeighborhoodRange>
+constexpr bool are_neighborhoods_weighted() {
+    using NeighborType = typename NeighborhoodRange::value_type;
+    static_assert(
+        kamping::internal::tuple_size<NeighborType> == 1 || kamping::internal::tuple_size<NeighborType> == 2,
+        "Neighbor type has to be a scalar (in the unweighted case) or pair-like (in the weighted case) type"
+    );
+    return kamping::internal::tuple_size<NeighborType> == 2;
 }
 } // namespace internal
 
-/// @brief A Distributed communication graph. Each vertex of the graph corresponds to a rank and each edge (i,j) connect
-/// two ranks i and j which can communicate with each other. Note that MPI allow multiple edges between the same ranks i
-/// and j, i.e. the distributed communication graph can be a multi-graph. Each rank holds its local view on the
-/// communication graph, i.e., it knows its neighboring vertices/ranks.
+/// @brief A (vertex-centric) distributed communication graph. Each vertex of the graph corresponds to a rank and each
+/// edge (i,j) connect two ranks i and j which can communicate with each other. The distributed communication graph is
+/// vertex-centric in the sense that on each rank the local graph only contains the corresponding vertex and its in and
+/// out neighborhood. Note that MPI allow multiple edges between the same ranks i and j, i.e. the distributed
+/// communication graph can be a multi-graph.
 template <template <typename...> typename DefaultContainer = std::vector>
-class CommunicationGraph {
+class DistributedCommunicationGraph {
 public:
     /// @brief Default constructor.
-    CommunicationGraph() = default;
+    DistributedCommunicationGraph() = default;
 
     /// @brief Constructs a communication graph based on a range of in-going and out-going edges which might be
     /// weighted. A unweighted edge is simply an integer, wherea a weighted edge is a pair-like object consisting of two
     /// integers which can be decomposed by a structured binding via `auto [rank, weight] = weighted_edge;`.
     ///
-    /// @tparam InEdgeRange Range type of in-going edges.
-    /// @tparam InEdgeRange Range type of out-going edges.
-    /// @param in_edges Range of in-going edges.
-    /// @param out_edges Range of out-going edges.
+    /// @tparam InNeighborsRange Range type of in-going neighbors.
+    /// @tparam OutNeighborsRange Range type of out-going neighbors.
+    /// @param in_neighbors Range of in-going neighbors.
+    /// @param out_neighbors Range of out-going neighbors.
     ///
-    template <typename InEdgeRange, typename OutEdgeRange>
-    CommunicationGraph(InEdgeRange const& in_edges, OutEdgeRange const& out_edges) {
-        constexpr bool are_in_edges_weighted  = internal::are_edges_weighted<InEdgeRange>();
-        constexpr bool are_out_edges_weighted = internal::are_edges_weighted<OutEdgeRange>();
+    template <typename InNeighborsRange, typename OutNeighborsRange>
+    DistributedCommunicationGraph(InNeighborsRange const& in_neighbors, OutNeighborsRange const& out_neighbors) {
+        constexpr bool are_in_neighbors_weighted  = internal::are_neighborhoods_weighted<InNeighborsRange>();
+        constexpr bool are_out_neighbors_weighted = internal::are_neighborhoods_weighted<OutNeighborsRange>();
         static_assert(
-            are_in_edges_weighted == are_out_edges_weighted,
-            "Weight status of in and out edges is different!"
+            are_in_neighbors_weighted == are_out_neighbors_weighted,
+            "If weighted neighborhoods are passed, they must be provided for both in and out neighbors!"
         );
-        if constexpr (are_in_edges_weighted) {
-            auto get_rank = [](auto const& edge) {
+        auto get_rank = [&](auto const& edge) {
+            if constexpr (are_in_neighbors_weighted) {
                 auto const& [rank, _] = edge;
                 return static_cast<int>(rank);
-            };
+            } else {
+                return static_cast<int>(edge);
+            }
+        };
+
+        transform_elems_to_integers(in_neighbors, _in_ranks, get_rank);
+        transform_elems_to_integers(out_neighbors, _out_ranks, get_rank);
+
+        if constexpr (are_in_neighbors_weighted) {
             auto get_weight = [](auto const& edge) {
                 auto const& [_, weight] = edge;
                 return static_cast<int>(weight);
             };
-            transform_elems_to_integers(in_edges, _in_ranks, get_rank);
-            transform_elems_to_integers(out_edges, _out_ranks, get_rank);
             _in_weights  = DefaultContainer<int>{};
             _out_weights = DefaultContainer<int>{};
-            transform_elems_to_integers(in_edges, _in_weights.value(), get_weight);
-            transform_elems_to_integers(out_edges, _out_weights.value(), get_weight);
-        } else {
-            auto get_rank = [](auto const& edge) {
-                return static_cast<int>(edge);
-            };
-            transform_elems_to_integers(in_edges, _in_ranks, get_rank);
-            transform_elems_to_integers(out_edges, _out_ranks, get_rank);
+            transform_elems_to_integers(in_neighbors, _in_weights.value(), get_weight);
+            transform_elems_to_integers(out_neighbors, _out_weights.value(), get_weight);
         }
     }
 
-    /// @brief Constructs a communication graph based on a range of unweighted in-going and out-going edges.
-    CommunicationGraph(DefaultContainer<int>&& in_ranks, DefaultContainer<int>&& out_ranks)
+    /// @brief Constructs a communication graph based on a range of unweighted in-going and out-going neighbors, i.e.,
+    /// ranks.
+    DistributedCommunicationGraph(DefaultContainer<int>&& in_ranks, DefaultContainer<int>&& out_ranks)
         : _in_ranks{std::move(in_ranks)},
           _out_ranks{std::move(out_ranks)} {}
 
-    /// @brief Constructs a communication graph based on a range of weighted in-going and out-going edges.
-    CommunicationGraph(
+    /// @brief Constructs a communication graph based on a range of weighted in-going and out-going neighbors.
+    /// The ownership of the underlying ranks/weights containers is transfered.
+    DistributedCommunicationGraph(
         DefaultContainer<int>&& in_ranks,
         DefaultContainer<int>&& out_ranks,
         DefaultContainer<int>&& in_weights,
@@ -217,27 +225,34 @@ public:
           _in_weights{std::move(in_weights)},
           _out_weights{std::move(out_weights)} {}
 
-    /// @brief Constructs a communication graph based on a range of potentially weighted symmetric edges.
-    template <typename EdgeRange>
-    CommunicationGraph(EdgeRange const& edges) : CommunicationGraph(edges, edges) {}
+    /// @brief Constructs a communication graph based where in and out neighbors are the same, i.e. a symmetric
+    /// neighborhood/graph.
+    template <typename NeighborRange>
+    DistributedCommunicationGraph(NeighborRange const& neighbors)
+        : DistributedCommunicationGraph(neighbors, neighbors) {}
 
     /// @brief Returns a view of the communication graph.
-    CommunicationGraphView get_view() const {
+    CommunicationGraphLocalView get_view() const {
         if (_in_weights.has_value()) {
-            return CommunicationGraphView(_in_ranks, _out_ranks, _in_weights.value(), _out_weights.value());
+            return CommunicationGraphLocalView(_in_ranks, _out_ranks, _in_weights.value(), _out_weights.value());
         } else {
-            return CommunicationGraphView(_in_ranks, _out_ranks);
+            return CommunicationGraphLocalView(_in_ranks, _out_ranks);
         }
     }
 
-    /// @brief For each rank n for which there is (at least one) outgoing edge (own_rank, r), returns a mapping
-    /// r -> index of an edge (own_rank, r). This may be useful for collective communication primitives like
-    /// `MPI_Neighbor_alltoall` when one wants to calculate the position within the send_buffer to send data to a rank
-    /// r.
+    /// @brief In neighborhood collectives the order of sent and received data depends on
+    /// the ordering of the underlying out and in neighbors (note that the MPI standard allows that a neighbor occurs
+    /// multiple times within the neighbors list). For example in \c MPI_Neighbor_alltoall the \c k-th block in the send
+    /// buffer is sent to the \c k-th negibhoring process. Hence, to exchange data to rank r via neighborhood
+    /// collectives it might be useful to know the index of rank r within the out neighbors (provided r is a neighbor at
+    /// all). Therefore, this function returns a mapping from the rank of each out neighbor r to its index within the
+    /// out neighbors. If r occurs multiple times, one of these positions is returned in the mapping.
     ///
-    /// @return Returns the mapping
+    /// @tparam Map Map type storing the mapping, uses std::unordered_map<size_t, size_t> as default.
+    ///
+    /// @return Returns the mapping.
     template <typename Map = std::unordered_map<size_t, size_t>>
-    auto get_rank_to_out_edge_idx_mapping() {
+    auto get_rank_to_out_neighbor_idx_mapping() {
         Map mapping;
         for (size_t i = 0; i < _out_ranks.size(); ++i) {
             size_t rank = static_cast<size_t>(_out_ranks.data()[i]);
@@ -260,9 +275,9 @@ private:
     std::optional<DefaultContainer<int>> _out_weights; ///< Weights of out-going edges if present.
 };
 
-/// @brief Wrapper for an MPI communicator with a (distributed) graph topology providing access to \c rank() and \c
-/// size() of the communicator. The \ref Communicator is also access point to all MPI communications provided by
-/// KaMPIng.
+/// @brief A \ref Communicator which possesses an additional virtual topology and supports neighborhood collectives (on
+/// the topology). The virtual topology is specified via a distributed communication graph (see \ref
+/// DistributedCommunicationGraph).
 /// @tparam DefaultContainerType The default container type to use for containers created by KaMPIng. Defaults to
 /// std::vector.
 /// @tparam Plugins Plugins adding functionality to KaMPIng. Plugins should be classes taking a ``Communicator``
@@ -288,7 +303,7 @@ public:
     /// @param comm Communicator for which a graph topology shall be added.
     /// @param comm_graph_view View on the communication graph which will be added to the given communicator.
     template <typename Communicator>
-    DistributedGraphCommunicator(Communicator const& comm, CommunicationGraphView comm_graph_view)
+    DistributedGraphCommunicator(Communicator const& comm, CommunicationGraphLocalView comm_graph_view)
         : TopologyCommunicator<DefaultContainerType>(
             comm_graph_view.in_degree(),
             comm_graph_view.out_degree(),
@@ -302,7 +317,9 @@ public:
     /// @param comm Communicator for which a graph topology shall be added.
     /// @param comm_graph Communication graph which will be added to the given communicator.
     template <typename Communicator>
-    DistributedGraphCommunicator(Communicator const& comm, CommunicationGraph<DefaultContainerType> const& comm_graph)
+    DistributedGraphCommunicator(
+        Communicator const& comm, DistributedCommunicationGraph<DefaultContainerType> const& comm_graph
+    )
         : DistributedGraphCommunicator(comm, comm_graph.get_view()) {}
 
     /// @brief Returns the communicators underlying communication graph by calling `MPI_Dist_graph_neighbors`.
@@ -328,14 +345,14 @@ public:
             is_weighted() ? out_weights.data() : MPI_UNWEIGHTED
         );
         if (is_weighted()) {
-            return CommunicationGraph<DefaultContainerType>(
+            return DistributedCommunicationGraph<DefaultContainerType>(
                 std::move(in_ranks),
                 std::move(out_ranks),
                 std::move(in_weights),
                 std::move(out_weights)
             );
         } else {
-            return CommunicationGraph<DefaultContainerType>(std::move(in_ranks), std::move(out_ranks));
+            return DistributedCommunicationGraph<DefaultContainerType>(std::move(in_ranks), std::move(out_ranks));
         }
     }
 

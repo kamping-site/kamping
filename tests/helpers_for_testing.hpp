@@ -452,7 +452,8 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
 }
 
 /// @brief Compares two CommunicationGraphViews objects for equality
-inline bool are_equal(kamping::CommunicationGraphView const& lhs, kamping::CommunicationGraphView const& rhs) {
+inline bool
+are_equal(kamping::CommunicationGraphLocalView const& lhs, kamping::CommunicationGraphLocalView const& rhs) {
     auto compare_span = [](auto const& lhs_, auto const& rhs_) {
         if (lhs_.size() != rhs_.size()) {
             return false;

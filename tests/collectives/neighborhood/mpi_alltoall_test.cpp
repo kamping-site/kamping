@@ -28,10 +28,10 @@ using namespace ::kamping;
 using namespace ::testing;
 
 TEST(NeighborhoodAlltoallTest, single_element_no_receive_buffer_for_edges_to_predecessor_successor) {
-    Communicator                 comm;
-    std::vector<size_t>          edges{comm.rank_shifted_cyclic(-1), comm.rank_shifted_cyclic(1)};
-    CommunicationGraph<>         input_comm_graph(edges);
-    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+    Communicator                    comm;
+    std::vector<size_t>             edges{comm.rank_shifted_cyclic(-1), comm.rank_shifted_cyclic(1)};
+    DistributedCommunicationGraph<> input_comm_graph(edges);
+    DistributedGraphCommunicator    graph_comm(comm, input_comm_graph);
 
     std::vector<size_t> const input = edges;
 
@@ -49,11 +49,11 @@ TEST(NeighborhoodAlltoallTest, single_element_no_receive_buffer_for_edges_to_pre
 }
 
 TEST(NeighborhoodAlltoallTest, single_element_no_receive_buffer_for_edges_to_successor) {
-    Communicator                 comm;
-    std::vector<size_t>          in_edges{comm.rank_shifted_cyclic(-1)};
-    std::vector<size_t>          out_edges{comm.rank_shifted_cyclic(1)};
-    CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
-    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+    Communicator                    comm;
+    std::vector<size_t>             in_edges{comm.rank_shifted_cyclic(-1)};
+    std::vector<size_t>             out_edges{comm.rank_shifted_cyclic(1)};
+    DistributedCommunicationGraph<> input_comm_graph(in_edges, out_edges);
+    DistributedGraphCommunicator    graph_comm(comm, input_comm_graph);
 
     std::vector<size_t> const input{comm.rank()};
 
@@ -71,12 +71,12 @@ TEST(NeighborhoodAlltoallTest, single_element_no_receive_buffer_for_edges_to_suc
 }
 
 TEST(NeighborhoodAlltoallTest, single_element_no_receive_buffer_for_multi_edges_to_successor) {
-    Communicator                 comm;
-    size_t const                 edge_multiplicity = 3;
-    std::vector<size_t> const    in_edges(edge_multiplicity, comm.rank_shifted_cyclic(-1));
-    std::vector<size_t> const    out_edges(edge_multiplicity, comm.rank_shifted_cyclic(1));
-    CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
-    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+    Communicator                    comm;
+    size_t const                    edge_multiplicity = 3;
+    std::vector<size_t> const       in_edges(edge_multiplicity, comm.rank_shifted_cyclic(-1));
+    std::vector<size_t> const       out_edges(edge_multiplicity, comm.rank_shifted_cyclic(1));
+    DistributedCommunicationGraph<> input_comm_graph(in_edges, out_edges);
+    DistributedGraphCommunicator    graph_comm(comm, input_comm_graph);
 
     std::vector<size_t> const input(edge_multiplicity, comm.rank());
 
@@ -113,7 +113,7 @@ TEST(NeighborhoodAlltoallTest, single_element_no_receive_buffer_for_multi_edges_
 //     if (is_succ_of_root) {
 //         in_edges.clear();
 //     }
-//     CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
+//     DistributedCommunicationGraph<>         input_comm_graph(in_edges, out_edges);
 //     DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
 //
 //     std::vector<size_t> input{comm.rank()};

@@ -31,8 +31,8 @@ using namespace ::kamping;
 using namespace ::testing;
 
 TEST(CommunicationGraphTest, empty) {
-    CommunicationGraph<> comm_graph{};
-    auto                 comm_graph_view = comm_graph.get_view();
+    DistributedCommunicationGraph<> comm_graph{};
+    auto                            comm_graph_view = comm_graph.get_view();
     EXPECT_EQ(comm_graph_view.in_degree(), 0);
     EXPECT_EQ(comm_graph_view.in_ranks().size(), 0);
     EXPECT_EQ(comm_graph_view.in_weights(), std::nullopt);
@@ -43,9 +43,9 @@ TEST(CommunicationGraphTest, empty) {
 }
 
 TEST(CommunicationGraphTest, unweighted_symmetric_edges) {
-    std::vector<size_t>  edges{1, 2, 3};
-    CommunicationGraph<> comm_graph{edges};
-    auto                 comm_graph_view = comm_graph.get_view();
+    std::vector<size_t>             edges{1, 2, 3};
+    DistributedCommunicationGraph<> comm_graph{edges};
+    auto                            comm_graph_view = comm_graph.get_view();
     EXPECT_EQ(comm_graph_view.in_degree(), 3);
     EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3));
     EXPECT_EQ(comm_graph_view.in_weights(), std::nullopt);
@@ -56,10 +56,10 @@ TEST(CommunicationGraphTest, unweighted_symmetric_edges) {
 }
 
 TEST(CommunicationGraphTest, unweighted_asymmetric_edges) {
-    std::vector<size_t>  in_edges{1, 2, 3, 4};
-    std::vector<size_t>  out_edges{5, 6, 7};
-    CommunicationGraph<> comm_graph{in_edges, out_edges};
-    auto                 comm_graph_view = comm_graph.get_view();
+    std::vector<size_t>             in_edges{1, 2, 3, 4};
+    std::vector<size_t>             out_edges{5, 6, 7};
+    DistributedCommunicationGraph<> comm_graph{in_edges, out_edges};
+    auto                            comm_graph_view = comm_graph.get_view();
     EXPECT_EQ(comm_graph_view.in_degree(), 4);
     EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3, 4));
     EXPECT_EQ(comm_graph_view.in_weights(), std::nullopt);
@@ -72,7 +72,7 @@ TEST(CommunicationGraphTest, unweighted_asymmetric_edges) {
 TEST(CommunicationGraphTest, weighted_asymmetric_edges) {
     std::vector<std::pair<size_t, int>> in_edges{{1, 4}, {2, 3}, {3, 2}, {4, 1}};
     std::vector<std::pair<size_t, int>> out_edges{{5, 7}, {6, 6}, {7, 5}};
-    CommunicationGraph<>                comm_graph{in_edges, out_edges};
+    DistributedCommunicationGraph<>     comm_graph{in_edges, out_edges};
     auto                                comm_graph_view = comm_graph.get_view();
     EXPECT_EQ(comm_graph_view.in_degree(), 4);
     EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3, 4));
@@ -89,10 +89,10 @@ struct OwnEdge {
 };
 
 TEST(CommunicationGraphTest, weighted_asymmetric_edges_with_custom_edge_type) {
-    std::vector<OwnEdge> in_edges{{1, 4}, {2, 3}, {3, 2}, {4, 1}};
-    std::vector<OwnEdge> out_edges{{5, 7}, {6, 6}, {7, 5}};
-    CommunicationGraph<> comm_graph{in_edges, out_edges};
-    auto                 comm_graph_view = comm_graph.get_view();
+    std::vector<OwnEdge>            in_edges{{1, 4}, {2, 3}, {3, 2}, {4, 1}};
+    std::vector<OwnEdge>            out_edges{{5, 7}, {6, 6}, {7, 5}};
+    DistributedCommunicationGraph<> comm_graph{in_edges, out_edges};
+    auto                            comm_graph_view = comm_graph.get_view();
     EXPECT_EQ(comm_graph_view.in_degree(), 4);
     EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3, 4));
     EXPECT_THAT(comm_graph_view.in_weights().value(), ElementsAre(4, 3, 2, 1));
@@ -103,10 +103,10 @@ TEST(CommunicationGraphTest, weighted_asymmetric_edges_with_custom_edge_type) {
 }
 
 TEST(CommunicationGraphTest, unweighted_asymmetric_edges_with_move_construction) {
-    std::vector<int>     in_edges{1, 2, 3, 4};
-    std::vector<int>     out_edges{5, 6, 7};
-    CommunicationGraph<> comm_graph{std::move(in_edges), std::move(out_edges)};
-    auto                 comm_graph_view = comm_graph.get_view();
+    std::vector<int>                in_edges{1, 2, 3, 4};
+    std::vector<int>                out_edges{5, 6, 7};
+    DistributedCommunicationGraph<> comm_graph{std::move(in_edges), std::move(out_edges)};
+    auto                            comm_graph_view = comm_graph.get_view();
     EXPECT_EQ(comm_graph_view.in_degree(), 4);
     EXPECT_THAT(comm_graph_view.in_ranks(), ElementsAre(1, 2, 3, 4));
     EXPECT_EQ(comm_graph_view.in_weights(), std::nullopt);
@@ -117,11 +117,11 @@ TEST(CommunicationGraphTest, unweighted_asymmetric_edges_with_move_construction)
 }
 
 TEST(CommunicationGraphTest, weighted_asymmetric_edges_with_move_construction) {
-    std::vector<int>     in_edges{1, 2, 3, 4};
-    std::vector<int>     in_weights{4, 3, 2, 1};
-    std::vector<int>     out_edges{5, 6, 7};
-    std::vector<int>     out_weights{7, 6, 5};
-    CommunicationGraph<> comm_graph{
+    std::vector<int>                in_edges{1, 2, 3, 4};
+    std::vector<int>                in_weights{4, 3, 2, 1};
+    std::vector<int>                out_edges{5, 6, 7};
+    std::vector<int>                out_weights{7, 6, 5};
+    DistributedCommunicationGraph<> comm_graph{
         std::move(in_edges),
         std::move(out_edges),
         std::move(in_weights),
@@ -137,10 +137,10 @@ TEST(CommunicationGraphTest, weighted_asymmetric_edges_with_move_construction) {
 }
 
 TEST(CommunicationGraphTest, rank_to_out_edge_mapping_for_unweighted_asymmetric_edges) {
-    std::vector<int>     in_edges{1, 2, 3, 4};
-    std::vector<int>     out_edges{5, 6, 7};
-    CommunicationGraph<> comm_graph{std::move(in_edges), std::move(out_edges)};
-    auto                 mapping = comm_graph.get_rank_to_out_edge_idx_mapping();
+    std::vector<int>                in_edges{1, 2, 3, 4};
+    std::vector<int>                out_edges{5, 6, 7};
+    DistributedCommunicationGraph<> comm_graph{std::move(in_edges), std::move(out_edges)};
+    auto                            mapping = comm_graph.get_rank_to_out_neighbor_idx_mapping();
     EXPECT_EQ(mapping.size(), 3);
     auto it1 = mapping.find(5);
     EXPECT_NE(it1, mapping.end());

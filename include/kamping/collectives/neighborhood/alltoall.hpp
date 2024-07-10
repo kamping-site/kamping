@@ -43,14 +43,16 @@
 
 /// @brief Wrapper for \c MPI_Neighbor_alltoall.
 ///
-/// This wrapper for \c MPI_Neighbor_alltoall sends the same amount of data from a rank i to each of its neighbour j for
-/// which an edge (i,j) in the communication graph exists. The following buffers are required:
+/// @todo check again once the concrete semantics (potential differing number of send/recv counts) of
+/// MPI_Neighbor_alltoall has been clarified. This wrapper for \c MPI_Neighbor_alltoall sends the same amount of data
+/// from a rank i to each of its neighbour j for which an edge (i,j) in the communication graph exists. The following
+/// buffers are required:
 /// - \ref kamping::send_buf() containing the data that is sent to each neighbor. This buffer has to be divisible by the
-/// size of the communicator unless a send_count or a send_type is explicitly given as parameter.
+/// out degree unless a send_count or a send_type is explicitly given as parameter.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::send_count() specifying how many elements are sent. If
-/// omitted, the size of send buffer divided by number of neighbors is used.
+/// omitted, the size of send buffer divided by number of outgoing neighbors is used.
 /// This has to be the same on all ranks.
 /// This parameter is mandatory if \ref kamping::send_type() is given.
 ///
@@ -59,16 +61,13 @@
 /// This parameter is mandatory if \ref kamping::recv_type() is given.
 ///
 /// - \ref kamping::recv_buf() specifying a buffer for the output. A buffer of at least
-/// `recv_count * communicator size` is required.
+/// `recv_count * in degree` is required.
 ///
 /// - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
 /// derived automatically based on send_buf's underlying \c value_type.
 ///
 /// - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
 /// derived automatically based on recv_buf's underlying \c value_type.
-///
-/// Inplace alltoall is supported by passing send_recv_buf as parameter. This changes the requirements for the other
-/// parameters, see \ref Communicator::alltoall_inplace.
 ///
 /// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional buffers described above.

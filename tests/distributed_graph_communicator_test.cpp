@@ -49,8 +49,8 @@ struct DistributedGraphCommunicatorTest : Test {
 TEST_F(DistributedGraphCommunicatorTest, empty_communication_graph) {
     Communicator comm;
 
-    CommunicationGraph<>         comm_graph{};
-    DistributedGraphCommunicator graph_comm(comm, comm_graph);
+    DistributedCommunicationGraph<> comm_graph{};
+    DistributedGraphCommunicator    graph_comm(comm, comm_graph);
 
     EXPECT_EQ(graph_comm.compare(kamping::comm_world()), CommunicatorComparisonResult::congruent);
     EXPECT_EQ(graph_comm.rank(), rank);
@@ -67,10 +67,10 @@ TEST_F(DistributedGraphCommunicatorTest, empty_communication_graph) {
 }
 
 TEST_F(DistributedGraphCommunicatorTest, basics_for_edge_to_predecessor_and_successor_rank) {
-    Communicator                 comm;
-    std::vector<size_t>          edges{comm.rank_shifted_cyclic(-1), comm.rank_shifted_cyclic(1)};
-    CommunicationGraph<>         input_comm_graph(edges);
-    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+    Communicator                    comm;
+    std::vector<size_t>             edges{comm.rank_shifted_cyclic(-1), comm.rank_shifted_cyclic(1)};
+    DistributedCommunicationGraph<> input_comm_graph(edges);
+    DistributedGraphCommunicator    graph_comm(comm, input_comm_graph);
 
     EXPECT_EQ(graph_comm.compare(kamping::comm_world()), CommunicatorComparisonResult::congruent);
     EXPECT_EQ(graph_comm.rank(), rank);
@@ -87,10 +87,10 @@ TEST_F(DistributedGraphCommunicatorTest, basics_for_edge_to_predecessor_and_succ
 }
 
 TEST_F(DistributedGraphCommunicatorTest, get_communication_graph_for_edge_to_predecessor_and_successor_rank) {
-    Communicator                 comm;
-    std::vector<size_t>          edges{comm.rank_shifted_cyclic(-1), comm.rank_shifted_cyclic(1)};
-    CommunicationGraph<>         input_comm_graph(edges);
-    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+    Communicator                    comm;
+    std::vector<size_t>             edges{comm.rank_shifted_cyclic(-1), comm.rank_shifted_cyclic(1)};
+    DistributedCommunicationGraph<> input_comm_graph(edges);
+    DistributedGraphCommunicator    graph_comm(comm, input_comm_graph);
 
     auto const comm_graph      = graph_comm.get_communication_graph();
     auto const comm_graph_view = comm_graph.get_view();
@@ -103,11 +103,11 @@ TEST_F(DistributedGraphCommunicatorTest, get_communication_graph_for_edge_to_pre
 }
 
 TEST_F(DistributedGraphCommunicatorTest, out_edge_to_successor_rank) {
-    Communicator                 comm;
-    std::vector<size_t>          out_edges{comm.rank_shifted_cyclic(1)};
-    std::vector<size_t>          in_edges{comm.rank_shifted_cyclic(-1)};
-    CommunicationGraph<>         input_comm_graph(out_edges, in_edges);
-    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+    Communicator                    comm;
+    std::vector<size_t>             out_edges{comm.rank_shifted_cyclic(1)};
+    std::vector<size_t>             in_edges{comm.rank_shifted_cyclic(-1)};
+    DistributedCommunicationGraph<> input_comm_graph(out_edges, in_edges);
+    DistributedGraphCommunicator    graph_comm(comm, input_comm_graph);
 
     EXPECT_EQ(graph_comm.compare(kamping::comm_world()), CommunicatorComparisonResult::congruent);
     EXPECT_EQ(graph_comm.rank(), rank);
@@ -124,11 +124,11 @@ TEST_F(DistributedGraphCommunicatorTest, out_edge_to_successor_rank) {
 }
 
 TEST_F(DistributedGraphCommunicatorTest, get_communication_graph_for_edge_to_successor_rank_and_oneself) {
-    Communicator                 comm;
-    std::vector<size_t>          in_edges{comm.rank_shifted_cyclic(-1), comm.rank()};
-    std::vector<size_t>          out_edges{comm.rank_shifted_cyclic(1), comm.rank()};
-    CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
-    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+    Communicator                    comm;
+    std::vector<size_t>             in_edges{comm.rank_shifted_cyclic(-1), comm.rank()};
+    std::vector<size_t>             out_edges{comm.rank_shifted_cyclic(1), comm.rank()};
+    DistributedCommunicationGraph<> input_comm_graph(in_edges, out_edges);
+    DistributedGraphCommunicator    graph_comm(comm, input_comm_graph);
 
     auto const comm_graph      = graph_comm.get_communication_graph();
     auto const comm_graph_view = comm_graph.get_view();
@@ -144,7 +144,7 @@ TEST_F(DistributedGraphCommunicatorTest, basics_for_edge_to_successor_rank_and_o
     Communicator                        comm;
     std::vector<std::pair<size_t, int>> in_edges{{comm.rank_shifted_cyclic(-1), 42}, {comm.rank(), 0}};
     std::vector<std::pair<size_t, int>> out_edges{{comm.rank_shifted_cyclic(1), 42}, {comm.rank(), 0}};
-    CommunicationGraph<>                input_comm_graph(in_edges, out_edges);
+    DistributedCommunicationGraph<>     input_comm_graph(in_edges, out_edges);
     DistributedGraphCommunicator        graph_comm(comm, input_comm_graph);
 
     EXPECT_EQ(graph_comm.compare(kamping::comm_world()), CommunicatorComparisonResult::congruent);
@@ -166,8 +166,8 @@ TEST_F(DistributedGraphCommunicatorTest, get_communication_graph_for_edge_to_suc
     std::vector<std::pair<size_t, int>> in_edges{{comm.rank_shifted_cyclic(-1), 42}, {comm.rank(), 0}};
     std::vector<std::pair<size_t, int>> out_edges{{comm.rank_shifted_cyclic(1), 42}, {comm.rank(), 0}};
 
-    CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
-    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+    DistributedCommunicationGraph<> input_comm_graph(in_edges, out_edges);
+    DistributedGraphCommunicator    graph_comm(comm, input_comm_graph);
 
     auto const comm_graph      = graph_comm.get_communication_graph();
     auto const comm_graph_view = comm_graph.get_view();
@@ -191,8 +191,8 @@ TEST_F(DistributedGraphCommunicatorTest, root_to_all_others_from_graph_view) {
     }
     auto const expected_out_edges = out_edges;
 
-    CommunicationGraph<>         input_comm_graph(in_edges, out_edges);
-    DistributedGraphCommunicator graph_comm(comm, input_comm_graph);
+    DistributedCommunicationGraph<> input_comm_graph(in_edges, out_edges);
+    DistributedGraphCommunicator    graph_comm(comm, input_comm_graph);
 
     auto const comm_graph      = graph_comm.get_communication_graph();
     auto const comm_graph_view = comm_graph.get_view();
