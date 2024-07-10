@@ -43,10 +43,11 @@
 
 /// @brief Wrapper for \c MPI_Neighbor_alltoall.
 ///
-/// @todo check again once the concrete semantics (potential differing number of send/recv counts) of
-/// MPI_Neighbor_alltoall has been clarified. This wrapper for \c MPI_Neighbor_alltoall sends the same amount of data
+/// This wrapper for \c MPI_Neighbor_alltoall sends the same amount of data
 /// from a rank i to each of its neighbour j for which an edge (i,j) in the communication graph exists. The following
 /// buffers are required:
+/// @todo check again once the concrete semantics (potential differing number of send/recv counts) of
+/// MPI_Neighbor_alltoall has been clarified.
 /// - \ref kamping::send_buf() containing the data that is sent to each neighbor. This buffer has to be divisible by the
 /// out degree unless a send_count or a send_type is explicitly given as parameter.
 ///

@@ -19,10 +19,10 @@
 
 namespace kamping {
 
-/// @brief Local view on a a distributed communication graph. Each vertex is a rank and the edges define possible
-/// communication links between the vertices. This view of a distributed communication graph contains views on the
-/// (potentially weighted) in- and outgoing edges which are basically a sequence of neighboring ranks. Note that MPI
-/// allows this to be a multi-graph. This view is local as it only provides a view on the neighboring ranks of this
+/// @brief Local view of a a distributed communication graph from the perspective of the current rank. Each vertex is a
+/// rank and the edges define possible communication links between the vertices. This view provides access to the
+/// (potentially weighted) in- and outgoing edges which are represented as a sequence of neighboring ranks. Note that
+/// MPI allows this to be a multi-graph.
 /// process' rank.
 class CommunicationGraphLocalView {
 public:
@@ -141,7 +141,8 @@ private:
 };
 
 namespace internal {
-/// @brief Returns whether a given range of neighbors is weighted or not at compile time
+/// @brief Returns whether a given range of neighbors is weighted or not at compile time, i.e., whether the neighborhood
+/// only consists of ranks or of (rank, weight) pairs
 /// @tparam NeighborhoodRange Range type to be checked.
 template <typename NeighborhoodRange>
 constexpr bool are_neighborhoods_weighted() {
@@ -190,6 +191,10 @@ public:
                 return static_cast<int>(edge);
             }
         };
+        _in_ranks.resize(in_neighbors.size());
+        _out_ranks.resize(out_neighbors.size());
+        std::transform(in_neighbors.data(), in_neighbors.data() + in_neighbors.size(), _in_ranks.data(), get_rank);
+        std::transform(out_neighbors.data(), out_neighbors.data() + out_neighbors.size(), _out_ranks.data(), get_rank);
 
         transform_elems_to_integers(in_neighbors, _in_ranks, get_rank);
         transform_elems_to_integers(out_neighbors, _out_ranks, get_rank);
@@ -199,10 +204,21 @@ public:
                 auto const& [_, weight] = edge;
                 return static_cast<int>(weight);
             };
-            _in_weights  = DefaultContainer<int>{};
-            _out_weights = DefaultContainer<int>{};
-            transform_elems_to_integers(in_neighbors, _in_weights.value(), get_weight);
-            transform_elems_to_integers(out_neighbors, _out_weights.value(), get_weight);
+            _in_weights  = DefaultContainer<int>(in_neighbors.size());
+            _out_weights = DefaultContainer<int>(out_neighbors.size());
+
+            std::transform(
+                in_neighbors.data(),
+                in_neighbors.data() + in_neighbors.size(),
+                _in_weights.value().data(),
+                get_weight
+            );
+            std::transform(
+                out_neighbors.data(),
+                out_neighbors.data() + out_neighbors.size(),
+                _out_weights.value().data(),
+                get_weight
+            );
         }
     }
 
@@ -243,7 +259,7 @@ public:
     /// @brief In neighborhood collectives the order of sent and received data depends on
     /// the ordering of the underlying out and in neighbors (note that the MPI standard allows that a neighbor occurs
     /// multiple times within the neighbors list). For example in \c MPI_Neighbor_alltoall the \c k-th block in the send
-    /// buffer is sent to the \c k-th negibhoring process. Hence, to exchange data to rank r via neighborhood
+    /// buffer is sent to the \c k-th neighboring process. Hence, to exchange data to rank r via neighborhood
     /// collectives it might be useful to know the index of rank r within the out neighbors (provided r is a neighbor at
     /// all). Therefore, this function returns a mapping from the rank of each out neighbor r to its index within the
     /// out neighbors. If r occurs multiple times, one of these positions is returned in the mapping.
