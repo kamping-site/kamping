@@ -69,12 +69,12 @@ template <typename Duration = double>
 class SimpleJsonPrinter {
 public:
     /// @brief Construct a printer that use std::cout as outstream.
-    SimpleJsonPrinter() : _outstream{std::cout}, _interal_printer(_outstream) {}
+    SimpleJsonPrinter() : _outstream{std::cout}, _internal_printer(_outstream) {}
 
     /// @brief Construct a printer printing to a given outstream.
     ///
     /// @param outstream Outstream on which the content is printed.
-    SimpleJsonPrinter(std::ostream& outstream) : _outstream{outstream}, _interal_printer(_outstream) {}
+    SimpleJsonPrinter(std::ostream& outstream) : _outstream{outstream}, _internal_printer(_outstream) {}
 
     /// @brief Construct a printer printing to a given outstream and adding
     /// additional configuration info.
@@ -84,7 +84,7 @@ public:
     /// "config" - dict by the printer.
     SimpleJsonPrinter(std::ostream& outstream, std::vector<std::pair<std::string, std::string>> config_info)
         : _outstream{outstream},
-          _interal_printer(_outstream),
+          _internal_printer(_outstream),
           _config_info{config_info} {}
 
     /// @brief Prints an evaluated TimerTree in Json format to stdout.
@@ -105,7 +105,7 @@ public:
 private:
     std::ostream&                             _outstream; ///< Outstream to print on.
     std::size_t                               indentation_per_level = 2u;
-    internal::ScalarOrVectorPrinter<Duration> _interal_printer; ///< Internal printer able to print either a scalar or
+    internal::ScalarOrVectorPrinter<Duration> _internal_printer; ///< Internal printer able to print either a scalar or
                                                                 ///< vector of durations.
     std::vector<std::pair<std::string, std::string>> _config_info;
 
@@ -150,8 +150,7 @@ private:
                 }
                 is_first_outer = false;
                 _outstream << std::string(indentation + 2 * indentation_per_level, ' ') << "\"" << get_string(op)
-                           << "\""
-                           << ": [";
+                           << "\"" << ": [";
                 bool is_first = true;
                 for (auto const& data_item: data) {
                     if (!is_first) {
