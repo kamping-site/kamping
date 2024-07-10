@@ -29,67 +29,21 @@ int main() {
     using namespace kamping;
     kamping::Environment  e;
     kamping::Communicator comm;
-    // std::vector<int>      input(comm.size(), comm.rank_signed());
+    std::vector<int>      input(comm.size(), comm.rank_signed());
 
-    //{ // Basic form: Provide a send buffer and let KaMPIng allocate the receive buffer.
-    //    auto output = comm.allgather(send_buf(input));
-    //    print_result_on_root(output, comm);
-    //}
-
-    // print_on_root("------", comm);
-
-    //{ // We can also send only parts of the input and specify an explicit receive buffer.
-    //    std::vector<int> output;
-
-    //    // this can also be achieved with `kamping::Span`
-    //    comm.allgather(send_buf(Span(input.begin(), 2)), recv_buf<resize_to_fit>(output));
-    //    print_result_on_root(output, comm);
-    //    return 0;
-    //}
-
-    MPI_Comm         mpi_graph_comm;
-    int              in_degree = -1, out_degree = -1;
-    std::vector<int> input{comm.rank_signed()};
-    std::vector<int> recv_buf(10, -1);
-    int              send_count = -1, recv_count = -1;
-    std::vector<int> in_ranks, out_ranks;
-    if (comm.rank() == 0) {
-        in_degree  = 0;
-        out_degree = 0;
-        send_count = 1;
-        recv_count = 1;
-    } else if (comm.rank() == 1) {
-        in_degree  = 0;
-        out_degree = 1;
-        out_ranks.push_back(2);
-        send_count = 1;
-        recv_count = 1;
-    } else if (comm.rank() == 2) {
-        in_degree  = 1;
-        out_degree = 1;
-        in_ranks.push_back(1);
-        out_ranks.push_back(3);
-        send_count = 1;
-        recv_count = 1;
-    } else if (comm.rank() == 3) {
-        in_degree  = 1;
-        out_degree = 0;
-        in_ranks.push_back(2);
-        send_count = 1;
-        recv_count = 1;
+    { // Basic form: Provide a send buffer and let KaMPIng allocate the receive buffer.
+        auto output = comm.allgather(send_buf(input));
+        print_result_on_root(output, comm);
     }
-    MPI_Dist_graph_create_adjacent(
-        comm.mpi_communicator(),
-        in_degree,
-        in_ranks.data(),
-        MPI_UNWEIGHTED,
-        out_degree,
-        out_ranks.data(),
-        MPI_UNWEIGHTED,
-        MPI_INFO_NULL,
-        false,
-        &mpi_graph_comm
-    );
 
-    MPI_Neighbor_alltoall(input.data(), send_count, MPI_INT, recv_buf.data(), recv_count, MPI_INT, mpi_graph_comm);
+    print_on_root("------", comm);
+
+    { // We can also send only parts of the input and specify an explicit receive buffer.
+        std::vector<int> output;
+
+        // this can also be achieved with `kamping::Span`
+        comm.allgather(send_buf(Span(input.begin(), 2)), recv_buf<resize_to_fit>(output));
+        print_result_on_root(output, comm);
+        return 0;
+    }
 }
