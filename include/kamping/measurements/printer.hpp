@@ -80,6 +80,8 @@ public:
     /// additional configuration info.
     ///
     /// @param outstream Outstream on which the content is printed.
+    /// @param config_info Additional configuration info (vector of key-value pairs), which will be printed as a
+    /// "config" - dict by the printer.
     SimpleJsonPrinter(std::ostream& outstream, std::vector<std::pair<std::string, std::string>> config_info)
         : _outstream{outstream},
           _interal_printer(_outstream),
@@ -148,7 +150,8 @@ private:
                 }
                 is_first_outer = false;
                 _outstream << std::string(indentation + 2 * indentation_per_level, ' ') << "\"" << get_string(op)
-                           << "\"" << ": [";
+                           << "\""
+                           << ": [";
                 bool is_first = true;
                 for (auto const& data_item: data) {
                     if (!is_first) {
