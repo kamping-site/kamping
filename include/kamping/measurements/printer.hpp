@@ -106,7 +106,7 @@ private:
     std::ostream&                             _outstream; ///< Outstream to print on.
     std::size_t                               indentation_per_level = 2u;
     internal::ScalarOrVectorPrinter<Duration> _internal_printer; ///< Internal printer able to print either a scalar or
-                                                                ///< vector of durations.
+                                                                 ///< vector of durations.
     std::vector<std::pair<std::string, std::string>> _config_info;
 
     void print_config(std::size_t indentation) {
@@ -138,8 +138,6 @@ private:
         auto name            = node.name();
         auto evaluation_data = node.aggregated_data();
         _outstream << std::string(indentation, ' ') << quote_string(name) << ": {" << std::endl;
-
-        internal::ScalarOrVectorPrinter<Duration> _internal_printer{_outstream};
         _outstream << std::string(indentation + indentation_per_level, ' ') << quote_string("statistics") << ": {"
                    << std::endl;
         if (!evaluation_data.empty()) {
@@ -150,7 +148,8 @@ private:
                 }
                 is_first_outer = false;
                 _outstream << std::string(indentation + 2 * indentation_per_level, ' ') << "\"" << get_string(op)
-                           << "\"" << ": [";
+                           << "\""
+                           << ": [";
                 bool is_first = true;
                 for (auto const& data_item: data) {
                     if (!is_first) {
