@@ -212,7 +212,7 @@ if (KAMPING_ENABLE_SERIALIZATION)
         GIT_TAG v1.3.2
         FIND_PACKAGE_ARGS NAMES cereal 1.3.2
     )
-
+    set(JUST_INSTALL_CEREAL ON)
     FetchContent_MakeAvailable(cereal)
     message(STATUS "${cereal_SOURCE_DIR}")
     if (cereal_FOUND)
