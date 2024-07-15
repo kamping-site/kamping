@@ -18,8 +18,6 @@
 #include <kamping/serialization.hpp>
 #include <mpi.h>
 
-#include "cereal/types/string.hpp"
-#include "cereal/types/unordered_map.hpp"
 #include "helpers_for_examples.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/allgather.hpp"
