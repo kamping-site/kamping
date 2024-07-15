@@ -288,11 +288,13 @@ kamping_register_mpi_test(
     FILES helpers_for_testing_mpi_test.cpp
     CORES 1 4
 )
-kamping_register_mpi_test(
-    test_serialization
-    FILES serialization_test.cpp
-    CORES 1 2 4
-)
+if (KAMPING_ENABLE_SERIALIZATION)
+    kamping_register_mpi_test(
+        test_serialization
+        FILES serialization_test.cpp
+        CORES 1 2 4
+    )
+endif ()
 kamping_register_mpi_test(
     test_flatten
     FILES utils/flatten_test.cpp

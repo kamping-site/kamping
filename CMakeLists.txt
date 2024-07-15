@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.24)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
@@ -7,10 +7,11 @@ project(
     kamping
     DESCRIPTION "An MPI wrapper which makes using MPI feel like C++"
     LANGUAGES CXX
-    VERSION 0.1.0
+    VERSION 0.1.1
 )
+include(FetchContent)
 
-if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+if (PROJECT_IS_TOP_LEVEL)
     # folder support for IDEs
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -56,9 +57,10 @@ option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
 option(KAMPING_ENABLE_ULFM "Enable User-Level Failure-Mitigation (ULFM)" OFF)
+option(KAMPING_ENABLE_SERIALIZATION "Enable support for serialization (requires Cereal)" ON)
 
 # Enable compilation with ccache. Defaults to ON if this is the main project.
-if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+if (PROJECT_IS_TOP_LEVEL)
     option(KAMPING_USE_CCACHE "Globally enable ccache." ON)
 else ()
     option(KAMPING_USE_CCACHE "Globally enable ccache." OFF)
@@ -203,17 +205,33 @@ add_library(pfr INTERFACE)
 target_include_directories(pfr SYSTEM INTERFACE extern/pfr/include)
 target_link_libraries(kamping_base INTERFACE pfr)
 
-add_library(cereal INTERFACE)
-add_library(cereal::cereal ALIAS cereal)
-target_include_directories(cereal SYSTEM INTERFACE extern/cereal/include)
-target_compile_features(cereal INTERFACE cxx_std_11)
-target_link_libraries(kamping_base INTERFACE cereal)
+if (KAMPING_ENABLE_SERIALIZATION)
+    FetchContent_Declare(
+        cereal
+        GIT_REPOSITORY https://github.com/USCiLab/cereal
+        GIT_TAG v1.3.2
+        FIND_PACKAGE_ARGS NAMES cereal 1.3.2
+    )
+
+    FetchContent_MakeAvailable(cereal)
+    message(STATUS "${cereal_SOURCE_DIR}")
+    if (cereal_FOUND)
+        message(STATUS "Found cereal: ${cereal_DIR}")
+    else ()
+        message(STATUS "Cereal: building from source.")
+    endif ()
+    target_link_libraries(kamping_base INTERFACE cereal::cereal)
+    message(STATUS "Serialization: enabled")
+else ()
+    target_compile_definitions(kamping_base INTERFACE KAMPING_DISABLE_SERIALIZATION)
+    message(STATUS "Serialization: disabled")
+endif ()
 
 add_library(kamping::kamping ALIAS kamping)
 
 # Testing and examples are only built if this is the main project or if KAMPING_BUILD_EXAMPLES_AND_TESTS is set (OFF by
 # default)
-if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR KAMPING_BUILD_EXAMPLES_AND_TESTS)
+if (PROJECT_IS_TOP_LEVEL OR KAMPING_BUILD_EXAMPLES_AND_TESTS)
     add_subdirectory(examples)
     add_subdirectory(tests)
 endif ()

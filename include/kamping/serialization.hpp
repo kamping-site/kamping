@@ -17,11 +17,14 @@
 
 #include <type_traits>
 
-#include "cereal/archives/binary.hpp"
+#if !defined(KAMPING_DISABLE_SERIALIZATION)
+    #include "cereal/archives/binary.hpp"
+#endif
 #include "kamping/data_buffer.hpp"
 
 namespace kamping {
 namespace internal {
+#if !defined(KAMPING_DISABLE_SERIALIZATION)
 
 /// @brief Buffer holding serialized data.
 ///
@@ -92,6 +95,7 @@ public:
         return _data.size();
     }
 };
+#endif
 
 /// @brief Tag type to identify serialization support.
 struct serialization_support_tag {};
@@ -99,10 +103,11 @@ struct serialization_support_tag {};
 /// @brief Type trait to check if a type is a serialization buffer.
 template <typename>
 constexpr bool is_serialization_buffer_v_impl = false;
-
+#if !defined(KAMPING_DISABLE_SERIALIZATION)
 /// @brief Type trait to check if a type is a serialization buffer.
 template <typename... Args>
 constexpr bool is_serialization_buffer_v_impl<SerializationBuffer<Args...>> = true;
+#endif
 
 /// @brief Type trait to check if a type is a serialization buffer.
 template <typename T>
@@ -123,7 +128,7 @@ auto deserialization_repack(BufferType buffer) {
     }
 }
 } // namespace internal
-
+#if !defined(KAMPING_DISABLE_SERIALIZATION)
 /// @brief Serializes an object using [`cereal`](https://uscilab.github.io/cereal/).
 /// @tparam Archive Type of the archive to use for serialization (see
 /// https://uscilab.github.io/cereal/serialization_archives.html). Default is `cereal::BinaryOutputArchive`.
@@ -235,5 +240,6 @@ auto as_deserializable(T&& object) {
         return internal::SerializationBuffer<void, Archive, Allocator, decltype(buffer)>(std::move(buffer));
     }
 }
+#endif
 
 } // namespace kamping
