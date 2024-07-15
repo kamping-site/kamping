@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.25)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
@@ -210,7 +210,7 @@ if (KAMPING_ENABLE_SERIALIZATION)
         cereal
         GIT_REPOSITORY https://github.com/USCiLab/cereal
         GIT_TAG v1.3.2
-        FIND_PACKAGE_ARGS NAMES cereal 1.3.2
+        SYSTEM FIND_PACKAGE_ARGS NAMES cereal 1.3.2
     )
     set(JUST_INSTALL_CEREAL ON)
     FetchContent_MakeAvailable(cereal)
