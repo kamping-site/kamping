@@ -40,7 +40,12 @@ if (PROJECT_IS_TOP_LEVEL)
     endif ()
     configure_file(${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile.in ${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile @ONLY)
 
-    add_subdirectory(cmake/Format.cmake)
+    FetchContent_Declare(
+        Format.cmake
+        GIT_REPOSITORY https://github.com/TheLartians/Format.cmake
+        GIT_TAG v1.8.1
+    )
+    FetchContent_MakeAvailable(Format.cmake)
 endif ()
 
 # Require out-of-source builds
