@@ -201,10 +201,14 @@ string(
            $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy">:60>
            $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy">:60>
 )
+FetchContent_Declare(
+    kassert
+    GIT_REPOSITORY https://github.com/kamping-site/kassert
+    GIT_TAG v0.1.0
+)
+FetchContent_MakeAvailable(kassert)
 
-add_subdirectory(extern/kassert)
-target_include_directories(kamping_base INTERFACE extern/kassert/include)
-target_link_libraries(kamping_base INTERFACE kassert)
+target_link_libraries(kamping_base INTERFACE kassert::kassert)
 
 add_library(pfr INTERFACE)
 target_include_directories(pfr SYSTEM INTERFACE extern/pfr/include)
