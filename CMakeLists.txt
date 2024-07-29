@@ -210,9 +210,14 @@ FetchContent_MakeAvailable(kassert)
 
 target_link_libraries(kamping_base INTERFACE kassert::kassert)
 
-add_library(pfr INTERFACE)
-target_include_directories(pfr SYSTEM INTERFACE extern/pfr/include)
-target_link_libraries(kamping_base INTERFACE pfr)
+FetchContent_Declare(
+    pfr
+    GIT_REPOSITORY https://github.com/apolukhin/pfr_non_boost
+    GIT_TAG 2.2.0
+    SYSTEM
+)
+FetchContent_MakeAvailable(pfr)
+target_link_libraries(kamping_base INTERFACE Boost::pfr)
 
 if (KAMPING_ENABLE_SERIALIZATION)
     FetchContent_Declare(
