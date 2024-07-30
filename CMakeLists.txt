@@ -4,8 +4,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # Project setup
 project(
-    kamping
-    DESCRIPTION "An MPI wrapper which makes using MPI feel like C++"
+    KaMPIng
+    DESCRIPTION "(Near) zero-overhead C++ MPI bindings."
     LANGUAGES CXX
     VERSION 0.1.1
 )
@@ -21,24 +21,37 @@ if (PROJECT_IS_TOP_LEVEL)
     # find Doxygen
     find_package(Doxygen)
     if (DOXYGEN_FOUND)
-        if (DOXYGEN_VERSION VERSION_LESS "1.9.2")
+        if (DOXYGEN_VERSION VERSION_LESS "1.10.0")
             message(
                 WARNING
-                    "Doxygen must be version 1.9.2 or newer. Documentation may not be displayed correctly and CI may "
+                    "Doxygen must be version 1.10.0 or newer. Documentation may not be displayed correctly and CI may "
                     "not pass even if checks pass locally."
             )
         endif ()
-        add_custom_target(
-            docs
-            COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/docs/Doxyfile
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-            COMMENT "Generating Documentation"
-            VERBATIM
+        set(DOXYGEN_PROJECT_LOGO "docs/images/icon.svg")
+        set(DOXYGEN_IMAGE_PATH "docs/images")
+        set(DOXYGEN_EXAMPLE_PATH docs examples)
+        set(DOXYGEN_PREDEFINED KAMPING_DOXYGEN_ONLY)
+        set(DOXYGEN_GENERATE_TODOLIST NO)
+        set(DOXYGEN_EXTRACT_STATIC YES)
+        set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
+        set(DOXYGEN_RECURSIVE YES)
+        set(DOXYGEN_STRIP_CODE_COMMENTS NO)
+        set(DOXYGEN_GENERATE_LATEX NO)
+        set(DOXYGEN_TAB_SIZE 2)
+        set(DOXYGEN_ENABLED_SECTIONS KAMPING_MAIN_PAGE)
+        set(DOXYGEN_FILE_PATTERNS *.cpp *.hpp *.dox *.md)
+        set(DOXYGEN_WARN_AS_ERROR FAIL_ON_WARNINGS)
+
+        doxygen_add_docs(
+            docs docs/ include/
+            # COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/docs/Doxyfile WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+            COMMENT "Generating Documentation" # CONFIG_FILE ${PROJECT_SOURCE_DIR}/docs/Doxyfile # VERBATIM
         )
     else ()
         message(STATUS "Doxygen not found, not building docs")
     endif ()
-    configure_file(${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile.in ${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile @ONLY)
+    # configure_file(${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile.in ${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile @ONLY)
 
     FetchContent_Declare(
         Format.cmake
@@ -210,6 +223,7 @@ FetchContent_MakeAvailable(kassert)
 
 target_link_libraries(kamping_base INTERFACE kassert::kassert)
 
+# TODO: make this dependency optional
 FetchContent_Declare(
     pfr
     GIT_REPOSITORY https://github.com/apolukhin/pfr_non_boost
