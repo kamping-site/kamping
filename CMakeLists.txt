@@ -18,39 +18,7 @@ if (PROJECT_IS_TOP_LEVEL)
     # this has to be enabled in the main CMakeLists file
     include(CTest)
 
-    # find Doxygen
-    find_package(Doxygen)
-    if (DOXYGEN_FOUND)
-        if (DOXYGEN_VERSION VERSION_LESS "1.10.0")
-            message(
-                WARNING
-                    "Doxygen must be version 1.10.0 or newer. Documentation may not be displayed correctly and CI may "
-                    "not pass even if checks pass locally."
-            )
-        endif ()
-        set(DOXYGEN_PROJECT_LOGO "docs/images/icon.svg")
-        set(DOXYGEN_IMAGE_PATH "docs/images")
-        set(DOXYGEN_EXAMPLE_PATH docs examples)
-        set(DOXYGEN_PREDEFINED KAMPING_DOXYGEN_ONLY)
-        set(DOXYGEN_GENERATE_TODOLIST NO)
-        set(DOXYGEN_EXTRACT_STATIC YES)
-        set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
-        set(DOXYGEN_RECURSIVE YES)
-        set(DOXYGEN_STRIP_CODE_COMMENTS NO)
-        set(DOXYGEN_GENERATE_LATEX NO)
-        set(DOXYGEN_TAB_SIZE 2)
-        set(DOXYGEN_ENABLED_SECTIONS KAMPING_MAIN_PAGE)
-        set(DOXYGEN_FILE_PATTERNS *.cpp *.hpp *.dox *.md)
-        set(DOXYGEN_WARN_AS_ERROR FAIL_ON_WARNINGS)
-
-        doxygen_add_docs(
-            docs docs/ include/
-            COMMENT "Generating Documentation"
-        )
-    else ()
-        message(STATUS "Doxygen not found, not building docs")
-    endif ()
-    # configure_file(${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile.in ${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile @ONLY)
+    add_subdirectory(docs)
 
     FetchContent_Declare(
         Format.cmake
