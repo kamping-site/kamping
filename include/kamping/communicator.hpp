@@ -39,9 +39,9 @@ KAMPING_MAKE_HAS_MEMBER(mpi_error_handler)
 /// Communicator is also access point to all MPI communications provided by KaMPIng.
 /// @tparam DefaultContainerType The default container type to use for containers created by KaMPIng. Defaults to
 /// std::vector.
-/// @tparam Plugins Plugins adding functionality to KaMPIng. Plugins should be classes taking a ``Communicator``
-/// template parameter and can assume that they are castable to `Communicator` from which they can
-/// call any function of `kamping::Communicator`. See `test/plugin_tests.cpp` for examples.
+/// @tparam Plugins Plugins adding functionality to KaMPIng. Plugins should be classes taking a <tt>Communicator</tt>
+/// template parameter and can assume that they are castable to <tt>Communicator</tt> from which they can
+/// call any function of <tt>kamping::Communicator</tt>. See <tt>test/plugin_tests.cpp</tt> for examples.
 template <
     template <typename...> typename DefaultContainerType = std::vector,
     template <typename, template <typename...> typename>
@@ -144,27 +144,27 @@ public:
         this->mpi_error_hook(err, "MPI_Abort");
     }
 
-    /// @brief Rank of the current MPI process in the communicator as `int`.
-    /// @return Rank of the current MPI process in the communicator as `int`.
+    /// @brief Rank of the current MPI process in the communicator as <tt>int</tt>.
+    /// @return Rank of the current MPI process in the communicator as <tt>int</tt>.
     [[nodiscard]] int rank_signed() const {
         return asserting_cast<int>(_rank);
     }
 
-    /// @brief Rank of the current MPI process in the communicator as `size_t`.
-    /// @return Rank of the current MPI process in the communicator as `size_t`.
+    /// @brief Rank of the current MPI process in the communicator as <tt>size_t</tt>.
+    /// @return Rank of the current MPI process in the communicator as <tt>size_t</tt>.
     [[nodiscard]] size_t rank() const {
         return _rank;
     }
 
-    /// @brief Number of MPI processes in this communicator as `int`.
-    /// @return Number of MPI processes in this communicator `int`.
+    /// @brief Number of MPI processes in this communicator as <tt>int</tt>.
+    /// @return Number of MPI processes in this communicator <tt>int</tt>.
     [[nodiscard]] int size_signed() const {
         return asserting_cast<int>(_size);
     }
 
-    /// @brief Number of MPI processes in this communicator as `size_t`.
+    /// @brief Number of MPI processes in this communicator as <tt>size_t</tt>.
 
-    /// @return Number of MPI processes in this communicator as `size_t`.
+    /// @return Number of MPI processes in this communicator as <tt>size_t</tt>.
     [[nodiscard]] size_t size() const {
         return _size;
     }
@@ -234,14 +234,14 @@ public:
         _root = new_root;
     }
 
-    /// @brief Default root for MPI operations that require a root as `size_t`.
-    /// @return Default root for MPI operations that require a root as `size_t`.
+    /// @brief Default root for MPI operations that require a root as <tt>size_t</tt>.
+    /// @return Default root for MPI operations that require a root as <tt>size_t</tt>.
     [[nodiscard]] size_t root() const {
         return _root;
     }
 
-    /// @brief Default root for MPI operations that require a root as `int`.
-    /// @return Default root for MPI operations that require a root as `int`.
+    /// @brief Default root for MPI operations that require a root as <tt>int</tt>.
+    /// @return Default root for MPI operations that require a root as <tt>int</tt>.
     [[nodiscard]] int root_signed() const {
         return asserting_cast<int>(_root);
     }
@@ -452,7 +452,7 @@ public:
         }
     }
 
-    /// @brief Default MPI error callback. Depending on `KASSERT_EXCEPTION_MODE` either throws a \ref
+    /// @brief Default MPI error callback. Depending on <tt>KASSERT_EXCEPTION_MODE</tt> either throws a \ref
     /// MpiErrorException if \c error_code != \c MPI_SUCCESS or fails an assertion.
     void mpi_error_default_handler(int const error_code, std::string const& function_name) const {
         THROWING_KASSERT_SPECIFIED(
