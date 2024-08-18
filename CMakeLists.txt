@@ -45,8 +45,7 @@ if (PROJECT_IS_TOP_LEVEL)
 
         doxygen_add_docs(
             docs docs/ include/
-            # COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/docs/Doxyfile WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-            COMMENT "Generating Documentation" # CONFIG_FILE ${PROJECT_SOURCE_DIR}/docs/Doxyfile # VERBATIM
+            COMMENT "Generating Documentation"
         )
     else ()
         message(STATUS "Doxygen not found, not building docs")
