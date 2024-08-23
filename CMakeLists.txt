@@ -5,7 +5,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 # Project setup
 project(
     KaMPIng
-    DESCRIPTION "(Near) zero-overhead C++ MPI bindings."
+    DESCRIPTION "Flexible and (near) zero-overhead C++ bindings for MPI"
     LANGUAGES CXX
     VERSION 0.1.1
 )
