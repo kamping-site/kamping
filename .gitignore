@@ -651,5 +651,3 @@ docs/html/**
 # clangd config file
 .clangd
 
-# this file will be generated
-docs/Doxyfile

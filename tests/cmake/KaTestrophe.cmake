@@ -1,6 +1,11 @@
 if (NOT DEFINED KATESTROPHE_INCLUDED)
     set(KATESTROPHE_INCLUDED TRUE)
-    add_subdirectory("${PROJECT_SOURCE_DIR}/extern/googletest" "extern/googletest")
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest
+        GIT_TAG v1.14.0
+    )
+    FetchContent_MakeAvailable(googletest)
 
     include(MPIGoogleTest)
 

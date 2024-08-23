@@ -4,8 +4,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # Project setup
 project(
-    kamping
-    DESCRIPTION "An MPI wrapper which makes using MPI feel like C++"
+    KaMPIng
+    DESCRIPTION "Flexible and (near) zero-overhead C++ bindings for MPI"
     LANGUAGES CXX
     VERSION 0.1.1
 )
@@ -18,29 +18,14 @@ if (PROJECT_IS_TOP_LEVEL)
     # this has to be enabled in the main CMakeLists file
     include(CTest)
 
-    # find Doxygen
-    find_package(Doxygen)
-    if (DOXYGEN_FOUND)
-        if (DOXYGEN_VERSION VERSION_LESS "1.9.2")
-            message(
-                WARNING
-                    "Doxygen must be version 1.9.2 or newer. Documentation may not be displayed correctly and CI may "
-                    "not pass even if checks pass locally."
-            )
-        endif ()
-        add_custom_target(
-            docs
-            COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_SOURCE_DIR}/docs/Doxyfile
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-            COMMENT "Generating Documentation"
-            VERBATIM
-        )
-    else ()
-        message(STATUS "Doxygen not found, not building docs")
-    endif ()
-    configure_file(${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile.in ${CMAKE_CURRENT_LIST_DIR}/docs/Doxyfile @ONLY)
+    add_subdirectory(docs)
 
-    add_subdirectory(cmake/Format.cmake)
+    FetchContent_Declare(
+        Format.cmake
+        GIT_REPOSITORY https://github.com/TheLartians/Format.cmake
+        GIT_TAG v1.8.1
+    )
+    FetchContent_MakeAvailable(Format.cmake)
 endif ()
 
 # Require out-of-source builds
@@ -196,14 +181,24 @@ string(
            $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy">:60>
            $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy">:60>
 )
+FetchContent_Declare(
+    kassert
+    GIT_REPOSITORY https://github.com/kamping-site/kassert
+    GIT_TAG v0.1.0
+)
+FetchContent_MakeAvailable(kassert)
 
-add_subdirectory(extern/kassert)
-target_include_directories(kamping_base INTERFACE extern/kassert/include)
-target_link_libraries(kamping_base INTERFACE kassert)
+target_link_libraries(kamping_base INTERFACE kassert::kassert)
 
-add_library(pfr INTERFACE)
-target_include_directories(pfr SYSTEM INTERFACE extern/pfr/include)
-target_link_libraries(kamping_base INTERFACE pfr)
+# TODO: make this dependency optional
+FetchContent_Declare(
+    pfr
+    GIT_REPOSITORY https://github.com/apolukhin/pfr_non_boost
+    GIT_TAG 2.2.0
+    SYSTEM
+)
+FetchContent_MakeAvailable(pfr)
+target_link_libraries(kamping_base INTERFACE Boost::pfr)
 
 if (KAMPING_ENABLE_SERIALIZATION)
     FetchContent_Declare(
