@@ -43,6 +43,7 @@ option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
 option(KAMPING_ENABLE_ULFM "Enable User-Level Failure-Mitigation (ULFM)" OFF)
 option(KAMPING_ENABLE_SERIALIZATION "Enable support for serialization (requires Cereal)" ON)
+option(KAMPING_ENABLE_REFLECTION "Enable support for reflecting struct members (requires Boost.PFR)" ON)
 
 # Enable compilation with ccache. Defaults to ON if this is the main project.
 if (PROJECT_IS_TOP_LEVEL)
@@ -197,8 +198,12 @@ FetchContent_Declare(
     GIT_TAG 2.2.0
     SYSTEM
 )
-FetchContent_MakeAvailable(pfr)
-target_link_libraries(kamping_base INTERFACE Boost::pfr)
+
+if (KAMPING_ENABLE_REFLECTION)
+    FetchContent_MakeAvailable(pfr)
+    target_link_libraries(kamping_base INTERFACE Boost::pfr)
+    target_compile_definitions(kamping_base INTERFACE KAMPING_ENABLE_REFLECTION)
+endif ()
 
 if (KAMPING_ENABLE_SERIALIZATION)
     FetchContent_Declare(

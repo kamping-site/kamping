@@ -20,7 +20,9 @@
 
 #include <kassert/kassert.hpp>
 #include <mpi.h>
-#include <pfr.hpp>
+#ifdef KAMPING_ENABLE_REFLECTION
+    #include <pfr.hpp>
+#endif
 
 #include "kamping/builtin_types.hpp"
 #include "kamping/environment.hpp"
@@ -90,11 +92,17 @@ struct byte_serialized : contiguous_type<std::byte, sizeof(T)> {};
 /// @see https://apolukhin.github.io/pfr_non_boost/pfr/is_reflectable.html for details
 template <typename T>
 struct struct_type {
+#ifdef KAMPING_ENABLE_REFLECTION
     static_assert(
         internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value
             || pfr::is_implicitly_reflectable<T, kamping_tag>::value,
         "Type must be a std::pair, std::tuple or reflectable"
     );
+#else
+    static_assert(
+        internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value, "Type must be a std::pair or std::tuple"
+    );
+#endif
     /// @brief The category of the type.
     static constexpr TypeCategory category = TypeCategory::struct_like;
     /// @brief Whether the type has to be committed before it can be used in MPI calls.
@@ -342,7 +350,12 @@ void for_each_field(T& t, F&& f) {
     if constexpr (internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value) {
         for_each_tuple_field(t, std::forward<F>(f));
     } else {
+#ifdef KAMPING_ENABLE_REFLECTION
         pfr::for_each_field(t, std::forward<F>(f));
+#else
+        // should not happen
+        static_assert(internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value);
+#endif
     }
 }
 
@@ -356,7 +369,15 @@ constexpr size_t tuple_size = [] {
     } else if constexpr (internal::is_std_tuple<T>::value) {
         return std::tuple_size_v<T>;
     } else {
+#ifdef KAMPING_ENABLE_REFLECTION
         return pfr::tuple_size_v<T>;
+#else
+        if constexpr (std::is_arithmetic_v<T>) {
+            return 1;
+        } else {
+            return std::tuple_size_v<T>;
+        }
+#endif
     }
 }();
 } // namespace internal
