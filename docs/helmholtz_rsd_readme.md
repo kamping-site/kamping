@@ -83,7 +83,7 @@ comm.recv<int>(recv_buf<kamping::no_resize>(v_out), recv_count(i_know_already_kn
 
 Dive into the [documentation](https://kamping-site.github.io/kamping/) or [tests](https://github.com/kamping-site/kamping/tree/main/tests) to find out more ...
 
-### (Near) zero overhead - for development and performance :chart_with_upwards_trend:
+### (Near) zero overhead - for development and performance
 Using template-metaprogramming, KaMPIng only generates the code paths required for computing parameters not provided by the user. 
 The following shows a complete implementation of distributed sample sort with KaMPIng. 
 
