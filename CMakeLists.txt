@@ -44,7 +44,7 @@ option(KAMPING_TESTS_DISCOVER OFF)
 option(KAMPING_ENABLE_ULFM "Enable User-Level Failure-Mitigation (ULFM)" OFF)
 option(KAMPING_ENABLE_SERIALIZATION "Enable support for serialization (requires Cereal)" ON)
 option(KAMPING_ENABLE_REFLECTION "Enable support for reflecting struct members (requires Boost.PFR)" ON)
-option(KAMPING_REFLECTION_USE_BOOST "Use Boost.PFR from system installed Boost" ON)
+option(KAMPING_REFLECTION_USE_BOOST "Use Boost.PFR from system installed Boost" OFF)
 
 # Enable compilation with ccache. Defaults to ON if this is the main project.
 if (PROJECT_IS_TOP_LEVEL)
