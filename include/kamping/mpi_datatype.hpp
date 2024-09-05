@@ -21,7 +21,7 @@
 #include <kassert/kassert.hpp>
 #include <mpi.h>
 #ifdef KAMPING_ENABLE_REFLECTION
-    #include <pfr.hpp>
+    #include <boost/pfr.hpp>
 #endif
 
 #include "kamping/builtin_types.hpp"
@@ -86,16 +86,18 @@ struct byte_serialized : contiguous_type<std::byte, sizeof(T)> {};
 /// @tparam T The type to construct the MPI_Datatype for.
 ///
 /// This requires that \p T is a `std::pair`, `std::tuple` or a type that is reflectable with
-/// [pfr](https://github.com/apolukhin/pfr_non_boost). If you do not agree with PFR's decision if a type is implicitly
+/// [pfr](https://github.com/boostorg/pfr). If you do not agree with PFR's decision if a type is implicitly
 /// reflectable, you can override it by providing a specialization of \c pfr::is_reflectable with the tag \ref
 /// kamping_tag.
-/// @see https://apolukhin.github.io/pfr_non_boost/pfr/is_reflectable.html for details
+/// @see https://apolukhin.github.io/pfr_non_boost/pfr/is_reflectable.html
+/// https://www.boost.org/doc/libs/master/doc/html/reference_section_of_pfr.htmlfor details
+/// @note Reflection support for arbitrary struct types is only suppported when KaMPIng is compiled with PFR.
 template <typename T>
 struct struct_type {
 #ifdef KAMPING_ENABLE_REFLECTION
     static_assert(
         internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value
-            || pfr::is_implicitly_reflectable<T, kamping_tag>::value,
+            || boost::pfr::is_implicitly_reflectable<T, kamping_tag>::value,
         "Type must be a std::pair, std::tuple or reflectable"
     );
 #else
@@ -340,8 +342,8 @@ void for_each_tuple_field(T& t, F&& f) {
 }
 
 /// @brief Applies functor \p f to each field of the tuple-like type \p t.
-/// This works for `std::pair` and `std::tuple` as well as types that are reflectable with
-/// [pfr](https://github.com/apolukhin/pfr_non_boost).
+/// This works for `std::pair` and `std::tuple`. If KaMPIng's reflection support is enabled, this also works with types
+/// that are reflectable with [pfr](https://github.com/boostorg/pfr).
 ///
 /// \p f should be a callable that takes a reference to the field and
 /// its index.
@@ -351,7 +353,7 @@ void for_each_field(T& t, F&& f) {
         for_each_tuple_field(t, std::forward<F>(f));
     } else {
 #ifdef KAMPING_ENABLE_REFLECTION
-        pfr::for_each_field(t, std::forward<F>(f));
+        boost::pfr::for_each_field(t, std::forward<F>(f));
 #else
         // should not happen
         static_assert(internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value);
@@ -360,8 +362,9 @@ void for_each_field(T& t, F&& f) {
 }
 
 /// @brief The number of elements in a tuple-like type.
-/// This works for `std::pair` and `std::tuple` as well as types that are reflectable with
-/// [pfr](https://github.com/apolukhin/pfr_non_boost).
+/// This works for `std::pair` and `std::tuple`.
+/// If KaMPIng's reflection support is enabled, this also works with types that are reflectable with
+/// [pfr](https://github.com/boostorg/pfr).
 template <typename T>
 constexpr size_t tuple_size = [] {
     if constexpr (internal::is_std_pair<T>::value) {
@@ -370,7 +373,7 @@ constexpr size_t tuple_size = [] {
         return std::tuple_size_v<T>;
     } else {
 #ifdef KAMPING_ENABLE_REFLECTION
-        return pfr::tuple_size_v<T>;
+        return boost::pfr::tuple_size_v<T>;
 #else
         if constexpr (std::is_arithmetic_v<T>) {
             return 1;
