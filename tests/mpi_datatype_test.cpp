@@ -320,6 +320,7 @@ TEST(MpiDataTypeTest, byte_serialized_type_works) {
     PMPI_Type_free(&byte_serialized_type);
 }
 
+#ifdef KAMPING_ENABLE_REFLECTION
 TEST(MpiDataTypeTest, struct_type_works_with_struct) {
     struct TestStruct {
         uint8_t  a;
@@ -556,6 +557,7 @@ TEST(MpiDataTypeTest, struct_type_works_with_nested_struct) {
     EXPECT_EQ(u.nested.d, t.nested.d);
     PMPI_Type_free(&struct_type);
 }
+#endif
 
 TEST(MpiDataTypeTest, struct_type_works_with_pair) {
     MPI_Datatype resized_type = kamping::struct_type<std::pair<uint8_t, uint64_t>>::data_type();

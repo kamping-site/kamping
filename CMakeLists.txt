@@ -43,6 +43,12 @@ option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
 option(KAMPING_ENABLE_ULFM "Enable User-Level Failure-Mitigation (ULFM)" OFF)
 option(KAMPING_ENABLE_SERIALIZATION "Enable support for serialization (requires Cereal)" ON)
+option(KAMPING_ENABLE_REFLECTION "Enable support for reflecting struct members (requires Boost.PFR)" ON)
+option(
+    KAMPING_REFLECTION_USE_SYSTEM_BOOST_FOR_PFR
+    "Use Boost.PFR from system installed Boost, instead of using a standalone PFR install or building PFR from source."
+    OFF
+)
 
 # Enable compilation with ccache. Defaults to ON if this is the main project.
 if (PROJECT_IS_TOP_LEVEL)
@@ -190,22 +196,51 @@ FetchContent_MakeAvailable(kassert)
 
 target_link_libraries(kamping_base INTERFACE kassert::kassert)
 
-# TODO: make this dependency optional
 FetchContent_Declare(
     pfr
-    GIT_REPOSITORY https://github.com/apolukhin/pfr_non_boost
+    GIT_REPOSITORY https://github.com/boostorg/pfr
     GIT_TAG 2.2.0
-    SYSTEM
+    SYSTEM FIND_PACKAGE_ARGS 2.2.0
 )
-FetchContent_MakeAvailable(pfr)
-target_link_libraries(kamping_base INTERFACE Boost::pfr)
+
+if (KAMPING_ENABLE_REFLECTION)
+    if (KAMPING_REFLECTION_USE_SYSTEM_BOOST_FOR_PFR)
+        find_package(Boost 1.75 COMPONENTS headers CONFIG)
+        if (NOT Boost_FOUND)
+            message(
+                FATAL_ERROR
+                    "Boost.PFR: No compatible Boost version found. Use KAMPING_REFLECTION_USE_SYSTEM_BOOST_FOR_PFR=OFF to use standalone Boost.PFR."
+            )
+        else ()
+            message(STATUS "Found Boost ${Boost_VERSION}: ${Boost_DIR}")
+            message(STATUS "Using system Boost for Boost.PFR")
+            add_library(kamping_pfr INTERFACE)
+            # when using system installed Boost, it does not provide a PFR target, so we have to link to the headers
+            # target
+            target_link_libraries(kamping_pfr INTERFACE Boost::headers)
+            add_library(Boost::pfr ALIAS kamping_pfr)
+        endif ()
+    else ()
+        FetchContent_MakeAvailable(pfr)
+        if (pr_FOUND)
+            message(STATUS "Found Boost.PFR: ${pfr_DIR}")
+        else ()
+            message(STATUS "Boost.PFR: building from source.")
+        endif ()
+    endif ()
+    target_link_libraries(kamping_base INTERFACE Boost::pfr)
+    target_compile_definitions(kamping_base INTERFACE KAMPING_ENABLE_REFLECTION)
+    message(STATUS "Reflection: enabled")
+else ()
+    message(STATUS "Reflection: disabled")
+endif ()
 
 if (KAMPING_ENABLE_SERIALIZATION)
     FetchContent_Declare(
         cereal
         GIT_REPOSITORY https://github.com/USCiLab/cereal
         GIT_TAG v1.3.2
-        SYSTEM FIND_PACKAGE_ARGS NAMES cereal 1.3.2
+        SYSTEM FIND_PACKAGE_ARGS 1.3.2
     )
     set(JUST_INSTALL_CEREAL ON)
     FetchContent_MakeAvailable(cereal)

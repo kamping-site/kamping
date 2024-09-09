@@ -147,11 +147,18 @@ namespace internal {
 template <typename NeighborhoodRange>
 constexpr bool are_neighborhoods_weighted() {
     using NeighborType = typename NeighborhoodRange::value_type;
+#ifdef KAMPING_ENABLE_REFLECTION
     static_assert(
         kamping::internal::tuple_size<NeighborType> == 1 || kamping::internal::tuple_size<NeighborType> == 2,
         "Neighbor type has to be a scalar (in the unweighted case) or pair-like (in the weighted case) type"
     );
     return kamping::internal::tuple_size<NeighborType> == 2;
+#else
+    // If reflection is not available, we assume that the neighbor type is a pair-like type if it is not integral.
+    // This is the best we can do, because kamping::internal::tuple_size does not work with arbitrary types without
+    // reflection.
+    return !std::is_integral_v<NeighborType>;
+#endif
 }
 } // namespace internal
 
