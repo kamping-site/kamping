@@ -44,7 +44,11 @@ option(KAMPING_TESTS_DISCOVER OFF)
 option(KAMPING_ENABLE_ULFM "Enable User-Level Failure-Mitigation (ULFM)" OFF)
 option(KAMPING_ENABLE_SERIALIZATION "Enable support for serialization (requires Cereal)" ON)
 option(KAMPING_ENABLE_REFLECTION "Enable support for reflecting struct members (requires Boost.PFR)" ON)
-option(KAMPING_REFLECTION_USE_BOOST "Use Boost.PFR from system installed Boost" OFF)
+option(
+    KAMPING_REFLECTION_USE_SYSTEM_BOOST_FOR_PFR
+    "Use Boost.PFR from system installed Boost, instead of using a standalone PFR install or building PFR from source."
+    OFF
+)
 
 # Enable compilation with ccache. Defaults to ON if this is the main project.
 if (PROJECT_IS_TOP_LEVEL)
@@ -200,12 +204,12 @@ FetchContent_Declare(
 )
 
 if (KAMPING_ENABLE_REFLECTION)
-    if (KAMPING_REFLECTION_USE_BOOST)
+    if (KAMPING_REFLECTION_USE_SYSTEM_BOOST_FOR_PFR)
         find_package(Boost 1.75 COMPONENTS headers CONFIG)
         if (NOT Boost_FOUND)
             message(
                 FATAL_ERROR
-                    "Boost.PFR: No compatible Boost version found. Use KAMPING_REFLECTION_USE_BOOST=OFF to use standalone Boost.PFR."
+                    "Boost.PFR: No compatible Boost version found. Use KAMPING_REFLECTION_USE_SYSTEM_BOOST_FOR_PFR=OFF to use standalone Boost.PFR."
             )
         else ()
             message(STATUS "Found Boost ${Boost_VERSION}: ${Boost_DIR}")
