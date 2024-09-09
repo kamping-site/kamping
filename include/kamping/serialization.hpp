@@ -17,14 +17,14 @@
 
 #include <type_traits>
 
-#if !defined(KAMPING_DISABLE_SERIALIZATION)
+#ifdef KAMPING_ENABLE_SERIALIZATION
     #include "cereal/archives/binary.hpp"
 #endif
 #include "kamping/data_buffer.hpp"
 
 namespace kamping {
 namespace internal {
-#if !defined(KAMPING_DISABLE_SERIALIZATION)
+#ifdef KAMPING_ENABLE_SERIALIZATION
 
 /// @brief Buffer holding serialized data.
 ///
@@ -103,7 +103,7 @@ struct serialization_support_tag {};
 /// @brief Type trait to check if a type is a serialization buffer.
 template <typename>
 constexpr bool is_serialization_buffer_v_impl = false;
-#if !defined(KAMPING_DISABLE_SERIALIZATION)
+#ifdef KAMPING_ENABLE_SERIALIZATION
 /// @brief Type trait to check if a type is a serialization buffer.
 template <typename... Args>
 constexpr bool is_serialization_buffer_v_impl<SerializationBuffer<Args...>> = true;
@@ -128,7 +128,7 @@ auto deserialization_repack(BufferType buffer) {
     }
 }
 } // namespace internal
-#if !defined(KAMPING_DISABLE_SERIALIZATION)
+#ifdef KAMPING_ENABLE_SERIALIZATION
 /// @brief Serializes an object using [`cereal`](https://uscilab.github.io/cereal/).
 /// @tparam Archive Type of the archive to use for serialization (see
 /// https://uscilab.github.io/cereal/serialization_archives.html). Default is `cereal::BinaryOutputArchive`.
