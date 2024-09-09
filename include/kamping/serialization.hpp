@@ -103,7 +103,7 @@ struct serialization_support_tag {};
 /// @brief Type trait to check if a type is a serialization buffer.
 template <typename>
 constexpr bool is_serialization_buffer_v_impl = false;
-#if !defined(KAMPING_DISABLE_SERIALIZATION)
+#ifdef KAMPING_ENABLE_SERIALIZATION
 /// @brief Type trait to check if a type is a serialization buffer.
 template <typename... Args>
 constexpr bool is_serialization_buffer_v_impl<SerializationBuffer<Args...>> = true;
