@@ -45,7 +45,7 @@ struct ResultCategoryNotUsed {};
 /// @brief Helper for implementing the extract_* functions in \ref MPIResult. Is \c true if the passed buffer type owns
 /// its underlying storage and is an output buffer.
 template <typename Buffer>
-inline constexpr bool is_extractable = Buffer::is_owning && Buffer::is_out_buffer;
+inline constexpr bool is_extractable = Buffer::is_owning&& Buffer::is_out_buffer;
 
 /// @brief Specialization of helper for implementing the extract_* functions in \ref MPIResult. Is always \c false;
 template <>
@@ -918,12 +918,9 @@ constexpr bool return_recv_or_send_recv_buffer_only() {
     constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutBuffers>;
     if constexpr (num_caller_provided_owning_out_buffers == 0) {
         return true;
-    } else if constexpr (num_caller_provided_owning_out_buffers == 1
-                         && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::recv_buf) {
+    } else if constexpr (num_caller_provided_owning_out_buffers == 1 && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::recv_buf) {
         return true;
-    } else if constexpr (num_caller_provided_owning_out_buffers == 1
-                         && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value
-                                == ParameterType::send_recv_buf) {
+    } else if constexpr (num_caller_provided_owning_out_buffers == 1 && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::send_recv_buf) {
         return true;
     } else {
         return false;
@@ -1021,8 +1018,7 @@ struct DiscardSerializationBuffers {
         // we sometimes call this with DataBuffers and sometimes with DataBufferBuilder, so we need a case distinction
         // here.
         using ptype_entry = ParameterTypeEntry<BufferType::parameter_type>;
-        if constexpr (ptype_entry::parameter_type == internal::ParameterType::recv_buf
-                      || ptype_entry::parameter_type == internal::ParameterType::send_recv_buf) {
+        if constexpr (ptype_entry::parameter_type == internal::ParameterType::recv_buf || ptype_entry::parameter_type == internal::ParameterType::send_recv_buf) {
             if constexpr (has_data_buffer_type_member<BufferType>) {
                 return buffer_uses_serialization<typename BufferType::DataBufferType>;
             } else {

@@ -978,10 +978,10 @@ TEST(MakeMpiResultTest, pass_random_order_buffer) {
     {
         constexpr BufferType btype = BufferType::out_buffer;
         using OutParameters        = std::tuple<
-                   LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_counts, btype>,
-                   LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>,
-                   LibAllocatedContainerBasedBuffer<std::vector<std::int32_t>, ParameterType::recv_displs, btype>,
-                   LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>>;
+            LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_counts, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<std::int32_t>, ParameterType::recv_displs, btype>,
+            LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>>;
         std::tuple_element_t<0, OutParameters> recv_counts;
         std::tuple_element_t<1, OutParameters> recv_buf;
         std::tuple_element_t<2, OutParameters> recv_displs;
@@ -1008,8 +1008,8 @@ TEST(MakeMpiResultTest, pass_random_order_buffer) {
     {
         constexpr BufferType btype = BufferType::out_buffer;
         using OutParameters        = std::tuple<
-                   LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>,
-                   LibAllocatedContainerBasedBuffer<std::vector<double>, ParameterType::recv_buf, btype>>;
+            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>,
+            LibAllocatedContainerBasedBuffer<std::vector<double>, ParameterType::recv_buf, btype>>;
 
         std::tuple_element_t<0, OutParameters> recv_counts;
         std::tuple_element_t<1, OutParameters> recv_buf;
