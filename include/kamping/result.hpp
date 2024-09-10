@@ -45,7 +45,7 @@ struct ResultCategoryNotUsed {};
 /// @brief Helper for implementing the extract_* functions in \ref MPIResult. Is \c true if the passed buffer type owns
 /// its underlying storage and is an output buffer.
 template <typename Buffer>
-inline constexpr bool is_extractable = Buffer::is_owning&& Buffer::is_out_buffer;
+inline constexpr bool is_extractable = Buffer::is_owning && Buffer::is_out_buffer;
 
 /// @brief Specialization of helper for implementing the extract_* functions in \ref MPIResult. Is always \c false;
 template <>
@@ -622,6 +622,36 @@ public:
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_recv_type>(_data).extract();
     }
 
+    /// @brief Gets the \c parameter with given parameter type from the MPIResult object.
+    ///
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam ptype Parameter type of the buffer to be retrieved.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
+    /// @return Returns the underlying storage containing the requested parameter.
+    template <
+        internal::ParameterType ptype,
+        typename T                                                                = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_type_in_tuple<ptype, T>(), bool> = true>
+    auto& get() {
+        return internal::select_parameter_type_in_tuple<ptype>(_data).underlying();
+    }
+
+    /// @brief Gets the \c parameter with given parameter type from the MPIResult object.
+    ///
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam ptype Parameter type of the buffer to be retrieved.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
+    /// @return Returns the underlying storage containing the requested parameter.
+    template <
+        internal::ParameterType ptype,
+        typename T                                                                = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_type_in_tuple<ptype, T>(), bool> = true>
+    auto const& get() const {
+        return internal::select_parameter_type_in_tuple<ptype>(_data).underlying();
+    }
+
     /// @brief Get the underlying data from the i-th buffer in the result object. This method is part of the
     /// structured binding enabling machinery.
     ///
@@ -888,9 +918,12 @@ constexpr bool return_recv_or_send_recv_buffer_only() {
     constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutBuffers>;
     if constexpr (num_caller_provided_owning_out_buffers == 0) {
         return true;
-    } else if constexpr (num_caller_provided_owning_out_buffers == 1 && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::recv_buf) {
+    } else if constexpr (num_caller_provided_owning_out_buffers == 1
+                         && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::recv_buf) {
         return true;
-    } else if constexpr (num_caller_provided_owning_out_buffers == 1 && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::send_recv_buf) {
+    } else if constexpr (num_caller_provided_owning_out_buffers == 1
+                         && std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value
+                                == ParameterType::send_recv_buf) {
         return true;
     } else {
         return false;
@@ -988,7 +1021,8 @@ struct DiscardSerializationBuffers {
         // we sometimes call this with DataBuffers and sometimes with DataBufferBuilder, so we need a case distinction
         // here.
         using ptype_entry = ParameterTypeEntry<BufferType::parameter_type>;
-        if constexpr (ptype_entry::parameter_type == internal::ParameterType::recv_buf || ptype_entry::parameter_type == internal::ParameterType::send_recv_buf) {
+        if constexpr (ptype_entry::parameter_type == internal::ParameterType::recv_buf
+                      || ptype_entry::parameter_type == internal::ParameterType::send_recv_buf) {
             if constexpr (has_data_buffer_type_member<BufferType>) {
                 return buffer_uses_serialization<typename BufferType::DataBufferType>;
             } else {

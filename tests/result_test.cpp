@@ -70,9 +70,25 @@ void test_recv_buffer_in_MPIResult() {
         }
     }
     {
+        MPIResult            mpi_result{std::make_tuple(construct_recv_buffer())};
+        UnderlyingContainer& underlying_container =
+            mpi_result.template get<decltype(construct_recv_buffer())::parameter_type>();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
         MPIResult const mpi_result{std::make_tuple(construct_recv_buffer())};
         mpi_result.get_recv_buffer();
         UnderlyingContainer const& underlying_container = mpi_result.get_recv_buffer();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const            mpi_result{std::make_tuple(construct_recv_buffer())};
+        UnderlyingContainer const& underlying_container =
+            mpi_result.template get<decltype(construct_recv_buffer())::parameter_type>();
         for (size_t i = 0; i < 10; ++i) {
             EXPECT_EQ(underlying_container[i], i);
         }
@@ -111,8 +127,24 @@ void test_recv_counts_in_MPIResult() {
         }
     }
     {
+        MPIResult            mpi_result{std::make_tuple(construct_recv_counts())};
+        UnderlyingContainer& underlying_container =
+            mpi_result.template get<decltype(construct_recv_counts())::parameter_type>();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
         MPIResult const            mpi_result{std::make_tuple(construct_recv_counts())};
         UnderlyingContainer const& underlying_container = mpi_result.get_recv_counts();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const            mpi_result{std::make_tuple(construct_recv_counts())};
+        UnderlyingContainer const& underlying_container =
+            mpi_result.template get<decltype(construct_recv_counts())::parameter_type>();
         for (size_t i = 0; i < 10; ++i) {
             EXPECT_EQ(underlying_container[i], i);
         }
@@ -151,8 +183,24 @@ void test_recv_displs_in_MPIResult() {
         }
     }
     {
+        MPIResult            mpi_result{std::make_tuple(construct_recv_displs())};
+        UnderlyingContainer& underlying_container =
+            mpi_result.template get<decltype(construct_recv_displs())::parameter_type>();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
         MPIResult const            mpi_result{std::make_tuple(construct_recv_displs())};
         UnderlyingContainer const& underlying_container = mpi_result.get_recv_displs();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const            mpi_result{std::make_tuple(construct_recv_displs())};
+        UnderlyingContainer const& underlying_container =
+            mpi_result.template get<decltype(construct_recv_displs())::parameter_type>();
         for (size_t i = 0; i < 10; ++i) {
             EXPECT_EQ(underlying_container[i], i);
         }
@@ -191,8 +239,24 @@ void test_send_counts_in_MPIResult() {
         }
     }
     {
+        MPIResult            mpi_result{std::make_tuple(construct_send_counts())};
+        UnderlyingContainer& underlying_container =
+            mpi_result.template get<decltype(construct_send_counts())::parameter_type>();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
         MPIResult const            mpi_result{std::make_tuple(construct_send_counts())};
         UnderlyingContainer const& underlying_container = mpi_result.get_send_counts();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const            mpi_result{std::make_tuple(construct_send_counts())};
+        UnderlyingContainer const& underlying_container =
+            mpi_result.template get<decltype(construct_send_counts())::parameter_type>();
         for (size_t i = 0; i < 10; ++i) {
             EXPECT_EQ(underlying_container[i], i);
         }
@@ -231,8 +295,31 @@ void test_send_displs_in_MPIResult() {
         }
     }
     {
+        MPIResult            mpi_result{std::make_tuple(construct_send_displs())};
+        UnderlyingContainer& underlying_container = mpi_result.get_send_displs();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult            mpi_result{std::make_tuple(construct_send_displs())};
+        UnderlyingContainer& underlying_container =
+            mpi_result.template get<decltype(construct_send_displs())::parameter_type>();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
         MPIResult const            mpi_result{std::make_tuple(construct_send_displs())};
         UnderlyingContainer const& underlying_container = mpi_result.get_send_displs();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const            mpi_result{std::make_tuple(construct_send_displs())};
+        UnderlyingContainer const& underlying_container =
+            mpi_result.template get<decltype(construct_send_displs())::parameter_type>();
         for (size_t i = 0; i < 10; ++i) {
             EXPECT_EQ(underlying_container[i], i);
         }
@@ -320,8 +407,18 @@ TEST(MpiResultTest, extract_send_count) {
         EXPECT_EQ(send_count, 42);
     }
     {
+        MPIResult mpi_result{std::make_tuple(construct_send_count())};
+        int&      send_count = mpi_result.template get<decltype(construct_send_count())::parameter_type>();
+        EXPECT_EQ(send_count, 42);
+    }
+    {
         MPIResult const mpi_result{std::make_tuple(construct_send_count())};
         int const&      send_count = mpi_result.get_send_count();
+        EXPECT_EQ(send_count, 42);
+    }
+    {
+        MPIResult const mpi_result{std::make_tuple(construct_send_count())};
+        int const&      send_count = mpi_result.template get<decltype(construct_send_count())::parameter_type>();
         EXPECT_EQ(send_count, 42);
     }
 }
@@ -346,8 +443,18 @@ TEST(MpiResultTest, extract_recv_count) {
         EXPECT_EQ(recv_count, 42);
     }
     {
+        MPIResult mpi_result{std::make_tuple(construct_recv_count())};
+        int&      recv_count = mpi_result.template get<decltype(construct_recv_count())::parameter_type>();
+        EXPECT_EQ(recv_count, 42);
+    }
+    {
         MPIResult const mpi_result{std::make_tuple(construct_recv_count())};
         int const&      recv_count = mpi_result.get_recv_count();
+        EXPECT_EQ(recv_count, 42);
+    }
+    {
+        MPIResult const mpi_result{std::make_tuple(construct_recv_count())};
+        int const&      recv_count = mpi_result.template get<decltype(construct_recv_count())::parameter_type>();
         EXPECT_EQ(recv_count, 42);
     }
 }
@@ -370,8 +477,18 @@ TEST(MpiResultTest, extract_send_recv_count) {
         EXPECT_EQ(send_recv_count, 42);
     }
     {
+        MPIResult mpi_result{std::make_tuple(construct_send_recv_count())};
+        int&      send_recv_count = mpi_result.template get<decltype(construct_send_recv_count())::parameter_type>();
+        EXPECT_EQ(send_recv_count, 42);
+    }
+    {
         MPIResult const mpi_result{std::make_tuple(construct_send_recv_count())};
         int const&      send_recv_count = mpi_result.get_send_recv_count();
+        EXPECT_EQ(send_recv_count, 42);
+    }
+    {
+        MPIResult const mpi_result{std::make_tuple(construct_send_recv_count())};
+        int const& send_recv_count = mpi_result.template get<decltype(construct_send_recv_count())::parameter_type>();
         EXPECT_EQ(send_recv_count, 42);
     }
 }
@@ -394,8 +511,18 @@ TEST(MpiResultTest, extract_send_type) {
         EXPECT_EQ(send_type, MPI_DOUBLE);
     }
     {
+        MPIResult     mpi_result{std::make_tuple(construct_send_type())};
+        MPI_Datatype& send_type = mpi_result.template get<decltype(construct_send_type())::parameter_type>();
+        EXPECT_EQ(send_type, MPI_DOUBLE);
+    }
+    {
         MPIResult const     mpi_result{std::make_tuple(construct_send_type())};
         MPI_Datatype const& send_type = mpi_result.get_send_type();
+        EXPECT_EQ(send_type, MPI_DOUBLE);
+    }
+    {
+        MPIResult const     mpi_result{std::make_tuple(construct_send_type())};
+        MPI_Datatype const& send_type = mpi_result.template get<decltype(construct_send_type())::parameter_type>();
         EXPECT_EQ(send_type, MPI_DOUBLE);
     }
 }
@@ -418,8 +545,19 @@ TEST(MpiResultTest, extract_recv_type) {
         EXPECT_EQ(recv_type, MPI_CHAR);
     }
     {
+        MPIResult     mpi_result{std::tuple(construct_recv_type())};
+        MPI_Datatype& recv_type = mpi_result.template get<decltype(construct_recv_type())::parameter_type>();
+        EXPECT_EQ(recv_type, MPI_CHAR);
+    }
+
+    {
         MPIResult const     mpi_result{std::tuple(construct_recv_type())};
         MPI_Datatype const& recv_type = mpi_result.get_recv_type();
+        EXPECT_EQ(recv_type, MPI_CHAR);
+    }
+    {
+        MPIResult const     mpi_result{std::tuple(construct_recv_type())};
+        MPI_Datatype const& recv_type = mpi_result.template get<decltype(construct_recv_type())::parameter_type>();
         EXPECT_EQ(recv_type, MPI_CHAR);
     }
 }
@@ -442,8 +580,18 @@ TEST(MpiResultTest, extract_send_recv_type) {
         EXPECT_EQ(recv_type, MPI_CHAR);
     }
     {
+        MPIResult     mpi_result{std::tuple(construct_send_recv_type())};
+        MPI_Datatype& recv_type = mpi_result.template get<decltype(construct_send_recv_type())::parameter_type>();
+        EXPECT_EQ(recv_type, MPI_CHAR);
+    }
+    {
         MPIResult const     mpi_result{std::tuple(construct_send_recv_type())};
         MPI_Datatype const& recv_type = mpi_result.get_send_recv_type();
+        EXPECT_EQ(recv_type, MPI_CHAR);
+    }
+    {
+        MPIResult const     mpi_result{std::tuple(construct_send_recv_type())};
+        MPI_Datatype const& recv_type = mpi_result.template get<decltype(construct_send_recv_type())::parameter_type>();
         EXPECT_EQ(recv_type, MPI_CHAR);
     }
 }
@@ -468,8 +616,18 @@ TEST(MpiResultTest, extract_status_basics) {
         EXPECT_EQ(underlying_status.tag(), 42);
     }
     {
+        MPIResult mpi_result{std::make_tuple(construct_status())};
+        auto&     underlying_status = mpi_result.template get<decltype(construct_status())::parameter_type>();
+        EXPECT_EQ(underlying_status.tag(), 42);
+    }
+    {
         MPIResult const mpi_result{std::make_tuple(construct_status())};
         auto const&     underlying_status = mpi_result.get_status();
+        EXPECT_EQ(underlying_status.tag(), 42);
+    }
+    {
+        MPIResult const mpi_result{std::make_tuple(construct_status())};
+        auto const&     underlying_status = mpi_result.template get<decltype(construct_status())::parameter_type>();
         EXPECT_EQ(underlying_status.tag(), 42);
     }
 }
@@ -820,10 +978,10 @@ TEST(MakeMpiResultTest, pass_random_order_buffer) {
     {
         constexpr BufferType btype = BufferType::out_buffer;
         using OutParameters        = std::tuple<
-            LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_counts, btype>,
-            LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>,
-            LibAllocatedContainerBasedBuffer<std::vector<std::int32_t>, ParameterType::recv_displs, btype>,
-            LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>>;
+                   LibAllocatedContainerBasedBuffer<std::vector<std::int8_t>, ParameterType::recv_counts, btype>,
+                   LibAllocatedContainerBasedBuffer<std::vector<char>, ParameterType::recv_buf, btype>,
+                   LibAllocatedContainerBasedBuffer<std::vector<std::int32_t>, ParameterType::recv_displs, btype>,
+                   LibAllocatedSingleElementBuffer<Status, ParameterType::status, btype>>;
         std::tuple_element_t<0, OutParameters> recv_counts;
         std::tuple_element_t<1, OutParameters> recv_buf;
         std::tuple_element_t<2, OutParameters> recv_displs;
@@ -850,8 +1008,8 @@ TEST(MakeMpiResultTest, pass_random_order_buffer) {
     {
         constexpr BufferType btype = BufferType::out_buffer;
         using OutParameters        = std::tuple<
-            LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>,
-            LibAllocatedContainerBasedBuffer<std::vector<double>, ParameterType::recv_buf, btype>>;
+                   LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_counts, btype>,
+                   LibAllocatedContainerBasedBuffer<std::vector<double>, ParameterType::recv_buf, btype>>;
 
         std::tuple_element_t<0, OutParameters> recv_counts;
         std::tuple_element_t<1, OutParameters> recv_buf;
