@@ -622,6 +622,36 @@ public:
         return internal::select_parameter_type_in_tuple<internal::ParameterType::send_recv_type>(_data).extract();
     }
 
+    /// @brief Gets the \c parameter with given parameter type from the MPIResult object.
+    ///
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam ptype Parameter type of the buffer to be retrieved.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
+    /// @return Returns the underlying storage containing the requested parameter.
+    template <
+        internal::ParameterType ptype,
+        typename T                                                                = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_type_in_tuple<ptype, T>(), bool> = true>
+    auto& get() {
+        return internal::select_parameter_type_in_tuple<ptype>(_data).underlying();
+    }
+
+    /// @brief Gets the \c parameter with given parameter type from the MPIResult object.
+    ///
+    /// This function is only available if the corresponding data is part of the result object.
+    /// @tparam ptype Parameter type of the buffer to be retrieved.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
+    /// @return Returns the underlying storage containing the requested parameter.
+    template <
+        internal::ParameterType ptype,
+        typename T                                                                = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_type_in_tuple<ptype, T>(), bool> = true>
+    auto const& get() const {
+        return internal::select_parameter_type_in_tuple<ptype>(_data).underlying();
+    }
+
     /// @brief Get the underlying data from the i-th buffer in the result object. This method is part of the
     /// structured binding enabling machinery.
     ///
