@@ -48,9 +48,8 @@ namespace kamping {
 
 namespace internal {
 
-/// @brief Base class containing logic to eo ensure whether a buffers data has already been extracted. This only has
-/// effects if an appropiate assertion level is set.
-class ExtractionStatusBase {
+/// @brief Base class containing logic to verify whether a buffer's data has already been extracted. This only has effects if an appropiate assertion level is set.
+class Extractable {
 protected:
     /// @brief Set the extracted flag to indicate that the status stored in this buffer has been moved out.
     void set_extracted() {
@@ -82,37 +81,37 @@ protected:
 /// can not be default constructed, due to the missing implementation in the base class. Because we provide a (default)
 /// implementation for the move constructor (assignment) in the base class, the derived class can construct default
 /// implementations.
-template <bool /*has_copy_constructor*/ = false>
-class ParameterObjectBase : protected ExtractionStatusBase {
+template <bool /*enable_copy_constructor*/ = false>
+class CopyMoveEnabler {
 protected:
-    constexpr ParameterObjectBase() = default;
-    ~ParameterObjectBase()          = default;
+    constexpr CopyMoveEnabler() = default;
+    ~CopyMoveEnabler()          = default;
 
     /// @brief Copy constructor is deleted as buffers should only be moved.
-    ParameterObjectBase(ParameterObjectBase const&) = delete;
+    CopyMoveEnabler(CopyMoveEnabler const&) = delete;
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    ParameterObjectBase& operator=(ParameterObjectBase const&) = delete;
+    CopyMoveEnabler& operator=(CopyMoveEnabler const&) = delete;
     /// @brief Move constructor.
-    ParameterObjectBase(ParameterObjectBase&&) = default;
+    CopyMoveEnabler(CopyMoveEnabler&&) = default;
     /// @brief Move assignment operator.
-    ParameterObjectBase& operator=(ParameterObjectBase&&) = default;
+    CopyMoveEnabler& operator=(CopyMoveEnabler&&) = default;
 };
 
 /// @brief Specialisation of ParameterObjectBase which possesses a copy constructor.
 template <>
-class ParameterObjectBase<true> : protected ExtractionStatusBase {
+class CopyMoveEnabler<true> {
 protected:
-    constexpr ParameterObjectBase() = default;
-    ~ParameterObjectBase()          = default;
+    constexpr CopyMoveEnabler() = default;
+    ~CopyMoveEnabler()          = default;
 
     /// @brief Copy constructor is enabled (this is okay for buffers which only reference their data)
-    ParameterObjectBase(ParameterObjectBase const&) = default;
+    CopyMoveEnabler(CopyMoveEnabler const&) = default;
     /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    ParameterObjectBase& operator=(ParameterObjectBase const&) = delete;
+    CopyMoveEnabler& operator=(CopyMoveEnabler const&) = delete;
     /// @brief Move constructor.
-    ParameterObjectBase(ParameterObjectBase&&) = default;
+    CopyMoveEnabler(CopyMoveEnabler&&) = default;
     /// @brief Move assignment operator.
-    ParameterObjectBase& operator=(ParameterObjectBase&&) = default;
+    CopyMoveEnabler& operator=(CopyMoveEnabler&&) = default;
 };
 
 /// @brief Boolean value helping to decide if type has a \c value_type member type.
@@ -369,7 +368,7 @@ template <
     BufferResizePolicy  buffer_resize_policy_param,
     BufferAllocation    allocation = BufferAllocation::user_allocated,
     typename ValueType             = default_value_type_tag>
-class DataBuffer : private ParameterObjectBase<enable_copy_construction<ownership>> {
+class DataBuffer : private CopyMoveEnabler<enable_copy_construction<ownership>>, private Extractable {
 public:
     static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
@@ -455,7 +454,7 @@ public:
 
     /// @brief The size of the underlying container.
     size_t size() const {
-        this->kassert_not_extracted("Cannot get the size of a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot get the size of a buffer that has already been extracted.");
         if constexpr (is_single_element) {
             return 1;
         } else {
@@ -474,7 +473,7 @@ public:
         BufferResizePolicy _resize_policy                                = resize_policy,
         typename std::enable_if_t<_resize_policy == resize_to_fit, bool> = true>
     void resize(size_t size) {
-        this->kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
         underlying().resize(size);
     }
 
@@ -489,7 +488,7 @@ public:
         BufferResizePolicy _resize_policy                            = resize_policy,
         typename std::enable_if_t<_resize_policy == grow_only, bool> = true>
     void resize(size_t size) {
-        this->kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot resize a buffer that has already been extracted.");
         if (this->size() < size) {
             underlying().resize(size);
         }
@@ -516,7 +515,7 @@ public:
     /// @brief Get const access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type const* data() const {
-        this->kassert_not_extracted("Cannot get a pointer to a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot get a pointer to a buffer that has already been extracted.");
         if constexpr (is_single_element) {
             return &underlying();
         } else {
@@ -527,7 +526,7 @@ public:
     /// @brief Get access to the underlying container.
     /// @return Pointer to the underlying container.
     value_type_with_const* data() {
-        this->kassert_not_extracted("Cannot get a pointer to a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot get a pointer to a buffer that has already been extracted.");
         if constexpr (is_single_element) {
             return &underlying();
         } else {
@@ -538,14 +537,14 @@ public:
     /// @brief Get read-only access to the underlying storage.
     /// @return Span referring the underlying storage.
     Span<value_type const> get() const {
-        this->kassert_not_extracted("Cannot get a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
         return {this->data(), this->size()};
     }
 
     /// @brief Get access to the underlying storage.
     /// @return Span referring to the underlying storage.
     Span<value_type_with_const> get() {
-        this->kassert_not_extracted("Cannot get a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
         return {this->data(), this->size()};
     }
 
@@ -553,14 +552,14 @@ public:
     /// @return The single element wrapped by this object.
     template <bool enabled = is_single_element, std::enable_if_t<enabled, bool> = true>
     value_type const get_single_element() const {
-        this->kassert_not_extracted("Cannot get an element from a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot get an element from a buffer that has already been extracted.");
         return underlying();
     }
 
     /// @brief Provides access to the underlying data.
     /// @return A reference to the data.
     MemberType const& underlying() const {
-        this->kassert_not_extracted("Cannot get a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
         // this assertion is only checked if the buffer is actually accessed.
         static_assert(
             !is_vector_bool_v<MemberType>,
@@ -573,7 +572,7 @@ public:
     /// @return A reference to the data.
     template <bool enabled = modifiability == BufferModifiability::modifiable, std::enable_if_t<enabled, bool> = true>
     MemberType& underlying() {
-        this->kassert_not_extracted("Cannot get a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
         // this assertion is only checked if the buffer is actually accessed.
         static_assert(
             !is_vector_bool_v<MemberType>,
@@ -593,10 +592,10 @@ public:
             "Moving out of a reference should not be done because it would leave "
             "a users container in an unspecified state."
         );
-        this->kassert_not_extracted("Cannot extract a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot extract a buffer that has already been extracted.");
         auto extracted = std::move(underlying());
         // we set is_extracted here because otherwise the call to underlying() would fail
-        this->set_extracted();
+        set_extracted();
         return extracted;
     }
 
@@ -623,7 +622,7 @@ template <
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param>
-class GenericDataBuffer : private ParameterObjectBase<enable_copy_construction<ownership>> {
+class GenericDataBuffer : private CopyMoveEnabler<enable_copy_construction<ownership>>, private Extractable {
 public:
     static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
@@ -667,7 +666,7 @@ public:
     /// @brief Provides access to the underlying data.
     /// @return A reference to the data.
     MemberType const& underlying() const {
-        this->kassert_not_extracted("Cannot get a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
         return _data;
     }
 
@@ -675,7 +674,7 @@ public:
     /// @return A reference to the data.
     template <bool enabled = modifiability == BufferModifiability::modifiable, std::enable_if_t<enabled, bool> = true>
     MemberType& underlying() {
-        this->kassert_not_extracted("Cannot get a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot get a buffer that has already been extracted.");
         return _data;
     }
 
@@ -690,10 +689,10 @@ public:
             "Moving out of a reference should not be done because it would leave "
             "a users container in an unspecified state."
         );
-        this->kassert_not_extracted("Cannot extract a buffer that has already been extracted.");
+        kassert_not_extracted("Cannot extract a buffer that has already been extracted.");
         auto extracted = std::move(underlying());
         // we set is_extracted here because otherwise the call to underlying() would fail
-        this->set_extracted();
+        set_extracted();
         return extracted;
     }
 
