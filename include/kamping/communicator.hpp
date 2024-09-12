@@ -557,6 +557,9 @@ public:
     auto allreduce_single(Args... args) const;
 
     template <typename... Args>
+    auto iallreduce(Args... args) const;
+
+    template <typename... Args>
     auto gather(Args... args) const;
 
     template <typename... Args>
