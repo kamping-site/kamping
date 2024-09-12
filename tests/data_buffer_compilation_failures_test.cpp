@@ -28,7 +28,13 @@ int main(int /*argc*/, char** /*argv*/) {
     ContainerType const                                                   const_container;
     ContainerBasedConstBuffer<ContainerType, parameter_type, buffer_type> container_based_const_buffer(const_container);
 
+    ContainerBasedOwningBuffer<ContainerType, parameter_type, buffer_type> container_based_owning_buffer(
+        std::vector<int>{1, 2, 3}
+    );
+
     SingleElementConstBuffer<int, parameter_type, buffer_type> single_elem_const_buffer(42);
+
+    SingleElementOwningBuffer<int, parameter_type, buffer_type> single_elem_owning_buffer(42);
 
     int                                                             elem = 42;
     SingleElementModifiableBuffer<int, parameter_type, buffer_type> single_elem_modifiable_buffer(elem);
@@ -44,46 +50,43 @@ int main(int /*argc*/, char** /*argv*/) {
     RootDataBuffer root(42);
 
 #if defined(COPY_CONSTRUCT_CONTAINER_CONST_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
-    auto tmp = container_based_const_buffer;
+    // should not be possible to copy construct an owning buffer (for performance reasons)
+    auto tmp = container_based_owning_buffer;
 #elif defined(COPY_ASSIGN_CONTAINER_CONST_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     container_based_const_buffer = container_based_const_buffer;
 #elif defined(COPY_CONSTRUCT_SINGLE_ELMENT_CONST_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
-    auto tmp = single_elem_const_buffer;
+    // should not be possible to copy construct an owning buffer (for performance reasons)
+    auto tmp = single_elem_owning_buffer;
 #elif defined(COPY_ASSIGN_SINGLE_ELMENT_CONST_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     single_elem_const_buffer = single_elem_const_buffer;
 #elif defined(COPY_CONSTRUCT_SINGLE_ELMENT_MODIFIABLE_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
-    auto tmp = single_elem_modifiable_buffer;
+    // should not be possible to copy construct an owning buffer (for performance reasons)
+    auto tmp = lib_alloc_single_element_buffer;
 #elif defined(COPY_ASSIGN_SINGLE_ELMENT_MODIFIABLE_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     single_elem_modifiable_buffer = single_elem_modifiable_buffer;
-#elif defined(COPY_CONSTRUCT_USER_ALLOC_CONTAINER_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
-    auto tmp = user_alloc_container_based_buffer;
 #elif defined(COPY_ASSIGN_USER_ALLOC_CONTAINER_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     user_alloc_container_based_buffer = user_alloc_container_based_buffer;
 #elif defined(COPY_CONSTRUCT_LIB_ALLOC_CONTAINER_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct an owning buffer (for performance reasons)
     auto tmp = lib_alloc_container_based_buffer;
 #elif defined(COPY_ASSIGN_LIB_ALLOC_CONTAINER_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     lib_alloc_container_based_buffer = lib_alloc_container_based_buffer;
 #elif defined(COPY_CONSTRUCT_LIB_ALLOC_SINGLE_ELEMENT_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct an owning buffer (for performance reasons)
     auto tmp = lib_alloc_single_element_buffer;
 #elif defined(COPY_ASSIGN_LIB_ALLOC_SINGLE_ELEMENT_BUFFER)
     // should not be possible to copy assign a buffer (for performance reasons)
     lib_alloc_single_element_buffer = lib_alloc_single_element_buffer;
 #elif defined(COPY_CONSTRUCT_ROOT_BUFFER)
-    // should not be possible to copy construct a buffer (for performance reasons)
+    // should not be possible to copy construct an owning buffer (for performance reasons)
     auto tmp = root;
 #elif defined(COPY_ASSIGN_ROOT_BUFFER)
-    // should not be possible to copy assign a buffer (for performance reasons)
+    // should not be possible to copy assign an owning buffer (for performance reasons)
     root = root;
 #elif defined(VALUE_CONSTRUCTOR_REFERENCING_DATA_BUFFER)
     // should not be possible to value (or rvalue) construct a referencing DataBuffer

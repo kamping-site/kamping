@@ -419,7 +419,7 @@ public:
 /// This is a specialization for MPI_ANY_SOURCE which only implements
 /// \ref rank_signed(), without allocating any additional memory.
 template <ParameterType type>
-class RankDataBuffer<RankType::any, type> : private ParameterObjectBase {
+class RankDataBuffer<RankType::any, type> : private CopyMoveEnabler<> {
 public:
     static constexpr ParameterType parameter_type = type;          ///< The type of parameter this object encapsulates.
     static constexpr RankType      rank_type      = RankType::any; ///< The rank type.
@@ -444,7 +444,7 @@ public:
 /// This is a specialization for MPI_PROC_NULL which only implements
 /// \ref rank_signed(), without allocating any additional memory.
 template <ParameterType type>
-class RankDataBuffer<RankType::null, type> : private ParameterObjectBase {
+class RankDataBuffer<RankType::null, type> : private CopyMoveEnabler<> {
 public:
     static constexpr ParameterType parameter_type = type;           ///< The type of parameter this object encapsulates.
     static constexpr RankType      rank_type      = RankType::null; ///< The rank type.
@@ -475,7 +475,7 @@ using send_mode_list =
 /// @brief Parameter object for send_mode encapsulating the send mode compile-time tag.
 /// @tparam SendModeTag The send mode.
 template <typename SendModeTag>
-struct SendModeParameter : private ParameterObjectBase {
+struct SendModeParameter : private CopyMoveEnabler<> {
     static_assert(send_mode_list::contains<SendModeTag>, "Unsupported send mode.");
     static constexpr ParameterType parameter_type = ParameterType::send_mode; ///< The parameter type.
     using send_mode                               = SendModeTag;              ///< The send mode.
@@ -514,7 +514,7 @@ class TagParam {};
 
 /// @brief Encapsulates a message tag. Specialization if an explicit tag value is provided.
 template <>
-class TagParam<TagType::value> : private ParameterObjectBase {
+class TagParam<TagType::value> : private CopyMoveEnabler<> {
 public:
     /// @param tag The tag.
     TagParam(int tag) : _tag_value(tag) {}
@@ -538,7 +538,7 @@ private:
 
 /// @brief Encapsulates a message tag. Specialization if the value is MPI_ANY_TAG.
 template <>
-class TagParam<TagType::any> : private ParameterObjectBase {
+class TagParam<TagType::any> : private CopyMoveEnabler<> {
 public:
     static constexpr ParameterType parameter_type = ParameterType::tag; ///< The parameter type.
     static constexpr TagType       tag_type       = TagType::any;       ///< The tag type.

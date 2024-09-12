@@ -48,27 +48,10 @@ namespace kamping {
 
 namespace internal {
 
-/// @brief Base object for parameter objects which deletes copy constructor and assignment operator and enables move.
-///
-/// You can inherit from this class privately.
-/// While  constructors are never inherited, the derived class still has no copy constructor (assignment), because it
-/// can not be default constructed, due to the missing implementation in the base class. Because we provide a (default)
-/// implementation for the move constructor (assignment) in the base class, the derived class can construct default
-/// implementations.
-class ParameterObjectBase {
+/// @brief Base class containing logic to verify whether a buffer's data has already been extracted. This only has
+/// effects if an appropiate assertion level is set.
+class Extractable {
 protected:
-    constexpr ParameterObjectBase() = default;
-    ~ParameterObjectBase()          = default;
-
-    /// @brief Copy constructor is deleted as buffers should only be moved.
-    ParameterObjectBase(ParameterObjectBase const&) = delete;
-    /// @brief Copy assignment operator is deleted as buffers should only be moved.
-    ParameterObjectBase& operator=(ParameterObjectBase const&) = delete;
-    /// @brief Move constructor.
-    ParameterObjectBase(ParameterObjectBase&&) = default;
-    /// @brief Move assignment operator.
-    ParameterObjectBase& operator=(ParameterObjectBase&&) = default;
-
     /// @brief Set the extracted flag to indicate that the status stored in this buffer has been moved out.
     void set_extracted() {
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
@@ -88,6 +71,47 @@ protected:
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     bool is_extracted = false; ///< Has the status been extracted and is therefore in an invalid state?
 #endif
+};
+
+/// @brief Class optionally containing a copy constructor while supporting move assignment/construction.
+///
+/// @tparam enable_copy_constructor Indicates whether the copy constructor should be enabled.
+/// You can inherit from this class privately.
+/// While constructors are never inherited, the derived class still has no  copy constructor (if not especially
+/// enabled), because it can not be default constructed, due to the missing implementation in the base class. Because we
+/// provide a (default) implementation for the move constructor (assignment) in the base class, the derived class can
+/// construct default implementations.
+template <bool /*enable_copy_constructor*/ = false>
+class CopyMoveEnabler {
+protected:
+    constexpr CopyMoveEnabler() = default;
+    ~CopyMoveEnabler()          = default;
+
+    /// @brief Copy constructor is deleted as buffers should only be moved.
+    CopyMoveEnabler(CopyMoveEnabler const&) = delete;
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    CopyMoveEnabler& operator=(CopyMoveEnabler const&) = delete;
+    /// @brief Move constructor.
+    CopyMoveEnabler(CopyMoveEnabler&&) = default;
+    /// @brief Move assignment operator.
+    CopyMoveEnabler& operator=(CopyMoveEnabler&&) = default;
+};
+
+/// @brief Specialisation of ParameterObjectBase which possesses a copy constructor.
+template <>
+class CopyMoveEnabler<true> {
+protected:
+    constexpr CopyMoveEnabler() = default;
+    ~CopyMoveEnabler()          = default;
+
+    /// @brief Copy constructor is enabled (this is okay for buffers which only reference their data)
+    CopyMoveEnabler(CopyMoveEnabler const&) = default;
+    /// @brief Copy assignment operator is deleted as buffers should only be moved.
+    CopyMoveEnabler& operator=(CopyMoveEnabler const&) = delete;
+    /// @brief Move constructor.
+    CopyMoveEnabler(CopyMoveEnabler&&) = default;
+    /// @brief Move assignment operator.
+    CopyMoveEnabler& operator=(CopyMoveEnabler&&) = default;
 };
 
 /// @brief Boolean value helping to decide if type has a \c value_type member type.
@@ -251,6 +275,11 @@ inline constexpr bool has_data_member_v = has_data_member<T>::value;
 enum class BufferModifiability { modifiable, constant };
 /// @brief Enum to specify whether a buffer owns its data
 enum class BufferOwnership { owning, referencing };
+
+/// @brief Check whether copy construction is allowed for the given ownership
+template <BufferOwnership ownership>
+inline constexpr bool enable_copy_construction_v = (ownership == BufferOwnership::referencing);
+
 /// @brief Enum to specify whether a buffer is allocated by the library or the user
 enum class BufferAllocation { lib_allocated, user_allocated };
 /// @brief Enum to specify whether a buffer is an in buffer of an out
@@ -339,7 +368,7 @@ template <
     BufferResizePolicy  buffer_resize_policy_param,
     BufferAllocation    allocation = BufferAllocation::user_allocated,
     typename ValueType             = default_value_type_tag>
-class DataBuffer : private ParameterObjectBase {
+class DataBuffer : private CopyMoveEnabler<enable_copy_construction_v<ownership>>, private Extractable {
 public:
     static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
@@ -593,7 +622,7 @@ template <
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param>
-class GenericDataBuffer : private ParameterObjectBase {
+class GenericDataBuffer : private CopyMoveEnabler<enable_copy_construction_v<ownership>>, private Extractable {
 public:
     static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
