@@ -1164,3 +1164,24 @@ TEST(DataBufferTest, make_data_buffer_boolean_value) {
         EXPECT_TRUE(has_extract_v<decltype(data_buf)>);
     }
 }
+
+TEST(DataBufferTest, referencing_buffers_are_copyable) {
+    std::vector<int>       int_vec{1, 2, 3};
+    std::vector<int> const int_vec_const{1, 2, 3, 4};
+
+    constexpr ParameterType                                   ptype = ParameterType::send_counts;
+    constexpr BufferType                                      btype = BufferType::in_buffer;
+    ContainerBasedConstBuffer<std::vector<int>, ptype, btype> buffer_based_on_int_vector(int_vec);
+    ContainerBasedConstBuffer<std::vector<int>, ptype, btype> buffer_based_on_const_int_vector(int_vec_const);
+
+    // the following just has to compile
+    {
+        [[maybe_unused]] auto buffer1 = buffer_based_on_int_vector;
+        [[maybe_unused]] auto buffer2 = buffer_based_on_const_int_vector;
+    }
+
+    {
+        [[maybe_unused]] auto buffer1 = std::move(buffer_based_on_int_vector);
+        [[maybe_unused]] auto buffer2 = std::move(buffer_based_on_const_int_vector);
+    }
+}
