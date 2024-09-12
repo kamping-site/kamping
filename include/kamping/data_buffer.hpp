@@ -73,7 +73,7 @@ protected:
 #endif
 };
 
-/// @brief Class optionally containing a copy constructor while supporting move assignment/construction0
+/// @brief Class optionally containing a copy constructor while supporting move assignment/construction.
 ///
 /// @tparam enable_copy_constructor Indicates whether the copy constructor should be enabled.
 /// You can inherit from this class privately.
@@ -277,7 +277,7 @@ enum class BufferOwnership { owning, referencing };
 
 /// @brief Check whether copy construction is allowed for the given ownership
 template <BufferOwnership ownership>
-inline constexpr bool enable_copy_construction = ownership == BufferOwnership::referencing;
+inline constexpr bool enable_copy_construction_v = (ownership == BufferOwnership::referencing);
 
 /// @brief Enum to specify whether a buffer is allocated by the library or the user
 enum class BufferAllocation { lib_allocated, user_allocated };
@@ -367,7 +367,7 @@ template <
     BufferResizePolicy  buffer_resize_policy_param,
     BufferAllocation    allocation = BufferAllocation::user_allocated,
     typename ValueType             = default_value_type_tag>
-class DataBuffer : private CopyMoveEnabler<enable_copy_construction<ownership>>, private Extractable {
+class DataBuffer : private CopyMoveEnabler<enable_copy_construction_v<ownership>>, private Extractable {
 public:
     static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
@@ -622,7 +622,7 @@ template <
     BufferModifiability modifiability,
     BufferOwnership     ownership,
     BufferType          buffer_type_param>
-class GenericDataBuffer : private CopyMoveEnabler<enable_copy_construction<ownership>>, private Extractable {
+class GenericDataBuffer : private CopyMoveEnabler<enable_copy_construction_v<ownership>>, private Extractable {
 public:
     static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
