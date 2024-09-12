@@ -77,9 +77,10 @@ protected:
 ///
 /// @tparam enable_copy_constructor Indicates whether the copy constructor should be enabled.
 /// You can inherit from this class privately.
-/// While constructors are never inherited, the derived class still has no  copy constructor (if not especially enabled), because it can not be default constructed, due to the missing implementation in the base class. Because we provide a (default)
-/// implementation for the move constructor (assignment) in the base class, the derived class can construct default
-/// implementations.
+/// While constructors are never inherited, the derived class still has no  copy constructor (if not especially
+/// enabled), because it can not be default constructed, due to the missing implementation in the base class. Because we
+/// provide a (default) implementation for the move constructor (assignment) in the base class, the derived class can
+/// construct default implementations.
 template <bool /*enable_copy_constructor*/ = false>
 class CopyMoveEnabler {
 protected:
@@ -170,8 +171,8 @@ static constexpr bool is_vector_bool_v<
 template <typename T>
 static constexpr bool
     is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
-        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value
-        && std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
+        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
+            std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
 
 KAMPING_MAKE_HAS_MEMBER(resize)
 
@@ -506,8 +507,7 @@ public:
     /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
     template <typename SizeFunc>
     void resize_if_requested(SizeFunc&& compute_required_size) {
-        if constexpr (resize_policy == BufferResizePolicy::resize_to_fit
-                      || resize_policy == BufferResizePolicy::grow_only) {
+        if constexpr (resize_policy == BufferResizePolicy::resize_to_fit || resize_policy == BufferResizePolicy::grow_only) {
             resize(compute_required_size());
         }
     }
