@@ -193,10 +193,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
         );
         this->mpi_error_hook(err, "MPI_Irsend");
     }
-    return internal::make_nonblocking_result<std::tuple<Args...>>(
-        std::move(request_param),
-        std::move(buffers_on_heap)
-    );
+    return internal::make_nonblocking_result<std::tuple<Args...>>(std::move(request_param), std::move(buffers_on_heap));
 }
 
 /// @brief Convenience wrapper for MPI_Ibsend. Calls \ref kamping::Communicator::isend() with the appropriate send mode
