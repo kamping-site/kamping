@@ -33,38 +33,6 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-template <typename NonblockingResult, typename Buffer>
-auto get_ptr_to_buffer(NonblockingResult& nonblocking_result, Buffer&& buffer) {
-    using namespace kamping;
-
-    if constexpr (std::remove_reference_t<Buffer>::is_out_buffer) {
-        std::cout << "out buf" << std::endl;
-        auto& result                  = nonblocking_result.get_result();
-        using result_type             = std::remove_reference_t<decltype(result)>;
-        constexpr auto parameter_type = std::remove_reference_t<Buffer>::parameter_type;
-        if constexpr (is_mpi_result_v<result_type>) {
-            std::cout << "return mpi result" << std::endl;
-            return result.template get<parameter_type>().data();
-        } else {
-            std::cout << "return buffer directly" << std::endl;
-            // this branch is taken if make_result directly returns a buffer, i.e. when the user only provided
-            // send_buf_out. then we access the data directly
-            if constexpr (internal::has_data_member_v<result_type>) {
-                return result.data();
-            } else {
-                // if it is a single element, we do not have .data()
-                return &result;
-            }
-        }
-    } else {
-        std::cout << "in buf" << std::endl;
-        return buffer.data();
-    }
-}
-
-template <typename Arg>
-void foo(Arg arg) {}
-
 /// @addtogroup kamping_collectives
 /// @{
 
