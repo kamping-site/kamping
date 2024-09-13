@@ -1084,17 +1084,18 @@ auto make_mpi_result_from_tuple(std::tuple<Buffers...>& buffers) {
 namespace kamping {
 
 /// @brief NonBlockingResult contains the result of a non-blocking \c MPI call wrapped by KaMPIng. It encapsulates a
-/// \ref kamping::MPIResult and a \ref kamping::Request.
+/// \ref kamping::Request and stores the buffers associated with the non-blocking call. Upon completion the owning
+/// out-buffers among all associated buffers are returned wrappend in an \ref MPIResult object.
 ///
-///
-/// @tparam MPIResultType The underlying result type.
+/// @tparam CallerProvidedArgs Types of arguments passed to the wrapped MPI call.
 /// @tparam RequestDataBuffer Container encapsulating the underlying request.
+/// @tparam Buffers Types of buffers associated with the underlying non-blocking MPI call.
 template <typename CallerProvidedArgs, typename RequestDataBuffer, typename... Buffers>
 class NonBlockingResult {
 public:
     /// @brief Constructor for \c NonBlockingResult.
-    /// @param buffers_on_heap Buffers stored on the heap which are required by the nonblocking mpi operation associated
-    /// with the given request upon completition.
+    /// @param buffers_on_heap Buffers stored on the heap which are required by the non-blocking mpi operation
+    /// associated with the given request upon completition.
     /// @param request A \ref kamping::internal::DataBuffer containing the associated \ref kamping::Request.
     NonBlockingResult(std::unique_ptr<std::tuple<Buffers...>> buffers_on_heap, RequestDataBuffer request)
         : _buffers_on_heap(std::move(buffers_on_heap)),
@@ -1284,12 +1285,14 @@ auto move_buffer_to_heap(Buffers&&... buffers) {
 /// Note that an argument of with type \ref kamping::internal::ParameterType::request is required.
 ///
 /// @tparam CallerProvidedArgs Types of arguments passed to the wrapped MPI call.
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All parameter that should be included in the MPIResult.
+/// @tparam RequestDataBuffer Container encapsulating the underlying request.
+/// @tparam Buffers Types of buffers associated with the underlying non-blocking MPI call.
+/// @param request Request associated with the non-blocking \c MPI call.
+/// @param buffers_on_heap Buffers associated with the non-blocking \c MPI call stored in a tuple on the heap.
 /// @return \ref kamping::NonBlockingResult encapsulating all passed parameters.
-template <typename CallerProvidedArgsInTuple, typename Request, typename... Buffers>
-auto make_nonblocking_result(Request&& request, std::unique_ptr<std::tuple<Buffers...>> buffers_on_heap) {
-    return NonBlockingResult<CallerProvidedArgsInTuple, std::remove_reference_t<Request>, Buffers...>(
+template <typename CallerProvidedArgsInTuple, typename RequestDataBuffer, typename... Buffers>
+auto make_nonblocking_result(RequestDataBuffer&& request, std::unique_ptr<std::tuple<Buffers...>> buffers_on_heap) {
+    return NonBlockingResult<CallerProvidedArgsInTuple, std::remove_reference_t<RequestDataBuffer>, Buffers...>(
         std::move(buffers_on_heap),
         std::move(request)
     );
@@ -1302,12 +1305,12 @@ auto make_nonblocking_result(Request&& request, std::unique_ptr<std::tuple<Buffe
 ///
 /// Note that an argument of with type \ref kamping::internal::ParameterType::request is required.
 ///
-/// @tparam Args Automatically deducted template parameters.
-/// @param args All parameter that should be included in the MPIResult.
+/// @tparam RequestDataBuffer Container encapsulating the underlying request.
+/// @param request Request associated with the non-blocking \c MPI call.
 /// @return \ref kamping::NonBlockingResult encapsulating all passed parameters.
-template <typename Request>
-auto make_nonblocking_result(Request&& request) {
-    return NonBlockingResult<std::tuple<>, std::remove_reference_t<Request>>(std::move(request));
+template <typename RequestDataBuffer>
+auto make_nonblocking_result(RequestDataBuffer&& request) {
+    return NonBlockingResult<std::tuple<>, std::remove_reference_t<RequestDataBuffer>>(std::move(request));
 }
 } // namespace internal
 } // namespace kamping
