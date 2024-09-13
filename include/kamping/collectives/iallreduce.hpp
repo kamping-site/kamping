@@ -36,9 +36,9 @@
 /// @addtogroup kamping_collectives
 /// @{
 
-/// @brief Wrapper for \c MPI_Allreduce; which is semantically a reduction followed by a broadcast.
+/// @brief Wrapper for \c MPI_Iallreduce.
 ///
-/// This wraps \c MPI_Allreduce. The operation combines the elements in the input buffer provided via \c
+/// This wraps \c MPI_Iallreduce. The operation combines the elements in the input buffer provided via \c
 /// kamping::send_buf() and returns the combined value on all ranks.
 ///
 /// The following parameters are required:
