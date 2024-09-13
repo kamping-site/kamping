@@ -1269,6 +1269,11 @@ private:
 
 namespace internal {
 
+/// @brief Moves given buffers into a std::tuple wrapped with an std::unique_ptr on the heap.
+///
+/// @tparam Buffers... Types of the buffers to be moved to the heap.
+/// @param buffers Buffers to be moved to the heap.
+/// @return std::unique_ptr wrapping a std::tuple containing the passed buffers.
 template <typename... Buffers>
 auto move_buffer_to_heap(Buffers&&... buffers) {
     using BufferTuple = std::tuple<std::remove_reference_t<Buffers>...>;
@@ -1287,7 +1292,7 @@ auto move_buffer_to_heap(Buffers&&... buffers) {
 /// @param args All parameter that should be included in the MPIResult.
 /// @return \ref kamping::NonBlockingResult encapsulating all passed parameters.
 template <typename CallerProvidedArgsInTuple, typename Request, typename... Buffers>
-auto make__nonblocking_result(Request&& request, std::unique_ptr<std::tuple<Buffers...>> buffers_on_heap) {
+auto make_nonblocking_result(Request&& request, std::unique_ptr<std::tuple<Buffers...>> buffers_on_heap) {
     return NonBlockingResult<CallerProvidedArgsInTuple, std::remove_reference_t<Request>, Buffers...>(
         std::move(buffers_on_heap),
         std::move(request)
@@ -1305,7 +1310,7 @@ auto make__nonblocking_result(Request&& request, std::unique_ptr<std::tuple<Buff
 /// @param args All parameter that should be included in the MPIResult.
 /// @return \ref kamping::NonBlockingResult encapsulating all passed parameters.
 template <typename Request>
-auto make__nonblocking_result(Request&& request) {
+auto make_nonblocking_result(Request&& request) {
     return NonBlockingResult<std::tuple<>, std::remove_reference_t<Request>>(std::move(request));
 }
 } // namespace internal
