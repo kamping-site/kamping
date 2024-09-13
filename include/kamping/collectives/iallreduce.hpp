@@ -183,20 +183,23 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iallreduce(Args...
         std::move(send_recv_type),
         std::move(operation)
     );
-    HeapBufferView heap_buffer_view{*buffers_on_heap.get()};
 
     // Perform the MPI_Allreduce call and return.
     [[maybe_unused]] int err = MPI_Iallreduce(
-        heap_buffer_view.template get<ParameterType::send_buf>().data(),                      // sendbuf
-        heap_buffer_view.template get<ParameterType::recv_buf>().data(),                      // recvbuf,
-        heap_buffer_view.template get<ParameterType::send_recv_count>().get_single_element(), // count
-        heap_buffer_view.template get<ParameterType::send_recv_type>().get_single_element(),  // datatype,
-        heap_buffer_view.template get<ParameterType::op>().underlying().op(),                 // op
-        mpi_communicator(),                                                                   // communicator
-        request_param.underlying().request_ptr()
+        select_parameter_type_in_tuple<ParameterType::send_buf>(*buffers_on_heap).data(), // sendbuf
+        select_parameter_type_in_tuple<ParameterType::recv_buf>(*buffers_on_heap).data(), // recvbuf,
+        select_parameter_type_in_tuple<ParameterType::send_recv_count>(*buffers_on_heap).get_single_element(), // count,
+        select_parameter_type_in_tuple<ParameterType::send_recv_type>(*buffers_on_heap)
+            .get_single_element(),                                                             // datatype,
+        select_parameter_type_in_tuple<ParameterType::op>(*buffers_on_heap).underlying().op(), // op,
+        mpi_communicator(),                                                                    // communicator,
+        request_param.underlying().request_ptr()                                               // request
     );
     this->mpi_error_hook(err, "MPI_Iallreduce");
 
-    return make__nonblocking_result<std::tuple<Args...>>(std::move(buffers_on_heap), std::move(request_param));
+    return internal::make__nonblocking_result<std::tuple<Args...>>(
+        std::move(request_param),
+        std::move(buffers_on_heap)
+    );
 }
 /// @}

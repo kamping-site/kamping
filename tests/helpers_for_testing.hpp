@@ -309,10 +309,9 @@ struct DummyNonBlockingOperation {
         );
         this->req         = request_param.underlying().mpi_request();
         using RecvBufType = std::remove_reference_t<decltype(recv_buf)>;
-        using RequestType = std::remove_reference_t<decltype(request_param)>;
-        return kamping::internal::make_nonblocking_result<std::tuple<RecvBufType, RequestType>>(
-            std::move(recv_buf),
-            std::move(request_param)
+        return kamping::internal::make__nonblocking_result<std::tuple<RecvBufType>>(
+            std::move(request_param),
+            move_buffer_to_heap(std::move(recv_buf))
         );
     }
 

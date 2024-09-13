@@ -23,31 +23,80 @@
 using namespace ::kamping;
 using namespace ::testing;
 
-//TEST(IallreduceTest, allreduce_no_receive_buffer) {
-//    Communicator comm;
-//
-//    std::vector<int> input = {comm.rank_signed(), 42};
-//
-//    auto non_blocking_result = comm.iallreduce(send_buf(input), op(kamping::ops::plus<>{}));
-//    auto result = non_blocking_result.wait();
-//
-//    EXPECT_EQ(*non_blocking_result.get_request_ptr(), MPI_REQUEST_NULL);
-//    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
-//    EXPECT_EQ(result, expected_result);
-//}
+TEST(IallreduceTest, iallreduce_no_receive_buffer) {
+    Communicator comm;
 
-TEST(AllreduceTest, allreduce_with_receive_buffer) {
+    std::vector<int> input = {comm.rank_signed(), 42};
+
+    auto non_blocking_result = comm.iallreduce(send_buf(input), op(kamping::ops::plus<>{}));
+    auto result              = non_blocking_result.wait();
+
+    EXPECT_EQ(*non_blocking_result.get_request_ptr(), MPI_REQUEST_NULL);
+    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+    EXPECT_EQ(result, expected_result);
+}
+
+TEST(IallreduceTest, iallreduce_no_receive_buffer_with_test) {
+    Communicator comm;
+
+    std::vector<int> input = {comm.rank_signed(), 42};
+
+    auto non_blocking_result = comm.iallreduce(send_buf(input), op(kamping::ops::plus<>{}));
+
+    auto result = non_blocking_result.test();
+    while (!result.has_value()) {
+        EXPECT_NE(*non_blocking_result.get_request_ptr(), MPI_REQUEST_NULL);
+        result = non_blocking_result.test();
+    }
+
+    EXPECT_EQ(*non_blocking_result.get_request_ptr(), MPI_REQUEST_NULL);
+    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+    EXPECT_EQ(result, expected_result);
+}
+
+TEST(IallreduceTest, iallreduce_with_receive_buffer) {
     Communicator comm;
 
     std::vector<int> input = {comm.rank_signed(), 42};
     std::vector<int> result;
 
-    comm.iallreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result));
-    //non_blocking_result.wait();
+    comm.iallreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result)).wait();
 
+    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+    EXPECT_EQ(result, expected_result);
+}
 
-    //EXPECT_EQ(result.size(), 2);
+TEST(IallreduceTest, iallreduce_with_receive_buffer_resize_too_big) {
+    Communicator comm;
 
-    //std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
-    //EXPECT_EQ(result, expected_result);
+    std::vector<int> input = {comm.rank_signed(), 42};
+    std::vector<int> result(10, -1);
+
+    comm.iallreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<resize_to_fit>(result)).wait();
+    EXPECT_EQ(result.size(), 2);
+
+    std::vector<int> expected_result = {(comm.size_signed() * (comm.size_signed() - 1)) / 2, comm.size_signed() * 42};
+    EXPECT_EQ(result, expected_result);
+}
+
+TEST(IallreduceTest, iallreduce_with_receive_buffer_no_resize_and_explicit_send_recv_count) {
+    Communicator comm;
+
+    std::vector<int> input  = {1, 2, 3, 4};
+    std::vector<int> result = {42, 42};
+
+    comm.iallreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<no_resize>(result), send_recv_count(1))
+        .wait();
+    EXPECT_THAT(result, ElementsAre(comm.size(), 42));
+}
+
+TEST(IallreduceTest, iallreduce_with_receive_buffer_grow_only_and_explicit_send_recv_count) {
+    Communicator comm;
+
+    std::vector<int> input  = {1, 2, 3, 4};
+    std::vector<int> result = {42, 42};
+
+    comm.iallreduce(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<grow_only>(result), send_recv_count(1))
+        .wait();
+    EXPECT_THAT(result, ElementsAre(comm.size(), 42));
 }
