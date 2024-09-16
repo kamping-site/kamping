@@ -105,7 +105,7 @@ TEST(ParameterObjectsTest, DataBufferBuilder_with_const_owning_noncopyable_type)
         container[0] = 42;
         EXPECT_EQ(b.size(), 4);
         auto           buffer                 = b.construct_buffer_or_rebind();
-        constexpr bool is_data_ptr_constant   = std::is_const_v<std::remove_pointer_t<decltype(*buffer.data())>>;
+        constexpr bool is_data_ptr_constant   = std::is_const_v<std::remove_pointer_t<decltype(buffer.data())>>;
         constexpr bool is_underlying_constant = std::is_const_v<std::remove_reference_t<decltype(buffer.underlying())>>;
         EXPECT_TRUE(is_data_ptr_constant);
         EXPECT_TRUE(is_underlying_constant);
