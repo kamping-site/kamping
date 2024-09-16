@@ -1186,4 +1186,4 @@ TEST(DataBufferTest, referencing_buffers_are_copyable) {
     }
 }
 
-    using StorageType = std::conditional_t<is_owning, MemberType, MemberTypeWithConstAndRef>;
+using StorageType = std::conditional_t<is_owning, MemberType, MemberTypeWithConstAndRef>;

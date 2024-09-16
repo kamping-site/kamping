@@ -407,9 +407,12 @@ TEST(ParameterFactoriesTest, send_buf_ignored) {
 
 TEST(ParameterFactoriesTest, send_buf_owning_move_only_data) {
     // test that data within the buffer is still treated as constant but can be returned without being copied
-    testing::NonCopyableOwnContainer<int> vec{1, 2, 3, 4}; // required as original data will be moved to buffer
-    testing::NonCopyableOwnContainer<int> const
-         expected_vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    testing::NonCopyableOwnContainer<int>       vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    testing::NonCopyableOwnContainer<int> const expected_vec{
+        1,
+        2,
+        3,
+        4}; // required as original data will be moved to buffer
     auto send_buffer = send_buf(std::move(vec)).construct_buffer_or_rebind();
     testing::test_const_owning_buffer<int>(
         send_buffer,
@@ -475,9 +478,12 @@ TEST(ParameterFactoriesTest, send_counts_basics_initializer_list) {
 
 TEST(ParameterFactoriesTest, send_counts_owning_move_only_data) {
     // test that data within the buffer is still treated as constant but can be returned without being copied
-    testing::NonCopyableOwnContainer<int> vec{1, 2, 3, 4}; // required as original data will be moved to buffer
-    testing::NonCopyableOwnContainer<int> const
-         expected_vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    testing::NonCopyableOwnContainer<int>       vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    testing::NonCopyableOwnContainer<int> const expected_vec{
+        1,
+        2,
+        3,
+        4}; // required as original data will be moved to buffer
     auto send_buffer = send_counts(std::move(vec)).construct_buffer_or_rebind();
     testing::test_const_owning_buffer<int>(
         send_buffer,
@@ -593,9 +599,12 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_initializer_list) {
 
 TEST(ParameterFactoriesTest, send_displs_owning_move_only_data) {
     // test that data within the buffer is still treated as constant but can be returned without being copied
-    testing::NonCopyableOwnContainer<int> vec{1, 2, 3, 4}; // required as original data will be moved to buffer
-    testing::NonCopyableOwnContainer<int> const
-         expected_vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    testing::NonCopyableOwnContainer<int>       vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    testing::NonCopyableOwnContainer<int> const expected_vec{
+        1,
+        2,
+        3,
+        4}; // required as original data will be moved to buffer
     auto send_buffer = send_displs(std::move(vec)).construct_buffer_or_rebind();
     testing::test_const_owning_buffer<int>(
         send_buffer,
