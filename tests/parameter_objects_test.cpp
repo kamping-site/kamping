@@ -59,10 +59,10 @@ TEST(ParameterObjectsTest, DataBufferBuilder_with_noncopyable_type) {
     { // by reference
         testing::NonCopyableOwnContainer<int> container{1, 2, 3, 4};
         auto                                  b = make_data_buffer_builder<
-            kamping::internal::ParameterType::recv_buf,
-            kamping::internal::BufferModifiability::modifiable,
-            kamping::internal::BufferType::out_buffer,
-            resize_to_fit>(container);
+                                             kamping::internal::ParameterType::recv_buf,
+                                             kamping::internal::BufferModifiability::modifiable,
+                                             kamping::internal::BufferType::out_buffer,
+                                             resize_to_fit>(container);
         container[0] = 42;
         EXPECT_EQ(b.size(), 4);
         auto buffer = b.construct_buffer_or_rebind();
@@ -72,10 +72,10 @@ TEST(ParameterObjectsTest, DataBufferBuilder_with_noncopyable_type) {
     { // by value
         testing::NonCopyableOwnContainer<int> container{1, 2, 3, 4};
         auto                                  b = make_data_buffer_builder<
-            kamping::internal::ParameterType::recv_buf,
-            kamping::internal::BufferModifiability::modifiable,
-            kamping::internal::BufferType::out_buffer,
-            resize_to_fit>(std::move(container));
+                                             kamping::internal::ParameterType::recv_buf,
+                                             kamping::internal::BufferModifiability::modifiable,
+                                             kamping::internal::BufferType::out_buffer,
+                                             resize_to_fit>(std::move(container));
         container.resize(1);
         container[0] = 42;
         EXPECT_EQ(b.size(), 4);
@@ -90,5 +90,26 @@ TEST(ParameterObjectsTest, DataBufferBuilder_with_noncopyable_type) {
             resize_to_fit>(alloc_container_of<int>);
         auto buffer = b.template construct_buffer_or_rebind<NonCopyableOwnContainer>();
         EXPECT_TRUE(is_non_copyable_own_container<std::remove_reference_t<decltype(buffer.underlying())>>);
+    }
+}
+
+TEST(ParameterObjectsTest, DataBufferBuilder_with_const_owning_noncopyable_type) {
+    {
+        testing::NonCopyableOwnContainer<int> container{1, 2, 3, 4};
+        auto                                  b = make_data_buffer_builder<
+                                             kamping::internal::ParameterType::recv_buf,
+                                             kamping::internal::BufferModifiability::constant,
+                                             kamping::internal::BufferType::out_buffer,
+                                             no_resize>(std::move(container));
+        container.resize(1);
+        container[0] = 42;
+        EXPECT_EQ(b.size(), 4);
+        auto           buffer                 = b.construct_buffer_or_rebind();
+        constexpr bool is_data_ptr_constant   = std::is_const_v<std::remove_pointer_t<decltype(*buffer.data())>>;
+        constexpr bool is_underlying_constant = std::is_const_v<<decltype(buffer.underlying())>>;
+        EXPECT_TRUE(is_data_ptr_constant);
+        EXPECT_TRUE(is_underlying_constant);
+        EXPECT_THAT(buffer.underlying(), ElementsAre(1, 2, 3, 4));
+        EXPECT_THAT(buffer.extract(), ElementsAre(1, 2, 3, 4));
     }
 }

@@ -171,8 +171,8 @@ static constexpr bool is_vector_bool_v<
 template <typename T>
 static constexpr bool
     is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
-        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value&&
-            std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
+        is_specialization<std::remove_cv_t<std::remove_reference_t<T>>, std::vector>::value
+        && std::is_same_v<typename std::remove_cv_t<std::remove_reference_t<T>>::value_type, bool>;
 
 KAMPING_MAKE_HAS_MEMBER(resize)
 
@@ -370,6 +370,8 @@ template <
     typename ValueType             = default_value_type_tag>
 class DataBuffer : private CopyMoveEnabler<enable_copy_construction_v<ownership>>, private Extractable {
 public:
+    static_assert(!std::is_const_v<MemberType>, "Member Type should not be const qualified.");
+
     static constexpr TParameterType parameter_type =
         parameter_type_param; ///< The type of parameter this buffer represents.
 
@@ -411,6 +413,16 @@ public:
         MemberTypeWithConst,
         MemberTypeWithConst&>; ///< The ContainerType as const or non-const (see ContainerTypeWithConst) and
                                ///< reference or non-reference depending on ownership.
+    ///
+    using StorageType = std::conditional_t<
+        is_owning,
+        MemberType,
+        MemberTypeWithConstAndRef>; ///< The type as which the underlying container will be stored. If the buffer is
+                                    ///< owning, i.e. the underlying data is not referenced but stored directly, the
+                                    ///< potential constness of the data is not reflected in StorageType as this would
+                                    ///< enforce copying of the \c const data once it will be extracted. Modifying const
+                                    ///< data is instead prevented by giving only const qualified access via
+                                    ///< underlying() or data() in such case.
 
     using value_type =
         typename ValueTypeWrapper<!is_single_element, MemberType>::value_type; ///< Value type of the buffer.
@@ -507,7 +519,8 @@ public:
     /// is not called if the buffer's resize policy is BufferResizePolicy::no_resize.
     template <typename SizeFunc>
     void resize_if_requested(SizeFunc&& compute_required_size) {
-        if constexpr (resize_policy == BufferResizePolicy::resize_to_fit || resize_policy == BufferResizePolicy::grow_only) {
+        if constexpr (resize_policy == BufferResizePolicy::resize_to_fit
+                      || resize_policy == BufferResizePolicy::grow_only) {
             resize(compute_required_size());
         }
     }
@@ -586,21 +599,21 @@ public:
     ///
     /// @return Moves the underlying container out of the DataBuffer.
     template <bool enabled = is_owning, std::enable_if_t<enabled, bool> = true>
-    MemberTypeWithConst extract() {
+    StorageType extract() {
         static_assert(
             ownership == BufferOwnership::owning,
             "Moving out of a reference should not be done because it would leave "
             "a users container in an unspecified state."
         );
         kassert_not_extracted("Cannot extract a buffer that has already been extracted.");
-        auto extracted = std::move(underlying());
+        auto extracted = std::move(_data);
         // we set is_extracted here because otherwise the call to underlying() would fail
         set_extracted();
         return extracted;
     }
 
 private:
-    MemberTypeWithConstAndRef _data; ///< Container which holds the actual data.
+    StorageType _data; ///< Container which holds the actual data.
 };
 
 /// @brief A more generic version of a DataBuffer which stores an object of type \tparam MemberType with its associcated

@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <vector>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <mpi.h>
 
@@ -30,8 +31,8 @@ using namespace ::kamping::internal;
 
 namespace testing {
 template <typename ExpectedValueType, typename GeneratedBuffer, typename T>
-void test_const_buffer(
-    GeneratedBuffer const&           generated_buffer,
+void test_const_referencing_buffer(
+    GeneratedBuffer&                 generated_buffer,
     kamping::internal::ParameterType expected_parameter_type,
     kamping::internal::BufferType    expected_buffer_type,
     Span<T>&                         expected_span
@@ -40,8 +41,18 @@ void test_const_buffer(
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
     EXPECT_FALSE(GeneratedBuffer::is_modifiable);
+    EXPECT_FALSE(GeneratedBuffer::is_owning);
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
     EXPECT_EQ(GeneratedBuffer::buffer_type, expected_buffer_type);
+
+    static_assert(
+        std::is_const_v<std::remove_pointer_t<decltype(generated_buffer.data())>>,
+        "Member data() of the generated buffer does not point to const memory."
+    );
+    static_assert(
+        std::is_const_v<std::remove_reference_t<decltype(generated_buffer.underlying())>>,
+        "Member underlying() of the generated buffer provides access to non-const memory."
+    );
 
     auto span = generated_buffer.get();
     static_assert(std::is_pointer_v<decltype(span.data())>, "Member ptr of internal::Span is not a pointer.");
@@ -59,8 +70,8 @@ void test_const_buffer(
 }
 
 template <typename ExpectedValueType, typename GeneratedBuffer, typename ExpectedValueContainer>
-void test_owning_buffer(
-    GeneratedBuffer const&           generated_buffer,
+void test_const_owning_buffer(
+    GeneratedBuffer&                 generated_buffer,
     kamping::internal::ParameterType expected_parameter_type,
     kamping::internal::BufferType    expected_buffer_type,
     ExpectedValueContainer&&         expected_value_container
@@ -69,8 +80,18 @@ void test_owning_buffer(
     static_assert(std::is_same_v<typename GeneratedBuffer::value_type, ExpectedValueType>);
 
     EXPECT_FALSE(GeneratedBuffer::is_modifiable);
+    EXPECT_TRUE(GeneratedBuffer::is_owning);
     EXPECT_EQ(GeneratedBuffer::parameter_type, expected_parameter_type);
     EXPECT_EQ(GeneratedBuffer::buffer_type, expected_buffer_type);
+
+    static_assert(
+        std::is_const_v<std::remove_pointer_t<decltype(generated_buffer.data())>>,
+        "Member data() of the generated buffer does not point to const memory."
+    );
+    static_assert(
+        std::is_const_v<std::remove_reference_t<decltype(generated_buffer.underlying())>>,
+        "Member underlying() of the generated buffer provides access to non-const memory."
+    );
 
     auto span = generated_buffer.get();
     static_assert(std::is_pointer_v<decltype(span.data())>, "Member ptr of internal::Span is not a pointer.");
@@ -205,7 +226,7 @@ TEST(ParameterFactoriesTest, send_buf_basics_int_vector) {
     auto             gen_via_int_vec = send_buf(int_vec).construct_buffer_or_rebind();
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_int_vec,
         ParameterType::send_buf,
         internal::BufferType::in_buffer,
@@ -218,7 +239,7 @@ TEST(ParameterFactoriesTest, send_buf_basics_const_int_vector) {
     auto                   gen_via_const_int_vec = send_buf(const_int_vec).construct_buffer_or_rebind();
     Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_const_int_vec,
         ParameterType::send_buf,
         internal::BufferType::in_buffer,
@@ -231,7 +252,7 @@ TEST(ParameterFactoriesTest, send_buf_basics_moved_vector) {
     std::vector<int> const expected          = const_int_vec;
     auto                   gen_via_moved_vec = send_buf(std::move(const_int_vec)).construct_buffer_or_rebind();
     using ExpectedValueType                  = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_moved_vec,
         ParameterType::send_buf,
         internal::BufferType::in_buffer,
@@ -247,7 +268,7 @@ TEST(ParameterFactoriesTest, send_buf_basics_vector_from_function) {
     std::vector<int> const expected                  = make_vector();
     auto                   gen_via_vec_from_function = send_buf(make_vector()).construct_buffer_or_rebind();
     using ExpectedValueType                          = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_vec_from_function,
         ParameterType::send_buf,
         internal::BufferType::in_buffer,
@@ -259,7 +280,7 @@ TEST(ParameterFactoriesTest, send_buf_basics_vector_from_initializer_list) {
     std::vector<int> expected      = {1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto gen_via_vec_from_function = send_buf({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
     using ExpectedValueType        = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_vec_from_function,
         ParameterType::send_buf,
         internal::BufferType::in_buffer,
@@ -384,12 +405,28 @@ TEST(ParameterFactoriesTest, send_buf_ignored) {
     EXPECT_EQ(ignored_send_buf.get().size(), 0);
 }
 
+TEST(ParameterFactoriesTest, send_buf_owning_move_only_data) {
+    // test that data within the buffer is still treated as constant but can be returned without being copied
+    testing::NonCopyableOwnContainer<int> vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    testing::NonCopyableOwnContainer<int> const
+         expected_vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    auto send_buffer = send_buf(std::move(vec)).construct_buffer_or_rebind();
+    testing::test_const_owning_buffer<int>(
+        send_buffer,
+        ParameterType::send_buf,
+        internal::BufferType::in_buffer,
+        expected_vec
+    );
+    auto extracted_vec = send_buffer.extract();
+    EXPECT_THAT(extracted_vec, testing::ElementsAre(1, 2, 3, 4));
+}
+
 TEST(ParameterFactoriesTest, send_counts_basics_int_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto             gen_via_int_vec = send_counts(int_vec).construct_buffer_or_rebind();
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_int_vec,
         ParameterType::send_counts,
         internal::BufferType::in_buffer,
@@ -402,7 +439,7 @@ TEST(ParameterFactoriesTest, send_counts_basics_const_int_vector) {
     auto                   gen_via_const_int_vec = send_counts(const_int_vec).construct_buffer_or_rebind();
     Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_const_int_vec,
         ParameterType::send_counts,
         internal::BufferType::in_buffer,
@@ -416,7 +453,7 @@ TEST(ParameterFactoriesTest, send_counts_basics_moved_int_vector) {
     auto             gen_via_int_vec = send_counts(std::move(int_vec)).construct_buffer_or_rebind();
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_int_vec,
         ParameterType::send_counts,
         internal::BufferType::in_buffer,
@@ -428,7 +465,7 @@ TEST(ParameterFactoriesTest, send_counts_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto gen_via_int_initializer_list = send_counts({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
     using ExpectedValueType           = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_int_initializer_list,
         ParameterType::send_counts,
         internal::BufferType::in_buffer,
@@ -436,12 +473,28 @@ TEST(ParameterFactoriesTest, send_counts_basics_initializer_list) {
     );
 }
 
+TEST(ParameterFactoriesTest, send_counts_owning_move_only_data) {
+    // test that data within the buffer is still treated as constant but can be returned without being copied
+    testing::NonCopyableOwnContainer<int> vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    testing::NonCopyableOwnContainer<int> const
+         expected_vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    auto send_buffer = send_counts(std::move(vec)).construct_buffer_or_rebind();
+    testing::test_const_owning_buffer<int>(
+        send_buffer,
+        ParameterType::send_counts,
+        internal::BufferType::in_buffer,
+        expected_vec
+    );
+    auto extracted_vec = send_buffer.extract();
+    EXPECT_THAT(extracted_vec, testing::ElementsAre(1, 2, 3, 4));
+}
+
 TEST(ParameterFactoriesTest, recv_counts_in_basics_int_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto             gen_via_int_vec = recv_counts(int_vec).construct_buffer_or_rebind();
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_int_vec,
         ParameterType::recv_counts,
         internal::BufferType::in_buffer,
@@ -454,7 +507,7 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_const_int_vector) {
     auto                   gen_via_const_int_vec = recv_counts(const_int_vec).construct_buffer_or_rebind();
     Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_const_int_vec,
         ParameterType::recv_counts,
         internal::BufferType::in_buffer,
@@ -467,7 +520,7 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_moved_vector) {
     auto             expected          = int_vec;
     auto             gen_via_moved_vec = recv_counts(std::move(int_vec)).construct_buffer_or_rebind();
     using ExpectedValueType            = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_moved_vec,
         ParameterType::recv_counts,
         internal::BufferType::in_buffer,
@@ -479,7 +532,7 @@ TEST(ParameterFactoriesTest, recv_counts_in_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto gen_via_initializer_list = recv_counts({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
     using ExpectedValueType       = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_initializer_list,
         ParameterType::recv_counts,
         internal::BufferType::in_buffer,
@@ -492,7 +545,7 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_int_vector) {
     auto             gen_via_int_vec = send_displs(int_vec).construct_buffer_or_rebind();
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_int_vec,
         ParameterType::send_displs,
         internal::BufferType::in_buffer,
@@ -505,7 +558,7 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_const_int_vector) {
     auto                   gen_via_const_int_vec = send_displs(const_int_vec).construct_buffer_or_rebind();
     Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_const_int_vec,
         ParameterType::send_displs,
         internal::BufferType::in_buffer,
@@ -518,7 +571,7 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_moved_vector) {
     auto             expected          = int_vec;
     auto             gen_via_moved_vec = send_displs(std::move(int_vec)).construct_buffer_or_rebind();
     using ExpectedValueType            = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_moved_vec,
         ParameterType::send_displs,
         internal::BufferType::in_buffer,
@@ -530,7 +583,7 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto gen_via_initializer_list = send_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
     using ExpectedValueType       = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_initializer_list,
         ParameterType::send_displs,
         internal::BufferType::in_buffer,
@@ -538,12 +591,28 @@ TEST(ParameterFactoriesTest, send_displs_in_basics_initializer_list) {
     );
 }
 
+TEST(ParameterFactoriesTest, send_displs_owning_move_only_data) {
+    // test that data within the buffer is still treated as constant but can be returned without being copied
+    testing::NonCopyableOwnContainer<int> vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    testing::NonCopyableOwnContainer<int> const
+         expected_vec{1, 2, 3, 4}; // required as original data will be moved to buffer
+    auto send_buffer = send_displs(std::move(vec)).construct_buffer_or_rebind();
+    testing::test_const_owning_buffer<int>(
+        send_buffer,
+        ParameterType::send_displs,
+        internal::BufferType::in_buffer,
+        expected_vec
+    );
+    auto extracted_vec = send_buffer.extract();
+    EXPECT_THAT(extracted_vec, testing::ElementsAre(1, 2, 3, 4));
+}
+
 TEST(ParameterFactoriesTest, recv_displs_in_basics_int_vector) {
     std::vector<int> int_vec{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto             gen_via_int_vec = recv_displs(int_vec).construct_buffer_or_rebind();
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_int_vec,
         ParameterType::recv_displs,
         internal::BufferType::in_buffer,
@@ -556,7 +625,7 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_const_int_vector) {
     auto                   gen_via_const_int_vec = recv_displs(const_int_vec).construct_buffer_or_rebind();
     Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_const_int_vec,
         ParameterType::recv_displs,
         internal::BufferType::in_buffer,
@@ -569,7 +638,7 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_moved_vector) {
     auto             expected          = int_vec;
     auto             gen_via_moved_vec = recv_displs(std::move(int_vec)).construct_buffer_or_rebind();
     using ExpectedValueType            = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_moved_vec,
         ParameterType::recv_displs,
         internal::BufferType::in_buffer,
@@ -581,7 +650,7 @@ TEST(ParameterFactoriesTest, recv_displs_in_basics_initializer_list) {
     std::vector<int> expected{1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto gen_via_initializer_list = recv_displs({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
     using ExpectedValueType       = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_initializer_list,
         ParameterType::recv_displs,
         internal::BufferType::in_buffer,
@@ -1218,7 +1287,7 @@ TEST(ParameterFactoriesTest, send_recv_buf_basics_const_int_vector) {
     auto                   gen_via_const_int_vec = send_recv_buf(const_int_vec).construct_buffer_or_rebind();
     Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_const_int_vec,
         ParameterType::send_recv_buf,
         internal::BufferType::in_out_buffer,
@@ -1514,7 +1583,7 @@ TEST(ParameterFactoriesTest, values_on_rank_0_basics_int_vector) {
     auto             gen_via_int_vec = values_on_rank_0(int_vec).construct_buffer_or_rebind();
     Span<int>        expected_span{int_vec.data(), int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_int_vec,
         ParameterType::values_on_rank_0,
         BufferType::in_buffer,
@@ -1527,7 +1596,7 @@ TEST(ParameterFactoriesTest, values_on_rank_0_basics_const_int_vector) {
     auto                   gen_via_const_int_vec = values_on_rank_0(const_int_vec).construct_buffer_or_rebind();
     Span<int const>        expected_span{const_int_vec.data(), const_int_vec.size()};
     using ExpectedValueType = int;
-    testing::test_const_buffer<ExpectedValueType>(
+    testing::test_const_referencing_buffer<ExpectedValueType>(
         gen_via_const_int_vec,
         ParameterType::values_on_rank_0,
         BufferType::in_buffer,
@@ -1540,7 +1609,7 @@ TEST(ParameterFactoriesTest, values_on_rank_0_basics_moved_vector) {
     std::vector<int> const expected          = const_int_vec;
     auto                   gen_via_moved_vec = values_on_rank_0(std::move(const_int_vec)).construct_buffer_or_rebind();
     using ExpectedValueType                  = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_moved_vec,
         ParameterType::values_on_rank_0,
         BufferType::in_buffer,
@@ -1556,7 +1625,7 @@ TEST(ParameterFactoriesTest, values_on_rank_0_basics_vector_from_function) {
     std::vector<int> const expected                  = make_vector();
     auto                   gen_via_vec_from_function = values_on_rank_0(make_vector()).construct_buffer_or_rebind();
     using ExpectedValueType                          = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_vec_from_function,
         ParameterType::values_on_rank_0,
         BufferType::in_buffer,
@@ -1568,7 +1637,7 @@ TEST(ParameterFactoriesTest, values_on_rank_0_basics_vector_from_initializer_lis
     std::vector<int> expected      = {1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1};
     auto gen_via_vec_from_function = values_on_rank_0({1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1}).construct_buffer_or_rebind();
     using ExpectedValueType        = int;
-    testing::test_owning_buffer<ExpectedValueType>(
+    testing::test_const_owning_buffer<ExpectedValueType>(
         gen_via_vec_from_function,
         ParameterType::values_on_rank_0,
         BufferType::in_buffer,

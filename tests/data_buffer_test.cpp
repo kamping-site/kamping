@@ -1185,3 +1185,5 @@ TEST(DataBufferTest, referencing_buffers_are_copyable) {
         [[maybe_unused]] auto buffer2 = std::move(buffer_based_on_const_int_vector);
     }
 }
+
+    using StorageType = std::conditional_t<is_owning, MemberType, MemberTypeWithConstAndRef>;
