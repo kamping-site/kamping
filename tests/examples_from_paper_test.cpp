@@ -141,6 +141,7 @@ bool is_empty(VBuf const& frontier, Communicator<> const& comm) {
     return comm.allreduce_single(send_buf(frontier.empty()), op(std::logical_and<>{}));
 }
 
+// changed signature from auto to std::unordered_map to be C++17 compliant
 VBuf exchange(std::unordered_map<int, VBuf> frontier, Communicator<> const& comm) {
     return with_flattened(frontier, comm.size()).call([&](auto... flattened) {
         return comm.alltoallv(std::move(flattened)...);
@@ -154,12 +155,9 @@ expand_frontier(Graph const& graph, size_t level, VBuf const& frontier, std::vec
     for (auto const& v: frontier) {
         auto  v_local  = graph.local_id(v);
         auto& cur_dist = dist[graph.local_id(v)];
-        std::cout << kamping::comm_world().rank() << " check " << v << " with local id: " << v_local << " and dist "
-                  << cur_dist << std::endl;
         if (cur_dist == undef) {
             cur_dist = level;
             for (auto const& [u, rank]: graph.neighbors(v_local)) {
-                std::cout << kamping::comm_world().rank() << " append " << u << " with rank: " << rank << std::endl;
                 next_frontier[rank].push_back(u);
             }
         }
@@ -177,10 +175,8 @@ std::vector<size_t> bfs(Graph const& g, VId s, MPI_Comm _comm) {
         frontier.push_back(s);
     }
     while (!is_empty(frontier, comm)) {
-        std::cout << "in loop" << std::endl;
         next_frontier = expand_frontier(g, level, frontier, dist);
         frontier      = exchange(std::move(next_frontier), comm);
-        next_frontier.clear();
         ++level;
     }
     return dist;
@@ -422,6 +418,8 @@ TEST(ExamplesFromPaperTest, figure9) {
     if (comm.size() != 4) {
         return;
     }
+
+    // test result (not part of listing)
     bfs::Graph g          = bfs::init_graph();
     auto       bfs_levels = bfs::bfs(g, 0, MPI_COMM_WORLD);
 
