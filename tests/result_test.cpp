@@ -63,8 +63,22 @@ void test_recv_buffer_in_MPIResult() {
         }
     }
     {
+        MPIResult           mpi_result{std::make_tuple(construct_recv_buffer())};
+        UnderlyingContainer underlying_container = mpi_result.extract_recv_buf();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
         MPIResult            mpi_result{std::make_tuple(construct_recv_buffer())};
         UnderlyingContainer& underlying_container = mpi_result.get_recv_buffer();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult            mpi_result{std::make_tuple(construct_recv_buffer())};
+        UnderlyingContainer& underlying_container = mpi_result.get_recv_buf();
         for (size_t i = 0; i < 10; ++i) {
             EXPECT_EQ(underlying_container[i], i);
         }
@@ -81,6 +95,14 @@ void test_recv_buffer_in_MPIResult() {
         MPIResult const mpi_result{std::make_tuple(construct_recv_buffer())};
         mpi_result.get_recv_buffer();
         UnderlyingContainer const& underlying_container = mpi_result.get_recv_buffer();
+        for (size_t i = 0; i < 10; ++i) {
+            EXPECT_EQ(underlying_container[i], i);
+        }
+    }
+    {
+        MPIResult const mpi_result{std::make_tuple(construct_recv_buffer())};
+        mpi_result.get_recv_buffer();
+        UnderlyingContainer const& underlying_container = mpi_result.get_recv_buf();
         for (size_t i = 0; i < 10; ++i) {
             EXPECT_EQ(underlying_container[i], i);
         }
