@@ -398,17 +398,17 @@ TEST(ExamplesFromPaperTest, section_III_g) {
 }
 
 TEST(ExamplesFromPaperTest, figure7) {
-    std::vector<int>       data          = {13, 1, 7, 18};
-    std::vector<int> const expected_data = {13, 1, 7, 18}; // not part of listing
+    std::vector<int> data          = {13, 1, 7, 18};
+    auto             gathered_data = kamping::comm_world().allgatherv(kamping::send_buf(data));
+    std::sort(gathered_data.begin(), gathered_data.end());
+
     sorting::sort(data, MPI_COMM_WORLD);
 
     // test result (not part of listing)
     using namespace kamping;
-    Communicator     comm;
-    auto             gathered_result = comm.allgatherv(send_buf(data));
-    std::vector<int> expected_result = repeat_n(expected_data, comm.size());
-    std::sort(expected_result.begin(), expected_result.end());
-    EXPECT_EQ(gathered_result, expected_result);
+    Communicator comm;
+    auto         gathered_result = kamping::comm_world().allgatherv(kamping::send_buf(data));
+    EXPECT_EQ(gathered_result, gathered_data);
 }
 
 TEST(ExamplesFromPaperTest, figure9) {
