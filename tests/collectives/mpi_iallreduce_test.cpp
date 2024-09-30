@@ -100,3 +100,46 @@ TEST(IallreduceTest, iallreduce_with_receive_buffer_grow_only_and_explicit_send_
         .wait();
     EXPECT_THAT(result, ElementsAre(comm.size(), 42));
 }
+
+TEST(IallreduceTest, iallreduce_move_send_buf_to_call) {
+    Communicator comm;
+
+    std::vector<int> input = {1, 2, 3, 4};
+    std::vector<int> expected_recv_buf{
+        comm.size_signed() * 1,
+        comm.size_signed() * 2,
+        comm.size_signed() * 3,
+        comm.size_signed() * 4};
+    auto const expected_send_buf = input;
+
+    auto [recv_buf, send_buf] = comm.iallreduce(send_buf_out(std::move(input)), op(kamping::ops::plus<>{})).wait();
+    EXPECT_EQ(send_buf, expected_send_buf);
+    EXPECT_EQ(recv_buf, expected_recv_buf);
+}
+
+TEST(IallreduceTest, iallreduce_move_send_buf_and_recv_buf_to_call) {
+    Communicator comm;
+
+    std::vector<int> input = {1, 2, 3, 4};
+    std::vector<int> output(6, 42);
+    std::vector<int> expected_recv_buf{
+        comm.size_signed() * 1,
+        comm.size_signed() * 2,
+        comm.size_signed() * 3,
+        comm.size_signed() * 4,
+        42,
+        42};
+    auto const expected_send_buf = input;
+
+    auto nonblocking_result =
+        comm.iallreduce(recv_buf_out(std::move(output)), send_buf_out(std::move(input)), op(kamping::ops::plus<>{}));
+    // clear to rule out improper useage of move semantics
+    input.clear();
+    output.clear();
+    auto result = nonblocking_result.wait();
+    input       = result.extract_send_buf();
+    output      = result.extract_recv_buf();
+
+    EXPECT_EQ(input, expected_send_buf);
+    EXPECT_EQ(output, expected_recv_buf);
+}

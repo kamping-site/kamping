@@ -82,7 +82,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iallreduce(Args...
     );
 
     // Get the send buffer and deduce the send and recv value types.
-    auto const& send_buf  = select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+    auto&& send_buf       = select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
 

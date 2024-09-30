@@ -209,6 +209,20 @@ public:
         return get_send_buf();
     }
 
+    /// @brief Extracts the \c send_buffer from the MPIResult object.
+    ///
+    /// This function is only available if the underlying memory is owned by the
+    /// MPIResult object.
+    /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
+    /// the result object.
+    /// @return Returns the underlying storage containing the elements to send.
+    template <
+        typename T = std::tuple<Args...>,
+        std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_buf, T>(), bool> = true>
+    auto extract_send_buf() {
+        return internal::select_parameter_type_in_tuple<internal::ParameterType::send_buf>(_data).extract();
+    }
+
     /// @brief Extracts the \c recv_buffer from the MPIResult object.
     ///
     /// This function is only available if the underlying memory is owned by the
@@ -848,18 +862,6 @@ constexpr bool return_recv_or_send_recv_buffer_only() {
     }
 }
 
-/// @brief Determines whether only the send buffer should be returned.
-/// This may happen if ownership of the send buffer is transfered to the call.
-template <typename CallerProvidedOwningOutBuffers>
-constexpr bool return_send_buf_out_only() {
-    constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutBuffers>;
-    if constexpr (num_caller_provided_owning_out_buffers == 1) {
-        return std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::send_buf;
-    } else {
-        return false;
-    }
-}
-
 /// @brief Checks whether a buffer with parameter type recv_buf or a buffer with type send_recv_buf is present and
 /// returns the found parameter type. Note that we require that either a recv_buf or a send_recv_buf is present.
 ///
@@ -962,6 +964,18 @@ constexpr bool has_recv_or_send_recv_buf() {
     return has_recv_buffer || has_send_recv_buffer;
 }
 
+/// @brief Determines whether only the send buffer should be returned.
+/// This may happen if ownership of the send buffer is transfered to the call.
+template <typename CallerProvidedOwningOutBuffers, typename... Buffers>
+constexpr bool return_send_buf_out_only() {
+    constexpr std::size_t num_caller_provided_owning_out_buffers = std::tuple_size_v<CallerProvidedOwningOutBuffers>;
+    if constexpr (num_caller_provided_owning_out_buffers == 1 && !has_recv_or_send_recv_buf<Buffers...>()) {
+        return std::tuple_element_t<0, CallerProvidedOwningOutBuffers>::value == ParameterType::send_buf;
+    } else {
+        return false;
+    }
+}
+
 /// @brief Template class to prepend the ParameterTypeEntry<ParameterType::ptype> type to a given std::tuple.
 /// @tparam ptype ParameterType to prepend
 /// @tparam Tuple An std::tuple.
@@ -1009,7 +1023,7 @@ auto make_mpi_result(Buffers&&... buffers) {
         typename internal::FilterOut<DiscardSerializationBuffers, CallerProvidedArgs>::type;
     constexpr std::size_t num_caller_provided_owning_out_buffers =
         std::tuple_size_v<CallerProvidedOwningOutParametersWithoutSerializationBuffers>;
-    if constexpr (return_send_buf_out_only<CallerProvidedOwningOutParameters>()) {
+    if constexpr (return_send_buf_out_only<CallerProvidedOwningOutParameters, Buffers...>()) {
         auto& send_buffer = internal::select_parameter_type<ParameterType::send_buf>(buffers...);
         return send_buffer.extract();
     } else if constexpr (!has_recv_or_send_recv_buf<Buffers...>()) {
