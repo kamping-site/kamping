@@ -174,6 +174,11 @@ kamping_register_mpi_test(
     CORES 1 4
 )
 kamping_register_mpi_test(
+    test_mpi_iallreduce
+    FILES collectives/mpi_iallreduce_test.cpp
+    CORES 1 4
+)
+kamping_register_mpi_test(
     test_mpi_scan
     FILES collectives/mpi_scan_test.cpp
     CORES 1 4
