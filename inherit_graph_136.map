@@ -1,0 +1,57 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,853,117,878"/>
+<area shape="rect" id="Node000001" href="$structkamping_1_1builtin__type_3_01bool_01_4.html" title="Specialization of builtin_type for bool." alt="" coords="196,5,359,45"/>
+<area shape="poly" id="edge59_Node000000_Node000001" title=" " alt="" coords="60,839,61,681,72,446,84,324,103,212,129,120,145,83,163,56,178,43,194,34,197,39,181,47,167,59,149,86,134,121,108,214,89,325,77,447,66,681,65,839"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1builtin__type_3_01char_01_4.html" title="Specialization of builtin_type for char." alt="" coords="196,69,359,109"/>
+<area shape="poly" id="edge60_Node000000_Node000002" title=" " alt="" coords="60,839,63,692,76,476,88,365,106,263,131,178,146,145,163,120,178,107,194,98,197,103,181,111,167,123,151,148,136,180,112,264,94,366,81,477,68,692,65,839"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1builtin__type_3_01double_01_4.html" title="Specialization of builtin_type for double." alt="" coords="196,133,359,173"/>
+<area shape="poly" id="edge61_Node000000_Node000003" title=" " alt="" coords="60,839,65,703,79,507,92,406,110,313,133,237,147,207,163,184,178,171,194,162,197,167,181,175,167,187,152,209,138,238,115,314,98,407,85,508,70,703,66,839"/>
+<area shape="rect" id="Node000004" href="$structkamping_1_1builtin__type_3_01float_01_4.html" title="Specialization of builtin_type for float." alt="" coords="196,197,359,237"/>
+<area shape="poly" id="edge62_Node000000_Node000004" title=" " alt="" coords="61,839,67,715,83,538,96,447,114,364,136,295,149,268,163,248,178,235,195,226,197,231,181,240,167,251,153,271,141,297,119,365,102,448,88,538,72,715,66,839"/>
+<area shape="rect" id="Node000005" href="$structkamping_1_1builtin__type_3_01int_01_4.html" title="Specialization of builtin_type for int." alt="" coords="196,261,359,301"/>
+<area shape="poly" id="edge63_Node000000_Node000005" title=" " alt="" coords="61,839,69,726,87,568,101,488,117,414,138,353,163,312,178,299,194,291,197,295,181,304,167,315,143,356,123,416,106,489,93,569,75,726,67,839"/>
+<area shape="rect" id="Node000006" href="$structkamping_1_1builtin__type_3_01kabool_01_4.html" title="Specialization of builtin_type for kabool." alt="" coords="196,325,359,365"/>
+<area shape="poly" id="edge64_Node000000_Node000006" title=" " alt="" coords="62,839,72,738,91,599,105,529,121,465,141,412,163,376,178,363,194,355,197,360,181,368,167,379,145,414,126,466,110,530,97,600,77,738,67,839"/>
+<area shape="rect" id="Node000007" href="$structkamping_1_1builtin__type_3_01long_01double_01_4.html" title="Specialization of builtin_type for long double." alt="" coords="196,389,359,429"/>
+<area shape="poly" id="edge65_Node000000_Node000007" title=" " alt="" coords="63,839,75,750,96,630,125,516,143,471,163,440,178,428,195,419,197,424,181,432,167,443,148,473,130,517,101,632,80,751,68,840"/>
+<area shape="rect" id="Node000008" href="$structkamping_1_1builtin__type_3_01long_01int_01_4.html" title="Specialization of builtin_type for long int." alt="" coords="196,453,359,493"/>
+<area shape="poly" id="edge66_Node000000_Node000008" title=" " alt="" coords="59,839,62,772,76,682,89,634,107,587,132,543,164,503,194,484,197,488,167,507,136,545,112,589,94,636,81,683,68,773,65,839"/>
+<area shape="rect" id="Node000009" href="$structkamping_1_1builtin__type_3_01long_01long_01int_01_4.html" title="Specialization of builtin_type for long long int." alt="" coords="196,517,359,557"/>
+<area shape="poly" id="edge67_Node000000_Node000009" title=" " alt="" coords="61,839,68,783,84,710,97,671,115,634,136,598,164,567,194,548,197,553,167,571,141,602,119,636,102,673,89,711,73,784,67,839"/>
+<area shape="rect" id="Node000010" href="$structkamping_1_1builtin__type_3_01short_01int_01_4.html" title="Specialization of builtin_type for short int." alt="" coords="196,581,359,621"/>
+<area shape="poly" id="edge68_Node000000_Node000010" title=" " alt="" coords="64,838,75,794,93,738,122,681,141,654,164,631,194,613,197,618,167,635,145,658,127,683,98,740,80,795,69,840"/>
+<area shape="rect" id="Node000011" href="$structkamping_1_1builtin__type_3_01signed_01char_01_4.html" title="Specialization of builtin_type for signed char." alt="" coords="196,645,359,685"/>
+<area shape="poly" id="edge69_Node000000_Node000011" title=" " alt="" coords="69,839,83,806,103,767,130,728,164,695,195,678,197,683,167,699,134,732,108,770,88,808,74,841"/>
+<area shape="rect" id="Node000012" href="$structkamping_1_1builtin__type_3_01std_1_1complex_3_01double_01_4_01_4.html" title="Specialization of builtin_type for std::complex&lt;double&gt;." alt="" coords="172,709,383,749"/>
+<area shape="poly" id="edge70_Node000000_Node000012" title=" " alt="" coords="78,839,115,798,138,777,164,759,189,747,191,752,167,764,142,781,119,802,82,843"/>
+<area shape="rect" id="Node000013" href="$structkamping_1_1builtin__type_3_01std_1_1complex_3_01float_01_4_01_4.html" title="Specialization of builtin_type for std::complex&lt;float&gt;." alt="" coords="180,773,375,813"/>
+<area shape="poly" id="edge71_Node000000_Node000013" title=" " alt="" coords="105,845,164,823,202,811,204,816,166,828,107,850"/>
+<area shape="rect" id="Node000014" href="$structkamping_1_1builtin__type_3_01std_1_1complex_3_01long_01double_01_4_01_4.html" title="Specialization of builtin_type for std::complex&lt;long double&gt;." alt="" coords="195,838,359,893"/>
+<area shape="poly" id="edge72_Node000000_Node000014" title=" " alt="" coords="131,863,195,863,195,868,131,868"/>
+<area shape="rect" id="Node000015" href="$structkamping_1_1builtin__type_3_01unsigned_01char_01_4.html" title="Specialization of builtin_type for unsigned char." alt="" coords="196,917,359,957"/>
+<area shape="poly" id="edge73_Node000000_Node000015" title=" " alt="" coords="108,880,166,901,208,915,206,920,164,907,106,885"/>
+<area shape="rect" id="Node000016" href="$structkamping_1_1builtin__type_3_01unsigned_01int_01_4.html" title="Specialization of builtin_type for unsigned int." alt="" coords="196,981,359,1021"/>
+<area shape="poly" id="edge74_Node000000_Node000016" title=" " alt="" coords="82,888,119,929,142,949,167,967,197,981,195,986,164,972,138,953,115,932,78,891"/>
+<area shape="rect" id="Node000017" href="$structkamping_1_1builtin__type_3_01unsigned_01long_01int_01_4.html" title="Specialization of builtin_type for unsigned long int." alt="" coords="195,1045,359,1085"/>
+<area shape="poly" id="edge75_Node000000_Node000017" title=" " alt="" coords="74,890,88,922,108,961,134,999,167,1031,196,1047,194,1052,164,1035,130,1002,103,963,83,925,69,892"/>
+<area shape="rect" id="Node000018" href="$structkamping_1_1builtin__type_3_01unsigned_01long_01long_01int_01_4.html" title="Specialization of builtin_type for unsigned long long int." alt="" coords="179,1109,375,1149"/>
+<area shape="poly" id="edge76_Node000000_Node000018" title=" " alt="" coords="69,891,80,936,98,991,127,1047,145,1073,167,1095,184,1107,181,1111,164,1099,141,1076,122,1050,93,993,75,937,64,892"/>
+<area shape="rect" id="Node000019" href="$structkamping_1_1builtin__type_3_01unsigned_01short_01int_01_4.html" title="Specialization of builtin_type for unsigned short int." alt="" coords="193,1173,362,1213"/>
+<area shape="poly" id="edge77_Node000000_Node000019" title=" " alt="" coords="67,891,73,947,89,1019,102,1057,119,1095,141,1129,167,1159,194,1177,191,1181,164,1163,136,1132,115,1097,97,1059,84,1021,68,948,61,892"/>
+<area shape="rect" id="Node000020" href="$structkamping_1_1builtin__type_3_01wchar__t_01_4.html" title="Specialization of builtin_type for wchar_t." alt="" coords="196,1237,359,1277"/>
+<area shape="poly" id="edge78_Node000000_Node000020" title=" " alt="" coords="65,892,68,958,81,1047,94,1095,112,1142,136,1185,167,1223,197,1242,194,1247,164,1227,132,1188,107,1144,89,1097,76,1048,62,959,59,892"/>
+<area shape="rect" id="Node000021" href="$structkamping_1_1has__static__type_3_01T_00_01std_1_1void__t_3_01decltype_07mpi__type__traits_3_15da6b469e2a3ba98f1fb493cab97940.html" title="Check if the type has a static type definition, i.e. mpi_type_traits is defined." alt="" coords="170,1301,385,1371"/>
+<area shape="poly" id="edge79_Node000000_Node000021" title=" " alt="" coords="69,891,81,980,103,1098,132,1212,149,1257,167,1288,179,1299,176,1303,163,1291,144,1259,127,1214,97,1099,76,981,63,892"/>
+<area shape="rect" id="Node000022" href="$structkamping_1_1internal_1_1all__unique.html" title="Base wrapper (std::integral_constant) to test if all types of a tuple are unique." alt="" coords="201,1395,354,1435"/>
+<area shape="poly" id="edge80_Node000000_Node000022" title=" " alt="" coords="67,892,76,998,95,1145,108,1220,125,1288,144,1343,167,1381,183,1394,202,1402,199,1407,180,1398,163,1384,140,1346,120,1289,103,1221,89,1146,71,999,62,892"/>
+<area shape="rect" id="Node000023" href="$structkamping_1_1internal_1_1has__data__member_3_01T_00_01std_1_1void__t_3_01decltype_07std_1_1dfe1346dc82617c01fb5c64ff94e93db8.html" title="Helper to decide if data type has .data() method." alt="" coords="165,1459,389,1528"/>
+<area shape="poly" id="edge81_Node000000_Node000023" title=" " alt="" coords="67,892,75,1009,93,1174,107,1259,123,1336,144,1401,167,1445,179,1456,175,1460,163,1448,139,1403,118,1338,101,1260,88,1175,70,1009,61,892"/>
+<area shape="rect" id="Node000024" href="$structkamping_1_1internal_1_1is__specialization_3_01Template_3_01Args_8_8_8_01_4_00_01Template_01_4.html" title="Type trait to check if a type is an instance of a templated type." alt="" coords="175,1553,380,1607"/>
+<area shape="poly" id="edge82_Node000000_Node000024" title=" " alt="" coords="66,892,71,1026,87,1219,100,1319,117,1411,140,1487,153,1516,167,1538,180,1551,177,1555,163,1542,148,1518,135,1488,112,1412,94,1320,81,1220,66,1026,61,892"/>
+<area shape="rect" id="Node000025" href="$structkamping_1_1internal_1_1is__std__array_3_01std_1_1array_3_01T_00_01N_01_4_01_4.html" title="Helper to check if a type is a std::array." alt="" coords="188,1631,367,1686"/>
+<area shape="poly" id="edge83_Node000000_Node000025" title=" " alt="" coords="65,892,69,1040,82,1257,95,1370,113,1473,137,1558,151,1592,167,1617,189,1635,186,1640,163,1620,147,1594,132,1560,108,1474,90,1370,77,1258,63,1040,60,892"/>
+<area shape="rect" id="Node000026" href="$structkamping_1_1internal_1_1is__std__pair_3_01std_1_1pair_3_01T1_00_01T2_01_4_01_4.html" title="Helper to check if a type is a std::pair." alt="" coords="197,1710,357,1765"/>
+<area shape="poly" id="edge84_Node000000_Node000026" title=" " alt="" coords="65,892,66,1054,78,1294,90,1419,108,1535,134,1630,150,1667,167,1696,181,1709,198,1719,196,1723,178,1713,163,1699,145,1670,129,1632,103,1536,85,1420,72,1295,61,1054,60,892"/>
+<area shape="rect" id="Node000027" href="$structkamping_1_1internal_1_1is__std__tuple_3_01std_1_1tuple_3_01Ts_8_8_8_01_4_01_4.html" title="Helper to check if a type is a std::tuple." alt="" coords="189,1789,365,1843"/>
+<area shape="poly" id="edge85_Node000000_Node000027" title=" " alt="" coords="67,892,78,1080,99,1360,113,1502,129,1627,148,1723,157,1755,167,1774,191,1794,187,1798,163,1778,153,1757,143,1724,124,1628,108,1503,94,1361,72,1080,61,892"/>
+</map>

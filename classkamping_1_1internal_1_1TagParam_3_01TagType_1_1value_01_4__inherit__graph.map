@@ -1,0 +1,5 @@
+<map id="kamping::internal::TagParam&lt; TagType::value &gt;" name="kamping::internal::TagParam&lt; TagType::value &gt;">
+<area shape="rect" id="Node000001" title="Encapsulates a message tag. Specialization if an explicit tag value is provided." alt="" coords="5,93,216,133"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1internal_1_1CopyMoveEnabler.html" title="Class optionally containing a copy constructor while supporting move assignment/construction." alt="" coords="11,5,210,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,59,113,93,108,93,108,59"/>
+</map>

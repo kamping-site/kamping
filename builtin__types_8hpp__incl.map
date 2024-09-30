@@ -1,0 +1,11 @@
+<map id="include/kamping/builtin_types.hpp" name="include/kamping/builtin_types.hpp">
+<area shape="rect" id="Node000001" title="Mapping of C++ datatypes to builtin MPI types." alt="" coords="116,5,291,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,84,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,48,81,90,79,85,164,43"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="108,93,200,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,47,171,83,166,80,189,44"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="225,93,283,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="218,44,241,80,237,83,213,47"/>
+<area shape="rect" id="Node000005" href="$kabool_8hpp_source.html" title=" " alt="" coords="308,93,461,119"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="248,43,346,85,344,90,246,48"/>
+</map>
