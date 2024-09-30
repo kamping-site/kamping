@@ -604,6 +604,10 @@ public:
             "Moving out of a reference should not be done because it would leave "
             "a users container in an unspecified state."
         );
+        static_assert(
+            !is_vector_bool_v<MemberType>,
+            "Buffers based on std::vector<bool> are not supported, use std::vector<kamping::kabool> instead."
+        );
         kassert_not_extracted("Cannot extract a buffer that has already been extracted.");
         auto extracted = std::move(_data);
         // we set is_extracted here because otherwise the call to underlying() would fail
