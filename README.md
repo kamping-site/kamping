@@ -18,7 +18,34 @@ Using template-metaprogramming, only code paths required for computing
 parameters not provided by the user are generated at compile time, which results in (near) zero-overhead
 bindings.
 
-**:running: Quick Start:** We provide a wide range of [usage](./examples/usage) and [simple applications](./examples/applications) examples (start with [`allgatherv`](./examples/usage/allgatherv_example.cpp)). Or checkout the [documentation](https://kamping-site.github.io/kamping/) for a description of KaMPIng's core concepts and a full reference.
+**:running: Quick Start:**
+KaMPIng is header-only, compatible with all major MPI implementations and requires a C++17-ready compiler.
+The easiest way to get started is to include KaMPIng using CMake's FetchContent module.
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+  kamping
+  GIT_REPOSITORY https://github.com/kamping-site/kamping.git
+  GIT_TAG v0.1.1
+)
+
+FetchContent_MakeAvailable(kamping)
+target_link_libraries(myapp PRIVATE kamping::kamping)
+```
+It is fully compatible with your existing MPI code and you can start using it right away. Just include the headers for the main communicator class and the MPI call that you want to use.
+
+``` c++
+
+#include <kamping/communicator.hpp>
+#include <kamping/collectives/allgather.hpp>
+ 
+kamping::Communicator comm;
+ 
+std::vector<int> input(comm.rank(), comm.rank_signed());
+auto const result = comm.allgatherv(kamping::send_buf(input));
+```
+
+We provide a wide range of [usage](./examples/usage) and [simple applications](./examples/applications) examples (start with [`allgatherv`](./examples/usage/allgatherv_example.cpp)). Or checkout the [documentation](https://kamping-site.github.io/kamping/) for a description of KaMPIng's core concepts and a full reference.
 
 KaMPIng is developed at the [Algorithm Engineering
 Group](https://ae.iti.kit.edu/english/index.php) at Karlsruhe Institute of
