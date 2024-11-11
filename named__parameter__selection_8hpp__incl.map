@@ -1,0 +1,11 @@
+<map id="include/kamping/named_parameter_selection.hpp" name="include/kamping/named_parameter_selection.hpp">
+<area shape="rect" id="Node000001" title="Template magic to implement named parameters in cpp." alt="" coords="75,5,265,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,101,76,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="143,48,71,95,68,91,140,43"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="101,101,159,126"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="164,47,144,89,139,87,159,44"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="184,101,239,126"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="182,44,202,87,197,89,177,47"/>
+<area shape="rect" id="Node000005" href="$named__parameter__types_8hpp.html" title="File containing the parameter types used by the KaMPIng library." alt="" coords="263,93,466,133"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="214,43,311,85,309,90,212,48"/>
+</map>
