@@ -45,10 +45,12 @@ See `allgatherv_example.cpp` and the other files in `examples` directory for mor
   - \ref kamping_utility
   - \ref kamping_mpi_utility
 
+
   ## Dependencies
   - Building this documentation requires `Doxygen 1.10.0`.
 
   ## Guidelines
+  - \subpage user_guides
   - \subpage coding_guidelines
   - \subpage documentation_guidelines
   - \subpage testing_guidelines
