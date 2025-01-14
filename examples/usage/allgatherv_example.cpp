@@ -109,7 +109,7 @@ int main() {
         print_result_on_root(output, comm);
     }
     {
-        // you can also use define a shorthand for the named parameter namespace, to reduce code verbosity
+        // you can also define a shorthand for the named parameter namespace, to reduce code verbosity
         namespace kmp     = kamping::params;
         auto const output = comm.allgatherv(kmp::send_buf(input));
         print_result_on_root(output, comm);
