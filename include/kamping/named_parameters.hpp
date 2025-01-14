@@ -36,6 +36,8 @@ namespace internal {
 struct unused_tparam {};
 } // namespace internal
 
+namespace params {
+
 //// @addtogroup kamping_named_parameters
 /// @{
 
@@ -1319,4 +1321,7 @@ inline auto send_recv_type_out(MPI_Datatype& send_recv_type) {
         MPI_Datatype>(send_recv_type);
 }
 /// @}
+
+} // namespace params
+using namespace params;
 } // namespace kamping
