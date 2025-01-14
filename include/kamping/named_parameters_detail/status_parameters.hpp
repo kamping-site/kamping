@@ -1,3 +1,4 @@
+
 // This file is part of KaMPIng.
 //
 // Copyright 2023-2024 The KaMPIng Authors
@@ -20,6 +21,7 @@
 #include "kamping/status.hpp"
 
 namespace kamping {
+namespace params {
 /// @addtogroup kamping_mpi_utility
 /// @{
 
@@ -110,4 +112,6 @@ inline auto statuses_out() {
 }
 
 /// @}
+} // namespace params
+using namespace params;
 } // namespace kamping
