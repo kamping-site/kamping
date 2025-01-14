@@ -1,0 +1,7 @@
+<map id="kamping::internal::DataBuffer&lt; MemberType, TParameterType, parameter_type_param, modifiability, ownership, buffer_type_param, buffer_resize_policy_param, allocation, ValueType &gt;" name="kamping::internal::DataBuffer&lt; MemberType, TParameterType, parameter_type_param, modifiability, ownership, buffer_type_param, buffer_resize_policy_param, allocation, ValueType &gt;">
+<area shape="rect" id="Node000001" title="Data buffer used for named parameters." alt="" coords="328,12,556,125"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1internal_1_1CopyMoveEnabler.html" title=" " alt="" coords="5,5,280,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="294,48,328,52,328,58,293,53"/>
+<area shape="rect" id="Node000003" href="$classkamping_1_1internal_1_1Extractable.html" title="Base class containing logic to verify whether a buffer&#39;s data has already been extracted...." alt="" coords="71,85,215,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="228,92,327,80,328,85,228,97"/>
+</map>
