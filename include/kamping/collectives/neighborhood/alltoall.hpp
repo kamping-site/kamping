@@ -14,7 +14,6 @@
 #pragma once
 
 #include <cstddef>
-#include <numeric>
 #include <tuple>
 #include <type_traits>
 
@@ -23,18 +22,10 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
-#include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/collectives_helpers.hpp"
-#include "kamping/collectives/ibarrier.hpp"
-#include "kamping/comm_helper/is_same_on_all_ranks.hpp"
-#include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/p2p/iprobe.hpp"
-#include "kamping/p2p/isend.hpp"
-#include "kamping/p2p/recv.hpp"
-#include "kamping/request_pool.hpp"
 #include "kamping/result.hpp"
 #include "kamping/topology_communicator.hpp"
 
@@ -92,13 +83,13 @@ auto kamping::TopologyCommunicator<DefaultContainerType, Plugins...>::neighbor_a
         KAMPING_OPTIONAL_PARAMETERS(recv_buf, send_count, recv_count, send_type, recv_type)
     );
     // Get the buffers
-    auto const&& send_buf =
+    auto const send_buf =
         internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
 
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
-    auto&& recv_buf =
+    auto recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
@@ -108,13 +99,13 @@ auto kamping::TopologyCommunicator<DefaultContainerType, Plugins...>::neighbor_a
 
     static_assert(!std::is_const_v<recv_value_type>, "The receive buffer must not have a const value_type.");
 
-    auto&& [send_type, recv_type] =
+    auto [send_type, recv_type] =
         internal::determine_mpi_datatypes<send_value_type, recv_value_type, decltype(recv_buf)>(args...);
     [[maybe_unused]] constexpr bool recv_type_has_to_be_deduced = has_to_be_computed<decltype(recv_type)>;
 
     // Get the send counts
     using default_send_count_type = decltype(kamping::send_count_out());
-    auto&& send_count =
+    auto send_count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
@@ -127,7 +118,7 @@ auto kamping::TopologyCommunicator<DefaultContainerType, Plugins...>::neighbor_a
     }
     // Get the recv counts
     using default_recv_count_type = decltype(kamping::recv_count_out());
-    auto&& recv_count =
+    auto recv_count =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
             std::tuple(),
             args...
