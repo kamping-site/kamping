@@ -20,7 +20,6 @@
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
-#include "kamping/data_buffer.hpp"
 #include "kamping/implementation_helpers.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -85,7 +84,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
 
     using default_status_param_type = decltype(kamping::status(kamping::ignore<>));
 
-    auto&& status =
+    auto status =
         internal::select_parameter_type_or_default<internal::ParameterType::status, default_status_param_type>(
             {},
             args...

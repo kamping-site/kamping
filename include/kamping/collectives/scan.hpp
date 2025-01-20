@@ -86,27 +86,27 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
         );
 
         // get the send buffer and deduce the send and recv value types.
-        auto const&& send_buf = select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind();
+        auto const send_buf   = select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
         using default_recv_value_type = std::remove_const_t<send_value_type>;
 
         // deduce the recv buffer type and get (if provided) the recv buffer or allocate one (if not provided).
         using default_recv_buf_type =
             decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
-        auto&& recv_buf =
+        auto recv_buf =
             select_parameter_type_or_default<ParameterType::recv_buf, default_recv_buf_type>(std::tuple(), args...)
                 .template construct_buffer_or_rebind<DefaultContainerType>();
 
         // get the send_recv_type
-        auto&& send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
+        auto send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
         [[maybe_unused]] constexpr bool send_recv_type_is_in_param = !has_to_be_computed<decltype(send_recv_type)>;
 
         // get the send_recv count
         using default_send_recv_count_type = decltype(kamping::send_recv_count_out());
-        auto&& send_recv_count             = internal::select_parameter_type_or_default<
-                                     internal::ParameterType::send_recv_count,
-                                     default_send_recv_count_type>(std::tuple(), args...)
-                                     .construct_buffer_or_rebind();
+        auto send_recv_count               = internal::select_parameter_type_or_default<
+                                   internal::ParameterType::send_recv_count,
+                                   default_send_recv_count_type>(std::tuple(), args...)
+                                   .construct_buffer_or_rebind();
 
         constexpr bool do_compute_send_recv_count = internal::has_to_be_computed<decltype(send_recv_count)>;
         if constexpr (do_compute_send_recv_count) {
@@ -196,16 +196,16 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_inplace(Args.
     );
 
     // get the send recv buffer and deduce the send and recv value types.
-    auto&& send_recv_buf = select_parameter_type<ParameterType::send_recv_buf>(args...).construct_buffer_or_rebind();
-    using value_type     = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
+    auto send_recv_buf = select_parameter_type<ParameterType::send_recv_buf>(args...).construct_buffer_or_rebind();
+    using value_type   = typename std::remove_reference_t<decltype(send_recv_buf)>::value_type;
 
     // get the send_recv_type
-    auto&& type = determine_mpi_send_recv_datatype<value_type, decltype(send_recv_buf)>(args...);
+    auto type = determine_mpi_send_recv_datatype<value_type, decltype(send_recv_buf)>(args...);
     [[maybe_unused]] constexpr bool type_is_in_param = !has_to_be_computed<decltype(type)>;
 
     // get the send_recv count
     using default_count_type = decltype(kamping::send_recv_count_out());
-    auto&& count =
+    auto count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_count, default_count_type>(
             std::tuple(),
             args...

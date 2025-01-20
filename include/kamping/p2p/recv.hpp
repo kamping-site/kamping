@@ -23,9 +23,7 @@
 
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
-#include "kamping/error_handling.hpp"
 #include "kamping/implementation_helpers.hpp"
-#include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
@@ -88,7 +86,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         KAMPING_OPTIONAL_PARAMETERS(recv_buf, tag, source, recv_count, recv_type, status)
     );
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<recv_value_type_tparam>>));
-    auto&& recv_buf =
+    auto recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
@@ -105,7 +103,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         "No recv_buf parameter provided and no receive value given as template parameter. One of these is required."
     );
 
-    auto&& recv_type = internal::determine_mpi_recv_datatype<recv_value_type, decltype(recv_buf)>(args...);
+    auto recv_type = internal::determine_mpi_recv_datatype<recv_value_type, decltype(recv_buf)>(args...);
     [[maybe_unused]] constexpr bool recv_type_is_in_param = !internal::has_to_be_computed<decltype(recv_type)>;
 
     using default_source_buf_type = decltype(kamping::source(rank::any));
@@ -132,7 +130,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
 
     using default_status_param_type = decltype(kamping::status(kamping::ignore<>));
 
-    auto&& status =
+    auto status =
         internal::select_parameter_type_or_default<internal::ParameterType::status, default_status_param_type>(
             {},
             args...
@@ -142,7 +140,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     // Get the optional recv_count parameter. If the parameter is not given,
     // allocate a new container.
     using default_recv_count_type = decltype(kamping::recv_count_out());
-    auto&& recv_count_param =
+    auto recv_count_param =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
             std::tuple(),
             args...

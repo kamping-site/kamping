@@ -88,13 +88,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
         );
 
         // get the send/recv buffer and types
-        auto&& send_buf_param =
+        auto send_buf_param =
             internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
         auto send_buf         = send_buf_param.get();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf_param)>::value_type;
 
         using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
-        auto&& recv_buf =
+        auto recv_buf =
             internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
                 std::tuple(),
                 args...
@@ -102,7 +102,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
                 .template construct_buffer_or_rebind<DefaultContainerType>();
         using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
-        auto&& [send_type, recv_type] =
+        auto [send_type, recv_type] =
             internal::determine_mpi_datatypes<send_value_type, recv_value_type, decltype(recv_buf)>(args...);
         [[maybe_unused]] constexpr bool send_type_is_input_parameter = !has_to_be_computed<decltype(send_type)>;
         [[maybe_unused]] constexpr bool recv_type_is_input_parameter = !has_to_be_computed<decltype(recv_type)>;
@@ -119,7 +119,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
 
         // get the send counts
         using default_send_count_type = decltype(kamping::send_count_out());
-        auto&& send_count =
+        auto send_count =
             internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
                 std::tuple(),
                 args...
@@ -132,7 +132,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
 
         // get the receive counts
         using default_recv_count_type = decltype(kamping::recv_count_out());
-        auto&& recv_count =
+        auto recv_count =
             internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
                 std::tuple(),
                 args...
@@ -215,11 +215,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
     );
 
     // get the send/recv buffer and type
-    auto&& buffer =
+    auto buffer =
         internal::select_parameter_type<internal::ParameterType::send_recv_buf>(args...).construct_buffer_or_rebind();
     using value_type = typename std::remove_reference_t<decltype(buffer)>::value_type;
 
-    auto&& type = internal::determine_mpi_send_recv_datatype<value_type, decltype(buffer)>(args...);
+    auto type = internal::determine_mpi_send_recv_datatype<value_type, decltype(buffer)>(args...);
     [[maybe_unused]] constexpr bool type_is_input_parameter = !has_to_be_computed<decltype(type)>;
 
     KASSERT(
@@ -233,7 +233,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
 
     // get the send counts
     using default_count_type = decltype(kamping::send_recv_count_out());
-    auto&& count =
+    auto count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_count, default_count_type>(
             std::tuple(),
             args...
@@ -332,13 +332,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     );
 
     // get send_buf
-    auto&& send_buf =
+    auto send_buf =
         internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
     // get recv_buf
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
-    auto&& recv_buf =
+    auto recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
@@ -347,14 +347,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
 
     // get send/recv types
-    auto&& [send_type, recv_type] =
+    auto [send_type, recv_type] =
         internal::determine_mpi_datatypes<send_value_type, recv_value_type, decltype(recv_buf)>(args...);
     [[maybe_unused]] constexpr bool send_type_is_input_parameter = !internal::has_to_be_computed<decltype(send_type)>;
     [[maybe_unused]] constexpr bool recv_type_is_input_parameter = !internal::has_to_be_computed<decltype(recv_type)>;
 
     // get the send counts
     using default_send_count_type = decltype(kamping::send_count_out());
-    auto&& send_count =
+    auto send_count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
@@ -366,7 +366,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     }
     // get the recv counts
     using default_recv_counts_type = decltype(kamping::recv_counts_out(alloc_new<DefaultContainerType<int>>));
-    auto&& recv_counts =
+    auto recv_counts =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_counts, default_recv_counts_type>(
             std::tuple(),
             args...
@@ -394,7 +394,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
 
     // Get recv_displs
     using default_recv_displs_type = decltype(kamping::recv_displs_out(alloc_new<DefaultContainerType<int>>));
-    auto&& recv_displs =
+    auto recv_displs =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
             std::tuple(),
             args...

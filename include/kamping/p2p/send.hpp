@@ -21,9 +21,7 @@
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
-#include "kamping/data_buffer.hpp"
 #include "kamping/implementation_helpers.hpp"
-#include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
@@ -73,8 +71,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
         KAMPING_OPTIONAL_PARAMETERS(send_count, tag, send_mode, send_type)
     );
 
-    auto&& send_buf = internal::select_parameter_type<internal::ParameterType::send_buf>(args...)
-                          .template construct_buffer_or_rebind<UnusedRebindContainer, serialization_support_tag>();
+    auto send_buf = internal::select_parameter_type<internal::ParameterType::send_buf>(args...)
+                        .template construct_buffer_or_rebind<UnusedRebindContainer, serialization_support_tag>();
     constexpr bool is_serialization_used = internal::buffer_uses_serialization<decltype(send_buf)>;
     if constexpr (is_serialization_used) {
         KAMPING_UNSUPPORTED_PARAMETER(Args, send_count, when using serialization);
@@ -83,10 +81,10 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
     }
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
-    auto&& send_type = internal::determine_mpi_send_datatype<send_value_type>(args...);
+    auto send_type = internal::determine_mpi_send_datatype<send_value_type>(args...);
 
     using default_send_count_type = decltype(kamping::send_count_out());
-    auto&& send_count =
+    auto send_count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             {},
             args...

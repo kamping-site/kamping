@@ -88,13 +88,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
     );
 
     // Get the send buffer and deduce the send and recv value types.
-    auto const& send_buf =
+    auto const send_buf =
         internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type         = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     using default_recv_value_type = std::remove_const_t<send_value_type>;
 
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<default_recv_value_type>>));
-    auto&& recv_buf =
+    auto recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
@@ -102,7 +102,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
             .template construct_buffer_or_rebind<DefaultContainerType>();
 
     // Get the send type.
-    auto&& send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
+    auto send_recv_type = determine_mpi_send_recv_datatype<send_value_type, decltype(recv_buf)>(args...);
     [[maybe_unused]] constexpr bool send_recv_type_is_in_param = !has_to_be_computed<decltype(send_recv_type)>;
 
     // Get the operation used for the reduction. The signature of the provided function is checked while building.
@@ -111,10 +111,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
     auto operation = operation_param.template build_operation<send_value_type>();
 
     using default_send_recv_count_type = decltype(kamping::send_recv_count_out());
-    auto&& send_recv_count             = internal::select_parameter_type_or_default<
-                                 internal::ParameterType::send_recv_count,
-                                 default_send_recv_count_type>({}, args...)
-                                 .construct_buffer_or_rebind();
+    auto send_recv_count               = internal::select_parameter_type_or_default<
+                               internal::ParameterType::send_recv_count,
+                               default_send_recv_count_type>({}, args...)
+                               .construct_buffer_or_rebind();
     if constexpr (has_to_be_computed<decltype(send_recv_count)>) {
         send_recv_count.underlying() = asserting_cast<int>(send_buf.size());
     }
