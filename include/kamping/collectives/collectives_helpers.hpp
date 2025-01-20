@@ -54,12 +54,6 @@ size_t compute_required_recv_buf_size_in_vectorized_communication(
     }
 }
 
-/// @brief If the given type T is an rvalue reference,i.e. T = U&&, the type alias refers to U. Otherwise the type alias
-/// refers to T (which possibly can be an lvalue reference).
-/// @tparam T Type for which a possible rvalue reference is removed.
-template <typename T>
-using remove_rvalue_reference_t = std::conditional_t<std::is_rvalue_reference_v<T>, std::remove_reference_t<T>, T>;
-
 /// @brief Deduce the MPI_Datatype to use on the send and recv side.
 /// If \ref kamping::send_type() is given, the \c MPI_Datatype wrapped inside will be used as send_type. Otherwise, the
 /// \c MPI_datatype is derived automatically based on send_buf's underlying \c value_type.
@@ -113,7 +107,7 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
     using default_mpi_send_type = decltype(kamping::send_type_out());
     using default_mpi_recv_type = decltype(kamping::recv_type_out());
 
-    auto&& mpi_send_type =
+    auto mpi_send_type =
         internal::select_parameter_type_or_default<internal::ParameterType::send_type, default_mpi_send_type>(
             std::make_tuple(),
             args...
@@ -127,7 +121,7 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
         }
     }
 
-    auto&& mpi_recv_type =
+    auto mpi_recv_type =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_type, default_mpi_recv_type>(
             std::make_tuple(),
             args...
@@ -137,16 +131,7 @@ constexpr auto determine_mpi_datatypes(Args&... args) {
         mpi_recv_type.underlying() = mpi_datatype<recv_value_type>();
     }
 
-    // If the send/recv types are user provided we can refer to the corresponding buffers contained in args and only
-    // need to store an lvalue reference bound to them in the return tuple. Otherwise the send/recv type buffers are
-    // constructed in this function and have to be returned by value (and therefore be non-reference members of the
-    // return tuple).
-    using ForwardingTuple = std::
-        tuple<remove_rvalue_reference_t<decltype(mpi_send_type)>, remove_rvalue_reference_t<decltype(mpi_recv_type)>>;
-    return ForwardingTuple(
-        std::forward<decltype(mpi_send_type)>(mpi_send_type),
-        std::forward<decltype(mpi_recv_type)>(mpi_recv_type)
-    );
+    return std::tuple{std::move(mpi_send_type), std::move(mpi_recv_type)};
 }
 
 /// @brief Deduce the MPI_Datatype to use as send_recv_type in a collective operation which accepts only one parameter
@@ -193,10 +178,7 @@ constexpr auto determine_mpi_send_recv_datatype(Args&... args)
     // Get the send_recv type
     using default_mpi_send_recv_type = decltype(kamping::send_recv_type_out());
 
-    // decltype(auto) becomes an lvalue reference type if the initializer is an lvalue and a non-reference type if the
-    // the initializer is a pr-value (e.g. a function call returning by value). These are the only two value categories
-    // we accept for the return value of select_parameter_type_or_default.
-    decltype(auto) mpi_send_recv_type =
+    auto mpi_send_recv_type =
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_type, default_mpi_send_recv_type>(
             std::make_tuple(),
             args...
