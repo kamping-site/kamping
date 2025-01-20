@@ -23,9 +23,7 @@
 
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
-#include "kamping/error_handling.hpp"
 #include "kamping/implementation_helpers.hpp"
-#include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
@@ -33,7 +31,6 @@
 #include "kamping/p2p/helpers.hpp"
 #include "kamping/p2p/probe.hpp"
 #include "kamping/parameter_objects.hpp"
-#include "kamping/request.hpp"
 #include "kamping/result.hpp"
 #include "kamping/status.hpp"
 
@@ -89,7 +86,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::irecv(Args... args
         KAMPING_OPTIONAL_PARAMETERS(recv_buf, tag, source, recv_count, recv_type, request)
     );
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<recv_value_type_tparam>>));
-    auto&& recv_buf =
+    auto recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
@@ -101,7 +98,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::irecv(Args... args
         "No recv_buf parameter provided and no receive value given as template parameter. One of these is required."
     );
 
-    auto&& recv_type = internal::determine_mpi_recv_datatype<recv_value_type, decltype(recv_buf)>(args...);
+    auto recv_type = internal::determine_mpi_recv_datatype<recv_value_type, decltype(recv_buf)>(args...);
     [[maybe_unused]] constexpr bool recv_type_is_in_param = !internal::has_to_be_computed<decltype(recv_type)>;
 
     using default_request_param = decltype(kamping::request());
@@ -136,7 +133,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::irecv(Args... args
     // Get the optional recv_count parameter. If the parameter is not given,
     // allocate a new container.
     using default_recv_count_type = decltype(kamping::recv_count_out());
-    auto&& recv_count_param =
+    auto recv_count_param =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
             std::tuple(),
             args...

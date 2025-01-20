@@ -23,7 +23,6 @@
 
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
-#include "kamping/error_handling.hpp"
 #include "kamping/implementation_helpers.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -87,7 +86,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
 
     //  Get the recv buffer
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<recv_value_type_tparam>>));
-    auto&& recv_buf =
+    auto recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
@@ -99,7 +98,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         "No recv_buf parameter provided and no receive value given as template parameter. One of these is required."
     );
 
-    auto&& recv_type = internal::determine_mpi_recv_datatype<recv_value_type, decltype(recv_buf)>(args...);
+    auto recv_type = internal::determine_mpi_recv_datatype<recv_value_type, decltype(recv_buf)>(args...);
     [[maybe_unused]] constexpr bool recv_type_is_in_param = !internal::has_to_be_computed<decltype(recv_type)>;
 
     // Get the source parameter. If the parameter is not given, use MPI_ANY_SOURCE.
@@ -124,7 +123,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
     }
     // Get the status parameter.
     using default_status_param_type = decltype(kamping::status(kamping::ignore<>));
-    auto&& status_param =
+    auto status_param =
         internal::select_parameter_type_or_default<internal::ParameterType::status, default_status_param_type>(
             {},
             args...

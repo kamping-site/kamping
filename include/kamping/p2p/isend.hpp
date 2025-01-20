@@ -21,16 +21,13 @@
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
-#include "kamping/data_buffer.hpp"
 #include "kamping/implementation_helpers.hpp"
-#include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/helpers.hpp"
 #include "kamping/parameter_objects.hpp"
-#include "kamping/request.hpp"
 #include "kamping/result.hpp"
 
 ///// @addtogroup kamping_p2p
@@ -85,14 +82,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
         KAMPING_OPTIONAL_PARAMETERS(send_count, tag, send_mode, request, send_type)
     );
 
-    auto&& send_buf =
+    auto send_buf =
         internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
-    auto&& send_type = internal::determine_mpi_send_datatype<send_value_type>(args...);
+    auto send_type = internal::determine_mpi_send_datatype<send_value_type>(args...);
 
     using default_send_count_type = decltype(kamping::send_count_out());
-    auto&& send_count =
+    auto send_count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             {},
             args...
