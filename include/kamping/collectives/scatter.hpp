@@ -116,7 +116,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     // Optional parameter: recv_buf()
     // Default: allocate new container
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
-    auto&& recv_buf =
+    auto recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
@@ -131,7 +131,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     );
 
     // Get send_type and recv_type
-    auto&& [send_type, recv_type] =
+    auto [send_type, recv_type] =
         internal::determine_mpi_datatypes<send_value_type, recv_value_type, decltype(recv_buf)>(args...);
     KASSERT(
         !is_root(int_root) || send_type.underlying() != MPI_DATATYPE_NULL,
@@ -142,7 +142,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
 
     // Compute sendcount based on the size of the sendbuf
     using default_send_count_type = decltype(kamping::send_count_out());
-    auto&& send_count =
+    auto send_count =
         internal::select_parameter_type_or_default<internal::ParameterType::send_count, default_send_count_type>(
             std::tuple(),
             args...
@@ -165,7 +165,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     // Optional parameter: recv_count()
     // Default: compute value based on send_buf.size on root
     using default_recv_count_type = decltype(kamping::recv_count_out());
-    auto&& recv_count =
+    auto recv_count =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
             std::tuple(),
             args...
@@ -368,7 +368,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     // Optional parameter: recv_buf()
     // Default: allocate new container
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<send_value_type>>));
-    auto&& recv_buf =
+    auto recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
             std::tuple(),
             args...
@@ -383,13 +383,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     );
 
     // Get send_type and recv_type
-    auto&& [send_type, recv_type] =
+    auto [send_type, recv_type] =
         internal::determine_mpi_datatypes<send_value_type, recv_value_type, decltype(recv_buf)>(args...);
     [[maybe_unused]] constexpr bool recv_type_is_in_param = !has_to_be_computed<decltype(recv_type)>;
 
     // Get send counts
     using default_send_counts_type = decltype(send_counts_out(alloc_new<DefaultContainerType<int>>));
-    auto&& send_counts =
+    auto send_counts =
         select_parameter_type_or_default<ParameterType::send_counts, default_send_counts_type>(std::tuple(), args...)
             .template construct_buffer_or_rebind<DefaultContainerType>();
     [[maybe_unused]] constexpr bool send_counts_provided = !has_to_be_computed<decltype(send_counts)>;
@@ -406,7 +406,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
 
     // Get send displacements
     using default_send_displs_type = decltype(send_displs_out(alloc_new<DefaultContainerType<int>>));
-    auto&& send_displs =
+    auto send_displs =
         select_parameter_type_or_default<ParameterType::send_displs, default_send_displs_type>(std::tuple(), args...)
             .template construct_buffer_or_rebind<DefaultContainerType>();
 
@@ -429,7 +429,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
 
     // Get recv counts
     using default_recv_count_type = decltype(recv_count_out());
-    auto&& recv_count =
+    auto recv_count =
         select_parameter_type_or_default<ParameterType::recv_count, default_recv_count_type>(std::tuple(), args...)
             .construct_buffer_or_rebind();
 
