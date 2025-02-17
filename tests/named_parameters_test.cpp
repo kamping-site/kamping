@@ -1203,6 +1203,108 @@ TEST(ParameterFactoriesTest, tag_enum_class) {
     }
 }
 
+TEST(ParameterFactoriesTest, send_tag_basics) {
+    {
+        auto tag_obj = send_tag(22);
+        EXPECT_EQ(tag_obj.tag(), 22);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::send_tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+    {
+        auto tag_obj = send_tag(tags::any);
+        EXPECT_EQ(tag_obj.tag(), MPI_ANY_TAG);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::any);
+    }
+}
+
+TEST(ParameterFactoriesTest, send_tag_enum) {
+    enum Tags : int {
+        type_a = 27,
+        type_b = 3,
+    };
+    {
+        auto tag_obj = send_tag(Tags::type_a);
+        EXPECT_EQ(tag_obj.tag(), 27);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::send_tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+    {
+        auto tag_obj = send_tag(Tags::type_b);
+        EXPECT_EQ(tag_obj.tag(), 3);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::send_tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+}
+
+TEST(ParameterFactoriesTest, send_tag_enum_class) {
+    enum class Tags {
+        type_a = 27,
+        type_b = 3,
+    };
+    {
+        auto tag_obj = send_tag(Tags::type_a);
+        EXPECT_EQ(tag_obj.tag(), 27);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+    {
+        auto tag_obj = send_tag(Tags::type_b);
+        EXPECT_EQ(tag_obj.tag(), 3);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::send_tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+}
+
+TEST(ParameterFactoriesTest, recv_tag_basics) {
+    {
+        auto tag_obj = recv_tag(22);
+        EXPECT_EQ(tag_obj.tag(), 22);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::recv_tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+    {
+        auto tag_obj = recv_tag(tags::any);
+        EXPECT_EQ(tag_obj.tag(), MPI_ANY_TAG);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::any);
+    }
+}
+
+TEST(ParameterFactoriesTest, recv_tag_enum) {
+    enum Tags : int {
+        type_a = 27,
+        type_b = 3,
+    };
+    {
+        auto tag_obj = recv_tag(Tags::type_a);
+        EXPECT_EQ(tag_obj.tag(), 27);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::recv_tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+    {
+        auto tag_obj = recv_tag(Tags::type_b);
+        EXPECT_EQ(tag_obj.tag(), 3);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::recv_tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+}
+
+TEST(ParameterFactoriesTest, recv_tag_enum_class) {
+    enum class Tags {
+        type_a = 27,
+        type_b = 3,
+    };
+    {
+        auto tag_obj = recv_tag(Tags::type_a);
+        EXPECT_EQ(tag_obj.tag(), 27);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+    {
+        auto tag_obj = recv_tag(Tags::type_b);
+        EXPECT_EQ(tag_obj.tag(), 3);
+        EXPECT_EQ(decltype(tag_obj)::parameter_type, ParameterType::recv_tag);
+        EXPECT_EQ(decltype(tag_obj)::tag_type, TagType::value);
+    }
+}
+
 TEST(ParameterFactoriesTest, status_basics) {
     {
         auto status_obj = status(kamping::ignore<>).construct_buffer_or_rebind();
