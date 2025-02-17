@@ -509,17 +509,18 @@ enum class TagType {
 
 /// @brief Encapsulates a message tag.
 /// @tparam The type of the tag.
-template <TagType tag_type>
+/// @tparam The parameter type associated with the tag parameter object. Defaults to \ref ParameterType::tag.
+template <TagType tag_type, ParameterType parameter_type = ParameterType::tag>
 class TagParam {};
 
 /// @brief Encapsulates a message tag. Specialization if an explicit tag value is provided.
-template <>
-class TagParam<TagType::value> : private CopyMoveEnabler<> {
+template <ParameterType parameter_type_>
+class TagParam<TagType::value, parameter_type_> : private CopyMoveEnabler<> {
 public:
     /// @param tag The tag.
     TagParam(int tag) : _tag_value(tag) {}
-    static constexpr ParameterType parameter_type = ParameterType::tag; ///< The parameter type.
-    static constexpr TagType       tag_type       = TagType::value;     ///< The tag type.
+    static constexpr ParameterType parameter_type = parameter_type_; ///< The parameter type.
+    static constexpr TagType       tag_type       = TagType::value;  ///< The tag type.
     /// @return The tag.
     [[nodiscard]] int tag() const {
         return _tag_value;
@@ -537,11 +538,11 @@ private:
 };
 
 /// @brief Encapsulates a message tag. Specialization if the value is MPI_ANY_TAG.
-template <>
-class TagParam<TagType::any> : private CopyMoveEnabler<> {
+template <ParameterType parameter_type_>
+class TagParam<TagType::any, parameter_type_> : private CopyMoveEnabler<> {
 public:
-    static constexpr ParameterType parameter_type = ParameterType::tag; ///< The parameter type.
-    static constexpr TagType       tag_type       = TagType::any;       ///< The tag type.
+    static constexpr ParameterType parameter_type = parameter_type_; ///< The parameter type.
+    static constexpr TagType       tag_type       = TagType::any;    ///< The tag type.
     /// @return The tag.
     [[nodiscard]] int tag() const {
         return MPI_ANY_TAG;

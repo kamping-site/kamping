@@ -1076,7 +1076,7 @@ inline auto tag(int value) {
     return internal::TagParam<internal::TagType::value>{value};
 }
 
-/// @brief Converts the passed enum \p value to its integer representaiton and passes this value to the underlying call.
+/// @brief Converts the passed enum \p value to its integer representation and passes this value to the underlying call.
 ///
 /// @param value The tag value.
 /// @return The corresponding parameter object.
@@ -1088,6 +1088,68 @@ inline auto tag(EnumType value) {
         "The underlying enum type must be implicitly convertible to int."
     );
     return tag(static_cast<int>(value));
+}
+
+/// @brief Indicates to use \c MPI_ANY_TAG as send tag in the underlying call.
+///
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto send_tag(internal::any_tag_t) {
+    return internal::TagParam<internal::TagType::any, internal::ParameterType::send_tag>{};
+}
+
+/// @brief Passes \p value as send tag to the underlying call.
+///
+/// @param value The tag value.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto send_tag(int value) {
+    return internal::TagParam<internal::TagType::value, internal::ParameterType::send_tag>{value};
+}
+
+/// @brief Converts the passed enum \p value to its integer representation and passes this value to the underlying call.
+///
+/// @param value The send tag value.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <typename EnumType, typename = std::enable_if_t<std::is_enum_v<EnumType>>>
+inline auto send_tag(EnumType value) {
+    static_assert(
+        std::is_convertible_v<std::underlying_type_t<EnumType>, int>,
+        "The underlying enum type must be implicitly convertible to int."
+    );
+    return send_tag(static_cast<int>(value));
+}
+
+/// @brief Indicates to use \c MPI_ANY_TAG as recv tag in the underlying call.
+///
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto recv_tag(internal::any_tag_t) {
+    return internal::TagParam<internal::TagType::any, internal::ParameterType::recv_tag>{};
+}
+
+/// @brief Passes \p value as recv tag to the underlying call.
+///
+/// @param value The tag value.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+inline auto recv_tag(int value) {
+    return internal::TagParam<internal::TagType::value, internal::ParameterType::recv_tag>{value};
+}
+
+/// @brief Converts the passed enum \p value to its integer representation and passes this value to the underlying call.
+///
+/// @param value The recv tag value.
+/// @return The corresponding parameter object.
+/// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
+template <typename EnumType, typename = std::enable_if_t<std::is_enum_v<EnumType>>>
+inline auto recv_tag(EnumType value) {
+    static_assert(
+        std::is_convertible_v<std::underlying_type_t<EnumType>, int>,
+        "The underlying enum type must be implicitly convertible to int."
+    );
+    return send_tag(static_cast<int>(value));
 }
 
 /// @brief Passes a request handle to the underlying MPI call.

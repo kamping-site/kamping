@@ -60,6 +60,8 @@ enum class ParameterType {
     request,          ///< Tag used to represent an \c MPI_Request.
     root,             ///< Tag used to represent the root PE in a \c MPI collectives call.
     tag,              ///< Tag used to represent the message tag in a \c MPI call.
+    send_tag,         ///< Tag used to represent the message send tag in a \c MPI call.
+    recv_tag,         ///< Tag used to represent the message recv tag in a \c MPI call.
     send_mode,        ///< Tag used to represent the send mode used by a send operation.
     values_on_rank_0, ///< Tag used to represent the value of the exclusive scan
                       ///< operation on rank 0.
