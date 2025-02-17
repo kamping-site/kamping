@@ -1149,7 +1149,7 @@ inline auto recv_tag(EnumType value) {
         std::is_convertible_v<std::underlying_type_t<EnumType>, int>,
         "The underlying enum type must be implicitly convertible to int."
     );
-    return send_tag(static_cast<int>(value));
+    return recv_tag(static_cast<int>(value));
 }
 
 /// @brief Passes a request handle to the underlying MPI call.
