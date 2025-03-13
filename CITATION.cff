@@ -21,7 +21,6 @@ doi: 10.5281/zenodo.10949643
 preferred-citation:
   type: conference-paper
   title: "KaMPIng: Flexible and (Near) Zero-Overhead C++ Bindings for MPI"
-  abbreviation: "kamping2024"
   authors:
     - family-names: Uhl
       given-names: Tim Niklas
@@ -41,5 +40,7 @@ preferred-citation:
       given-names: Peter
   collection-title: "SC24: International Conference for High Performance Computing, Networking, Storage and Analysis"
   doi: "10.1109/SC41406.2024.00050"
+  start: 1
+  end: 21
   pages: 21
   year: 2024
