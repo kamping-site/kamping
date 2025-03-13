@@ -86,7 +86,7 @@ In contrast, KaMPIng introduces a streamlined syntax inspired by Python's named 
 
 ```c++
 std::vector<T> v = ...; // Fill with data
-std::vector<T> v_glob = comm.allgatherv(send_buf(v));
+std::vector<T> v_glob = comm.allgatherv(kamping::send_buf(v));
 ```
 
 Empowered by named parameters, KaMPIng allows users to name and pass parameters in arbitrary order, computing default values only for the missing ones. This not only improves readability but also streamlines the code, providing a user-friendly and efficient way of writing MPI applications.
@@ -103,13 +103,13 @@ KaMPIng's *resize policies* allow for fine-grained control over when allocation 
 
 ``` c++
 // easy to use with sane defaults
-std::vector<int> v = comm.recv<int>(source(kamping::rank::any));
+std::vector<int> v = comm.recv<int>(kamping::source(kamping::rank::any));
 
 // flexible memory control
 std::vector<int> v_out;
 v_out.resize(enough_memory_to_fit);
 // already_known_counts are the recv_counts that may have been computed already earlier and thus do not need to be computed again
-comm.recv<int>(recv_buf<kamping::no_resize>(v_out), recv_count(i_know_already_know_that), source(kamping::rank::any));
+comm.recv<int>(kamping::recv_buf<kamping::no_resize>(v_out), kamping::recv_count(i_know_already_know_that), kamping::source(kamping::rank::any));
 ```
 
 ### STL support :books:
@@ -140,7 +140,7 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
     size_t const   oversampling_ratio = 16 * static_cast<size_t>(std::log2(comm.size())) + 1;
     std::vector<T> local_samples(oversampling_ratio);
     std::sample(data.begin(), data.end(), local_samples.begin(), oversampling_ratio, std::mt19937{seed});
-    auto global_samples = comm.allgather(send_buf(local_samples)).extract_recv_buffer();
+    auto global_samples = comm.allgather(kamping::send_buf(local_samples));
     std::sort(global_samples.begin(), global_samples.end());
     for (size_t i = 0; i < comm.size() - 1; i++) {
         global_samples[i] = global_samples[oversampling_ratio * (i + 1)];
@@ -157,7 +157,7 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
         data.insert(data.end(), bucket.begin(), bucket.end());
         scounts.push_back(static_cast<int>(bucket.size()));
     }
-    data = comm.alltoallv(send_buf(data), send_counts(scounts)).extract_recv_buffer();
+    data = comm.alltoallv(kamping::send_buf(data), kamping::send_counts(scounts));
     std::sort(data.begin(), data.end());
 }
 ```
