@@ -1,6 +1,6 @@
 [![C/C++ CI](https://github.com/kamping-site/kamping/actions/workflows/build.yml/badge.svg)](https://github.com/kamping-site/kamping/actions/workflows/build.yml)
 ![GitHub](https://img.shields.io/github/license/kamping-site/kamping)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10949647.svg)](https://doi.org/10.5281/zenodo.10949647)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10949643.svg)](https://doi.org/10.5281/zenodo.10949643)
 
 # KaMPIng: Karlsruhe MPI next generation :rocket:
 
@@ -38,7 +38,7 @@ It is fully compatible with your existing MPI code and you can start using it ri
 
 #include <kamping/communicator.hpp>
 #include <kamping/collectives/allgather.hpp>
- 
+
 kamping::Communicator comm;
  
 std::vector<int> input(comm.rank(), comm.rank_signed());
@@ -51,18 +51,25 @@ KaMPIng is developed at the [Algorithm Engineering
 Group](https://ae.iti.kit.edu/english/index.php) at Karlsruhe Institute of
 Technology.
 
-If you use KaMPIng in the context of an academic publication, we kindly ask you to cite [our technical report](https://arxiv.org/abs/2404.05610):
+If you use KaMPIng in the context of an academic publication, we kindly ask you to cite our [SC'24 paper](https://doi.org/10.1109/SC41406.2024.00050):
 
 ``` bibtex
-@misc{kamping2024,
-  title={KaMPIng: Flexible and (Near) Zero-overhead C++ Bindings for MPI},
-  author={Demian Hespe and Lukas Hübner and Florian Kurpicz and Peter Sanders and Matthias Schimek and Daniel Seemaier and Christoph Stelz and Tim Niklas Uhl},
-  year={2024},
-  eprint={2404.05610},
-  archivePrefix={arXiv},
-  primaryClass={cs.DC}
+@inproceedings{kamping2024,
+  author       = {Uhl, Tim Niklas and Schimek, Matthias and Hübner,
+                  Lukas and Hespe, Demian and Kurpicz, Florian and
+                  Seemaier, Daniel and Stelz, Christoph and Sanders,
+                  Peter},
+  booktitle    = {SC24: International Conference for High Performance
+                  Computing, Networking, Storage and Analysis},
+  title	       = {KaMPIng: Flexible and (Near) Zero-Overhead C++
+                  Bindings for MPI},
+  year	       = {2024},
+  pages	       = {1-21},
+  doi	       = {10.1109/SC41406.2024.00050}
 }
 ```
+
+You can also find a [freely accessibly post-print in the arXiv.](https://arxiv.org/abs/2404.05610)
 
 ## Features :sparkles:
 ### Named Parameters :speech_balloon:
@@ -86,7 +93,7 @@ In contrast, KaMPIng introduces a streamlined syntax inspired by Python's named 
 
 ```c++
 std::vector<T> v = ...; // Fill with data
-std::vector<T> v_glob = comm.allgatherv(send_buf(v));
+std::vector<T> v_glob = comm.allgatherv(kamping::send_buf(v));
 ```
 
 Empowered by named parameters, KaMPIng allows users to name and pass parameters in arbitrary order, computing default values only for the missing ones. This not only improves readability but also streamlines the code, providing a user-friendly and efficient way of writing MPI applications.
@@ -103,13 +110,13 @@ KaMPIng's *resize policies* allow for fine-grained control over when allocation 
 
 ``` c++
 // easy to use with sane defaults
-std::vector<int> v = comm.recv<int>(source(kamping::rank::any));
+std::vector<int> v = comm.recv<int>(kamping::source(kamping::rank::any));
 
 // flexible memory control
 std::vector<int> v_out;
 v_out.resize(enough_memory_to_fit);
 // already_known_counts are the recv_counts that may have been computed already earlier and thus do not need to be computed again
-comm.recv<int>(recv_buf<kamping::no_resize>(v_out), recv_count(i_know_already_know_that), source(kamping::rank::any));
+comm.recv<int>(kamping::recv_buf<kamping::no_resize>(v_out), kamping::recv_count(i_know_already_know_that), kamping::source(kamping::rank::any));
 ```
 
 ### STL support :books:
@@ -140,7 +147,7 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
     size_t const   oversampling_ratio = 16 * static_cast<size_t>(std::log2(comm.size())) + 1;
     std::vector<T> local_samples(oversampling_ratio);
     std::sample(data.begin(), data.end(), local_samples.begin(), oversampling_ratio, std::mt19937{seed});
-    auto global_samples = comm.allgather(send_buf(local_samples)).extract_recv_buffer();
+    auto global_samples = comm.allgather(kamping::send_buf(local_samples));
     std::sort(global_samples.begin(), global_samples.end());
     for (size_t i = 0; i < comm.size() - 1; i++) {
         global_samples[i] = global_samples[oversampling_ratio * (i + 1)];
@@ -157,7 +164,7 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
         data.insert(data.end(), bucket.begin(), bucket.end());
         scounts.push_back(static_cast<int>(bucket.size()));
     }
-    data = comm.alltoallv(send_buf(data), send_counts(scounts)).extract_recv_buffer();
+    data = comm.alltoallv(kamping::send_buf(data), kamping::send_counts(scounts));
     std::sort(data.begin(), data.end());
 }
 ```

@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use KaMPIng in an academic context, please cite our technial report."
+message: "If you use KaMPIng in an academic context, please cite our SC'24 paper."
 authors:
 - family-names: Hespe
   given-names: Demian
@@ -13,33 +13,34 @@ authors:
   given-names: Daniel
 - family-names: Uhl
   given-names: Tim Niklas
-title: "KaMPIng"
-version: 0.1.0
-date-released: 2024-04-09
+title: "KaMPIng: (Near) zero-overhead MPI wrapper for modern C++"
+version: 0.1.2
+date-released: 2025-03-13
 url: "https://github.com/kamping-site/kamping"
+doi: 10.5281/zenodo.10949643
 preferred-citation:
-  type: report
-  title: "KaMPIng: Flexible and (Near) Zero-overhead C++ Bindings for MPI"
+  type: conference-paper
+  title: "KaMPIng: Flexible and (Near) Zero-Overhead C++ Bindings for MPI"
   authors:
-    - family-names: Hespe
-      given-names: Demian
-    - family-names: Hübner
-      given-names: Lukas
-    - family-names: Kurpicz
-      given-names: Florian
-    - family-names: Sanders
-      given-names: Peter
+    - family-names: Uhl
+      given-names: Tim Niklas
     - family-names: Schimek
       given-names: Matthias
+    - family-names: Hübner
+      given-names: Lukas
+    - family-names: Hespe
+      given-names: Demian
+    - family-names: Kurpicz
+      given-names: Florian
     - family-names: Seemaier
       given-names: Daniel
     - family-names: Stelz
       given-names: Christoph
-    - family-names: Uhl
-      given-names: Tim Niklas
-  journal: "arXiv"
-  publisher:
-    name: "arXiv"
-  doi: "https://doi.org/10.48550/arXiv.2404.05610"
-  url: "https://arxiv.org/abs/2404.05610"
+    - family-names: Sanders
+      given-names: Peter
+  collection-title: "SC24: International Conference for High Performance Computing, Networking, Storage and Analysis"
+  doi: "10.1109/SC41406.2024.00050"
+  start: 1
+  end: 21
+  pages: 21
   year: 2024

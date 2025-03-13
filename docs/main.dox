@@ -27,6 +27,8 @@ Technology.
 
     kamping::Environment e;
     kamping::Communicator comm;
+
+    using namespace kamping::params;
  
     std::vector<int> input(comm.rank(), comm.rank_signed());
     auto const result = comm.allgatherv(send_buf(input));
