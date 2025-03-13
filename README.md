@@ -1,6 +1,6 @@
 [![C/C++ CI](https://github.com/kamping-site/kamping/actions/workflows/build.yml/badge.svg)](https://github.com/kamping-site/kamping/actions/workflows/build.yml)
 ![GitHub](https://img.shields.io/github/license/kamping-site/kamping)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10949647.svg)](https://doi.org/10.5281/zenodo.10949647)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10949643.svg)](https://doi.org/10.5281/zenodo.10949643)
 
 # KaMPIng: Karlsruhe MPI next generation :rocket:
 
@@ -38,7 +38,7 @@ It is fully compatible with your existing MPI code and you can start using it ri
 
 #include <kamping/communicator.hpp>
 #include <kamping/collectives/allgather.hpp>
- 
+
 kamping::Communicator comm;
  
 std::vector<int> input(comm.rank(), comm.rank_signed());
@@ -51,18 +51,25 @@ KaMPIng is developed at the [Algorithm Engineering
 Group](https://ae.iti.kit.edu/english/index.php) at Karlsruhe Institute of
 Technology.
 
-If you use KaMPIng in the context of an academic publication, we kindly ask you to cite [our technical report](https://arxiv.org/abs/2404.05610):
+If you use KaMPIng in the context of an academic publication, we kindly ask you to cite our [SC'24 paper](https://doi.org/10.1109/SC41406.2024.00050):
 
 ``` bibtex
-@misc{kamping2024,
-  title={KaMPIng: Flexible and (Near) Zero-overhead C++ Bindings for MPI},
-  author={Demian Hespe and Lukas Hübner and Florian Kurpicz and Peter Sanders and Matthias Schimek and Daniel Seemaier and Christoph Stelz and Tim Niklas Uhl},
-  year={2024},
-  eprint={2404.05610},
-  archivePrefix={arXiv},
-  primaryClass={cs.DC}
+@inproceedings{kamping2024,
+  author       = {Uhl, Tim Niklas and Schimek, Matthias and Hübner,
+                  Lukas and Hespe, Demian and Kurpicz, Florian and
+                  Seemaier, Daniel and Stelz, Christoph and Sanders,
+                  Peter},
+  booktitle    = {SC24: International Conference for High Performance
+                  Computing, Networking, Storage and Analysis},
+  title	       = {KaMPIng: Flexible and (Near) Zero-Overhead C++
+                  Bindings for MPI},
+  year	       = {2024},
+  pages	       = {1-21},
+  doi	       = {10.1109/SC41406.2024.00050}
 }
 ```
+
+You can also find a [freely accessibly post-print in the arXiv.](https://arxiv.org/abs/2404.05610)
 
 ## Features :sparkles:
 ### Named Parameters :speech_balloon:
