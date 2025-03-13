@@ -1,0 +1,11 @@
+<map id="kamping::contiguous_type&lt; T, N &gt;" name="kamping::contiguous_type&lt; T, N &gt;">
+<area shape="rect" id="Node000001" title="Constructs an contiguous type of size N from type T using MPI_Type_contiguous." alt="" coords="5,78,163,118"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1byte__serialized.html" title=" " alt="" coords="211,37,429,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,79,210,73,211,78,177,84"/>
+<area shape="rect" id="Node000004" href="$structkamping_1_1byte__serialized.html" title=" " alt="" coords="227,110,413,150"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="177,108,228,115,227,120,176,113"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1mpi__type__traits_3_01std_1_1pair_3_01First_00_01Second_01_4_00_01std_1_1enable8225356c1b4dd1afe36e838bc902e3db.html" title="Specialization of the mpi_type_traits type trait for std::pair, which represents the pair as a sequen..." alt="" coords="477,5,700,89"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="443,50,477,49,477,54,443,55"/>
+<area shape="rect" id="Node000005" href="$structkamping_1_1mpi__type__traits_3_01std_1_1tuple_3_01Ts_8_8_8_01_4_00_01std_1_1enable__if__t_71629c10fd8c4629866f18448d725d4c.html" title="Specialization of the mpi_type_traits type trait for std::tuple, which represents the tuple as MPI st..." alt="" coords="485,114,693,183"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="427,135,484,139,484,144,426,140"/>
+</map>
