@@ -40,6 +40,7 @@ preferred-citation:
       given-names: Peter
   conference:
     name: "SC24: International Conference for High Performance Computing, Networking, Storage and Analysis"
+  collection-title: "SC24: International Conference for High Performance Computing, Networking, Storage and Analysis"
   doi: "10.1109/SC41406.2024.00050"
-  pages: 1-21
+  pages: 21
   year: 2024
