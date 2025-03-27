@@ -494,6 +494,9 @@ public:
     auto iprobe(Args... args) const;
 
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
+    auto sendrecv(Args... args) const;
+
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto recv(Args... args) const;
 
     template <typename recv_value_type_tparam, typename... Args>
