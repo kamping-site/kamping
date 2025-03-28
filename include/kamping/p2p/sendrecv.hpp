@@ -155,6 +155,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
         )
             .template construct_buffer_or_rebind<DefaultContainerType, internal::serialization_support_tag>();
 
+    KASSERT(
+        !(send_buf.size() == recv_buf.size() && send_buf.data() == recv_buf.data()),
+        "Send buffer and recv buffer can not be the same."
+    );
+
 
     auto recv_count_param = internal::select_parameter_type<internal::ParameterType::recv_count>(args...)
         .template construct_buffer_or_rebind<UnusedRebindContainer, serialization_support_tag>();
@@ -236,7 +241,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
         source,                                         // source
         recv_tag,                                       // recv_tag
         this->mpi_communicator(),                       // comm
-        internal::status_param_to_native_ptr(status)   // status
+        internal::status_param_to_native_ptr(status)    // status
     );
     this->mpi_error_hook(err, "MPI_Sendrecv");
 
