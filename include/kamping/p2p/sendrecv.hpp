@@ -50,15 +50,12 @@
 ///
 /// - \ref kamping::destination() the receiving rank.
 ///
-/// The following parameter is optional, but leads to an additional call to \c MPI_Probe if not present:
-/// - \ref kamping::recv_count() the number of elements to receive. Will be probed before receiving if not given.
+/// - \ref kamping::recv_count() the number of elements to receive. Using sendrecv this cannot be probed if not given.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::recv_buf() the buffer to receive the message into.  The buffer's underlying
 /// storage must be large enough to hold all received elements. If no \ref kamping::recv_buf() is provided, the \c
 /// value_type of the recv buffer has to be passed as a template parameter to \c sendrecv().
-///
-///
 ///
 /// - \ref kamping::send_count() specifying how many elements of the buffer are sent. If omitted, the size of the send
 /// buffer is used as a default.
@@ -96,9 +93,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
     using namespace kamping::internal;
     KAMPING_CHECK_PARAMETERS(
         Args,
-        KAMPING_REQUIRED_PARAMETERS(send_buf, destination),
-        KAMPING_OPTIONAL_PARAMETERS(send_count, send_type, send_tag, recv_buf, recv_tag, source, recv_count, recv_type
-                                    , status)
+        KAMPING_REQUIRED_PARAMETERS(send_buf, destination, recv_count),
+        KAMPING_OPTIONAL_PARAMETERS(send_count, send_type, send_tag, recv_buf, recv_tag, source, recv_type, status)
     );
 
     auto send_buf = internal::select_parameter_type<internal::ParameterType::send_buf>(args...)
@@ -133,8 +129,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
         "Please provide an explicit destination or destination(ranks::null)."
     );
 
-    using default_tag_buf_type = decltype(kamping::tag(this->default_tag()));
-    auto&& send_tag_param = internal::select_parameter_type_or_default<internal::ParameterType::send_tag, default_tag_buf_type>(
+    using default_send_tag_type = decltype(kamping::tag(this->default_tag()));
+    auto&& send_tag_param = internal::select_parameter_type_or_default<internal::ParameterType::send_tag
+                                                                             , default_send_tag_type>(
         std::tuple(this->default_tag()),
         args...
     );
@@ -159,16 +156,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
             .template construct_buffer_or_rebind<DefaultContainerType, internal::serialization_support_tag>();
 
 
-    // Get the optional recv_count parameter. If the parameter is not given,
-    // allocate a new container.
-    using default_recv_count_type = decltype(kamping::recv_count_out());
-    auto recv_count_param =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_count, default_recv_count_type>(
-            std::tuple(),
-            args...
-        )
-            .construct_buffer_or_rebind();
-
+    auto recv_count_param = internal::select_parameter_type<internal::ParameterType::recv_count>(args...)
+        .template construct_buffer_or_rebind<UnusedRebindContainer, serialization_support_tag>();
 
     constexpr bool is_recv_serialization_used = internal::buffer_uses_serialization<decltype(recv_buf)>;
     if constexpr (is_recv_serialization_used) {
@@ -185,9 +174,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
     auto recv_type = internal::determine_mpi_recv_datatype<recv_value_type, decltype(recv_buf)>(args...);
     [[maybe_unused]] constexpr bool recv_type_is_in_param = !internal::has_to_be_computed<decltype(recv_type)>;
 
-
+    using default_recv_tag_type = decltype(kamping::tag(tags::any));
     auto&& recv_tag_param =
-        internal::select_parameter_type_or_default<internal::ParameterType::recv_tag, default_tag_buf_type>({}, args...);
+        internal::select_parameter_type_or_default<internal::ParameterType::recv_tag, default_recv_tag_type>({}, args...);
     constexpr auto tag_type = std::remove_reference_t<decltype(recv_tag_param)>::tag_type;
     if constexpr (tag_type == internal::TagType::value) {
         int recv_tag = recv_tag_param.tag();
@@ -216,13 +205,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
     KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
     int source = source_param.rank_signed();
     int recv_tag    = recv_tag_param.tag();
-    // If the recv count needs to be computed a probe is executed
-    if constexpr (internal::has_to_be_computed<decltype(recv_count_param)>) {
-        Status probe_status = this->probe(source_param.clone(), recv_tag_param.clone(), status_out()).extract_status();
-        source              = probe_status.source_signed();
-        recv_tag                 = probe_status.tag();
-        recv_count_param.underlying() = asserting_cast<int>(probe_status.count(recv_type.get_single_element()));
-    }
+
 
     // Ensure that we do not touch the recv buffer if MPI_PROC_NULL is passed,
     // because this is what the standard guarantees.
@@ -245,7 +228,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
         send_buf.data(),                                // send_buff
         send_count.get_single_element(),                // send_count
         send_type.get_single_element(),                 // send_data_type
-        destination.rank_singed(),                      // destination
+        destination.rank_signed(),                      // destination
         send_tag,                                       // send_tag
         recv_buf.data(),                                // recv_buff
         recv_count_param.get_single_element(),          // recv_count
@@ -253,9 +236,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
         source,                                         // source
         recv_tag,                                       // recv_tag
         this->mpi_communicator(),                       // comm
-        internal::status_param_to_native_ptr(&status)   // status
+        internal::status_param_to_native_ptr(status)   // status
     );
-    this->mpi_error_hook(err);
+    this->mpi_error_hook(err, "MPI_Sendrecv");
 
     return internal::make_mpi_result<std::tuple<Args...>>(
         deserialization_repack<is_recv_serialization_used>(std::move(recv_buf)),
