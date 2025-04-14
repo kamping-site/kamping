@@ -13,17 +13,16 @@
 
 #include <iostream>
 
-#include "kamping/p2p/sendrecv.hpp"
-#include "kamping/p2p/recv.hpp"
-#include "kamping/p2p/send.hpp"
 #include "helpers_for_examples.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/named_parameters.hpp"
-#include "kamping/collectives/barrier.hpp"
-
+#include "kamping/p2p/recv.hpp"
+#include "kamping/p2p/send.hpp"
+#include "kamping/p2p/sendrecv.hpp"
 
 int main() {
     using namespace kamping;
@@ -33,14 +32,15 @@ int main() {
 
     std::vector<int> input(1, comm.rank_signed());
     std::vector<int> message;
-    auto dest = comm.rank_shifted_cyclic(1);
+    auto             dest = comm.rank_shifted_cyclic(1);
 
     {
         // Cyclic sendrecv given a recv buffer
-        comm.sendrecv(send_buf(input)
-                          , destination(dest)
-                          , recv_count(1)
-                          , recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message));
+        comm.sendrecv(
+            send_buf(input),
+            destination(dest),
+            recv_buf<kamping::BufferResizePolicy::resize_to_fit>(message)
+        );
         std::cout << "Rank: " << comm.rank_signed() << " Received: " << message[0] << "\n";
     }
     comm.barrier();
@@ -48,12 +48,7 @@ int main() {
 
     {
         // Cyclic sendrecv without an explicit recv buffer
-        auto received = comm.sendrecv<int>(send_buf(input)
-                          , destination(dest)
-                          , recv_count(1));
+        auto received = comm.sendrecv<int>(send_buf(input), destination(dest));
         std::cout << "Rank: " << comm.rank_signed() << " Received: " << received[0] << "\n";
     }
-
-
-
 }
