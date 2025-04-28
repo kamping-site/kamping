@@ -139,6 +139,11 @@ kamping_register_mpi_test(
     CORES 1 2 4
 )
 kamping_register_mpi_test(
+    test_mpi_sendrecv
+    FILES p2p/mpi_sendrecv_test.cpp
+    CORES 2 4
+)
+kamping_register_mpi_test(
     test_mpi_try_recv
     FILES p2p/mpi_try_recv_test.cpp
     CORES 1 2 4

@@ -40,8 +40,8 @@
 // @brief Wrapper for \c MPI_Sendrecv.
 ///
 /// This wraps \c MPI_Sendrecv. This operation performs a blocking send and receive operation. If the
-/// \ref kamping::recv_counts() parameter is not specified, this first performs a probe, followed by a receive of
-/// the probed message with the probed message size.
+/// \ref kamping::recv_counts() parameter is not specified, this first performs a sendrecv, sending and receiving
+/// the recv count.
 ///
 /// The following parameters are required:
 /// - \ref kamping::send_buf() containing the data that is sent.
@@ -51,7 +51,9 @@
 ///
 /// The following parameter is optional, but leads to an additional call to \c MPI_Sendrecv if not present:
 /// - \ref kamping::recv_count() the number of elements to receive. Will be calculated using an additional sendrecv
-/// if not given.
+/// if not given. Note that this additional sendrecv can be received by \c send(). This will lead to unintended
+/// behavior, if \c sendrecv() is used in combination with \c send() or \c recv() while omitting
+/// the \ref kamping::recv_counts() parameter.
 ///
 /// The following parameters are optional:
 /// - \ref kamping::recv_buf() the buffer to receive the message into.  The buffer's underlying
@@ -64,8 +66,8 @@
 /// - \ref kamping::source() receive a message sent from this source rank. Defaults to probing for an arbitrary source,
 /// i.e. \c source(rank::any).
 ///
-/// - \ref kamping::send_tag() send message with this tag. Defaults to sending for an arbitrary tag, i.e. \c
-/// tag(tags::any).
+/// - \ref kamping::send_tag() send message with this tag. Defaults to the communicator's default tag (\ref
+///// Communicator::default_tag()) if not present.
 ///
 /// - \ref kamping::recv_tag() receive message with this tag. Defaults to receiving for an arbitrary tag, i.e. \c
 /// tag(tags::any).
@@ -155,12 +157,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
             std::tuple(),
             args...
         )
-            .template construct_buffer_or_rebind<DefaultContainerType();
-
-    KASSERT(
-        !(send_buf.size() == recv_buf.size() && send_buf.data() == recv_buf.data()),
-        "Send buffer and recv buffer can not be the same."
-    );
+            .template construct_buffer_or_rebind<DefaultContainerType>();
 
     using default_recv_count_type = decltype(kamping::recv_count_out());
     auto recv_count_param =
@@ -169,7 +166,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
             args...
         )
             .construct_buffer_or_rebind();
-
 
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
@@ -216,6 +212,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
     if constexpr (internal::has_to_be_computed<decltype(recv_count_param)>) {
         this->sendrecv(
             kamping::destination(destination.rank_signed()),
+            std::move(source_param),
             kamping::send_count(1),
             kamping::send_buf(send_count.get_single_element()),
             kamping::recv_count(1),
@@ -245,7 +242,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
         send_count.get_single_element(),             // send_count
         send_type.get_single_element(),              // send_data_type
         destination.rank_signed(),                   // destination
-        send_tag_param.tag(),                                    // send_tag
+        send_tag,                                    // send_tag
         recv_buf.data(),                             // recv_buff
         recv_count_param.get_single_element(),       // recv_count
         recv_type.get_single_element(),              // recv_data_type
