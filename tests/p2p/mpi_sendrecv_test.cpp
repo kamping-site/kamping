@@ -26,12 +26,12 @@ using namespace kamping;
 using namespace ::testing;
 
 TEST(SendrecvTest, sendrecv_vector_cyclic) {
-    Communicator     comm;
+    Communicator comm;
 
     std::vector<int> input(1, comm.rank_signed());
     std::vector<int> message;
-    auto             sent_to = comm.rank_shifted_cyclic(1);
-    auto sent_from = comm.rank_shifted_cyclic(-1);
+    auto             sent_to   = comm.rank_shifted_cyclic(1);
+    auto             sent_from = comm.rank_shifted_cyclic(-1);
 
     comm.sendrecv(
         send_buf(input),
@@ -46,45 +46,36 @@ TEST(SendrecvTest, sendrecv_vector_cyclic) {
 }
 
 TEST(SendrecvTest, sendrecv_vector_cyclic_wo_recv_buf) {
-    Communicator     comm;
+    Communicator comm;
 
     std::vector<int> input(1, comm.rank_signed());
-    auto             sent_to = comm.rank_shifted_cyclic(1);
-    auto sent_from = comm.rank_shifted_cyclic(-1);
+    auto             sent_to   = comm.rank_shifted_cyclic(1);
+    auto             sent_from = comm.rank_shifted_cyclic(-1);
 
-    auto message = comm.sendrecv<int>(
-        send_buf(input),
-        send_count(1),
-        destination(sent_to),
-        recv_count(1)
-    );
+    auto message = comm.sendrecv<int>(send_buf(input), send_count(1), destination(sent_to), recv_count(1));
 
     ASSERT_EQ(message, std::vector<int>{static_cast<int>(sent_from)});
     ASSERT_EQ(message.size(), 1);
 }
 
 TEST(SendrecvTest, sendrecv_vector_cyclic_wo_recv_count) {
-    Communicator     comm;
+    Communicator comm;
 
     std::vector<int> input(42, comm.rank_signed());
-    auto             sent_to = comm.rank_shifted_cyclic(1);
-    auto sent_from = comm.rank_shifted_cyclic(-1);
+    auto             sent_to   = comm.rank_shifted_cyclic(1);
+    auto             sent_from = comm.rank_shifted_cyclic(-1);
 
-    auto message = comm.sendrecv<int>(
-        send_buf(input),
-        send_count(42),
-        destination(sent_to)
-    );
+    auto message = comm.sendrecv<int>(send_buf(input), send_count(42), destination(sent_to));
 
     ASSERT_EQ(message, std::vector<int>(42, static_cast<int>(sent_from)));
     ASSERT_EQ(message.size(), 42);
 }
 
 TEST(SendrecvTest, send_and_recv_with_sendrecv) {
-    Communicator     comm;
+    Communicator comm;
     ASSERT_GT(comm.size(), 1)
         << "The invariants tested here only hold when the tests are executed using more than one MPI rank!";
-    auto         other_rank          = (comm.root() + 1) % comm.size();
+    auto other_rank = (comm.root() + 1) % comm.size();
 
     if (comm.is_root()) {
         std::vector<int> root_recv(3, 0);
@@ -108,29 +99,24 @@ TEST(SendrecvTest, send_and_recv_with_sendrecv) {
             static_cast<int>(other_rank),
             comm.rank_signed(),
             comm.mpi_communicator()
-            );
+        );
     }
 
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> msg{11, 12, 13};
-        auto message = comm.sendrecv<int>(
-            send_buf(msg),
-            destination(comm.root()),
-            recv_count(6)
-        );
+        auto             message = comm.sendrecv<int>(send_buf(msg), destination(comm.root()), recv_count(6));
 
         ASSERT_EQ(message, std::vector({4, 5, 6, 7, 8, 9}));
     }
-
 }
 
 TEST(SendrecvTest, sendrecv_cyclic_all_params) {
-    Communicator     comm;
+    Communicator comm;
 
     std::vector<int> input(1, comm.rank_signed());
     std::vector<int> message(1);
-    auto             sent_to = comm.rank_shifted_cyclic(1);
-    auto sent_from = comm.rank_shifted_cyclic(-1);
+    auto             sent_to   = comm.rank_shifted_cyclic(1);
+    auto             sent_from = comm.rank_shifted_cyclic(-1);
 
     comm.sendrecv(
         send_buf(input),
@@ -151,34 +137,26 @@ TEST(SendrecvTest, sendrecv_cyclic_all_params) {
 }
 
 TEST(SendrecvTest, sendrecv_cyclic_only_req_params) {
-    Communicator     comm;
+    Communicator comm;
 
     std::vector<int> input(42, comm.rank_signed());
-    auto             sent_to = comm.rank_shifted_cyclic(1);
-    auto sent_from = comm.rank_shifted_cyclic(-1);
+    auto             sent_to   = comm.rank_shifted_cyclic(1);
+    auto             sent_from = comm.rank_shifted_cyclic(-1);
 
-    auto message = comm.sendrecv<int>(
-        send_buf(input),
-        destination(sent_to)
-    );
+    auto message = comm.sendrecv<int>(send_buf(input), destination(sent_to));
 
     ASSERT_EQ(message, std::vector<int>(42, static_cast<int>(sent_from)));
     ASSERT_EQ(message.size(), 42);
 }
 
 TEST(SendrecvTest, sendrecv_cyclic_with_status) {
-    Communicator     comm;
+    Communicator comm;
 
     std::vector<int> input(42, comm.rank_signed());
-    auto             sent_to = comm.rank_shifted_cyclic(1);
-    auto sent_from = comm.rank_shifted_cyclic(-1);
+    auto             sent_to   = comm.rank_shifted_cyclic(1);
+    auto             sent_from = comm.rank_shifted_cyclic(-1);
 
-    auto result = comm.sendrecv<int>(
-        send_buf(input),
-        destination(sent_to),
-        status_out(),
-        recv_type_out()
-    );
+    auto result = comm.sendrecv<int>(send_buf(input), destination(sent_to), status_out(), recv_type_out());
 
     auto message = result.extract_recv_buf();
     ASSERT_EQ(message, std::vector<int>(42, static_cast<int>(sent_from)));
@@ -190,46 +168,40 @@ TEST(SendrecvTest, sendrecv_cyclic_with_status) {
 }
 
 TEST(SendrecvTest, sendrecv_different_send_and_recv_count) {
-    Communicator     comm;
+    Communicator comm;
 
     std::vector<int> input(static_cast<size_t>(comm.rank_signed() + 10), comm.rank_signed());
-    auto             sent_to = comm.rank_shifted_cyclic(1);
-    auto sent_from = comm.rank_shifted_cyclic(-1);
+    auto             sent_to   = comm.rank_shifted_cyclic(1);
+    auto             sent_from = comm.rank_shifted_cyclic(-1);
 
-    auto message = comm.sendrecv<int>(
-        send_buf(input),
-        destination(sent_to)
-    );
+    auto message = comm.sendrecv<int>(send_buf(input), destination(sent_to));
 
     ASSERT_EQ(message, std::vector<int>(sent_from + 10, static_cast<int>(sent_from)));
     ASSERT_EQ(message.size(), sent_from + 10);
 }
 
 TEST(SendrecvTest, sendrecv_custom_container) {
-    Communicator     comm;
+    Communicator      comm;
     OwnContainer<int> values(4);
-    for (int & value : values) {
+    for (int& value: values) {
         value = comm.rank_signed();
     }
-    auto             sent_to = comm.rank_shifted_cyclic(1);
+    auto sent_to   = comm.rank_shifted_cyclic(1);
     auto sent_from = comm.rank_shifted_cyclic(-1);
 
-    auto message = comm.sendrecv<int>(
-        send_buf(values),
-        destination(sent_to)
-    );
+    auto message = comm.sendrecv<int>(send_buf(values), destination(sent_to));
 
     ASSERT_EQ(message.size(), 4);
-    for (int i : message) {
+    for (int i: message) {
         EXPECT_EQ(i, sent_from);
     }
 }
 
 TEST(SendrecvTest, sendrecv_with_MPI_sendrecv) {
-    Communicator     comm;
+    Communicator comm;
     ASSERT_GT(comm.size(), 1)
         << "The invariants tested here only hold when the tests are executed using more than one MPI rank!";
-    auto         other_rank          = (comm.root() + 1) % comm.size();
+    auto other_rank = (comm.root() + 1) % comm.size();
 
     if (comm.is_root()) {
         std::vector<int> root_send(3, 0);
@@ -254,53 +226,41 @@ TEST(SendrecvTest, sendrecv_with_MPI_sendrecv) {
 
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> msg{11, 12, 13};
-        auto message = comm.sendrecv<int>(
-            send_buf(msg),
-            destination(comm.root()),
-            recv_count(3)
-        );
+        auto             message = comm.sendrecv<int>(send_buf(msg), destination(comm.root()), recv_count(3));
 
         ASSERT_EQ(message, std::vector<int>({0, 0, 0}));
     }
-
 }
 
 TEST(SendrecvTest, sendrecv_different_types) {
-    Communicator     comm;
+    Communicator comm;
     ASSERT_GT(comm.size(), 1)
         << "The invariants tested here only hold when the tests are executed using more than one MPI rank!";
-    auto         other_rank          = (comm.root() + 1) % comm.size();
+    auto other_rank = (comm.root() + 1) % comm.size();
 
     if (comm.is_root()) {
         std::vector<char> root_send{'a', 'b', 'c'};
-        auto message = comm.sendrecv<int>(
-            send_buf(root_send),
-            destination(other_rank)
-        );
+        auto              message = comm.sendrecv<int>(send_buf(root_send), destination(other_rank));
         ASSERT_EQ(message, std::vector<int>({11, 12, 13, 14}));
     }
 
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> msg{11, 12, 13, 14};
-        auto message = comm.sendrecv<char>(
-            send_buf(msg),
-            destination(comm.root())
-        );
+        auto             message = comm.sendrecv<char>(send_buf(msg), destination(comm.root()));
 
         ASSERT_EQ(message, std::vector<char>({'a', 'b', 'c'}));
     }
-
 }
 
 TEST(SendrecvTest, sendrecv_different_types_with_explicit_buffer) {
-    Communicator     comm;
+    Communicator comm;
     ASSERT_GT(comm.size(), 1)
         << "The invariants tested here only hold when the tests are executed using more than one MPI rank!";
-    auto         other_rank          = (comm.root() + 1) % comm.size();
+    auto other_rank = (comm.root() + 1) % comm.size();
 
     if (comm.is_root()) {
         std::vector<char> root_send{'a', 'b', 'c'};
-        std::vector<int> root_recv;
+        std::vector<int>  root_recv;
         comm.sendrecv(
             send_buf(root_send),
             destination(other_rank),
@@ -310,7 +270,7 @@ TEST(SendrecvTest, sendrecv_different_types_with_explicit_buffer) {
     }
 
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
-        std::vector<int> msg_send{11, 12, 13, 14};
+        std::vector<int>  msg_send{11, 12, 13, 14};
         std::vector<char> msg_recv;
         comm.sendrecv(
             send_buf(msg_send),
@@ -320,23 +280,26 @@ TEST(SendrecvTest, sendrecv_different_types_with_explicit_buffer) {
 
         ASSERT_EQ(msg_recv, std::vector<char>({'a', 'b', 'c'}));
     }
-
 }
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
 TEST(SendrecvTest, sendrecv_cyclic_with_explicit_size_no_resize_too_small) {
-    Communicator     comm;
+    Communicator comm;
 
     std::vector<int> input(5, comm.rank_signed());
     std::vector<int> msg_recv;
     auto             sent_to = comm.rank_shifted_cyclic(1);
 
-    EXPECT_KASSERT_FAILS({comm.sendrecv(
-        send_buf(input),
-        destination(sent_to),
-        recv_buf<BufferResizePolicy::no_resize>(msg_recv),
-        recv_count(5)
-    );},"Recv buffer is not large enough to hold all received elements.");
-
+    EXPECT_KASSERT_FAILS(
+        {
+            comm.sendrecv(
+                send_buf(input),
+                destination(sent_to),
+                recv_buf<BufferResizePolicy::no_resize>(msg_recv),
+                recv_count(5)
+            );
+        },
+        "Recv buffer is not large enough to hold all received elements."
+    );
 }
 #endif
