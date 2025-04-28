@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022-2024 The KaMPIng Authors
+// Copyright 2022-2025 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the
 // terms of the GNU Lesser General Public License as published by the Free
@@ -49,7 +49,7 @@
 ///
 /// - \ref kamping::destination() the receiving rank.
 ///
-/// The following parameter is optional, but leads to an additional call to \c MPI_Probe if not present:
+/// The following parameter is optional, but leads to an additional call to \c MPI_Sendrecv if not present:
 /// - \ref kamping::recv_count() the number of elements to receive. Will be calculated using an additional sendrecv
 /// if not given.
 ///
@@ -108,7 +108,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
     );
 
     auto send_buf = internal::select_parameter_type<internal::ParameterType::send_buf>(args...)
-                        .template construct_buffer_or_rebind<UnusedRebindContainer, serialization_support_tag>();
+                        .template construct_buffer_or_rebind<UnusedRebindContainer>();
 
     using default_send_count_type = decltype(kamping::send_count_out());
     auto send_count =
@@ -131,7 +131,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
         "Please provide an explicit destination or destination(ranks::null)."
     );
 
-    using default_send_tag_type = decltype(kamping::tag(this->default_tag()));
+    using default_send_tag_type = decltype(kamping::send_tag(this->default_tag()));
     auto&& send_tag_param =
         internal::select_parameter_type_or_default<internal::ParameterType::send_tag, default_send_tag_type>(
             std::tuple(this->default_tag()),
@@ -155,7 +155,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
             std::tuple(),
             args...
         )
-            .template construct_buffer_or_rebind<DefaultContainerType, internal::serialization_support_tag>();
+            .template construct_buffer_or_rebind<DefaultContainerType();
 
     KASSERT(
         !(send_buf.size() == recv_buf.size() && send_buf.data() == recv_buf.data()),
@@ -170,7 +170,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
         )
             .construct_buffer_or_rebind();
 
-    constexpr bool is_recv_serialization_used = internal::buffer_uses_serialization<decltype(recv_buf)>;
 
     using recv_value_type = typename std::remove_reference_t<decltype(recv_buf)>::value_type;
     static_assert(
@@ -180,7 +179,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
     auto recv_type = internal::determine_mpi_recv_datatype<recv_value_type, decltype(recv_buf)>(args...);
     [[maybe_unused]] constexpr bool recv_type_is_in_param = !internal::has_to_be_computed<decltype(recv_type)>;
 
-    using default_recv_tag_type = decltype(kamping::tag(tags::any));
+    using default_recv_tag_type = decltype(kamping::recv_tag(tags::any));
     auto&& recv_tag_param =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_tag, default_recv_tag_type>(
             {},
@@ -246,7 +245,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
         send_count.get_single_element(),             // send_count
         send_type.get_single_element(),              // send_data_type
         destination.rank_signed(),                   // destination
-        send_tag,                                    // send_tag
+        send_tag_param.tag(),                                    // send_tag
         recv_buf.data(),                             // recv_buff
         recv_count_param.get_single_element(),       // recv_count
         recv_type.get_single_element(),              // recv_data_type
@@ -258,7 +257,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
     this->mpi_error_hook(err, "MPI_Sendrecv");
 
     return internal::make_mpi_result<std::tuple<Args...>>(
-        deserialization_repack<is_recv_serialization_used>(std::move(recv_buf)),
+        std::move(recv_buf),
         std::move(recv_count_param),
         std::move(status),
         std::move(recv_type)
