@@ -108,6 +108,8 @@ TEST(SendrecvTest, send_and_recv_with_sendrecv) {
 
         ASSERT_EQ(message, std::vector({4, 5, 6, 7, 8, 9}));
     }
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, sendrecv_cyclic_all_params) {
@@ -230,6 +232,8 @@ TEST(SendrecvTest, sendrecv_with_MPI_sendrecv) {
 
         ASSERT_EQ(message, std::vector<int>({0, 0, 0}));
     }
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, sendrecv_different_types) {
@@ -250,6 +254,8 @@ TEST(SendrecvTest, sendrecv_different_types) {
 
         ASSERT_EQ(message, std::vector<char>({'a', 'b', 'c'}));
     }
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, sendrecv_different_types_with_explicit_buffer) {
@@ -280,6 +286,8 @@ TEST(SendrecvTest, sendrecv_different_types_with_explicit_buffer) {
 
         ASSERT_EQ(msg_recv, std::vector<char>({'a', 'b', 'c'}));
     }
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 #if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
