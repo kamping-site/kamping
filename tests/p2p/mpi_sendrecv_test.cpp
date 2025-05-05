@@ -43,6 +43,8 @@ TEST(SendrecvTest, sendrecv_vector_cyclic) {
 
     ASSERT_EQ(message, std::vector<int>{static_cast<int>(sent_from)});
     ASSERT_EQ(message.size(), 1);
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, sendrecv_vector_cyclic_wo_recv_buf) {
@@ -56,6 +58,8 @@ TEST(SendrecvTest, sendrecv_vector_cyclic_wo_recv_buf) {
 
     ASSERT_EQ(message, std::vector<int>{static_cast<int>(sent_from)});
     ASSERT_EQ(message.size(), 1);
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, sendrecv_vector_cyclic_wo_recv_count) {
@@ -69,6 +73,8 @@ TEST(SendrecvTest, sendrecv_vector_cyclic_wo_recv_count) {
 
     ASSERT_EQ(message, std::vector<int>(42, static_cast<int>(sent_from)));
     ASSERT_EQ(message.size(), 42);
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, send_and_recv_with_sendrecv) {
@@ -136,6 +142,8 @@ TEST(SendrecvTest, sendrecv_cyclic_all_params) {
 
     ASSERT_EQ(message, std::vector<int>{static_cast<int>(sent_from)});
     ASSERT_EQ(message.size(), 1);
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, sendrecv_cyclic_only_req_params) {
@@ -149,6 +157,8 @@ TEST(SendrecvTest, sendrecv_cyclic_only_req_params) {
 
     ASSERT_EQ(message, std::vector<int>(42, static_cast<int>(sent_from)));
     ASSERT_EQ(message.size(), 42);
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, sendrecv_cyclic_with_status) {
@@ -167,6 +177,8 @@ TEST(SendrecvTest, sendrecv_cyclic_with_status) {
     auto source = status.source();
     ASSERT_EQ(source, sent_from);
     EXPECT_EQ(result.extract_recv_type(), MPI_INT);
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, sendrecv_different_send_and_recv_count) {
@@ -180,6 +192,8 @@ TEST(SendrecvTest, sendrecv_different_send_and_recv_count) {
 
     ASSERT_EQ(message, std::vector<int>(sent_from + 10, static_cast<int>(sent_from)));
     ASSERT_EQ(message.size(), sent_from + 10);
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, sendrecv_custom_container) {
@@ -197,6 +211,8 @@ TEST(SendrecvTest, sendrecv_custom_container) {
     for (int i: message) {
         EXPECT_EQ(i, sent_from);
     }
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 
 TEST(SendrecvTest, sendrecv_with_MPI_sendrecv) {
@@ -309,5 +325,7 @@ TEST(SendrecvTest, sendrecv_cyclic_with_explicit_size_no_resize_too_small) {
         },
         "Recv buffer is not large enough to hold all received elements."
     );
+
+    MPI_Barrier(comm.mpi_communicator());
 }
 #endif
