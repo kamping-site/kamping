@@ -889,6 +889,8 @@ using parameter_types_to_ignore_for_result_object = type_list<
     ParameterTypeEntry<ParameterType::request>,
     ParameterTypeEntry<ParameterType::root>,
     ParameterTypeEntry<ParameterType::tag>,
+    ParameterTypeEntry<ParameterType::send_tag>,
+    ParameterTypeEntry<ParameterType::recv_tag>,
     ParameterTypeEntry<ParameterType::send_mode>,
     ParameterTypeEntry<ParameterType::values_on_rank_0>>;
 
