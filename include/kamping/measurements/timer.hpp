@@ -282,13 +282,4 @@ inline Timer<Communicator<>>& timer() {
     return timer;
 }
 
-struct ScopedTimer {
-    ScopedTimer(std::string const& key) {
-        timer().synchronize_and_start(key);
-    }
-    ~ScopedTimer() {
-        timer().stop();
-    }
-};
-
 } // namespace kamping::measurements
