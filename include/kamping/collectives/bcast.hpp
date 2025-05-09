@@ -96,7 +96,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         decltype(kamping::send_recv_buf(alloc_new<DefaultContainerType<recv_value_type_tparam>>));
     auto send_recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::send_recv_buf, default_send_recv_buf_type>(
-            std::tuple(),
+            std::tuple<>(),
             args...
         )
             .template construct_buffer_or_rebind<DefaultContainerType, serialization_support_tag>();
@@ -130,7 +130,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     // Get the optional recv_count parameter. If the parameter is not given, allocate a new container.
     using default_count_type = decltype(kamping::send_recv_count_out());
     auto count_param = internal::select_parameter_type_or_default<ParameterType::send_recv_count, default_count_type>(
-                           std::tuple(),
+                           std::tuple<>(),
                            args...
     )
                            .construct_buffer_or_rebind();

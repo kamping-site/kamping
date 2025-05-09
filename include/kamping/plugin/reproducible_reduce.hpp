@@ -502,7 +502,7 @@ public:
         using default_recv_displs_type = decltype(kamping::recv_displs_out(alloc_new<DefaultContainerType<int>>));
         auto&& recv_displs =
             internal::select_parameter_type_or_default<internal::ParameterType::recv_displs, default_recv_displs_type>(
-                std::tuple(),
+                std::tuple<>(),
                 args...
             )
                 .template construct_buffer_or_rebind<DefaultContainerType>();

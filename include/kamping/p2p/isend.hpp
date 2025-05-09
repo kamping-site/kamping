@@ -132,7 +132,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::isend(Args... args
 
     using send_mode_obj_type = decltype(internal::select_parameter_type_or_default<
                                         internal::ParameterType::send_mode,
-                                        internal::SendModeParameter<internal::standard_mode_t>>(std::tuple(), args...));
+                                        internal::SendModeParameter<internal::standard_mode_t>>(std::tuple<>(), args...));
     using send_mode          = typename std::remove_reference_t<send_mode_obj_type>::send_mode;
 
     // RankType::null is valid, RankType::any is not.

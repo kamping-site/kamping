@@ -40,7 +40,7 @@ public:
             );
         auto&& recv_buf =
             internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
-                std::tuple(),
+                std::tuple<>(),
                 args...
             )
                 .template construct_buffer_or_rebind<Communicator::template default_container_type>();

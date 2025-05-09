@@ -88,7 +88,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
     using default_recv_buf_type = decltype(kamping::recv_buf(alloc_new<DefaultContainerType<recv_value_type_tparam>>));
     auto recv_buf =
         internal::select_parameter_type_or_default<internal::ParameterType::recv_buf, default_recv_buf_type>(
-            std::tuple(),
+            std::tuple<>(),
             args...
         )
             .template construct_buffer_or_rebind<DefaultContainerType>();
