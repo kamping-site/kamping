@@ -49,13 +49,13 @@
 /// KAMPING_CHECK_PARAMETERS.
 /// Note that this macro only takes the *name* of parameter types, i.e., instead of using
 /// `kamping::internal::ParameterType::send_buf`, only pass `send_buf` to this macro.
-#define KAMPING_REQUIRED_PARAMETERS(...) , ##__VA_ARGS__
+#define KAMPING_REQUIRED_PARAMETERS(...) __VA_OPT__(, __VA_ARGS__)
 
 /// @brief Wrapper to pass (possibly empty) list of parameter type names as optional parameters to \c
 /// KAMPING_CHECK_PARAMETERS.
 /// Note that this macro only takes the *name* of parameter types, i.e., instead of using
 /// `kamping::internal::ParameterType::send_buf`, only pass `send_buf` to this macro.
-#define KAMPING_OPTIONAL_PARAMETERS(...) , ##__VA_ARGS__
+#define KAMPING_OPTIONAL_PARAMETERS(...) __VA_OPT__(, __VA_ARGS__)
 
 /// @brief Assertion macro that checks if passed parameters are correct, i.e., all parameter types are unique, all
 /// required parameters are provided, and no unused parameter is passed. Also checks that all parameter types are
