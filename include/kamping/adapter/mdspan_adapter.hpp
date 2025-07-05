@@ -13,24 +13,25 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
-
 #pragma once
 #include <mdspan>
 
+#include "kamping/data_buffer.hpp"
 
 namespace kamping::adapter {
 
 template <typename T, typename Extent, typename DataBufferType>
 class MDSpanBuffer {
-
 public:
     using value_type = T;
 
-    explicit MDSpanBuffer(DataBufferType&& object) : _object(std::move(object)), _data() {unpack();}
+    explicit MDSpanBuffer(DataBufferType&& object) : _object(std::move(object)), _data() {
+        unpack();
+    }
 
     void unpack() {
         _mdspan = _object.underlying();
-        _data = _mdspan.data_handle();
+        _data   = _mdspan.data_handle();
     }
 
     T* data() noexcept {
@@ -46,28 +47,28 @@ public:
     }
 
 private:
-    DataBufferType _object;
+    DataBufferType         _object;
     std::mdspan<T, Extent> _mdspan;
-    T* _data;
-
+    T*                     _data;
 };
-    template<typename T, typename Extent, typename LayoutPolicy = std::layout_right, typename Accessor = std::default_accessor<T>>
-    auto md_span_send(std::mdspan<T, Extent, LayoutPolicy, Accessor>& data) {
-        static_assert(std::is_same_v<Accessor, std::default_accessor<T>>, "use std::default_accessor<T>");
-        static_assert(std::is_same_v<LayoutPolicy, std::layout_right>, "use std::layout_right");
-        internal::GenericDataBuffer<
-            std::mdspan<T, Extent>,
-            internal::ParameterType,
-            internal::ParameterType::send_buf,
-            internal::BufferModifiability::constant,
-            internal::BufferOwnership::referencing,
-            internal::BufferType::in_buffer>
+
+template <
+    typename T,
+    typename Extent,
+    typename LayoutPolicy = std::layout_right,
+    typename Accessor     = std::default_accessor<T>>
+auto md_span_send(std::mdspan<T, Extent, LayoutPolicy, Accessor>& data) {
+    static_assert(std::is_same_v<Accessor, std::default_accessor<T>>, "use std::default_accessor<T>");
+    static_assert(std::is_same_v<LayoutPolicy, std::layout_right>, "use std::layout_right");
+    internal::GenericDataBuffer<
+        std::mdspan<T, Extent>,
+        internal::ParameterType,
+        internal::ParameterType::send_buf,
+        internal::BufferModifiability::constant,
+        internal::BufferOwnership::referencing,
+        internal::BufferType::in_buffer>
         buffer(data);
-        return MDSpanBuffer<T, Extent, decltype(buffer)>(std::move(buffer));
-    }
-
-
+    return MDSpanBuffer<T, Extent, decltype(buffer)>(std::move(buffer));
 }
 
-
-
+} // namespace kamping::adapter
