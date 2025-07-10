@@ -12,23 +12,31 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <iostream>
+#include <mdspan>
+#include <vector>
 
+#include "kamping/adapter/generic_adapter.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/recv.hpp"
 #include "kamping/p2p/send.hpp"
-#include "kamping/collectives/barrier.hpp"
-#include "kamping/adapter/generic_adapter.hpp"
 
-#include <vector>
-#include <mdspan>
+template <typename Container>
+bool correct_data_recv(Container const& sent, Container const& recv) {
+    for (size_t i = 0; i < sent.size(); ++i) {
+        if (sent[i] != recv[i]) {
+            return false;
+        }
+    }
+    return true;
+}
 
 int main() {
     using namespace kamping;
 
     kamping::Environment  e;
-
     kamping::Communicator comm;
 
     if (comm.size() <= 1) {
@@ -38,38 +46,70 @@ int main() {
 
     std::vector v{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 
-    std::function<const int*(const std::vector<int>&)> get_data = [](const std::vector<int>& vec) noexcept {return vec.data();};
-    std::function<size_t(const std::vector<int>&)> get_size = [](const std::vector<int>& vec) noexcept {return vec.size();};
-
-    auto buff = adapter::generic_adapter(v, get_data, get_size);
-
     if (comm.rank() == 0) {
-        comm.send(kamping::send_buf(buff), kamping::destination(1));
-    }
-    else if (comm.rank() == 1) {
-        auto recv_data = comm.recv<int>(kamping::source(0));
+        auto get_data = [](std::vector<int> const& vec) noexcept {
+            return vec.data();
+        };
+        auto get_size = [](std::vector<int> const& vec) noexcept {
+            return vec.size();
+        };
 
-        for (auto a : recv_data) {
-            std::cout << a << std::endl;
-        }
+        auto buff = adapter::generic_adapter_alt(v, get_data, get_size);
+        comm.send(kamping::send_buf(buff), kamping::destination(1));
+    } else if (comm.rank() == 1) {
+        auto recv_data = comm.recv<int>(kamping::source(0));
+        std::cout << "Using lambda without explicit T: " << correct_data_recv(v, recv_data) << std::endl;
     }
 
     comm.barrier();
 
-    auto mdspan_send = std::mdspan(v.data(), 2, 6);
-    std::function<const int*(const decltype(mdspan_send)&)> get_data_span = [](const decltype(mdspan_send)& span) noexcept {
+    if (comm.rank() == 0) {
+        auto get_data = [](std::vector<int> const& vec) noexcept {
+            return vec.data();
+        };
+        auto get_size = [](std::vector<int> const& vec) noexcept {
+            return vec.size();
+        };
+
+        auto buff = adapter::generic_adapter<int>(v, get_data, get_size);
+        comm.send(kamping::send_buf(buff), kamping::destination(1));
+    } else if (comm.rank() == 1) {
+        auto recv_data = comm.recv<int>(kamping::source(0));
+        std::cout << "Using lambda with explicit T: " << correct_data_recv(v, recv_data) << std::endl;
+    }
+
+    comm.barrier();
+
+    if (comm.rank() == 0) {
+        std::function<int const*(std::vector<int> const&)> get_data = [](std::vector<int> const& vec) noexcept {
+            return vec.data();
+        };
+        std::function<size_t(std::vector<int> const&)> get_size = [](std::vector<int> const& vec) noexcept {
+            return vec.size();
+        };
+
+        auto buff = adapter::generic_adapter_std_func(v, get_data, get_size);
+        comm.send(kamping::send_buf(buff), kamping::destination(1));
+    } else if (comm.rank() == 1) {
+        auto recv_data = comm.recv<int>(kamping::source(0));
+        std::cout << "Using std::function without explicit T: " << correct_data_recv(v, recv_data) << std::endl;
+    }
+
+    comm.barrier();
+
+    auto mdspan_send   = std::mdspan(v.data(), 2, 6);
+    auto get_data_span = [](const decltype(mdspan_send) & span) noexcept {
         return span.data_handle();
     };
-    std::function<size_t(const decltype(mdspan_send)&)> get_size_span = [](const decltype(mdspan_send)& span) noexcept {
+    auto get_size_span = [](const decltype(mdspan_send) & span) noexcept {
         return span.size();
     };
 
-    auto buff_span = adapter::generic_adapter(mdspan_send, get_data_span, get_size_span);
+    auto buff_span = adapter::generic_adapter<int>(mdspan_send, get_data_span, get_size_span);
 
     if (comm.rank() == 0) {
         comm.send(kamping::send_buf(buff_span), kamping::destination(1));
-    }
-    else if (comm.rank() == 1) {
+    } else if (comm.rank() == 1) {
         auto recv_data = comm.recv<int>(kamping::source(0));
 
         auto mdspan_recv = std::mdspan(recv_data.data(), 2, 6);
@@ -83,7 +123,4 @@ int main() {
 
         std::cout << "Are the mdspans the same: " << is_same << std::endl;
     }
-
 }
-
-
