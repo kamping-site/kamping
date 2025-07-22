@@ -14,7 +14,6 @@
 // along with KaMPIng.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
-#include <functional>
 
 #include "kamping/data_buffer.hpp"
 
@@ -39,6 +38,10 @@ public:
         return _get_size(_data);
     }
 
+    const Container& underlying() const {
+        return _data;
+    }
+
 private:
     DataBufferType   _object;
     Container const& _data;
@@ -56,55 +59,11 @@ concept has_get_size = requires(GetSize size_func, Container const& container) {
     { size_func(container) } -> std::same_as<size_t>;
 };
 
-template <typename T, typename Container, typename GetData, typename GetSize>
-requires has_get_data<GetData, T, Container> && has_get_size<GetSize, Container>
-auto generic_adapter(Container const& data, GetData data_func, GetSize size_func) {
-    internal::GenericDataBuffer<
-        Container,
-        internal::ParameterType,
-        internal::ParameterType::send_buf,
-        internal::BufferModifiability::constant,
-        internal::BufferOwnership::referencing,
-        internal::BufferType::in_buffer>
-        buffer(data);
-    return AdapterBuffer<T, Container, decltype(buffer), GetData, GetSize>(
-        std::move(buffer),
-        std::move(data_func),
-        std::move(size_func)
-    );
-}
-
-template <typename T, typename Container, typename GetData, typename GetSize>
-requires std::same_as<std::invoke_result_t<GetSize, Container const&>, size_t> && std::convertible_to
-    < std::invoke_result_t<GetData, Container const&>,
-const T* > auto generic_adapter_alt_helper(Container const& data, GetData data_func, GetSize size_func) {
-    internal::GenericDataBuffer<
-        Container,
-        internal::ParameterType,
-        internal::ParameterType::send_buf,
-        internal::BufferModifiability::constant,
-        internal::BufferOwnership::referencing,
-        internal::BufferType::in_buffer>
-        buffer(data);
-    return AdapterBuffer<T, Container, decltype(buffer), GetData, GetSize>(
-        std::move(buffer),
-        std::move(data_func),
-        std::move(size_func)
-    );
-}
-
 template <typename Container, typename GetData, typename GetSize>
-auto generic_adapter_alt(Container const& data, GetData data_func, GetSize size_func) {
+requires has_get_data<GetData, std::remove_pointer_t<std::invoke_result_t<GetData, Container const&>>, Container>
+        && has_get_size<GetSize, Container>
+auto generic_adapter(Container const& data, GetData data_func, GetSize size_func) {
     using T = std::remove_pointer_t<std::invoke_result_t<GetData, Container const&>>;
-    return generic_adapter_alt_helper<T>(data, data_func, size_func);
-}
-
-template <typename T, typename Container>
-auto generic_adapter_std_func(
-    Container const&                             data,
-    std::function<const T*(Container const&)>    get_data,
-    std::function<size_t(Container const& data)> get_size
-) {
     internal::GenericDataBuffer<
         Container,
         internal::ParameterType,
@@ -113,10 +72,10 @@ auto generic_adapter_std_func(
         internal::BufferOwnership::referencing,
         internal::BufferType::in_buffer>
         buffer(data);
-    return AdapterBuffer<T, Container, decltype(buffer), decltype(get_data), decltype(get_size)>(
+    return AdapterBuffer<T, Container, decltype(buffer), GetData, GetSize>(
         std::move(buffer),
-        std::move(get_data),
-        std::move(get_size)
+        std::move(data_func),
+        std::move(size_func)
     );
 }
 
