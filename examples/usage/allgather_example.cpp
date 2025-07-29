@@ -30,20 +30,15 @@ int main() {
     kamping::Environment  e;
     kamping::Communicator comm;
     std::vector<int>      input(comm.size(), comm.rank_signed());
+    std::vector<int>      output(comm.size() * comm.size(), 99);
 
-    { // Basic form: Provide a send buffer and let KaMPIng allocate the receive buffer.
-        auto output = comm.allgather(send_buf(input));
-        print_result_on_root(output, comm);
-    }
+    auto [sent, recved] = comm.allgather(input, output);
 
+    print_result_on_root(recved, comm);
     print_on_root("------", comm);
+    print_result_on_root(sent, comm);
 
-    { // We can also send only parts of the input and specify an explicit receive buffer.
-        std::vector<int> output;
 
-        // this can also be achieved with `kamping::Span`
-        comm.allgather(send_buf(Span(input.begin(), 2)), recv_buf<resize_to_fit>(output));
-        print_result_on_root(output, comm);
-        return 0;
-    }
+
+
 }

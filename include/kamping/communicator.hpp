@@ -571,6 +571,9 @@ public:
     template <typename... Args>
     auto allgather(Args... args) const;
 
+    template <class SBuff, class RBuff>
+    auto allgather(SBuff&& sbuf, RBuff&& rbuf) const;
+
     template <typename... Args>
     auto allgather_inplace(Args... args) const;
 
