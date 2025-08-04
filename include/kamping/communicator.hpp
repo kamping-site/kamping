@@ -32,6 +32,18 @@
 
 namespace kamping {
 
+template <typename Buff>
+concept DataBufferConcept = std::ranges::contiguous_range<Buff> && std::ranges::sized_range<Buff> &&(
+    std::is_fundamental_v<std::ranges::range_value_t<Buff>> || /*Typed<Buff>*/ false
+);
+
+template <typename SBuff>
+concept SendDataBuffer = DataBufferConcept<SBuff> && std::ranges::input_range<SBuff>;
+
+template <typename RBuff>
+concept RecvDataBuffer =
+    DataBufferConcept<RBuff> && std::ranges::output_range<RBuff, std::ranges::range_value_t<RBuff>>;
+
 // Needed by the plugin system to check if a plugin provides a callback function for MPI errors.
 KAMPING_MAKE_HAS_MEMBER(mpi_error_handler)
 
@@ -568,10 +580,9 @@ public:
     template <typename... Args>
     auto gatherv(Args... args) const;
 
-    template <typename... Args>
-    auto allgather(Args... args) const;
-
-    template <class SBuff, class RBuff>
+    template <typename SBuff, typename RBuff>
+    requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<
+        SBuff> && kamping::RecvDataBuffer<RBuff>
     auto allgather(SBuff&& sbuf, RBuff&& rbuf) const;
 
     template <typename... Args>
@@ -594,6 +605,9 @@ public:
 
     template <typename Value>
     bool is_same_on_all_ranks(Value const& value) const;
+
+    template <typename... Tags, typename SBuff, typename RBuff>
+    void infer_rbuf_vals_from(SBuff const& sbuf, RBuff& rbuf) const;
 
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
