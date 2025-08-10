@@ -40,7 +40,7 @@ public:
     Info(MPI_Info info, bool owning = false) : _info(info), _owning(owning) {}
 
     ~Info() {
-        if (!_owning || _info == MPI_INFO_NULL) {
+        if (!_owning) {
             return;
         }
         MPI_Info_free(&_info);
