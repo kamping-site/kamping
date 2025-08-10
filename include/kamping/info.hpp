@@ -1,8 +1,11 @@
 #pragma once
 
+#include <charconv>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <system_error>
+#include <type_traits>
 
 #include <mpi.h>
 
@@ -27,6 +30,21 @@ inline std::optional<bool> from_info_value_string<bool>(std::string_view value) 
     }
     if (value == "false") {
         return false;
+    }
+    return std::nullopt;
+}
+
+template <typename T, std::enable_if_t<std::is_integral_v<T> && std::is_same_v<T, bool>, int> = 0>
+std::string_view to_info_value_string(T const& value) {
+    return std::to_string(value);
+}
+
+template <typename T, std::enable_if_t<std::is_integral_v<T> && std::is_same_v<T, bool>, int> = 0>
+std::optional<T> from_info_value_string(std::string_view value) {
+    T result;
+    auto [ptr, errcode] = std::from_chars(value.data(), value.data() + value.size(), result);
+    if (errcode == std::errc{}) {
+        return result;
     }
     return std::nullopt;
 }
