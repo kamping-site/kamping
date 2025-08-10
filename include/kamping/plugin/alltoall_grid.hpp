@@ -321,7 +321,7 @@ public:
                 ++recv_counts_span[grid_recv_buf[i].get_source()];
             }
         } else {
-	  KASSERT(recv_counts.size() >= _size_of_orig_comm, "Recv counts buffer is not large enough.", assert::light);
+            KASSERT(recv_counts.size() >= _size_of_orig_comm, "Recv counts buffer is not large enough.", assert::light);
         }
 
         // Get recv displs
