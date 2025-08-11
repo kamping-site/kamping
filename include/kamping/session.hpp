@@ -18,6 +18,7 @@
 #include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
+#include "kamping/error_handling.hpp"
 #include "kamping/group.hpp"
 #include "kamping/info.hpp"
 #include "kamping/thread_levels.hpp"
@@ -35,7 +36,8 @@ public:
     Session(ThreadLevel thread_level) {
         Info info;
         info.set("thread_level", thread_level);
-        MPI_Session_init(info.native(), MPI_ERRORS_RETURN, &_session);
+        int err = MPI_Session_init(info.native(), MPI_ERRORS_RETURN, &_session);
+        THROW_IF_MPI_ERROR(err, "MPI_Session_init");
     }
 
     ~Session() {
@@ -44,7 +46,8 @@ public:
 
     Info get_info() const {
         MPI_Info info_used = MPI_INFO_NULL;
-        MPI_Session_get_info(_session, &info_used);
+        int      err       = MPI_Session_get_info(_session, &info_used);
+        THROW_IF_MPI_ERROR(err, "MPI_Session_get_info");
         Info info{info_used, /* owning = */ true};
         return info;
     }
@@ -52,7 +55,8 @@ public:
     std::optional<Group> group_from_pset(std::string_view pset_name) const {
         KASSERT(pset_name_is_valid(pset_name), "Invalid pset name " << pset_name);
         MPI_Group newgroup = MPI_GROUP_NULL;
-        MPI_Group_from_session_pset(_session, pset_name.data(), &newgroup);
+        int       err      = MPI_Group_from_session_pset(_session, pset_name.data(), &newgroup);
+        THROW_IF_MPI_ERROR(err, "MPI_Group_from_session_pset");
         if (newgroup == MPI_GROUP_NULL) {
             return std::nullopt;
         }
@@ -63,7 +67,8 @@ public:
     Info pset_info(std::string_view pset_name) const {
         KASSERT(pset_name_is_valid(pset_name));
         MPI_Info pset_info = MPI_INFO_NULL;
-        MPI_Session_get_pset_info(_session, pset_name.data(), &pset_info);
+        int      err       = MPI_Session_get_pset_info(_session, pset_name.data(), &pset_info);
+        THROW_IF_MPI_ERROR(err, "MPI_Session_get_pset_info");
         Info info{pset_info, /* owning = */ true};
         return info;
     }
@@ -96,10 +101,12 @@ public:
         KASSERT(n < get_num_psets(info));
         int pset_len = 0;
         // query length
-        MPI_Session_get_nth_pset(_session, info.native(), asserting_cast<int>(n), &pset_len, nullptr);
+        int err = MPI_Session_get_nth_pset(_session, info.native(), asserting_cast<int>(n), &pset_len, nullptr);
+        THROW_IF_MPI_ERROR(err, "MPI_Session_get_nth_pset");
         std::string pset_name;
         pset_name.resize(asserting_cast<std::size_t>(pset_len) - 1);
-        MPI_Session_get_nth_pset(_session, info.native(), asserting_cast<int>(n), &pset_len, pset_name.data());
+        err = MPI_Session_get_nth_pset(_session, info.native(), asserting_cast<int>(n), &pset_len, pset_name.data());
+        THROW_IF_MPI_ERROR(err, "MPI_Session_get_nth_pset");
         return pset_name;
     }
 

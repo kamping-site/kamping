@@ -213,7 +213,8 @@ template <
 Communicator<DefaultContainerType, Plugins...> Group::create_comm(std::string_view tag, Info const& info) const {
     KASSERT(tag.size() <= MPI_MAX_STRINGTAG_LEN);
     MPI_Comm comm;
-    MPI_Comm_create_from_group(_group, tag.data(), info.native(), MPI_ERRORS_RETURN, &comm);
+    int      err = MPI_Comm_create_from_group(_group, tag.data(), info.native(), MPI_ERRORS_RETURN, &comm);
+    THROW_IF_MPI_ERROR(err, "MPI_Comm_create_from_group");
     return kamping::Communicator<DefaultContainerType, Plugins...>{comm, /* take_ownership = */ true};
 }
 template <

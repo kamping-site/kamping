@@ -10,6 +10,7 @@
 #include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
+#include "kamping/error_handling.hpp"
 
 namespace kamping {
 
@@ -53,7 +54,8 @@ struct info_value_traits<T, std::enable_if_t<std::is_integral_v<T> && !std::is_s
 class Info {
 public:
     Info() {
-        MPI_Info_create(&_info);
+        int err = MPI_Info_create(&_info);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_create");
     }
 
     Info(MPI_Info info, bool owning = false) : _info(info), _owning(owning) {}
@@ -66,14 +68,16 @@ public:
     }
 
     Info(Info const& other) {
-        MPI_Info_dup(other._info, &_info);
+        int err = MPI_Info_dup(other._info, &_info);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_dup");
     }
 
     Info& operator=(Info const& other) {
         if (_owning) {
             MPI_Info_free(&_info);
         }
-        MPI_Info_dup(other._info, &_info);
+        int err = MPI_Info_dup(other._info, &_info);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_dup");
         _owning = true; // now we own the info object, since it's a new one
         return *this;
     }
@@ -84,7 +88,8 @@ public:
 
     Info operator=(Info&& other) {
         if (_owning) {
-            MPI_Info_free(&_info);
+            int err = MPI_Info_free(&_info);
+            THROW_IF_MPI_ERROR(err, "MPI_Info_free");
         }
         _info       = other._info;
         _owning     = other._owning;
@@ -93,7 +98,8 @@ public:
     }
 
     void set(std::string_view key, std::string_view value) {
-        MPI_Info_set(_info, key.data(), value.data());
+        int err = MPI_Info_set(_info, key.data(), value.data());
+        THROW_IF_MPI_ERROR(err, "MPI_Info_set");
     }
 
     template <typename T>
@@ -105,21 +111,24 @@ public:
     bool contains(std::string_view key) const {
         int flag   = 0;
         int buflen = 0;
-        MPI_Info_get_string(_info, key.data(), &buflen, nullptr, &flag);
+        int err    = MPI_Info_get_string(_info, key.data(), &buflen, nullptr, &flag);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
         return flag;
     }
 
     std::optional<std::string> get(std::string_view key) const {
         int flag   = 0;
         int buflen = 0;
-        MPI_Info_get_string(_info, key.data(), &buflen, nullptr, &flag);
+        int err    = MPI_Info_get_string(_info, key.data(), &buflen, nullptr, &flag);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
         if (!flag) {
             return std::nullopt;
         }
         std::string value;
         value.resize(asserting_cast<std::size_t>(buflen) - 1);
 
-        MPI_Info_get_string(_info, key.data(), &buflen, value.data(), &flag);
+        err = MPI_Info_get_string(_info, key.data(), &buflen, value.data(), &flag);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
         return value;
     }
 
@@ -134,12 +143,14 @@ public:
     }
 
     void erase(std::string_view key) {
-        MPI_Info_delete(_info, key.data());
+        int err = MPI_Info_delete(_info, key.data());
+        THROW_IF_MPI_ERROR(err, "MPI_Info_delete");
     }
 
     std::size_t size() const {
         int nkeys = 0;
-        MPI_Info_get_nkeys(_info, &nkeys);
+        int err   = MPI_Info_get_nkeys(_info, &nkeys);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_get_nkeys");
         return asserting_cast<std::size_t>(nkeys);
     }
 
