@@ -60,19 +60,8 @@ struct FlatContainer<T, std::enable_if_t<is_nested_send_buffer_v<T>>> {
 
 } // namespace internal
 
-/// @brief Flattens a container of containers or destination-container-pairs and provides the flattened buffer, send
-/// counts and send displacements as parameters to be passed to an \c MPI call.
-///
-/// This returns a callable wrapper that can be called with a functor which accepts a parameter pack of these arguments.
-///
-/// Example:
-/// ```cpp
-/// Communicator                  comm;
-/// std::vector<std::vector<int>> nested_send_buf(comm.size()); // or std::unordered_map<int, std::vector<int>>
-/// auto [recv_buf, recv_counts, recv_displs] = with_flattened(nested_send_buf).call([&](auto... flattened) {
-///    return comm.alltoallv(std::move(flattened)..., recv_counts_out(), recv_displs_out());
-/// });
-/// ```
+/// @brief Flattens a container of containers or destination-container-pairs and returns the flattened buffer, send
+/// counts and send displacements as a tuple.
 ///
 /// The container can be a range of pair-like types of destination and data (see \c is_sparse_send_buffer_v ) or
 /// a container of containers (see \c is_nested_send_buffer_v ).
@@ -87,7 +76,8 @@ template <
     template <typename...> typename CountContainer = std::vector,
     typename Container,
     typename Enable = std::enable_if_t<is_sparse_send_buffer_v<Container> || is_nested_send_buffer_v<Container>>>
-auto with_flattened(Container const& nested_send_buf, size_t comm_size) {
+auto flatten(Container const& nested_send_buf, size_t comm_size)
+    -> std::tuple<typename internal::FlatContainer<Container>::type, CountContainer<int>, CountContainer<int>> {
     CountContainer<int> send_counts(comm_size);
     if constexpr (is_sparse_send_buffer_v<Container>) {
         for (auto const& [destination, message]: nested_send_buf) {
@@ -126,9 +116,58 @@ auto with_flattened(Container const& nested_send_buf, size_t comm_size) {
             i++;
         }
     }
-    return internal::make_callable_wrapper([flat_send_buf = std::move(flat_send_buf),
-                                            send_counts   = std::move(send_counts),
-                                            send_displs   = std::move(send_displs)](auto&& f) {
+    return std::tuple(std::move(flat_send_buf), std::move(send_counts), std::move(send_displs));
+}
+
+/// @brief Flattens a container of containers and and returns the flattened buffer, send counts and send displacement as
+/// a tuple.
+///
+/// The size of the computed count buffers is the size of the container.
+/// @param nested_send_buf The nested container of send buffers. Must satisfy \c is_nested_send_buffer_v.
+/// @tparam CountContainer The type of the container to use for the send counts and send displacements.
+/// @tparam Container The type of the nested container.
+/// @tparam Enable SFINAE.
+template <
+    template <typename...> typename CountContainer = std::vector,
+    typename Container,
+    typename Enable = std::enable_if_t<is_nested_send_buffer_v<Container>>>
+auto flatten(Container const& nested_send_buf)
+    -> std::tuple<typename internal::FlatContainer<Container>::type, CountContainer<int>, CountContainer<int>> {
+    return flatten<CountContainer>(nested_send_buf, nested_send_buf.size());
+}
+
+/// @brief Flattens a container of containers or destination-container-pairs and provides the flattened buffer, send
+/// counts and send displacements as parameters to be passed to an \c MPI call.
+///
+/// This returns a callable wrapper that can be called with a functor which accepts a parameter pack of these arguments.
+///
+/// Example:
+/// ```cpp
+/// Communicator                  comm;
+/// std::vector<std::vector<int>> nested_send_buf(comm.size()); // or std::unordered_map<int, std::vector<int>>
+/// auto [recv_buf, recv_counts, recv_displs] = with_flattened(nested_send_buf).call([&](auto... flattened) {
+///    return comm.alltoallv(std::move(flattened)..., recv_counts_out(), recv_displs_out());
+/// });
+/// ```
+///
+/// The container can be a range of pair-like types of destination and data (see \c is_sparse_send_buffer_v ) or
+/// a container of containers (see \c is_nested_send_buffer_v ).
+///
+/// @param nested_send_buf The nested container of send buffers.
+/// @param comm_size The size of the communicator, used as number of elements in the computed count buffers.
+/// @tparam CountContainer The type of the container to use for the send counts and send displacements.
+/// @tparam Container The type of the nested container.
+/// @tparam Enable SFINAE.
+///
+template <
+    template <typename...> typename CountContainer = std::vector,
+    typename Container,
+    typename Enable = std::enable_if_t<is_sparse_send_buffer_v<Container> || is_nested_send_buffer_v<Container>>>
+auto with_flattened(Container const& nested_send_buf, size_t comm_size) {
+    auto flat = flatten(nested_send_buf, comm_size);
+    return internal::make_callable_wrapper([flat_send_buf = std::move(std::get<0>(flat)),
+                                            send_counts   = std::move(std::get<1>(flat)),
+                                            send_displs   = std::move(std::get<2>(flat))](auto&& f) {
         return std::apply(
             std::forward<decltype(f)>(f),
             std::tuple(
