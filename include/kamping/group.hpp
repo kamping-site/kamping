@@ -177,6 +177,14 @@ public:
         return asserting_cast<size_t>(rank);
     }
 
+    MPI_Group const& native() const {
+        return _group;
+    }
+
+    MPI_Group& native() {
+        return _group;
+    }
+
 private:
     MPI_Group _group;
     bool      _owns_group;
