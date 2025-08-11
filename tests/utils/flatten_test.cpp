@@ -30,7 +30,7 @@ TEST(FlattenTest, basic_unordered_map) {
         sparse_send_buf.emplace(dst, std::vector<int>(1, dst));
     }
     auto [flat_buf, send_counts, send_displs] = flatten(sparse_send_buf, comm.size());
-    
+
     EXPECT_EQ(flat_buf, testing::iota_container_n(comm.size(), 0));
     EXPECT_THAT(send_counts.size(), comm.size());
     EXPECT_THAT(send_counts, ::testing::Each(1));
