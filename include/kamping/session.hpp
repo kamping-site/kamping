@@ -50,7 +50,7 @@ public:
     }
 
     std::optional<Group> group_from_pset(std::string_view pset_name) const {
-        KASSERT(pset_name_is_valid(pset_name));
+        KASSERT(pset_name_is_valid(pset_name), "Invalid pset name " << pset_name);
         MPI_Group newgroup = MPI_GROUP_NULL;
         MPI_Group_from_session_pset(_session, pset_name.data(), &newgroup);
         if (newgroup == MPI_GROUP_NULL) {
@@ -98,7 +98,7 @@ public:
         // query length
         MPI_Session_get_nth_pset(_session, info.native(), asserting_cast<int>(n), &pset_len, nullptr);
         std::string pset_name;
-        pset_name.resize(asserting_cast<std::size_t>(pset_len));
+        pset_name.resize(asserting_cast<std::size_t>(pset_len) - 1);
         MPI_Session_get_nth_pset(_session, info.native(), asserting_cast<int>(n), &pset_len, pset_name.data());
         return pset_name;
     }
@@ -134,12 +134,12 @@ private:
     friend class Session;
     PsetNameIterator(Session const& session, Info const& info, std::size_t index)
         : _session(&session),
-          _info(&info),
+          _info(info.native()),
           _index(asserting_cast<difference_type>(index)) {}
 
 public:
     std::string operator*() const {
-        return _session->get_nth_pset(asserting_cast<std::size_t>(_index), *_info);
+        return _session->get_nth_pset(asserting_cast<std::size_t>(_index), _info);
     }
 
     // Increment/decrement
@@ -193,8 +193,7 @@ public:
 
     // Comparisons
     bool operator==(PsetNameIterator const& other) const {
-        return _index == other._index && _session->native() == other._session->native()
-               && _info->native() == other._info->native();
+        return _index == other._index && _session->native() == other._session->native() && _info == other._info;
     }
     bool operator!=(PsetNameIterator const& other) const {
         return !(*this == other);
@@ -214,7 +213,7 @@ public:
 
 private:
     Session const*  _session;
-    Info const*     _info;
+    MPI_Info        _info;
     difference_type _index;
 };
 
@@ -237,7 +236,7 @@ inline PsetNameIterator Session::pset_names_end() const {
 }
 
 inline bool Session::pset_name_is_valid(std::string_view pset_name) const {
-    return std::find(pset_names_begin(), pset_names_end(), pset_name) != pset_names_end();
+    return std::find(pset_names_begin(), pset_names_end(), std::string{pset_name}) != pset_names_end();
 }
 
 } // namespace kamping
