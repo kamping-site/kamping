@@ -127,7 +127,7 @@ public:
         int err = MPI_Info_get_string(_info, key.data(), &buflen, value.data(), &flag);
 	THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
 #else
-        // From the standard: ""In C, valuelen should be one less than the amount of allocated space to allow for the
+        // From the standard: "In C, valuelen should be one less than the amount of allocated space to allow for the
         // null terminator."
         int err = MPI_Info_get(_info, key.data(), asserting_cast<int>(*val_size), value.data(), &flag);
         THROW_IF_MPI_ERROR(err, "MPI_Info_get");
