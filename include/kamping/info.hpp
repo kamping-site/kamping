@@ -13,41 +13,42 @@
 
 namespace kamping {
 
-template <typename T>
-std::string_view to_info_value_string(T const& value) = delete;
-
-template <typename T>
-std::optional<T> from_info_value_string(std::string_view value) = delete;
+template <typename T, typename Enable = void>
+struct info_value_traits;
 
 template <>
-inline std::string_view to_info_value_string<bool>(bool const& value) {
-    return value ? "true" : "false";
-}
-template <>
-inline std::optional<bool> from_info_value_string<bool>(std::string_view value) {
-    if (value == "true") {
-        return true;
+struct info_value_traits<bool> {
+    using type = bool;
+    static std::string_view to(bool value) {
+        return value ? "true" : "false";
     }
-    if (value == "false") {
-        return false;
+    static inline std::optional<bool> from(std::string_view value) {
+        if (value == "true") {
+            return true;
+        }
+        if (value == "false") {
+            return false;
+        }
+        return std::nullopt;
     }
-    return std::nullopt;
-}
+};
 
-template <typename T, std::enable_if_t<std::is_integral_v<T> && std::is_same_v<T, bool>, int> = 0>
-std::string_view to_info_value_string(T const& value) {
-    return std::to_string(value);
-}
-
-template <typename T, std::enable_if_t<std::is_integral_v<T> && std::is_same_v<T, bool>, int> = 0>
-std::optional<T> from_info_value_string(std::string_view value) {
-    T result;
-    auto [ptr, errcode] = std::from_chars(value.data(), value.data() + value.size(), result);
-    if (errcode == std::errc{}) {
-        return result;
+template <typename T>
+struct info_value_traits<T, std::enable_if_t<std::is_integral_v<T> && !std::is_same_v<T, bool>>> {
+    using type = T;
+    static std::string_view to(T const& value) {
+        return std::to_string(value);
     }
-    return std::nullopt;
-}
+
+    static std::optional<T> from(std::string_view value) {
+        T result;
+        auto [ptr, errcode] = std::from_chars(value.data(), value.data() + value.size(), result);
+        if (errcode == std::errc{}) {
+            return result;
+        }
+        return std::nullopt;
+    }
+};
 
 class Info {
 public:
@@ -73,7 +74,7 @@ public:
             MPI_Info_free(&_info);
         }
         MPI_Info_dup(other._info, &_info);
-        _owning = true; // no we own the info object, since it's a new one
+        _owning = true; // now we own the info object, since it's a new one
         return *this;
     }
 
@@ -97,7 +98,7 @@ public:
 
     template <typename T>
     void set(std::string_view key, T const& value) {
-        auto value_string = to_info_value_string(value);
+        auto value_string = info_value_traits<T>::to(value);
         set(key, value_string);
     }
 
@@ -116,7 +117,7 @@ public:
             return std::nullopt;
         }
         std::string value;
-        value.resize(asserting_cast<std::size_t>(buflen));
+        value.resize(asserting_cast<std::size_t>(buflen) - 1);
 
         MPI_Info_get_string(_info, key.data(), &buflen, value.data(), &flag);
         return value;
@@ -128,7 +129,7 @@ public:
         if (!value_string) {
             return std::nullopt;
         }
-        std::optional<T> value = from_info_value_string<T>(*value_string);
+        std::optional<T> value = info_value_traits<T>::from(*value_string);
         return value;
     }
 
