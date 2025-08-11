@@ -222,6 +222,6 @@ template <
     template <typename, template <typename...> typename> typename... Plugins>
 Communicator<DefaultContainerType, Plugins...> Group::create_comm(std::string_view tag) const {
     Info info_null{MPI_INFO_NULL, false};
-    return create_comm(tag, info_null);
+    return create_comm<DefaultContainerType, Plugins...>(tag, info_null);
 }
 } // namespace kamping
