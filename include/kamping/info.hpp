@@ -108,26 +108,30 @@ public:
     }
 
     bool contains(std::string_view key) const {
-        int flag   = 0;
-        int buflen = 0;
-        int err    = MPI_Info_get_string(_info, key.data(), &buflen, nullptr, &flag);
-        THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
-        return flag;
+        return get_value_length(key).has_value();
     }
 
     std::optional<std::string> get(std::string_view key) const {
-        int flag   = 0;
-        int buflen = 0;
-        int err    = MPI_Info_get_string(_info, key.data(), &buflen, nullptr, &flag);
-        THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
-        if (!flag) {
+        auto val_size = get_value_length(key);
+        if (!val_size) {
             return std::nullopt;
         }
         std::string value;
-        value.resize(asserting_cast<std::size_t>(buflen));
+        value.resize(asserting_cast<std::size_t>(*val_size));
 
-        err = MPI_Info_get_string(_info, key.data(), &buflen, value.data(), &flag);
-        THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
+        int flag = 0;
+#if MPI_VERSION >= 4
+        // From the standard: "In C, buflen includes the required space for the null terminator."
+        int buflen = asserting_cast<int>(*val_size) + 1;
+        int err = MPI_Info_get_string(_info, key.data(), &buflen, value.data(), &flag);
+	THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
+#else
+        // From the standard: ""In C, valuelen should be one less than the amount of allocated space to allow for the
+        // null terminator."
+        int err = MPI_Info_get(_info, key.data(), asserting_cast<int>(*val_size), value.data(), &flag);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_get");
+#endif
+        KASSERT(flag == 1);
         return value;
     }
 
@@ -164,6 +168,26 @@ public:
     // TODO add key-value iterator
 
 private:
+    /// without null-terminator
+    std::optional<std::size_t> get_value_length(std::string_view key) const {
+        int flag   = 0;
+        int buflen = 0;
+#if MPI_VERSION >= 4
+        int err = MPI_Info_get_string(_info, key.data(), &buflen, nullptr, &flag);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
+        // From the standard: "In C, buflen includes the required space for the null terminator."
+        buflen--;
+#else
+        // length returned does not include the end-of-string-character
+        MPI_Info_get_valuelen(_info, key.data(), &buflen, &flag);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_get_valuelen");
+#endif
+        if (flag) {
+            return asserting_cast<std::size_t>(buflen);
+        }
+        return std::nullopt;
+    }
+
     MPI_Info _info;
     bool     _owning = true;
 };
