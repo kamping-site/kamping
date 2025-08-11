@@ -20,7 +20,9 @@
 #include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
+#include "kamping/communicator_fwd.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/info.hpp"
 
 namespace kamping {
 
@@ -75,6 +77,16 @@ public:
             MPI_Group_free(&_group);
         }
     }
+
+    template <
+        template <typename...> typename DefaultContainerType = std::vector,
+        template <typename, template <typename...> typename> typename... Plugins>
+    Communicator<DefaultContainerType, Plugins...> create_comm(std::string_view tag, Info const& info) const;
+
+    template <
+        template <typename...> typename DefaultContainerType = std::vector,
+        template <typename, template <typename...> typename> typename... Plugins>
+    Communicator<DefaultContainerType, Plugins...> create_comm(std::string_view tag) const;
 
     // TODO We need a safe tag for this -> move to another PR
     // template <typename Comm>
@@ -190,4 +202,25 @@ private:
     bool      _owns_group;
 };
 
+} // namespace kamping
+
+#include <kamping/communicator.hpp>
+
+namespace kamping {
+template <
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
+Communicator<DefaultContainerType, Plugins...> Group::create_comm(std::string_view tag, Info const& info) const {
+    KASSERT(tag.size() <= MPI_MAX_STRINGTAG_LEN);
+    MPI_Comm comm;
+    MPI_Comm_create_from_group(_group, tag.data(), info.native(), MPI_ERRORS_RETURN, &comm);
+    return kamping::Communicator<DefaultContainerType, Plugins...>{comm, /* take_ownership = */ true};
+}
+template <
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
+Communicator<DefaultContainerType, Plugins...> Group::create_comm(std::string_view tag) const {
+    Info info_null{MPI_INFO_NULL, false};
+    return create_comm(tag, info_null);
+}
 } // namespace kamping
