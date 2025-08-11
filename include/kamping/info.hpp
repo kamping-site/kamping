@@ -179,7 +179,7 @@ private:
         buflen--;
 #else
         // length returned does not include the end-of-string-character
-        MPI_Info_get_valuelen(_info, key.data(), &buflen, &flag);
+        int err = MPI_Info_get_valuelen(_info, key.data(), &buflen, &flag);
         THROW_IF_MPI_ERROR(err, "MPI_Info_get_valuelen");
 #endif
         if (flag) {
