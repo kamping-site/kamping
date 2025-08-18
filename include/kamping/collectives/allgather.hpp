@@ -24,22 +24,14 @@
 #include "kamping/comm_helper/infer_rbuf_vals_from.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
-#include "kamping/data_buffer.hpp"
 #include "kamping/mpi_datatype.hpp"
-#include "kamping/named_parameter_check.hpp"
-#include "kamping/named_parameter_selection.hpp"
-#include "kamping/named_parameter_types.hpp"
-#include "kamping/named_parameters.hpp"
-#include "kamping/result.hpp"
 
 template <
-    template <typename...>
-    typename DefaultContainerType,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
 template <typename SBuff, typename RBuff>
-requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<
-    SBuff> && kamping::RecvDataBuffer<RBuff>
+    requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<SBuff>
+             && kamping::RecvDataBuffer<RBuff>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(SBuff&& sbuf, RBuff&& rbuf) const {
     using namespace kamping::internal;
 
@@ -47,7 +39,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(SBuff&& 
     using recv_type = std::ranges::range_value_t<RBuff>;
 
     auto   send_count = sbuf.size();
-    size_t recv_count;
+    size_t recv_count = get_recv_count<CommType::allgather>(sbuf, rbuf, *this);
 
     KASSERT(
         is_same_on_all_ranks(send_count),
@@ -57,21 +49,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(SBuff&& 
         assert::light_communication
     );
 
-    if constexpr (std::is_same_v<send_type, recv_type>) {
-        recv_count = asserting_cast<size_t>(send_count);
+    infer<CommType::allgather>(sbuf, rbuf, *this);
 
-        if (rbuf.size() < recv_count) {
-            infer_rbuf_vals_from<resize_send_size_allgather>(sbuf, rbuf);
-        }
-    } else {
-        static_assert(HasCount<RBuff>, "Recv type differs from send type and no recv count is given");
-        recv_count = rbuf.count();
-
-        if (rbuf.size() < recv_count) {
-            infer_rbuf_vals_from<resize_recv_count>(sbuf, rbuf);
-        }
-
-    }
+    KASSERT(rbuf.size() >= send_count, "The receive buffer is not large enough", assert::light);
 
     // error code can be unused if KTHROW is removed at compile time
     [[maybe_unused]] int err = MPI_Allgather(

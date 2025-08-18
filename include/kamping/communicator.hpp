@@ -33,9 +33,8 @@
 namespace kamping {
 
 template <typename Buff>
-concept DataBufferConcept = std::ranges::contiguous_range<Buff> && std::ranges::sized_range<Buff> &&(
-    std::is_fundamental_v<std::ranges::range_value_t<Buff>> || /*Typed<Buff>*/ false
-);
+concept DataBufferConcept = std::ranges::contiguous_range<Buff> && std::ranges::sized_range<Buff>
+                            && (std::is_fundamental_v<std::ranges::range_value_t<Buff>> || /*Typed<Buff>*/ false);
 
 template <typename SBuff>
 concept SendDataBuffer = DataBufferConcept<SBuff> && std::ranges::input_range<SBuff>;
@@ -56,8 +55,7 @@ KAMPING_MAKE_HAS_MEMBER(mpi_error_handler)
 /// call any function of <tt>kamping::Communicator</tt>. See <tt>test/plugin_tests.cpp</tt> for examples.
 template <
     template <typename...> typename DefaultContainerType = std::vector,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
+    template <typename, template <typename...> typename> typename... Plugins>
 class Communicator : public Plugins<Communicator<DefaultContainerType, Plugins...>, DefaultContainerType>... {
 public:
     /// @brief Type of the default container type to use for containers created inside operations of this communicator.
@@ -581,8 +579,8 @@ public:
     auto gatherv(Args... args) const;
 
     template <typename SBuff, typename RBuff>
-    requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<
-        SBuff> && kamping::RecvDataBuffer<RBuff>
+        requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff>
+                 && kamping::SendDataBuffer<SBuff> && kamping::RecvDataBuffer<RBuff>
     auto allgather(SBuff&& sbuf, RBuff&& rbuf) const;
 
     template <typename... Args>
@@ -606,8 +604,6 @@ public:
     template <typename Value>
     bool is_same_on_all_ranks(Value const& value) const;
 
-    template <typename... Tags, typename SBuff, typename RBuff>
-    void infer_rbuf_vals_from(SBuff const& sbuf, RBuff& rbuf) const;
 
 private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
@@ -632,10 +628,8 @@ private:
 
     /// See \ref mpi_error_hook
     template <
-        template <typename, template <typename...> typename>
-        typename Plugin,
-        template <typename, template <typename...> typename>
-        typename... RemainingPlugins>
+        template <typename, template <typename...> typename> typename Plugin,
+        template <typename, template <typename...> typename> typename... RemainingPlugins>
     void mpi_error_hook_impl(int const error_code, std::string const& callee) const {
         using PluginType = Plugin<Communicator<DefaultContainerType, Plugins...>, DefaultContainerType>;
         if constexpr (has_member_mpi_error_handler_v<PluginType, int, std::string const&>) {

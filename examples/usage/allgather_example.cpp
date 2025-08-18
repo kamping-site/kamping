@@ -18,35 +18,54 @@
 #include <mpi.h>
 
 #include "helpers_for_examples.hpp"
-#include "kamping/checking_casts.hpp"
 #include "kamping/collectives/allgather.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/data_buffers/empty_db.hpp"
-#include "kamping/data_buffers/test_db.hpp"
+#include "kamping/data_buffers/resizable_db.hpp"
 #include "kamping/environment.hpp"
-#include "kamping/named_parameters.hpp"
 
 int main() {
     using namespace kamping;
     kamping::Environment  e;
     kamping::Communicator comm;
 
-    std::vector<int> input(comm.size(), comm.rank_signed() + 5);
+    /*{
+        std::vector<int> sbuf(comm.size() + 10, comm.rank_signed() + 5);
+        auto rbuf = EmptyDataBuffer<int>();
 
-    auto [sent, received] = comm.allgather(input, EmptyDataBuffer<int>());
+        // Fails because rbuf is not large enough
+        auto [sent, received] = comm.allgather(sbuf, rbuf);
+    }*/
 
-    if (comm.rank() == 0) {
-        std::cout << "Input is lvalue: " << std::is_lvalue_reference_v<decltype(sent)> << std::endl;
-        std::cout << "Output is lvalue: " << std::is_lvalue_reference_v<decltype(received)> << std::endl;
+    comm.barrier();
+
+    {
+        std::vector<int> sbuf(comm.size() + 10, comm.rank_signed() + 5);
+        auto             rbuf = ResizeableDataBuffer(EmptyDataBuffer<int>());
+        auto [sent, received] = comm.allgather(sbuf, rbuf);
+
+        if (comm.rank() == 0) {
+            for (auto x: received) {
+                print_on_root(std::to_string(x), comm);
+            }
+        }
     }
 
-    print_result_on_root(sent, comm);
-    print_on_root("------", comm);
+    comm.barrier();
+    print_on_root("-----", comm);
 
-    if (comm.rank() == 0) {
-        for (auto x: received) {
-            std::cout << x << std::endl;
+    {
+        size_t           size = comm.size() + 10;
+        std::vector<int> sbuf(size, comm.rank_signed() + 5);
+        std::vector<int> rbuf(size * comm.size());
+        auto [sent, received] = comm.allgather(sbuf, rbuf);
+
+        if (comm.rank() == 0) {
+            for (auto x: received) {
+                print_on_root(std::to_string(x), comm);
+            }
         }
     }
 }
