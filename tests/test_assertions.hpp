@@ -12,15 +12,16 @@
 // <https://www.gnu.org/licenses/>.
 
 /// @file
-/// @brief Redefines the KASSERT macro such that assertions throw exceptions instead of aborting the process.
+/// @brief Redefines the KAMPING_ASSERT macro such that assertions throw exceptions instead of aborting the process.
 /// This is needed because GoogleTest does not support death tests in a multithreaded program (MPI spawns multiple
 /// threads).
 ///
-/// *NOTE THAT THIS HEADER MUST BE INCLUDED BEFORE ANY OTHER KAMPING HEADERS* since it redefines the KASSERT macro.
-/// This must happen before the preprocessor substitutes the macro invocations.
+/// *NOTE THAT THIS HEADER MUST BE INCLUDED BEFORE ANY OTHER KAMPING HEADERS* since it redefines the KAMPING_ASSERT
+/// macro. This must happen before the preprocessor substitutes the macro invocations.
 #pragma once
 
-#if defined(KASSERT) || defined(EXPECT_KASSERT_FAILS) || defined(ASSERT_KASSERT_FAILS) || defined(KAMPING_NOEXCEPT)
+#if defined(KAMPING_ASSERT) || defined(EXPECT_KAMPING_ASSERT_FAILS) || defined(ASSERT_KAMPING_ASSERT_FAILS) \
+    || defined(KAMPING_NOEXCEPT)
     #error "Bad #include order: this header must be included first"
 #endif
 
@@ -38,16 +39,15 @@
 #define KAMPING_CONDITIONAL_NOEXCEPT(condition)
 
 //
-// Redefine KASSERT()
+// Redefine KAMPING_ASSERT()
 //
 
-#include <kassert/kassert.hpp>
-
 #include "kamping/assertion_levels.hpp"
+#include "kamping/kassert/kassert.hpp"
 
-// Redefine KASSERT implementation to throw an exception
-#undef KASSERT_KASSERT_HPP_KASSERT_IMPL
-#define KASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level)                                       \
+// Redefine KAMPING_ASSERT implementation to throw an exception
+#undef KAMPING_ASSERT_KASSERT_HPP_KASSERT_IMPL
+#define KAMPING_ASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level)                                \
     do {                                                                                                         \
         if constexpr (kassert::internal::assertion_enabled(level)) {                                             \
             if (!(expression)) {                                                                                 \
@@ -58,13 +58,15 @@
         }                                                                                                        \
     } while (false)
 
-// Makros to test for failed KASSERTs
-// EXPECT that any KASSERT assertion failed. The failure message is ignored since EXPECT_THROW does not support one.
-#define EXPECT_KASSERT_FAILS(code, failure_message) \
+// Makros to test for failed KAMPING_ASSERTs
+// EXPECT that any KAMPING_ASSERT assertion failed. The failure message is ignored since EXPECT_THROW does not support
+// one.
+#define EXPECT_KAMPING_ASSERT_FAILS(code, failure_message) \
     EXPECT_THROW({ code; }, ::kamping::testing::KassertTestingException);
 
-// ASSERT that any KASSERT assertion failed. The failure message is ignored since ASSERT_THROW does not support one.
-#define ASSERT_KASSERT_FAILS(code, failure_message) \
+// ASSERT that any KAMPING_ASSERT assertion failed. The failure message is ignored since ASSERT_THROW does not support
+// one.
+#define ASSERT_KAMPING_ASSERT_FAILS(code, failure_message) \
     ASSERT_THROW({ code; }, ::kamping::testing::KassertTestingException);
 
 // Dummy exception class used for remapping assertions to throwing exceptions.

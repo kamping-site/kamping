@@ -81,14 +81,14 @@ TEST(AllreduceTest, allreduce_with_receive_buffer_grow_only_and_explicit_send_re
     EXPECT_THAT(result, ElementsAre(comm.size(), 42));
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
 TEST(AllreduceTest, allreduce_with_receive_buffer_no_resize_too_small) {
     Communicator comm;
 
     std::vector<int> input = {1, 2, 3, 4};
     std::vector<int> result;
 
-    EXPECT_KASSERT_FAILS(
+    EXPECT_KAMPING_ASSERT_FAILS(
         {
             comm.allreduce(
                 send_buf(input),
@@ -362,7 +362,7 @@ TEST(AllreduceTest, send_recv_type_part_of_result_object) {
 //     assert(input.size() == comm.rank());
 //
 //     if (kassert::internal::assertion_enabled(assert::light_communication)) {
-//         EXPECT_KASSERT_FAILS(
+//         EXPECT_KAMPING_ASSERT_FAILS(
 //             comm.allreduce(send_buf(input), op(kamping::ops::plus<>{})),
 //             "The send buffer has to be the same size on all ranks.");
 //     }

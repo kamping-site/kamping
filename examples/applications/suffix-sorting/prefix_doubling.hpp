@@ -28,12 +28,12 @@
 #include "kamping/collectives/allreduce.hpp"
 #include "kamping/collectives/exscan.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/p2p/isend.hpp"
 #include "kamping/p2p/recv.hpp"
 #include "kamping/plugin/sort.hpp"
-#include "kassert/kassert.hpp"
 
 template <typename IndexType>
 struct IR {
@@ -106,7 +106,7 @@ auto reduce_alphabet(
     size_t const k_fitting = (CHAR_BIT * sizeof(IndexType)) / bits_per_symbol;
 
     // Prepare sending 2*k_fitting characters to the preceding PE.
-    KASSERT(input.size() > 2 * k_fitting, "Input too small");
+    KAMPING_ASSERT(input.size() > 2 * k_fitting, "Input too small");
     size_t const local_size = input.size();
     input.resize(input.size() + (2 * k_fitting), 0);
     Span<InputType> shift_span(

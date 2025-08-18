@@ -15,7 +15,6 @@
 
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
@@ -24,6 +23,7 @@
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -85,8 +85,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
         std::tuple(this->root()),
         args...
     );
-    KASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.", assert::light);
-    KASSERT(
+    KAMPING_ASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.", assert::light);
+    KAMPING_ASSERT(
         is_same_on_all_ranks(root.rank_signed()),
         "root() parameter must be the same on all ranks.",
         assert::light_communication
@@ -121,7 +121,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
     auto send_recv_type = determine_mpi_send_recv_datatype<value_type, decltype(send_recv_buf)>(args...);
     [[maybe_unused]] constexpr bool send_recv_type_is_in_param = !has_to_be_computed<decltype(send_recv_type)>;
 
-    KASSERT(
+    KAMPING_ASSERT(
         this->is_root(root.rank_signed()) || buffer_is_modifiable,
         "send_recv_buf must be modifiable on all non-root ranks.",
         assert::light
@@ -136,7 +136,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
                            .construct_buffer_or_rebind();
 
     constexpr bool count_has_to_be_computed = has_to_be_computed<decltype(count_param)>;
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(count_has_to_be_computed),
         "send_recv_count() parameter is either deduced on all ranks or must be explicitly provided on all ranks.",
         assert::light_communication
@@ -169,12 +169,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
 
         // it is valid to do this check here, because if no send_recv_buf is provided on the root rank, we have
         // always have deduce counts and get into this branch.
-        KASSERT(count != NO_BUF_ON_ROOT, "send_recv_buf must be provided on the root rank.", assert::light);
+        KAMPING_ASSERT(count != NO_BUF_ON_ROOT, "send_recv_buf must be provided on the root rank.", assert::light);
 
         // Output the recv count via the output_parameter
         count_param.underlying() = count;
     } else {
-        KASSERT(
+        KAMPING_ASSERT(
             (!this->is_root(root.rank_signed()) || has_parameter_type<internal::ParameterType::send_recv_buf, Args...>()
             ),
             "send_recv_buf must be provided on the root rank.",
@@ -189,7 +189,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast(Args... args
             return asserting_cast<size_t>(count_param.get_single_element());
         };
         send_recv_buf.resize_if_requested(compute_recv_buffer_size);
-        KASSERT(
+        KAMPING_ASSERT(
             // if the send_recv type is user provided, kamping cannot make any assumptions about the required size of
             // the send_recv buffer
             send_recv_type_is_in_param || send_recv_buf.size() >= compute_recv_buffer_size(),
@@ -262,7 +262,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::bcast_single(Args.
         bool root_has_buffer = has_parameter_type<internal::ParameterType::send_recv_buf, Args...>();
         int  err = MPI_Bcast(&root_has_buffer, 1, MPI_CXX_BOOL, root.rank_signed(), this->mpi_communicator());
         this->mpi_error_hook(err, "MPI_Bcast");
-        KASSERT(root_has_buffer, "send_recv_buf must be provided on the root rank.", assert::light_communication);
+        KAMPING_ASSERT(
+            root_has_buffer,
+            "send_recv_buf must be provided on the root rank.",
+            assert::light_communication
+        );
     }
 
     if constexpr (has_parameter_type<ParameterType::send_recv_buf, Args...>()) {

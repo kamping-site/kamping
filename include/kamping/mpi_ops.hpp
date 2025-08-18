@@ -519,7 +519,7 @@ public:
     /// this parameter must match the semantics of the function pointer passed to \c MPI_Op_create according to the
     /// MPI standard.
     UserOperationPtrWrapper(mpi_custom_operation_type ptr) : _no_op(false) {
-        KASSERT(ptr != nullptr);
+        KAMPING_ASSERT(ptr != nullptr);
         MPI_Op_create(ptr, is_commutative, &_mpi_op);
     }
 
@@ -611,7 +611,7 @@ public:
                                               // need this information for a native \c MPI_Op
 
     T operator()(T const& lhs, T const& rhs) const {
-        KASSERT(_op != MPI_OP_NULL, "Cannot call MPI_OP_NULL.");
+        KAMPING_ASSERT(_op != MPI_OP_NULL, "Cannot call MPI_OP_NULL.");
         T result;
         internal::with_operation_functor(_op, [&result, lhs, rhs, this](auto operation) {
             if constexpr (!std::is_same_v<decltype(operation), ops::null<> >) {

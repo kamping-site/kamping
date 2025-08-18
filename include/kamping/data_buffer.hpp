@@ -38,9 +38,9 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/has_member.hpp"
 #include "kamping/kabool.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/span.hpp"
-#include "kassert/kassert.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -54,7 +54,7 @@ class Extractable {
 protected:
     /// @brief Set the extracted flag to indicate that the status stored in this buffer has been moved out.
     void set_extracted() {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         is_extracted = true;
 #endif
     }
@@ -63,12 +63,12 @@ protected:
     ///
     /// @param message The message for the assertion.
     void kassert_not_extracted(std::string const message [[maybe_unused]]) const {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, message, assert::normal);
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KAMPING_ASSERT(!is_extracted, message, assert::normal);
 #endif
     }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     bool is_extracted = false; ///< Has the status been extracted and is therefore in an invalid state?
 #endif
 };

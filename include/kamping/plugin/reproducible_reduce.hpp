@@ -137,8 +137,8 @@ public:
         // B) it already has the same value.
         _target_rank = target_rank;
 
-        KASSERT(_outbox.size() < _outbox.capacity());
-        KASSERT(_outbox.capacity() > 0);
+        KAMPING_ASSERT(_outbox.size() < _outbox.capacity());
+        KAMPING_ASSERT(_outbox.capacity() > 0);
         MessageBufferEntry<T> entry{index, value};
         _outbox.push_back(entry);
 
@@ -170,7 +170,7 @@ public:
             receive(source_rank);
 
             auto const new_entry = _inbox.find(index);
-            KASSERT(new_entry != _inbox.end());
+            KAMPING_ASSERT(new_entry != _inbox.end());
             value = new_entry->second;
             _inbox.erase(new_entry);
         }
@@ -201,7 +201,7 @@ private:
 
 /// @brief Get the index of the parent of non-negative index \p i.
 inline auto tree_parent(size_t const i) {
-    KASSERT(i != 0);
+    KAMPING_ASSERT(i != 0);
 
     // Clear least significand set bit
     return i & (i - 1);
@@ -218,7 +218,7 @@ inline auto tree_subtree_size(size_t const i) {
 inline auto tree_rank_from_index_map(std::map<size_t, size_t> const& start_indices, size_t const index) {
     // Get an iterator to the start index that is greater than index
     auto it = start_indices.upper_bound(index);
-    KASSERT(it != start_indices.begin());
+    KAMPING_ASSERT(it != start_indices.begin());
     --it;
 
     return kamping::asserting_cast<size_t>(it->second);
@@ -240,7 +240,7 @@ inline auto tree_rank_intersecting_elements(size_t const region_begin, size_t co
     size_t index{region_begin};
     while (index < region_end) {
         if (index > 0) {
-            KASSERT(tree_parent(index) < region_begin);
+            KAMPING_ASSERT(tree_parent(index) < region_begin);
         }
         result.push_back(index);
         index += tree_subtree_size(index);
@@ -269,7 +269,7 @@ inline auto log2l(size_t const value) {
 /// @brief Return the number of necessary passes through the array to fully reduce the subtree with the specified \p
 /// index.
 inline size_t subtree_height(size_t const index) {
-    KASSERT(index != 0);
+    KAMPING_ASSERT(index != 0);
 
     return log2l(tree_subtree_size(index));
 }
@@ -338,7 +338,7 @@ public:
             internal::select_parameter_type<internal::ParameterType::send_buf>(args...).construct_buffer_or_rebind();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
 
-        KASSERT(
+        KAMPING_ASSERT(
             send_buf.size() == _region_size,
             "send_buf must have the same size as specified during creation of the reproducible communicator. "
                 << "Is " << send_buf.size() << " but should be " << _region_size << " on rank " << _comm.rank()
@@ -394,7 +394,7 @@ private:
             (index == 0) ? _global_size - 1 : std::min(_global_size - 1, index + tree_subtree_size(index) - 1);
         size_t const max_y = (index == 0) ? tree_height(_global_size) : subtree_height(index);
 
-        KASSERT(max_y < 64, "Unreasonably large max_y");
+        KAMPING_ASSERT(max_y < 64, "Unreasonably large max_y");
 
         size_t const largest_local_index = std::min(max_x, _region_end - 1);
         auto const   n_local_elements    = largest_local_index + 1 - index;
@@ -413,7 +413,7 @@ private:
                 destination_buffer[elements_written++] = op(a, b);
             }
             size_t const remaining_elements = elements_in_buffer - 2 * elements_written;
-            KASSERT(remaining_elements <= 1);
+            KAMPING_ASSERT(remaining_elements <= 1);
 
             if (remaining_elements == 1) {
                 auto const indexA = index + (elements_in_buffer - 1) * stride;
@@ -435,7 +435,7 @@ private:
             elements_in_buffer = elements_written;
         }
 
-        KASSERT(elements_in_buffer == 1);
+        KAMPING_ASSERT(elements_in_buffer == 1);
         return destination_buffer[0];
     }
 
@@ -515,8 +515,8 @@ public:
         // using sendcounts_type = typename std::remove_reference_t<decltype(send_counts)>::value_type;
 
         auto comm = this->to_communicator();
-        KASSERT(send_counts.size() == comm.size(), "send_counts must be of same size as communicator");
-        KASSERT(recv_displs.size() == comm.size(), "recv_displs must be of same size as communicator");
+        KAMPING_ASSERT(send_counts.size() == comm.size(), "send_counts must be of same size as communicator");
+        KAMPING_ASSERT(recv_displs.size() == comm.size(), "recv_displs must be of same size as communicator");
 
         auto const global_array_length = static_cast<size_t>(
             std::reduce(send_counts.data(), send_counts.data() + send_counts.size(), 0, std::plus<>())
@@ -524,25 +524,25 @@ public:
 
         // Assert distribution is the same on all ranks
         for (auto i = 0U; i < send_counts.size(); ++i) {
-            KASSERT(
+            KAMPING_ASSERT(
                 comm.is_same_on_all_ranks(send_counts.data()[i]),
                 "send_counts value for rank " << i << " is not uniform across the cluster",
                 assert::light_communication
             );
-            KASSERT(
+            KAMPING_ASSERT(
                 comm.is_same_on_all_ranks(recv_displs.data()[i]),
                 "recv_displs value for rank " << i << " is not uniform across the cluster",
                 assert::light_communication
             );
         }
 
-        KASSERT(global_array_length > 0, "The array must not be empty");
+        KAMPING_ASSERT(global_array_length > 0, "The array must not be empty");
 
         // Construct index map which maps global array indices to PEs
         std::map<size_t, size_t> start_indices;
         for (size_t p = 0; p < comm.size(); ++p) {
-            KASSERT(send_counts.data()[p] >= 0, "send_count for rank " << p << " is negative");
-            KASSERT(recv_displs.data()[p] >= 0, "displacement for rank " << p << " is negative");
+            KAMPING_ASSERT(send_counts.data()[p] >= 0, "send_count for rank " << p << " is negative");
+            KAMPING_ASSERT(recv_displs.data()[p] >= 0, "displacement for rank " << p << " is negative");
 
             if (send_counts.data()[p] == 0) {
                 continue;
@@ -552,8 +552,8 @@ public:
         }
         start_indices[global_array_length] = comm.size(); // guardian element
 
-        KASSERT(start_indices.begin()->first >= 0UL, "recv_displs must not contain negative displacements");
-        KASSERT(start_indices.begin()->first == 0UL, "recv_displs must have entry for index 0");
+        KAMPING_ASSERT(start_indices.begin()->first >= 0UL, "recv_displs must not contain negative displacements");
+        KAMPING_ASSERT(start_indices.begin()->first == 0UL, "recv_displs must have entry for index 0");
 
         // Verify correctness of index map
         for (auto it = start_indices.begin(); it != start_indices.end(); ++it) {
@@ -567,7 +567,7 @@ public:
             auto const next_rank         = next->second;
             auto const next_region_start = next->first;
 
-            KASSERT(
+            KAMPING_ASSERT(
                 region_end == next_region_start,
                 "Region of rank " << rank << " ends at index " << region_end << ", but next region of rank "
                                   << next_rank << " starts at index " << next_region_start

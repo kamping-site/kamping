@@ -15,7 +15,6 @@
 
 #include <numeric>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
@@ -24,6 +23,7 @@
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -107,7 +107,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
         [[maybe_unused]] constexpr bool send_type_is_input_parameter = !has_to_be_computed<decltype(send_type)>;
         [[maybe_unused]] constexpr bool recv_type_is_input_parameter = !has_to_be_computed<decltype(recv_type)>;
 
-        KASSERT(
+        KAMPING_ASSERT(
             // if the send type is user provided, kamping no longer can deduce the number of elements to send from the
             // size of the recv buffer
             send_type_is_input_parameter || is_same_on_all_ranks(send_buf.size()),
@@ -147,7 +147,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(Args... 
             return asserting_cast<size_t>(recv_count.get_single_element()) * size();
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             // if the recv type is user provided, kamping cannot make any assumptions about the required size of the
             // recv buffer
             recv_type_is_input_parameter || recv_buf.size() >= compute_required_recv_buf_size(),
@@ -222,7 +222,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
     auto type = internal::determine_mpi_send_recv_datatype<value_type, decltype(buffer)>(args...);
     [[maybe_unused]] constexpr bool type_is_input_parameter = !has_to_be_computed<decltype(type)>;
 
-    KASSERT(
+    KAMPING_ASSERT(
         // if the type is user provided, kamping no longer can deduce the number of elements to send from the size
         // of the recv buffer
         type_is_input_parameter || is_same_on_all_ranks(buffer.size()),
@@ -242,7 +242,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
     constexpr bool do_compute_count = internal::has_to_be_computed<decltype(count)>;
     // Opposed the non-inplace version, this requires that the data contributed by each rank is already at the correct
     // location in the buffer. Therefore the count is inferred as buffer.size() / size() if not given.
-    KASSERT(
+    KAMPING_ASSERT(
         (!do_compute_count || buffer.size() % size() == 0lu),
         "There is no send_recv_count given and the number of elements in send_recv_buf is not divisible by the number "
         "of "
@@ -258,7 +258,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather_inplace(
         return asserting_cast<size_t>(count.get_single_element()) * size();
     };
     buffer.resize_if_requested(compute_required_buf_size);
-    KASSERT(
+    KAMPING_ASSERT(
         // if the type is user provided, kamping cannot make any assumptions about the required size of the buffer
         type_is_input_parameter || buffer.size() >= compute_required_buf_size(),
         "Recv buffer is not large enough to hold all received elements.",
@@ -376,20 +376,20 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
     static_assert(std::is_same_v<std::remove_const_t<recv_counts_type>, int>, "Recv counts must be of type int");
     // calculate recv_counts if necessary
     constexpr bool do_calculate_recv_counts = internal::has_to_be_computed<decltype(recv_counts)>;
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(do_calculate_recv_counts),
         "Receive counts are given on some ranks and have to be computed on others",
         assert::light_communication
     );
     if constexpr (do_calculate_recv_counts) {
         recv_counts.resize_if_requested([&]() { return this->size(); });
-        KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
+        KAMPING_ASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
         this->allgather(
             kamping::send_buf(static_cast<int>(send_count.get_single_element())),
             kamping::recv_buf(recv_counts.get())
         );
     } else {
-        KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
+        KAMPING_ASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
     }
 
     // Get recv_displs
@@ -407,24 +407,24 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgatherv(Args...
 
     // Calculate recv_displs if necessary
     constexpr bool do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(do_calculate_recv_displs),
         "Receive displacements are given on some ranks and have to be computed on others",
         assert::light_communication
     );
     if constexpr (do_calculate_recv_displs) {
         recv_displs.resize_if_requested([&]() { return this->size(); });
-        KASSERT(recv_displs.size() >= this->size(), "Recv displs buffer is not large enough.", assert::light);
+        KAMPING_ASSERT(recv_displs.size() >= this->size(), "Recv displs buffer is not large enough.", assert::light);
         std::exclusive_scan(recv_counts.data(), recv_counts.data() + this->size(), recv_displs.data(), 0);
     } else {
-        KASSERT(recv_displs.size() >= this->size(), "Recv displs buffer is not large enough.", assert::light);
+        KAMPING_ASSERT(recv_displs.size() >= this->size(), "Recv displs buffer is not large enough.", assert::light);
     }
 
     auto compute_required_recv_buf_size = [&]() {
         return compute_required_recv_buf_size_in_vectorized_communication(recv_counts, recv_displs, this->size());
     };
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
-    KASSERT(
+    KAMPING_ASSERT(
         // if the recv type is user provided, kamping cannot make any assumptions about the required size of the recv
         // buffer
         recv_type_is_input_parameter || recv_buf.size() >= compute_required_recv_buf_size(),

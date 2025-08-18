@@ -127,14 +127,14 @@ TEST(ScatterTest, scatter_single_with_explicit_root) {
     EXPECT_EQ(result, comm.rank());
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
 TEST(ScatterTest, scatter_single_with_too_small_send_buf) {
     Communicator comm;
 
     std::vector<int> const input = create_input_vector_on_root(comm, 1);
     if (comm.is_root()) {
         std::vector<int> const input_too_small(input.begin(), std::next(input.begin(), comm.size_signed() / 2));
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.scatter_single(send_buf(input_too_small)),
             "send_buf of size equal to comm.size() must be provided on the root rank."
         );
@@ -152,7 +152,7 @@ TEST(ScatterTest, scatter_single_with_too_small_send_buf_and_explicit_root) {
     std::vector<int> const input = create_input_vector_on_root(comm, 1, root);
     if (comm.is_root(root)) {
         std::vector<int> const input_too_small(input.begin(), std::next(input.begin(), comm.size_signed() / 2));
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.scatter_single(send_buf(input_too_small), kamping::root(root)),
             "send_buf of size equal to comm.size() must be provided on the root rank."
         );
@@ -336,12 +336,12 @@ TEST(ScatterTest, scatter_with_nonempty_sendbuf_on_non_root) {
     EXPECT_EQ(result.front(), comm.rank());
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT_COMMUNICATION)
 TEST(ScatterTest, scatter_different_roots_on_different_processes) {
     Communicator comm;
     auto const   input = create_input_vector_on_root(comm, 1);
     if (comm.size() > 1) {
-        EXPECT_KASSERT_FAILS(comm.scatter(send_buf(input), root(comm.rank())), "");
+        EXPECT_KAMPING_ASSERT_FAILS(comm.scatter(send_buf(input), root(comm.rank())), "");
     }
 }
 #endif
@@ -408,19 +408,19 @@ TEST(ScatterTest, scatter_single_element_with_given_recv_buf_smaller_than_requir
         ASSERT_EQ(result.size(), 1);
         EXPECT_EQ(result.front(), comm.rank());
     }
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     {
         // recv buffer will not be resized as policy is no_resize; therefore the kassert for a sufficiently sized recv
         // buffer will fail
         std::vector<int> result;
-        EXPECT_KASSERT_FAILS(comm.scatter(send_buf(input), recv_buf<no_resize>(result)), "");
+        EXPECT_KAMPING_ASSERT_FAILS(comm.scatter(send_buf(input), recv_buf<no_resize>(result)), "");
     }
 
     {
         // recv buffer will not be resized as default policy is no_resize; therefore the kassert for a sufficiently
         // sized recv buffer will fail
         std::vector<int> result;
-        EXPECT_KASSERT_FAILS(comm.scatter(send_buf(input), recv_buf(result)), "");
+        EXPECT_KAMPING_ASSERT_FAILS(comm.scatter(send_buf(input), recv_buf(result)), "");
     }
 #endif
 }

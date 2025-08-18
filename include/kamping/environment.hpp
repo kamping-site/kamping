@@ -18,12 +18,12 @@
 
 #include <vector>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/span.hpp"
 
 namespace kamping {
@@ -84,7 +84,7 @@ public:
 
     /// @brief Calls MPI_Init without arguments and doesn't check whether MPI_Init has already been called.
     void init_unchecked() const {
-        KASSERT(!initialized(), "Trying to call MPI_Init twice");
+        KAMPING_ASSERT(!initialized(), "Trying to call MPI_Init twice");
         [[maybe_unused]] int err = MPI_Init(NULL, NULL);
         THROW_IF_MPI_ERROR(err, MPI_Init);
     }
@@ -94,7 +94,7 @@ public:
     /// @param argc Number of arguments.
     /// @param argv The arguments.
     void init_unchecked(int& argc, char**& argv) const {
-        KASSERT(!initialized(), "Trying to call MPI_Init twice");
+        KAMPING_ASSERT(!initialized(), "Trying to call MPI_Init twice");
         [[maybe_unused]] int err = MPI_Init(&argc, &argv);
         THROW_IF_MPI_ERROR(err, MPI_Init);
     }
@@ -126,7 +126,7 @@ public:
     /// potentially return an error, this function can be used if you want to be able to handle that error. Otherwise
     /// the destructor will call MPI_Finalize and not throw on any errors returned.
     void finalize() const {
-        KASSERT(!finalized(), "Trying to call MPI_Finalize twice");
+        KAMPING_ASSERT(!finalized(), "Trying to call MPI_Finalize twice");
         free_registered_mpi_types();
         [[maybe_unused]] int err = MPI_Finalize();
         THROW_IF_MPI_ERROR(err, MPI_Finalize);
@@ -172,7 +172,7 @@ public:
         int* tag_ub;
         int  flag;
         MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &tag_ub, &flag);
-        KASSERT(flag, "Could not retrieve MPI_TAG_UB");
+        KAMPING_ASSERT(flag, "Could not retrieve MPI_TAG_UB");
         return *tag_ub;
     }
 
@@ -232,12 +232,12 @@ public:
     /// ignored by MPI.
     template <typename T>
     void buffer_attach(Span<T> buffer) {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!has_buffer_attached, "You may only attach one buffer at a time.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KAMPING_ASSERT(!has_buffer_attached, "You may only attach one buffer at a time.");
 #endif
         int err = MPI_Buffer_attach(buffer.data(), asserting_cast<int>(buffer.size() * sizeof(T)));
         THROW_IF_MPI_ERROR(err, MPI_Buffer_attach);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         has_buffer_attached = true;
 #endif
     }
@@ -251,17 +251,17 @@ public:
     /// the parameter \c T. The pointer to the buffer stored internally by MPI is reinterpreted accordingly.
     template <typename T = std::byte>
     Span<T> buffer_detach() {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(has_buffer_attached, "There is currently no buffer attached.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KAMPING_ASSERT(has_buffer_attached, "There is currently no buffer attached.");
 #endif
         void* buffer_ptr;
         int   buffer_size;
         int   err = MPI_Buffer_detach(&buffer_ptr, &buffer_size);
         THROW_IF_MPI_ERROR(err, MPI_Buffer_detach);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         has_buffer_attached = false;
 #endif
-        KASSERT(
+        KAMPING_ASSERT(
             static_cast<size_t>(buffer_size) % sizeof(T) == size_t{0},
             "The buffer size is not a multiple of the size of T."
         );
@@ -280,14 +280,14 @@ public:
             } catch (MpiErrorException&) {
                 // Just kassert. We can't throw exceptions in the destructor.
 
-                // During testing we sometimes force KASSERT to throw exceptions. During the resulting stack unwinding,
-                // code in this destructor might be executed and thus throwing another exception will result in calling
-                // std::abort(). We're disabling the respective warning here.
+                // During testing we sometimes force KAMPING_ASSERT to throw exceptions. During the resulting stack
+                // unwinding, code in this destructor might be executed and thus throwing another exception will result
+                // in calling std::abort(). We're disabling the respective warning here.
 #if defined(__GNUC__) and not defined(__clang__)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wterminate"
 #endif
-                KASSERT(false, "MPI_Finalized call failed.");
+                KAMPING_ASSERT(false, "MPI_Finalized call failed.");
 #if defined(__GNUC__) and not defined(__clang__)
     #pragma GCC diagnostic pop
 #endif
@@ -300,7 +300,7 @@ public:
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wterminate"
 #endif
-                KASSERT(err == MPI_SUCCESS, "MPI_Finalize call failed.");
+                KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Finalize call failed.");
 #if defined(__GNUC__) and not defined(__clang__)
     #pragma GCC diagnostic pop
 #endif
@@ -310,7 +310,7 @@ public:
 
 private:
     bool _finalize = false;
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     bool has_buffer_attached = false; ///< Is there currently an attached buffer?
 #endif
 

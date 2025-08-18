@@ -123,7 +123,7 @@ endif ()
 add_library(kamping INTERFACE)
 target_link_libraries(kamping INTERFACE kamping_base)
 
-# If enabled, use exceptions, otherwise use KASSERT()
+# If enabled, use exceptions, otherwise use KAMPING_ASSERT()
 option(KAMPING_EXCEPTION_MODE "Use exceptions to report recoverable errors." ON)
 if (KAMPING_EXCEPTION_MODE)
     set(KASSERT_EXCEPTION_MODE 1)
@@ -190,11 +190,15 @@ string(
 FetchContent_Declare(
     kassert
     GIT_REPOSITORY https://github.com/kamping-site/kassert
-    GIT_TAG v0.1.0
+    GIT_TAG v1.0.0
 )
+set(KASSERT_VENDOR_ID kamping)
+set(KASSERT_CXX_NAMESPACE kamping::kassert)
+set(KASSERT_INCLUDE_SUBDIR kamping/kassert)
+set(KASSERT_PREFIX KAMPING_ASSERT)
 FetchContent_MakeAvailable(kassert)
 
-target_link_libraries(kamping_base INTERFACE kassert::kassert)
+target_link_libraries(kamping_base INTERFACE kamping::kassert)
 
 FetchContent_Declare(
     pfr

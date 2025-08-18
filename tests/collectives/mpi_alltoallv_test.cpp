@@ -789,7 +789,7 @@ TEST(AlltoallvTest, non_monotonically_increasing_recv_displacements) {
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_policy) {
     Communicator comm;
 
@@ -817,7 +817,7 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
         std::vector<int> send_displs_buffer;
         std::vector<int> recv_counts_buffer;
         std::vector<int> recv_displs_buffer;
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
@@ -829,7 +829,7 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
             ""
         );
         // same check but this time without explicit no_resize for the recv buffer as this is the default resize policy
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
@@ -847,7 +847,7 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
         std::vector<int> send_displs_buffer;
         std::vector<int> recv_counts_buffer;
         std::vector<int> recv_displs_buffer;
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
@@ -860,7 +860,7 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
         );
         // same check but this time without explicit no_resize for the recv displs buffer as this is the default resize
         // policy
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
@@ -878,7 +878,7 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
         std::vector<int> send_displs_buffer;
         std::vector<int> recv_counts_buffer;
         std::vector<int> recv_displs_buffer;
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
@@ -891,7 +891,7 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
         );
         // same check but this time without explicit no_resize for the recv counts buffer as this is the default resize
         // policy
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
@@ -909,7 +909,7 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
         std::vector<int> send_displs_buffer;
         std::vector<int> recv_counts_buffer;
         std::vector<int> recv_displs_buffer;
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),
@@ -922,7 +922,7 @@ TEST(AlltoallvTest, given_buffers_are_smaller_than_required_with_no_resize_polic
         );
         // same check but this time without explicit no_resize for the send displs buffer as this is the default resize
         // policy
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.alltoallv(
                 send_buf(input),
                 send_counts(send_counts_buffer),

@@ -320,7 +320,7 @@ TEST(AllgathervTest, allgather_single_element_with_given_buffers_smaller_than_re
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(AllgatherTest, given_buffers_smaller_than_required_with_policy_no_resize) {
     Communicator comm;
 
@@ -330,7 +330,7 @@ TEST(AllgatherTest, given_buffers_smaller_than_required_with_policy_no_resize) {
         std::vector<int> recv_buffer;
         std::vector<int> recv_counts;
         std::vector<int> recv_displs;
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.allgatherv(
                 send_buf(input),
                 recv_counts_out<no_resize>(recv_counts),
@@ -340,7 +340,7 @@ TEST(AllgatherTest, given_buffers_smaller_than_required_with_policy_no_resize) {
             ""
         );
         // test kassert for sufficient size of recv_counts (default is no_resize)
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.allgatherv(
                 send_buf(input),
                 recv_counts_out(recv_counts),
@@ -355,7 +355,7 @@ TEST(AllgatherTest, given_buffers_smaller_than_required_with_policy_no_resize) {
         std::vector<int> recv_buffer;
         std::vector<int> recv_counts;
         std::vector<int> recv_displs;
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.allgatherv(
                 send_buf(input),
                 recv_counts_out<resize_to_fit>(recv_counts),
@@ -365,7 +365,7 @@ TEST(AllgatherTest, given_buffers_smaller_than_required_with_policy_no_resize) {
             ""
         );
         // test kassert for sufficient size of recv_displs (default is no_resize)
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.allgatherv(
                 send_buf(input),
                 recv_counts_out<resize_to_fit>(recv_counts),
@@ -380,7 +380,7 @@ TEST(AllgatherTest, given_buffers_smaller_than_required_with_policy_no_resize) {
         std::vector<int> recv_buffer;
         std::vector<int> recv_counts;
         std::vector<int> recv_displs;
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.allgatherv(
                 send_buf(input),
                 recv_counts_out<resize_to_fit>(recv_counts),
@@ -390,7 +390,7 @@ TEST(AllgatherTest, given_buffers_smaller_than_required_with_policy_no_resize) {
             ""
         );
         // test kassert for sufficient size of recv_counts (default is no_resize)
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.allgatherv(
                 send_buf(input),
                 recv_counts_out<resize_to_fit>(recv_counts),

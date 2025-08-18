@@ -415,11 +415,11 @@ TEST(GathervTest, recv_counts_ignore_on_non_root_works) {
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
 TEST(GathervTest, recv_counts_ignore_should_fail_on_root) {
     Communicator comm;
     if (comm.is_root()) {
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.gatherv(send_buf(comm.rank_signed()), recv_counts(ignore<>)),
             "Recv counts buffer is smaller than the number of PEs at the root PE."
         )

@@ -19,12 +19,12 @@
 #include <memory>
 #include <optional>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/collectives/bcast.hpp"
 #include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/measurements/measurement_aggregation_definitions.hpp"
 
 namespace kamping::measurements::internal {

@@ -18,7 +18,6 @@
 #include <tuple>
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
@@ -26,6 +25,7 @@
 #include "kamping/collectives/collectives_helpers.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameters.hpp"
@@ -136,7 +136,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             recv_count.underlying() = send_count.get_single_element();
         }
 
-        KASSERT(
+        KAMPING_ASSERT(
             (!do_compute_send_count || send_buf.size() % size() == 0lu),
             "There are no send counts given and the number of elements in send_buf is not divisible by the number of "
             "ranks "
@@ -148,7 +148,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             return asserting_cast<size_t>(recv_count.get_single_element()) * size();
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             // if the recv type is user provided, kamping cannot make any assumptions about the required size of the
             // recv buffer
             !recv_type_has_to_be_deduced || recv_buf.size() >= compute_required_recv_buf_size(),
@@ -156,9 +156,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall(Args... a
             assert::light
         );
 
-        // These KASSERTs are required to avoid a false warning from g++ in release mode
-        KASSERT(send_buf.data() != nullptr, assert::light);
-        KASSERT(recv_buf.data() != nullptr, assert::light);
+        // These KAMPING_ASSERTs are required to avoid a false warning from g++ in release mode
+        KAMPING_ASSERT(send_buf.data() != nullptr, assert::light);
+        KAMPING_ASSERT(recv_buf.data() != nullptr, assert::light);
 
         [[maybe_unused]] int err = MPI_Alltoall(
             send_buf.data(),                 // send_buf
@@ -239,7 +239,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(A
                            .construct_buffer_or_rebind();
     constexpr bool count_has_to_be_computed = has_to_be_computed<decltype(count_param)>;
 
-    KASSERT(
+    KAMPING_ASSERT(
         (!count_has_to_be_computed || send_recv_buf.size() % size() == 0lu),
         "There is no send_recv_count given and the number of elements in send_recv_buf is not divisible by the number "
         "of "
@@ -255,7 +255,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoall_inplace(A
         return asserting_cast<size_t>(count_param.get_single_element()) * size();
     };
     send_recv_buf.resize_if_requested(compute_required_recv_buf_size);
-    KASSERT(
+    KAMPING_ASSERT(
         // if the type is user provided, kamping cannot make any assumptions about the required size of the
         // buffer
         !send_recv_type_has_to_be_deduced || send_recv_buf.size() >= compute_required_recv_buf_size(),
@@ -364,7 +364,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
         !internal::has_to_be_computed<decltype(send_counts)>,
         "Send counts must be given as an input parameter"
     );
-    KASSERT(send_counts.size() >= this->size(), "Send counts buffer is not large enough.", assert::light);
+    KAMPING_ASSERT(send_counts.size() >= this->size(), "Send counts buffer is not large enough.", assert::light);
 
     // Get recv_counts
     using default_recv_counts_type = decltype(kamping::recv_counts_out(alloc_new<DefaultContainerType<int>>));
@@ -403,7 +403,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
 
     // Calculate recv_counts if necessary
     constexpr bool do_calculate_recv_counts = internal::has_to_be_computed<decltype(recv_counts)>;
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(do_calculate_recv_counts),
         "Receive counts are given on some ranks and have to be computed on others",
         assert::light_communication
@@ -411,15 +411,15 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     if constexpr (do_calculate_recv_counts) {
         /// @todo make it possible to test whether this additional communication is skipped
         recv_counts.resize_if_requested([&]() { return this->size(); });
-        KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
+        KAMPING_ASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
         this->alltoall(kamping::send_buf(send_counts.get()), kamping::recv_buf(recv_counts.get()));
     } else {
-        KASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
+        KAMPING_ASSERT(recv_counts.size() >= this->size(), "Recv counts buffer is not large enough.", assert::light);
     }
 
     // Calculate send_displs if necessary
     constexpr bool do_calculate_send_displs = internal::has_to_be_computed<decltype(send_displs)>;
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(do_calculate_send_displs),
         "Send displacements are given on some ranks and have to be computed on others",
         assert::light_communication
@@ -427,14 +427,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
 
     if constexpr (do_calculate_send_displs) {
         send_displs.resize_if_requested([&]() { return this->size(); });
-        KASSERT(send_displs.size() >= this->size(), "Send displs buffer is not large enough.", assert::light);
+        KAMPING_ASSERT(send_displs.size() >= this->size(), "Send displs buffer is not large enough.", assert::light);
         std::exclusive_scan(send_counts.data(), send_counts.data() + this->size(), send_displs.data(), 0);
     } else {
-        KASSERT(send_displs.size() >= this->size(), "Send displs buffer is not large enough.", assert::light);
+        KAMPING_ASSERT(send_displs.size() >= this->size(), "Send displs buffer is not large enough.", assert::light);
     }
 
     // Check that send displs and send counts are large enough
-    KASSERT(
+    KAMPING_ASSERT(
         // if the send type is user provided, kamping cannot make any assumptions about the size of the send
         // buffer
         !send_type_has_to_be_deduced
@@ -446,17 +446,17 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
 
     // Calculate recv_displs if necessary
     constexpr bool do_calculate_recv_displs = internal::has_to_be_computed<decltype(recv_displs)>;
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(do_calculate_recv_displs),
         "Receive displacements are given on some ranks and have to be computed on others",
         assert::light_communication
     );
     if constexpr (do_calculate_recv_displs) {
         recv_displs.resize_if_requested([&]() { return this->size(); });
-        KASSERT(recv_displs.size() >= this->size(), "Recv displs buffer is not large enough.", assert::light);
+        KAMPING_ASSERT(recv_displs.size() >= this->size(), "Recv displs buffer is not large enough.", assert::light);
         std::exclusive_scan(recv_counts.data(), recv_counts.data() + this->size(), recv_displs.data(), 0);
     } else {
-        KASSERT(recv_displs.size() >= this->size(), "Recv displs buffer is not large enough.", assert::light);
+        KAMPING_ASSERT(recv_displs.size() >= this->size(), "Recv displs buffer is not large enough.", assert::light);
     }
 
     auto compute_required_recv_buf_size = [&]() {
@@ -464,7 +464,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     };
 
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
-    KASSERT(
+    KAMPING_ASSERT(
         // if the recv type is user provided, kamping cannot make any assumptions about the required size of the recv
         // buffer
         !recv_type_has_to_be_deduced || recv_buf.size() >= compute_required_recv_buf_size(),

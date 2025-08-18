@@ -16,7 +16,6 @@
 #include <cstddef>
 #include <numeric>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
@@ -25,6 +24,7 @@
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -89,8 +89,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
         std::tuple(this->root()),
         args...
     );
-    KASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.");
-    KASSERT(
+    KAMPING_ASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.");
+    KAMPING_ASSERT(
         this->is_same_on_all_ranks(root.rank_signed()),
         "Root has to be the same on all ranks.",
         assert::light_communication
@@ -148,7 +148,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gather(Args... arg
     };
     if (this->is_root(root.rank_signed())) {
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             // if the recv type is user provided, kamping cannot make any assumptions about the required size of
             // the recv buffer
             recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
@@ -269,10 +269,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
             recv_counts_param_type> && recv_counts_param_type::buffer_type == internal::BufferType::ignore;
 
     // because this check is asymmetric, we move it before any communication happens.
-    KASSERT(!this->is_root(root.rank_signed()) || !recv_counts_is_ignore, "Root cannot ignore recv counts.");
+    KAMPING_ASSERT(!this->is_root(root.rank_signed()) || !recv_counts_is_ignore, "Root cannot ignore recv counts.");
 
-    KASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.");
-    KASSERT(
+    KAMPING_ASSERT(this->is_valid_rank(root.rank_signed()), "Invalid rank as root.");
+    KAMPING_ASSERT(
         this->is_same_on_all_ranks(root.rank_signed()),
         "Root has to be the same on all ranks.",
         assert::light_communication
@@ -304,7 +304,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
     // calculate recv_counts if necessary
     constexpr bool do_calculate_recv_counts =
         internal::has_to_be_computed<decltype(recv_counts)> || recv_counts_is_ignore;
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(do_calculate_recv_counts),
         "Receive counts are given on some ranks and are omitted on others",
         assert::light_communication
@@ -316,7 +316,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
     if constexpr (do_calculate_recv_counts) {
         if (this->is_root(root.rank_signed())) {
             recv_counts.resize_if_requested(compute_required_recv_counts_size);
-            KASSERT(
+            KAMPING_ASSERT(
                 recv_counts.size() >= compute_required_recv_counts_size(),
                 "Recv counts buffer is smaller than the number of PEs at the root PE.",
                 assert::light
@@ -331,7 +331,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         );
     } else {
         if (this->is_root(root.rank_signed())) {
-            KASSERT(
+            KAMPING_ASSERT(
                 recv_counts.size() >= compute_required_recv_counts_size(),
                 "Recv counts buffer is smaller than the number of PEs at the root PE.",
                 assert::light
@@ -353,7 +353,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
         }
     }
     if (this->is_root(root.rank_signed())) {
-        KASSERT(
+        KAMPING_ASSERT(
             recv_displs.size() >= compute_required_recv_displs_size(),
             "Recv displs buffer is smaller than the number of PEs at the root PE.",
             assert::light
@@ -365,7 +365,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::gatherv(Args... ar
             return compute_required_recv_buf_size_in_vectorized_communication(recv_counts, recv_displs, this->size());
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             // if the recv type is user provided, kamping cannot make any assumptions about the required size of
             // the recv buffer
             recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),

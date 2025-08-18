@@ -163,11 +163,14 @@ TEST(ExscanTest, recv_buffer_is_given_and_smaller_than_required) {
         comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<grow_only>(result));
         EXPECT_THAT(result, ElementsAre(comm.rank_signed()));
     }
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     {
         std::vector<int> result;
         // recv buffer will not be resizes as resize policy is no resize
-        EXPECT_KASSERT_FAILS(comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<no_resize>(result)), "");
+        EXPECT_KAMPING_ASSERT_FAILS(
+            comm.exscan(send_buf(input), op(kamping::ops::plus<>{}), recv_buf<no_resize>(result)),
+            ""
+        );
     }
 #endif
 }
@@ -409,10 +412,10 @@ TEST(ExscanTest, given_values_on_rank_0_have_wrong_size) {
     std::vector<int> input = {0, 0};
     std::vector<int> result{-1, -1};
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     // test kassert that ensure that size of values_on_rank_0 buffer is either 1 or matches the send_recv_count
     if (comm.rank() == 0) {
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.exscan(
                 send_buf(input),
                 op(kamping::ops::plus<>{}),

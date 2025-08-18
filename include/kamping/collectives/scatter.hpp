@@ -17,7 +17,6 @@
 #include <numeric>
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
@@ -27,6 +26,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -98,12 +98,16 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     auto&& root_param =
         select_parameter_type_or_default<ParameterType::root, root_param_type>(std::tuple(root()), args...);
     int const int_root = root_param.rank_signed();
-    KASSERT(
+    KAMPING_ASSERT(
         is_valid_rank(int_root),
         "Invalid root rank " << int_root << " in communicator of size " << size(),
         assert::light
     );
-    KASSERT(this->is_same_on_all_ranks(int_root), "Root has to be the same on all ranks.", assert::light_communication);
+    KAMPING_ASSERT(
+        this->is_same_on_all_ranks(int_root),
+        "Root has to be the same on all ranks.",
+        assert::light_communication
+    );
 
     // Parameter send_buf()
     using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
@@ -111,7 +115,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
         select_parameter_type_or_default<ParameterType::send_buf, default_send_buf_type>(std::tuple<>(), args...)
             .construct_buffer_or_rebind();
     using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
-    KASSERT(!is_root(int_root) || send_buf.data() != nullptr, "Send buffer must be specified on root.", assert::light);
+    KAMPING_ASSERT(
+        !is_root(int_root) || send_buf.data() != nullptr,
+        "Send buffer must be specified on root.",
+        assert::light
+    );
 
     // Optional parameter: recv_buf()
     // Default: allocate new container
@@ -133,7 +141,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     // Get send_type and recv_type
     auto [send_type, recv_type] =
         internal::determine_mpi_datatypes<send_value_type, recv_value_type, decltype(recv_buf)>(args...);
-    KASSERT(
+    KAMPING_ASSERT(
         !is_root(int_root) || send_type.underlying() != MPI_DATATYPE_NULL,
         "Send type must be specified on root.",
         assert::light
@@ -151,7 +159,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
     constexpr bool do_compute_send_count = internal::has_to_be_computed<decltype(send_count)>;
     if constexpr (do_compute_send_count) {
         if (is_root(int_root)) {
-            KASSERT(
+            KAMPING_ASSERT(
                 send_buf.size() % size() == 0u,
                 "No send count is given and the size of the send buffer ("
                     << send_buf.size() << ") at the root is not divisible by the number of PEs (" << size()
@@ -173,7 +181,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
             .construct_buffer_or_rebind();
     constexpr bool do_compute_recv_count = has_to_be_computed<decltype(recv_count)>;
 
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(do_compute_recv_count),
         "recv_count() parameter is an output parameter on some PEs, but not on alle PEs.",
         assert::light_communication
@@ -189,7 +197,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter(Args... ar
         return asserting_cast<size_t>(recv_count.get_single_element());
     };
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
-    KASSERT(
+    KAMPING_ASSERT(
         // if the recv type is user provided, kamping cannot make any assumptions about the required size of
         // the recv buffer
         recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
@@ -261,7 +269,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter_single(Arg
             );
             bool root_has_buffer_of_size_comm_size =
                 has_parameter_type<internal::ParameterType::send_buf, Args...>() && send_buf_builder.size() == size();
-            KASSERT(
+            KAMPING_ASSERT(
                 root_has_buffer_of_size_comm_size,
                 "send_buf of size equal to comm.size() must be provided on the root rank.",
                 assert::light
@@ -351,12 +359,16 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
     auto&& root_param =
         select_parameter_type_or_default<ParameterType::root, root_param_type>(std::tuple(root()), args...);
     int const root_val = root_param.rank_signed();
-    KASSERT(
+    KAMPING_ASSERT(
         is_valid_rank(root_val),
         "Invalid root rank " << root_val << " in communicator of size " << size(),
         assert::light
     );
-    KASSERT(is_same_on_all_ranks(root_val), "Root has to be the same on all ranks.", assert::light_communication);
+    KAMPING_ASSERT(
+        is_same_on_all_ranks(root_val),
+        "Root has to be the same on all ranks.",
+        assert::light_communication
+    );
 
     // Parameter send_buf()
     using default_send_buf_type = decltype(kamping::send_buf(kamping::ignore<recv_value_type_tparam>));
@@ -365,7 +377,11 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
             .construct_buffer_or_rebind();
     using send_value_type    = typename std::remove_reference_t<decltype(send_buf)>::value_type;
     auto const* send_buf_ptr = send_buf.data();
-    KASSERT(!is_root(root_val) || send_buf_ptr != nullptr, "Send buffer must be specified on root.", assert::light);
+    KAMPING_ASSERT(
+        !is_root(root_val) || send_buf_ptr != nullptr,
+        "Send buffer must be specified on root.",
+        assert::light
+    );
 
     // Optional parameter: recv_buf()
     // Default: allocate new container
@@ -395,12 +411,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         select_parameter_type_or_default<ParameterType::send_counts, default_send_counts_type>(std::tuple<>(), args...)
             .template construct_buffer_or_rebind<DefaultContainerType>();
     [[maybe_unused]] constexpr bool send_counts_provided = !has_to_be_computed<decltype(send_counts)>;
-    KASSERT(
+    KAMPING_ASSERT(
         !is_root(root_val) || send_counts_provided,
         "send_counts() must be given on the root PE.",
         assert::light_communication
     );
-    KASSERT(
+    KAMPING_ASSERT(
         !is_root(root_val) || send_counts.size() >= size(),
         "Send counts buffer is smaller than the number of PEs at the root PE.",
         assert::light
@@ -418,7 +434,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         if constexpr (do_compute_send_displs) {
             send_displs.resize_if_requested([&]() { return this->size(); });
         }
-        KASSERT(
+        KAMPING_ASSERT(
             send_displs.size() >= size(),
             "Send displs buffer is smaller than the number of PEs at the root PE.",
             assert::light
@@ -437,7 +453,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
 
     // Check that recv_counts() can be used to compute send_counts(); or send_counts() is given on the root PE
     [[maybe_unused]] constexpr bool do_compute_recv_count = has_to_be_computed<decltype(recv_count)>;
-    KASSERT(
+    KAMPING_ASSERT(
         this->is_same_on_all_ranks(do_compute_recv_count),
         "recv_counts() must be given on all PEs or on no PEs",
         assert::light_communication
@@ -456,7 +472,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatterv(Args... a
         return static_cast<size_t>(recv_count.get_single_element());
     };
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
-    KASSERT(
+    KAMPING_ASSERT(
         // if the recv type is user provided, kamping cannot make any assumptions about the required size of
         // the recv buffer
         recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),

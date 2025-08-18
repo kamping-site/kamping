@@ -203,17 +203,17 @@ TEST(AllgatherTest, given_recv_buffer_smaller_than_required) {
         EXPECT_EQ(recv_buffer, expected_recv_buffer);
     }
 }
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(AllgatherTest, given_recv_buffer_smaller_than_required_with_policy_no_resize) {
     Communicator comm;
 
     std::vector<int> input{comm.rank_signed()};
     std::vector<int> recv_buffer;
     // test kassert for sufficient size of recv buffer
-    EXPECT_KASSERT_FAILS(comm.allgather(send_buf(input), recv_buf<no_resize>(recv_buffer)), "");
+    EXPECT_KAMPING_ASSERT_FAILS(comm.allgather(send_buf(input), recv_buf<no_resize>(recv_buffer)), "");
     // same test but this time without explicit no_resize for the recv buffer as this is the default resize
     // policy
-    EXPECT_KASSERT_FAILS(comm.allgather(send_buf(input), recv_buf(recv_buffer)), "");
+    EXPECT_KAMPING_ASSERT_FAILS(comm.allgather(send_buf(input), recv_buf(recv_buffer)), "");
 }
 #endif
 
@@ -291,7 +291,7 @@ TEST(AllgatherTest, allgather_single_element_initializer_list_bool_no_receive_bu
     // gather does not support single element bool when specifying no recv_buffer, because the default receive buffer is
     // std::vector<bool>, which is not supported
     auto result = comm.allgather(send_buf({false}));
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), comm.size());
     for (auto elem: result) {
         EXPECT_EQ(elem, false);
@@ -302,7 +302,7 @@ TEST(AllgatherTest, allgather_initializer_list_bool_no_receive_buffer) {
     Communicator comm;
     auto         result = comm.allgather(send_buf({false, false}));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), 2 * comm.size());
     for (auto elem: result) {
         EXPECT_EQ(elem, false);
@@ -313,7 +313,7 @@ TEST(AllgatherTest, allgather_single_element_kabool_no_receive_buffer) {
     Communicator comm;
     auto         result = comm.allgather(send_buf(kabool{false}));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), comm.size());
     for (auto elem: result) {
         EXPECT_EQ(elem, false);
@@ -325,7 +325,7 @@ TEST(AllgatherTest, allgather_single_element_bool_with_receive_buffer) {
     std::vector<kabool> result;
     comm.allgather(send_buf({false}), recv_buf<resize_to_fit>(result));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), comm.size());
     for (auto elem: result) {
         EXPECT_EQ(elem, false);
@@ -337,7 +337,7 @@ TEST(AllgatherTest, allgather_single_element_kabool_with_receive_buffer) {
     std::vector<kabool> result;
     comm.allgather(send_buf(kabool{false}), recv_buf<resize_to_fit>(result));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), comm.size());
     for (auto elem: result) {
         EXPECT_EQ(elem, false);
@@ -349,7 +349,7 @@ TEST(AllgatherTest, allgather_multiple_elements_kabool_no_receive_buffer) {
     std::vector<kabool> input  = {false, true};
     auto                result = comm.allgather(send_buf(input));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), 2 * comm.size());
     for (size_t i = 0; i < result.size(); i++) {
         EXPECT_EQ((i % 2 != 0), result[i]);
@@ -362,7 +362,7 @@ TEST(AllgatherTest, allgather_multiple_elements_kabool_with_receive_buffer) {
     std::vector<kabool> result;
     comm.allgather(send_buf(input), recv_buf<resize_to_fit>(result));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     EXPECT_EQ(result.size(), 2 * comm.size());
     for (size_t i = 0; i < result.size(); i++) {
         EXPECT_EQ((i % 2 != 0), result[i]);

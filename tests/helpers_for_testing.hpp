@@ -274,7 +274,7 @@ struct DummyNonBlockingOperation {
             return size_t{1};
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             recv_buf.size() >= compute_required_recv_buf_size(),
             "Recv buffer is not large enough to hold all received elements.",
             assert::light

@@ -18,11 +18,11 @@
 #include <vector>
 
 #include <gtest/gtest.h>
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/comm_helper/num_numa_nodes.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/kassert/kassert.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;
@@ -365,17 +365,17 @@ TEST_F(CommunicatorTest, communicator_comparison) {
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_illegal_arguments) {
     Communicator comm;
 
     // set of ranks is empty
-    EXPECT_KASSERT_FAILS(
+    EXPECT_KAMPING_ASSERT_FAILS(
         std::ignore = comm.create_subcommunicators(std::vector<int>{}),
         "The set of ranks to include in the new subcommunicator must not be empty."
     );
     // set of ranks must contain own rank
-    EXPECT_KASSERT_FAILS(
+    EXPECT_KAMPING_ASSERT_FAILS(
         std::ignore = comm.create_subcommunicators(std::vector<int>{rank + 1}),
         "The ranks to include in the new subcommunicator must contain own rank."
     );
@@ -428,28 +428,29 @@ TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_rep
     }
 }
 
-// Using KAMPING_ASSERTION_LEVEL_HEAVY because EXPECT_KASSERT_FAILS only checks for failing kasserts on that level
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
+// Using KAMPING_ASSERTION_LEVEL_HEAVY because EXPECT_KAMPING_ASSERT_FAILS only checks for failing kasserts on that
+// level
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_HEAVY)
 TEST_F(CommunicatorTest, create_communicators_via_provided_ranks_with_sparse_representation_illegal_arguments) {
     Communicator comm;
 
     // set of ranks is empty
-    EXPECT_KASSERT_FAILS(
+    EXPECT_KAMPING_ASSERT_FAILS(
         std::ignore = comm.create_subcommunicators(RankRanges(nullptr, 0)),
         "The set of ranks to include in the new subcommunicator must not be empty."
     );
-    EXPECT_KASSERT_FAILS(
+    EXPECT_KAMPING_ASSERT_FAILS(
         std::ignore = comm.create_subcommunicators(RankRanges(std::vector<RankRange>{})),
         "The set of ranks to include in the new subcommunicator must not be empty."
     );
     // set of ranks must contain own rank
     if (size > 1) {
         int rank_range_array[1][3] = {{size, size + 1, 1}};
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             std::ignore = comm.create_subcommunicators(RankRanges(rank_range_array, 1)),
             "The ranks to include in the new subcommunicator must contain own rank."
         );
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             std::ignore =
                 comm.create_subcommunicators(RankRanges(std::vector<RankRange>{RankRange{size, size + 1, 1}})),
             "The ranks to include in the new subcommunicator must contain own rank."
