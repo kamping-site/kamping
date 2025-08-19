@@ -10,8 +10,6 @@ project(
 include(FetchContent)
 
 if (PROJECT_IS_TOP_LEVEL)
-    # folder support for IDEs
-    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
     # this has to be enabled in the main CMakeLists file
     include(CTest)
