@@ -17,7 +17,6 @@
                 "KAMPING_BUILD_EXAMPLES": "OFF",
 		"KAMPING_BUILD_TESTS": "OFF",
                 "KAMPING_ENABLE_ULFM": "OFF",
-                "KAMPING_WARNINGS_ARE_ERRORS": "OFF",
 		"CMAKE_PROJECT_KaMPIng_INCLUDE": "${sourceDir}/cmake/Formatting.cmake"
             }
         },

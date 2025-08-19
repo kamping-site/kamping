@@ -7,7 +7,6 @@ project(
     VERSION 0.1.2
 )
 
-option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_TESTS ${PROJECT_IS_TOP_LEVEL})
 option(KAMPING_BUILD_EXAMPLES ${PROJECT_IS_TOP_LEVEL})
 option(KAMPING_BUILD_DOCS OFF)
@@ -74,11 +73,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         "-Wsuggest-attribute=noreturn"
         "-Wsuggest-override"
     )
-endif ()
-
-# OFF by default.
-if (KAMPING_WARNINGS_ARE_ERRORS)
-    list(APPEND KAMPING_WARNING_FLAGS "-Werror")
 endif ()
 
 # Target for user-code
