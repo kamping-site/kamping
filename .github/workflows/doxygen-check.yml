@@ -19,6 +19,6 @@ jobs:
       - name: version
         run: doxygen --version
       - name: cmake
-        run: cmake -B build
+        run: cmake -B build -DKAMPING_BUILD_DOCS=ON
       - name: run-doxygen
-        run: cmake --build build/ --target docs
+        run: cmake --build build/ --target kamping_docs

@@ -16,12 +16,11 @@ if (PROJECT_IS_TOP_LEVEL)
     # this has to be enabled in the main CMakeLists file
     include(CTest)
 
-    add_subdirectory(docs)
-
 endif ()
 
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
+option(KAMPING_BUILD_DOCS OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
 option(KAMPING_ENABLE_ULFM "Enable User-Level Failure-Mitigation (ULFM)" OFF)
 option(KAMPING_ENABLE_SERIALIZATION "Enable support for serialization (requires Cereal)" ON)
@@ -32,6 +31,9 @@ option(
     OFF
 )
 
+if (KAMPING_BUILD_DOCS)
+    add_subdirectory(docs)
+endif ()
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
 find_package(MPI REQUIRED)
 

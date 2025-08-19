@@ -1,7 +1,7 @@
-# find Doxygen
 find_package(Doxygen)
 
 if (DOXYGEN_FOUND)
+    include(FetchContent)
     if (DOXYGEN_VERSION VERSION_LESS "1.10.0")
         message(
             WARNING "Doxygen must be version 1.10.0 or newer. Documentation may not be displayed correctly and CI may "
@@ -48,12 +48,13 @@ if (DOXYGEN_FOUND)
     set(DOXYGEN_ENABLED_SECTIONS KAMPING_MAIN_PAGE)
     set(DOXYGEN_FILE_PATTERNS *.cpp *.hpp *.dox *.md)
     set(DOXYGEN_WARN_AS_ERROR FAIL_ON_WARNINGS)
-    set(CITE_BIB_FILES ${CMAKE_CURRENT_LIST_DIR}/literature.bib)
+    set(DOXYGEN_CITE_BIB_FILES ${CMAKE_CURRENT_LIST_DIR}/literature.bib)
+    set(DOXYGEN_QUIET ON)
 
     doxygen_add_docs(
-        docs ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/../include/
+        kamping_docs ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/../include/
         COMMENT "Generating Documentation"
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/..
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/.. ALL
     )
 else ()
     message(STATUS "Doxygen not found, not building docs")

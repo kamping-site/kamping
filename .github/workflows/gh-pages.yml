@@ -17,10 +17,10 @@ jobs:
       with:
           submodules: true
     - name: Configure project
-      run: cmake -B build
+      run: cmake -B build -DKAMPING_BUILD_DOCS=ON
     # Build the HTML documentation
     - name: Build documentation
-      run: cmake --build build --target docs
+      run: cmake --build build --target kamping_docs
     # Deploy the HTML documentation to GitHub Pages
     - name: GH Pages Deployment
       uses: peaceiris/actions-gh-pages@v3
