@@ -63,7 +63,6 @@ if (NOT DEFINED KATESTROPHE_INCLUDED)
         cmake_parse_arguments("KATESTROPHE" "" "" "FILES" ${ARGN})
         add_executable(${KATESTROPHE_TARGET} "${KATESTROPHE_FILES}")
         target_link_libraries(${KATESTROPHE_TARGET} PUBLIC gtest mpi-gtest-main)
-        target_compile_options(${KATESTROPHE_TARGET} PRIVATE ${KAMPING_WARNING_FLAGS})
     endfunction ()
 
     # Registers an executable target KATESTROPHE_TEST_TARGET as a test to be executed with ctest

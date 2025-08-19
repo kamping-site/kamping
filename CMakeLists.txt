@@ -19,6 +19,10 @@ option(
     "Use Boost.PFR from system installed Boost, instead of using a standalone PFR install or building PFR from source."
     OFF
 )
+set(KAMPING_CXX_FLAGS
+    ""
+    CACHE STRING "Additional compilation flags to use for building tests and examples."
+)
 
 if (KAMPING_BUILD_DOCS)
     add_subdirectory(docs)
@@ -33,47 +37,6 @@ target_include_directories(kamping_base INTERFACE include)
 # set C++ standard to C++17
 target_compile_features(kamping_base INTERFACE cxx_std_17)
 target_link_libraries(kamping_base INTERFACE MPI::MPI_CXX)
-
-list(
-    APPEND
-    KAMPING_WARNING_FLAGS
-    "-Wall"
-    "-Wextra"
-    "-Wconversion"
-    "-Wnon-virtual-dtor"
-    "-Woverloaded-virtual"
-    "-Wshadow"
-    "-Wsign-conversion"
-    "-Wundef"
-    "-Wunreachable-code"
-    "-Wunused"
-)
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    list(
-        APPEND
-        KAMPING_WARNING_FLAGS
-        "-Wcast-align"
-        "-Wnull-dereference"
-        "-Wpedantic"
-        "-Wextra-semi"
-        "-Wno-gnu-zero-variadic-macro-arguments"
-    )
-endif ()
-
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    list(
-        APPEND
-        KAMPING_WARNING_FLAGS
-        "-Wcast-align"
-        "-Wnull-dereference"
-        "-Wpedantic"
-        "-Wnoexcept"
-        "-Wsuggest-attribute=const"
-        "-Wsuggest-attribute=noreturn"
-        "-Wsuggest-override"
-    )
-endif ()
 
 # Target for user-code
 add_library(kamping INTERFACE)

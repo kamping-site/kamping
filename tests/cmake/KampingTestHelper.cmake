@@ -1,6 +1,11 @@
 include(KaTestrophe)
 include(GoogleTest)
 
+add_library(kamping_test_base INTERFACE)
+if (KAMPING_CXX_FLAGS)
+    target_compile_options(kamping_test_base INTERFACE ${KAMPING_CXX_FLAGS})
+endif ()
+
 function (kamping_set_kassert_flags KAMPING_TARGET_NAME)
     cmake_parse_arguments("KAMPING" "NO_EXCEPTION_MODE" "" "" ${ARGN})
 
@@ -24,8 +29,7 @@ endfunction ()
 function (kamping_register_test KAMPING_TARGET_NAME)
     cmake_parse_arguments("KAMPING" "NO_GLIBCXX_DEBUG_CONTAINERS" "" "FILES" ${ARGN})
     add_executable(${KAMPING_TARGET_NAME} ${KAMPING_FILES})
-    target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE gtest gtest_main gmock kamping_base)
-    target_compile_options(${KAMPING_TARGET_NAME} PRIVATE ${KAMPING_WARNING_FLAGS})
+    target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE gtest gtest_main gmock kamping_base kamping_test_base)
     gtest_discover_tests(${KAMPING_TARGET_NAME} WORKING_DIRECTORY ${PROJECT_BINARY_DIR} DISCOVERY_MODE PRE_TEST)
     kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN})
     if (NOT ${KAMPING_NO_GLIBCXX_DEBUG_CONTAINERS})
@@ -52,7 +56,7 @@ endfunction ()
 function (kamping_register_mpi_test KAMPING_TARGET_NAME)
     cmake_parse_arguments("KAMPING" "NO_GLIBCXX_DEBUG_CONTAINERS" "" "FILES;CORES" ${ARGN})
     katestrophe_add_test_executable(${KAMPING_TARGET_NAME} FILES ${KAMPING_FILES})
-    target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE kamping_base)
+    target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE kamping_base kamping_test_base)
     if (KAMPING_TESTS_DISCOVER)
         katestrophe_add_mpi_test(
             ${KAMPING_TARGET_NAME}

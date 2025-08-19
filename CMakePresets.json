@@ -14,9 +14,10 @@
             "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "KAMPING_BUILD_EXAMPLES": "OFF",
-		"KAMPING_BUILD_TESTS": "OFF",
+                "KAMPING_BUILD_EXAMPLES": "ON",
+		"KAMPING_BUILD_TESTS": "ON",
                 "KAMPING_ENABLE_ULFM": "OFF",
+		"CMAKE_PROJECT_KaMPIng_INCLUDE_BEFORE": "${sourceDir}/cmake/dev_warning_flags.cmake",
 		"CMAKE_PROJECT_KaMPIng_INCLUDE": "${sourceDir}/cmake/Formatting.cmake"
             }
         },
