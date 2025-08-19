@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-
 # Project setup
 project(
     KaMPIng
@@ -39,17 +37,6 @@ option(
     "Use Boost.PFR from system installed Boost, instead of using a standalone PFR install or building PFR from source."
     OFF
 )
-
-# Enable compilation with ccache. Defaults to ON if this is the main project.
-if (PROJECT_IS_TOP_LEVEL)
-    option(KAMPING_USE_CCACHE "Globally enable ccache." ON)
-else ()
-    option(KAMPING_USE_CCACHE "Globally enable ccache." OFF)
-endif ()
-
-if (KAMPING_USE_CCACHE)
-    include(CCache)
-endif ()
 
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
 find_package(MPI REQUIRED)
