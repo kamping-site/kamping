@@ -17,11 +17,11 @@
 
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
 #include "kamping/implementation_helpers.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
@@ -114,7 +114,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
         "Please provide a tag for the message."
     );
     int tag = tag_param.tag();
-    KASSERT(
+    KAMPING_ASSERT(
         Environment<>::is_valid_tag(tag),
         "invalid tag " << tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
     );
@@ -126,7 +126,7 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
     using send_mode = typename std::remove_reference_t<send_mode_obj_type>::send_mode;
 
     // RankType::null is valid, RankType::any is not.
-    KASSERT(is_valid_rank_in_comm(destination, *this, true, false), "Invalid destination rank.");
+    KAMPING_ASSERT(is_valid_rank_in_comm(destination, *this, true, false), "Invalid destination rank.");
 
     if constexpr (std::is_same_v<send_mode, internal::standard_mode_t>) {
         [[maybe_unused]] int err = MPI_Send(

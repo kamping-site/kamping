@@ -12,12 +12,12 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <gtest/gtest.h>
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "../helpers_for_testing.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/kassert/kassert.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;

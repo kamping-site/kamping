@@ -60,29 +60,29 @@ TODO \@Demian \@Matthias: Rules for API
 * Prefer smart pointers over raw pointers.
 * Avoid `std::bind`, use lambda functions instead as they result in better readability and allow the compiler to inline better.
 * Use the subset of `C++` which compiles in `gcc10`, `clang10` and `icc19`.
-* Use the `KASSERT()` macro with the appropriate assertion level to validate the internal state of your code or user supplied data.
+* Use the `KAMPING_ASSERT()` macro with the appropriate assertion level to validate the internal state of your code or user supplied data.
 * Use the `THROW_IF_MPI_ERROR()` macro for MPI errors.
 
-# Short-circuit evaluation in KASSERT() macros
-Since we overload the `&&` and `||` operators, `KASSERT` cannot short circuit assertion expressions.
+# Short-circuit evaluation in KAMPING_ASSERT() macros
+Since we overload the `&&` and `||` operators, `KAMPING_ASSERT` cannot short circuit assertion expressions.
 This can lead to unexpected behaviour, for instance:
 
 ```cpp
-KASSERT(ptr != nullptr && ptr->check_sth()); // might seg fault if ptr == nullptr
+KAMPING_ASSERT(ptr != nullptr && ptr->check_sth()); // might seg fault if ptr == nullptr
 // or
-KASSERT(!pe_is_root() || [&]{
-    KASSERT(/* Stuff that matters only on root. */);
+KAMPING_ASSERT(!pe_is_root() || [&]{
+    KAMPING_ASSERT(/* Stuff that matters only on root. */);
 }()); // The lambda is evaluated on *all* PEs.
 ```
 
 This is impossible to fix since C++ does not allow us to overload the `&&` and `||` operators while preserving short-circuit evaluation.
 Therefore, it is not allowed to write
 ```cpp
-KASSERT(false && true);
+KAMPING_ASSERT(false && true);
 ```
 Instead, add an extra pair of parenthesis:
 ```cpp
-KASSERT((false && true));
+KAMPING_ASSERT((false && true));
 ```
 
 # Warnings

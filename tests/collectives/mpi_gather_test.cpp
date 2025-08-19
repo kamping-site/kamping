@@ -206,10 +206,10 @@ TEST(GatherTest, resize_policy_recv_buf_too_small) {
     std::vector<int> output(0);
     std::vector<int> expected_result(comm.size());
     std::iota(expected_result.begin(), expected_result.end(), 0);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
     { // default resize policy (no resize)
         if (comm.is_root()) {
-            EXPECT_KASSERT_FAILS(
+            EXPECT_KAMPING_ASSERT_FAILS(
                 comm.gather(send_buf(comm.rank_signed()), recv_buf(output)),
                 "Recv buffer is not large enough to hold all received elements."
             );
@@ -232,7 +232,7 @@ TEST(GatherTest, resize_policy_recv_buf_too_small) {
     }
     { // no resize policy
         if (comm.is_root()) {
-            EXPECT_KASSERT_FAILS(
+            EXPECT_KAMPING_ASSERT_FAILS(
                 comm.gather(send_buf(comm.rank_signed()), recv_buf<no_resize>(output)),
                 "Recv buffer is not large enough to hold all received elements."
             );
@@ -525,7 +525,7 @@ TEST(GatherTest, gather_single_element_initializer_list_bool_no_receive_buffer) 
     // gather does not support single element bool when specifying no recv_buffer, because the default receive buffer is
     // std::vector<bool>, which is not supported
     auto result = comm.gather(send_buf({false}));
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
@@ -541,7 +541,7 @@ TEST(GatherTest, gather_initializer_list_bool_no_receive_buffer) {
     Communicator comm;
     auto         result = comm.gather(send_buf({false, false}));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), 2 * comm.size());
@@ -557,7 +557,7 @@ TEST(GatherTest, gather_single_element_kabool_no_receive_buffer) {
     Communicator comm;
     auto         result = comm.gather(send_buf(kabool{false}));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
@@ -574,7 +574,7 @@ TEST(GatherTest, gather_single_element_bool_with_receive_buffer) {
     std::vector<kabool> result;
     comm.gather(send_buf({false}), recv_buf<resize_to_fit>(result));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
@@ -591,7 +591,7 @@ TEST(GatherTest, gather_single_element_kabool_with_receive_buffer) {
     std::vector<kabool> result;
     comm.gather(send_buf(kabool{false}), recv_buf<resize_to_fit>(result));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), comm.size());
@@ -608,7 +608,7 @@ TEST(GatherTest, gather_multiple_elements_kabool_no_receive_buffer) {
     std::vector<kabool> input  = {false, true};
     auto                result = comm.gather(send_buf(input));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), 2 * comm.size());
@@ -626,7 +626,7 @@ TEST(GatherTest, gather_multiple_elements_kabool_with_receive_buffer) {
     std::vector<kabool> result;
     comm.gather(send_buf(input), recv_buf<resize_to_fit>(result));
 
-    KASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
+    KAMPING_ASSERT((std::is_same_v<decltype(result), std::vector<kabool>>));
     // Test default root of communicator
     if (comm.rank() == comm.root()) {
         EXPECT_EQ(result.size(), 2 * comm.size());
@@ -827,13 +827,13 @@ TEST(GatherTest, different_send_and_recv_counts_without_explicit_mpi_types) {
     }
 }
 // Death test do not work with MPI.
-/// @todo Implement proper tests for input validation via KASSERT()s.
+/// @todo Implement proper tests for input validation via KAMPING_ASSERT()s.
 // TEST(GatherTest, gather_different_roots_on_different_processes) {
 //     Communicator comm;
 //     auto         value = comm.rank();
 //
 //     if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
-//         EXPECT_KASSERT_FAILS(comm.gather(send_buf(value), root(comm.rank())), "Root has to be the same on all
+//         EXPECT_KAMPING_ASSERT_FAILS(comm.gather(send_buf(value), root(comm.rank())), "Root has to be the same on all
 //         ranks.");
 //     }
 // }

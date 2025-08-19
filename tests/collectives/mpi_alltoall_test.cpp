@@ -288,7 +288,7 @@ TEST(AlltoallTest, default_container_type) {
     OwnContainer<int> result = comm.alltoall(send_buf(input));
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(AlltoallTest, given_recv_buffer_with_no_resize_policy) {
     Communicator comm;
 
@@ -298,10 +298,10 @@ TEST(AlltoallTest, given_recv_buffer_with_no_resize_policy) {
     std::vector<int> recv_counts_buffer;
     std::vector<int> recv_displs_buffer;
     // test kassert for sufficient size of recv buffer
-    EXPECT_KASSERT_FAILS(comm.alltoall(send_buf(input), send_count(1), recv_buf<no_resize>(recv_buffer)), "");
+    EXPECT_KAMPING_ASSERT_FAILS(comm.alltoall(send_buf(input), send_count(1), recv_buf<no_resize>(recv_buffer)), "");
     // same test but this time without explicit no_resize for the recv buffer as this is the default resize
     // policy
-    EXPECT_KASSERT_FAILS(comm.alltoall(send_buf(input), send_count(1), recv_buf(recv_buffer)), "");
+    EXPECT_KAMPING_ASSERT_FAILS(comm.alltoall(send_buf(input), send_count(1), recv_buf(recv_buffer)), "");
 }
 #endif
 

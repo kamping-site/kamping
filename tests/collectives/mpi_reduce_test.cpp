@@ -455,7 +455,7 @@ TEST(ReduceTest, reduce_builtin_native_operation) {
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(ReduceTest, reduce_builtin_native_operation_with_incompatible_type) {
     struct MyInt {
         MyInt() noexcept : _value(0) {}
@@ -472,7 +472,7 @@ TEST(ReduceTest, reduce_builtin_native_operation_with_incompatible_type) {
 
     std::vector<MyInt> input = {1, 2, 3};
 
-    EXPECT_KASSERT_FAILS(
+    EXPECT_KAMPING_ASSERT_FAILS(
         auto result = comm.reduce(send_buf(input), op(MPI_SUM)),
         "The provided builtin operation is not compatible with datatype T."
     )
@@ -703,7 +703,7 @@ TEST(ReduceTest, send_type_part_of_result_object) {
 //     auto         value = comm.rank();
 //
 //     if (kassert::internal::assertion_enabled(assert::light_communication) && comm.size() > 1) {
-//         EXPECT_KASSERT_FAILS(
+//         EXPECT_KAMPING_ASSERT_FAILS(
 //             comm.reduce(send_buf(value), op(kamping::ops::plus<>{}), root(comm.rank())),
 //             "Root has to be the same on all ranks.");
 //     }

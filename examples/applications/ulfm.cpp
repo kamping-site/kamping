@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     while (true) {
         try {
             comm.allreduce(send_recv_buf(result), op(kamping::ops::plus<>()));
-            KASSERT(!comm.is_revoked());
+            KAMPING_ASSERT(!comm.is_revoked());
         } catch ([[maybe_unused]] MPIFailureDetected const& _) {
             if (!comm.is_revoked()) {
                 comm.revoke();

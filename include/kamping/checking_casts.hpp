@@ -22,8 +22,7 @@
 #include <string>
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
-
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/noexcept.hpp"
 
 namespace kamping {
@@ -114,7 +113,7 @@ constexpr bool in_range(From value) noexcept {
 ///
 template <class To, class From>
 constexpr To asserting_cast(From value) KAMPING_NOEXCEPT {
-    KASSERT(in_range<To>(value));
+    KAMPING_ASSERT(in_range<To>(value));
     return static_cast<To>(value);
 }
 
@@ -134,7 +133,7 @@ constexpr To asserting_cast(From value) KAMPING_NOEXCEPT {
 ///
 template <class To, class From>
 constexpr To throwing_cast(From value) {
-    THROWING_KASSERT_SPECIFIED(
+    THROWING_KAMPING_ASSERT_SPECIFIED(
         in_range<To>(value),
         value << " is not representable by the target type.",
         std::range_error
