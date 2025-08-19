@@ -20,7 +20,7 @@ jobs:
     - name: Silence "dubious ownership" warning from git
       run: git config --global --add safe.directory $(pwd)
     - name: Run CMake configure step
-      run: cmake -B build
+      run: cmake -B build -DCMAKE_PROJECT_KaMPIng_INCLUDE=cmake/Formatting.cmake
     - name: Check C++ formatting
       run: cmake --build build --target check-clang-format
     - name: Check CMake formatting

@@ -18,12 +18,6 @@ if (PROJECT_IS_TOP_LEVEL)
 
     add_subdirectory(docs)
 
-    FetchContent_Declare(
-        Format.cmake
-        GIT_REPOSITORY https://github.com/TheLartians/Format.cmake
-        GIT_TAG v1.8.1
-    )
-    FetchContent_MakeAvailable(Format.cmake)
 endif ()
 
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
