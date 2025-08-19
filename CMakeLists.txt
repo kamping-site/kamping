@@ -1,23 +1,15 @@
 cmake_minimum_required(VERSION 3.25)
 
-# Project setup
 project(
     KaMPIng
     DESCRIPTION "Flexible and (near) zero-overhead C++ bindings for MPI"
     LANGUAGES CXX
     VERSION 0.1.2
 )
-include(FetchContent)
-
-if (PROJECT_IS_TOP_LEVEL)
-
-    # this has to be enabled in the main CMakeLists file
-    include(CTest)
-
-endif ()
 
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
-option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
+option(KAMPING_BUILD_TESTS ${PROJECT_IS_TOP_LEVEL})
+option(KAMPING_BUILD_EXAMPLES ${PROJECT_IS_TOP_LEVEL})
 option(KAMPING_BUILD_DOCS OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
 option(KAMPING_ENABLE_ULFM "Enable User-Level Failure-Mitigation (ULFM)" OFF)
@@ -32,10 +24,9 @@ option(
 if (KAMPING_BUILD_DOCS)
     add_subdirectory(docs)
 endif ()
+
 set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
 find_package(MPI REQUIRED)
-
-add_subdirectory(extern)
 
 add_library(kamping_base INTERFACE)
 target_include_directories(kamping_base INTERFACE include)
@@ -158,6 +149,8 @@ string(
 )
 target_compile_definitions(kamping INTERFACE -DKAMPING_ASSERT_ASSERTION_LEVEL=${KAMPING_ASSERT_ASSERTION_LEVEL})
 
+include(FetchContent)
+
 FetchContent_Declare(
     kamping_kassert
     GIT_REPOSITORY https://github.com/kamping-site/kassert
@@ -233,9 +226,10 @@ endif ()
 
 add_library(kamping::kamping ALIAS kamping)
 
-# Testing and examples are only built if this is the main project or if KAMPING_BUILD_EXAMPLES_AND_TESTS is set (OFF by
-# default)
-if (PROJECT_IS_TOP_LEVEL OR KAMPING_BUILD_EXAMPLES_AND_TESTS)
-    add_subdirectory(examples)
+if (KAMPING_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(tests)
+endif ()
+if (KAMPING_BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif ()
