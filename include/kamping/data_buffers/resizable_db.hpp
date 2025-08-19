@@ -1,10 +1,10 @@
 #pragma once
 
 template <typename Container>
-class ResizeableDataBuffer {
+class ResizableDataBuffer {
 
 public:
-    explicit ResizeableDataBuffer(Container data) : _data(data){}
+    explicit ResizableDataBuffer(Container data) : _data(data){}
 
     using value_type = std::ranges::range_value_t<Container>;
 
@@ -26,6 +26,14 @@ public:
 
     void resize(size_t count) {
         _data.get_data().resize(count);
+    }
+
+    auto get_data() {
+        return _data.get_data();
+    }
+
+    Container& underlying() {
+        return _data;
     }
 
 

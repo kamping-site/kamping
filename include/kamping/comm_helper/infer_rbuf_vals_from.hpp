@@ -5,11 +5,17 @@ namespace kamping {
 
 // Base infer is a no opt
 template <CommType type, typename SBuff, typename RBuff, typename Communicator>
-void infer(SBuff const&, RBuff const&, Communicator const&) {}
+void infer(SBuff& sbuf, RBuff& rbuf, Communicator& comm) {
+    std::cout << "No opt infer called " << std::endl;
+    if constexpr (HasUnderlying<RBuff>) {
+        infer<type>(sbuf, rbuf.underlying(), comm);
+    }
+}
 
 template <CommType type, typename SBuff, typename RBuff, typename Communicator>
     requires HasResize<RBuff>
-void infer(SBuff const& sbuf, RBuff& rbuf, Communicator const& comm) {
+void infer(SBuff& sbuf, RBuff& rbuf, Communicator& comm) {
+    std::cout << "Resize infer called " << std::endl;
     size_t recv_size = 0;
 
     if constexpr (type == CommType::allgather) {
@@ -19,8 +25,12 @@ void infer(SBuff const& sbuf, RBuff& rbuf, Communicator const& comm) {
     rbuf.resize(recv_size);
 
     if constexpr (HasUnderlying<RBuff>) {
-        infer(sbuf, rbuf.underlying(), comm);
+        infer<type>(sbuf, rbuf.underlying(), comm);
     }
 }
+
+
+
+
 
 } // namespace kamping

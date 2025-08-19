@@ -21,12 +21,12 @@ public:
         return _data.data();
     }
 
-    size_t size() {
+    [[nodiscard]] size_t size() const {
         return _data.size();
     }
 
-    void resize(size_t count) {
-        _data.resize(count);
+    std::vector<T>& get_data() {
+        return _data;
     }
 
 
