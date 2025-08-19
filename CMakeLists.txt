@@ -28,16 +28,6 @@ if (PROJECT_IS_TOP_LEVEL)
     FetchContent_MakeAvailable(Format.cmake)
 endif ()
 
-# Require out-of-source builds
-file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
-if (EXISTS "${LOC_PATH}")
-    message(
-        FATAL_ERROR
-            "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build "
-            "subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles."
-    )
-endif ()
-
 option(KAMPING_WARNINGS_ARE_ERRORS OFF)
 option(KAMPING_BUILD_EXAMPLES_AND_TESTS OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
