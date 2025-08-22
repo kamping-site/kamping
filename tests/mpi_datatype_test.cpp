@@ -11,6 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <cstddef>
 #include <cstdint>
 #include <type_traits>
 #include <vector>
@@ -173,6 +174,7 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
     EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(mpi_type_traits<uint64_t>::data_type()));
     EXPECT_THAT(possible_mpi_datatypes<bool>(), Contains(mpi_type_traits<bool>::data_type()));
     EXPECT_THAT(possible_mpi_datatypes<kamping::kabool>(), Contains(mpi_type_traits<kamping::kabool>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<kamping::packed>(), Contains(mpi_type_traits<kamping::packed>::data_type()));
     EXPECT_THAT(
         possible_mpi_datatypes<std::complex<double>>(),
         Contains(mpi_type_traits<std::complex<double>>::data_type())
@@ -819,6 +821,7 @@ TEST(MpiDataTypeTest, test_type_groups) {
 
     EXPECT_EQ(kamping::mpi_type_traits<bool>::category, kamping::TypeCategory::logical);
     EXPECT_EQ(kamping::mpi_type_traits<kamping::kabool>::category, kamping::TypeCategory::logical);
+    EXPECT_EQ(kamping::mpi_type_traits<kamping::packed>::category, kamping::TypeCategory::packed);
 
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<float>>::category, kamping::TypeCategory::complex);
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<double>>::category, kamping::TypeCategory::complex);
@@ -856,6 +859,25 @@ TEST(MpiDataTypeTest, kabool_basics) {
     EXPECT_EQ(kabool{true} && kabool{true}, true);
     EXPECT_EQ(kabool{false} || kabool{false}, false);
     EXPECT_EQ(kabool{true} || kabool{false}, true);
+}
+
+TEST(MpiDataTypeTest, packed_basics) {
+    // size matches std::byte
+    EXPECT_EQ(sizeof(packed), sizeof(std::byte));
+    // construction + explicit conversion
+    EXPECT_EQ(static_cast<std::byte>(packed{}), std::byte{0});
+    EXPECT_EQ(static_cast<std::byte>(packed{std::byte{0}}), std::byte{0});
+    EXPECT_EQ(static_cast<std::byte>(packed{std::byte{42}}), std::byte{42});
+    EXPECT_EQ(static_cast<packed>(std::byte{0}), packed{std::byte{0}});
+    EXPECT_EQ(static_cast<packed>(std::byte{42}), packed{std::byte{42}});
+    // implicit conversion
+    EXPECT_EQ(packed{std::byte{}}, std::byte{});
+    EXPECT_EQ(packed{std::byte{42}}, std::byte{42});
+    // TODO add some operation tests
+    // EXPECT_EQ(kabool{true} && kabool{false}, false);
+    // EXPECT_EQ(kabool{true} && kabool{true}, true);
+    // EXPECT_EQ(kabool{false} || kabool{false}, false);
+    // EXPECT_EQ(kabool{true} || kabool{false}, true);
 }
 
 TEST(MpiDataTypeTest, register_types_with_environment) {

@@ -34,6 +34,7 @@
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/named_parameters.hpp"
+#include "kamping/packed.hpp"
 #include "kamping/result.hpp"
 
 namespace testing {
@@ -435,6 +436,9 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
     }
     if constexpr (std::is_same_v<T_no_const, kamping::kabool>) {
         possible_mpi_datatypes.push_back(MPI_CXX_BOOL);
+    }
+    if constexpr (std::is_same_v<T_no_const, kamping::packed>) {
+        possible_mpi_datatypes.push_back(MPI_PACKED);
     }
     if constexpr (std::is_same_v<T_no_const, std::complex<float>>) {
         possible_mpi_datatypes.push_back(MPI_CXX_FLOAT_COMPLEX);
