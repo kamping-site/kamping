@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2024 The KaMPIng Authors
+// Copyright 2021-2025 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -21,6 +21,7 @@
 #include <mpi.h>
 
 #include "kamping/kabool.hpp"
+#include "kamping/packed.hpp"
 
 namespace kamping {
 
@@ -29,7 +30,7 @@ namespace kamping {
 
 /// @brief the members specify which group the datatype belongs to according to the type groups specified in
 /// Section 6.9.2 of the MPI 4.0 standard.
-enum class TypeCategory { integer, floating, complex, logical, byte, character, struct_like, contiguous };
+enum class TypeCategory { integer, floating, complex, logical, byte, character, struct_like, contiguous, packed };
 
 /// @brief Checks if a type of the given \p category has to commited before usage in MPI calls.
 constexpr bool category_has_to_be_committed(TypeCategory category) {
@@ -40,6 +41,7 @@ constexpr bool category_has_to_be_committed(TypeCategory category) {
         case TypeCategory::logical:
         case TypeCategory::byte:
         case TypeCategory::character:
+        case kamping::TypeCategory::packed:
             return false;
         case TypeCategory::struct_like:
         case TypeCategory::contiguous:
@@ -236,6 +238,16 @@ struct builtin_type<kabool> : std::true_type {
         return MPI_CXX_BOOL;
     }
     static constexpr TypeCategory category = TypeCategory::logical; ///< The types's \ref TypeCategory.
+};
+
+/// @brief Specialization of \ref builtin_type for \ref packed.
+template <>
+struct builtin_type<packed> : std::true_type {
+    /// @brief Returns the matching \c MPI_Datatype.
+    static MPI_Datatype data_type() {
+        return MPI_PACKED;
+    }
+    static constexpr TypeCategory category = TypeCategory::packed; ///< The types's \ref TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for `std::complex<float>`.
