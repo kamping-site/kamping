@@ -28,7 +28,45 @@ struct MyType {
 namespace kamping {
 // using KaMPIng’s built-in struct serializer
 template <>
-struct mpi_type_traits<MyType> : struct_type<MyType> {};
+struct mpi_type_traits<MyType>
+#ifdef KAMPING_ENABLE_REFLECTION
+    : struct_type<MyType> {
+};
+#else
+{
+    // or using an explicitly constructed type
+    static constexpr bool has_to_be_committed = true;
+    static MPI_Datatype   data_type() {
+          MyType   temp{};
+          MPI_Aint base;
+          MPI_Get_address(&temp, &base);
+          std::array<int, 4>          blocklens;
+          std::array<MPI_Datatype, 4> types;
+          std::array<MPI_Aint, 4>     disp;
+
+          MPI_Get_address(&temp.a, &disp[0]);
+          types[0] = mpi_type_traits<int>::data_type();
+          disp[0]  = MPI_Aint_diff(disp[0], base);
+
+          MPI_Get_address(&temp.b, &disp[1]);
+          types[1] = mpi_type_traits<double>::data_type();
+          disp[1]  = MPI_Aint_diff(disp[1], base);
+
+          MPI_Get_address(&temp.c, &disp[2]);
+          types[2] = mpi_type_traits<int>::data_type();
+          disp[2]  = MPI_Aint_diff(disp[2], base);
+
+          MPI_Get_address(&temp.d, &disp[3]);
+          types[3] = mpi_type_traits<std::array<int, 3>>::data_type();
+          disp[3]  = MPI_Aint_diff(disp[3], base);
+          MPI_Datatype type;
+          MPI_Type_create_struct(4, blocklens.data(), disp.data(), types.data(), &type);
+          MPI_Datatype resized_type;
+          MPI_Type_create_resized(type, 0, sizeof(MyType), &resized_type);
+          return resized_type;
+    }
+};
+#endif
 // or using an explicitly constructed type
 // template <>
 // struct mpi_type_traits<MyType2> {
