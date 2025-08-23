@@ -1,6 +1,4 @@
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-include(KaTestrophe)
-include(KampingTestHelper)
+include(cmake/KampingTestHelper.cmake)
 include(GoogleTest)
 
 set(KAMPING_TEST_TIMEOUT
