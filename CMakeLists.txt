@@ -7,9 +7,9 @@ project(
     VERSION 0.1.2
 )
 
-option(KAMPING_BUILD_TESTS ${PROJECT_IS_TOP_LEVEL})
-option(KAMPING_BUILD_EXAMPLES ${PROJECT_IS_TOP_LEVEL})
-option(KAMPING_BUILD_DOCS OFF)
+option(KAMPING_BUILD_TESTS "Build the tests for KaMPIng." ${PROJECT_IS_TOP_LEVEL})
+option(KAMPING_BUILD_EXAMPLES "Build the example for KaMPIng." ${PROJECT_IS_TOP_LEVEL})
+option(KAMPING_BUILD_DOCS "Build the docs for KaMPIng." OFF)
 option(KAMPING_TESTS_DISCOVER OFF)
 option(KAMPING_ENABLE_ULFM "Enable User-Level Failure-Mitigation (ULFM)" OFF)
 option(KAMPING_ENABLE_SERIALIZATION "Enable support for serialization (requires Cereal)" ON)
