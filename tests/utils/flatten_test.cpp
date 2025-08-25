@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2024 The KaMPIng Authors
+// Copyright 2024-2025 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -23,7 +23,21 @@
 
 using namespace kamping;
 
-TEST(FlattenTest, basic_unorderd_map) {
+TEST(FlattenTest, basic_unordered_map) {
+    Communicator                              comm;
+    std::unordered_map<int, std::vector<int>> sparse_send_buf;
+    for (int dst = 0; dst < comm.size_signed(); dst++) {
+        sparse_send_buf.emplace(dst, std::vector<int>(1, dst));
+    }
+    auto [flat_buf, send_counts, send_displs] = flatten(sparse_send_buf, comm.size());
+
+    EXPECT_EQ(flat_buf, testing::iota_container_n(comm.size(), 0));
+    EXPECT_THAT(send_counts.size(), comm.size());
+    EXPECT_THAT(send_counts, ::testing::Each(1));
+    EXPECT_EQ(send_displs, testing::iota_container_n(comm.size(), 0));
+}
+
+TEST(WithFlattenedTest, basic_unorderd_map) {
     Communicator                              comm;
     std::unordered_map<int, std::vector<int>> sparse_send_buf;
     for (int dst = 0; dst < comm.size_signed(); dst++) {
@@ -42,7 +56,7 @@ TEST(FlattenTest, basic_unorderd_map) {
     EXPECT_EQ(recv_displs, testing::iota_container_n(comm.size(), 0));
 }
 
-TEST(FlattenTest, basic_vector_of_vectors) {
+TEST(WithFlattenedTest, basic_vector_of_vectors) {
     Communicator                  comm;
     std::vector<std::vector<int>> nested_send_buf(comm.size());
     for (int i = 0; i < comm.size_signed(); i++) {
@@ -58,4 +72,19 @@ TEST(FlattenTest, basic_vector_of_vectors) {
     EXPECT_THAT(recv_counts.size(), comm.size());
     EXPECT_THAT(recv_counts, ::testing::Each(1));
     EXPECT_EQ(recv_displs, testing::iota_container_n(comm.size(), 0));
+}
+
+TEST(FlattenTest, basic_vector_of_vectors) {
+    Communicator                  comm;
+    std::vector<std::vector<int>> nested_send_buf(comm.size());
+    for (int i = 0; i < comm.size_signed(); i++) {
+        nested_send_buf[asserting_cast<size_t>(i)] = std::vector<int>(1, i);
+    }
+
+    auto [flat_buf, send_counts, send_displs] = flatten(nested_send_buf);
+
+    EXPECT_EQ(flat_buf, testing::iota_container_n(comm.size(), 0));
+    EXPECT_THAT(send_counts.size(), comm.size());
+    EXPECT_THAT(send_counts, ::testing::Each(1));
+    EXPECT_EQ(send_displs, testing::iota_container_n(comm.size(), 0));
 }
