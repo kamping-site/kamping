@@ -1,0 +1,9 @@
+<map id="kamping::internal::RankDataBuffer&lt; RankType::value, type &gt;" name="kamping::internal::RankDataBuffer&lt; RankType::value, type &gt;">
+<area shape="rect" id="Node000001" title="Encapsulates the rank of a PE. This is needed for p2p communication and rooted MPI collectives like M..." alt="" coords="624,42,827,97"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1internal_1_1DataBuffer.html" title=" " alt="" coords="328,5,576,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="590,67,624,67,624,72,590,72"/>
+<area shape="rect" id="Node000003" href="$classkamping_1_1internal_1_1CopyMoveEnabler.html" title=" " alt="" coords="5,6,280,61"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="294,48,328,52,328,58,293,54"/>
+<area shape="rect" id="Node000004" href="$classkamping_1_1internal_1_1Extractable.html" title="Base class containing logic to verify whether a buffer&#39;s data has already been extracted...." alt="" coords="71,85,215,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="228,93,328,81,328,86,228,98"/>
+</map>
