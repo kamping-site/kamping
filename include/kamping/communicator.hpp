@@ -30,6 +30,8 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/rank_ranges.hpp"
 
+#include "kamping/communicator_fwd.hpp"
+
 namespace kamping {
 
 // Needed by the plugin system to check if a plugin provides a callback function for MPI errors.
@@ -43,7 +45,7 @@ KAMPING_MAKE_HAS_MEMBER(mpi_error_handler)
 /// template parameter and can assume that they are castable to <tt>Communicator</tt> from which they can
 /// call any function of <tt>kamping::Communicator</tt>. See <tt>test/plugin_tests.cpp</tt> for examples.
 template <
-    template <typename...> typename DefaultContainerType = std::vector,
+    template <typename...> typename DefaultContainerType,
     template <typename, template <typename...> typename>
     typename... Plugins>
 class Communicator : public Plugins<Communicator<DefaultContainerType, Plugins...>, DefaultContainerType>... {
