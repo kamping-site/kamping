@@ -20,10 +20,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest-death-test.h>
 #include <gtest/gtest.h>
-#include <kassert/kassert.hpp>
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/kassert/kassert.hpp"
 
 using namespace ::testing;
 using namespace ::kamping;
@@ -91,7 +91,7 @@ TEST(CheckingCastTest, asserting_cast) {
         "Still alive"
     );
 
-    if constexpr (KASSERT_ASSERTION_LEVEL >= kamping::assert::normal) {
+    if constexpr (KAMPING_ASSERT_ASSERTION_LEVEL >= kamping::assert::normal) {
         // According to the googletest documentation, throwing an exception is not considered a death.
         // This ASSERT should therefore only succeed if an assert() fails, not if an exception is thrown.
         EXPECT_DEATH(asserting_cast<int8_t>(u8val), "FAILED ASSERTION");
@@ -118,8 +118,8 @@ TEST(CheckingCastTest, asserting_cast) {
 ///
 template <typename Lambda>
 void checkThrowOrAssert(Lambda&& callable, [[maybe_unused]] std::string const& what = std::string()) {
-#if KASSERT_EXCEPTION_MODE == 0
-    if constexpr (KASSERT_ASSERTION_LEVEL >= kassert::assert::kthrow) {
+#if KAMPING_ASSERT_EXCEPTION_MODE == 0
+    if constexpr (KAMPING_ASSERT_ASSERTION_LEVEL >= kassert::assert::kthrow) {
         EXPECT_DEATH(callable(), "FAILED");
     } else {
         EXPECT_EXIT(

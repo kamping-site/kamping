@@ -311,36 +311,36 @@ TEST(OperationsTest, builtin_operations_on_unsupported_type) {
 
 TEST(OperationsTest, with_operation_functor) {
     kamping::internal::with_operation_functor(MPI_MAX, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::max<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::max<>>));
     });
     kamping::internal::with_operation_functor(MPI_MIN, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::min<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::min<>>));
     });
     kamping::internal::with_operation_functor(MPI_SUM, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::plus<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::plus<>>));
     });
     kamping::internal::with_operation_functor(MPI_PROD, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::multiplies<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::multiplies<>>));
     });
     kamping::internal::with_operation_functor(MPI_LAND, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::logical_and<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::logical_and<>>));
     });
     kamping::internal::with_operation_functor(MPI_LOR, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::logical_or<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::logical_or<>>));
     });
     kamping::internal::with_operation_functor(MPI_LXOR, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::logical_xor<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::logical_xor<>>));
     });
     kamping::internal::with_operation_functor(MPI_BAND, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::bit_and<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::bit_and<>>));
     });
     kamping::internal::with_operation_functor(MPI_BOR, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::bit_or<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::bit_or<>>));
     });
     kamping::internal::with_operation_functor(MPI_BXOR, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::bit_xor<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::bit_xor<>>));
     });
     kamping::internal::with_operation_functor(MPI_OP_NULL, [](auto functor) {
-        KASSERT((std::is_same_v<decltype(functor), kamping::ops::null<>>));
+        KAMPING_ASSERT((std::is_same_v<decltype(functor), kamping::ops::null<>>));
     });
 }

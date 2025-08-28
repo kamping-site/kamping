@@ -17,13 +17,13 @@
 #include <cstddef>
 #include <cstdlib>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/group.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_constants.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
@@ -72,7 +72,7 @@ public:
           _default_tag(0),
           _owns_mpi_comm(take_ownership) {
         if (take_ownership) {
-            KASSERT(comm != MPI_COMM_WORLD, "Taking ownership of MPI_COMM_WORLD is not allowed.");
+            KAMPING_ASSERT(comm != MPI_COMM_WORLD, "Taking ownership of MPI_COMM_WORLD is not allowed.");
         }
         this->root(root);
     }
@@ -202,7 +202,7 @@ public:
 
     /// @brief Set a new default tag used in point to point communication. The initial value is 0.
     void default_tag(int const default_tag) {
-        THROWING_KASSERT(
+        THROWING_KAMPING_ASSERT(
             Environment<>::is_valid_tag(default_tag),
             "invalid tag " << default_tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
         );
@@ -217,7 +217,7 @@ public:
     /// @brief Set a new root for MPI operations that require a root.
     /// @param new_root The new default root.
     void root(int const new_root) {
-        THROWING_KASSERT(
+        THROWING_KAMPING_ASSERT(
             is_valid_rank(new_root),
             "invalid root rank " << new_root << " in communicator of size " << size()
         );
@@ -227,7 +227,7 @@ public:
     /// @brief Set a new root for MPI operations that require a root.
     /// @param new_root The new default root.
     void root(size_t const new_root) {
-        THROWING_KASSERT(
+        THROWING_KAMPING_ASSERT(
             is_valid_rank(new_root),
             "invalid root rank " << new_root << " in communicator of size " << size()
         );
@@ -322,14 +322,17 @@ public:
     template <typename Ranks>
     [[nodiscard]] Communicator create_subcommunicators(Ranks const& ranks_in_own_group) const {
         static_assert(std::is_same_v<typename Ranks::value_type, int>, "Ranks must be of type int");
-        KASSERT(
+        KAMPING_ASSERT(
             ranks_in_own_group.size() > 0ull,
             "The set of ranks to include in the new subcommunicator must not be empty."
         );
         auto ranks_contain_own_rank = [&]() {
             return std::find(ranks_in_own_group.begin(), ranks_in_own_group.end(), rank()) != ranks_in_own_group.end();
         };
-        KASSERT(ranks_contain_own_rank(), "The ranks to include in the new subcommunicator must contain own rank.");
+        KAMPING_ASSERT(
+            ranks_contain_own_rank(),
+            "The ranks to include in the new subcommunicator must contain own rank."
+        );
         MPI_Group comm_group;
         MPI_Comm_group(_comm, &comm_group);
         MPI_Group new_comm_group;
@@ -358,8 +361,11 @@ public:
     /// an identical \c ranks_in_own_group argument. Furthermore, this set must not be empty.
     /// @return \ref Communicator wrapping the newly split MPI communicator.
     [[nodiscard]] Communicator create_subcommunicators(RankRanges const& rank_ranges) const {
-        KASSERT(rank_ranges.size() > 0ull, "The set of ranks to include in the new subcommunicator must not be empty.");
-        KASSERT(
+        KAMPING_ASSERT(
+            rank_ranges.size() > 0ull,
+            "The set of ranks to include in the new subcommunicator must not be empty."
+        );
+        KAMPING_ASSERT(
             rank_ranges.contains(rank_signed()),
             "The ranks to include in the new subcommunicator must contain own rank."
         );
@@ -414,7 +420,7 @@ public:
     /// @return Rank if rank is in [0, size of communicator) and ASSERT/EXCEPTION? otherwise.
     [[nodiscard]] size_t rank_shifted_checked(int const distance) const {
         int const result = rank_signed() + distance;
-        THROWING_KASSERT(is_valid_rank(result), "invalid shifted rank " << result);
+        THROWING_KAMPING_ASSERT(is_valid_rank(result), "invalid shifted rank " << result);
         return asserting_cast<size_t>(result);
     }
 
@@ -455,7 +461,7 @@ public:
     /// @brief Default MPI error callback. Depending on <tt>KASSERT_EXCEPTION_MODE</tt> either throws a \ref
     /// MpiErrorException if \c error_code != \c MPI_SUCCESS or fails an assertion.
     void mpi_error_default_handler(int const error_code, std::string const& function_name) const {
-        THROWING_KASSERT_SPECIFIED(
+        THROWING_KAMPING_ASSERT_SPECIFIED(
             error_code == MPI_SUCCESS,
             function_name << " failed!",
             kamping::MpiErrorException,
@@ -596,7 +602,10 @@ private:
     /// @brief Compute the rank of the current MPI process computed using \c MPI_Comm_rank.
     /// @return Rank of the current MPI process in the communicator.
     size_t get_mpi_rank(MPI_Comm comm) const {
-        THROWING_KASSERT(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
+        THROWING_KAMPING_ASSERT(
+            comm != MPI_COMM_NULL,
+            "communicator must be initialized with a valid MPI communicator"
+        );
 
         int rank;
         MPI_Comm_rank(comm, &rank);
@@ -606,7 +615,10 @@ private:
     /// @brief Compute the number of MPI processes in this communicator using \c MPI_Comm_size.
     /// @return Size of the communicator.
     size_t get_mpi_size(MPI_Comm comm) const {
-        THROWING_KASSERT(comm != MPI_COMM_NULL, "communicator must be initialized with a valid MPI communicator");
+        THROWING_KAMPING_ASSERT(
+            comm != MPI_COMM_NULL,
+            "communicator must be initialized with a valid MPI communicator"
+        );
 
         int size;
         MPI_Comm_size(comm, &size);

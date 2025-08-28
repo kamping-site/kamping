@@ -16,7 +16,6 @@
 #include <tuple>
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
@@ -26,6 +25,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -134,7 +134,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iallreduce(Args...
     };
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
 
-    KASSERT(
+    KAMPING_ASSERT(
         // if the send type is user provided, kamping cannot make any assumptions about the required size of the
         // recv buffer
         send_recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),

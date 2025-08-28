@@ -18,12 +18,12 @@
 #include <type_traits>
 #include <utility>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/implementation_helpers.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
@@ -146,7 +146,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
         "Please provide a send tag for the message."
     );
     int send_tag = send_tag_param.tag();
-    KASSERT(
+    KAMPING_ASSERT(
         Environment<>::is_valid_tag(send_tag),
         "invalid send tag " << send_tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
     );
@@ -184,7 +184,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
     constexpr auto tag_type = std::remove_reference_t<decltype(recv_tag_param)>::tag_type;
     if constexpr (tag_type == internal::TagType::value) {
         int recv_tag = recv_tag_param.tag();
-        KASSERT(
+        KAMPING_ASSERT(
             Environment<>::is_valid_tag(recv_tag),
             "invalid recv tag " << recv_tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
         );
@@ -205,7 +205,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
             args...
         );
 
-    KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
+    KAMPING_ASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
     int source = source_param.rank_signed();
 
     // Calculate rev_count if not given by calling sendrecv with the send_count
@@ -228,7 +228,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
             return asserting_cast<size_t>(recv_count_param.get_single_element());
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             // if the recv type is user provided, kamping cannot make any assumptions about the required size of the
             // recv buffer
             recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
