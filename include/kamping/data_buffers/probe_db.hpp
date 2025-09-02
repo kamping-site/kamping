@@ -30,7 +30,7 @@ public:
         _size = kamping::asserting_cast<size_t>(status.template count_signed<int>());
     }
 
-    [[nodiscard]] size_t size() noexcept {
+    [[nodiscard]] size_t size() const /* noexcept */ {
         size_t curr_size = _data.size();
         if (curr_size != _size) {
             resize();
@@ -42,14 +42,14 @@ public:
         _data.resize(_size);
     }
 
-    [[nodiscard]] size_t size() const noexcept {
-        return _data.size();
-    }
+    // [[nodiscard]] size_t size() const noexcept {
+    //     return _data.size();
+    // }
 
     [[nodiscard]] int source() const noexcept {return _source;}
 
 private:
-    std::vector<T> _data;
+    mutable std::vector<T> _data;
     int _source;
     size_t         _size = 0;
 };

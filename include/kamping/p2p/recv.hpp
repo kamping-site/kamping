@@ -33,7 +33,9 @@ template <
     typename... Plugins>
 template <typename RBuff>
 requires kamping::DataBufferConcept<RBuff> && kamping::RecvDataBuffer<RBuff>
-auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(RBuff&& rbuf) const {
+// FIXME source, tag, status should not be part of the data buffer
+// handle status similar to Request::wait (request.hpp)
+auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(RBuff&& rbuf/* , int source = MPI_ANY_SOURCE, int tag = MPI_ANY_TAG, Status ... */) const {
     using namespace kamping::internal;
 
     infer<CommType::recv>(rbuf, *this);

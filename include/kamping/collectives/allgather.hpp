@@ -43,6 +43,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(SBuff&& 
     using recv_type = std::ranges::range_value_t<RBuff>;
 
     auto   send_size = std::size(sbuf);
+    // FIXME this could be std::size(rbuf)
     size_t recv_size = get_recv_size<CommType::allgather>(sbuf, rbuf, *this);
 
     KASSERT(
