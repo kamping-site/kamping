@@ -27,39 +27,41 @@
 #include "kamping/mpi_datatype.hpp"
 
 template <
-    template <typename...> typename DefaultContainerType,
-    template <typename, template <typename...> typename> typename... Plugins>
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename SBuff, typename RBuff>
-    requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<SBuff>
-             && kamping::RecvDataBuffer<RBuff>
+requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<
+    SBuff> && kamping::RecvDataBuffer<RBuff>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(SBuff&& sbuf, RBuff&& rbuf) const {
     using namespace kamping::internal;
+
+    infer<CommType::allgather>(sbuf, rbuf, *this);
 
     using send_type = std::ranges::range_value_t<SBuff>;
     using recv_type = std::ranges::range_value_t<RBuff>;
 
-    auto   send_count = sbuf.size();
-    size_t recv_count = get_recv_count<CommType::allgather>(sbuf, rbuf, *this);
+    auto   send_size = std::size(sbuf);
+    size_t recv_size = get_recv_size<CommType::allgather>(sbuf, rbuf, *this);
 
     KASSERT(
-        is_same_on_all_ranks(send_count),
+        is_same_on_all_ranks(send_size),
         "All PEs have to send the same number of elements. Use allgatherv, if you want to send a different number "
         "of "
         "elements.",
         assert::light_communication
     );
 
-    infer<CommType::allgather>(sbuf, rbuf, *this);
-
-    KASSERT(rbuf.size() >= send_count, "The receive buffer is not large enough", assert::light);
+    KASSERT(rbuf.size() >= send_size, "The receive buffer is not large enough", assert::light);
 
     // error code can be unused if KTHROW is removed at compile time
     [[maybe_unused]] int err = MPI_Allgather(
         sbuf.data(),
-        asserting_cast<int>(send_count),
+        asserting_cast<int>(send_size),
         mpi_datatype<send_type>(),
         rbuf.data(),
-        asserting_cast<int>(recv_count),
+        asserting_cast<int>(recv_size / size()),
         mpi_datatype<recv_type>(),
         this->mpi_communicator()
     );

@@ -62,6 +62,10 @@ add_executable(example_adapter adapter_example.cpp)
 target_link_libraries(example_adapter kamping)
 target_compile_options(example_adapter PRIVATE ${KAMPING_WARNING_FLAGS})
 
+add_executable(example_recv recv_example.cpp)
+target_link_libraries(example_recv kamping)
+target_compile_options(example_recv PRIVATE ${KAMPING_WARNING_FLAGS})
+
 if (KAMPING_ENABLE_SERIALIZATION)
     add_executable(example_serialization serialization_example.cpp)
     target_link_libraries(example_serialization kamping cereal::cereal)
