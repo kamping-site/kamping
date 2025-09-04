@@ -1,6 +1,7 @@
 [![C/C++ CI](https://github.com/kamping-site/kamping/actions/workflows/build.yml/badge.svg)](https://github.com/kamping-site/kamping/actions/workflows/build.yml)
 ![GitHub](https://img.shields.io/github/license/kamping-site/kamping)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10949643.svg)](https://doi.org/10.5281/zenodo.10949643)
+[![HiRSE Code Promo Badge](https://img.shields.io/badge/Promo-8db427?style=plastic&label=HiRSE&labelColor=005aa0&link=https%3A%2F%2Fgo.fzj.de%2FCodePromo)](https://go.fzj.de/CodePromo)
 
 # KaMPIng: Karlsruhe MPI next generation :rocket:
 
