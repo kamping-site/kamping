@@ -31,43 +31,34 @@ template <
     typename DefaultContainerType,
     template <typename, template <typename...> typename>
     typename... Plugins>
-template <typename RBuff>
+template <typename RBuff, typename StatusObject>
 requires kamping::DataBufferConcept<RBuff> && kamping::RecvDataBuffer<RBuff>
-// FIXME source, tag, status should not be part of the data buffer
-// handle status similar to Request::wait (request.hpp)
-auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(RBuff&& rbuf/* , int source = MPI_ANY_SOURCE, int tag = MPI_ANY_TAG, Status ... */) const {
-    using namespace kamping::internal;
+auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(RBuff&& rbuf, int source, int tag, StatusObject status_param) const {
 
     infer<CommType::recv>(rbuf, *this);
+
     using recv_type = std::ranges::range_value_t<RBuff>;
 
-    int source = MPI_ANY_SOURCE;
-    if constexpr (HasSource<RBuff>) {
-        source = rbuf.source();
-    }
+    // Make sure that the size is set before .data is called in the MPI call
+    int recv_size = asserting_cast<int>(std::size(rbuf));
 
-    int tag = MPI_ANY_TAG;
-    if constexpr (HasTag<RBuff>) {
-        tag = rbuf.tag();
-    }
-
-    auto status = MPI_Status{};
-    if constexpr (HasStatus<RBuff>) {
-        status = rbuf.status();
-    }
-
-    auto t = rbuf.size();
+    static_assert(
+            StatusObject::parameter_type == internal::ParameterType::status,
+            "Only status parameters are allowed."
+        );
+    auto status = status_param.construct_buffer_or_rebind();
 
     [[maybe_unused]] int err = MPI_Recv(
         rbuf.data(),                          // buf
-        asserting_cast<int>(std::size(rbuf)), // count
+        recv_size,                            // count
         mpi_datatype<recv_type>(),            // datatype
         source,                               // source
         tag,                                  // tag
         this->mpi_communicator(),             // comm
-        &status                               // status
+        internal::status_param_to_native_ptr(status) // status
     );
     this->mpi_error_hook(err, "MPI_Recv");
 
     return std::forward<RBuff>(rbuf);
 }
+

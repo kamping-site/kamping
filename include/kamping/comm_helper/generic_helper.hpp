@@ -5,19 +5,10 @@ namespace kamping {
 enum class CommType { allgather, gather, recv };
 
 template <typename Buff>
-concept HasTag = requires(Buff buf) {
-    { buf.tag() } -> std::integral<>;
+concept HasSetSize= requires(Buff buf, size_t size) {
+    { buf.set_size(size) };
 };
 
-template <typename Buff>
-concept HasSource = requires(Buff buf) {
-    { buf.source() } -> std::integral<>;
-};
-
-template <typename Buff>
-concept HasStatus = requires(Buff buf) {
-    {buf.status()};
-};
 
 // Returns the size of the total communication. E.g. the size that the receiving buffer needs to be
 template <CommType type, typename SBuff, typename RBuff, typename Communicator>

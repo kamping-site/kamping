@@ -14,7 +14,13 @@ void infer(SBuff& sbuf, RBuff& rbuf, Communicator& comm) {
 template <CommType type, typename RBuff, typename Communicator>
 void infer(RBuff& rbuf, Communicator& comm) {
     if constexpr (type == CommType::recv) {
-        rbuf.set_size(comm);
+        // RBuff has set_size -> assume it's size is not correct, probe for the actual recv size
+        if constexpr (HasSetSize<RBuff>) {
+            auto status = comm.probe(status_out()).extract_status();
+            size_t size = kamping::asserting_cast<size_t>(status.template count_signed<int>());
+            rbuf.set_size(size);
+        }
+
     }
 }
 

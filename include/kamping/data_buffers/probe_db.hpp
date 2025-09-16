@@ -8,7 +8,7 @@
 template <typename T>
 class ProbeDataBuffer {
 public:
-    explicit ProbeDataBuffer(int source) : _data(std::vector<T>()), _source(source) {}
+    explicit ProbeDataBuffer() : _data(std::vector<T>()) {}
 
     using value_type = T;
 
@@ -24,32 +24,20 @@ public:
         return _data.data();
     }
 
-    template <typename Communicator>
-    auto set_size(Communicator& comm) {
-        auto status = comm.probe(kamping::status_out()).extract_status();
-        _size = kamping::asserting_cast<size_t>(status.template count_signed<int>());
+
+    auto set_size(size_t size)noexcept {
+        _size = size;
     }
 
-    [[nodiscard]] size_t size() const /* noexcept */ {
+    [[nodiscard]] size_t size() const {
         size_t curr_size = _data.size();
         if (curr_size != _size) {
-            resize();
+            _data.resize(_size);
         }
         return _size;
     }
 
-    void resize() {
-        _data.resize(_size);
-    }
-
-    // [[nodiscard]] size_t size() const noexcept {
-    //     return _data.size();
-    // }
-
-    [[nodiscard]] int source() const noexcept {return _source;}
-
 private:
     mutable std::vector<T> _data;
-    int _source;
     size_t         _size = 0;
 };
