@@ -29,13 +29,13 @@
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/rank_ranges.hpp"
+#include "kamping/comm_helper/generic_helper.hpp"
 
 namespace kamping {
 
 template <typename Buff>
-concept DataBufferConcept = std::ranges::contiguous_range<Buff> && std::ranges::sized_range<Buff> &&(
-    std::is_fundamental_v<std::ranges::range_value_t<Buff>> || /*Typed<Buff>*/ false
-);
+concept DataBufferConcept = std::ranges::contiguous_range<Buff> && std::ranges::sized_range<Buff> &&
+    Typed<Buff>;
 
 template <typename SBuff>
 concept SendDataBuffer = DataBufferConcept<SBuff> && std::ranges::input_range<SBuff>;

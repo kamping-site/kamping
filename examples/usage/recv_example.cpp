@@ -46,5 +46,7 @@ int main() {
                 std::cout << std::to_string(x) << std::endl;
             }
         }
+	int result = 0;
+	comm.recv(std::ranges::single_view {result}, 0);
     }
 }

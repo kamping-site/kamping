@@ -8,7 +8,32 @@ template <typename Buff>
 concept HasSetSize= requires(Buff buf, size_t size) {
     { buf.set_size(size) };
 };
+  
+template<typename T>
+concept static_mpi_type = has_static_type_v<T>;
 
+template<typename Buff>
+concept HasType = requires(Buff buf) {
+  { buf.type() } -> std::same_as<MPI_Datatype>;
+};
+
+// template<typename Buff>
+// MPI_Datatype type(Buff&) = delete;
+
+template<typename Buff> requires HasType<Buff> || static_mpi_type<std::ranges::range_value_t<Buff>>
+MPI_Datatype type(Buff& buf) {
+  if constexpr (HasType<Buff>) {
+    return buf.type();
+  } else if constexpr (static_mpi_type<std::ranges::range_value_t<Buff>>) {
+    return mpi_datatype<std::ranges::range_value_t<Buff>>();
+  }
+}
+  template<typename Buff>
+  concept Typed = requires(Buff buf) {
+    {type(buf)} -> std::same_as<MPI_Datatype>;
+  };
+
+  
 
 // Returns the size of the total communication. E.g. the size that the receiving buffer needs to be
 template <CommType type, typename SBuff, typename RBuff, typename Communicator>
