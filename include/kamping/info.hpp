@@ -37,7 +37,7 @@ struct info_value_traits<bool> {
 template <typename T>
 struct info_value_traits<T, std::enable_if_t<std::is_integral_v<T> && !std::is_same_v<T, bool>>> {
     using type = T;
-    static std::string_view to(T const& value) {
+    static std::string to(T const& value) {
         return std::to_string(value);
     }
 
