@@ -12,18 +12,16 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <iostream>
-#include <numeric>
 #include <vector>
 
 #include <mpi.h>
 
 #include "helpers_for_examples.hpp"
+#include "kamping/communicator.hpp"
+#include "kamping/data_buffers/empty_db.hpp"
+#include "kamping/environment.hpp"
 #include "kamping/p2p/recv.hpp"
 #include "kamping/p2p/send.hpp"
-#include "kamping/collectives/barrier.hpp"
-#include "kamping/communicator.hpp"
-#include "kamping/data_buffers/probe_db.hpp"
-#include "kamping/environment.hpp"
 
 int main() {
     using namespace kamping;
@@ -33,20 +31,16 @@ int main() {
     {
         size_t           size = comm.size() + 10;
         std::vector<int> sbuf(size, comm.rank_signed() + 5);
-        auto             rbuf = ProbeDataBuffer<int>();
-
+        auto             rbuf = EmptyDataBuffer<int>();
 
         if (comm.rank_signed() == 0) {
             comm.send(destination(1), send_buf(sbuf));
-        }
-        else {
+        } else {
             auto received = comm.recv(rbuf, 0);
 
             for (auto x: received) {
                 std::cout << std::to_string(x) << std::endl;
             }
         }
-	int result = 0;
-	comm.recv(std::ranges::single_view {result}, 0);
     }
 }

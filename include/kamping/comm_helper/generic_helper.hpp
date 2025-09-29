@@ -1,47 +1,45 @@
 #pragma once
 
+#include "kamping/mpi_datatype.hpp"
+
 namespace kamping {
 
 enum class CommType { allgather, gather, recv };
 
 template <typename Buff>
-concept HasSetSize= requires(Buff buf, size_t size) {
-    { buf.set_size(size) };
+concept HasSetSize = requires(Buff buf, size_t size) {
+    {buf.set_size(size)};
 };
-  
-template<typename T>
+
+template <typename T>
 concept static_mpi_type = has_static_type_v<T>;
 
-template<typename Buff>
+template <typename Buff>
 concept HasType = requires(Buff buf) {
-  { buf.type() } -> std::same_as<MPI_Datatype>;
+    { buf.type() } -> std::same_as<MPI_Datatype>;
 };
 
-// template<typename Buff>
-// MPI_Datatype type(Buff&) = delete;
-
-template<typename Buff> requires HasType<Buff> || static_mpi_type<std::ranges::range_value_t<Buff>>
-MPI_Datatype type(Buff& buf) {
-  if constexpr (HasType<Buff>) {
-    return buf.type();
-  } else if constexpr (static_mpi_type<std::ranges::range_value_t<Buff>>) {
-    return mpi_datatype<std::ranges::range_value_t<Buff>>();
-  }
+template <typename Buff>
+requires HasType<Buff> || static_mpi_type<std::ranges::range_value_t<Buff>> MPI_Datatype type(Buff& buf) {
+    if constexpr (HasType<Buff>) {
+        return buf.type();
+    } else if constexpr (static_mpi_type<std::ranges::range_value_t<Buff>>) {
+        return mpi_datatype<std::ranges::range_value_t<Buff>>();
+    }
 }
-  template<typename Buff>
-  concept Typed = requires(Buff buf) {
-    {type(buf)} -> std::same_as<MPI_Datatype>;
-  };
 
-  
+template <typename Buff>
+concept Typed = requires(Buff buf) {
+    { type(buf) } -> std::same_as<MPI_Datatype>;
+};
 
 // Returns the size of the total communication. E.g. the size that the receiving buffer needs to be
-template <CommType type, typename SBuff, typename RBuff, typename Communicator>
+template <CommType commType, typename SBuff, typename RBuff, typename Communicator>
 size_t get_recv_size(SBuff const& sbuf, RBuff& rbuf, Communicator const& comm) {
-    using send_type = std::ranges::range_value_t<SBuff>;
-    using recv_type = std::ranges::range_value_t<RBuff>;
+    using send_type = decltype(type(sbuf));
+    using recv_type = decltype(type(rbuf));
 
-    if constexpr (type == CommType::allgather) {
+    if constexpr (commType == CommType::allgather) {
         if constexpr (std::is_same_v<send_type, recv_type>) {
             return asserting_cast<size_t>(std::size(sbuf) * comm.size());
         } else {

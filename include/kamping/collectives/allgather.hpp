@@ -35,15 +35,10 @@ template <typename SBuff, typename RBuff>
 requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<
     SBuff> && kamping::RecvDataBuffer<RBuff>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(SBuff&& sbuf, RBuff&& rbuf) const {
-    using namespace kamping::internal;
-
     infer<CommType::allgather>(sbuf, rbuf, *this);
 
-    using send_type = std::ranges::range_value_t<SBuff>;
-    using recv_type = std::ranges::range_value_t<RBuff>;
-
-    auto   send_size = std::size(sbuf);
-    size_t recv_size = std::size(rbuf);
+    size_t send_size = std::ranges::size(sbuf);
+    size_t recv_size = std::ranges::size(rbuf);
 
     KASSERT(
         is_same_on_all_ranks(send_size),
@@ -57,12 +52,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(SBuff&& 
 
     // error code can be unused if KTHROW is removed at compile time
     [[maybe_unused]] int err = MPI_Allgather(
-        sbuf.data(),
+        std::ranges::data(sbuf),
         asserting_cast<int>(send_size),
-        mpi_datatype<send_type>(),
-        rbuf.data(),
+        type(sbuf),
+        std::ranges::data(rbuf),
         asserting_cast<int>(recv_size / size()),
-        mpi_datatype<recv_type>(),
+        type(rbuf),
         this->mpi_communicator()
     );
     this->mpi_error_hook(err, "MPI_Allgather");

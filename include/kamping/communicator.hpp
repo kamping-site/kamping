@@ -22,6 +22,7 @@
 
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/comm_helper/generic_helper.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/group.hpp"
 #include "kamping/mpi_constants.hpp"
@@ -29,13 +30,11 @@
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/rank_ranges.hpp"
-#include "kamping/comm_helper/generic_helper.hpp"
 
 namespace kamping {
 
 template <typename Buff>
-concept DataBufferConcept = std::ranges::contiguous_range<Buff> && std::ranges::sized_range<Buff> &&
-    Typed<Buff>;
+concept DataBufferConcept = std::ranges::contiguous_range<Buff> && std::ranges::sized_range<Buff> && Typed<Buff>;
 
 template <typename SBuff>
 concept SendDataBuffer = DataBufferConcept<SBuff> && std::ranges::input_range<SBuff>;
@@ -510,8 +509,12 @@ public:
 
     template <typename RBuff, typename StatusObject = decltype(status(ignore<>))>
     requires kamping::DataBufferConcept<RBuff> && kamping::RecvDataBuffer<RBuff>
-    auto recv(RBuff&& rbuf, int source = MPI_ANY_SOURCE, int tag = MPI_ANY_TAG, StatusObject status = kamping::status(ignore<>)) const;
-
+    auto recv(
+        RBuff&&      rbuf,
+        int          source = MPI_ANY_SOURCE,
+        int          tag    = MPI_ANY_TAG,
+        StatusObject status = kamping::status(ignore<>)
+    ) const;
 
     template <typename recv_value_type_tparam, typename... Args>
     auto recv_single(Args... args) const;

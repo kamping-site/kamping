@@ -15,9 +15,9 @@
 
 #pragma once
 
+#include <ranges>
 #include <type_traits>
 #include <utility>
-#include <ranges>
 
 #include <kassert/kassert.hpp>
 #include <mpi.h>
@@ -28,17 +28,16 @@
 #include "kamping/implementation_helpers.hpp"
 
 template <
-    template <typename...> typename DefaultContainerType,
-    template <typename, template <typename...> typename> typename... Plugins>
+    template <typename...>
+    typename DefaultContainerType,
+    template <typename, template <typename...> typename>
+    typename... Plugins>
 template <typename RBuff, typename StatusObject>
-    requires kamping::DataBufferConcept<RBuff> && kamping::RecvDataBuffer<RBuff>
+requires kamping::DataBufferConcept<RBuff> && kamping::RecvDataBuffer<RBuff>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(
     RBuff&& rbuf, int source, int tag, StatusObject status_param
 ) const {
     infer<CommType::recv>(rbuf, *this);
-
-    // Make sure that the size is set before .data is called in the MPI call
-    // int recv_size = asserting_cast<int>(std::size(rbuf));
 
     static_assert(
         StatusObject::parameter_type == internal::ParameterType::status,
@@ -47,14 +46,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(
     auto status = status_param.construct_buffer_or_rebind();
 
     [[maybe_unused]] int err = MPI_Recv(
-	std::ranges::data(rbuf), // buf
-        asserting_cast<int>(std::ranges::size(rbuf)),       // count
-        type(rbuf),
-        // mpi_datatype<recv_type>(),            // datatype
-        source,                                      // source
-        tag,                                         // tag
-        this->mpi_communicator(),                    // comm
-        internal::status_param_to_native_ptr(status) // status
+        std::ranges::data(rbuf),                      // buf
+        asserting_cast<int>(std::ranges::size(rbuf)), // count
+        type(rbuf),                                   // datatype
+        source,                                       // source
+        tag,                                          // tag
+        this->mpi_communicator(),                     // comm
+        internal::status_param_to_native_ptr(status)  // status
     );
     this->mpi_error_hook(err, "MPI_Recv");
 
