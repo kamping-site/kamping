@@ -102,7 +102,7 @@ public:
         THROW_IF_MPI_ERROR(err, "MPI_Info_set");
     }
 
-    template <typename T>
+    template <typename T, typename Enable = std::enable_if_t<!std::is_convertible_v<T, std::string_view>>>
     void set(std::string_view key, T const& value) {
         auto value_string = info_value_traits<T>::to(value);
         set(key, value_string);
