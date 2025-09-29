@@ -169,7 +169,6 @@ auto const& select_parameter_type_in_tuple(std::tuple<Args...> const& tuple) {
 
 /// @brief Type of Buffer with requested \tparam parameter_type
 ///
-/// @tparam TParameterType Type of the parameter type (required for parameter selection within plugins).
 /// @tparam parameter_type The parameter type with which a parameter should be found.
 /// @tparam Args All parameter types to be searched for type `parameter_type`.
 template <ParameterType parameter_type, typename... Args>

@@ -33,10 +33,10 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-//// @addtogroup kamping_collectives
+/// @addtogroup kamping_collectives
 /// @{
 
-// @brief Wrapper for \c MPI_Reduce.
+/// @brief Wrapper for \c MPI_Reduce.
 ///
 /// This wraps \c MPI_Reduce. The operation combines the elements in the input buffer provided via \c
 /// kamping::send_buf() and returns the combined value on the root rank.
@@ -53,7 +53,7 @@
 /// The following parameters are optional:
 /// - \ref kamping::send_recv_count() specifying how many elements of the buffer take part in the reduction.
 /// If omitted, the size of the send buffer is used as a default. This parameter is mandatory if \ref
-/// kamping::send_type() is given.
+/// kamping::send_recv_type() is given.
 ///
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send_recv type. If omitted, the \c MPI
 /// datatype is derived automatically based on send_buf's underlying \c value_type.

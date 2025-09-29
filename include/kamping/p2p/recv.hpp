@@ -34,10 +34,10 @@
 #include "kamping/result.hpp"
 #include "kamping/status.hpp"
 
-///// @addtogroup kamping_p2p
+/// @addtogroup kamping_p2p
 /// @{
 
-// @brief Wrapper for \c MPI_Recv.
+/// @brief Wrapper for \c MPI_Recv.
 ///
 /// This wraps \c MPI_Recv. This operation performs a standard blocking receive.
 /// If the \ref kamping::recv_counts() parameter is not specified, this first performs a probe, followed by a receive of
@@ -51,7 +51,7 @@
 /// storage must be large enough to hold all received elements. If no \ref kamping::recv_buf() is provided, the \c
 /// value_type of the recv buffer has to be passed as a template parameter to \c recv().
 ///
-//  - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
+///  - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
 /// derived automatically based on recv_buf's underlying \c value_type.
 ///
 /// - \ref kamping::source() receive a message sent from this source rank. Defaults to probing for an arbitrary source,

@@ -363,7 +363,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_inplace(Arg
 ///  - \ref kamping::op() the operation to apply to the input.
 ///
 ///  The following parameters are optional:
-///  - \ref kamping::values_on_rank_0() containing the single value that is returned in the \c recv_buf of rank 0.///
+///  - \ref kamping::values_on_rank_0() containing the single value that is returned in the \c recv_buf of rank 0.
 ///
 ///  @tparam Args Automatically deduced template parameters.
 ///  @param args All required and any number of the optional buffers described above.

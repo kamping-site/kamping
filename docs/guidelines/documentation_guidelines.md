@@ -228,7 +228,7 @@ As mentioned above, the documentation can be formatted with different commands.
 Due to better readability of the unprocessed documentation, we use a backslash `\` to enable formatting commands similar to how LaTeX works.
 (`@` would also work but is strongly discouraged in KaMPIng.)
 
-- **Typwriter Font** `\c`
+- **Typewriter Font** `\c`
 
   We use typewriter font to highlight language specific concepts like boolean types `true` and `false`, character types like `signed char` and `unsigned char`, `nullptr`, or fixed size integers like `uint16_t` or `int64_t`.
   Note that [Doxygen] is unaware of any C++-Standard-Library-Classes so if such classes (e.g., `std::vector` or `std::array`) are used, they should also be formatted using typewriter font.

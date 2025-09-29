@@ -55,12 +55,12 @@ inline constexpr bool is_extractable<internal::ResultCategoryNotUsed> = false;
 ///
 /// A wrapped \c MPI call can have multiple different results such as the \c
 /// recv_buffer, \c recv_counts, \c recv_displs etc. If the buffers where these
-/// results have been written to by the library call has been allocated
+/// results have been written to by the library call have been allocated
 /// by/transferred to KaMPIng, the content of the buffers can be extracted using
 /// extract_<result>.
-/// Note that not all below-listed buffer categories needs to be used by every
+/// Note that not all below-listed buffer categories need to be used by every
 /// wrapped \c MPI call. If a specific call does not use a buffer category, you
-/// have to provide ResultCategoryNotUsed instead.
+/// have to provide \c ResultCategoryNotUsed instead.
 ///
 /// @tparam Args Types of return data buffers.
 template <typename... Args>
@@ -583,7 +583,7 @@ public:
     /// This function is only available if the corresponding data is part of the result object.
     /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
     /// the result object.
-    /// @return Returns a reference to the underlying storage containing the send_recv_count.
+    /// @return Returns a reference to the underlying storage containing the \c send_recv_count.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_recv_count, T>(), bool> =
@@ -597,7 +597,7 @@ public:
     /// This function is only available if the corresponding data is part of the result object.
     /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
     /// the result object.
-    /// @return Returns a reference to the underlying storage containing the send_recv_count.
+    /// @return Returns a reference to the underlying storage containing the \c send_recv_count.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_recv_count, T>(), bool> =
@@ -611,7 +611,7 @@ public:
     /// This function is only available if the corresponding data is part of the result object.
     /// @tparam T Template parameter helper only needed to remove this function if the corresponding data is not part of
     /// the result object.
-    /// @return Returns the underlying storage containing the send_recv_count.
+    /// @return Returns the underlying storage containing the \c send_recv_count.
     template <
         typename T = std::tuple<Args...>,
         std::enable_if_t<internal::has_parameter_type_in_tuple<internal::ParameterType::send_recv_count, T>(), bool> =

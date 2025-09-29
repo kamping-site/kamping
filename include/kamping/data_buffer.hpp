@@ -159,7 +159,7 @@ static constexpr bool is_vector_bool_v = false;
 /// This catches the edge case of elements which do not have a value type, they can not be a vector bool.
 ///
 /// @tparam T The type.
-/// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
+/// @return \c true if \c T is an template instance of \c std::vector<bool>, \c false otherwise.
 template <typename T>
 static constexpr bool is_vector_bool_v<
     T,
@@ -167,7 +167,7 @@ static constexpr bool is_vector_bool_v<
 
 /// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
 /// @tparam T The type.
-/// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
+/// @return \c true if \c T is an template instance of \c std::vector<bool>, \c false otherwise.
 template <typename T>
 static constexpr bool
     is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
@@ -394,7 +394,7 @@ public:
     static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
     static constexpr bool is_single_element =
-        !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
+        !has_data_member_v<MemberType>; ///< `true` if the DataBuffer represents a single element, `false` if the
                                         ///< DataBuffer represents a container.
     using MemberTypeWithConst =
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or

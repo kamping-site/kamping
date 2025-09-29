@@ -104,7 +104,7 @@ public:
     static constexpr bool is_lib_allocated =
         DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng.
     static constexpr bool is_single_element =
-        DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
+        DataBufferType::is_single_element; ///< Indicates whether the buffer is a single element buffer.
     using value_type = typename DataBufferType::value_type; ///< The constructed data buffer's value type.
 
     /// @brief The size of the underlying container.
@@ -200,7 +200,7 @@ public:
     static constexpr bool is_lib_allocated =
         DataBufferType::is_lib_allocated; ///< Indicates whether the buffer is allocated by KaMPIng
     static constexpr bool is_single_element =
-        DataBufferType::is_single_element; ///< Indicated whether the buffer is a single element buffer.
+        DataBufferType::is_single_element; ///< Indicates whether the buffer is a single element buffer.
     using value_type = typename DataBufferType::value_type; ///< The constructed data buffer's value type.
 
     /// @brief The size of the underlying container.
@@ -352,8 +352,8 @@ struct rank_null_t {}; ///< tag struct for \c MPI_PROC_NULL
 /// ease-of-use functionality in the form of the methods \c rank() and \c
 /// rank_signed(), which return the encapsulated rank and are easier to read in
 /// the code.
-// @tparam rank_type The \ref RankType encapsulated.
-// @tparam parameter_type The parameter type.
+/// @tparam rank_type The \ref RankType encapsulated.
+/// @tparam parameter_type The parameter type.
 template <RankType rank_type, ParameterType parameter_type>
 class RankDataBuffer {};
 
@@ -364,8 +364,8 @@ class RankDataBuffer {};
 /// ease-of-use functionality in the form of the methods \c rank() and \c
 /// rank_signed(), which return the encapsulated rank and are easier to read in
 /// the code.
-// @tparam rank_type The \ref RankType encapsulated.
-// @tparam parameter_type The parameter type.
+/// @tparam rank_type The \ref RankType encapsulated.
+/// @tparam parameter_type The parameter type.
 template <ParameterType type>
 class RankDataBuffer<RankType::value, type> final : private DataBuffer<
                                                         size_t,

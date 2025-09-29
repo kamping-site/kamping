@@ -27,9 +27,9 @@ Submit a pull request
 - Always add extensive unit tests for your pull request and make sure that they pass.
 - Please do not upgrade dependencies or build tools unless you have a good reason for it. Doing so can easily introduce bugs that are hard to track down.
 - If you plan to do a change that touches many files (10+), please ask beforehand. This usually causes merge conflicts for other developers.
-- Please read our [coding guidelines](https://github.com/kamping-site/kamping/blob/main/docs/coding_guidelines.md)
-- Please read our [documentation guidelines](https://github.com/kamping-site/kamping/blob/main/docs/documentation_guidelines.md)
-- Please read our [testing guidelines](https://github.com/kamping-site/kamping/blob/main/docs/testing_guidelines.md)
+- Please read our [coding guidelines](https://github.com/kamping-site/kamping/blob/main/docs/guidelines/coding_guidelines.md)
+- Please read our [documentation guidelines](https://github.com/kamping-site/kamping/blob/main/docs/guidelines/documentation_guidelines.md)
+- Please read our [testing guidelines](https://github.com/kamping-site/kamping/blob/main/docs/guidelines/testing_guidelines.md)
 - Commit only corrections of typos and similar minor fixes directly to the `main` branch. For everything else, use `feature-` and `fix-` branches and merge them to the `main` branch using a Pull Request (PR).
 - Use a draft PR while you are still working on your pull request. Once you are ready for review, convert it into a regular PR.
 - Label your Pull Request with one or more of these labels:

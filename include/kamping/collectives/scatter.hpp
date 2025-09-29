@@ -34,10 +34,10 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-//// @addtogroup kamping_collectives
+/// @addtogroup kamping_collectives
 /// @{
 
-// @brief Wrapper for \c MPI_Scatter.
+/// @brief Wrapper for \c MPI_Scatter.
 ///
 /// This wrapper for \c MPI_Scatter distributes data on the root PE evenly across all PEs in the current
 /// communicator.
@@ -314,7 +314,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scatter_single(Arg
 ///
 /// @tparam recv_value_type_tparam The type that is received. Only required when no kamping::send_buf() and no
 /// kamping::recv_buf() is given.
-/// /// @tparam Args Automatically deduced template parameters.
+/// @tparam Args Automatically deduced template parameters.
 /// @param args All required and any number of the optional parameters described above.
 /// @return Result object wrapping the output parameters to be returned by value.
 ///

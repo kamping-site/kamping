@@ -453,7 +453,6 @@ private:
                 entry            = MsgType(std::move(elem));
                 entry.set_destination(destination
                 ); // this has to be done independently of the envelope level, otherwise routing is not possible
-                   //
                 if constexpr (envelope_level != MessageEnvelopeLevel::no_envelope) {
                     entry.set_source(asserting_cast<int>(_rank_in_orig_comm));
                 }
