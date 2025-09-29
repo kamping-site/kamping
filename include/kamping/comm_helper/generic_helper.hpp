@@ -4,7 +4,7 @@
 
 namespace kamping {
 
-enum class CommType { allgather, gather, recv };
+enum class CommType { allgather, gather, recv, sendrecv };
 
 template <typename Buff>
 concept HasSetSize = requires(Buff buf, size_t size) {

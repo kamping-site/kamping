@@ -504,8 +504,18 @@ public:
     template <typename... Args>
     auto iprobe(Args... args) const;
 
-    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
-    auto sendrecv(Args... args) const;
+    template <typename SBuff, typename RBuff, typename StatusObject = decltype(status(ignore<>))>
+    requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<
+        SBuff> && kamping::RecvDataBuffer<RBuff>
+    auto sendrecv(
+        SBuff&&      sbuf,
+        RBuff&&      rbuf,
+        int          dest,
+        int          send_tag = MPI_ANY_TAG,
+        int          source   = MPI_ANY_SOURCE,
+        int          recv_tag = MPI_ANY_TAG,
+        StatusObject status   = kamping::status(ignore<>)
+    ) const;
 
     template <typename RBuff, typename StatusObject = decltype(status(ignore<>))>
     requires kamping::DataBufferConcept<RBuff> && kamping::RecvDataBuffer<RBuff>
