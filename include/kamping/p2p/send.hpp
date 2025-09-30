@@ -29,10 +29,10 @@
 #include "kamping/p2p/helpers.hpp"
 #include "kamping/parameter_objects.hpp"
 
-///// @addtogroup kamping_p2p
+/// @addtogroup kamping_p2p
 /// @{
 
-// @brief Wrapper for \c MPI_Send.
+/// @brief Wrapper for \c MPI_Send.
 ///
 /// This wraps \c MPI_Send. This operation sends the elements in the input buffer provided via \c
 /// kamping::send_buf() to the specified receiver rank using standard send mode.
@@ -42,7 +42,7 @@
 /// - \ref kamping::send_count() specifying how many elements of the buffer are sent. If omitted, the size of the send
 /// buffer is used as a default. This parameter is mandatory if \ref kamping::send_type() is given.
 ///
-//  - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
+///  - \ref kamping::send_type() specifying the \c MPI datatype to use as send type. If omitted, the \c MPI datatype is
 /// derived automatically based on send_buf's underlying \c value_type.
 ///
 /// - \ref kamping::destination() the receiving rank.

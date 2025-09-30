@@ -30,10 +30,10 @@
 #include "kamping/parameter_objects.hpp"
 #include "kamping/result.hpp"
 
-///// @addtogroup kamping_p2p
+/// @addtogroup kamping_p2p
 /// @{
 
-// @brief Wrapper for \c MPI_Isend.
+/// @brief Wrapper for \c MPI_Isend.
 ///
 /// This wraps \c MPI_Isend. This operation sends the elements in the input buffer provided via \c
 /// kamping::send_buf() to the specified receiver rank using standard send mode without blocking. The call is associated

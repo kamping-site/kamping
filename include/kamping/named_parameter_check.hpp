@@ -286,9 +286,9 @@ namespace kamping::internal {
 /// @brief Struct wrapping a check that verifies that no unused parameters are part of the arguments.
 ///
 /// @tparam RequiredParametersTuple All required kamping::internal::ParameterType passed as \c
-/// std::integral_constant in an \c std::tuple.
+/// std::integral_constant in a \c std::tuple.
 /// @tparam OptionalParametersTuple All optional kamping::internal::ParameterType passed as \c
-/// std::integral_constant in an \c std::tuple.
+/// std::integral_constant in a \c std::tuple.
 /// @tparam Args Arguments passed to the function that calls this check, i.e., the different parameters.
 template <typename RequiredParametersTuple, typename OptionalParametersTuple, typename... Args>
 struct has_no_unused_parameters {

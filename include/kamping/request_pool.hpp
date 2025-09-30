@@ -12,7 +12,6 @@
 // <https://www.gnu.org/licenses/>.
 
 #pragma once
-#pragma once
 
 #include <cstddef>
 #include <vector>

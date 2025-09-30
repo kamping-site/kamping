@@ -34,10 +34,10 @@
 #include "kamping/result.hpp"
 #include "kamping/status.hpp"
 
-///// @addtogroup kamping_p2p
+/// @addtogroup kamping_p2p
 /// @{
 
-// @brief Wrapper for \c MPI_Sendrecv.
+/// @brief Wrapper for \c MPI_Sendrecv.
 ///
 /// This wraps \c MPI_Sendrecv. This operation performs a blocking send and receive operation. If the
 /// \ref kamping::recv_counts() parameter is not specified, this first performs a sendrecv, sending and receiving
@@ -67,7 +67,7 @@
 /// i.e. \c source(rank::any).
 ///
 /// - \ref kamping::send_tag() send message with this tag. Defaults to the communicator's default tag (\ref
-///// Communicator::default_tag()) if not present.
+/// Communicator::default_tag()) if not present.
 ///
 /// - \ref kamping::recv_tag() receive message with this tag. Defaults to receiving for an arbitrary tag, i.e. \c
 /// tag(tags::any).
