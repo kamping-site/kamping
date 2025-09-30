@@ -52,7 +52,8 @@
 /// is required.
 ///
 /// - \ref kamping::send_recv_count() containing the number of elements to be processed in this operation. This
-/// parameter has to be the same at each rank. If omitted, the size of the send buffer will be used as `send_recv_count`.
+/// parameter has to be the same at each rank. If omitted, the size of the send buffer will be used as
+/// `send_recv_count`.
 ///
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as data type in this operation. If omitted,
 /// the \c MPI datatype is derived automatically based on send_buf's underlying \c value_type.
