@@ -1,0 +1,20 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,185,75,210"/>
+<area shape="rect" id="Node000001" href="$classkamping_1_1Communicator.html" title=" " alt="" coords="133,5,316,45"/>
+<area shape="poly" id="edge36_Node000000_Node000001" title=" " alt="" coords="47,170,74,113,95,82,121,55,140,43,143,48,124,59,99,85,79,115,52,173"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1Communicator.html" title=" " alt="" coords="123,70,327,95"/>
+<area shape="poly" id="edge37_Node000000_Node000002" title=" " alt="" coords="55,171,84,137,121,106,150,93,152,98,124,110,87,141,60,174"/>
+<area shape="rect" id="Node000003" href="$classkamping_1_1Communicator.html" title=" " alt="" coords="128,120,321,160"/>
+<area shape="poly" id="edge38_Node000000_Node000003" title=" " alt="" coords="87,180,159,158,160,163,88,185"/>
+<area shape="rect" id="Node000004" href="$classkamping_1_1TopologyCommunicator.html" title=" " alt="" coords="379,208,619,248"/>
+<area shape="poly" id="edge39_Node000000_Node000004" title=" " alt="" coords="89,198,378,217,378,223,88,203"/>
+<area shape="rect" id="Node000005" href="$classkamping_1_1Communicator.html" title="Wrapper for MPI communicator providing access to rank() and size() of the communicator...." alt="" coords="133,235,316,290"/>
+<area shape="poly" id="edge40_Node000000_Node000005" title=" " alt="" coords="88,211,148,233,146,238,86,216"/>
+<area shape="rect" id="Node000006" href="$classkamping_1_1TopologyCommunicator.html" title="A Communicator which possesses an additional virtual topology and supports neighborhood collectives (..." alt="" coords="375,301,623,341"/>
+<area shape="poly" id="edge45_Node000000_Node000006" title=" " alt="" coords="55,221,82,263,101,283,124,299,184,322,249,335,314,339,375,337,375,342,314,344,248,340,183,328,121,304,98,287,78,266,51,224"/>
+<area shape="rect" id="Node000007" href="$classkamping_1_1DistributedGraphCommunicator.html" title="A Communicator which possesses an additional virtual topology and supports neighborhood collectives (..." alt="" coords="671,323,915,378"/>
+<area shape="poly" id="edge44_Node000000_Node000007" title=" " alt="" coords="50,223,59,253,74,288,95,320,124,346,194,380,270,401,349,412,428,415,504,410,577,401,700,375,701,381,578,406,505,416,428,420,348,418,269,407,193,385,121,350,91,324,69,290,54,255,44,225"/>
+<area shape="poly" id="edge41_Node000005_Node000004" title=" " alt="" coords="329,247,378,241,379,246,330,252"/>
+<area shape="poly" id="edge42_Node000005_Node000006" title=" " alt="" coords="330,282,405,299,404,304,329,288"/>
+<area shape="poly" id="edge43_Node000006_Node000007" title=" " alt="" coords="636,332,671,336,670,341,636,338"/>
+</map>
