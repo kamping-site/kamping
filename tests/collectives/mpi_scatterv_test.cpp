@@ -378,19 +378,22 @@ TEST(ScatterTest, scatterv_single_element_with_given_recv_buf_smaller_than_requi
         ASSERT_EQ(result.size(), 1);
         EXPECT_EQ(result.front(), comm.rank());
     }
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     {
         // recv buffer will not be resized as policy is no_resize; therefore the kassert for a sufficiently sized recv
         // buffer will fail
         std::vector<int> result;
-        EXPECT_KASSERT_FAILS(comm.scatterv(send_buf(input), send_counts(counts), recv_buf<no_resize>(result)), "");
+        EXPECT_KAMPING_ASSERT_FAILS(
+            comm.scatterv(send_buf(input), send_counts(counts), recv_buf<no_resize>(result)),
+            ""
+        );
     }
 
     {
         // recv buffer will not be resized as default policy is no_resize; therefore the kassert for a sufficiently
         // sized recv buffer will fail
         std::vector<int> result;
-        EXPECT_KASSERT_FAILS(comm.scatterv(send_buf(input), send_counts(counts), recv_buf(result)), "");
+        EXPECT_KAMPING_ASSERT_FAILS(comm.scatterv(send_buf(input), send_counts(counts), recv_buf(result)), "");
     }
 #endif
 }

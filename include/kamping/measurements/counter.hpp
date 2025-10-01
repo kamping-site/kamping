@@ -18,13 +18,13 @@
 
 #pragma once
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/collectives/barrier.hpp"
 #include "kamping/collectives/gather.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/measurements/aggregated_tree_node.hpp"
 #include "kamping/measurements/internal/measurement_utils.hpp"
 

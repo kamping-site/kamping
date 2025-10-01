@@ -21,10 +21,10 @@
 #include "kamping/collectives/bcast.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameters.hpp"
 #include "kamping/plugin/plugin_helpers.hpp"
-#include "kassert/kassert.hpp"
 
 int desired_mpi_ret_code;
 
@@ -49,7 +49,7 @@ template <typename Comm, template <typename...> typename DefaultContainerType>
 class IgnoreMPIErrors : public kamping::plugin::PluginBase<Comm, DefaultContainerType, IgnoreMPIErrors> {
 public:
     void mpi_error_handler([[maybe_unused]] int const ret, [[maybe_unused]] std::string const& callee) const {
-        KASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS");
+        KAMPING_ASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS");
         first_error_handler_called = true;
     }
 };
@@ -58,7 +58,7 @@ template <typename Comm, template <typename...> typename DefaultContainerType>
 class IgnoreMPIErrors2 : public kamping::plugin::PluginBase<Comm, DefaultContainerType, IgnoreMPIErrors2> {
 public:
     void mpi_error_handler([[maybe_unused]] int const ret, [[maybe_unused]] std::string const& callee) const {
-        KASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS");
+        KAMPING_ASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS");
         second_error_handler_called = true;
     }
 };

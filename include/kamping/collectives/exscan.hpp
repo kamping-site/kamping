@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
@@ -23,6 +22,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -96,7 +96,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
         // Get the send buffer and deduce the send and recv value types.
         auto const send_buf   = select_parameter_type<ParameterType::send_buf>(args...).construct_buffer_or_rebind();
         using send_value_type = typename std::remove_reference_t<decltype(send_buf)>::value_type;
-        KASSERT(
+        KAMPING_ASSERT(
             is_same_on_all_ranks(send_buf.size()),
             "The send buffer has to be the same size on all ranks.",
             assert::light_communication
@@ -126,7 +126,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
             send_recv_count.underlying() = asserting_cast<int>(send_buf.size());
         }
 
-        KASSERT(
+        KAMPING_ASSERT(
             is_same_on_all_ranks(send_recv_count.get_single_element()),
             "The send_recv_count has to be the same on all ranks.",
             assert::light_communication
@@ -141,7 +141,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
             return asserting_cast<size_t>(send_recv_count.get_single_element());
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             // if the send_recv type is user provided, kamping cannot make any assumptions about the required size of
             // the recv buffer
             send_recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
@@ -173,7 +173,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan(Args... arg
             if constexpr (has_values_on_rank_0_param) {
                 auto values_on_rank_0_param =
                     select_parameter_type<ParameterType::values_on_rank_0>(args...).construct_buffer_or_rebind();
-                KASSERT(
+                KAMPING_ASSERT(
                     // if the send_recv type is user provided, kamping cannot make any assumptions about the required
                     // size of the recv buffer
                     (send_recv_type_is_in_param || values_on_rank_0_param.size() == 1
@@ -274,7 +274,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_inplace(Arg
         count.underlying() = asserting_cast<int>(send_recv_buf.size());
     }
 
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(count.get_single_element()),
         "The send_recv_count has to be the same on all ranks.",
         assert::light_communication
@@ -288,7 +288,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_inplace(Arg
         return asserting_cast<size_t>(count.get_single_element());
     };
     send_recv_buf.resize_if_requested(compute_required_recv_buf_size);
-    KASSERT(
+    KAMPING_ASSERT(
         // if the send_recv type is user provided, kamping cannot make any assumptions about the required size of
         // the buffer
         type_is_in_param || send_recv_buf.size() >= compute_required_recv_buf_size(),
@@ -320,7 +320,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::exscan_inplace(Arg
         if constexpr (has_values_on_rank_0_param) {
             auto values_on_rank_0_param =
                 select_parameter_type<ParameterType::values_on_rank_0>(args...).construct_buffer_or_rebind();
-            KASSERT(
+            KAMPING_ASSERT(
                 // if the send_recv type is user provided, kamping cannot make any assumptions about the required
                 // size of the recv buffer
                 (type_is_in_param || values_on_rank_0_param.size() == 1

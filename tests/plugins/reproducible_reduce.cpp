@@ -213,8 +213,8 @@ TEST(ReproducibleReduceTest, TreeLevelCalculation) {
     EXPECT_EQ(tree_height(16), 4);
     EXPECT_EQ(tree_height(17), 5);
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(subtree_height(0), "");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(subtree_height(0), "");
 #endif
 
     // Randomized testing
@@ -275,8 +275,8 @@ template <typename F>
 void with_comm_size_n(
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> const& comm, size_t comm_size, F f
 ) {
-    KASSERT(comm.is_same_on_all_ranks(comm_size), "Target comm_size must be same on all ranks");
-    KASSERT(
+    KAMPING_ASSERT(comm.is_same_on_all_ranks(comm_size), "Target comm_size must be same on all ranks");
+    KAMPING_ASSERT(
         comm.size() >= comm_size,
         "Can not create communicator with " << comm_size << " ranks when process only has " << comm.size()
                                             << " ranks assigned."
@@ -286,7 +286,7 @@ void with_comm_size_n(
     auto new_comm    = comm.split(rank_active);
 
     if (rank_active) {
-        KASSERT(new_comm.size() == comm_size);
+        KAMPING_ASSERT(new_comm.size() == comm_size);
         f(new_comm);
     }
 }
@@ -348,7 +348,7 @@ TEST(ReproducibleReduceTest, Fuzzing) {
 
         // Calculate reference result
         with_comm_size_n(comm, 1, [&reference_result, &data_array](auto comm_) {
-            KASSERT(comm_.size() == 1);
+            KAMPING_ASSERT(comm_.size() == 1);
             const auto distribution = distribute_evenly(data_array.size(), 1);
             auto       repr_comm    = comm_.template make_reproducible_comm<double>(
                 kamping::send_counts(distribution.send_counts),
@@ -439,7 +439,7 @@ TEST(ReproducibleReduceTest, ReproducibleResults) {
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(ReproducibleReduceTest, ErrorChecking) {
     // Test error messages on communicator with 3 ranks
     kamping::Communicator<std::vector, kamping::plugin::ReproducibleReducePlugin> comm;
@@ -453,7 +453,7 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
         ));
 
         // Supplied distribution has unequal lengths
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             sub_comm.template make_reproducible_comm<double>(
                 kamping::send_counts({5, 5, 5, 5}),
                 kamping::recv_displs({0, 5, 10})
@@ -462,7 +462,7 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
         );
 
         // Supplied distribution does not match communicator size
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             sub_comm.template make_reproducible_comm<double>(
                 kamping::send_counts({5, 5, 5, 5}),
                 kamping::recv_displs({0, 5, 10, 15})
@@ -471,7 +471,7 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
         );
 
         // Supplied distribution does not start at 0
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             sub_comm.template make_reproducible_comm<double>(
                 kamping::send_counts({5, 5, 5}),
                 kamping::recv_displs({5, 10, 15})
@@ -480,7 +480,7 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
         );
 
         // Supplied distribution has gaps
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             sub_comm.template make_reproducible_comm<double>(
                 kamping::send_counts({5, 5, 5}),
                 kamping::recv_displs({0, 10, 15})
@@ -489,7 +489,7 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
         );
 
         // Supplied distribution has invalid displacements
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             sub_comm.template make_reproducible_comm<double>(
                 kamping::send_counts({5, 5, 5}),
                 kamping::recv_displs({0, 0, 0})
@@ -498,7 +498,7 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
         );
 
         // Supplied distribution has negative displacement
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             sub_comm.template make_reproducible_comm<double>(
                 kamping::send_counts({5, 5, 5}),
                 kamping::recv_displs({-5, 0, 5})
@@ -507,7 +507,7 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
         );
 
         // Supplied distribution is empty
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             sub_comm.template make_reproducible_comm<double>(
                 kamping::send_counts(std::vector<int>()),
                 kamping::recv_displs(std::vector<int>())
@@ -516,7 +516,7 @@ TEST(ReproducibleReduceTest, ErrorChecking) {
         );
 
         // Empty array, send_counts all zero
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             sub_comm.template make_reproducible_comm<double>(
                 kamping::send_counts({0, 0, 0}),
                 kamping::recv_displs({0, 0, 0})

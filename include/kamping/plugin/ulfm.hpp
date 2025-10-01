@@ -144,7 +144,7 @@ public:
 
     /// Overwrite the on-MPI-error handler to throw appropriate exceptions for then hardware faults happened.
     void mpi_error_handler(int const ret, [[maybe_unused]] std::string const& callee) const {
-        KASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS", assert::light);
+        KAMPING_ASSERT(ret != MPI_SUCCESS, "MPI error handler called with MPI_SUCCESS", assert::light);
         switch (ret) {
             case MPIX_ERR_PROC_FAILED:
                 throw MPIProcFailedError();
