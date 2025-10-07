@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/kassert/kassert.hpp"
 
 namespace kamping {
 
@@ -102,7 +102,7 @@ public:
             case MPI_UNEQUAL:
                 return GroupEquality::Unequal;
             default:
-                KASSERT(false, "MPI_Group_compare returned an unknown value");
+                KAMPING_ASSERT(false, "MPI_Group_compare returned an unknown value");
                 return GroupEquality::Invalid;
         }
     }

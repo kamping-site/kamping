@@ -101,7 +101,7 @@ public:
                 return num_requests();
             };
             statuses.resize_if_requested(compute_requested_size);
-            KASSERT(
+            KAMPING_ASSERT(
                 statuses.size() >= compute_requested_size(),
                 "statuses buffer is not large enough to hold all status information.",
                 assert::light
@@ -139,7 +139,7 @@ public:
                 return num_requests();
             };
             statuses.resize_if_requested(compute_requested_size);
-            KASSERT(
+            KAMPING_ASSERT(
                 statuses.size() >= compute_requested_size(),
                 "statuses buffer is not large enough to hold all status information.",
                 assert::light

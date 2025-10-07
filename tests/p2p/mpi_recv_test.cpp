@@ -258,7 +258,7 @@ TEST_F(RecvTest, recv_vector_with_explicit_size_no_resize_big_enough) {
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
 TEST_F(RecvTest, recv_vector_with_explicit_size_no_resize_too_small) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
@@ -278,7 +278,7 @@ TEST_F(RecvTest, recv_vector_with_explicit_size_no_resize_too_small) {
     if (comm.rank_shifted_cyclic(-1) == comm.root()) {
         std::vector<int> message(1);
         EXPECT_EQ(probe_counter, 0);
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             { comm.recv(recv_buf<BufferResizePolicy::no_resize>(message), recv_count(5), status_out()); },
             "Recv buffer is not large enough to hold all received elements."
         );
@@ -442,19 +442,19 @@ TEST_F(RecvTest, recv_from_proc_null) {
     EXPECT_EQ(recv_count, 0);
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(RecvTest, recv_from_invalid_tag) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
-    EXPECT_KASSERT_FAILS({ comm.recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
+    EXPECT_KAMPING_ASSERT_FAILS({ comm.recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
 }
 #endif
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(RecvTest, recv_from_invalid_tag_with_explicit_recv_count) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
-    EXPECT_KASSERT_FAILS({ comm.recv(recv_buf(v), status_out(), tag(-1), recv_count(1)); }, "invalid tag");
+    EXPECT_KAMPING_ASSERT_FAILS({ comm.recv(recv_buf(v), status_out(), tag(-1), recv_count(1)); }, "invalid tag");
 }
 #endif
 
@@ -573,10 +573,10 @@ TEST_F(RecvTest, recv_single_int_from_explicit_source_and_explicit_ignore_status
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(RecvTest, recv_single_int_from_invalid_tag) {
     Communicator comm;
-    EXPECT_KASSERT_FAILS({ comm.recv_single<int>(tag(-1)); }, "invalid tag");
+    EXPECT_KAMPING_ASSERT_FAILS({ comm.recv_single<int>(tag(-1)); }, "invalid tag");
 }
 #endif
 

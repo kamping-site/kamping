@@ -312,11 +312,11 @@ TEST(ScanTest, single_element_with_given_recv_buf_smaller_than_required) {
         comm.scan(send_buf(input), recv_buf<grow_only>(recv_buffer), op(kamping::ops::plus<>{}));
         EXPECT_EQ(recv_buffer, expected_recv_buffer);
     }
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     {
         // recv buffer will not be resized as the policy is no_resize
         std::vector<int> recv_buffer;
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.scan(send_buf(input), recv_buf<no_resize>(recv_buffer), op(kamping::ops::plus<>{})),
             ""
         );
@@ -324,7 +324,7 @@ TEST(ScanTest, single_element_with_given_recv_buf_smaller_than_required) {
     {
         // recv buffer will not be resized as the policy is no_resize (default)
         std::vector<int> recv_buffer;
-        EXPECT_KASSERT_FAILS(
+        EXPECT_KAMPING_ASSERT_FAILS(
             comm.scan(send_buf(input), recv_buf<no_resize>(recv_buffer), op(kamping::ops::plus<>{})),
             ""
         );

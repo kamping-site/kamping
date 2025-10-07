@@ -445,10 +445,10 @@ TEST_F(TryRecvTest, non_trivial_recv_type) {
     EXPECT_FALSE(comm.try_recv(recv_buf<no_resize>(message), recv_type(MPI_INT_padding_padding())));
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST_F(TryRecvTest, try_recv_from_invalid_tag) {
     Communicator comm;
     std::vector  v{1, 2, 3, 4, 5};
-    EXPECT_KASSERT_FAILS({ comm.try_recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
+    EXPECT_KAMPING_ASSERT_FAILS({ comm.try_recv(recv_buf(v), status_out(), tag(-1)); }, "invalid tag");
 }
 #endif

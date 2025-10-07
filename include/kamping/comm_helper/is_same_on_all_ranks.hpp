@@ -15,10 +15,10 @@
 
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/mpi_ops.hpp"
 #include "kamping/named_parameters.hpp"

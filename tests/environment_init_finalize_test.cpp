@@ -12,15 +12,15 @@
 // <https://www.gnu.org/licenses/>.
 
 #include "kamping/assertion_levels.hpp"
-#undef KASSERT_ASSERTION_LEVEL
-#define KASSERT_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION
+#undef KAMPING_ASSERT_ASSERTION_LEVEL
+#define KAMPING_ASSERT_ASSERTION_LEVEL KAMPING_ASSERTION_LEVEL_HEAVY_COMMUNICATION
 
 #include <set>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/environment.hpp"
+#include "kamping/kassert/kassert.hpp"
 using namespace ::kamping;
 
 std::set<MPI_Datatype> freed_types;
@@ -32,8 +32,8 @@ int MPI_Type_free(MPI_Datatype* type) {
 
 // This is not using google test because our test setup would call MPI_Init before running any tests
 int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
-    KASSERT(!mpi_env.initialized());
-    KASSERT(!mpi_env.finalized());
+    KAMPING_ASSERT(!mpi_env.initialized());
+    KAMPING_ASSERT(!mpi_env.finalized());
     std::set<MPI_Datatype> types_to_be_freed;
     {
 #if defined(KAMPING_ENVIRONMENT_TEST_NO_PARAM)
@@ -44,8 +44,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         static_assert(false, "Define either KAMPING_ENVIRONMENT_TEST_NO_PARAM or KAMPING_ENVIRONMENT_TEST_WITH_PARAM");
 #endif
 
-        KASSERT(environment.initialized());
-        KASSERT(!environment.finalized());
+        KAMPING_ASSERT(environment.initialized());
+        KAMPING_ASSERT(!environment.finalized());
 
         // Register MPI data types to be freed when finalizing
         MPI_Datatype type1, type2;
@@ -63,12 +63,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
 #if defined(KAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE)
         // Test that destructor works correctly even if finalize was called on a different object.
         mpi_env.finalize();
-        KASSERT(environment.finalized());
+        KAMPING_ASSERT(environment.finalized());
 #endif
         // If KAMPING_ENVIRONMENT_TEST_EXPLICIT_FINALIZE is not defined, MPI_Init() is called by `Environment`s
         // destructor after this closing bracket.
     }
-    KASSERT(mpi_env.finalized());
-    KASSERT(types_to_be_freed == freed_types);
+    KAMPING_ASSERT(mpi_env.finalized());
+    KAMPING_ASSERT(types_to_be_freed == freed_types);
     return 0;
 }

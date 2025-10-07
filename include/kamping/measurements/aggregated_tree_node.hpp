@@ -102,13 +102,13 @@ private:
         MeasurementNode&              measurement_tree_node,
         Communciator const&           comm
     ) {
-        KASSERT(
+        KAMPING_ASSERT(
             internal::is_string_same_on_all_ranks(measurement_tree_node.name(), comm),
             "Currently processed MeasurementTreeNode has not the same name on all ranks -> measurement trees have "
             "diverged",
             assert::heavy_communication
         );
-        KASSERT(
+        KAMPING_ASSERT(
             comm.is_same_on_all_ranks(measurement_tree_node.measurements().size()),
             "Currently processed MeasurementTreeNode has not the same number of measurements on all ranks -> "
             "measurement trees have "

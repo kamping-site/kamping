@@ -306,7 +306,7 @@ TEST(SendrecvTest, sendrecv_different_types_with_explicit_buffer) {
     MPI_Barrier(comm.mpi_communicator());
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_LIGHT)
 TEST(SendrecvTest, sendrecv_cyclic_with_explicit_size_no_resize_too_small) {
     Communicator comm;
 
@@ -314,7 +314,7 @@ TEST(SendrecvTest, sendrecv_cyclic_with_explicit_size_no_resize_too_small) {
     std::vector<int> msg_recv;
     auto             sent_to = comm.rank_shifted_cyclic(1);
 
-    EXPECT_KASSERT_FAILS(
+    EXPECT_KAMPING_ASSERT_FAILS(
         {
             comm.sendrecv(
                 send_buf(input),

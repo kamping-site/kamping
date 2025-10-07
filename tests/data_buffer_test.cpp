@@ -709,7 +709,7 @@ TEST(DataBufferTest, resize_if_requested_with_no_resize) {
     }
 }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
     LibAllocatedContainerBasedBuffer<std::vector<int>, ParameterType::recv_buf, BufferType::in_buffer> buffer;
 
@@ -717,11 +717,11 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction) {
     buffer.size();
     buffer.resize(10);
     std::ignore = buffer.extract();
-    EXPECT_KASSERT_FAILS(buffer.extract(), "Cannot extract a buffer that has already been extracted.");
-    EXPECT_KASSERT_FAILS(buffer.get(), "Cannot get a buffer that has already been extracted.");
-    EXPECT_KASSERT_FAILS(buffer.data(), "Cannot get a pointer to a buffer that has already been extracted.");
-    EXPECT_KASSERT_FAILS(buffer.size(), "Cannot get the size of a buffer that has already been extracted.");
-    EXPECT_KASSERT_FAILS(buffer.resize(20), "Cannot resize a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(buffer.extract(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(buffer.get(), "Cannot get a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(buffer.data(), "Cannot get a pointer to a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(buffer.size(), "Cannot get the size of a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(buffer.resize(20), "Cannot resize a buffer that has already been extracted.");
 }
 
 TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mpi_result) {
@@ -770,40 +770,67 @@ TEST(LibAllocatedContainerBasedBufferTest, prevent_usage_after_extraction_via_mp
     );
 
     std::ignore = result.extract_status();
-    EXPECT_KASSERT_FAILS(result.extract_status(), "Cannot extract a status that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(result.extract_status(), "Cannot extract a status that has already been extracted.");
 
     std::ignore = result.extract_recv_buffer();
-    EXPECT_KASSERT_FAILS(result.extract_recv_buffer(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(
+        result.extract_recv_buffer(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_recv_counts();
-    EXPECT_KASSERT_FAILS(result.extract_recv_counts(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(
+        result.extract_recv_counts(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_recv_displs();
-    EXPECT_KASSERT_FAILS(result.extract_recv_displs(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(
+        result.extract_recv_displs(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_send_counts();
-    EXPECT_KASSERT_FAILS(result.extract_send_counts(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(
+        result.extract_send_counts(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_send_displs();
-    EXPECT_KASSERT_FAILS(result.extract_send_displs(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(
+        result.extract_send_displs(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_recv_count();
-    EXPECT_KASSERT_FAILS(result.extract_recv_count(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(
+        result.extract_recv_count(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_send_count();
-    EXPECT_KASSERT_FAILS(result.extract_send_count(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(
+        result.extract_send_count(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_send_recv_count();
-    EXPECT_KASSERT_FAILS(result.extract_send_recv_count(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(
+        result.extract_send_recv_count(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 
     std::ignore = result.extract_send_type();
-    EXPECT_KASSERT_FAILS(result.extract_send_type(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(result.extract_send_type(), "Cannot extract a buffer that has already been extracted.");
 
     std::ignore = result.extract_recv_type();
-    EXPECT_KASSERT_FAILS(result.extract_recv_type(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(result.extract_recv_type(), "Cannot extract a buffer that has already been extracted.");
 
     std::ignore = result.extract_send_recv_type();
-    EXPECT_KASSERT_FAILS(result.extract_send_recv_type(), "Cannot extract a buffer that has already been extracted.");
+    EXPECT_KAMPING_ASSERT_FAILS(
+        result.extract_send_recv_type(),
+        "Cannot extract a buffer that has already been extracted."
+    );
 }
 #endif
 

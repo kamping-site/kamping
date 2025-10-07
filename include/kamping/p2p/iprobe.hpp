@@ -76,7 +76,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
 
     constexpr auto tag_type = std::remove_reference_t<decltype(tag_param)>::tag_type;
     if constexpr (tag_type == internal::TagType::value) {
-        KASSERT(
+        KAMPING_ASSERT(
             Environment<>::is_valid_tag(tag),
             "invalid tag " << tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
         );
@@ -91,7 +91,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
         )
             .construct_buffer_or_rebind();
 
-    KASSERT(internal::is_valid_rank_in_comm(source, *this, true, true), "Invalid source rank.");
+    KAMPING_ASSERT(internal::is_valid_rank_in_comm(source, *this, true, true), "Invalid source rank.");
 
     int                  flag;
     [[maybe_unused]] int err = MPI_Iprobe(

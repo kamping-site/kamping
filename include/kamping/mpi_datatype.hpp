@@ -18,8 +18,9 @@
 
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
+
+#include "kamping/kassert/kassert.hpp"
 #ifdef KAMPING_ENABLE_REFLECTION
     #include <boost/pfr.hpp>
 #endif
@@ -270,7 +271,7 @@ template <typename T>
 inline MPI_Datatype construct_and_commit_type() {
     MPI_Datatype type = mpi_type_traits<T>::data_type();
     MPI_Type_commit(&type);
-    KASSERT(type != MPI_DATATYPE_NULL);
+    KAMPING_ASSERT(type != MPI_DATATYPE_NULL);
     mpi_env.register_mpi_type(type);
     return type;
 }

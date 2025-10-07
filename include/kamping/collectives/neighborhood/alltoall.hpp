@@ -17,12 +17,12 @@
 #include <tuple>
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/collectives/collectives_helpers.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameters.hpp"
@@ -130,7 +130,7 @@ auto kamping::TopologyCommunicator<DefaultContainerType, Plugins...>::neighbor_a
         recv_count.underlying() = send_count.get_single_element();
     }
 
-    KASSERT(
+    KAMPING_ASSERT(
         // @todo check this condition once we know the exact intended semantics of neighbor_alltoall
         (!do_compute_send_count || this->out_degree() == 0 || send_buf.size() % this->out_degree() == 0lu),
         "There are no send counts given and the number of elements in send_buf is not divisible by the number "
@@ -143,7 +143,7 @@ auto kamping::TopologyCommunicator<DefaultContainerType, Plugins...>::neighbor_a
         return asserting_cast<size_t>(recv_count.get_single_element()) * this->in_degree();
     };
     recv_buf.resize_if_requested(compute_required_recv_buf_size);
-    KASSERT(
+    KAMPING_ASSERT(
         // if the recv type is user provided, kamping cannot make any assumptions about the required size of the
         // recv buffer
         !recv_type_has_to_be_deduced || recv_buf.size() >= compute_required_recv_buf_size(),
@@ -151,9 +151,9 @@ auto kamping::TopologyCommunicator<DefaultContainerType, Plugins...>::neighbor_a
         assert::light
     );
 
-    // These KASSERTs are required to avoid a false warning from g++ in release mode
-    KASSERT(send_buf.data() != nullptr, assert::light);
-    KASSERT(recv_buf.data() != nullptr, assert::light);
+    // These KAMPING_ASSERTs are required to avoid a false warning from g++ in release mode
+    KAMPING_ASSERT(send_buf.data() != nullptr, assert::light);
+    KAMPING_ASSERT(recv_buf.data() != nullptr, assert::light);
 
     [[maybe_unused]] int err = MPI_Neighbor_alltoall(
         send_buf.data(),                 // send_buf

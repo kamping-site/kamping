@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     kamping::Communicator<std::vector, MyNumNumaNodes> comm;
 
     // Check that our implementation matches the reference implementation and output put the result.
-    KASSERT(comm.my_num_numa_nodes() == comm.num_numa_nodes());
+    KAMPING_ASSERT(comm.my_num_numa_nodes() == comm.num_numa_nodes());
     std::cout << "Number of numa nodes: " << comm.my_num_numa_nodes() << std::endl;
 
     return EXIT_SUCCESS;

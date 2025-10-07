@@ -123,14 +123,12 @@ endif ()
 add_library(kamping INTERFACE)
 target_link_libraries(kamping INTERFACE kamping_base)
 
-# If enabled, use exceptions, otherwise use KASSERT()
+# If enabled, use exceptions, otherwise use KAMPING_ASSERT()
 option(KAMPING_EXCEPTION_MODE "Use exceptions to report recoverable errors." ON)
 if (KAMPING_EXCEPTION_MODE)
-    set(KASSERT_EXCEPTION_MODE 1)
-    target_compile_definitions(kamping INTERFACE -DKASSERT_EXCEPTION_MODE)
+    target_compile_definitions(kamping INTERFACE -DKAMPING_ASSERT_EXCEPTION_MODE)
     message(STATUS "Build with exceptions enabled.")
 else ()
-    set(KASSERT_EXCEPTION_MODE 0)
     message(STATUS "Build with exceptions disabled. Assertions are used instead.")
 endif ()
 
@@ -171,7 +169,7 @@ message(STATUS "Assertion level: ${KAMPING_ASSERTION_LEVEL}")
 # However, if it is explicitly set to some constant string, it must be quoted. Thus, all levels are listed twice, once
 # with and without quotes. @todo find a better solution for this problem
 string(
-    CONCAT KASSERT_ASSERTION_LEVEL
+    CONCAT KAMPING_ASSERT_ASSERTION_LEVEL
            $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"none">:0>
            $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","none">:0>
            $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"exceptions">:10>
@@ -187,14 +185,20 @@ string(
            $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy">:60>
            $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy">:60>
 )
-FetchContent_Declare(
-    kassert
-    GIT_REPOSITORY https://github.com/kamping-site/kassert
-    GIT_TAG v0.1.0
-)
-FetchContent_MakeAvailable(kassert)
+target_compile_definitions(kamping INTERFACE -DKAMPING_ASSERT_ASSERTION_LEVEL=${KAMPING_ASSERT_ASSERTION_LEVEL})
 
-target_link_libraries(kamping_base INTERFACE kassert::kassert)
+FetchContent_Declare(
+    kamping_kassert
+    GIT_REPOSITORY https://github.com/kamping-site/kassert
+    GIT_TAG v1.0.0
+)
+set(KASSERT_VENDOR_ID kamping)
+set(KASSERT_CXX_NAMESPACE kamping::kassert)
+set(KASSERT_INCLUDE_SUBDIR kamping/kassert)
+set(KASSERT_PREFIX KAMPING_ASSERT)
+FetchContent_MakeAvailable(kamping_kassert)
+
+target_link_libraries(kamping_base INTERFACE kamping::kassert)
 
 FetchContent_Declare(
     pfr

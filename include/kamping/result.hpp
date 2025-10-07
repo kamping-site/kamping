@@ -1260,7 +1260,7 @@ private:
     }
 
     void set_extracted() {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         is_extracted = true;
 #endif
     }
@@ -1269,13 +1269,13 @@ private:
     ///
     /// @param message The message for the assertion.
     void kassert_not_extracted(std::string const message [[maybe_unused]]) const {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, message, assert::normal);
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KAMPING_ASSERT(!is_extracted, message, assert::normal);
 #endif
     }
     std::unique_ptr<std::tuple<Buffers...>> _buffers_on_heap; ///< The wrapped \ref MPIResult.
     RequestDataBuffer                       _request;         ///< DataBuffer containing the wrapped \ref Request.
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     bool is_extracted = false; ///< Has the status been extracted and is therefore in an invalid state?
 #endif
 };
