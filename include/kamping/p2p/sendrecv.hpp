@@ -29,9 +29,7 @@ template <
     typename DefaultContainerType,
     template <typename, template <typename...> typename>
     typename... Plugins>
-template <typename SBuff, typename RBuff, typename StatusObject>
-requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<
-    SBuff> && kamping::RecvDataBuffer<RBuff>
+template <kamping::SendDataBuffer SBuff, kamping::RecvDataBuffer RBuff, typename StatusObject>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(
     SBuff&& sbuf, RBuff&& rbuf, int dest, int send_tag, int source, int recv_tag, StatusObject status_param
 ) const {

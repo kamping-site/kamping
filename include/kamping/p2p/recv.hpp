@@ -32,8 +32,7 @@ template <
     typename DefaultContainerType,
     template <typename, template <typename...> typename>
     typename... Plugins>
-template <typename RBuff, typename StatusObject>
-requires kamping::DataBufferConcept<RBuff> && kamping::RecvDataBuffer<RBuff>
+template <kamping::RecvDataBuffer RBuff, typename StatusObject>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(
     RBuff&& rbuf, int source, int tag, StatusObject status_param
 ) const {

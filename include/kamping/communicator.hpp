@@ -43,6 +43,23 @@ template <typename RBuff>
 concept RecvDataBuffer =
     DataBufferConcept<RBuff> && std::ranges::output_range<RBuff, std::ranges::range_value_t<RBuff>>;
 
+template <typename T>
+concept IntContiguousRange = std::ranges::contiguous_range<T> && std::same_as < std::ranges::range_value_t<T>,
+int > &&std::ranges::sized_range<T>;
+
+template <typename Buff>
+concept HasSizeV = requires(Buff buf) {
+    { buf.size_v() } -> IntContiguousRange<>;
+};
+
+template <typename Buff>
+concept HasDisplacements = requires(Buff buf) {
+    { buf.displacements() } -> IntContiguousRange<>;
+};
+
+template <typename Buff>
+concept ExtendedDataBuffer = DataBufferConcept<Buff> && HasDisplacements<Buff> && HasSizeV<Buff>;
+
 // Needed by the plugin system to check if a plugin provides a callback function for MPI errors.
 KAMPING_MAKE_HAS_MEMBER(mpi_error_handler)
 
@@ -504,9 +521,7 @@ public:
     template <typename... Args>
     auto iprobe(Args... args) const;
 
-    template <typename SBuff, typename RBuff, typename StatusObject = decltype(status(ignore<>))>
-    requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<
-        SBuff> && kamping::RecvDataBuffer<RBuff>
+    template <SendDataBuffer SBuff, RecvDataBuffer RBuff, typename StatusObject = decltype(status(ignore<>))>
     auto sendrecv(
         SBuff&&      sbuf,
         RBuff&&      rbuf,
@@ -517,8 +532,7 @@ public:
         StatusObject status   = kamping::status(ignore<>)
     ) const;
 
-    template <typename RBuff, typename StatusObject = decltype(status(ignore<>))>
-    requires kamping::DataBufferConcept<RBuff> && kamping::RecvDataBuffer<RBuff>
+    template <RecvDataBuffer RBuff, typename StatusObject = decltype(status(ignore<>))>
     auto recv(
         RBuff&&      rbuf,
         int          source = MPI_ANY_SOURCE,
@@ -535,14 +549,15 @@ public:
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto irecv(Args... args) const;
 
-    template <typename... Args>
-    auto alltoall(Args... args) const;
+    template <SendDataBuffer SBuff, RecvDataBuffer RBuff>
+    auto alltoall(SBuff&& sbuf, RBuff&& rbuf) const;
 
     template <typename... Args>
     auto alltoall_inplace(Args... args) const;
 
-    template <typename... Args>
-    auto alltoallv(Args... args) const;
+    template <SendDataBuffer SBuff, RecvDataBuffer RBuff>
+    requires kamping::ExtendedDataBuffer<SBuff> && kamping::ExtendedDataBuffer<RBuff>
+    auto alltoallv(SBuff&& sbuf, RBuff&& rbuf) const;
 
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto scatter(Args... args) const;
@@ -595,9 +610,7 @@ public:
     template <typename... Args>
     auto gatherv(Args... args) const;
 
-    template <typename SBuff, typename RBuff>
-    requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<
-        SBuff> && kamping::RecvDataBuffer<RBuff>
+    template <SendDataBuffer SBuff, RecvDataBuffer RBuff>
     auto allgather(SBuff&& sbuf, RBuff&& rbuf) const;
 
     template <typename... Args>

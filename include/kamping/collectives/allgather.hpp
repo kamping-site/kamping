@@ -31,9 +31,7 @@ template <
     typename DefaultContainerType,
     template <typename, template <typename...> typename>
     typename... Plugins>
-template <typename SBuff, typename RBuff>
-requires kamping::DataBufferConcept<SBuff> && kamping::DataBufferConcept<RBuff> && kamping::SendDataBuffer<
-    SBuff> && kamping::RecvDataBuffer<RBuff>
+template <kamping::SendDataBuffer SBuff, kamping::RecvDataBuffer RBuff>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(SBuff&& sbuf, RBuff&& rbuf) const {
     infer<CommType::allgather>(sbuf, rbuf, *this);
 
