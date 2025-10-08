@@ -22,6 +22,7 @@
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
+#include "kamping/data_buffers/empty_db.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/named_parameters.hpp"
 
@@ -32,26 +33,16 @@ int main() {
     Communicator         comm;
 
     std::vector<int> input(2u * comm.size(), comm.rank_signed());
-    std::vector<int> output;
+    auto             output = EmptyDataBuffer<int>();
 
     { // Basic alltoall example. Automatically deduce the send/recv counts and allocate a receive buffer.
-        output = comm.alltoall(send_buf(input));
-        print_result_on_root(output, comm);
-    }
-
-    print_on_root("------", comm);
-
-    { // Use an existing recv buffer but resize it to fit the received data.
-        comm.alltoall(send_buf(input), recv_buf<resize_to_fit>(output));
-        print_result_on_root(output, comm);
-    }
-
-    print_on_root("------", comm);
-
-    { // When the send and receive counts are known, we can provide them explicitly. Additionally, we can use a single
-      // buffer for sending and receiving (inplace).
-        comm.alltoall(send_recv_buf(input), send_recv_count(2));
-        print_result_on_root(input, comm);
+        auto [sent, received] = comm.alltoall(input, output);
+        if (comm.rank_signed() == 2) {
+            for (auto x: received) {
+                std::cout << std::to_string(x) << std::endl;
+            }
+        }
+        // print_result_on_root(output, comm);
     }
 
     return 0;

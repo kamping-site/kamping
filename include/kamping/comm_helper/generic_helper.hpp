@@ -4,11 +4,21 @@
 
 namespace kamping {
 
-enum class CommType { allgather, gather, recv, sendrecv };
+enum class CommType { allgather, gather, recv, sendrecv, alltoall, alltoallv };
 
 template <typename Buff>
 concept HasSetSize = requires(Buff buf, size_t size) {
     {buf.set_size(size)};
+};
+
+template <typename Buff>
+concept HasSetSizeV = requires(Buff buf, std::vector<int>&& sizes) {
+    {buf.set_size_v(std::move(sizes))};
+};
+
+template <typename Buff>
+concept HasSetDisplacements = requires(Buff buf, std::vector<int>&& displacements) {
+    {buf.set_displacements(std::move(displacements))};
 };
 
 template <typename T>
@@ -41,9 +51,17 @@ size_t get_recv_size(SBuff const& sbuf, RBuff& rbuf, Communicator const& comm) {
 
     if constexpr (commType == CommType::allgather) {
         if constexpr (std::is_same_v<send_type, recv_type>) {
-            return asserting_cast<size_t>(std::size(sbuf) * comm.size());
+            return asserting_cast<size_t>(std::ranges::size(sbuf) * comm.size());
         } else {
-            return asserting_cast<size_t>(std::size(rbuf));
+            return asserting_cast<size_t>(std::ranges::size(rbuf));
+        }
+    }
+
+    if constexpr (commType == CommType::alltoall) {
+        if constexpr (std::is_same_v<send_type, recv_type>) {
+            return asserting_cast<size_t>(std::ranges::size(sbuf));
+        } else {
+            return asserting_cast<size_t>(std::ranges::size(rbuf));
         }
     }
 
