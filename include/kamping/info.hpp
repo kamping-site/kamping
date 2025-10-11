@@ -132,7 +132,7 @@ public:
         int err = MPI_Info_get(_info, key.data(), asserting_cast<int>(*val_size), value.data(), &flag);
         THROW_IF_MPI_ERROR(err, "MPI_Info_get");
 #endif
-        KASSERT(flag == 1);
+        KAMPING_ASSERT(flag == 1);
         return value;
     }
 
