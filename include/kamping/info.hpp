@@ -53,6 +53,10 @@ struct info_value_traits<T, std::enable_if_t<std::is_integral_v<T> && !std::is_s
 
 class Info {
 public:
+    class KeyValueIterator;
+
+    using iterator = KeyValueIterator;
+
     Info() {
         int err = MPI_Info_create(&_info);
         THROW_IF_MPI_ERROR(err, "MPI_Info_create");
@@ -124,8 +128,8 @@ public:
 #if MPI_VERSION >= 4
         // From the standard: "In C, buflen includes the required space for the null terminator."
         int buflen = asserting_cast<int>(*val_size) + 1;
-        int err = MPI_Info_get_string(_info, key.data(), &buflen, value.data(), &flag);
-	THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
+        int err    = MPI_Info_get_string(_info, key.data(), &buflen, value.data(), &flag);
+        THROW_IF_MPI_ERROR(err, "MPI_Info_get_string");
 #else
         // From the standard: "In C, valuelen should be one less than the amount of allocated space to allow for the
         // null terminator."
@@ -166,7 +170,8 @@ public:
         return _info;
     }
 
-    // TODO add key-value iterator
+    iterator begin() const;
+    iterator end() const;
 
 private:
     /// without null-terminator
@@ -189,7 +194,48 @@ private:
         return std::nullopt;
     }
 
+    std::string get_nth_key(std::size_t n) const {
+        std::string key;
+        key.resize(MPI_MAX_INFO_KEY - 1);
+        int err = MPI_Info_get_nthkey(_info, asserting_cast<int>(n), key.data());
+	THROW_IF_MPI_ERROR(err, "MPI_Info_get_nthkey");
+        return key;
+    }
+
     MPI_Info _info;
     bool     _owning = true;
 };
+
+class Info::KeyValueIterator {
+public:
+    using value_type = std::pair<std::string, std::string>;
+    KeyValueIterator(Info const& info, std::size_t index) : _info(&info), _index(index) {}
+    value_type operator*() const {
+        auto key = _info->get_nth_key(_index);
+        auto value = _info->get(key);
+	KAMPING_ASSERT(value.has_value());
+        return std::pair{key, *std::move(value)};
+    }
+  
+    KeyValueIterator& operator++() {
+        _index++;
+        return *this;
+    }
+  
+    bool operator!=(KeyValueIterator const& other) {
+        return _index != other._index;
+    }
+
+private:
+    Info const* _info;
+    std::size_t _index;
+};
+
+inline Info::iterator Info::begin() const {
+    return KeyValueIterator(*this, 0);
+}
+
+inline Info::iterator Info::end() const {
+    return KeyValueIterator(*this, this->size());
+}
 } // namespace kamping
