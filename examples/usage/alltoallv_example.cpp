@@ -13,33 +13,17 @@
 
 #include <iostream>
 #include <numeric>
-#include <random>
-#include <unordered_set>
 #include <vector>
 
 #include <mpi.h>
 
 #include "helpers_for_examples.hpp"
-#include "kamping/checking_casts.hpp"
 #include "kamping/collectives/alltoall.hpp"
+#include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffers/extended_db.hpp"
+#include "kamping/data_buffers/pipe_db.hpp"
 #include "kamping/environment.hpp"
-
-// Helper function used in the example below.
-// Generates num_partners distinct random communication partners \in [0,comm_size).
-auto random_comm_partners(int comm_size, size_t num_partners) {
-    std::random_device              rd;
-    std::mt19937                    gen(rd());
-    std::uniform_int_distribution<> dis(0, comm_size - 1);
-    std::unordered_set<int>         comm_partners;
-
-    while (comm_partners.size() < num_partners) {
-        comm_partners.insert(dis(gen));
-    }
-
-    return comm_partners;
-}
 
 int main() {
     using namespace kamping;
@@ -47,35 +31,54 @@ int main() {
     kamping::Environment  e;
     kamping::Communicator comm;
 
-    { // KaMPIng wraps the classic MPI alltoallv
-        // Rank i sends i values to rank 0, i+1 values to rank 1, ...
+    int    rank = comm.rank_signed();
+    size_t size = comm.size();
 
-        std::vector<int> counts_per_rank(comm.size());
-        std::iota(counts_per_rank.begin(), counts_per_rank.end(), comm.rank_signed());
+    std::vector<int> send_counts(size);
+    std::vector<int> recv_counts(size);
+    std::vector<int> send_displs(size);
+    std::vector<int> recv_displs(size);
 
-        int              num_elements = std::reduce(counts_per_rank.begin(), counts_per_rank.end(), 0);
-        std::vector<int> input(asserting_cast<size_t>(num_elements));
-        // Rank i sends it own rank to all others
-        std::fill(input.begin(), input.end(), comm.rank());
-
-        std::vector<int> displacements(asserting_cast<size_t>(num_elements));
-
-        auto input_db  = ExtDataBuffer(input, displacements, counts_per_rank);
-        auto output_db = ExtDataBuffer();
-
-        { // Exchange the data; compute the recv counts automatically.
-            auto [sent, received] = comm.alltoallv(input_db, output_db);
-            if (comm.rank_signed() == 1) {
-                for (auto x: received) {
-                    std::cout << std::to_string(x) << std::endl;
-                }
-                std::cout << "----" << std::endl;
-                for (auto x: sent) {
-                    std::cout << std::to_string(x) << std::endl;
-                }
-            }
-        }
+    // Send i+rank elements to process i
+    int total_send = 0;
+    for (size_t i = 0; i < size; ++i) {
+        send_counts[i] = (int)i + rank;
+        send_displs[i] = total_send;
+        total_send += send_counts[i];
     }
 
-    return EXIT_SUCCESS;
+    std::vector<int> send_buf((size_t)total_send, rank);
+
+    int total_recv = 0;
+    for (size_t i = 0; i < size; ++i) {
+        recv_counts[i] = rank + (int)i;
+        recv_displs[i] = total_recv;
+        total_recv += recv_counts[i];
+    }
+
+    std::vector<int> recv_buf(0);
+
+    auto kamping_send_buf = ExtDataBuffer(send_buf);
+    auto kamping_recv_buf = ExtDataBuffer(recv_buf);
+
+    kamping_send_buf.set_size_v(std::move(send_counts));
+    kamping_send_buf.set_displacements(std::move(send_displs));
+
+    kamping_recv_buf.set_size_v(std::move(recv_counts));
+
+    auto [sent, recieved] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs() | resize_ext());
+
+    // Print results
+    comm.barrier();
+    for (int p = 0; p < (int)size; ++p) {
+        if (p == rank) {
+            std::cout << "Process " << rank << " received:";
+            for (int val: recieved)
+                std::cout << " " << val;
+            std::cout << std::endl;
+        }
+        comm.barrier();
+    }
+
+    return 0;
 }

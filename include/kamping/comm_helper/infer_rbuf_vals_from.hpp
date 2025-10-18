@@ -30,42 +30,6 @@ void infer(SBuff& sbuf, RBuff& rbuf, Communicator& comm) {
             comm.alltoall(send_counts, recv_counts);
             rbuf.set_size_v(std::move(recv_counts));
         }
-        // Calc send displacement
-        if constexpr (HasSetDisplacements<SBuff>) {
-            auto             send_counts = sbuf.size_v();
-            std::vector<int> send_displacements(comm.size());
-            std::exclusive_scan(
-                send_counts.begin(),
-                send_counts.begin() + asserting_cast<int>(comm.size()),
-                send_displacements.begin(),
-                0
-            );
-            sbuf.set_displacements(std::move(send_displacements));
-        }
-        // Calc recv displacements
-        if constexpr (HasSetDisplacements<RBuff>) {
-            auto             recv_counts = rbuf.size_v();
-            std::vector<int> recv_displacements(comm.size());
-            std::exclusive_scan(
-                recv_counts.begin(),
-                recv_counts.begin() + asserting_cast<int>(comm.size()),
-                recv_displacements.begin(),
-                0
-            );
-            rbuf.set_displacements(std::move(recv_displacements));
-        }
-        // Resize the recv buffer
-        if constexpr (HasSetSize<RBuff>) {
-            auto recv_displs = rbuf.displacements();
-            auto recv_counts = rbuf.size_v();
-
-            int recv_buf_size = 0;
-            for (size_t i = 0; i < comm.size(); ++i) {
-                recv_buf_size = std::max(recv_buf_size, recv_counts[i] + recv_displs[i]);
-            }
-
-            rbuf.set_size(asserting_cast<size_t>(recv_buf_size));
-        }
     }
 }
 

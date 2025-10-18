@@ -5,9 +5,11 @@
 class ExtDataBuffer {
 public:
 
-    ExtDataBuffer(std::vector<int>& data, std::vector<int>& displacements, std::vector<int>& sizes) : _data(data), _displacements(displacements), _sizes(sizes), _size(_data.size()) {}
-
-    ExtDataBuffer() : _data(std::vector<int>()), _displacements(std::vector<int>()), _sizes(std::vector<int>()), _size(0) {}
+    ExtDataBuffer(std::vector<int>& data)
+        : _data(data),
+          _displacements(std::vector<int>()),
+          _sizes(std::vector<int>()),
+          _size(_data.size()) {}
 
     auto begin() noexcept {
         return _data.begin();
@@ -27,11 +29,11 @@ public:
         return _size;
     }
 
-    [[nodiscard]] const std::vector<int>& size_v() const noexcept {
+    [[nodiscard]] std::vector<int> const& size_v() const noexcept {
         return _sizes;
     }
 
-    [[nodiscard]] const std::vector<int>& displacements() const noexcept {
+    [[nodiscard]] std::vector<int> const& displacements() const noexcept {
         return _displacements;
     }
 
@@ -48,10 +50,10 @@ public:
     }
 
 private:
-    mutable std::vector<int> _data{};
-    std::vector<int> _displacements{};
-    std::vector<int> _sizes{};
-    size_t _size{};
+    mutable std::vector<int> _data;
+    std::vector<int>         _displacements;
+    std::vector<int>         _sizes;
+    size_t                   _size = 0;
 
     void resize_if_needed() const {
         size_t curr_size = _data.size();

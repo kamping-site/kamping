@@ -23,6 +23,7 @@
 #include "error_handling.hpp"
 #include "kamping/checking_casts.hpp"
 #include "kamping/comm_helper/generic_helper.hpp"
+#include "kamping/data_buffers/data_buffer_concepts.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/group.hpp"
 #include "kamping/mpi_constants.hpp"
@@ -32,33 +33,6 @@
 #include "kamping/rank_ranges.hpp"
 
 namespace kamping {
-
-template <typename Buff>
-concept DataBufferConcept = std::ranges::contiguous_range<Buff> && std::ranges::sized_range<Buff> && Typed<Buff>;
-
-template <typename SBuff>
-concept SendDataBuffer = DataBufferConcept<SBuff> && std::ranges::input_range<SBuff>;
-
-template <typename RBuff>
-concept RecvDataBuffer =
-    DataBufferConcept<RBuff> && std::ranges::output_range<RBuff, std::ranges::range_value_t<RBuff>>;
-
-template <typename T>
-concept IntContiguousRange = std::ranges::contiguous_range<T> && std::same_as < std::ranges::range_value_t<T>,
-int > &&std::ranges::sized_range<T>;
-
-template <typename Buff>
-concept HasSizeV = requires(Buff buf) {
-    { buf.size_v() } -> IntContiguousRange<>;
-};
-
-template <typename Buff>
-concept HasDisplacements = requires(Buff buf) {
-    { buf.displacements() } -> IntContiguousRange<>;
-};
-
-template <typename Buff>
-concept ExtendedDataBuffer = DataBufferConcept<Buff> && HasDisplacements<Buff> && HasSizeV<Buff>;
 
 // Needed by the plugin system to check if a plugin provides a callback function for MPI errors.
 KAMPING_MAKE_HAS_MEMBER(mpi_error_handler)
@@ -556,7 +530,7 @@ public:
     auto alltoall_inplace(Args... args) const;
 
     template <SendDataBuffer SBuff, RecvDataBuffer RBuff>
-    requires kamping::ExtendedDataBuffer<SBuff> && kamping::ExtendedDataBuffer<RBuff>
+    requires ExtendedDataBuffer<SBuff> && ExtendedDataBuffer<RBuff>
     auto alltoallv(SBuff&& sbuf, RBuff&& rbuf) const;
 
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>

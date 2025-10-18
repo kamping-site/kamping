@@ -6,21 +6,6 @@ namespace kamping {
 
 enum class CommType { allgather, gather, recv, sendrecv, alltoall, alltoallv };
 
-template <typename Buff>
-concept HasSetSize = requires(Buff buf, size_t size) {
-    {buf.set_size(size)};
-};
-
-template <typename Buff>
-concept HasSetSizeV = requires(Buff buf, std::vector<int>&& sizes) {
-    {buf.set_size_v(std::move(sizes))};
-};
-
-template <typename Buff>
-concept HasSetDisplacements = requires(Buff buf, std::vector<int>&& displacements) {
-    {buf.set_displacements(std::move(displacements))};
-};
-
 template <typename T>
 concept static_mpi_type = has_static_type_v<T>;
 
@@ -37,11 +22,6 @@ requires HasType<Buff> || static_mpi_type<std::ranges::range_value_t<Buff>> MPI_
         return mpi_datatype<std::ranges::range_value_t<Buff>>();
     }
 }
-
-template <typename Buff>
-concept Typed = requires(Buff buf) {
-    { type(buf) } -> std::same_as<MPI_Datatype>;
-};
 
 // Returns the size of the total communication. E.g. the size that the receiving buffer needs to be
 template <CommType commType, typename SBuff, typename RBuff, typename Communicator>
