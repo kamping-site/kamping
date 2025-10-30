@@ -4,7 +4,6 @@
 
 class ExtDataBuffer {
 public:
-
     ExtDataBuffer(std::vector<int>& data)
         : _data(data),
           _displacements(std::vector<int>()),

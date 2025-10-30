@@ -500,7 +500,7 @@ public:
         SBuff&&      sbuf,
         RBuff&&      rbuf,
         int          dest,
-        int          send_tag = MPI_ANY_TAG,
+        int          send_tag = MPI_UNDEFINED,
         int          source   = MPI_ANY_SOURCE,
         int          recv_tag = MPI_ANY_TAG,
         StatusObject status   = kamping::status(ignore<>)

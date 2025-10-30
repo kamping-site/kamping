@@ -28,6 +28,8 @@ int main() {
     kamping::Environment  e;
     kamping::Communicator comm;
 
+    KASSERT(comm.size() == 2uz, "This example must be run with exactly 2 ranks.");
+
     {
         size_t           size = comm.size() + 10;
         std::vector<int> sbuf(size, comm.rank_signed() + 5);

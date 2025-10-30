@@ -29,10 +29,10 @@ struct auto_displs_view : std::ranges::view_interface<auto_displs_view<R>> {
     auto size_v() {
         return base_.size_v();
     }
-    auto begin() {
+    auto begin() noexcept {
         return std::ranges::begin(base_);
     }
-    auto end() {
+    auto end() noexcept {
         return std::ranges::end(base_);
     }
     auto data() {
@@ -81,10 +81,10 @@ struct resize_ext_view : std::ranges::view_interface<resize_ext_view<R>> {
     auto size_v() {
         return base_.size_v();
     }
-    auto begin() {
+    auto begin() noexcept {
         return std::ranges::begin(base_);
     }
-    auto end() {
+    auto end() noexcept {
         return std::ranges::end(base_);
     }
     auto data() {

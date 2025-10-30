@@ -33,7 +33,7 @@ template <kamping::SendDataBuffer SBuff, kamping::RecvDataBuffer RBuff, typename
 auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(
     SBuff&& sbuf, RBuff&& rbuf, int dest, int send_tag, int source, int recv_tag, StatusObject status_param
 ) const {
-    if (send_tag == MPI_ANY_TAG) {
+    if (send_tag == MPI_UNDEFINED) {
         send_tag = default_tag();
     }
 
