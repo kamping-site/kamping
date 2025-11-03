@@ -1,3 +1,7 @@
+#pragma once
+
+#include <mdspan>
+#include <numeric>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -100,3 +104,39 @@ struct resize_ext : std::ranges::range_adaptor_closure<resize_ext> {
         return resize_ext_view(std::forward<R>(r));
     }
 };
+
+template <typename T, typename Extent, typename LayoutPolicy>
+requires std::same_as<LayoutPolicy, std::layout_left> || std::same_as<LayoutPolicy, std::layout_right>
+struct mdspan_view {
+    using mdspan = std::mdspan<T, Extent, LayoutPolicy>;
+    mdspan base_;
+
+    explicit mdspan_view(mdspan base) : base_(base), data_(base_.data_handle()) {}
+
+    auto begin() noexcept {
+        return data_;
+    }
+    auto end() noexcept {
+        return data_ + base_.size();
+    }
+    auto data() {
+        return data_;
+    }
+
+private:
+    T* data_;
+};
+
+struct mdspan_view_fn {
+    template <typename T, typename Extent, typename Layout>
+    auto operator()(std::mdspan<T, Extent, Layout> ms) const {
+        return mdspan_view<T, Extent, Layout>{ms};
+    }
+};
+
+template <typename Mdspan>
+auto operator|(Mdspan&& ms, mdspan_view_fn const& adaptor) {
+    return adaptor(std::forward<Mdspan>(ms));
+}
+
+inline constexpr mdspan_view_fn mdspan_adapter{};

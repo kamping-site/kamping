@@ -62,6 +62,10 @@ add_executable(example_adapter adapter_example.cpp)
 target_link_libraries(example_adapter kamping)
 target_compile_options(example_adapter PRIVATE ${KAMPING_WARNING_FLAGS})
 
+add_executable(example_adapter_sendrecv sendrecv_adapter_example.cpp)
+target_link_libraries(example_adapter_sendrecv kamping)
+target_compile_options(example_adapter_sendrecv PRIVATE ${KAMPING_WARNING_FLAGS})
+
 add_executable(example_recv recv_example.cpp)
 target_link_libraries(example_recv kamping)
 target_compile_options(example_recv PRIVATE ${KAMPING_WARNING_FLAGS})
