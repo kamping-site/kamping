@@ -195,5 +195,15 @@ It is a lot more concise than the [(verbose) plain MPI implementation](./example
 
 [^4]: not mapped to builtin operations
 
+## Contributing
+
+We welcome contributions to KaMPIng! Please see our [contribution guidelines](CONTRIBUTING.md) for:
+- How to report bugs
+- How to submit feature requests
+- How to submit pull requests
+- Coding and testing guidelines
+
+For maintainers creating releases, see the [release guidelines](docs/guidelines/release_guidelines.md) for the automated release process.
+
 ## LICENSE
 KaMPIng is released under the GNU Lesser General Public License. See [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER) for details
