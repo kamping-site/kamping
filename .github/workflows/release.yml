@@ -113,24 +113,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Create version update PR
+      - name: Update version numbers and move tag
         if: steps.check-release.outputs.exists == 'false' && github.event_name == 'push'
         run: |
           VERSION="${{ steps.get-tag.outputs.version }}"
           TAG="${{ steps.get-tag.outputs.tag }}"
-          BRANCH="update-version-$VERSION"
           
           # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Create a new branch
-          git checkout -b "$BRANCH"
+          # Get the current commit SHA that the tag points to
+          ORIGINAL_COMMIT=$(git rev-parse "$TAG")
+          echo "Tag $TAG currently points to: $ORIGINAL_COMMIT"
+          
+          # Make sure we're working from the tagged commit
+          git checkout "$TAG"
           
           # Update CMakeLists.txt
           if grep -q "VERSION [0-9]" CMakeLists.txt; then
             sed -i "s/VERSION [0-9][0-9.]\+/VERSION $VERSION/" CMakeLists.txt
-            echo "Updated CMakeLists.txt"
+            echo "Updated CMakeLists.txt to $VERSION"
           fi
           
           # Update CITATION.cff
@@ -139,42 +142,41 @@ jobs:
             # Update date-released to today
             TODAY=$(date +%Y-%m-%d)
             sed -i "s/^date-released: .*/date-released: $TODAY/" CITATION.cff
-            echo "Updated CITATION.cff"
+            echo "Updated CITATION.cff to $VERSION"
           fi
           
           # Update README.md if it contains version references
           if grep -q "GIT_TAG v[0-9]" README.md; then
             sed -i "s/GIT_TAG v[0-9][0-9.]*/GIT_TAG $TAG/" README.md
-            echo "Updated README.md"
+            echo "Updated README.md to reference $TAG"
           fi
           
           # Check if there are any changes
           if git diff --quiet; then
-            echo "No version files to update"
+            echo "No version files needed updating - version numbers already correct"
             exit 0
           fi
           
-          # Commit and push changes
+          # Commit the version changes
           git add CMakeLists.txt CITATION.cff README.md
-          git commit -m "Bump version to $VERSION"
-          git push origin "$BRANCH"
+          git commit -m "Prepare $TAG release"
+          NEW_COMMIT=$(git rev-parse HEAD)
+          echo "Created version update commit: $NEW_COMMIT"
           
-          # Create PR
-          gh pr create \
-            --title "Bump version to $VERSION" \
-            --body "This PR updates version numbers in source files after the $TAG release.
-
-          ## Changes
-          - Updated version in CMakeLists.txt to $VERSION
-          - Updated version in CITATION.cff to $VERSION
-          - Updated date-released in CITATION.cff
-          - Updated GIT_TAG in README.md to $TAG
-
-          This PR was automatically created by the release workflow." \
-            --base main \
-            --head "$BRANCH"
+          # Delete the tag locally
+          git tag -d "$TAG"
           
-          echo "Version update PR created"
+          # Re-create the tag pointing to the new commit
+          git tag -a "$TAG" -m "Release $TAG"
+          echo "Moved tag $TAG to new commit: $NEW_COMMIT"
+          
+          # Force push the tag (this will update the tag on GitHub)
+          git push origin "$TAG" --force
+          
+          # Push the commit to main
+          git push origin HEAD:main
+          
+          echo "✅ Version numbers updated and tag moved to point to the version update commit"
         env:
           GH_TOKEN: ${{ github.token }}
 

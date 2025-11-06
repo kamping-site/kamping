@@ -28,6 +28,12 @@ Before creating a release:
 
 The automated release workflow is triggered when you push a tag matching the pattern `v*.*.*` (e.g., `v0.3.0`).
 
+**Important workflow:** 
+1. You create and push a tag from the current HEAD
+2. The workflow automatically updates version numbers in source files
+3. The workflow commits these changes and moves the tag to point to the new commit
+4. The tag ends up pointing to a commit that has the correct version numbers
+
 ```bash
 # Ensure you're on the latest main branch
 git checkout main
@@ -46,6 +52,15 @@ git tag -a v0.3.0 -m "Release v0.3.0"
 git push origin v0.3.0
 ```
 
+**What happens next:**
+1. Workflow triggers on the tag push
+2. Workflow creates the GitHub release
+3. Workflow updates version numbers in CMakeLists.txt, CITATION.cff, and README.md
+4. Workflow commits these changes to main
+5. Workflow moves the tag to point to this new commit (with updated versions)
+
+This ensures the tag always points to a commit where version numbers match the tag.
+
 ### 3. Automated Workflow Steps
 
 Once the tag is pushed, the release workflow automatically:
@@ -54,24 +69,35 @@ Once the tag is pushed, the release workflow automatically:
 2. **Checks for existing release**: Skips creation if the release already exists
 3. **Generates release notes**: Uses GitHub's automatic release notes generation based on merged pull requests since the last release
 4. **Creates the GitHub release**: Publishes the release with the generated notes
-5. **Creates a version update PR**: Opens a pull request to update version numbers in:
-   - `CMakeLists.txt`
-   - `CITATION.cff`
-   - `README.md`
+5. **Updates version numbers**: Updates the following files to match the release version:
+   - `CMakeLists.txt` → updated to release version (e.g., v0.3.0)
+   - `CITATION.cff` → updated to release version with current date
+   - `README.md` → updated to reference the release tag
+6. **Commits and moves tag**: Commits the version changes to main and moves the tag to point to this commit
 
-### 4. Review and Merge Version Update PR
+### 4. Verify the Release
 
-After the release is created, review the automatically generated PR that updates version numbers:
+After the workflow completes:
 
-1. **Review the changes** in the PR
-2. **Ensure all version numbers are correct**
-3. **Merge the PR** to keep version numbers synchronized
+1. **Pull the latest changes** from main (the version update commit was pushed automatically)
+   ```bash
+   git pull origin main
+   ```
 
-### 5. Verify the Release
+2. **Verify the tag points to the correct commit**:
+   ```bash
+   git show vX.Y.Z
+   ```
+   This should show the commit with the updated version numbers.
+
+3. **Check the GitHub release page** to ensure the release was created successfully
+
+### 5. Review and Edit Release Notes (Optional)
 
 1. Go to the [releases page](https://github.com/kamping-site/kamping/releases)
-2. Verify the release notes are accurate
-3. Edit the release notes if needed to add additional context or highlights
+2. Review the automatically generated release notes
+3. Edit the release notes if needed to add additional context, highlights, or breaking changes
+4. You can use the [release template](.github/release-template.md) as a guide for structuring release notes
 
 ## Manual Release Creation (Alternative)
 
@@ -94,7 +120,7 @@ git push origin v0.3.0-beta.1
 
 You can then mark the release as a pre-release in the GitHub UI after it's created.
 
-## Version Number Locations
+## Version Number Locations and Workflow
 
 Version numbers are maintained in the following files:
 
@@ -102,7 +128,23 @@ Version numbers are maintained in the following files:
 2. **CITATION.cff**: `version: X.Y.Z` and `date-released: YYYY-MM-DD`
 3. **README.md**: `GIT_TAG vX.Y.Z` in the FetchContent example
 
-The automated workflow updates these files after creating a release.
+### Version Number Workflow
+
+The release process follows this pattern:
+
+1. **Before release**: Version numbers in source files reflect the previous release (e.g., v0.2.0)
+2. **Create tag**: Tag is initially created pointing to the current HEAD (e.g., `git tag v0.3.0`)
+3. **Workflow triggers**: The release workflow is triggered by the tag push
+4. **Release created**: GitHub release is created
+5. **Versions updated**: Workflow updates version numbers to v0.3.0 in all files
+6. **Tag moved**: Workflow commits the changes and moves the tag to point to this new commit
+7. **Result**: The tag v0.3.0 now points to a commit where all version numbers are v0.3.0
+
+This ensures that:
+- The tag always points to code with consistent version numbers
+- Users can clone at any tag and get the correct version
+- Version numbers in source files always match the git tag
+- The process is fully automated after pushing the tag
 
 ## Troubleshooting
 
@@ -111,6 +153,7 @@ The automated workflow updates these files after creating a release.
 - **Check the Actions tab** for detailed error messages
 - **Ensure the tag format is correct** (must match `v*.*.*`)
 - **Verify you have the necessary permissions** to create releases
+- **Check if the version numbers were already at the release version** (workflow will skip updates if no changes needed)
 
 ### Release already exists
 
@@ -124,13 +167,32 @@ If you push a tag for an existing release, the workflow will detect it and skip 
    ```
 3. Create and push the tag again
 
-### Version update PR not created
+### Tag not moved / Version not updated
 
-The version update PR is only created for tag pushes (not manual workflow runs). If it's not created:
+If the workflow completes but the tag wasn't moved:
 
-- Check the workflow logs for errors
-- The PR might already exist
-- There might be no version changes needed
+- Check the workflow logs for the "Update version numbers and move tag" step
+- The version numbers might have already been correct (no update needed)
+- Ensure the workflow has permission to force-push tags
+- You can manually verify: `git show vX.Y.Z` should show the version update commit
+
+### Merge conflicts after release
+
+If someone pushes to main while the release workflow is running:
+
+1. The workflow might fail to push the version update commit
+2. You'll need to manually update version numbers and push
+3. Then manually move the tag:
+   ```bash
+   git pull origin main
+   # Update version numbers manually if needed
+   git add CMakeLists.txt CITATION.cff README.md
+   git commit -m "Prepare vX.Y.Z release"
+   git tag -d vX.Y.Z
+   git tag -a vX.Y.Z -m "Release vX.Y.Z"
+   git push origin main
+   git push origin vX.Y.Z --force
+   ```
 
 ## Best Practices
 
@@ -161,11 +223,20 @@ git push origin v0.3.0
 
 # 4. Wait for the automated workflow to complete
 # Monitor at: https://github.com/kamping-site/kamping/actions
+# The workflow will:
+#   - Create the GitHub release
+#   - Update version numbers in source files
+#   - Commit the changes to main
+#   - Move the tag to point to the version update commit
 
-# 5. Review and merge the version update PR
-# Find it at: https://github.com/kamping-site/kamping/pulls
+# 5. Pull the updated main branch
+git pull origin main
 
-# 6. Review the release
+# 6. Verify the tag points to the version update commit
+git show v0.3.0
+# Should show commit message "Prepare v0.3.0 release"
+
+# 7. Review and optionally edit the release notes
 # View at: https://github.com/kamping-site/kamping/releases/tag/v0.3.0
 ```
 
