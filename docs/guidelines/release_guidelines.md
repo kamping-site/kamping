@@ -13,6 +13,11 @@ KaMPIng uses an automated release workflow that creates GitHub releases when ver
 
 ## Release Process
 
+The KaMPIng release process is a **two-step workflow** that ensures releases are reviewed before finalization:
+
+1. **Preparation**: Push a pre-release tag (`v*.*.*-pre`) → Automated PR is created
+2. **Finalization**: Review and merge the PR → Release is automatically created
+
 ### 1. Prepare for Release
 
 Before creating a release:
@@ -24,101 +29,121 @@ Before creating a release:
    - **Minor version (0.X.0)**: New features, backwards-compatible changes
    - **Patch version (0.0.X)**: Bug fixes, backwards-compatible fixes
 
-### 2. Create and Push a Version Tag
+### 2. Create and Push a Pre-Release Tag
 
-The automated release workflow is triggered when you push a tag matching the pattern `v*.*.*` (e.g., `v0.3.0`).
-
-**Important workflow:** 
-1. You create and push a tag from the current HEAD
-2. The workflow automatically updates version numbers in source files
-3. The workflow commits these changes and moves the tag to point to the new commit
-4. The tag ends up pointing to a commit that has the correct version numbers
+To initiate the release process, push a **pre-release tag** with the `-pre` suffix:
 
 ```bash
 # Ensure you're on the latest main branch
 git checkout main
 git pull origin main
 
-# Create a version tag (replace X.Y.Z with your version)
-git tag -a vX.Y.Z -m "Release vX.Y.Z"
+# Create a pre-release tag (replace X.Y.Z with your version)
+git tag -a vX.Y.Z-pre -m "Prepare release vX.Y.Z"
 
-# Push the tag to trigger the release workflow
-git push origin vX.Y.Z
+# Push the tag to trigger the release preparation workflow
+git push origin vX.Y.Z-pre
 ```
 
 **Example:**
 ```bash
-git tag -a v0.3.0 -m "Release v0.3.0"
-git push origin v0.3.0
+git tag -a v0.3.0-pre -m "Prepare release v0.3.0"
+git push origin v0.3.0-pre
 ```
 
-**What happens next:**
-1. Workflow triggers on the tag push
-2. Workflow creates the GitHub release
-3. Workflow updates version numbers in CMakeLists.txt, CITATION.cff, and README.md
-4. Workflow commits these changes to main
-5. Workflow moves the tag to point to this new commit (with updated versions)
+**What happens automatically:**
+1. Workflow validates the version format
+2. Checks that the release doesn't already exist
+3. Creates a new branch `release-v0.3.0` with version updates:
+   - Updates `CMakeLists.txt` to version 0.3.0
+   - Updates `CITATION.cff` to version 0.3.0 with current date
+   - Updates `README.md` to reference v0.3.0
+4. Generates preview release notes from merged PRs
+5. Creates a Pull Request titled "Release v0.3.0" with all changes and preview notes
 
-This ensures the tag always points to a commit where version numbers match the tag.
+### 3. Review the Release PR
 
-### 3. Automated Workflow Steps
+After the workflow completes, you'll have a PR to review:
 
-Once the tag is pushed, the release workflow automatically:
+1. **Go to the Pull Requests page** of your repository
+2. **Find the "Release v0.3.0" PR** (it will be labeled with `release`)
+3. **Review the changes**:
+   - Verify version numbers are correct in all files
+   - Check the commit message
+4. **Review the release notes** in the PR description:
+   - The PR includes auto-generated release notes from merged PRs
+   - Edit the PR description to refine the release notes if needed
+   - Add highlights, breaking changes, or upgrade instructions
+5. **Request reviews** from team members if desired
 
-1. **Validates the tag format**: Ensures it follows semantic versioning (e.g., `v1.0.0` or `v1.0.0-beta.1`)
-2. **Checks for existing release**: Skips creation if the release already exists
-3. **Generates release notes**: Uses GitHub's automatic release notes generation based on merged pull requests since the last release
-4. **Creates the GitHub release**: Publishes the release with the generated notes
-5. **Updates version numbers**: Updates the following files to match the release version:
-   - `CMakeLists.txt` → updated to release version (e.g., v0.3.0)
-   - `CITATION.cff` → updated to release version with current date
-   - `README.md` → updated to reference the release tag
-6. **Commits and moves tag**: Commits the version changes to main and moves the tag to point to this commit
+### 4. Finalize the Release
 
-### 4. Verify the Release
+When you're satisfied with the release preparation:
+
+1. **Merge the PR** (use "Squash and merge" or "Create a merge commit")
+2. **Automated finalization** happens immediately:
+   - Workflow creates the final tag `v0.3.0` at the merge commit
+   - GitHub release is created with the release notes from the PR
+   - Pre-release tag `v0.3.0-pre` is automatically deleted
+
+### 5. Verify the Release
 
 After the workflow completes:
 
-1. **Pull the latest changes** from main (the version update commit was pushed automatically)
+1. **Pull the latest changes**:
    ```bash
+   git checkout main
    git pull origin main
    ```
 
-2. **Verify the tag points to the correct commit**:
+2. **Verify the tag was created**:
    ```bash
-   git show vX.Y.Z
+   git tag -l v0.3.0
+   git show v0.3.0
    ```
-   This should show the commit with the updated version numbers.
 
-3. **Check the GitHub release page** to ensure the release was created successfully
+3. **Check the GitHub release page**: Visit https://github.com/kamping-site/kamping/releases/tag/v0.3.0
 
-### 5. Review and Edit Release Notes (Optional)
+### 6. Edit Release Notes (Optional)
+
+After the release is published, you can further refine it:
 
 1. Go to the [releases page](https://github.com/kamping-site/kamping/releases)
-2. Review the automatically generated release notes
-3. Edit the release notes if needed to add additional context, highlights, or breaking changes
-4. You can use the [release template](.github/release-template.md) as a guide for structuring release notes
+2. Click "Edit" on the release
+3. Refine the release notes if needed
+4. You can use the [release template](../.github/release-template.md) as a guide for structuring release notes
 
-## Manual Release Creation (Alternative)
+## Canceling a Release
 
-If you need to create a release manually or re-run the workflow:
+If you pushed a pre-release tag by mistake or want to cancel the release:
 
-1. Go to the [Actions tab](https://github.com/kamping-site/kamping/actions)
-2. Select the "Create Release" workflow
-3. Click "Run workflow"
-4. Enter the tag name (e.g., `v0.3.0`)
-5. Click "Run workflow"
+1. **Close the release PR** without merging
+2. **Delete the pre-release tag**:
+   ```bash
+   git tag -d v0.3.0-pre
+   git push --delete origin v0.3.0-pre
+   ```
+3. **Delete the release branch** (optional):
+   ```bash
+   git push --delete origin release-v0.3.0
+   ```
 
-## Pre-release Versions
+## Creating Pre-release Versions (Beta, RC, etc.)
 
-For beta, alpha, or release candidate versions, use the standard semantic versioning pre-release syntax:
+For beta, alpha, or release candidate versions, the process is currently manual. The automated workflow is designed for stable releases only.
 
-```bash
-git tag -a v0.3.0-beta.1 -m "Release v0.3.0-beta.1"
-git push origin v0.3.0-beta.1
-```
+To create a pre-release version manually:
 
-You can then mark the release as a pre-release in the GitHub UI after it's created.
+1. Update version numbers in CMakeLists.txt, CITATION.cff, and README.md
+2. Commit and push to main
+3. Create and push the tag:
+   ```bash
+   git tag -a v0.3.0-beta.1 -m "Release v0.3.0-beta.1"
+   git push origin v0.3.0-beta.1
+   ```
+4. Create the GitHub release manually and mark it as a pre-release
+
+**Note**: Using the `-pre` suffix (e.g., `v0.3.0-beta.1-pre`) will trigger the automated workflow, but it's designed for stable releases.
 
 ## Version Number Locations and Workflow
 
@@ -130,95 +155,129 @@ Version numbers are maintained in the following files:
 
 ### Version Number Workflow
 
-The release process follows this pattern:
+The release process follows this two-step pattern:
 
-1. **Before release**: Version numbers in source files reflect the previous release (e.g., v0.2.0)
-2. **Create tag**: Tag is initially created pointing to the current HEAD (e.g., `git tag v0.3.0`)
-3. **Workflow triggers**: The release workflow is triggered by the tag push
-4. **Release created**: GitHub release is created
-5. **Versions updated**: Workflow updates version numbers to v0.3.0 in all files
-6. **Tag moved**: Workflow commits the changes and moves the tag to point to this new commit
-7. **Result**: The tag v0.3.0 now points to a commit where all version numbers are v0.3.0
-
-**Visual representation:**
+**Step 1: Preparation (Pre-Release Tag)**
 ```
-Before:
-  main: ... → commit A (v0.2.0 in files) → commit B → commit C
-                                                        ↑
-                                                    v0.3.0 tag
+1. Push v0.3.0-pre tag
+   main: ... → commit C (v0.2.0 in files)
+                       ↑
+                   v0.3.0-pre
 
-After workflow:
-  main: ... → commit A → commit B → commit C → commit D (v0.3.0 in files)
-                                                ↑
-                                            v0.3.0 tag (moved)
-  
-  Commit D message: "Prepare v0.3.0 release"
+2. Workflow creates release-v0.3.0 branch with version updates
+   release-v0.3.0: commit C → commit D (v0.3.0 in files)
+                              "Prepare v0.3.0 release"
+
+3. PR created: release-v0.3.0 → main
 ```
 
-This ensures that:
-- The tag always points to code with consistent version numbers
-- Users can clone at any tag and get the correct version
-- Version numbers in source files always match the git tag
-- The process is fully automated after pushing the tag
+**Step 2: Finalization (PR Merge)**
+```
+4. PR is reviewed and merged
+   main: ... → commit C → commit M (merge, v0.3.0 in files)
 
-**Note:** If version numbers are already correct (matching the tag), the workflow will skip the update step. This can happen if you manually updated versions before tagging.
+5. Workflow creates final tag at merge commit
+   main: ... → commit C → commit M (v0.3.0 in files)
+                          ↑
+                      v0.3.0 tag
+
+6. v0.3.0-pre tag is deleted
+```
+
+### Key Benefits of This Workflow
+
+✅ **Manual Review**: Release preparation is reviewed before finalization  
+✅ **Clear History**: Clean commit showing "Prepare v0.3.0 release"  
+✅ **Consistency**: Tag points to commit with matching version numbers  
+✅ **Flexibility**: Can edit release notes in PR before publishing  
+✅ **Safety**: Can cancel by closing PR without merging  
+✅ **Automation**: After approval, release creation is automatic
 
 ## Troubleshooting
 
-### Release workflow fails
+### PR creation fails
 
+If the workflow fails to create the release PR:
+
+- **Check if a PR already exists**: Look for open PRs with `release-v` branch names
+- **Check if the release already exists**: The workflow will fail if the final tag/release exists
+- **Verify the tag format**: Must be `vX.Y.Z-pre` (e.g., `v0.3.0-pre`)
 - **Check the Actions tab** for detailed error messages
-- **Ensure the tag format is correct** (must match `v*.*.*`)
-- **Verify you have the necessary permissions** to create releases
-- **Check if the version numbers were already at the release version** (workflow will skip updates if no changes needed)
 
-### Release already exists
+To retry:
+```bash
+# Delete the pre-release tag
+git tag -d v0.3.0-pre
+git push --delete origin v0.3.0-pre
 
-If you push a tag for an existing release, the workflow will detect it and skip creation. To create a new release:
+# Fix any issues and try again
+git tag -a v0.3.0-pre -m "Prepare release v0.3.0"
+git push origin v0.3.0-pre
+```
 
-1. Delete the existing release in GitHub
-2. Delete the tag locally and remotely:
+### Version numbers were already updated
+
+If you manually updated version numbers before pushing the pre-release tag:
+
+- The workflow will fail because there are no changes to commit
+- **Solution**: Revert the version numbers to the previous release, then push the pre-release tag
+
+### Merge conflicts in release PR
+
+If the release PR has merge conflicts (someone pushed to main after PR creation):
+
+1. **Update the release branch**:
    ```bash
-   git tag -d vX.Y.Z
-   git push --delete origin vX.Y.Z
-   ```
-3. Create and push the tag again
-
-### Tag not moved / Version not updated
-
-If the workflow completes but the tag wasn't moved:
-
-- Check the workflow logs for the "Update version numbers and move tag" step
-- The version numbers might have already been correct (no update needed)
-- Ensure the workflow has permission to force-push tags
-- You can manually verify: `git show vX.Y.Z` should show the version update commit
-
-### Merge conflicts after release
-
-If someone pushes to main while the release workflow is running:
-
-1. The workflow might fail to push the version update commit
-2. You'll need to manually update version numbers and push
-3. Then manually move the tag:
-   ```bash
+   git checkout release-v0.3.0
    git pull origin main
-   # Update version numbers manually if needed
-   git add CMakeLists.txt CITATION.cff README.md
-   git commit -m "Prepare vX.Y.Z release"
-   git tag -d vX.Y.Z
-   git tag -a vX.Y.Z -m "Release vX.Y.Z"
-   git push origin main
-   git push origin vX.Y.Z --force
+   # Resolve conflicts
+   git add .
+   git commit -m "Resolve merge conflicts"
+   git push origin release-v0.3.0
+   ```
+
+2. **Continue with normal PR review and merge**
+
+### Release finalization fails after PR merge
+
+If the finalization workflow fails after merging the PR:
+
+- **Check the Actions tab** for error messages
+- **Manually create the tag**:
+  ```bash
+  git checkout main
+  git pull origin main
+  git tag -a v0.3.0 -m "Release v0.3.0"
+  git push origin v0.3.0
+  ```
+- **Manually create the release** in GitHub UI if needed
+
+### Accidentally pushed wrong pre-release tag
+
+If you pushed `v0.4.0-pre` but meant `v0.3.0-pre`:
+
+1. **Close the PR** without merging
+2. **Delete the wrong tag and branch**:
+   ```bash
+   git push --delete origin v0.4.0-pre
+   git push --delete origin release-v0.4.0
+   ```
+3. **Push the correct tag**:
+   ```bash
+   git tag -a v0.3.0-pre -m "Prepare release v0.3.0"
+   git push origin v0.3.0-pre
    ```
 
 ## Best Practices
 
-1. **Use clear commit messages** - They appear in the automated release notes
-2. **Label pull requests appropriately** - This helps organize release notes
-3. **Review release notes** - Edit them after creation if needed to add highlights or context
-4. **Test before tagging** - Ensure the `main` branch is in a good state
-5. **Follow semantic versioning** - This helps users understand the impact of updates
-6. **Coordinate with team** - Ensure everyone knows a release is being created
+1. **Test before tagging** - Ensure the `main` branch is in a good state before pushing the pre-release tag
+2. **Use clear commit messages** - They appear in the automated release notes
+3. **Label pull requests** - Use labels like `feature`, `bug`, `documentation` to help organize release notes
+4. **Review the release PR thoroughly** - Check version numbers and release notes before merging
+5. **Edit release notes in the PR** - Refine the auto-generated notes before finalizing
+6. **Follow semantic versioning** - This helps users understand the impact of updates
+7. **Coordinate with team** - Ensure everyone knows a release is being prepared
+8. **Don't push to main during release** - Wait for the release PR to merge to avoid conflicts
 
 ## Example Release Workflow
 
@@ -229,32 +288,62 @@ Here's a complete example of creating version 0.3.0:
 git checkout main
 git pull origin main
 
-# 2. Verify everything is working
+# 2. Verify everything is working (recommended)
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ctest --test-dir build
 
-# 3. Create and push the tag
-git tag -a v0.3.0 -m "Release v0.3.0"
-git push origin v0.3.0
+# 3. Push the pre-release tag
+git tag -a v0.3.0-pre -m "Prepare release v0.3.0"
+git push origin v0.3.0-pre
 
-# 4. Wait for the automated workflow to complete
+# 4. Wait for the PR to be created (usually takes 1-2 minutes)
 # Monitor at: https://github.com/kamping-site/kamping/actions
-# The workflow will:
-#   - Create the GitHub release
-#   - Update version numbers in source files
-#   - Commit the changes to main
-#   - Move the tag to point to the version update commit
 
-# 5. Pull the updated main branch
+# 5. Review the release PR
+# Go to: https://github.com/kamping-site/kamping/pulls
+# - Check version numbers in files
+# - Review the auto-generated release notes
+# - Edit the PR description to refine release notes if needed
+# - Request team reviews if desired
+
+# 6. Merge the PR
+# Click "Merge pull request" in the GitHub UI
+# (or use gh CLI: gh pr merge --squash)
+
+# 7. Wait for final release creation (automatic, takes ~30 seconds)
+# The workflow will:
+#   - Create the v0.3.0 tag at the merge commit
+#   - Create the GitHub release with the notes from the PR
+#   - Delete the v0.3.0-pre tag
+
+# 8. Pull the latest changes
+git checkout main
 git pull origin main
 
-# 6. Verify the tag points to the version update commit
-git show v0.3.0
-# Should show commit message "Prepare v0.3.0 release"
+# 9. Verify the release
+git show v0.3.0  # Should show the merge commit with version updates
+# View release at: https://github.com/kamping-site/kamping/releases/tag/v0.3.0
 
-# 7. Review and optionally edit the release notes
-# View at: https://github.com/kamping-site/kamping/releases/tag/v0.3.0
+# 10. (Optional) Further edit release notes in GitHub UI if needed
+```
+
+### Quick Reference
+
+**Start release:**
+```bash
+git tag -a v0.3.0-pre -m "Prepare release v0.3.0" && git push origin v0.3.0-pre
+```
+
+**Cancel release:**
+```bash
+# Close the PR in GitHub, then:
+git push --delete origin v0.3.0-pre
+```
+
+**After merge:**
+```bash
+git pull origin main && git show v0.3.0
 ```
 
 ## Additional Notes

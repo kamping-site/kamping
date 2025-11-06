@@ -1,22 +1,22 @@
-name: Create Release
+name: Automated Release Process
 
 on:
   push:
     tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to create release for (e.g., v0.3.0)'
-        required: true
-        type: string
+      - 'v*.*.*-pre'
+  pull_request:
+    types: [closed]
+    branches:
+      - main
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  create-release:
+  # Job 1: When a -pre tag is pushed, create a PR with version updates
+  prepare-release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && endsWith(github.ref, '-pre')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -25,46 +25,72 @@ jobs:
           fetch-depth: 0
           submodules: 'recursive'
 
-      - name: Determine tag
-        id: get-tag
+      - name: Extract version from tag
+        id: get-version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG="${GITHUB_REF#refs/tags/}"
-          fi
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
-          echo "Creating release for tag: $TAG"
+          PRE_TAG="${GITHUB_REF#refs/tags/}"
+          echo "pre_tag=$PRE_TAG" >> $GITHUB_OUTPUT
+          
+          # Remove -pre suffix to get final version
+          FINAL_TAG="${PRE_TAG%-pre}"
+          VERSION="${FINAL_TAG#v}"
+          
+          echo "final_tag=$FINAL_TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Preparing release $FINAL_TAG (from $PRE_TAG)"
 
       - name: Validate version format
         run: |
-          TAG="${{ steps.get-tag.outputs.tag }}"
-          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
-            echo "Error: Tag '$TAG' does not match semantic versioning pattern (e.g., v1.0.0 or v1.0.0-beta.1)"
+          FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
+          if ! [[ "$FINAL_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Tag '$FINAL_TAG' does not match semantic versioning pattern (e.g., v1.0.0)"
+            echo "Pre-release tags should be in format: vX.Y.Z-pre"
             exit 1
           fi
 
-      - name: Check if release already exists
+      - name: Check if final release already exists
         id: check-release
         run: |
-          TAG="${{ steps.get-tag.outputs.tag }}"
-          if gh release view "$TAG" > /dev/null 2>&1; then
+          FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
+          if gh release view "$FINAL_TAG" > /dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Release for $TAG already exists"
+            echo "⚠️  Release for $FINAL_TAG already exists"
+            exit 1
           else
             echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Release for $TAG does not exist"
+            echo "✓ Release for $FINAL_TAG does not exist yet"
           fi
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Get previous tag
-        id: get-previous-tag
-        if: steps.check-release.outputs.exists == 'false'
+      - name: Check if PR already exists
+        id: check-pr
         run: |
-          CURRENT_TAG="${{ steps.get-tag.outputs.tag }}"
-          PREVIOUS_TAG=$(git tag --sort=-v:refname | grep -v "^$CURRENT_TAG$" | head -n 1)
+          FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
+          BRANCH="release-$FINAL_TAG"
+          
+          # Check if PR already exists
+          PR_COUNT=$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')
+          
+          if [ "$PR_COUNT" -gt 0 ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            PR_URL=$(gh pr list --head "$BRANCH" --state open --json url --jq '.[0].url')
+            echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+            echo "⚠️  PR already exists: $PR_URL"
+            exit 1
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✓ No existing PR found"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Get previous tag for release notes
+        id: get-previous-tag
+        run: |
+          PRE_TAG="${{ steps.get-version.outputs.pre_tag }}"
+          # Get previous non-pre release tags
+          PREVIOUS_TAG=$(git tag --sort=-v:refname | grep -v -- "-pre$" | grep -v "^$PRE_TAG$" | head -n 1)
           if [ -z "$PREVIOUS_TAG" ]; then
             echo "No previous tag found, this might be the first release"
             PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
@@ -72,68 +98,51 @@ jobs:
           echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
           echo "Previous tag: $PREVIOUS_TAG"
 
-      - name: Generate release notes
+      - name: Generate preview release notes
         id: generate-notes
-        if: steps.check-release.outputs.exists == 'false'
         run: |
-          TAG="${{ steps.get-tag.outputs.tag }}"
+          FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
           PREVIOUS_TAG="${{ steps.get-previous-tag.outputs.previous_tag }}"
           
           # Use GitHub's automatic release notes generation
+          # Note: We use the pre-tag here as a placeholder since final tag doesn't exist yet
           RESPONSE=$(gh api \
             --method POST \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/${{ github.repository }}/releases/generate-notes \
-            -f tag_name="$TAG" \
-            -f previous_tag_name="$PREVIOUS_TAG")
+            -f tag_name="${{ steps.get-version.outputs.pre_tag }}" \
+            -f previous_tag_name="$PREVIOUS_TAG" \
+            -f target_commitish="main")
           
           # Extract the body from the response
           NOTES=$(echo "$RESPONSE" | jq -r '.body')
           
-          # Save to file to handle multiline
-          echo "$NOTES" > release_notes.md
+          # Save to file
+          echo "$NOTES" > /tmp/release_notes.md
           
-          echo "Release notes generated"
+          echo "Release notes preview generated"
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Create GitHub Release
-        if: steps.check-release.outputs.exists == 'false'
+      - name: Create release preparation branch and PR
         run: |
-          TAG="${{ steps.get-tag.outputs.tag }}"
-          
-          # Create the release
-          gh release create "$TAG" \
-            --title "$TAG" \
-            --notes-file release_notes.md \
-            --verify-tag
-          
-          echo "Release $TAG created successfully"
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Update version numbers and move tag
-        if: steps.check-release.outputs.exists == 'false' && github.event_name == 'push'
-        run: |
-          VERSION="${{ steps.get-tag.outputs.version }}"
-          TAG="${{ steps.get-tag.outputs.tag }}"
+          VERSION="${{ steps.get-version.outputs.version }}"
+          FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
+          PRE_TAG="${{ steps.get-version.outputs.pre_tag }}"
+          BRANCH="release-$FINAL_TAG"
           
           # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Get the current commit SHA that the tag points to
-          ORIGINAL_COMMIT=$(git rev-parse "$TAG")
-          echo "Tag $TAG currently points to: $ORIGINAL_COMMIT"
-          
-          # Make sure we're working from the tagged commit
-          git checkout "$TAG"
+          # Create and checkout new branch from current HEAD
+          git checkout -b "$BRANCH"
           
           # Update CMakeLists.txt
           if grep -q "VERSION [0-9]" CMakeLists.txt; then
             sed -i "s/VERSION [0-9][0-9.]\+/VERSION $VERSION/" CMakeLists.txt
-            echo "Updated CMakeLists.txt to $VERSION"
+            echo "✓ Updated CMakeLists.txt to $VERSION"
           fi
           
           # Update CITATION.cff
@@ -142,54 +151,204 @@ jobs:
             # Update date-released to today
             TODAY=$(date +%Y-%m-%d)
             sed -i "s/^date-released: .*/date-released: $TODAY/" CITATION.cff
-            echo "Updated CITATION.cff to $VERSION"
+            echo "✓ Updated CITATION.cff to $VERSION (date: $TODAY)"
           fi
           
           # Update README.md if it contains version references
           if grep -q "GIT_TAG v[0-9]" README.md; then
-            sed -i "s/GIT_TAG v[0-9][0-9.]*/GIT_TAG $TAG/" README.md
-            echo "Updated README.md to reference $TAG"
+            sed -i "s/GIT_TAG v[0-9][0-9.]*/GIT_TAG $FINAL_TAG/" README.md
+            echo "✓ Updated README.md to reference $FINAL_TAG"
           fi
           
           # Check if there are any changes
           if git diff --quiet; then
-            echo "No version files needed updating - version numbers already correct"
-            exit 0
+            echo "⚠️  No version files needed updating - version numbers already correct"
+            echo "This might indicate the release was already prepared."
+            exit 1
           fi
           
           # Commit the version changes
           git add CMakeLists.txt CITATION.cff README.md
-          git commit -m "Prepare $TAG release"
-          NEW_COMMIT=$(git rev-parse HEAD)
-          echo "Created version update commit: $NEW_COMMIT"
+          git commit -m "Prepare $FINAL_TAG release"
           
-          # Delete the tag locally
-          git tag -d "$TAG"
+          # Push the branch
+          git push origin "$BRANCH"
           
-          # Re-create the tag pointing to the new commit
-          git tag -a "$TAG" -m "Release $TAG"
-          echo "Moved tag $TAG to new commit: $NEW_COMMIT"
+          # Read release notes
+          RELEASE_NOTES=$(cat /tmp/release_notes.md)
           
-          # Force push the tag (this will update the tag on GitHub)
-          git push origin "$TAG" --force
+          # Create PR with release notes preview
+          gh pr create \
+            --title "Release $FINAL_TAG" \
+            --body "## 🚀 Release Preparation for $FINAL_TAG
+
+          This PR was automatically created by pushing the \`$PRE_TAG\` tag.
+
+          ### Version Changes
+          - Updated \`CMakeLists.txt\` to version $VERSION
+          - Updated \`CITATION.cff\` to version $VERSION with release date
+          - Updated \`README.md\` to reference $FINAL_TAG
+
+          ### Preview Release Notes
           
-          # Push the commit to main
-          git push origin HEAD:main
+          $RELEASE_NOTES
           
-          echo "✅ Version numbers updated and tag moved to point to the version update commit"
+          ---
+          
+          ### Next Steps
+          1. **Review** the version changes and release notes above
+          2. **Edit** this PR description to refine the release notes if needed
+          3. **Merge** this PR to trigger the final release creation
+          
+          Once merged:
+          - The \`$FINAL_TAG\` tag will be created
+          - A GitHub release will be published with these notes
+          - The tag will point to the merge commit with updated version numbers
+          
+          ### To Cancel
+          Close this PR without merging and delete the \`$PRE_TAG\` tag." \
+            --base main \
+            --head "$BRANCH" \
+            --label "release"
+          
+          echo "✅ Release preparation PR created successfully!"
+          echo "🔗 Review at: https://github.com/${{ github.repository }}/pulls"
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Release summary
+  # Job 2: When a release PR is merged, create the final tag and release
+  finalize-release:
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release-v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+          ref: main
+
+      - name: Extract version from branch name
+        id: get-version
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          # Extract version from "release-vX.Y.Z" format
+          FINAL_TAG="${BRANCH#release-}"
+          VERSION="${FINAL_TAG#v}"
+          
+          echo "final_tag=$FINAL_TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Finalizing release $FINAL_TAG"
+
+      - name: Check if release already exists
+        id: check-release
+        run: |
+          FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
+          if gh release view "$FINAL_TAG" > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Release for $FINAL_TAG already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✓ Ready to create release for $FINAL_TAG"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Get previous tag
+        id: get-previous-tag
         if: steps.check-release.outputs.exists == 'false'
         run: |
-          TAG="${{ steps.get-tag.outputs.tag }}"
-          echo "✅ Release $TAG created successfully!"
-          echo "🔗 View release: https://github.com/${{ github.repository }}/releases/tag/$TAG"
+          FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
+          # Get previous non-pre release tags
+          PREVIOUS_TAG=$(git tag --sort=-v:refname | grep -v -- "-pre$" | grep -v "^$FINAL_TAG$" | head -n 1)
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tag found, this might be the first release"
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          echo "Previous tag: $PREVIOUS_TAG"
 
-      - name: Release already exists
-        if: steps.check-release.outputs.exists == 'true'
+      - name: Create final tag
+        if: steps.check-release.outputs.exists == 'false'
         run: |
-          TAG="${{ steps.get-tag.outputs.tag }}"
-          echo "ℹ️ Release $TAG already exists, skipping creation"
-          echo "🔗 View release: https://github.com/${{ github.repository }}/releases/tag/$TAG"
+          FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create tag at the merge commit (current HEAD on main)
+          git tag -a "$FINAL_TAG" -m "Release $FINAL_TAG"
+          
+          # Push the tag
+          git push origin "$FINAL_TAG"
+          
+          echo "✅ Tag $FINAL_TAG created at merge commit"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Extract release notes from PR
+        if: steps.check-release.outputs.exists == 'false'
+        id: extract-notes
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          
+          # Extract the release notes section from the PR body
+          # Look for content after "### Preview Release Notes" header
+          NOTES=$(echo "$PR_BODY" | awk '/### Preview Release Notes/,/^---$/' | sed '1d;$d' | sed '/^$/d')
+          
+          if [ -z "$NOTES" ]; then
+            echo "⚠️  Could not extract release notes from PR, using auto-generated notes"
+            # Fall back to auto-generation
+            FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
+            PREVIOUS_TAG="${{ steps.get-previous-tag.outputs.previous_tag }}"
+            
+            RESPONSE=$(gh api \
+              --method POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              /repos/${{ github.repository }}/releases/generate-notes \
+              -f tag_name="$FINAL_TAG" \
+              -f previous_tag_name="$PREVIOUS_TAG")
+            
+            NOTES=$(echo "$RESPONSE" | jq -r '.body')
+          fi
+          
+          # Save to file
+          echo "$NOTES" > release_notes.md
+          echo "✓ Release notes prepared"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create GitHub Release
+        if: steps.check-release.outputs.exists == 'false'
+        run: |
+          FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
+          
+          # Create the release
+          gh release create "$FINAL_TAG" \
+            --title "$FINAL_TAG" \
+            --notes-file release_notes.md \
+            --verify-tag
+          
+          echo "✅ Release $FINAL_TAG created successfully!"
+          echo "🔗 View release: https://github.com/${{ github.repository }}/releases/tag/$FINAL_TAG"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Delete pre-release tag
+        if: steps.check-release.outputs.exists == 'false'
+        run: |
+          FINAL_TAG="${{ steps.get-version.outputs.final_tag }}"
+          PRE_TAG="$FINAL_TAG-pre"
+          
+          # Check if pre-release tag exists and delete it
+          if git rev-parse "$PRE_TAG" >/dev/null 2>&1; then
+            git push --delete origin "$PRE_TAG" || echo "Could not delete pre-release tag (might not exist on remote)"
+            echo "✓ Cleaned up pre-release tag $PRE_TAG"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
