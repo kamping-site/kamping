@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 0.2.1)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
@@ -7,7 +7,7 @@ project(
     KaMPIng
     DESCRIPTION "Flexible and (near) zero-overhead C++ bindings for MPI"
     LANGUAGES CXX
-    VERSION 0.2.0
+    VERSION 0.2.1
 )
 include(FetchContent)
 
