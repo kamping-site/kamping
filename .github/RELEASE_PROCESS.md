@@ -19,14 +19,21 @@ git pull origin main && git show v0.3.0
 
 ## Two-Step Process
 
-### Step 1: Push Pre-Release Tag → Creates PR
+### Step 1: Initiate Release → Creates PR
 
+**Option A: Push Pre-Release Tag (Recommended)**
 ```bash
 git checkout main
 git pull origin main
 git tag -a vX.Y.Z-pre -m "Prepare release vX.Y.Z"
 git push origin vX.Y.Z-pre
 ```
+
+**Option B: Trigger Manually**
+1. Go to [Actions](https://github.com/kamping-site/kamping/actions/workflows/release.yml)
+2. Click "Run workflow"
+3. Enter version (e.g., `0.3.0`)
+4. Click "Run workflow"
 
 **What happens:**
 - Automated workflow creates a release PR

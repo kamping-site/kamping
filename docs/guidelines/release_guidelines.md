@@ -29,9 +29,13 @@ Before creating a release:
    - **Minor version (0.X.0)**: New features, backwards-compatible changes
    - **Patch version (0.0.X)**: Bug fixes, backwards-compatible fixes
 
-### 2. Create and Push a Pre-Release Tag
+### 2. Initiate Release Preparation
 
-To initiate the release process, push a **pre-release tag** with the `-pre` suffix:
+You can initiate the release process in two ways:
+
+#### Option A: Push a Pre-Release Tag (Recommended)
+
+Push a **pre-release tag** with the `-pre` suffix:
 
 ```bash
 # Ensure you're on the latest main branch
@@ -51,7 +55,17 @@ git tag -a v0.3.0-pre -m "Prepare release v0.3.0"
 git push origin v0.3.0-pre
 ```
 
-**What happens automatically:**
+#### Option B: Trigger Workflow Manually
+
+Alternatively, trigger the workflow manually without creating a tag:
+
+1. Go to the [Actions tab](https://github.com/kamping-site/kamping/actions/workflows/release.yml)
+2. Click "Run workflow"
+3. Select the `main` branch
+4. Enter the version number (e.g., `0.3.0` without the `v` prefix)
+5. Click "Run workflow"
+
+**What happens automatically (both options):**
 1. Workflow validates the version format
 2. Checks that the release doesn't already exist
 3. Creates a new branch `release-v0.3.0` with version updates:
@@ -293,9 +307,15 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ctest --test-dir build
 
-# 3. Push the pre-release tag
+# 3a. Option A: Push the pre-release tag
 git tag -a v0.3.0-pre -m "Prepare release v0.3.0"
 git push origin v0.3.0-pre
+
+# OR
+
+# 3b. Option B: Trigger workflow manually
+# Go to https://github.com/kamping-site/kamping/actions/workflows/release.yml
+# Click "Run workflow", enter version "0.3.0", and run
 
 # 4. Wait for the PR to be created (usually takes 1-2 minutes)
 # Monitor at: https://github.com/kamping-site/kamping/actions
@@ -330,14 +350,17 @@ git show v0.3.0  # Should show the merge commit with version updates
 
 ### Quick Reference
 
-**Start release:**
+**Start release (Option A - Tag):**
 ```bash
 git tag -a v0.3.0-pre -m "Prepare release v0.3.0" && git push origin v0.3.0-pre
 ```
 
+**Start release (Option B - Manual):**
+- Go to Actions → Run workflow → Enter version
+
 **Cancel release:**
 ```bash
-# Close the PR in GitHub, then:
+# Close the PR in GitHub, then (only if using tag method):
 git push --delete origin v0.3.0-pre
 ```
 

@@ -8,15 +8,23 @@ on:
     types: [closed]
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.3.0 without v prefix)'
+        required: true
+        type: string
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  # Job 1: When a -pre tag is pushed, create a PR with version updates
+  # Job 1: When a -pre tag is pushed or workflow is manually triggered, create a PR with version updates
   prepare-release:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && endsWith(github.ref, '-pre')
+    if: |
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && endsWith(github.ref, '-pre')) ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -25,19 +33,31 @@ jobs:
           fetch-depth: 0
           submodules: 'recursive'
 
-      - name: Extract version from tag
+      - name: Extract version from tag or input
         id: get-version
         run: |
-          PRE_TAG="${GITHUB_REF#refs/tags/}"
-          echo "pre_tag=$PRE_TAG" >> $GITHUB_OUTPUT
-          
-          # Remove -pre suffix to get final version
-          FINAL_TAG="${PRE_TAG%-pre}"
-          VERSION="${FINAL_TAG#v}"
-          
-          echo "final_tag=$FINAL_TAG" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Preparing release $FINAL_TAG (from $PRE_TAG)"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual trigger - version from input
+            VERSION="${{ inputs.version }}"
+            FINAL_TAG="v$VERSION"
+            PRE_TAG="manual"
+            echo "pre_tag=$PRE_TAG" >> $GITHUB_OUTPUT
+            echo "final_tag=$FINAL_TAG" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "Preparing release $FINAL_TAG (manual trigger)"
+          else
+            # Tag trigger - extract from tag
+            PRE_TAG="${GITHUB_REF#refs/tags/}"
+            echo "pre_tag=$PRE_TAG" >> $GITHUB_OUTPUT
+            
+            # Remove -pre suffix to get final version
+            FINAL_TAG="${PRE_TAG%-pre}"
+            VERSION="${FINAL_TAG#v}"
+            
+            echo "final_tag=$FINAL_TAG" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "Preparing release $FINAL_TAG (from $PRE_TAG)"
+          fi
 
       - name: Validate version format
         run: |
