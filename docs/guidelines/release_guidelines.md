@@ -125,7 +125,7 @@ After the release is published, you can further refine it:
 1. Go to the [releases page](https://github.com/kamping-site/kamping/releases)
 2. Click "Edit" on the release
 3. Refine the release notes if needed
-4. You can use the [release template](../.github/release-template.md) as a guide for structuring release notes
+4. You can use the [release template](https://github.com/kamping-site/kamping/blob/main/.github/release-template.md) as a guide for structuring release notes
 
 ## Canceling a Release
 
