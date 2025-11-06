@@ -433,6 +433,9 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
     if constexpr (std::is_same_v<T_no_const, bool>) {
         possible_mpi_datatypes.push_back(MPI_CXX_BOOL);
     }
+    if constexpr (std::is_same_v<T_no_const, std::byte>) {
+        possible_mpi_datatypes.push_back(MPI_BYTE);
+    }
     if constexpr (std::is_same_v<T_no_const, kamping::kabool>) {
         possible_mpi_datatypes.push_back(MPI_CXX_BOOL);
     }
