@@ -203,7 +203,7 @@ We welcome contributions to KaMPIng! Please see our [contribution guidelines](CO
 - How to submit pull requests
 - Coding and testing guidelines
 
-For maintainers creating releases, see the [release guidelines](docs/guidelines/release_guidelines.md) for the automated release process.
+For maintainers creating releases, see the [release guidelines](https://github.com/kamping-site/kamping/blob/main/docs/guidelines/release_guidelines.md) for the automated release process.
 
 ## LICENSE
 KaMPIng is released under the GNU Lesser General Public License. See [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER) for details
