@@ -435,6 +435,9 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
     if constexpr (std::is_same_v<T_no_const, std::complex<long double>>) {
         possible_types.push_back(MPI_CXX_LONG_DOUBLE_COMPLEX);
     }
+    if (!possible_types.empty()) {
+        return possible_types;
+    }
 
     // Check if we got a array type -> create a continuous type.
     if constexpr (std::is_array_v<T_no_const>) {
@@ -448,8 +451,7 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
         return possible_mpi_datatypes<std::underlying_type_t<T_no_const>>();
     }
 
-    assert(possible_types.size() > 0);
-    return possible_types;
+    return {};
 }
 
 /// @brief Compares two CommunicationGraphViews objects for equality
