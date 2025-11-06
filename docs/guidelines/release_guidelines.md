@@ -140,11 +140,28 @@ The release process follows this pattern:
 6. **Tag moved**: Workflow commits the changes and moves the tag to point to this new commit
 7. **Result**: The tag v0.3.0 now points to a commit where all version numbers are v0.3.0
 
+**Visual representation:**
+```
+Before:
+  main: ... → commit A (v0.2.0 in files) → commit B → commit C
+                                                        ↑
+                                                    v0.3.0 tag
+
+After workflow:
+  main: ... → commit A → commit B → commit C → commit D (v0.3.0 in files)
+                                                ↑
+                                            v0.3.0 tag (moved)
+  
+  Commit D message: "Prepare v0.3.0 release"
+```
+
 This ensures that:
 - The tag always points to code with consistent version numbers
 - Users can clone at any tag and get the correct version
 - Version numbers in source files always match the git tag
 - The process is fully automated after pushing the tag
+
+**Note:** If version numbers are already correct (matching the tag), the workflow will skip the update step. This can happen if you manually updated versions before tagging.
 
 ## Troubleshooting
 
