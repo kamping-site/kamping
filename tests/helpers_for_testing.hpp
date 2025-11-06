@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPIng Authors
+// Copyright 2021-2025 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -29,7 +29,6 @@
 
 #include "kamping/data_buffer.hpp"
 #include "kamping/distributed_graph_communicator.hpp"
-#include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
@@ -346,6 +345,100 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
     // Remove const qualifiers.
     using T_no_const = std::remove_const_t<T>;
 
+    // For each supported C++ datatype, check if it is equivalent to the T_no_const and if so, add the corresponding MPI
+    // datatype to the list of possible types.
+    std::vector<MPI_Datatype> possible_types;
+    if constexpr (std::is_same_v<T_no_const, char>) {
+        possible_types.push_back(MPI_CHAR);
+    }
+    if constexpr (std::is_same_v<T_no_const, signed char>) {
+        possible_types.push_back(MPI_SIGNED_CHAR);
+    }
+    if constexpr (std::is_same_v<T_no_const, unsigned char>) {
+        possible_types.push_back(MPI_UNSIGNED_CHAR);
+    }
+    if constexpr (std::is_same_v<T_no_const, wchar_t>) {
+        possible_types.push_back(MPI_WCHAR);
+    }
+    if constexpr (std::is_same_v<T_no_const, signed short>) {
+        possible_types.push_back(MPI_SHORT);
+    }
+    if constexpr (std::is_same_v<T_no_const, unsigned short>) {
+        possible_types.push_back(MPI_UNSIGNED_SHORT);
+    }
+    if constexpr (std::is_same_v<T_no_const, signed int>) {
+        possible_types.push_back(MPI_INT);
+    }
+    if constexpr (std::is_same_v<T_no_const, unsigned int>) {
+        possible_types.push_back(MPI_UNSIGNED);
+    }
+    if constexpr (std::is_same_v<T_no_const, signed long int>) {
+        possible_types.push_back(MPI_LONG);
+    }
+    if constexpr (std::is_same_v<T_no_const, unsigned long int>) {
+        possible_types.push_back(MPI_UNSIGNED_LONG);
+    }
+    if constexpr (std::is_same_v<T_no_const, signed long long int>) {
+        possible_types.push_back(MPI_LONG_LONG);
+    }
+    if constexpr (std::is_same_v<T_no_const, unsigned long long int>) {
+        possible_types.push_back(MPI_UNSIGNED_LONG_LONG);
+    }
+    if constexpr (std::is_same_v<T_no_const, float>) {
+        possible_types.push_back(MPI_FLOAT);
+    }
+    if constexpr (std::is_same_v<T_no_const, double>) {
+        possible_types.push_back(MPI_DOUBLE);
+    }
+    if constexpr (std::is_same_v<T_no_const, long double>) {
+        possible_types.push_back(MPI_LONG_DOUBLE);
+    }
+    if constexpr (std::is_same_v<T_no_const, int8_t>) {
+        possible_types.push_back(MPI_INT8_T);
+    }
+    if constexpr (std::is_same_v<T_no_const, int16_t>) {
+        possible_types.push_back(MPI_INT16_T);
+    }
+    if constexpr (std::is_same_v<T_no_const, int32_t>) {
+        possible_types.push_back(MPI_INT32_T);
+    }
+    if constexpr (std::is_same_v<T_no_const, int64_t>) {
+        possible_types.push_back(MPI_INT64_T);
+    }
+    if constexpr (std::is_same_v<T_no_const, uint8_t>) {
+        possible_types.push_back(MPI_UINT8_T);
+    }
+    if constexpr (std::is_same_v<T_no_const, uint16_t>) {
+        possible_types.push_back(MPI_UINT16_T);
+    }
+    if constexpr (std::is_same_v<T_no_const, uint32_t>) {
+        possible_types.push_back(MPI_UINT32_T);
+    }
+    if constexpr (std::is_same_v<T_no_const, uint64_t>) {
+        possible_types.push_back(MPI_UINT64_T);
+    }
+    if constexpr (std::is_same_v<T_no_const, bool>) {
+        possible_types.push_back(MPI_CXX_BOOL);
+    }
+    if constexpr (std::is_same_v<T_no_const, std::byte>) {
+        possible_types.push_back(MPI_BYTE);
+    }
+    if constexpr (std::is_same_v<T_no_const, kamping::kabool>) {
+        possible_types.push_back(MPI_CXX_BOOL);
+    }
+    if constexpr (std::is_same_v<T_no_const, std::complex<float>>) {
+        possible_types.push_back(MPI_CXX_FLOAT_COMPLEX);
+    }
+    if constexpr (std::is_same_v<T_no_const, std::complex<double>>) {
+        possible_types.push_back(MPI_CXX_DOUBLE_COMPLEX);
+    }
+    if constexpr (std::is_same_v<T_no_const, std::complex<long double>>) {
+        possible_types.push_back(MPI_CXX_LONG_DOUBLE_COMPLEX);
+    }
+    if (!possible_types.empty()) {
+        return possible_types;
+    }
+
     // Check if we got a array type -> create a continuous type.
     if constexpr (std::is_array_v<T_no_const>) {
         // sizeof(arrayType) returns the total length of the array not just the length of the first element. :-)
@@ -358,96 +451,7 @@ std::vector<MPI_Datatype> possible_mpi_datatypes() noexcept {
         return possible_mpi_datatypes<std::underlying_type_t<T_no_const>>();
     }
 
-    // For each supported C++ datatype, check if it is equivalent to the T_no_const and if so, add the corresponding MPI
-    // datatype to the list of possible types.
-    std::vector<MPI_Datatype> possible_mpi_datatypes;
-    if constexpr (std::is_same_v<T_no_const, char>) {
-        possible_mpi_datatypes.push_back(MPI_CHAR);
-    }
-    if constexpr (std::is_same_v<T_no_const, signed char>) {
-        possible_mpi_datatypes.push_back(MPI_SIGNED_CHAR);
-    }
-    if constexpr (std::is_same_v<T_no_const, unsigned char>) {
-        possible_mpi_datatypes.push_back(MPI_UNSIGNED_CHAR);
-    }
-    if constexpr (std::is_same_v<T_no_const, wchar_t>) {
-        possible_mpi_datatypes.push_back(MPI_WCHAR);
-    }
-    if constexpr (std::is_same_v<T_no_const, signed short>) {
-        possible_mpi_datatypes.push_back(MPI_SHORT);
-    }
-    if constexpr (std::is_same_v<T_no_const, unsigned short>) {
-        possible_mpi_datatypes.push_back(MPI_UNSIGNED_SHORT);
-    }
-    if constexpr (std::is_same_v<T_no_const, signed int>) {
-        possible_mpi_datatypes.push_back(MPI_INT);
-    }
-    if constexpr (std::is_same_v<T_no_const, unsigned int>) {
-        possible_mpi_datatypes.push_back(MPI_UNSIGNED);
-    }
-    if constexpr (std::is_same_v<T_no_const, signed long int>) {
-        possible_mpi_datatypes.push_back(MPI_LONG);
-    }
-    if constexpr (std::is_same_v<T_no_const, unsigned long int>) {
-        possible_mpi_datatypes.push_back(MPI_UNSIGNED_LONG);
-    }
-    if constexpr (std::is_same_v<T_no_const, signed long long int>) {
-        possible_mpi_datatypes.push_back(MPI_LONG_LONG);
-    }
-    if constexpr (std::is_same_v<T_no_const, unsigned long long int>) {
-        possible_mpi_datatypes.push_back(MPI_UNSIGNED_LONG_LONG);
-    }
-    if constexpr (std::is_same_v<T_no_const, float>) {
-        possible_mpi_datatypes.push_back(MPI_FLOAT);
-    }
-    if constexpr (std::is_same_v<T_no_const, double>) {
-        possible_mpi_datatypes.push_back(MPI_DOUBLE);
-    }
-    if constexpr (std::is_same_v<T_no_const, long double>) {
-        possible_mpi_datatypes.push_back(MPI_LONG_DOUBLE);
-    }
-    if constexpr (std::is_same_v<T_no_const, int8_t>) {
-        possible_mpi_datatypes.push_back(MPI_INT8_T);
-    }
-    if constexpr (std::is_same_v<T_no_const, int16_t>) {
-        possible_mpi_datatypes.push_back(MPI_INT16_T);
-    }
-    if constexpr (std::is_same_v<T_no_const, int32_t>) {
-        possible_mpi_datatypes.push_back(MPI_INT32_T);
-    }
-    if constexpr (std::is_same_v<T_no_const, int64_t>) {
-        possible_mpi_datatypes.push_back(MPI_INT64_T);
-    }
-    if constexpr (std::is_same_v<T_no_const, uint8_t>) {
-        possible_mpi_datatypes.push_back(MPI_UINT8_T);
-    }
-    if constexpr (std::is_same_v<T_no_const, uint16_t>) {
-        possible_mpi_datatypes.push_back(MPI_UINT16_T);
-    }
-    if constexpr (std::is_same_v<T_no_const, uint32_t>) {
-        possible_mpi_datatypes.push_back(MPI_UINT32_T);
-    }
-    if constexpr (std::is_same_v<T_no_const, uint64_t>) {
-        possible_mpi_datatypes.push_back(MPI_UINT64_T);
-    }
-    if constexpr (std::is_same_v<T_no_const, bool>) {
-        possible_mpi_datatypes.push_back(MPI_CXX_BOOL);
-    }
-    if constexpr (std::is_same_v<T_no_const, kamping::kabool>) {
-        possible_mpi_datatypes.push_back(MPI_CXX_BOOL);
-    }
-    if constexpr (std::is_same_v<T_no_const, std::complex<float>>) {
-        possible_mpi_datatypes.push_back(MPI_CXX_FLOAT_COMPLEX);
-    }
-    if constexpr (std::is_same_v<T_no_const, std::complex<double>>) {
-        possible_mpi_datatypes.push_back(MPI_CXX_DOUBLE_COMPLEX);
-    }
-    if constexpr (std::is_same_v<T_no_const, std::complex<long double>>) {
-        possible_mpi_datatypes.push_back(MPI_CXX_LONG_DOUBLE_COMPLEX);
-    }
-
-    assert(possible_mpi_datatypes.size() > 0);
-    return possible_mpi_datatypes;
+    return {};
 }
 
 /// @brief Compares two CommunicationGraphViews objects for equality
