@@ -7,7 +7,6 @@
 #include "kamping/data_buffers/pipe_db.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/p2p/sendrecv.hpp"
-#include "kamping/data_buffers/pipe_db.hpp"
 
 int main() {
     using namespace kamping;
@@ -18,17 +17,17 @@ int main() {
         auto   dest = comm.rank_shifted_cyclic(1);
         size_t size = 10;
 
-        std::vector<int> sbuf(size * 5, comm.rank_signed() + 5);
+        std::vector<int>                              sbuf(size * 5, comm.rank_signed() + 5);
         std::mdspan<int, std::extents<size_t, 5, 10>> ms_sbuf(sbuf.data());
-        auto             rbuf = EmptyDataBuffer<int>();
+        auto                                          rbuf = EmptyDataBuffer<int>();
 
         auto [sent, received] = comm.sendrecv(ms_sbuf | mdspan_adapter, rbuf, static_cast<int>(dest));
 
-       if (comm.rank() == 0) {
+        if (comm.rank() == 0) {
             for (auto x: received) {
                 print_on_root(std::to_string(x), comm);
             }
-           print_on_root(std::to_string(std::ranges::size(sent)), comm);
+            print_on_root(std::to_string(std::ranges::size(sent)), comm);
         }
     }
 }

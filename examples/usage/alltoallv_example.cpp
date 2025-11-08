@@ -62,18 +62,18 @@ int main() {
     auto kamping_recv_buf = ExtDataBuffer(recv_buf);
 
     kamping_send_buf.set_size_v(std::move(send_counts));
-    kamping_send_buf.set_displacements(std::move(send_displs));
+    kamping_send_buf.set_displs(std::move(send_displs));
 
     kamping_recv_buf.set_size_v(std::move(recv_counts));
 
-    auto [sent, recieved] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs() | resize_ext());
+    auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs() | resize_ext());
 
     // Print results
     comm.barrier();
     for (int p = 0; p < (int)size; ++p) {
         if (p == rank) {
             std::cout << "Process " << rank << " received:";
-            for (int val: recieved)
+            for (int val: received)
                 std::cout << " " << val;
             std::cout << std::endl;
         }

@@ -34,12 +34,12 @@ concept HasSizeV = requires(Buff buf) {
 };
 
 template <typename Buff>
-concept HasDisplacements = requires(Buff buf) {
-    { buf.displacements() } -> IntContiguousRange<>;
+concept HasDispls = requires(Buff buf) {
+    { buf.displs() } -> IntContiguousRange<>;
 };
 
 template <typename Buff>
-concept ExtendedDataBuffer = DataBufferConcept<Buff> && HasDisplacements<Buff> && HasSizeV<Buff>;
+concept ExtendedDataBuffer = DataBufferConcept<Buff> && HasDispls<Buff> && HasSizeV<Buff>;
 
 template <typename Buff>
 concept HasSetSize = requires(Buff buf, size_t size) {
@@ -52,8 +52,8 @@ concept HasSetSizeV = requires(Buff buf, std::vector<int>&& sizes) {
 };
 
 template <typename Buff>
-concept HasSetDisplacements = requires(Buff buf, std::vector<int>&& displacements) {
-    {buf.set_displacements(std::move(displacements))};
+concept HasSetDispls = requires(Buff buf, std::vector<int>&& displs) {
+    {buf.set_displs(std::move(displs))};
 };
 
 } // namespace kamping

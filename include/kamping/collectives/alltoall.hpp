@@ -98,13 +98,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(SBuff&& 
 
     infer<CommType::alltoallv>(sbuf, rbuf, *this);
 
-    auto send_displs = sbuf.displacements();
+    auto send_displs = sbuf.displs();
     KASSERT(std::ranges::size(send_displs) >= this->size(), "Send displs buffer is not large enough.", assert::light);
 
     auto recv_counts = rbuf.size_v();
     KASSERT(std::ranges::size(recv_counts) >= this->size(), "Recv counts buffer is not large enough.", assert::light);
 
-    auto recv_displs = rbuf.displacements();
+    auto recv_displs = rbuf.displs();
     KASSERT(std::ranges::size(recv_displs) >= this->size(), "Recv displs buffer is not large enough.", assert::light);
 
     // Do the actual alltoallv
