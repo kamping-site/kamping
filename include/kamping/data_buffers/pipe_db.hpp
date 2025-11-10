@@ -1,6 +1,5 @@
 #pragma once
 
-#include <mdspan>
 #include <numeric>
 #include <ranges>
 #include <utility>
@@ -11,9 +10,11 @@
 
 template <std::ranges::contiguous_range R>
 struct auto_displs_view : pipe_view_interface<auto_displs_view<R>, R> {
-    R base_;
+    R    base_;
+    bool displs_set = false;
 
-    explicit auto_displs_view(R base) requires kamping::HasDispls<R> && kamping::HasSetDispls<R> : base_(base) {}
+    explicit auto_displs_view(R base) requires kamping::HasDispls<R> && kamping::HasSetDispls<R> && kamping::HasSizeV<R>
+        : base_(std::move(base)) {}
 
     auto displs() {
         if (!displs_set) {
@@ -32,8 +33,6 @@ struct auto_displs_view : pipe_view_interface<auto_displs_view<R>, R> {
         }
         return base_.displs();
     }
-
-    bool displs_set = false;
 };
 
 struct auto_displs : std::ranges::range_adaptor_closure<auto_displs> {
@@ -47,10 +46,11 @@ struct auto_displs : std::ranges::range_adaptor_closure<auto_displs> {
 
 template <std::ranges::contiguous_range R>
 struct resize_ext_view : pipe_view_interface<resize_ext_view<R>, R> {
-    R base_;
+    R    base_;
+    bool resized = false;
 
     explicit resize_ext_view(R base) requires kamping::HasDispls<R> && kamping::HasSetSize<R> && kamping::HasSizeV<R>
-        : base_(base) {}
+        : base_(std::move(base)) {}
 
     auto data() {
         resize();
@@ -80,8 +80,6 @@ struct resize_ext_view : pipe_view_interface<resize_ext_view<R>, R> {
             resized = true;
         }
     }
-
-    bool resized = false;
 };
 
 struct resize_ext : std::ranges::range_adaptor_closure<resize_ext> {
@@ -93,38 +91,64 @@ struct resize_ext : std::ranges::range_adaptor_closure<resize_ext> {
     }
 };
 
-template <typename T, typename Extent, typename LayoutPolicy>
-requires std::same_as<LayoutPolicy, std::layout_left> || std::same_as<LayoutPolicy, std::layout_right>
-struct mdspan_view {
-    using mdspan = std::mdspan<T, Extent, LayoutPolicy>;
-    mdspan base_;
+template <std::ranges::contiguous_range R>
+struct displs_view : pipe_view_interface<resize_ext_view<R>, R> {
+    R                base_;
+    std::vector<int> displs_;
 
-    explicit mdspan_view(mdspan base) : base_(base), data_(base_.data_handle()) {}
+    explicit displs_view(R&& base) : base_(std::move(base)) {}
+    displs_view(R&& base, std::vector<int> displs) : base_(std::move(base)), displs_(std::move(displs)) {}
 
-    auto begin() noexcept {
-        return data_;
-    }
-    auto end() noexcept {
-        return data_ + base_.size();
-    }
-    auto data() {
-        return data_;
+    auto displs() {
+        return displs_;
     }
 
-private:
-    T* data_;
-};
-
-struct mdspan_view_fn {
-    template <typename T, typename Extent, typename Layout>
-    auto operator()(std::mdspan<T, Extent, Layout> ms) const {
-        return mdspan_view<T, Extent, Layout>{ms};
+    void set_displs(std::vector<int>&& displs) {
+        displs_ = displs;
     }
 };
 
-template <typename Mdspan>
-auto operator|(Mdspan&& ms, mdspan_view_fn const& adaptor) {
-    return adaptor(std::forward<Mdspan>(ms));
-}
+template <typename R>
+displs_view(R&&, std::vector<int> displs) -> displs_view<std::ranges::views::all_t<R>>;
 
-inline constexpr mdspan_view_fn mdspan_adapter{};
+template <typename R>
+displs_view(R&&) -> displs_view<std::ranges::views::all_t<R>>;
+
+struct add_displs : std::ranges::range_adaptor_closure<add_displs> {
+    std::vector<int> displs_;
+    bool             displs_set_ = false;
+
+    explicit add_displs(std::vector<int> displs) : displs_(std::move(displs)), displs_set_(true) {}
+    add_displs() = default;
+
+    template <std::ranges::contiguous_range R>
+    auto operator()(R&& r) const {
+        return displs_set_ ? displs_view(std::forward<R>(r), displs_) : displs_view(std::forward<R>(r));
+    }
+};
+
+template <std::ranges::contiguous_range R>
+struct size_v_view : pipe_view_interface<size_v_view<R>, R> {
+    R                base_;
+    std::vector<int> size_v_;
+
+    size_v_view(R&& base, std::vector<int> size_v) : base_(std::move(base)), size_v_(std::move(size_v)) {}
+
+    auto size_v() {
+        return size_v_;
+    }
+};
+
+template <typename R>
+size_v_view(R&&, std::vector<int> size_v) -> size_v_view<std::ranges::views::all_t<R>>;
+
+struct add_size_v : std::ranges::range_adaptor_closure<add_size_v> {
+    std::vector<int> size_v_;
+
+    explicit add_size_v(std::vector<int> size_v) : size_v_(std::move(size_v)) {}
+
+    template <std::ranges::contiguous_range R>
+    auto operator()(R&& r) const {
+        return size_v_view(std::forward<R>(r), size_v_);
+    }
+};

@@ -20,55 +20,33 @@
 
 namespace kamping::adapter {
 
-template <typename T, typename Extent, typename DataBufferType>
-class MDSpanBuffer {
+template <typename T, typename Extent, typename LayoutPolicy>
+requires std::same_as<LayoutPolicy, std::layout_left> || std::same_as<LayoutPolicy, std::layout_right>
+class MDSpanAdapter {
 public:
-    using value_type = T;
+    explicit MDSpanAdapter(std::mdspan<T, Extent, LayoutPolicy>& ms) : mdspan(ms), data_handle(mdspan.data_handle()) {}
 
-    explicit MDSpanBuffer(DataBufferType&& object) : _object(std::move(object)), _data() {
-        unpack();
+    auto begin() noexcept {
+        return data_handle;
     }
-
-    void unpack() {
-        _mdspan = _object.underlying();
-        _data   = _mdspan.data_handle();
+    auto end() noexcept {
+        return data_handle + mdspan.size();
     }
-
-    T* data() noexcept {
-        return _data;
-    }
-
-    T const* data() const noexcept {
-        return _data;
+    auto data() {
+        return data_handle;
     }
 
     [[nodiscard]] size_t size() const {
-        return _mdspan.size();
+        return mdspan.size();
+    }
+
+    auto get_mdspan() {
+        return mdspan;
     }
 
 private:
-    DataBufferType         _object;
-    std::mdspan<T, Extent> _mdspan;
-    T*                     _data;
+    std::mdspan<T, Extent> mdspan;
+    T*                     data_handle;
 };
-
-template <
-    typename T,
-    typename Extent,
-    typename LayoutPolicy = std::layout_right,
-    typename Accessor     = std::default_accessor<T>>
-auto md_span_send(std::mdspan<T, Extent, LayoutPolicy, Accessor>& data) {
-    static_assert(std::is_same_v<Accessor, std::default_accessor<T>>, "use std::default_accessor<T>");
-    static_assert(std::is_same_v<LayoutPolicy, std::layout_right>, "use std::layout_right");
-    internal::GenericDataBuffer<
-        std::mdspan<T, Extent>,
-        internal::ParameterType,
-        internal::ParameterType::send_buf,
-        internal::BufferModifiability::constant,
-        internal::BufferOwnership::referencing,
-        internal::BufferType::in_buffer>
-        buffer(data);
-    return MDSpanBuffer<T, Extent, decltype(buffer)>(std::move(buffer));
-}
 
 } // namespace kamping::adapter

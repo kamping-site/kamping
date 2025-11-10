@@ -10,6 +10,15 @@ public:
         return static_cast<Derived&>(*this).base_;
     }
 
+    constexpr auto get_base() noexcept {
+        auto& b = base();
+        if constexpr (requires { b.get_base(); }) {
+            return b.get_base();
+        } else {
+            return b;
+        }
+    }
+
     constexpr auto begin() {
         return std::ranges::begin(base());
     }
@@ -38,11 +47,11 @@ public:
         return base().type();
     }
 
-    constexpr void set_size_v() requires kamping::HasSetSizeV<Base> {
-        return base().set_size_v();
+    constexpr void set_size_v(std::vector<int>&& size_v) requires kamping::HasSetSizeV<Base> {
+        return base().set_size_v(std::move(size_v));
     }
 
     constexpr void set_displs(std::vector<int>&& displs) requires kamping::HasSetDispls<Base> {
-        return base().set_displs(displs);
+        return base().set_displs(std::move(displs));
     }
 };
