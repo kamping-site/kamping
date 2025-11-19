@@ -16,6 +16,11 @@
 
 #pragma once
 
+#include <memory>
+#include <optional>
+#include <iterator>
+#include <type_traits>
+
 #include <mpi.h>
 
 #include "kamping/checking_casts.hpp"
