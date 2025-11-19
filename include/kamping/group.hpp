@@ -214,7 +214,7 @@ public:
         int err   = MPI_Group_translate_ranks(
             this->_group,
             count,
-            const_cast<int*>(std::addressof(*ranks_in_this_group_begin)),
+            std::addressof(*ranks_in_this_group_begin),
             other_group._group,
             std::addressof(*ranks_in_other_group_begin)
         );
