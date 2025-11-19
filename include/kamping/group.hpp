@@ -167,12 +167,12 @@ public:
     /// @brief Translates a rank relative to this group to a rank relative to another group.
     /// @param rank_in_this_group The rank in this group.
     /// @param other_group The other group.
-    /// @return an optional containing the rank in the other group, or std::nullopt if the rank is not present in the
+    /// @return An optional containing the rank in the other group, or std::nullopt if the rank is not present in the
     /// other group.
-    std::optional<int> translate_rank_to_group(int rank_in_this_group, Group const& other_group) const {
+    [[nodiscard]] std::optional<int> translate_rank_to_group(int rank_in_this_group, Group const& other_group) const {
         int rank_in_other_group = 0;
         int err =
-            MPI_Group_translate_ranks(this->_group, 1, &rank_in_this_group, other_group._group, &rank_in_other_group);
+            MPI_Group_translate_ranks(_group, 1, &rank_in_this_group, other_group.mpi_group(), &rank_in_other_group);
         THROW_IF_MPI_ERROR(err, "MPI_Group_translate_ranks");
         if (rank_in_other_group == MPI_UNDEFINED) {
             return std::nullopt;
@@ -217,10 +217,10 @@ public:
 
         int count = asserting_cast<int>(std::distance(ranks_in_this_group_begin, ranks_in_this_group_end));
         int err   = MPI_Group_translate_ranks(
-            this->_group,
+            _group,
             count,
             std::addressof(*ranks_in_this_group_begin),
-            other_group._group,
+            other_group.mpi_group(),
             std::addressof(*ranks_in_other_group_begin)
         );
         THROW_IF_MPI_ERROR(err, "MPI_Group_translate_ranks");
@@ -228,7 +228,7 @@ public:
 
     /// @brief Get the number of ranks in the group.
     /// @return The number of ranks in the group.
-    size_t size() const {
+    [[nodiscard]] size_t size() const {
         int size;
         int err = MPI_Group_size(_group, &size);
         THROW_IF_MPI_ERROR(err, "MPI_Group_size");
@@ -237,7 +237,7 @@ public:
 
     /// @brief Get the rank of the calling process in the group.
     /// @return The rank of the calling process in the group.
-    size_t rank() const {
+    [[nodiscard]] size_t rank() const {
         int rank;
         int err = MPI_Group_rank(_group, &rank);
         THROW_IF_MPI_ERROR(err, "MPI_Group_rank");
@@ -246,7 +246,7 @@ public:
 
     /// @brief Native MPI_Group handle corresponding to this Group.
     /// @return The MPI_Group handle.
-    MPI_Group mpi_group() const {
+    [[nodiscard]] MPI_Group mpi_group() const {
         return _group;
     }
 
