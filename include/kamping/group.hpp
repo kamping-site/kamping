@@ -16,9 +16,9 @@
 
 #pragma once
 
+#include <iterator>
 #include <memory>
 #include <optional>
-#include <iterator>
 #include <type_traits>
 
 #include <mpi.h>
