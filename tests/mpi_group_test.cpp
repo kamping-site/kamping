@@ -105,12 +105,12 @@ TEST(GroupTest, rank_translation) {
         EXPECT_THAT(translated_rank_opt, testing::Optional(rank));
     }
 
-    auto even_odd_comm  = comm.split(comm.rank() % 2, comm.rank_signed());
+    auto even_odd_comm  = comm.split(comm.rank_signed() % 2, comm.rank_signed());
     auto even_odd_group = even_odd_comm.group();
 
     std::vector<int> expected_world_ranks;
     for (int rank = 0; rank < comm.size_signed(); rank++) {
-        if (rank % 2 == comm.rank() % 2) {
+        if (rank % 2 == comm.rank_signed() % 2) {
             expected_world_ranks.push_back(rank);
         }
     }
