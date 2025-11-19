@@ -11,6 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <numeric>
 #include <vector>
 
 #include <gmock/gmock-matchers.h>
@@ -92,4 +93,38 @@ TEST(GroupTest, basics) {
     EXPECT_EQ(world_group_copy2.size(), comm.size());
     EXPECT_EQ(world_group_copy2.rank(), comm.rank());
     EXPECT_TRUE(world_group_copy2.has_same_ranks(comm.group()));
+}
+
+TEST(GroupTest, rank_translation) {
+    using namespace kamping;
+    Communicator<std::vector> comm;
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+    auto world_group = comm.group();
+    for (int rank = 0; rank < comm.size_signed(); rank++) {
+        auto translated_rank_opt = world_group.translate_rank_to_group(rank, world_group);
+        EXPECT_THAT(translated_rank_opt, testing::Optional(rank));
+    }
+
+    auto even_odd_comm  = comm.split(comm.rank() % 2, comm.rank_signed());
+    auto even_odd_group = even_odd_comm.group();
+
+    std::vector<int> expected_world_ranks;
+    for (int rank = 0; rank < comm.size_signed(); rank++) {
+        if (rank % 2 == comm.rank() % 2) {
+            expected_world_ranks.push_back(rank);
+        }
+    }
+    std::vector<int> translated_ranks(even_odd_group.size());
+    for (std::size_t i = 0; i < translated_ranks.size(); i++) {
+        auto translated_rank_opt = even_odd_group.translate_rank_to_group(static_cast<int>(i), world_group);
+        ASSERT_THAT(translated_rank_opt, testing::Optional(testing::A<int>()));
+        translated_ranks[i] = translated_rank_opt.value();
+    }
+    EXPECT_THAT(translated_ranks, testing::ElementsAreArray(expected_world_ranks));
+    std::fill(translated_ranks.begin(), translated_ranks.end(), -1);
+    std::vector<int> local_ranks(even_odd_group.size());
+    std::iota(local_ranks.begin(), local_ranks.end(), 0);
+    even_odd_group
+        .translate_ranks_to_group(local_ranks.begin(), local_ranks.end(), translated_ranks.begin(), world_group);
+    EXPECT_THAT(translated_ranks, testing::ElementsAreArray(expected_world_ranks));
 }

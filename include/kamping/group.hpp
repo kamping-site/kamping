@@ -159,6 +159,68 @@ public:
         return Group(un);
     }
 
+    /// @brief Translates a rank relative to this group to a rank relative to another group.
+    /// @param rank_in_this_group The rank in this group.
+    /// @param other_group The other group.
+    /// @return an optional containing the rank in the other group, or std::nullopt if the rank is not present in the
+    /// other group.
+    std::optional<int> translate_rank_to_group(int rank_in_this_group, Group const& other_group) const {
+        int rank_in_other_group = 0;
+        int err =
+            MPI_Group_translate_ranks(this->_group, 1, &rank_in_this_group, other_group._group, &rank_in_other_group);
+        THROW_IF_MPI_ERROR(err, "MPI_Group_translate_ranks");
+        if (rank_in_other_group == MPI_UNDEFINED) {
+            return std::nullopt;
+        }
+        return rank_in_other_group;
+    }
+
+    /// @brief Translates multiple ranks relative to this group to ranks relative to another group.
+    /// @tparam In A random access iterator type with `int` as value type.
+    /// @tparam Out A random access iterator type with `int` as value type.
+    /// @param ranks_in_this_group_begin Iterator to the beginning of the ranks in this group.
+    /// @param ranks_in_this_group_end Iterator to the end of the ranks in this group.
+    /// @param ranks_in_other_group_begin Iterator to the beginning of the output ranks in the other group.
+    /// @param other_group The other group.
+    ///
+    /// @note The output ranks will be written starting from `ranks_in_other_group_begin`. The caller must ensure that
+    /// there is enough space to write all the output ranks.
+    /// If a rank is not present in the other group, the corresponding output rank will be set to `MPI_UNDEFINED`.
+    template <typename In, typename Out>
+    void translate_ranks_to_group(
+        In           ranks_in_this_group_begin,
+        In           ranks_in_this_group_end,
+        Out          ranks_in_other_group_begin,
+        Group const& other_group
+    ) const {
+        static_assert(
+            std::is_same_v<typename std::iterator_traits<In>::value_type, int>,
+            "Input iterator value type must be int"
+        );
+        static_assert(
+            std::is_same_v<typename std::iterator_traits<Out>::value_type, int>,
+            "Output iterator value type must be int"
+        );
+        static_assert(
+            std::is_base_of_v<std::random_access_iterator_tag, typename std::iterator_traits<In>::iterator_category>,
+            "Input iterator must be a random access iterator"
+        );
+        static_assert(
+            std::is_base_of_v<std::random_access_iterator_tag, typename std::iterator_traits<Out>::iterator_category>,
+            "Output iterator must be a random access iterator"
+        );
+
+        int count = asserting_cast<int>(std::distance(ranks_in_this_group_begin, ranks_in_this_group_end));
+        int err   = MPI_Group_translate_ranks(
+            this->_group,
+            count,
+            const_cast<int*>(std::addressof(*ranks_in_this_group_begin)),
+            other_group._group,
+            std::addressof(*ranks_in_other_group_begin)
+        );
+        THROW_IF_MPI_ERROR(err, "MPI_Group_translate_ranks");
+    }
+
     /// @brief Get the number of ranks in the group.
     /// @return The number of ranks in the group.
     size_t size() const {
@@ -175,6 +237,12 @@ public:
         int err = MPI_Group_rank(_group, &rank);
         THROW_IF_MPI_ERROR(err, "MPI_Group_rank");
         return asserting_cast<size_t>(rank);
+    }
+
+    /// @brief Native MPI_Group handle corresponding to this Group.
+    /// @return The MPI_Group handle.
+    MPI_Group mpi_group() const {
+        return _group;
     }
 
 private:
