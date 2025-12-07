@@ -4,6 +4,9 @@
 
 class ExtDataBuffer {
 public:
+
+    using resize_tag = kamping::range_resizable_tag;
+
     ExtDataBuffer(std::vector<int>& data)
         : _data(data),
           _displs(std::vector<int>()),

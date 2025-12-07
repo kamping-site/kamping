@@ -8,11 +8,14 @@
 
 namespace kamping {
 
+struct range_resizable_tag{};
+
 // Concepts for the Data Buffers
 template <typename Buff>
 concept Typed = requires(Buff buf) {
     { type(buf) } -> std::same_as<MPI_Datatype>;
 };
+
 
 template <typename Buff>
 concept DataBufferConcept = std::ranges::contiguous_range<Buff> && std::ranges::sized_range<Buff> && Typed<Buff>;
@@ -37,6 +40,10 @@ template <typename Buff>
 concept HasDispls = requires(Buff buf) {
     { buf.displs() } -> IntContiguousRange<>;
 };
+
+template <typename Buff>
+concept ResizableBuffer = requires {typename Buff::resize_tag;}
+    && std::same_as<typename Buff::resize_tag, range_resizable_tag>;
 
 template <typename Buff>
 concept ExtendedDataBuffer = DataBufferConcept<Buff> && HasDispls<Buff> && HasSizeV<Buff>;

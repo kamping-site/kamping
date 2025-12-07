@@ -7,6 +7,8 @@ class EmptyDataBuffer {
 public:
     EmptyDataBuffer() : _data(std::vector<T>()) {}
 
+    using resize_tag = kamping::range_resizable_tag;
+
     auto begin() noexcept {
         return _data.begin();
     }
