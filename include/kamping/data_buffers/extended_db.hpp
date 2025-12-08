@@ -2,7 +2,7 @@
 
 #include <span>
 
-class ExtDataBuffer {
+class ExtDataBuffer : public std::ranges::view_interface<ExtDataBuffer> {
 public:
 
     using resize_tag = kamping::range_resizable_tag;
@@ -31,11 +31,11 @@ public:
         return _size;
     }
 
-    [[nodiscard]] std::vector<int> const& size_v() const noexcept {
+    [[nodiscard]] std::vector<int>& size_v() noexcept {
         return _sizes;
     }
 
-    [[nodiscard]] std::vector<int> const& displs() const noexcept {
+    [[nodiscard]] std::vector<int>& displs() noexcept {
         return _displs;
     }
 

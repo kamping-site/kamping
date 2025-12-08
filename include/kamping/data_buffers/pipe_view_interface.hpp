@@ -1,3 +1,6 @@
+#pragma once
+
+
 #include <ranges>
 
 #include "kamping/comm_helper/generic_helper.hpp"
@@ -31,11 +34,11 @@ public:
         return std::ranges::data(base());
     }
 
-    constexpr auto displs() requires kamping::HasDispls<Base> {
+    constexpr auto& displs() requires kamping::HasDispls<Base> {
         return base().displs();
     }
 
-    constexpr auto size_v() requires kamping::HasSizeV<Base> {
+    constexpr auto& size_v() requires kamping::HasSizeV<Base> {
         return base().size_v();
     }
 

@@ -31,14 +31,20 @@ template <typename T>
 concept IntContiguousRange = std::ranges::contiguous_range<T> && std::same_as < std::ranges::range_value_t<T>,
 int > &&std::ranges::sized_range<T>;
 
+template <typename T>
+concept RefToIntContiguousRange =
+    std::is_reference_v<T> &&
+    IntContiguousRange<std::remove_reference_t<T>>;
+
+
 template <typename Buff>
 concept HasSizeV = requires(Buff buf) {
-    { buf.size_v() } -> IntContiguousRange<>;
+    { buf.size_v() } -> RefToIntContiguousRange;
 };
 
 template <typename Buff>
 concept HasDispls = requires(Buff buf) {
-    { buf.displs() } -> IntContiguousRange<>;
+    { buf.displs() } -> RefToIntContiguousRange;
 };
 
 template <typename Buff>

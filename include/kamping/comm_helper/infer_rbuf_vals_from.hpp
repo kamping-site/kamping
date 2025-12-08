@@ -27,11 +27,9 @@ requires(type == CommType::alltoallv) void infer(SBuff& sbuf, RBuff& rbuf, Commu
         assert::light_communication
     );
     // Calc recv counts
-    if constexpr (HasSetSizeV<RBuff>) {
+    if constexpr (HasSizeV<RBuff>) {
         auto             send_counts = sbuf.size_v();
-        std::vector<int> recv_counts(comm.size());
-        comm.alltoall(send_counts, recv_counts);
-        rbuf.set_size_v(std::move(recv_counts));
+        comm.alltoall(send_counts, rbuf.size_v());
     }
 }
 

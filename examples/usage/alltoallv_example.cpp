@@ -23,6 +23,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffers/extended_db.hpp"
 #include "kamping/data_buffers/pipe_db.hpp"
+#include "kamping/data_buffers/displs_pipes.hpp"
 #include "kamping/environment.hpp"
 
 int main() {
@@ -56,7 +57,7 @@ int main() {
         total_recv += recv_counts[i];
     }
 
-    std::vector<int> recv_buf(0);
+    std::vector<int> recv_buf(42);
 
     auto kamping_send_buf = ExtDataBuffer(send_buf);
     auto kamping_recv_buf = ExtDataBuffer(recv_buf);
@@ -66,11 +67,29 @@ int main() {
 
     kamping_recv_buf.set_size_v(std::move(recv_counts));
 
+     std::vector<int> displs_to_set{};
+     // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
+     // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(displs_to_set) | resize_ext());
+
+    // Works, displs_to_set contains computed displs
+    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) | resize_ext());
+
+    // Works
     auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs() | resize_ext());
+
+    // Works
+    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>() | resize_ext());
+
+    // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
+    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(std::move(displs_to_set)) | resize_ext());
+
+    // Works, displs_to_set is empty
+    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set)) | resize_ext());
+
 
     // Print results
     comm.barrier();
-    for (int p = 0; p < (int)size; ++p) {
+    for (int p = 0; p < static_cast<int>(size); ++p) {
         if (p == rank) {
             std::cout << "Process " << rank << " received:";
             for (int val: received)
@@ -79,6 +98,20 @@ int main() {
         }
         comm.barrier();
     }
+
+    // Print displs_to_set
+    comm.barrier();
+    for (int p = 0; p < static_cast<int>(size); ++p) {
+        if (p == rank) {
+            std::cout << "Process " << rank << " recv displs:";
+            for (auto d : displs_to_set) {
+                std::cout << " " << d;
+            }
+            std::cout << std::endl;
+        }
+        comm.barrier();
+    }
+
 
     return 0;
 }
