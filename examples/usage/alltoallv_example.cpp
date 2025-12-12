@@ -12,6 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <iostream>
+#include <list>
 #include <numeric>
 #include <vector>
 
@@ -21,9 +22,9 @@
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/collectives/barrier.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/data_buffers/displs_pipes.hpp"
 #include "kamping/data_buffers/extended_db.hpp"
 #include "kamping/data_buffers/pipe_db.hpp"
-#include "kamping/data_buffers/displs_pipes.hpp"
 #include "kamping/environment.hpp"
 
 int main() {
@@ -67,25 +68,31 @@ int main() {
 
     kamping_recv_buf.set_size_v(std::move(recv_counts));
 
-     std::vector<int> displs_to_set{};
-     // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
-     // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(displs_to_set) | resize_ext());
+    std::vector<int> displs_to_set{};
+    // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
+    // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(displs_to_set) |
+    // resize_ext());
 
     // Works, displs_to_set contains computed displs
-    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) | resize_ext());
+    // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf |
+    // auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) | resize_ext());
 
     // Works
-    auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs() | resize_ext());
+    // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs() | resize_ext());
 
-    // Works
-    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>() | resize_ext());
+    // Works, received.displs() returns a example_IntRange
+    // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<example_IntRange>() |
+    // resize_ext());
 
     // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
-    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(std::move(displs_to_set)) | resize_ext());
+    // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(std::move(displs_to_set))
+    // | resize_ext());
 
     // Works, displs_to_set is empty
-    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set)) | resize_ext());
-
+    auto [sent, received] = comm.alltoallv(
+        kamping_send_buf,
+        kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set)) | resize_ext()
+    );
 
     // Print results
     comm.barrier();
@@ -104,7 +111,7 @@ int main() {
     for (int p = 0; p < static_cast<int>(size); ++p) {
         if (p == rank) {
             std::cout << "Process " << rank << " recv displs:";
-            for (auto d : displs_to_set) {
+            for (auto d: displs_to_set) {
                 std::cout << " " << d;
             }
             std::cout << std::endl;
@@ -112,6 +119,7 @@ int main() {
         comm.barrier();
     }
 
+    auto& x = received.displs();
 
     return 0;
 }

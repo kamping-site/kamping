@@ -72,4 +72,22 @@ void print_on_root(std::string const& str, Communicator const& comm) {
         print_result(str, comm);
     }
 }
+
+struct example_IntRange {
+    std::vector<int> data;
+
+    auto begin() {
+        return data.begin();
+    }
+    auto end() {
+        return data.end();
+    }
+    [[nodiscard]] size_t size() const {
+        return data.size();
+    }
+
+    void resize(size_t n) {
+        data.resize(n);
+    }
+};
 } // namespace kamping
