@@ -4,42 +4,33 @@
 #include "kamping/data_buffers/pipe_view_interface.hpp"
 
 using namespace kamping;
-// with displs -> store given displs. either value, ref or move
-template <std::ranges::contiguous_range R>
-struct with_displs_view : pipe_view_interface<with_displs_view<R>, R> {
-    R                base_;
-    std::vector<int> displs_;
 
-    explicit with_displs_view(R&& base) : base_(std::move(base)) {}
-    with_displs_view(R&& base, std::vector<int> displs) : base_(std::move(base)), displs_(std::move(displs)) {}
+template <DataBufferConcept R, IntContiguousRange DisplsRange>
+struct with_displs_view : pipe_view_interface<with_displs_view<R, DisplsRange>, R> {
+    R base_;
+    DisplsRange displs_;
+
+    with_displs_view(R base, DisplsRange&& displs) : base_(std::move(base)), displs_(std::move(displs)) {}
 
     auto& displs() {
         return displs_;
     }
+};
 
-    void set_displs(std::vector<int>&& displs) {
-        displs_ = displs;
+template<IntContiguousRange DisplsRange>
+struct with_displs : std::ranges::range_adaptor_closure<with_displs<DisplsRange>> {
+    DisplsRange displs_;
+
+    explicit with_displs(DisplsRange&& displs) : displs_(std::forward<DisplsRange>(displs)) {}
+
+    template <DataBufferConcept R>
+    auto operator()(R&& r)  {
+        return with_displs_view<std::ranges::views::all_t<R>, DisplsRange>(std::forward<R>(r), std::move(displs_));
     }
 };
 
-template <typename R>
-with_displs_view(R&&, std::vector<int> displs) -> with_displs_view<std::ranges::views::all_t<R>>;
-
-template <typename R>
-with_displs_view(R&&) -> with_displs_view<std::ranges::views::all_t<R>>;
-
-struct with_displs : std::ranges::range_adaptor_closure<with_displs> {
-    std::vector<int> displs_;
-    bool             displs_set_ = false;
-
-    explicit with_displs(std::vector<int> displs) : displs_(std::move(displs)), displs_set_(true) {}
-    with_displs() = default;
-
-    template <std::ranges::contiguous_range R>
-    auto operator()(R&& r) const {
-        return displs_set_ ? displs_view(std::forward<R>(r), displs_) : displs_view(std::forward<R>(r));
-    }
-};
+template<IntContiguousRange DisplsRange>
+with_displs(DisplsRange&& displs) -> with_displs<std::views::all_t<DisplsRange>>;
 
 template <BufferResizePolicy ResizePolicy, IntContiguousRange DisplsRange>
 void resize_displs(DisplsRange& displs, size_t size) {
@@ -66,7 +57,7 @@ struct auto_displs_view : pipe_view_interface<auto_displs_view<ResizePolicy, R, 
     DisplsRange displs_;
     bool        displs_set = false;
 
-    auto_displs_view(R base, DisplsRange&& displs) requires HasSizeV<R> : base_(std::forward<R>(base)),
+    auto_displs_view(R base, DisplsRange&& displs) requires HasSizeV<R> : base_(std::move(base)),
                                                                           displs_(std::move(displs)) {}
 
     auto& displs() {
@@ -93,9 +84,6 @@ struct auto_displs_view : pipe_view_interface<auto_displs_view<ResizePolicy, R, 
         return displ_ref;
     }
 };
-
-template <BufferResizePolicy ResizePolicy = BufferResizePolicy::no_resize, DataBufferConcept R, IntContiguousRange DisplsRange>
-auto_displs_view(R base, DisplsRange&& displs) -> auto_displs_view<ResizePolicy, std::ranges::views::all_t<R>, DisplsRange>;
 
 // displs_set needed because auto_displs() creates an empty DisplsRange which can only be resized after operator()
 template <BufferResizePolicy ResizePolicy, IntContiguousRange DisplsRange, bool displs_set>

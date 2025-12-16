@@ -8,8 +8,6 @@
 #include "kamping/data_buffers/data_buffer_concepts.hpp"
 #include "kamping/data_buffers/pipe_view_interface.hpp"
 
-
-
 template <std::ranges::contiguous_range R>
 struct resize_ext_view : pipe_view_interface<resize_ext_view<R>, R> {
     R    base_;
@@ -29,8 +27,8 @@ struct resize_ext_view : pipe_view_interface<resize_ext_view<R>, R> {
 
     void resize() {
         if (!resized) {
-            auto displs = base_.displs();
-            auto counts = base_.size_v();
+            auto& displs = this->displs();
+            auto& counts = this->size_v();
 
             auto counts_ptr = std::ranges::data(displs);
             auto displs_ptr = std::ranges::data(counts);
@@ -56,6 +54,3 @@ struct resize_ext : std::ranges::range_adaptor_closure<resize_ext> {
         return resize_ext_view(std::forward<R>(r));
     }
 };
-
-
-

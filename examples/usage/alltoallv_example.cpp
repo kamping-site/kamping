@@ -94,6 +94,13 @@ int main() {
         kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set)) | resize_ext()
     );
 
+    // Works
+    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | with_displs(std::move(recv_displs)) | resize_ext());
+
+    // Works
+    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | with_displs(recv_displs) | resize_ext());
+
+
     // Print results
     comm.barrier();
     for (int p = 0; p < static_cast<int>(size); ++p) {
