@@ -10,6 +10,7 @@ struct with_displs_view : pipe_view_interface<with_displs_view<R, DisplsRange>, 
     R base_;
     DisplsRange displs_;
 
+  // FIXME: see below
     with_displs_view(R base, DisplsRange&& displs) : base_(std::move(base)), displs_(std::move(displs)) {}
 
     auto& displs() {
@@ -57,31 +58,39 @@ struct auto_displs_view : pipe_view_interface<auto_displs_view<ResizePolicy, R, 
     DisplsRange displs_;
     bool        displs_set = false;
 
+  // FIXME: This should be forward, and auto_displs_view should have a
+  // deduction guide that dispatches to ranges::views::all_t, so we
+  // can use this view without the pipe syntax.
     auto_displs_view(R base, DisplsRange&& displs) requires HasSizeV<R> : base_(std::move(base)),
                                                                           displs_(std::move(displs)) {}
 
     auto& displs() {
         // get ref to displs
-        auto& displ_ref = displs_.base();
+        /* auto& displ_ref = displs_.base(); */
         if (!displs_set) {
             auto&  counts = base_.size_v();
             size_t ranks  = std::ranges::size(counts);
-            resize_displs<ResizePolicy>(displ_ref, ranks);
+	    // FIXME: make this more generic: kamping::ranges::resize
+            resize_displs<ResizePolicy>(displs_, ranks);
             KASSERT(
-                std::ranges::size(displ_ref) >= ranks,
+                std::ranges::size(displs_) >= ranks,
                 "Displs are not large enough, and resize is not enabled",
                 assert::light
             );
 
             std::exclusive_scan(
-                counts.begin(),
-                counts.begin() + kamping::asserting_cast<int>(ranks),
-                displ_ref.begin(),
+                std::ranges::begin(counts),
+                std::ranges::begin(counts) + kamping::asserting_cast<int>(ranks),
+                std::ranges::begin(displs_),
                 0
             );
             displs_set = true;
         }
-        return displ_ref;
+        return displs_;
+    }
+  
+    void invalidate_displs() {
+      displs_set = false;
     }
 };
 
