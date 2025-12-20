@@ -2,7 +2,6 @@
 #include "kamping/data_buffers/data_buffer_concepts.hpp"
 #include "kamping/data_buffers/pipe_view_interface.hpp"
 
-
 template <std::ranges::contiguous_range R>
 struct size_v_view : pipe_view_interface<size_v_view<R>, R> {
     R                base_;

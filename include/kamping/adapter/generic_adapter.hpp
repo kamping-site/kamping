@@ -38,7 +38,7 @@ public:
         return _get_size(_data);
     }
 
-    const Container& underlying() const {
+    Container const& underlying() const {
         return _data;
     }
 
@@ -60,8 +60,10 @@ concept has_get_size = requires(GetSize size_func, Container const& container) {
 };
 
 template <typename Container, typename GetData, typename GetSize>
-requires has_get_data<GetData, std::remove_pointer_t<std::invoke_result_t<GetData, Container const&>>, Container>
-        && has_get_size<GetSize, Container>
+requires has_get_data<
+    GetData,
+    std::remove_pointer_t<std::invoke_result_t<GetData, Container const&>>,
+    Container> && has_get_size<GetSize, Container>
 auto generic_adapter(Container const& data, GetData data_func, GetSize size_func) {
     using T = std::remove_pointer_t<std::invoke_result_t<GetData, Container const&>>;
     internal::GenericDataBuffer<

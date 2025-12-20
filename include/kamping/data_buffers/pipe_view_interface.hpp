@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <ranges>
 
 #include "kamping/comm_helper/generic_helper.hpp"

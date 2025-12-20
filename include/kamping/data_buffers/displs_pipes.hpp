@@ -2,6 +2,7 @@
 
 #include "kamping/data_buffers/data_buffer_concepts.hpp"
 #include "kamping/data_buffers/pipe_view_interface.hpp"
+#include "kamping/ranges/ranges.hpp"
 
 using namespace kamping;
 
@@ -33,25 +34,6 @@ struct with_displs : std::ranges::range_adaptor_closure<with_displs<DisplsRange>
 template<IntContiguousRange DisplsRange>
 with_displs(DisplsRange&& displs) -> with_displs<std::views::all_t<DisplsRange>>;
 
-template <BufferResizePolicy ResizePolicy, IntContiguousRange DisplsRange>
-void resize_displs(DisplsRange& displs, size_t size) {
-    if constexpr (ResizePolicy == BufferResizePolicy::no_resize) {
-        return;
-    }
-    size_t const current_size = std::ranges::size(displs);
-    if constexpr (ResizePolicy == BufferResizePolicy::grow_only) {
-        if (current_size >= size) {
-            return;
-        }
-    }
-    if constexpr (ResizePolicy == BufferResizePolicy::resize_to_fit) {
-        if (current_size == size) {
-            return;
-        }
-    }
-    displs.resize(size);
-}
-
 template <BufferResizePolicy ResizePolicy, DataBufferConcept R, IntContiguousRange DisplsRange>
 struct auto_displs_view : pipe_view_interface<auto_displs_view<ResizePolicy, R, DisplsRange>, R> {
     R           base_;
@@ -65,13 +47,10 @@ struct auto_displs_view : pipe_view_interface<auto_displs_view<ResizePolicy, R, 
                                                                           displs_(std::move(displs)) {}
 
     auto& displs() {
-        // get ref to displs
-        /* auto& displ_ref = displs_.base(); */
         if (!displs_set) {
             auto&  counts = base_.size_v();
             size_t ranks  = std::ranges::size(counts);
-	    // FIXME: make this more generic: kamping::ranges::resize
-            resize_displs<ResizePolicy>(displs_, ranks);
+            kamping::ranges::resize<ResizePolicy>(displs_, ranks);
             KASSERT(
                 std::ranges::size(displs_) >= ranks,
                 "Displs are not large enough, and resize is not enabled",
@@ -94,10 +73,10 @@ struct auto_displs_view : pipe_view_interface<auto_displs_view<ResizePolicy, R, 
     }
 };
 
-// displs_set needed because auto_displs() creates an empty DisplsRange which can only be resized after operator()
-template <BufferResizePolicy ResizePolicy, IntContiguousRange DisplsRange/* , bool displs_set */>
+
+template <BufferResizePolicy ResizePolicy, IntContiguousRange DisplsRange>
 struct auto_displs_adapter
-    : std::ranges::range_adaptor_closure<auto_displs_adapter<ResizePolicy, DisplsRange/* , displs_set */>> {
+    : std::ranges::range_adaptor_closure<auto_displs_adapter<ResizePolicy, DisplsRange>> {
     DisplsRange empty_displs_;
 
     auto_displs_adapter() : empty_displs_(DisplsRange()) {}
@@ -106,16 +85,7 @@ struct auto_displs_adapter
     template <DataBufferConcept R>
     requires HasSizeV<R>
     auto operator()(R&& r) {
-      // FIXME das kann weg, wir können einfach in auto_displs()
-      // auto_displs(std::vector<int>{}) aufrufen, der Adapter kümmert
-      // sich um resizing
-        // if constexpr (!displs_set) {
-        //     // size_v acts as ground truth for the number of ranks
-        //     auto&  size_v = r.size_v();
-        //     size_t ranks  = std::ranges::size(size_v);
-        //     empty_displs_.base().resize(ranks);
-        // }
-        return auto_displs_view<ResizePolicy, std::ranges::views::all_t<R>, DisplsRange>(
+        return auto_displs_view<ResizePolicy, kamping::ranges::kamping_all_t<R>, DisplsRange>(
             std::forward<R>(r),
             std::move(empty_displs_)
         );
@@ -124,7 +94,7 @@ struct auto_displs_adapter
 
 template <BufferResizePolicy ResizePolicy = BufferResizePolicy::no_resize, IntContiguousRange DisplsRange>
 auto auto_displs(DisplsRange&& empty_displs) {
-    return auto_displs_adapter<ResizePolicy, std::views::all_t<DisplsRange>/* , true */>(
+    return auto_displs_adapter<ResizePolicy, kamping::ranges::kamping_all_t<DisplsRange>>(
         std::forward<DisplsRange>(empty_displs)
     );
 }

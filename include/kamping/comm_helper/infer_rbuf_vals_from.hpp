@@ -28,7 +28,7 @@ requires(type == CommType::alltoallv) void infer(SBuff& sbuf, RBuff& rbuf, Commu
     );
     // Calc recv counts
     if constexpr (HasSizeV<RBuff>) {
-        auto             send_counts = sbuf.size_v();
+        auto send_counts = sbuf.size_v();
         comm.alltoall(send_counts, rbuf.size_v());
     }
 }
