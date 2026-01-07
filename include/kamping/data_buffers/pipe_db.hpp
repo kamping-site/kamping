@@ -13,7 +13,7 @@ struct resize_ext_view : pipe_view_interface<resize_ext_view<R>, R> {
     R    base_;
     bool resized = false;
 
-    explicit resize_ext_view(R base) requires kamping::HasDispls<R> && kamping::HasSetSize<R> && kamping::HasSizeV<R>
+    explicit resize_ext_view(R base) requires kamping::HasDispls<R> && kamping::HasSizeV<R>
         : base_(std::move(base)) {}
 
     auto data() {
@@ -40,7 +40,7 @@ struct resize_ext_view : pipe_view_interface<resize_ext_view<R>, R> {
                 recv_buf_size = std::max(recv_buf_size, *(counts_ptr + i) + *(displs_ptr + i));
             }
 
-            base_.set_size(kamping::asserting_cast<size_t>(recv_buf_size));
+            base_.size_v().resize(kamping::asserting_cast<size_t>(recv_buf_size));
             resized = true;
         }
     }

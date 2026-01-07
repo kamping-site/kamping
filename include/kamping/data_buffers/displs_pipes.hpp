@@ -101,6 +101,6 @@ auto auto_displs(DisplsRange&& empty_displs) {
 
 template <IntContiguousRange DisplsRange = std::vector<int>>
 auto auto_displs() {
-  return auto_displs<BufferResizePolicy::resize_to_fit>(DisplsRange {});
+  return auto_displs<BufferResizePolicy::resize_to_fit>(DisplsRange{});
 }
 

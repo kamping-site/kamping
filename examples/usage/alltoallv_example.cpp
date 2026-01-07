@@ -58,7 +58,7 @@ int main() {
         total_recv += recv_counts[i];
     }
 
-    std::vector<int> recv_buf(42);
+    std::vector<int> recv_buf(total_recv);
 
     auto kamping_send_buf = ExtDataBuffer(send_buf);
     auto kamping_recv_buf = ExtDataBuffer(recv_buf);
@@ -68,7 +68,7 @@ int main() {
 
     kamping_recv_buf.set_size_v(std::move(recv_counts));
 
-    std::vector<int> displs_to_set{};
+    std::vector<int> displs_to_set{1,2};
     // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
     // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(displs_to_set) |
     // resize_ext());
@@ -91,15 +91,21 @@ int main() {
     // Works, displs_to_set is empty
     auto [sent, received] = comm.alltoallv(
         kamping_send_buf,
-        kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set)) | resize_ext()
+        kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) //| resize_ext()
     );
+
+    //auto ref = displs_to_set;
+    //std::ranges::ref_view<decltype(ref)>{ref};
+
+    //auto test = kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set));
 
     // Works
     //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | with_displs(std::move(recv_displs)) | resize_ext());
 
     // Works
     //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | with_displs(recv_displs) | resize_ext());
-
+    //test.displs();
+    //std::vector<int> received(5);
 
     // Print results
     comm.barrier();
