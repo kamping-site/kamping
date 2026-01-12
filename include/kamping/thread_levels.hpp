@@ -32,26 +32,32 @@ enum class ThreadLevel : int {
     multiple = MPI_THREAD_MULTIPLE
 };
 
+/// @brief Comparison operator for \ref ThreadLevel.
 inline bool operator==(ThreadLevel lhs, ThreadLevel rhs) noexcept {
     return static_cast<int>(lhs) == static_cast<int>(rhs);
 }
 
+/// @brief Comparison operator for \ref ThreadLevel.
 inline bool operator!=(ThreadLevel lhs, ThreadLevel rhs) noexcept {
     return !(lhs == rhs);
 }
 
+/// @brief Comparison operator for \ref ThreadLevel.
 inline bool operator<(ThreadLevel lhs, ThreadLevel rhs) noexcept {
     return static_cast<int>(lhs) < static_cast<int>(rhs);
 }
 
+/// @brief Comparison operator for \ref ThreadLevel.
 inline bool operator<=(ThreadLevel lhs, ThreadLevel rhs) noexcept {
     return static_cast<int>(lhs) <= static_cast<int>(rhs);
 }
 
+/// @brief Comparison operator for \ref ThreadLevel.
 inline bool operator>(ThreadLevel lhs, ThreadLevel rhs) noexcept {
     return static_cast<int>(lhs) > static_cast<int>(rhs);
 }
 
+/// @brief Comparison operator for \ref ThreadLevel.
 inline bool operator>=(ThreadLevel lhs, ThreadLevel rhs) noexcept {
     return static_cast<int>(lhs) >= static_cast<int>(rhs);
 }
