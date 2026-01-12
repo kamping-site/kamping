@@ -175,7 +175,7 @@ public:
 
     /// @returns The current level of thread support, as provided after MPI initialization.
     ThreadLevel thread_level() const {
-        KAMPING_ASSERT(!initialized(), "Cannot query thread level before MPI has been initialized");
+        KAMPING_ASSERT(initialized(), "Cannot query thread level before MPI has been initialized");
         int                  provided_thread_level = 0;
         [[maybe_unused]] int err                   = MPI_Query_thread(&provided_thread_level);
         THROW_IF_MPI_ERROR(err, MPI_Query_thread);
@@ -184,7 +184,7 @@ public:
 
     /// @brief Checks whether the calling thread is the main thread.
     bool is_main_thread() const {
-        KAMPING_ASSERT(!initialized(), "Cannot query main thread status before MPI has been initialized");
+        KAMPING_ASSERT(initialized(), "Cannot query main thread status before MPI has been initialized");
         int                  result = 0;
         [[maybe_unused]] int err    = MPI_Is_thread_main(&result);
         THROW_IF_MPI_ERROR(err, MPI_Is_thread_main);
