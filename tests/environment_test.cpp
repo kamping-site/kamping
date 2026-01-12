@@ -23,6 +23,7 @@
 
 #include "helpers_for_testing.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/thread_levels.hpp"
 
 using namespace ::kamping;
 
@@ -105,6 +106,20 @@ TEST_F(EnvironmentTest, init_unchecked) {
     EXPECT_KAMPING_ASSERT_FAILS(env.init_unchecked(), "Trying to call MPI_Init twice");
 }
 #endif
+
+TEST_F(EnvironmentTest, query_thread_level) {
+    // MPI_Init was already called by our custom test main().
+    // we can only check that the returned value is at least single, since an MPI implementation is allowed to provide a
+    // higher or lower level than requested.
+
+    EXPECT_GE(mpi_env.thread_level(), ThreadLevel::single);
+}
+
+TEST_F(EnvironmentTest, is_main_thread) {
+    // MPI_Init was already called by our custom test main().
+    // Since we have only one thread in this test, this must be the main thread.
+    EXPECT_TRUE(mpi_env.is_main_thread());
+}
 
 TEST_F(EnvironmentTest, tag_upper_bound) {
     EXPECT_EQ(mpi_env.tag_upper_bound(), mpi_tag_ub);
