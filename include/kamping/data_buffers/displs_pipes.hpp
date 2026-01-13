@@ -8,30 +8,30 @@ using namespace kamping;
 
 template <DataBufferConcept R, IntContiguousRange DisplsRange>
 struct with_displs_view : pipe_view_interface<with_displs_view<R, DisplsRange>, R> {
-    R base_;
+    R           base_;
     DisplsRange displs_;
 
-  // FIXME: see below
-    with_displs_view(R base, DisplsRange&& displs) : base_(std::move(base)), displs_(std::move(displs)) {}
+    // Todo make this callable with the adaptor
+    with_displs_view(R base, DisplsRange displs) : base_(std::move(base)), displs_(std::move(displs)) {}
 
     auto& displs() {
         return displs_;
     }
 };
 
-template<IntContiguousRange DisplsRange>
+template <IntContiguousRange DisplsRange>
 struct with_displs : std::ranges::range_adaptor_closure<with_displs<DisplsRange>> {
     DisplsRange displs_;
 
     explicit with_displs(DisplsRange&& displs) : displs_(std::forward<DisplsRange>(displs)) {}
 
     template <DataBufferConcept R>
-    auto operator()(R&& r)  {
-        return with_displs_view<std::ranges::views::all_t<R>, DisplsRange>(std::forward<R>(r), std::move(displs_));
+    auto operator()(R&& r) {
+        return with_displs_view<kamping::ranges::kamping_all_t<R>, DisplsRange>(std::forward<R>(r), std::move(displs_));
     }
 };
 
-template<IntContiguousRange DisplsRange>
+template <IntContiguousRange DisplsRange>
 with_displs(DisplsRange&& displs) -> with_displs<std::views::all_t<DisplsRange>>;
 
 template <BufferResizePolicy ResizePolicy, DataBufferConcept R, IntContiguousRange DisplsRange>
@@ -40,15 +40,12 @@ struct auto_displs_view : pipe_view_interface<auto_displs_view<ResizePolicy, R, 
     DisplsRange displs_;
     bool        displs_set = false;
 
-  // FIXME: This should be forward, and auto_displs_view should have a
-  // deduction guide that dispatches to ranges::views::all_t, so we
-  // can use this view without the pipe syntax.
-    auto_displs_view(R base, DisplsRange&& displs) requires HasSizeV<R> : base_(std::move(base)),
-                                                                          displs_(std::move(displs)) {}
+    auto_displs_view(R base, DisplsRange displs) requires HasSizeV<R> : base_(std::move(base)),
+                                                                        displs_(std::move(displs)) {}
 
     auto& displs() {
         if (!displs_set) {
-            auto&  counts = base_.size_v();
+            auto&  counts = this->size_v();
             size_t ranks  = std::ranges::size(counts);
             kamping::ranges::resize<ResizePolicy>(displs_, ranks);
             KASSERT(
@@ -67,16 +64,14 @@ struct auto_displs_view : pipe_view_interface<auto_displs_view<ResizePolicy, R, 
         }
         return displs_;
     }
-  
+
     void invalidate_displs() {
-      displs_set = false;
+        displs_set = false;
     }
 };
 
-
 template <BufferResizePolicy ResizePolicy, IntContiguousRange DisplsRange>
-struct auto_displs_adapter
-    : std::ranges::range_adaptor_closure<auto_displs_adapter<ResizePolicy, DisplsRange>> {
+struct auto_displs_adapter : std::ranges::range_adaptor_closure<auto_displs_adapter<ResizePolicy, DisplsRange>> {
     DisplsRange empty_displs_;
 
     auto_displs_adapter() : empty_displs_(DisplsRange()) {}
@@ -101,6 +96,17 @@ auto auto_displs(DisplsRange&& empty_displs) {
 
 template <IntContiguousRange DisplsRange = std::vector<int>>
 auto auto_displs() {
-  return auto_displs<BufferResizePolicy::resize_to_fit>(DisplsRange{});
+    return auto_displs<BufferResizePolicy::resize_to_fit>(DisplsRange{});
 }
 
+// Factory to construct with_displs_view with pipes
+template <
+    BufferResizePolicy ResizePolicy = BufferResizePolicy::no_resize,
+    DataBufferConcept  R,
+    IntContiguousRange DisplsRange>
+auto auto_displs(R&& base, DisplsRange&& empty_displs) {
+    return auto_displs_view<
+        ResizePolicy,
+        kamping::ranges::kamping_all_t<R>,
+        kamping::ranges::kamping_all_t<DisplsRange>>(std::forward<R>(base), std::forward<DisplsRange>(empty_displs));
+}

@@ -2,7 +2,7 @@
 
 #include <span>
 
-class ExtDataBuffer  {
+class ExtDataBuffer {
 public:
     using resize_tag = kamping::range_resizable_tag;
 

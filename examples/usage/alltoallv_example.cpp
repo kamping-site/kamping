@@ -27,6 +27,11 @@
 #include "kamping/data_buffers/pipe_db.hpp"
 #include "kamping/environment.hpp"
 
+template <typename T>
+void printType() {
+    std::cout << __PRETTY_FUNCTION__ << '\n';
+}
+
 int main() {
     using namespace kamping;
 
@@ -68,44 +73,57 @@ int main() {
 
     kamping_recv_buf.set_size_v(std::move(recv_counts));
 
-    std::vector<int> displs_to_set{1,2};
+    std::vector<int> displs_to_set;
     // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
     // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(displs_to_set) |
     // resize_ext());
 
-    // Works, displs_to_set contains computed displs
+    // Works, displs_to_set is set, received is
+    // resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
+    // kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_ref_view<std::vector<int>>>>
     // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf |
     // auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) | resize_ext());
 
-    // Works
+    // Works, received is resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
+    // kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_owning_view<std::vector<int>>>>
     // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs() | resize_ext());
 
-    // Works, received.displs() returns a example_IntRange
+    // Works, received is resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
+    // kamping::ranges::kamping_ref_view<ExtDataBuffer>,
+    // kamping::ranges::kamping_owning_view<kamping::example_IntRange>>>
     // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<example_IntRange>() |
     // resize_ext());
 
     // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
     // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(std::move(displs_to_set))
-    // | resize_ext());
+    //| resize_ext());
 
-    // Works, displs_to_set is empty
+    // Works, displs_to_set is set, received is
+    // resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
+    // kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_ref_view<std::vector<int>>>>
     auto [sent, received] = comm.alltoallv(
         kamping_send_buf,
-        kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) //| resize_ext()
+        kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) | resize_ext()
     );
 
-    //auto ref = displs_to_set;
-    //std::ranges::ref_view<decltype(ref)>{ref};
+    // Works, recv_displs are empty, received is
+    // resize_ext_view<with_displs_view<kamping::ranges::kamping_ref_view<ExtDataBuffer>,
+    // std::ranges::owning_view<std::vector<int>>>>
+    // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | with_displs(std::move(recv_displs)) |
+    // resize_ext());
 
-    //auto test = kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set));
+    // Works, displs_to_set are empty, received is
+    // resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
+    // kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_owning_view<std::vector<int>>>>
+    // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf |
+    // auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set)) | resize_ext());
 
     // Works
-    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | with_displs(std::move(recv_displs)) | resize_ext());
-
+    // auto [sent, received] = comm.alltoallv(kamping_send_buf,
+    // auto_displs<BufferResizePolicy::resize_to_fit>(kamping_recv_buf, std::move(displs_to_set)));
     // Works
-    //auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | with_displs(recv_displs) | resize_ext());
-    //test.displs();
-    //std::vector<int> received(5);
+    // auto [sent, received] = comm.alltoallv(kamping_send_buf,
+    // auto_displs<BufferResizePolicy::resize_to_fit>(kamping_recv_buf, displs_to_set));
 
     // Print results
     comm.barrier();
@@ -132,7 +150,22 @@ int main() {
         comm.barrier();
     }
 
+    // Print received.displs()
     auto& x = received.displs();
+    if (comm.rank_signed() == 0) {
+        printType<decltype(x)>();
+        printType<decltype(received)>();
+    }
+    for (int p = 0; p < static_cast<int>(size); ++p) {
+        if (p == rank) {
+            std::cout << "Process " << rank << " received.displs():";
+            for (auto d: x) {
+                std::cout << " " << d;
+            }
+            std::cout << std::endl;
+        }
+        comm.barrier();
+    }
 
     return 0;
 }
