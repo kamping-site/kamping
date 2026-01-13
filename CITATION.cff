@@ -14,8 +14,8 @@ authors:
 - family-names: Uhl
   given-names: Tim Niklas
 title: "KaMPIng: (Near) zero-overhead MPI wrapper for modern C++"
-version: 0.2.0
-date-released: 2025-10-08
+version: 0.2.1
+date-released: 2026-01-13
 url: "https://github.com/kamping-site/kamping"
 doi: 10.5281/zenodo.10949643
 preferred-citation:
