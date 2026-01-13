@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2022-2023 The KaMPIng Authors
+// Copyright 2022-2026 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -25,6 +25,7 @@
 #include "kamping/error_handling.hpp"
 #include "kamping/kassert/kassert.hpp"
 #include "kamping/span.hpp"
+#include "kamping/thread_levels.hpp"
 
 namespace kamping {
 
@@ -82,42 +83,62 @@ public:
         }
     }
 
-    /// @brief Calls MPI_Init without arguments and doesn't check whether MPI_Init has already been called.
-    void init_unchecked() const {
-        KAMPING_ASSERT(!initialized(), "Trying to call MPI_Init twice");
-        [[maybe_unused]] int err = MPI_Init(NULL, NULL);
-        THROW_IF_MPI_ERROR(err, MPI_Init);
+    /// @brief Calls MPI_Init_thread without arguments and doesn't check whether MPI has already been initialized.
+    /// @param thread_level The desired thread support level. Defaults to \c ThreadLevel::single.
+    /// @return The provided thread support level.
+    ThreadLevel init_unchecked(ThreadLevel thread_level = ThreadLevel::single) const {
+        KAMPING_ASSERT(!initialized(), "Trying to call MPI_Init_thread twice");
+        int                  provided_thread_level = 0;
+        [[maybe_unused]] int err = MPI_Init_thread(NULL, NULL, static_cast<int>(thread_level), &provided_thread_level);
+        THROW_IF_MPI_ERROR(err, MPI_Init_thread);
+        return static_cast<ThreadLevel>(provided_thread_level);
     }
 
-    /// @brief Calls MPI_Init with arguments and doesn't check whether MPI_Init has already been called.
+    /// @brief Calls MPI_Init_thread with arguments and doesn't check whether MPI has already been initialized.
     ///
     /// @param argc Number of arguments.
     /// @param argv The arguments.
-    void init_unchecked(int& argc, char**& argv) const {
-        KAMPING_ASSERT(!initialized(), "Trying to call MPI_Init twice");
-        [[maybe_unused]] int err = MPI_Init(&argc, &argv);
-        THROW_IF_MPI_ERROR(err, MPI_Init);
+    /// @param thread_level The desired thread support level. Defaults to \c ThreadLevel::single.
+    /// @return The provided thread support level.
+    ThreadLevel init_unchecked(int& argc, char**& argv, ThreadLevel thread_level = ThreadLevel::single) const {
+        KAMPING_ASSERT(!initialized(), "Trying to call MPI_Init_thread twice");
+        int                  provided_thread_level = 0;
+        [[maybe_unused]] int err =
+            MPI_Init_thread(&argc, &argv, static_cast<int>(thread_level), &provided_thread_level);
+        THROW_IF_MPI_ERROR(err, MPI_Init_thread);
+        return static_cast<ThreadLevel>(provided_thread_level);
     }
 
-    /// @brief Calls MPI_Init without arguments. Checks whether MPI_Init has already been called first.
-    void init() const {
+    /// @brief Calls MPI_Init_thread without arguments. Checks whether MPI has already been initialized first. If this
+    /// is the case, the function returns immediately.
+    /// @param thread_level The desired thread support level. Defaults to \c ThreadLevel::single.
+    /// @return The provided thread support level. If MPI was already initialized, the current thread level is returned.
+    ThreadLevel init(ThreadLevel thread_level = ThreadLevel::single) const {
         if (initialized()) {
-            return;
+            return this->thread_level();
         }
-        [[maybe_unused]] int err = MPI_Init(NULL, NULL);
-        THROW_IF_MPI_ERROR(err, MPI_Init);
+        int                  provided_thread_level = 0;
+        [[maybe_unused]] int err = MPI_Init_thread(NULL, NULL, static_cast<int>(thread_level), &provided_thread_level);
+        THROW_IF_MPI_ERROR(err, MPI_Init_thread);
+        return static_cast<ThreadLevel>(provided_thread_level);
     }
 
-    /// @brief Calls MPI_Init with arguments. Checks whether MPI_Init has already been called first.
+    /// @brief Calls MPI_Init_thread with arguments. Checks whether MPI has already been initialized first. If this is
+    /// the case, the function returns immediately.
     ///
     /// @param argc Number of arguments.
     /// @param argv The arguments.
-    void init(int& argc, char**& argv) const {
+    /// @param thread_level The desired thread support level. Defaults to \c ThreadLevel::single.
+    /// @return The provided thread support level. If MPI was already initialized, the current thread level is returned.
+    ThreadLevel init(int& argc, char**& argv, ThreadLevel thread_level = ThreadLevel::single) const {
         if (initialized()) {
-            return;
+            return this->thread_level();
         }
-        [[maybe_unused]] int err = MPI_Init(&argc, &argv);
-        THROW_IF_MPI_ERROR(err, MPI_Init);
+        int                  provided_thread_level = 0;
+        [[maybe_unused]] int err =
+            MPI_Init_thread(&argc, &argv, static_cast<int>(thread_level), &provided_thread_level);
+        THROW_IF_MPI_ERROR(err, MPI_Init_thread);
+        return static_cast<ThreadLevel>(provided_thread_level);
     }
 
     /// @brief Calls MPI_Finalize and frees all registered MPI data types.
@@ -150,6 +171,24 @@ public:
         [[maybe_unused]] int err = MPI_Finalized(&result);
         THROW_IF_MPI_ERROR(err, MPI_Finalized);
         return result == true;
+    }
+
+    /// @returns The current level of thread support, as provided after MPI initialization.
+    ThreadLevel thread_level() const {
+        KAMPING_ASSERT(initialized(), "Cannot query thread level before MPI has been initialized");
+        int                  provided_thread_level = 0;
+        [[maybe_unused]] int err                   = MPI_Query_thread(&provided_thread_level);
+        THROW_IF_MPI_ERROR(err, MPI_Query_thread);
+        return static_cast<ThreadLevel>(provided_thread_level);
+    }
+
+    /// @brief Checks whether the calling thread is the main thread.
+    bool is_main_thread() const {
+        KAMPING_ASSERT(initialized(), "Cannot query main thread status before MPI has been initialized");
+        int                  result = 0;
+        [[maybe_unused]] int err    = MPI_Is_thread_main(&result);
+        THROW_IF_MPI_ERROR(err, MPI_Is_thread_main);
+        return result != 0;
     }
 
     /// @brief Returns the elapsed time since an arbitrary time in the past.
