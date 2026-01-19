@@ -25,7 +25,6 @@ public:
         }
     }
 
-
     constexpr decltype(auto) get_base() && noexcept {
         auto&& b = base();
         if constexpr (requires { b.get_base(); }) {
@@ -63,8 +62,8 @@ public:
         return base().type();
     }
 
-    constexpr void resize(std::size_t n) requires requires { base().resize(n); } {
+    constexpr void resize(std::size_t n) requires requires {
         base().resize(n);
     }
-
+    { base().resize(n); }
 };

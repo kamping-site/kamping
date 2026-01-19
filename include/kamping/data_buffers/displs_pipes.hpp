@@ -20,7 +20,10 @@ struct with_displs_view : pipe_view_interface<with_displs_view<R, DisplsRange>, 
 
 template <DataBufferConcept R, IntContiguousRange DisplsRange>
 auto make_displs_view(R&& base, DisplsRange&& displs) {
-    return with_displs_view<kamping::ranges::kamping_all_t<R>, kamping::ranges::kamping_all_t<DisplsRange>>(std::forward<R>(base), std::forward<DisplsRange>(displs));
+    return with_displs_view<kamping::ranges::kamping_all_t<R>, kamping::ranges::kamping_all_t<DisplsRange>>(
+        std::forward<R>(base),
+        std::forward<DisplsRange>(displs)
+    );
 }
 
 template <IntContiguousRange DisplsRange>
@@ -102,7 +105,6 @@ template <IntContiguousRange DisplsRange = std::vector<int>>
 auto auto_displs() {
     return auto_displs<BufferResizePolicy::resize_to_fit>(DisplsRange{});
 }
-
 
 template <
     BufferResizePolicy ResizePolicy = BufferResizePolicy::no_resize,

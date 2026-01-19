@@ -89,10 +89,11 @@ int main() {
         // Works, displs_to_set is set, received is
         // resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
         // kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_ref_view<std::vector<int>>>>
-        auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf |
-        auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) | resize_ext());
+        auto [sent, received] = comm.alltoallv(
+            kamping_send_buf,
+            kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) | resize_ext()
+        );
     }
-
 
     {
         // Works, received is resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
@@ -100,19 +101,18 @@ int main() {
         auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs() | resize_ext());
     }
 
-
     {
         // Works, received is resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
         // kamping::ranges::kamping_ref_view<ExtDataBuffer>,
         // kamping::ranges::kamping_owning_view<kamping::example_IntRange>>>
-        auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<example_IntRange>() |
-        resize_ext());
+        auto [sent, received] =
+            comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<example_IntRange>() | resize_ext());
     }
 
     {
         // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
-        // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(std::move(displs_to_set))
-        // | resize_ext());
+        // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf |
+        // auto_displs(std::move(displs_to_set)) | resize_ext());
     }
 
     {
@@ -127,38 +127,41 @@ int main() {
 
     {
         // Works, recv_displs are empty, received is
-        // resize_ext_view<with_displs_view<kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_owning_view<std::vector<int>>>>
-        auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | with_displs(std::move(recv_displs)) |
-        resize_ext());
-
+        // resize_ext_view<with_displs_view<kamping::ranges::kamping_ref_view<ExtDataBuffer>,
+        // kamping::ranges::kamping_owning_view<std::vector<int>>>>
+        auto [sent, received] =
+            comm.alltoallv(kamping_send_buf, kamping_recv_buf | with_displs(std::move(recv_displs)) | resize_ext());
     }
-
 
     {
         // Works, displs_to_set are empty, received is
         // resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
         // kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_owning_view<std::vector<int>>>>
-        auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf |
-        auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set)) | resize_ext());
-    }
-
-
-
-    {
-        auto [sent, received] = comm.alltoallv(kamping_send_buf,
-        make_auto_displs_view<BufferResizePolicy::resize_to_fit>(kamping_recv_buf, std::move(displs_to_set)));
+        auto [sent, received] = comm.alltoallv(
+            kamping_send_buf,
+            kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set)) | resize_ext()
+        );
     }
 
     {
-        auto [sent, received] = comm.alltoallv(kamping_send_buf,
-        make_auto_displs_view<BufferResizePolicy::resize_to_fit>(kamping_recv_buf, displs_to_set));
+        auto [sent, received] = comm.alltoallv(
+            kamping_send_buf,
+            make_auto_displs_view<BufferResizePolicy::resize_to_fit>(kamping_recv_buf, std::move(displs_to_set))
+        );
+    }
+
+    {
+        auto [sent, received] = comm.alltoallv(
+            kamping_send_buf,
+            make_auto_displs_view<BufferResizePolicy::resize_to_fit>(kamping_recv_buf, displs_to_set)
+        );
     }
 
     {
         testing::NonCopyableOwnContainer<int> copy_test(100);
 
-        auto [sent, received] = comm.alltoallv(
-        kamping_send_buf, std::move(copy_test) | with_size_v(recv_size_v) | auto_displs());
+        auto [sent, received] =
+            comm.alltoallv(kamping_send_buf, std::move(copy_test) | with_size_v(recv_size_v) | auto_displs());
         auto copy_test_out = std::move(received.get_base());
         // CopyContainer has been moved, this CopyContainer is invalid
 
@@ -168,17 +171,16 @@ int main() {
     {
         testing::NonCopyableOwnContainer<int> copy_test(100);
 
-        auto [sent, received] = comm.alltoallv(
-        kamping_send_buf, copy_test | with_size_v(recv_size_v) | auto_displs());
+        auto [sent, received] = comm.alltoallv(kamping_send_buf, copy_test | with_size_v(recv_size_v) | auto_displs());
 
         auto& copy_test_out = received.get_base();
     }
 
-    auto [sent, received] = comm.alltoallv(kamping_send_buf, std::vector<int>(50) | with_size_v(recv_size_v) | auto_displs());
+    auto [sent, received] =
+        comm.alltoallv(kamping_send_buf, std::vector<int>(50) | with_size_v(recv_size_v) | auto_displs());
     // Copies
     auto vec_out = received.get_base();
-    //auto vec_out_move = std::move(received.get_base());
-
+    // auto vec_out_move = std::move(received.get_base());
 
     // Print results
     comm.barrier();

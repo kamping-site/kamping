@@ -7,8 +7,8 @@ using namespace kamping;
 
 template <DataBufferConcept R, IntContiguousRange SizeRange>
 struct with_size_v_view : pipe_view_interface<with_size_v_view<R, SizeRange>, R> {
-    R                base_;
-    SizeRange        size_v_;
+    R         base_;
+    SizeRange size_v_;
 
     with_size_v_view(R base, SizeRange size_v) : base_(std::move(base)), size_v_(std::move(size_v)) {}
 
@@ -19,7 +19,10 @@ struct with_size_v_view : pipe_view_interface<with_size_v_view<R, SizeRange>, R>
 
 template <DataBufferConcept R, IntContiguousRange SizeRange>
 auto make_size_v_view(R&& base, SizeRange&& size_v) {
-    return with_size_v_view<kamping::ranges::kamping_all_t<R>, kamping::ranges::kamping_all_t<SizeRange>>(std::forward<R>(base), std::forward<SizeRange>(size_v));
+    return with_size_v_view<kamping::ranges::kamping_all_t<R>, kamping::ranges::kamping_all_t<SizeRange>>(
+        std::forward<R>(base),
+        std::forward<SizeRange>(size_v)
+    );
 }
 
 template <IntContiguousRange SizeRange>
