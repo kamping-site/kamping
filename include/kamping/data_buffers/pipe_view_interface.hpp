@@ -8,16 +8,30 @@
 template <typename Derived, typename Base>
 class pipe_view_interface : public std::ranges::view_interface<Derived> {
 public:
-    constexpr auto& base() noexcept {
+    constexpr auto& base() & noexcept {
         return static_cast<Derived&>(*this).base_;
     }
 
-    constexpr auto get_base() noexcept {
+    constexpr auto&& base() && noexcept {
+        return std::move(static_cast<Derived&>(*this).base_);
+    }
+
+    constexpr decltype(auto) get_base() & noexcept {
         auto& b = base();
         if constexpr (requires { b.get_base(); }) {
             return b.get_base();
         } else {
             return b;
+        }
+    }
+
+
+    constexpr decltype(auto) get_base() && noexcept {
+        auto&& b = base();
+        if constexpr (requires { b.get_base(); }) {
+            return std::move(b).get_base();
+        } else {
+            return std::move(b);
         }
     }
 
@@ -49,11 +63,8 @@ public:
         return base().type();
     }
 
-    constexpr void set_size_v(std::vector<int>&& size_v) requires kamping::HasSetSizeV<Base> {
-        return base().set_size_v(std::move(size_v));
+    constexpr void resize(std::size_t n) requires requires { base().resize(n); } {
+        base().resize(n);
     }
 
-    constexpr void set_displs(std::vector<int>&& displs) requires kamping::HasSetDispls<Base> {
-        return base().set_displs(std::move(displs));
-    }
 };

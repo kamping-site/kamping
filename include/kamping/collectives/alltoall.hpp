@@ -92,7 +92,7 @@ template <
 template <kamping::SendDataBuffer SBuff, kamping::RecvDataBuffer RBuff>
 requires kamping::ExtendedDataBuffer<SBuff> && kamping::ExtendedDataBuffer<RBuff>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(SBuff&& sbuf, RBuff&& rbuf) const {
-    auto send_counts = sbuf.size_v();
+    auto& send_counts = sbuf.size_v();
     // Assert the send counts first, because they may be used to infer the recv counts
     KASSERT(std::ranges::size(send_counts) >= this->size(), "Send counts buffer is not large enough.", assert::light);
 

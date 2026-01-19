@@ -50,6 +50,10 @@ public:
         _size = size;
     }
 
+    void resize(size_t size) {
+        _size = size;
+    }
+
 private:
     mutable std::vector<int> _data;
     std::vector<int>         _displs;

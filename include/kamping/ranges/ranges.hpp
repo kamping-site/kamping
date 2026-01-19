@@ -41,6 +41,22 @@ public:
         std::declval<Range>().size_v();
     }
     { return this->base().size_v(); }
+
+    constexpr decltype(auto) get_base() & noexcept {
+        if constexpr (requires { this->base().get_base(); }) {
+            return this->base().get_base();
+        } else {
+            return this->base();
+        }
+    }
+
+    constexpr decltype(auto) get_base() && noexcept {
+        if constexpr (requires { std::move(this->base()).get_base(); }) {
+            return std::move(this->base()).get_base();
+        } else {
+            return std::move(this->base());
+        }
+    }
 };
 
 template <std::ranges::range Range>
@@ -62,6 +78,22 @@ public:
         std::declval<Range>().size_v();
     }
     { return this->base().size_v(); }
+
+    constexpr decltype(auto) get_base() & noexcept {
+        if constexpr (requires { this->base().get_base(); }) {
+            return this->base().get_base();
+        } else {
+            return this->base();
+        }
+    }
+
+    constexpr decltype(auto) get_base() && noexcept {
+        if constexpr (requires { std::move(this->base()).get_base(); }) {
+            return std::move(this->base()).get_base();
+        } else {
+            return std::move(this->base());
+        }
+    }
 };
 
 template <typename Range>

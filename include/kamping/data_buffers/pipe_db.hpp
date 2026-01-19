@@ -39,7 +39,7 @@ struct resize_ext_view : pipe_view_interface<resize_ext_view<R>, R> {
                 recv_buf_size = std::max(recv_buf_size, *(counts_ptr + i) + *(displs_ptr + i));
             }
 
-            base_.size_v().resize(kamping::asserting_cast<size_t>(recv_buf_size));
+            base_.resize(kamping::asserting_cast<size_t>(recv_buf_size));
             resized = true;
         }
     }
