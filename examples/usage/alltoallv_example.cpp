@@ -26,13 +26,9 @@
 #include "kamping/data_buffers/displs_pipes.hpp"
 #include "kamping/data_buffers/extended_db.hpp"
 #include "kamping/data_buffers/pipe_db.hpp"
+#include "kamping/data_buffers/pipes.hpp"
 #include "kamping/data_buffers/size_v_pipes.hpp"
 #include "kamping/environment.hpp"
-
-template <typename T>
-void printType() {
-    std::cout << __PRETTY_FUNCTION__ << '\n';
-}
 
 int main() {
     using namespace kamping;
@@ -48,181 +44,121 @@ int main() {
     std::vector<int> send_displs(size);
     std::vector<int> recv_displs(size);
 
-    // Send i+rank elements to process i
+    // Send i+rank+5 elements to process i
     int total_send = 0;
-    for (size_t i = 0; i < size; ++i) {
-        send_counts[i] = (int)i + rank;
+    for (int i = 0; i < size; ++i) {
+        send_counts[i] = i + rank + 5;
         send_displs[i] = total_send;
         total_send += send_counts[i];
     }
 
-    std::vector<int> send_buf((size_t)total_send, rank);
+    std::vector<int> send_buf(total_send, rank);
 
     int total_recv = 0;
-    for (size_t i = 0; i < size; ++i) {
-        recv_counts[i] = rank + (int)i;
+    for (int i = 0; i < size; ++i) {
+        recv_counts[i] = i + rank + 5;
         recv_displs[i] = total_recv;
         total_recv += recv_counts[i];
     }
+    // Prepare send buffer with correct size_v and displs
+    auto sbuf = ExtDataBuffer(send_buf);
+    sbuf.set_size_v(std::move(send_counts));
+    sbuf.set_displs(std::move(send_displs));
 
-    std::vector<int> recv_buf(total_recv);
-
-    auto kamping_send_buf = ExtDataBuffer(send_buf);
-    auto kamping_recv_buf = ExtDataBuffer(recv_buf);
-
-    kamping_send_buf.set_size_v(std::move(send_counts));
-    kamping_send_buf.set_displs(std::move(send_displs));
-
-    std::vector<int> recv_size_v = recv_counts;
-
-    kamping_recv_buf.set_size_v(std::move(recv_counts));
-
-    std::vector<int> displs_to_set;
-
+    // The following shows how to use kamping's pipes with alltoallv given a send buffer that holds size_v and displs
     {
-        // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
-        // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs(displs_to_set) |
-        // resize_ext());
-    }
-
-    {
-        // Works, displs_to_set is set, received is
-        // resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
-        // kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_ref_view<std::vector<int>>>>
-        auto [sent, received] = comm.alltoallv(
-            kamping_send_buf,
-            kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) | resize_ext()
-        );
-    }
-
-    {
-        // Works, received is resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
-        // kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_owning_view<std::vector<int>>>>
-        auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs() | resize_ext());
-    }
-
-    {
-        // Works, received is resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
-        // kamping::ranges::kamping_ref_view<ExtDataBuffer>,
-        // kamping::ranges::kamping_owning_view<kamping::example_IntRange>>>
+        // The most basic approach: use a vector and pipe the needed size_v, displs and resizing of the buffer.
+        std::vector<int> recv_buf;
         auto [sent, received] =
-            comm.alltoallv(kamping_send_buf, kamping_recv_buf | auto_displs<example_IntRange>() | resize_ext());
+            comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | auto_displs() | resize_ext());
+        // The computed displs can be accessed via
+        auto& displs = received.displs();
     }
 
     {
-        // FAILED ASSERTION: Displs are not large enough, and resize is not enabled
-        // auto [sent, received] = comm.alltoallv(kamping_send_buf, kamping_recv_buf |
-        // auto_displs(std::move(displs_to_set)) | resize_ext());
+        // Same as before using the convenience pipe make_vbuf
+        std::vector<int> recv_buf;
+        auto [sent, received] = comm.alltoallv(sbuf, kamping::pipes::make_vbuf(recv_buf, recv_counts));
     }
 
     {
-        // Works, displs_to_set is set, received is
-        // resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
-        // kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_ref_view<std::vector<int>>>>
-        auto [sent, received] = comm.alltoallv(
-            kamping_send_buf,
-            kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(displs_to_set) | resize_ext()
-        );
+        // Using the convenience pipe make_vbuf with an inplace constructed buffer
+        auto [sent, received] = comm.alltoallv(sbuf, kamping::pipes::make_vbuf(std::vector<int>(), recv_counts));
+
+        auto result = received.extract_buffer();
     }
 
     {
-        // Works, recv_displs are empty, received is
-        // resize_ext_view<with_displs_view<kamping::ranges::kamping_ref_view<ExtDataBuffer>,
-        // kamping::ranges::kamping_owning_view<std::vector<int>>>>
+        // Using the convenience pipe make_vbuf_vector to implicitly create a buffer of the given type
+        auto [sent, received] = comm.alltoallv(sbuf, kamping::pipes::make_vbuf_vector<int>(recv_counts));
+
+        auto result = received.extract_buffer();
+    }
+
+    {
+        using namespace kamping::pipes;
+        // One-liner using make_vbuf_vector
+        auto result = comm.alltoallv(sbuf, make_vbuf_vector<int>(recv_counts)).second.extract_buffer();
+    }
+
+    {
+        // The recv buffer can be moved into the pipe
+        std::vector<int> recv_buf;
+        auto [sent, received] = comm.alltoallv(sbuf, kamping::pipes::make_vbuf(std::move(recv_buf), recv_counts));
+
+        // A ref to the recv buffer can be retrieved using:
+        auto& recv_buf_out = received.buffer();
+
+        // The recv buffer can also be moved out using:
+        auto recv_buf_out_move = received.extract_buffer();
+    }
+
+    {
+        // The type of the displs can be user defined:
+        std::vector<int> recv_buf;
         auto [sent, received] =
-            comm.alltoallv(kamping_send_buf, kamping_recv_buf | with_displs(std::move(recv_displs)) | resize_ext());
+            comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | auto_displs<example_IntRange>() | resize_ext());
+
+        // The computed example_IntRange can be accessed via
+        auto& displs = received.displs();
     }
 
     {
-        // Works, displs_to_set are empty, received is
-        // resize_ext_view<auto_displs_view<kamping::BufferResizePolicy::resize_to_fit,
-        // kamping::ranges::kamping_ref_view<ExtDataBuffer>, kamping::ranges::kamping_owning_view<std::vector<int>>>>
+        // The displs can be computed into an existing container. Kamping won't resize the displs container by default,
+        // so either it is large enough or the ResizePolicy is used
+        std::vector<int> recv_buf;
+        std::vector<int> displs;
         auto [sent, received] = comm.alltoallv(
-            kamping_send_buf,
-            kamping_recv_buf | auto_displs<BufferResizePolicy::resize_to_fit>(std::move(displs_to_set)) | resize_ext()
+            sbuf,
+            recv_buf | with_size_v(recv_counts) | auto_displs<BufferResizePolicy::resize_to_fit>(displs) | resize_ext()
         );
     }
 
     {
-        auto [sent, received] = comm.alltoallv(
-            kamping_send_buf,
-            make_auto_displs_view<BufferResizePolicy::resize_to_fit>(kamping_recv_buf, std::move(displs_to_set))
-        );
+        // If the displs are known, they can be directly set using with_displs:
+        std::vector<int> recv_buf;
+        auto [sent, received] =
+            comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | with_displs(recv_displs) | resize_ext());
     }
 
     {
+        // If the displs are known, they can be moved into with_displs:
+        std::vector<int> recv_buf;
         auto [sent, received] = comm.alltoallv(
-            kamping_send_buf,
-            make_auto_displs_view<BufferResizePolicy::resize_to_fit>(kamping_recv_buf, displs_to_set)
+            sbuf,
+            recv_buf | with_size_v(recv_counts) | with_displs(std::move(recv_displs)) | resize_ext()
         );
+
+        auto& displs = received.displs();
     }
 
     {
+        // Using a non-copyable container as recv buffer:
         testing::NonCopyableOwnContainer<int> copy_test(100);
 
-        auto [sent, received] =
-            comm.alltoallv(kamping_send_buf, std::move(copy_test) | with_size_v(recv_size_v) | auto_displs());
+        auto [sent, received] = comm.alltoallv(sbuf, std::move(copy_test) | with_size_v(recv_counts) | auto_displs());
 
         auto copy_test_out = received.extract_buffer();
-
-        // CopyContainer has been moved, this CopyContainer is invalid
-        auto copy_invalid_out = received.extract_buffer();
-    }
-
-    {
-        testing::NonCopyableOwnContainer<int> copy_test(100);
-
-        auto [sent, received] = comm.alltoallv(kamping_send_buf, copy_test | with_size_v(recv_size_v) | auto_displs());
-
-        auto& copy_test_out = received.buffer();
-    }
-
-    auto [sent, received] =
-        comm.alltoallv(kamping_send_buf, std::vector<int>(50) | with_size_v(recv_size_v) | auto_displs());
-    // Copies
-    auto vec_out = received.buffer();
-    // auto vec_out_move = std::move(received.get_base());
-
-    // Print results
-    comm.barrier();
-    for (int p = 0; p < static_cast<int>(size); ++p) {
-        if (p == rank) {
-            std::cout << "Process " << rank << " received:";
-            for (int val: received)
-                std::cout << " " << val;
-            std::cout << std::endl;
-        }
-        comm.barrier();
-    }
-
-    // Print displs_to_set
-    comm.barrier();
-    for (int p = 0; p < static_cast<int>(size); ++p) {
-        if (p == rank) {
-            std::cout << "Process " << rank << " recv displs:";
-            for (auto d: displs_to_set) {
-                std::cout << " " << d;
-            }
-            std::cout << std::endl;
-        }
-        comm.barrier();
-    }
-
-    // Print received.displs()
-    auto& x = received.displs();
-    if (comm.rank_signed() == 0) {
-        printType<decltype(x)>();
-        printType<decltype(received)>();
-    }
-    for (int p = 0; p < static_cast<int>(size); ++p) {
-        if (p == rank) {
-            std::cout << "Process " << rank << " received.displs():";
-            for (auto d: x) {
-                std::cout << " " << d;
-            }
-            std::cout << std::endl;
-        }
-        comm.barrier();
     }
 
     return 0;
