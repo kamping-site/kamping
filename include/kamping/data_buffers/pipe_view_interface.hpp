@@ -16,19 +16,19 @@ public:
         return std::move(static_cast<Derived&>(*this).base_);
     }
 
-    constexpr decltype(auto) get_base() & noexcept {
+    constexpr auto& buffer() noexcept {
         auto& b = base();
-        if constexpr (requires { b.get_base(); }) {
-            return b.get_base();
+        if constexpr (requires { b.buffer(); }) {
+            return b.buffer();
         } else {
             return b;
         }
     }
 
-    constexpr decltype(auto) get_base() && noexcept {
+    constexpr auto extract_buffer() noexcept {
         auto&& b = base();
-        if constexpr (requires { b.get_base(); }) {
-            return std::move(b).get_base();
+        if constexpr (requires { b.extract_buffer(); }) {
+            return std::move(b).extract_buffer();
         } else {
             return std::move(b);
         }

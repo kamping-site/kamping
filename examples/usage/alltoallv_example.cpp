@@ -162,10 +162,11 @@ int main() {
 
         auto [sent, received] =
             comm.alltoallv(kamping_send_buf, std::move(copy_test) | with_size_v(recv_size_v) | auto_displs());
-        auto copy_test_out = std::move(received.get_base());
-        // CopyContainer has been moved, this CopyContainer is invalid
 
-        auto copy_invalid_out = std::move(received.get_base());
+        auto copy_test_out = received.extract_buffer();
+
+        // CopyContainer has been moved, this CopyContainer is invalid
+        auto copy_invalid_out = received.extract_buffer();
     }
 
     {
@@ -173,13 +174,13 @@ int main() {
 
         auto [sent, received] = comm.alltoallv(kamping_send_buf, copy_test | with_size_v(recv_size_v) | auto_displs());
 
-        auto& copy_test_out = received.get_base();
+        auto& copy_test_out = received.buffer();
     }
 
     auto [sent, received] =
         comm.alltoallv(kamping_send_buf, std::vector<int>(50) | with_size_v(recv_size_v) | auto_displs());
     // Copies
-    auto vec_out = received.get_base();
+    auto vec_out = received.buffer();
     // auto vec_out_move = std::move(received.get_base());
 
     // Print results

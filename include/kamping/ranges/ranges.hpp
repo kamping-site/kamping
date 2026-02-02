@@ -42,17 +42,17 @@ public:
     }
     { return this->base().size_v(); }
 
-    constexpr decltype(auto) get_base() & noexcept {
-        if constexpr (requires { this->base().get_base(); }) {
-            return this->base().get_base();
+    constexpr auto& buffer() noexcept {
+        if constexpr (requires { this->base().buffer(); }) {
+            return this->base().buffer();
         } else {
             return this->base();
         }
     }
 
-    constexpr decltype(auto) get_base() && noexcept {
-        if constexpr (requires { std::move(this->base()).get_base(); }) {
-            return std::move(this->base()).get_base();
+    constexpr auto extract_buffer() noexcept {
+        if constexpr (requires { std::move(this->base()).extract_buffer(); }) {
+            return std::move(this->base()).extract_buffer();
         } else {
             return std::move(this->base());
         }
@@ -79,17 +79,17 @@ public:
     }
     { return this->base().size_v(); }
 
-    constexpr decltype(auto) get_base() & noexcept {
-        if constexpr (requires { this->base().get_base(); }) {
-            return this->base().get_base();
+    constexpr auto& buffer() noexcept {
+        if constexpr (requires { this->base().buffer(); }) {
+            return this->base().buffer();
         } else {
             return this->base();
         }
     }
 
-    constexpr decltype(auto) get_base() && noexcept {
-        if constexpr (requires { std::move(this->base()).get_base(); }) {
-            return std::move(this->base()).get_base();
+    constexpr auto extract_buffer() noexcept {
+        if constexpr (requires { std::move(this->base()).extract_buffer(); }) {
+            return std::move(this->base()).extract_buffer();
         } else {
             return std::move(this->base());
         }
