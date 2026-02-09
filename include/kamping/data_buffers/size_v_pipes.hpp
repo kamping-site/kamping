@@ -32,7 +32,7 @@ struct with_size_v : std::ranges::range_adaptor_closure<with_size_v<SizeRange>> 
     explicit with_size_v(SizeRange&& size_v) : size_v_(std::forward<SizeRange>(size_v)) {}
 
     template <DataBufferConcept R>
-    auto operator()(R&& r) const {
+    auto operator()(R&& r) {
         return with_size_v_view<kamping::ranges::kamping_all_t<R>, SizeRange>(std::forward<R>(r), std::move(size_v_));
     }
 };
