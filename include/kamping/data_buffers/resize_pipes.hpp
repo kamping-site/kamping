@@ -1,19 +1,18 @@
 #pragma once
 
-#include <numeric>
 #include <ranges>
-#include <utility>
-#include <vector>
 
 #include "kamping/data_buffers/data_buffer_concepts.hpp"
 #include "kamping/data_buffers/pipe_view_interface.hpp"
 
-template <std::ranges::contiguous_range R>
-struct resize_ext_view : pipe_view_interface<resize_ext_view<R>, R> {
+using namespace kamping;
+
+template <DataBufferConcept R>
+struct resize_vbuf_view : pipe_view_interface<resize_vbuf_view<R>, R> {
     R    base_;
     bool resized = false;
 
-    explicit resize_ext_view(R base) requires kamping::HasDispls<R> && kamping::HasSizeV<R> : base_(std::move(base)) {}
+    explicit resize_vbuf_view(R base) requires HasDispls<R> && HasSizeV<R> : base_(std::forward<R>(base)) {}
 
     auto data() {
         resize();
@@ -45,11 +44,12 @@ struct resize_ext_view : pipe_view_interface<resize_ext_view<R>, R> {
     }
 };
 
-struct resize_ext : std::ranges::range_adaptor_closure<resize_ext> {
-    explicit resize_ext() = default;
+struct resize_vbuf : std::ranges::range_adaptor_closure<resize_vbuf> {
+    explicit resize_vbuf() = default;
 
-    template <std::ranges::contiguous_range R>
+    template <DataBufferConcept R>
+    requires HasDispls<R> && HasSizeV<R>
     auto operator()(R&& r) const {
-        return resize_ext_view(std::forward<R>(r));
+        return resize_vbuf_view(std::forward<R>(r));
     }
 };

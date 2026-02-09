@@ -6,7 +6,7 @@
 #include "kamping/collectives/alltoall.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffers/empty_db.hpp"
-#include "kamping/data_buffers/pipe_db.hpp"
+#include "kamping/data_buffers/resize_pipes.hpp"
 #include "kamping/environment.hpp"
 
 template <typename span>

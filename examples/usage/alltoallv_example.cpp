@@ -25,8 +25,8 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffers/displs_pipes.hpp"
 #include "kamping/data_buffers/extended_db.hpp"
-#include "kamping/data_buffers/pipe_db.hpp"
 #include "kamping/data_buffers/pipes.hpp"
+#include "kamping/data_buffers/resize_pipes.hpp"
 #include "kamping/data_buffers/size_v_pipes.hpp"
 #include "kamping/environment.hpp"
 
@@ -70,7 +70,7 @@ int main() {
         // The most basic approach: use a vector and pipe the needed size_v, displs and resizing of the buffer.
         std::vector<int> recv_buf;
         auto [sent, received] =
-            comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | auto_displs() | resize_ext());
+            comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | auto_displs() | resize_vbuf());
         // The computed displs can be accessed via
         auto& displs = received.displs();
     }
@@ -117,7 +117,7 @@ int main() {
         // The type of the displs can be user defined:
         std::vector<int> recv_buf;
         auto [sent, received] =
-            comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | auto_displs<example_IntRange>() | resize_ext());
+            comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | auto_displs<example_IntRange>() | resize_vbuf());
 
         // The computed example_IntRange can be accessed via
         auto& displs = received.displs();
@@ -130,7 +130,7 @@ int main() {
         std::vector<int> displs;
         auto [sent, received] = comm.alltoallv(
             sbuf,
-            recv_buf | with_size_v(recv_counts) | auto_displs<BufferResizePolicy::resize_to_fit>(displs) | resize_ext()
+            recv_buf | with_size_v(recv_counts) | auto_displs<BufferResizePolicy::resize_to_fit>(displs) | resize_vbuf()
         );
     }
 
@@ -138,7 +138,7 @@ int main() {
         // If the displs are known, they can be directly set using with_displs:
         std::vector<int> recv_buf;
         auto [sent, received] =
-            comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | with_displs(recv_displs) | resize_ext());
+            comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | with_displs(recv_displs) | resize_vbuf());
     }
 
     {
@@ -146,7 +146,7 @@ int main() {
         std::vector<int> recv_buf;
         auto [sent, received] = comm.alltoallv(
             sbuf,
-            recv_buf | with_size_v(recv_counts) | with_displs(std::move(recv_displs)) | resize_ext()
+            recv_buf | with_size_v(recv_counts) | with_displs(std::move(recv_displs)) | resize_vbuf()
         );
 
         auto& displs = received.displs();
