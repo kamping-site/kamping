@@ -107,6 +107,19 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(SBuff&& 
     auto& recv_displs = rbuf.displs();
     KASSERT(std::ranges::size(recv_displs) >= this->size(), "Recv displs buffer is not large enough.", assert::light);
 
+    auto compute_recv_size = [&]() {
+        int recv_buf_size = 0;
+        auto counts_ptr = std::ranges::data(recv_counts);
+        auto displs_ptr = std::ranges::data(recv_displs);
+        for (size_t i = 0; i < this->size(); ++i) {
+            recv_buf_size = std::max(recv_buf_size, *(counts_ptr + i) + *(displs_ptr + i));
+        }
+        return kamping::asserting_cast<size_t>(recv_buf_size);
+    };
+
+    KASSERT(std::ranges::size(rbuf) >= compute_recv_size(), "Recv buffer is not large enough.", assert::light);
+
+
     // Do the actual alltoallv
     [[maybe_unused]] int err = MPI_Alltoallv(
         std::ranges::data(sbuf),        // send_buf
