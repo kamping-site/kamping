@@ -22,14 +22,15 @@ requires(type == CommType::allgather || type == CommType::alltoall) void infer(
 template <CommType type, typename SBuff, typename RBuff, typename Communicator>
 requires(type == CommType::alltoallv) void infer(SBuff& sbuf, RBuff& rbuf, Communicator& comm) {
     KASSERT(
-        comm.is_same_on_all_ranks(HasSetSizeV<RBuff>),
+        comm.is_same_on_all_ranks(ResizableSizeV<RBuff>),
         "Receive counts have to be computed on some ranks, but not on all or on none",
         assert::light_communication
     );
-    // Calc recv counts
-    if constexpr (HasSizeV<RBuff>) {
-        auto send_counts = sbuf.size_v();
-        comm.alltoall(send_counts, rbuf.size_v());
+    // Calc recv counts and resize rbuf.size_v to communicator size if the size_v_resizable_tag tag is set
+    if constexpr (ResizableSizeV<RBuff>) {
+        auto& recv_counts = rbuf.size_v();
+        recv_counts.resize(comm.size());
+        comm.alltoall(sbuf.size_v(), recv_counts);
     }
 }
 

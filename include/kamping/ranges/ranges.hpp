@@ -22,10 +22,21 @@ void resize(IntRange& displs, size_t size) {
     displs.resize(size);
 }
 
+template <typename T>
+auto get_tag() {
+    if constexpr (HasInferTag<T>) {
+        return typename T::infer_tag{};
+    } else {
+        return;
+    }
+}
+
 template <std::ranges::range Range>
 class kamping_owning_view : public std::ranges::owning_view<Range> {
 public:
     kamping_owning_view(Range&& r) : std::ranges::owning_view<Range>{std::forward<Range>(r)} {}
+
+    using infer_tag = decltype(get_tag<Range>());
 
     void resize(size_t size) requires requires {
         std::declval<Range>().resize(size);
@@ -63,6 +74,8 @@ template <std::ranges::range Range>
 class kamping_ref_view : public std::ranges::ref_view<Range> {
 public:
     kamping_ref_view(Range& r) : std::ranges::ref_view<Range>{r} {}
+
+    using infer_tag = decltype(get_tag<Range>());
 
     void resize(size_t size) requires requires {
         std::declval<Range>().resize(size);

@@ -9,6 +9,7 @@
 namespace kamping {
 
 struct range_resizable_tag {};
+struct size_v_resizable_tag {};
 
 // Concepts for the Data Buffers
 template <typename Buff>
@@ -44,12 +45,6 @@ concept HasDispls = requires(Buff buf) {
 };
 
 template <typename Buff>
-concept ResizableBuffer = requires {
-    typename Buff::resize_tag;
-}
-&&std::same_as<typename Buff::resize_tag, range_resizable_tag>;
-
-template <typename Buff>
 concept ExtendedDataBuffer = DataBufferConcept<Buff> && HasDispls<Buff> && HasSizeV<Buff>;
 
 template <typename Buff>
@@ -57,14 +52,23 @@ concept HasSetSize = requires(Buff buf, size_t size) {
     {buf.set_size(size)};
 };
 
-template <typename Buff>
-concept HasSetSizeV = requires(Buff buf, std::vector<int>&& sizes) {
-    {buf.set_size_v(std::move(sizes))};
+template<typename T>
+concept HasResize = requires(T buf, size_t size) {
+    {buf.resize(size)};
 };
 
+// Concepts for infer tags
+
 template <typename Buff>
-concept HasSetDispls = requires(Buff buf, std::vector<int>&& displs) {
-    {buf.set_displs(std::move(displs))};
-};
+concept ResizableBuffer = requires {typename Buff::infer_tag;}
+        && std::same_as<typename Buff::infer_tag, range_resizable_tag>;
+
+template <typename Buff>
+concept ResizableSizeV = requires {typename Buff::infer_tag;}
+        && std::same_as<typename Buff::infer_tag, size_v_resizable_tag>
+        && HasResize<decltype(std::declval<Buff>().size_v())>;
+
+template <typename Buff>
+concept HasInferTag = requires {typename Buff::infer_tag;};
 
 } // namespace kamping

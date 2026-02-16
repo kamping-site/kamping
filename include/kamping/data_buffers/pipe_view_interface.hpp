@@ -8,6 +8,9 @@
 template <typename Derived, typename Base>
 class pipe_view_interface : public std::ranges::view_interface<Derived> {
 public:
+
+    using infer_tag = Base::infer_tag;
+
     constexpr auto& base() & noexcept {
         return static_cast<Derived&>(*this).base_;
     }
