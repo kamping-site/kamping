@@ -472,7 +472,7 @@ public:
     auto send(
             SBuff&&      sbuf,
             int          dest,
-            int          tag    = MPI_ANY_TAG
+            int          tag    = MPI_UNDEFINED
     ) const;
 
     template <typename... Args>
