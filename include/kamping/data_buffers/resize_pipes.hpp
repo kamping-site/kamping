@@ -48,7 +48,7 @@ struct resize_vbuf : std::ranges::range_adaptor_closure<resize_vbuf> {
     explicit resize_vbuf() = default;
 
     template <DataBufferConcept R>
-    requires HasDispls<R> && HasSizeV<R>
+    requires HasDispls<R> && HasSizeV<R> && HasResize<R>
     auto operator()(R&& r) const {
         return resize_vbuf_view(std::forward<R>(r));
     }
