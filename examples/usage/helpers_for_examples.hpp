@@ -73,7 +73,7 @@ void print_on_root(std::string const& str, Communicator const& comm) {
     }
 }
 
-struct example_IntRange {
+struct example_int_range {
     std::vector<int> data;
 
     auto begin() {
