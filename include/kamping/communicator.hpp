@@ -468,6 +468,13 @@ public:
     template <typename... Args>
     void send(Args... args) const;
 
+    template <SendDataBuffer SBuff>
+    auto send(
+            SBuff&&      sbuf,
+            int          dest,
+            int          tag    = MPI_ANY_TAG
+    ) const;
+
     template <typename... Args>
     void bsend(Args... args) const;
 

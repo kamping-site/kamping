@@ -206,4 +206,25 @@ template <typename... Args>
 void kamping::Communicator<DefaultContainerType, Plugins...>::rsend(Args... args) const {
     this->send(std::forward<Args>(args)..., send_mode(send_modes::ready));
 }
+
+template <
+        template <typename...>
+        typename DefaultContainerType,
+        template <typename, template <typename...> typename>
+        typename... Plugins>
+template <kamping::SendDataBuffer SBuff>
+auto kamping::Communicator<DefaultContainerType, Plugins...>::send(SBuff&& sbuf, int dest, int tag) const {
+
+    [[maybe_unused]] int err = MPI_Send(
+            std::ranges::data(sbuf),                      // buf
+            asserting_cast<int>(std::ranges::size(sbuf)), // count
+            type(sbuf),                                   // datatype
+            dest,                                         // source
+            tag,                                          // tag
+            this->mpi_communicator()                      // comm
+    );
+    this->mpi_error_hook(err, "MPI_Send");
+
+    return std::forward<SBuff>(sbuf);
+}
 /// @}
