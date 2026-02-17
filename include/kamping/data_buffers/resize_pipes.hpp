@@ -12,7 +12,7 @@ struct resize_vbuf_view : pipe_view_interface<resize_vbuf_view<R>, R> {
     R    base_;
     bool resized = false;
 
-    explicit resize_vbuf_view(R base) requires HasDispls<R> && HasSizeV<R> : base_(std::forward<R>(base)) {}
+    explicit resize_vbuf_view(R base) requires HasDispls<R> && HasSizeV<R> : base_(std::move(base)) {}
 
     auto data() {
         resize();
@@ -50,6 +50,28 @@ struct resize_vbuf : std::ranges::range_adaptor_closure<resize_vbuf> {
     template <DataBufferConcept R>
     requires HasDispls<R> && HasSizeV<R> && HasResize<R>
     auto operator()(R&& r) const {
-        return resize_vbuf_view(std::forward<R>(r));
+        return resize_vbuf_view<kamping::ranges::kamping_all_t<R>>(std::forward<R>(r));
+    }
+};
+
+
+template <DataBufferConcept R>
+struct resize_buf_view : pipe_view_interface<resize_buf_view<R>, R> {
+    R    base_;
+    bool resized = false;
+
+    explicit resize_buf_view(R base) requires HasResize<R> : base_(std::move(base)) {}
+
+    using infer_tag = range_resizable_tag;
+};
+
+
+struct resize_buf : std::ranges::range_adaptor_closure<resize_buf> {
+    explicit resize_buf() = default;
+
+    template <DataBufferConcept R>
+    requires HasResize<R>
+    auto operator()(R&& r) const {
+        return resize_buf_view<kamping::ranges::kamping_all_t<R>>(std::forward<R>(r));
     }
 };

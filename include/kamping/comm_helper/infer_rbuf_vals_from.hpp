@@ -55,11 +55,10 @@ requires(type == CommType::sendrecv) void infer(
 
 template <CommType type, typename RBuff, typename Communicator>
 requires(type == CommType::recv) void infer(RBuff& rbuf, Communicator& comm) {
-    // RBuff has set_size -> assume it's size is not correct, probe for the actual recv size
-    if constexpr (ResizableBuffer<RBuff> && HasSetSize<RBuff>) {
+    if constexpr (ResizableBuffer<RBuff>) {
         auto   status = comm.probe(status_out()).extract_status();
-        size_t size   = kamping::asserting_cast<size_t>(status.template count_signed<int>());
-        rbuf.set_size(size);
+        size_t size   = kamping::asserting_cast<size_t>(status.count_signed(kamping::type(rbuf)));
+        rbuf.resize(size);
     }
 }
 

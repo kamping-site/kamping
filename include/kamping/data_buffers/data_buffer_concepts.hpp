@@ -61,7 +61,8 @@ concept HasResize = requires(T buf, size_t size) {
 
 template <typename Buff>
 concept ResizableBuffer = requires {typename Buff::infer_tag;}
-        && std::same_as<typename Buff::infer_tag, range_resizable_tag>;
+        && std::same_as<typename Buff::infer_tag, range_resizable_tag>
+        && HasResize<Buff>;
 
 template <typename Buff>
 concept ResizableSizeV = requires {typename Buff::infer_tag;}
