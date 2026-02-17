@@ -24,6 +24,28 @@
 #include "kamping/p2p/recv.hpp"
 #include "kamping/p2p/send.hpp"
 #include "kamping/adapter/mdspan_adapter.hpp"
+#include "kamping/data_buffers/type_pipes.hpp"
+#include "kamping/data_buffers/resize_pipes.hpp"
+
+struct example_struct {
+    int foo;
+    double bar;
+};
+
+MPI_Datatype example_type() {
+    const int nitems = 2;
+    int blocklengths[2] = {1, 1};
+    MPI_Datatype types[2] = {MPI_INT, MPI_DOUBLE};
+    MPI_Aint offsets[2];
+
+    offsets[0] = offsetof(example_struct, foo);
+    offsets[1] = offsetof(example_struct, bar);
+
+    MPI_Datatype example_type;
+    MPI_Type_create_struct(nitems, blocklengths, offsets, types, &example_type);
+    MPI_Type_commit(&example_type);
+    return example_type;
+}
 
 int main() {
     using namespace kamping;
@@ -80,6 +102,17 @@ int main() {
 
             auto result = received.get_mdspan();
 
+        }
+    }
+
+    {
+        if (comm.rank_signed() == 0) {
+            std::vector<example_struct> data(10, {42, 42.42});
+            comm.send(data | with_type(example_type()), 1);
+        }
+        else {
+            std::vector<example_struct> data;
+            auto result = comm.recv(data | with_type(example_type()) | resize_buf(), 0);
         }
     }
 }
