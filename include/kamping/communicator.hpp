@@ -502,6 +502,9 @@ public:
     template <typename... Args>
     auto iprobe(Args... args) const;
 
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
+    auto sendrecv(Args... args) const;
+
     template <SendDataBuffer SBuff, RecvDataBuffer RBuff, typename StatusObject = decltype(status(ignore<>))>
     auto sendrecv(
         SBuff&&      sbuf,
@@ -521,6 +524,9 @@ public:
         StatusObject status = kamping::status(ignore<>)
     ) const;
 
+    template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
+    auto recv(Args... args) const;
+
     template <typename recv_value_type_tparam, typename... Args>
     auto recv_single(Args... args) const;
 
@@ -530,11 +536,17 @@ public:
     template <typename recv_value_type_tparam = kamping::internal::unused_tparam, typename... Args>
     auto irecv(Args... args) const;
 
-    template <SendDataBuffer SBuff, RecvDataBuffer RBuff>
-    auto alltoall(SBuff&& sbuf, RBuff&& rbuf) const;
+    template <typename... Args>
+    auto alltoall(Args... args) const;
 
     template <typename... Args>
     auto alltoall_inplace(Args... args) const;
+
+    template <typename... Args>
+    auto alltoallv(Args... args) const;
+
+    template <SendDataBuffer SBuff, RecvDataBuffer RBuff>
+    auto alltoall(SBuff&& sbuf, RBuff&& rbuf) const;
 
     template <SendDataBuffer SBuff, RecvDataBuffer RBuff>
     requires ExtendedDataBuffer<SBuff> && ExtendedDataBuffer<RBuff>
@@ -593,6 +605,9 @@ public:
 
     template <SendDataBuffer SBuff, RecvDataBuffer RBuff>
     auto allgather(SBuff&& sbuf, RBuff&& rbuf) const;
+
+    template <typename... Args>
+    auto allgather(Args... args) const;
 
     template <typename... Args>
     auto allgather_inplace(Args... args) const;

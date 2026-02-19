@@ -223,7 +223,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::send(SBuff&& sbuf,
             std::ranges::data(sbuf),                      // buf
             asserting_cast<int>(std::ranges::size(sbuf)), // count
             type(sbuf),                                   // datatype
-            dest,                                         // source
+            dest,                                         // destination
             send_tag,                                     // tag
             this->mpi_communicator()                      // comm
     );
