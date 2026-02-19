@@ -25,9 +25,6 @@
 #include "kamping/comm_helper/generic_helper.hpp"
 #include "kamping/comm_helper/infer_rbuf_vals_from.hpp"
 #include "kamping/communicator.hpp"
-#include "kamping/implementation_helpers.hpp"
-
-#include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/implementation_helpers.hpp"
 #include "kamping/named_parameter_check.hpp"

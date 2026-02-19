@@ -47,7 +47,7 @@ concept HasDispls = requires(Buff buf) {
 template <typename Buff>
 concept ExtendedDataBuffer = DataBufferConcept<Buff> && HasDispls<Buff> && HasSizeV<Buff>;
 
-template<typename T>
+template <typename T>
 concept HasResize = requires(T buf, size_t size) {
     {buf.resize(size)};
 };
@@ -55,16 +55,20 @@ concept HasResize = requires(T buf, size_t size) {
 // Concepts for infer tags
 
 template <typename Buff>
-concept ResizableBuffer = requires {typename Buff::infer_tag;}
-        && std::same_as<typename Buff::infer_tag, range_resizable_tag>
-        && HasResize<Buff>;
+concept ResizableBuffer = requires {
+    typename Buff::infer_tag;
+}
+&&std::same_as<typename Buff::infer_tag, range_resizable_tag>&& HasResize<Buff>;
 
 template <typename Buff>
-concept ResizableSizeV = requires {typename Buff::infer_tag;}
-        && std::same_as<typename Buff::infer_tag, size_v_resizable_tag>
-        && HasResize<decltype(std::declval<Buff>().size_v())>;
+concept ResizableSizeV = requires {
+    typename Buff::infer_tag;
+}
+&&std::same_as<typename Buff::infer_tag, size_v_resizable_tag>&& HasResize<decltype(std::declval<Buff>().size_v())>;
 
 template <typename Buff>
-concept HasInferTag = requires {typename Buff::infer_tag;};
+concept HasInferTag = requires {
+    typename Buff::infer_tag;
+};
 
 } // namespace kamping

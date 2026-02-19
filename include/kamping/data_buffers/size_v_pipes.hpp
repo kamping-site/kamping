@@ -40,10 +40,8 @@ struct with_size_v : std::ranges::range_adaptor_closure<with_size_v<SizeRange>> 
 template <IntContiguousRange SizeRange>
 with_size_v(SizeRange&& size_v) -> with_size_v<kamping::ranges::kamping_all_t<SizeRange>>;
 
-
 template <DataBufferConcept R, IntContiguousRange SizeRange>
 struct auto_size_v_view : pipe_view_interface<auto_size_v_view<R, SizeRange>, R> {
-
     using infer_tag = kamping::size_v_resizable_tag;
 
     R         base_;
@@ -56,8 +54,7 @@ struct auto_size_v_view : pipe_view_interface<auto_size_v_view<R, SizeRange>, R>
     }
 };
 
-
-template<IntContiguousRange SizeRange = std::vector<int>>
+template <IntContiguousRange SizeRange = std::vector<int>>
 requires HasResize<SizeRange>
 struct auto_size_v : std::ranges::range_adaptor_closure<auto_size_v<SizeRange>> {
     SizeRange size_v_;
@@ -66,6 +63,9 @@ struct auto_size_v : std::ranges::range_adaptor_closure<auto_size_v<SizeRange>> 
 
     template <DataBufferConcept R>
     auto operator()(R&& r) {
-        return auto_size_v_view<kamping::ranges::kamping_all_t<R>, kamping::ranges::kamping_all_t<SizeRange>>(std::forward<R>(r), std::forward<SizeRange>(size_v_));
+        return auto_size_v_view<kamping::ranges::kamping_all_t<R>, kamping::ranges::kamping_all_t<SizeRange>>(
+            std::forward<R>(r),
+            std::forward<SizeRange>(size_v_)
+        );
     }
 };

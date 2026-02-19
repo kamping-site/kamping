@@ -8,7 +8,7 @@ using namespace kamping;
 
 template <DataBufferConcept R>
 struct with_type_view : pipe_view_interface<with_type_view<R>, R> {
-    R           base_;
+    R            base_;
     MPI_Datatype type_;
 
     with_type_view(R base, MPI_Datatype type) : base_(std::move(base)), type_(type) {}
@@ -17,7 +17,6 @@ struct with_type_view : pipe_view_interface<with_type_view<R>, R> {
         return type_;
     }
 };
-
 
 struct with_type : std::ranges::range_adaptor_closure<with_type> {
     MPI_Datatype type_;

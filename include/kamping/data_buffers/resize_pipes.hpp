@@ -1,9 +1,8 @@
 #pragma once
 
-#include <ranges>
-
 #include "kamping/data_buffers/data_buffer_concepts.hpp"
 #include "kamping/data_buffers/pipe_view_interface.hpp"
+#include "kamping/ranges/ranges.hpp"
 
 using namespace kamping;
 
@@ -54,7 +53,6 @@ struct resize_vbuf : std::ranges::range_adaptor_closure<resize_vbuf> {
     }
 };
 
-
 template <DataBufferConcept R>
 struct resize_buf_view : pipe_view_interface<resize_buf_view<R>, R> {
     R    base_;
@@ -64,7 +62,6 @@ struct resize_buf_view : pipe_view_interface<resize_buf_view<R>, R> {
 
     using infer_tag = range_resizable_tag;
 };
-
 
 struct resize_buf : std::ranges::range_adaptor_closure<resize_buf> {
     explicit resize_buf() = default;

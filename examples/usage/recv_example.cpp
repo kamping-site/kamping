@@ -12,31 +12,31 @@
 // <https://www.gnu.org/licenses/>.
 
 #include <iostream>
-#include <vector>
 #include <mdspan>
 #include <random>
+#include <vector>
 
 #include <mpi.h>
 
 #include "helpers_for_examples.hpp"
+#include "kamping/adapter/mdspan_adapter.hpp"
 #include "kamping/communicator.hpp"
+#include "kamping/data_buffers/resize_pipes.hpp"
+#include "kamping/data_buffers/type_pipes.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/p2p/recv.hpp"
 #include "kamping/p2p/send.hpp"
-#include "kamping/adapter/mdspan_adapter.hpp"
-#include "kamping/data_buffers/type_pipes.hpp"
-#include "kamping/data_buffers/resize_pipes.hpp"
 
 struct example_struct {
-    int foo;
+    int    foo;
     double bar;
 };
 
 MPI_Datatype example_type() {
-    const int nitems = 2;
-    int blocklengths[2] = {1, 1};
-    MPI_Datatype types[2] = {MPI_INT, MPI_DOUBLE};
-    MPI_Aint offsets[2];
+    int const    nitems          = 2;
+    int          blocklengths[2] = {1, 1};
+    MPI_Datatype types[2]        = {MPI_INT, MPI_DOUBLE};
+    MPI_Aint     offsets[2];
 
     offsets[0] = offsetof(example_struct, foo);
     offsets[1] = offsetof(example_struct, bar);
@@ -56,36 +56,37 @@ int main() {
 
     {
         if (comm.rank_signed() == 0) {
-            std::vector<int> data{1, 2, 3, 4, 5, 6, 7, 8, 9};
+            std::vector<int>                             data{1, 2, 3, 4, 5, 6, 7, 8, 9};
             std::mdspan<int, std::extents<size_t, 3, 3>> to_send(data.data());
             comm.send(adapter::MDSpanAdapter(to_send), 1);
-        }
-        else {
-            std::vector<int> data(9);
+        } else {
+            std::vector<int>                             data(9);
             std::mdspan<int, std::extents<size_t, 3, 3>> to_recv(data.data());
-            auto received = comm.recv(adapter::MDSpanAdapter(to_recv), 0);
-            auto result = received.get_mdspan();
+            auto                                         received = comm.recv(adapter::MDSpanAdapter(to_recv), 0);
+            auto                                         result   = received.get_mdspan();
         }
     }
 
     {
         if (comm.rank_signed() == 0) {
             std::random_device rd;
-            std::mt19937 gen(rd());
-
+            std::mt19937       gen(rd());
 
             std::uniform_int_distribution<> dist(1, 10);
-            int ext1 = dist(gen);
-            int ext2 = dist(gen);
+            int                             ext1 = dist(gen);
+            int                             ext2 = dist(gen);
 
-            std::vector<int> data(ext1 * ext2, 42);
-            std::mdspan<int, std::extents<size_t,  std::dynamic_extent, std::dynamic_extent>> to_send(data.data(), ext1, ext2);
-            
+            std::vector<int>                                                                 data(ext1 * ext2, 42);
+            std::mdspan<int, std::extents<size_t, std::dynamic_extent, std::dynamic_extent>> to_send(
+                data.data(),
+                ext1,
+                ext2
+            );
+
             comm.send(std::ranges::single_view(ext1), 1);
             comm.send(std::ranges::single_view(ext2), 1);
             comm.send(adapter::MDSpanAdapter(to_send), 1);
-        }
-        else {
+        } else {
             std::ranges::single_view v1(0);
             comm.recv(v1, 0);
 
@@ -95,13 +96,16 @@ int main() {
             int ext1 = v1.front();
             int ext2 = v2.front();
 
-            std::vector<int> data(ext1 * ext2);
-            std::mdspan<int, std::extents<size_t, std::dynamic_extent, std::dynamic_extent>> to_recv(data.data(), ext1, ext2);
+            std::vector<int>                                                                 data(ext1 * ext2);
+            std::mdspan<int, std::extents<size_t, std::dynamic_extent, std::dynamic_extent>> to_recv(
+                data.data(),
+                ext1,
+                ext2
+            );
 
             auto received = comm.recv(adapter::MDSpanAdapter(to_recv), 0);
 
             auto result = received.get_mdspan();
-
         }
     }
 
@@ -109,10 +113,9 @@ int main() {
         if (comm.rank_signed() == 0) {
             std::vector<example_struct> data(10, {42, 42.42});
             comm.send(data | with_type(example_type()), 1);
-        }
-        else {
+        } else {
             std::vector<example_struct> data;
-            auto result = comm.recv(data | with_type(example_type()) | resize_buf(), 0);
+            auto                        result = comm.recv(data | with_type(example_type()) | resize_buf(), 0);
         }
     }
 }

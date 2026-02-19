@@ -469,11 +469,7 @@ public:
     void send(Args... args) const;
 
     template <SendDataBuffer SBuff>
-    auto send(
-            SBuff&&      sbuf,
-            int          dest,
-            int          tag    = MPI_UNDEFINED
-    ) const;
+    auto send(SBuff&& sbuf, int dest, int tag = MPI_UNDEFINED) const;
 
     template <typename... Args>
     void bsend(Args... args) const;

@@ -91,13 +91,15 @@ int main() {
         make_vbuf_resizing(recv_buf, recv_counts, recv_displs);
         make_vbuf_resizing(recv_buf, recv_counts);
 
-        // The functions with auto imply heavier operations, like creating a DataBuffer or using auto_size_v which requires additional communication
-        // This creates a vbuf of type std::vector<int> with auto_size_v and auto_displs
+        // The functions with auto imply heavier operations, like creating a DataBuffer or using auto_size_v which
+        // requires additional communication This creates a vbuf of type std::vector<int> with auto_size_v and
+        // auto_displs
         make_vbuf_auto<int>();
         // If the given type satisfies DataBufferConcept and has .resize a buffer of that type will be created
         make_vbuf_auto<example_int_range>();
 
-        // Both of the above can be used with an existing recv_count, so no additional communication to exchange the recv counts is needed
+        // Both of the above can be used with an existing recv_count, so no additional communication to exchange the
+        // recv counts is needed
         make_vbuf_auto<int>(recv_counts);
         make_vbuf_auto<example_int_range>(recv_counts);
 
@@ -124,15 +126,13 @@ int main() {
             comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | auto_displs() | resize_vbuf());
 
         // The same using the convenience function make_vbuf_resizing:
-        auto [sent_f, received_f] =
-                comm.alltoallv(sbuf, make_vbuf_resizing(recv_buf, recv_counts));
-
+        auto [sent_f, received_f] = comm.alltoallv(sbuf, make_vbuf_resizing(recv_buf, recv_counts));
     }
-
 
     {
         // The recv buffer can be constructed inside the make_vbuf_resizing pipe
-        auto [sent, received] = comm.alltoallv(sbuf, kamping::pipes::make_vbuf_resizing(std::vector<int>(), recv_counts));
+        auto [sent, received] =
+            comm.alltoallv(sbuf, kamping::pipes::make_vbuf_resizing(std::vector<int>(), recv_counts));
         // To retrieve the recv buffer, it can be moved out using extract_buffer:
         auto result = received.extract_buffer();
     }
@@ -151,7 +151,6 @@ int main() {
 
         // The same using the convenience function make_vbuf_auto given a recv buffer
         auto [sent_f, received_f] = comm.alltoallv(sbuf, make_vbuf_auto(recv_buf));
-
     }
 
     {
@@ -175,8 +174,10 @@ int main() {
     {
         // The type of the computed displs can be user defined:
         std::vector<int> recv_buf;
-        auto [sent, received] =
-            comm.alltoallv(sbuf, recv_buf | with_size_v(recv_counts) | auto_displs<example_int_range>() | resize_vbuf());
+        auto [sent, received] = comm.alltoallv(
+            sbuf,
+            recv_buf | with_size_v(recv_counts) | auto_displs<example_int_range>() | resize_vbuf()
+        );
 
         // The computed example_int_range can be accessed via
         auto& displs = received.displs();

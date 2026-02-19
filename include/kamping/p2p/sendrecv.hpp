@@ -262,7 +262,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(Args... a
     );
 }
 
-
 template <
     template <typename...>
     typename DefaultContainerType,

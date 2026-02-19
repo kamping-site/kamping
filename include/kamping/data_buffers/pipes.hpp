@@ -13,19 +13,21 @@ auto make_vbuf(DataBuffer&& data, SizeRange&& size_v) {
 
 template <DataBufferConcept DataBuffer, IntContiguousRange SizeRange, IntContiguousRange DisplsRange>
 auto make_vbuf(DataBuffer&& data, SizeRange&& size_v, DisplsRange&& displs) {
-    return std::forward<DataBuffer>(data) | with_size_v(std::forward<SizeRange>(size_v)) | with_displs(std::forward<DisplsRange>(displs));
+    return std::forward<DataBuffer>(data) | with_size_v(std::forward<SizeRange>(size_v))
+           | with_displs(std::forward<DisplsRange>(displs));
 }
 
 template <DataBufferConcept DataBuffer, IntContiguousRange SizeRange>
 auto make_vbuf_resizing(DataBuffer&& data, SizeRange&& size_v) {
-    return std::forward<DataBuffer>(data) | with_size_v(std::forward<SizeRange>(size_v)) | auto_displs() | resize_vbuf();
+    return std::forward<DataBuffer>(data) | with_size_v(std::forward<SizeRange>(size_v)) | auto_displs()
+           | resize_vbuf();
 }
 
 template <DataBufferConcept DataBuffer, IntContiguousRange SizeRange, IntContiguousRange DisplsRange>
 auto make_vbuf_resizing(DataBuffer&& data, SizeRange&& size_v, DisplsRange&& displs) {
-    return std::forward<DataBuffer>(data) | with_size_v(std::forward<SizeRange>(size_v)) | with_displs(std::forward<DisplsRange>(displs)) | resize_vbuf();
+    return std::forward<DataBuffer>(data) | with_size_v(std::forward<SizeRange>(size_v))
+           | with_displs(std::forward<DisplsRange>(displs)) | resize_vbuf();
 }
-
 
 template <typename T>
 auto make_vbuf_auto() {

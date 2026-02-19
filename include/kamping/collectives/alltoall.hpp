@@ -20,12 +20,11 @@
 
 #include "kamping/assertion_levels.hpp"
 #include "kamping/checking_casts.hpp"
+#include "kamping/collectives/collectives_helpers.hpp"
 #include "kamping/comm_helper/generic_helper.hpp"
 #include "kamping/comm_helper/infer_rbuf_vals_from.hpp"
-#include "kamping/communicator.hpp"
-
-#include "kamping/collectives/collectives_helpers.hpp"
 #include "kamping/comm_helper/is_same_on_all_ranks.hpp"
+#include "kamping/communicator.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameters.hpp"
@@ -497,7 +496,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(Args... 
     );
 }
 
-
 /// @brief Wrapper for \c MPI_Alltoall.
 ///
 /// This wrapper for \c MPI_Alltoall sends the same amount of data from each rank to each rank. The following
@@ -579,9 +577,9 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(SBuff&& 
     KASSERT(std::ranges::size(recv_displs) >= this->size(), "Recv displs buffer is not large enough.", assert::light);
 
     auto compute_recv_size = [&]() {
-        int recv_buf_size = 0;
-        auto counts_ptr = std::ranges::data(recv_counts);
-        auto displs_ptr = std::ranges::data(recv_displs);
+        int  recv_buf_size = 0;
+        auto counts_ptr    = std::ranges::data(recv_counts);
+        auto displs_ptr    = std::ranges::data(recv_displs);
         for (size_t i = 0; i < this->size(); ++i) {
             recv_buf_size = std::max(recv_buf_size, *(counts_ptr + i) + *(displs_ptr + i));
         }
@@ -589,7 +587,6 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::alltoallv(SBuff&& 
     };
 
     KASSERT(std::ranges::size(rbuf) >= compute_recv_size(), "Recv buffer is not large enough.", assert::light);
-
 
     // Do the actual alltoallv
     [[maybe_unused]] int err = MPI_Alltoallv(
