@@ -54,7 +54,7 @@ int main() {
             return vec.size();
         };
 
-        auto buff = adapter::generic_adapter_alt(v, get_data, get_size);
+        auto buff = adapter::generic_adapter(v, get_data, get_size);
         comm.send(kamping::send_buf(buff), kamping::destination(1));
     } else if (comm.rank() == 1) {
         auto recv_data = comm.recv<int>(kamping::source(0));
@@ -71,7 +71,7 @@ int main() {
             return vec.size();
         };
 
-        auto buff = adapter::generic_adapter<int>(v, get_data, get_size);
+        auto buff = adapter::generic_adapter(v, get_data, get_size);
         comm.send(kamping::send_buf(buff), kamping::destination(1));
     } else if (comm.rank() == 1) {
         auto recv_data = comm.recv<int>(kamping::source(0));
@@ -88,7 +88,7 @@ int main() {
             return vec.size();
         };
 
-        auto buff = adapter::generic_adapter_std_func(v, get_data, get_size);
+        auto buff = adapter::generic_adapter(v, get_data, get_size);
         comm.send(kamping::send_buf(buff), kamping::destination(1));
     } else if (comm.rank() == 1) {
         auto recv_data = comm.recv<int>(kamping::source(0));
@@ -98,14 +98,14 @@ int main() {
     comm.barrier();
 
     auto mdspan_send   = std::mdspan(v.data(), 2, 6);
-    auto get_data_span = [](decltype const(mdspan_send) & span) noexcept {
+    auto get_data_span = [](const decltype(mdspan_send) & span) noexcept {
         return span.data_handle();
     };
-    auto get_size_span = [](decltype const(mdspan_send) & span) noexcept {
+    auto get_size_span = [](const decltype(mdspan_send) & span) noexcept {
         return span.size();
     };
 
-    auto buff_span = adapter::generic_adapter<int>(mdspan_send, get_data_span, get_size_span);
+    auto buff_span = adapter::generic_adapter(mdspan_send, get_data_span, get_size_span);
 
     if (comm.rank() == 0) {
         comm.send(kamping::send_buf(buff_span), kamping::destination(1));

@@ -24,6 +24,8 @@ template <typename T, typename Extent, typename LayoutPolicy>
 requires std::same_as<LayoutPolicy, std::layout_left> || std::same_as<LayoutPolicy, std::layout_right>
 class MDSpanAdapter {
 public:
+    using value_type = T;
+
     explicit MDSpanAdapter(std::mdspan<T, Extent, LayoutPolicy>& ms) : mdspan(ms), data_handle(mdspan.data_handle()) {}
 
     auto begin() noexcept {
@@ -32,7 +34,7 @@ public:
     auto end() noexcept {
         return data_handle + mdspan.size();
     }
-    auto data() {
+    auto data() const {
         return data_handle;
     }
 

@@ -38,7 +38,7 @@ int main() {
     auto        mdspan_send = std::mdspan(v.data(), 2, 6);
 
     if (comm.rank() == 0) {
-        comm.send((kamping::send_buf(kamping::adapter::md_span_send(mdspan_send))), kamping::destination(1));
+        comm.send(kamping::send_buf(kamping::adapter::MDSpanAdapter(mdspan_send)), kamping::destination(1));
     } else if (comm.rank() == 1) {
         auto recv_data = comm.recv<int>(kamping::source(0));
 
