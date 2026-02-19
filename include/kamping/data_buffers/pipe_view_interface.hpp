@@ -57,16 +57,10 @@ public:
         return base().size_v();
     }
 
-    constexpr void set_size(std::size_t n) requires kamping::HasSetSize<Base> {
-        base().set_size(n);
-    }
-
     constexpr auto type() requires kamping::HasType<Base> {
         return base().type();
     }
 
-    constexpr void resize(std::size_t n) requires requires {
-        base().resize(n);
-    }
+    constexpr void resize(std::size_t n) requires kamping::HasResize<Base>
     { base().resize(n); }
 };

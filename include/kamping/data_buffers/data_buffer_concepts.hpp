@@ -47,11 +47,6 @@ concept HasDispls = requires(Buff buf) {
 template <typename Buff>
 concept ExtendedDataBuffer = DataBufferConcept<Buff> && HasDispls<Buff> && HasSizeV<Buff>;
 
-template <typename Buff>
-concept HasSetSize = requires(Buff buf, size_t size) {
-    {buf.set_size(size)};
-};
-
 template<typename T>
 concept HasResize = requires(T buf, size_t size) {
     {buf.resize(size)};
