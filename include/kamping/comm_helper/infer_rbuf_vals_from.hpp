@@ -13,9 +13,9 @@ template <CommType type, typename SBuff, typename RBuff, typename Communicator>
 requires(type == CommType::allgather || type == CommType::alltoall) void infer(
     SBuff& sbuf, RBuff& rbuf, Communicator& comm
 ) {
-    if constexpr (ResizableBuffer<RBuff> && HasSetSize<RBuff>) {
+    if constexpr (ResizableBuffer<RBuff>) {
         size_t recv_size = get_recv_size<type>(sbuf, rbuf, comm);
-        rbuf.set_size(recv_size);
+        rbuf.resize(recv_size);
     }
 }
 
@@ -40,16 +40,16 @@ requires(type == CommType::sendrecv) void infer(
 ) {
     // Use sendrecv to exchange the recv sizes
     KASSERT(
-        comm.is_same_on_all_ranks(HasSetSize<RBuff>),
+        comm.is_same_on_all_ranks(ResizableBuffer<RBuff>),
         "Receive count has to be computed on some ranks, but not on all or on none",
         assert::light_communication
     );
-    if constexpr (ResizableBuffer<RBuff> && HasSetSize<RBuff>) {
+    if constexpr (ResizableBuffer<RBuff>) {
         size_t                           send_size = std::ranges::size(sbuf);
         std::ranges::single_view<size_t> send_buff(send_size);
         std::ranges::single_view<size_t> recv_buff(0);
         comm.sendrecv(send_buff, recv_buff, destination, 0, source);
-        rbuf.set_size(*recv_buff.data());
+        rbuf.resize(*recv_buff.data());
     }
 }
 

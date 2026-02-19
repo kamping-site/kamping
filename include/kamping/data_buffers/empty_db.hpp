@@ -22,7 +22,7 @@ public:
         return _data.data();
     }
 
-    void set_size(size_t to_size) {
+    void resize(size_t to_size) {
         _size = to_size;
     }
 
