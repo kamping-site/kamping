@@ -97,13 +97,15 @@ int main() {
 
     comm.barrier();
 
-    auto mdspan_send   = std::mdspan(v.data(), 2, 6);
+    auto mdspan_send = std::mdspan(v.data(), 2, 6);
+    // clang-format off
     auto get_data_span = [](const decltype(mdspan_send) & span) noexcept {
         return span.data_handle();
     };
     auto get_size_span = [](const decltype(mdspan_send) & span) noexcept {
         return span.size();
     };
+    // clang-format on
 
     auto buff_span = adapter::generic_adapter(mdspan_send, get_data_span, get_size_span);
 
