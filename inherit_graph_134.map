@@ -1,0 +1,13 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,88,120,113"/>
+<area shape="rect" id="Node000001" href="$classkamping_1_1MPIFailureDetected.html" title="Base class for all exceptions thrown by the FaultTolerance plugin. Means, that either a process faile..." alt="" coords="168,63,380,88"/>
+<area shape="poly" id="edge47_Node000000_Node000001" title=" " alt="" coords="133,90,168,85,169,91,134,95"/>
+<area shape="rect" id="Node000005" href="$classkamping_1_1MpiErrorException.html" title="The exception type used when an MPI call did not return MPI_SUCCESS." alt="" coords="171,112,377,137"/>
+<area shape="poly" id="edge51_Node000000_Node000005" title=" " alt="" coords="134,106,171,110,171,116,134,111"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1MPIProcFailedError.html" title="Thrown when a process failure prevented the completetion of the MPI operation." alt="" coords="439,5,645,31"/>
+<area shape="poly" id="edge48_Node000001_Node000002" title=" " alt="" coords="347,57,481,28,483,33,348,62"/>
+<area shape="rect" id="Node000003" href="$classkamping_1_1MPIProcFailedPendingError.html" title="Thrown when a potential sender matching a non&#45;blocking wildcard source receive has failed." alt="" coords="428,55,656,95"/>
+<area shape="poly" id="edge49_Node000001_Node000003" title=" " alt="" coords="394,73,428,73,428,78,394,78"/>
+<area shape="rect" id="Node000004" href="$classkamping_1_1MPIRevokedError.html" title="Thrown when the communicator was revoked." alt="" coords="443,120,641,145"/>
+<area shape="poly" id="edge50_Node000001_Node000004" title=" " alt="" coords="348,88,483,117,481,123,347,94"/>
+</map>

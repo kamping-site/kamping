@@ -1,0 +1,16 @@
+<map id="include/kamping/measurements/measurement_aggregation_definitions.hpp" name="include/kamping/measurements/measurement_aggregation_definitions.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="169,5,400,60"/>
+<area shape="rect" id="Node000002" href="$aggregated__tree__node_8hpp.html" title=" " alt="" coords="247,196,477,236"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="317,70,339,107,355,154,362,195,357,196,349,155,334,109,312,72"/>
+<area shape="rect" id="Node000006" href="$measurement__utils_8hpp.html" title=" " alt="" coords="90,108,325,148"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="256,72,225,110,221,106,252,69"/>
+<area shape="rect" id="Node000003" href="$counter_8hpp.html" title=" " alt="" coords="260,284,491,324"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="370,249,375,283,370,284,364,250"/>
+<area shape="rect" id="Node000004" href="$timer_8hpp.html" title=" " alt="" coords="5,284,236,324"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="297,243,174,286,173,281,295,238"/>
+<area shape="rect" id="Node000005" href="$printer_8hpp_source.html" title=" " alt="" coords="5,372,236,412"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="123,338,123,372,118,372,118,338"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="255,152,329,194,327,198,252,157"/>
+<area shape="poly" id="edge7_Node000006_Node000003" title=" " alt="" coords="211,161,219,199,227,218,237,234,270,262,308,282,306,286,267,267,233,238,222,220,214,201,206,162"/>
+<area shape="poly" id="edge8_Node000006_Node000004" title=" " alt="" coords="194,162,132,285,128,283,189,159"/>
+</map>

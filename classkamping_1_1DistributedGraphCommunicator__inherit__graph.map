@@ -1,0 +1,13 @@
+<map id="kamping::DistributedGraphCommunicator&lt; DefaultContainerType, Plugins &gt;" name="kamping::DistributedGraphCommunicator&lt; DefaultContainerType, Plugins &gt;">
+<area shape="rect" id="Node000001" title="A Communicator which possesses an additional virtual topology and supports neighborhood collectives (..." alt="" coords="816,80,1060,135"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1TopologyCommunicator.html" title="A Communicator which possesses an additional virtual topology and supports neighborhood collectives (..." alt="" coords="520,51,768,91"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="782,86,816,90,816,95,781,91"/>
+<area shape="rect" id="Node000003" href="$classkamping_1_1Communicator.html" title="Wrapper for MPI communicator providing access to rank() and size() of the communicator...." alt="" coords="261,5,444,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="458,44,520,52,520,58,458,49"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,5,185,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="199,30,261,30,261,35,199,35"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="233,84,472,139"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="485,90,520,86,520,91,486,96"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="541,116,747,171"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="761,126,815,120,816,125,762,132"/>
+</map>

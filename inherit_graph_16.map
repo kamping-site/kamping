@@ -1,0 +1,15 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classkamping_1_1internal_1_1CopyMoveEnabler.html" title=" " alt="" coords="5,151,280,206"/>
+<area shape="rect" id="Node000001" href="$classkamping_1_1internal_1_1DataBuffer.html" title=" " alt="" coords="328,5,576,133"/>
+<area shape="poly" id="edge13_Node000000_Node000001" title=" " alt="" coords="233,144,327,111,329,116,235,149"/>
+<area shape="rect" id="Node000004" href="$classkamping_1_1internal_1_1DataBuffer.html" title="Data buffer used for named parameters." alt="" coords="338,158,566,271"/>
+<area shape="poly" id="edge15_Node000000_Node000004" title=" " alt="" coords="294,194,338,199,337,204,294,199"/>
+<area shape="rect" id="Node000005" href="$classkamping_1_1internal_1_1GenericDataBuffer.html" title="A more generic version of a DataBuffer which stores an object of type." alt="" coords="329,295,575,379"/>
+<area shape="poly" id="edge16_Node000000_Node000005" title=" " alt="" coords="272,210,282,217,298,233,307,249,315,266,330,282,345,293,342,297,326,286,311,269,302,252,294,236,278,221,269,215"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1internal_1_1RankDataBuffer_3_01RankType_1_1value_00_01type_01_4.html" title="Encapsulates the rank of a PE. This is needed for p2p communication and rooted MPI collectives like M..." alt="" coords="624,42,827,97"/>
+<area shape="poly" id="edge14_Node000001_Node000002" title=" " alt="" coords="590,67,624,67,624,72,590,72"/>
+<area shape="rect" id="Node000003" href="$classkamping_1_1internal_1_1Extractable.html" title="Base class containing logic to verify whether a buffer&#39;s data has already been extracted...." alt="" coords="71,231,215,271"/>
+<area shape="poly" id="edge17_Node000003_Node000001" title=" " alt="" coords="227,239,254,230,278,217,295,200,303,183,311,165,326,145,341,131,345,135,330,148,316,167,308,186,299,203,282,221,256,235,229,244"/>
+<area shape="poly" id="edge18_Node000003_Node000004" title=" " alt="" coords="228,238,337,225,338,231,229,243"/>
+<area shape="poly" id="edge19_Node000003_Node000005" title=" " alt="" coords="229,272,330,300,328,306,227,277"/>
+</map>

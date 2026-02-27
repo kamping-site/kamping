@@ -1,0 +1,13 @@
+<map id="include/kamping/error_handling.hpp" name="include/kamping/error_handling.hpp">
+<area shape="rect" id="Node000001" title="Code for error handling." alt="" coords="145,5,309,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,61,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,48,75,91,73,86,179,43"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="86,93,173,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="205,48,156,87,153,82,201,43"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="197,93,256,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="229,46,229,79,224,79,224,46"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="280,93,339,119"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="249,44,289,82,285,86,245,47"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="363,93,571,119"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="285,43,419,87,418,92,283,48"/>
+</map>

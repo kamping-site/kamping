@@ -1,0 +1,9 @@
+<map id="kamping::measurements::AggregatedTreeNode&lt; DataType &gt;" name="kamping::measurements::AggregatedTreeNode&lt; DataType &gt;">
+<area shape="rect" id="Node000001" title="Class representing a node in an (globally) aggregated tree, i.e., a node of a timer (or counter) tree..." alt="" coords="740,59,924,114"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1measurements_1_1internal_1_1TreeNode.html" title=" " alt="" coords="365,5,549,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="563,50,740,73,739,78,562,56"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="343,99,571,168"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="584,115,739,95,740,101,585,120"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,113,229,153"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="243,131,342,131,342,136,243,136"/>
+</map>

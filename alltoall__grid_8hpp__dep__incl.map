@@ -1,0 +1,5 @@
+<map id="include/kamping/plugin/alltoall_grid.hpp" name="include/kamping/plugin/alltoall_grid.hpp">
+<area shape="rect" id="Node000001" title="Plugin to enable grid communication." alt="" coords="5,5,179,45"/>
+<area shape="rect" id="Node000002" href="$alltoall__dispatch_8hpp.html" title="Plugin to dispatch to one of multiple possible algorithms for alltoallv exchanges." alt="" coords="5,93,179,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,59,95,93,89,93,89,59"/>
+</map>

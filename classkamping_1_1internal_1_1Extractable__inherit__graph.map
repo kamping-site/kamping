@@ -1,0 +1,11 @@
+<map id="kamping::internal::Extractable" name="kamping::internal::Extractable">
+<area shape="rect" id="Node000001" title="Base class containing logic to verify whether a buffer&#39;s data has already been extracted...." alt="" coords="5,195,149,235"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1internal_1_1DataBuffer.html" title=" " alt="" coords="197,5,445,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="122,185,212,131,215,136,125,190"/>
+<area shape="rect" id="Node000004" href="$classkamping_1_1internal_1_1DataBuffer.html" title="Data buffer used for named parameters." alt="" coords="207,158,435,271"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="163,212,207,212,207,217,163,217"/>
+<area shape="rect" id="Node000005" href="$classkamping_1_1internal_1_1GenericDataBuffer.html" title="A more generic version of a DataBuffer which stores an object of type." alt="" coords="199,295,444,379"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="125,239,199,280,224,293,222,298,196,285,122,244"/>
+<area shape="rect" id="Node000003" href="$classkamping_1_1internal_1_1RankDataBuffer_3_01RankType_1_1value_00_01type_01_4.html" title="Encapsulates the rank of a PE. This is needed for p2p communication and rooted MPI collectives like M..." alt="" coords="493,42,696,97"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="459,67,493,67,493,72,459,72"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="kamping::has_static_type&lt; T, std::void_t&lt; decltype(mpi_type_traits&lt; T &gt;::data_type())&gt; &gt;" name="kamping::has_static_type&lt; T, std::void_t&lt; decltype(mpi_type_traits&lt; T &gt;::data_type())&gt; &gt;">
+<area shape="rect" id="Node000001" title="Check if the type has a static type definition, i.e. mpi_type_traits is defined." alt="" coords="5,79,220,148"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="57,5,169,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,44,115,79,110,79,110,44"/>
+</map>

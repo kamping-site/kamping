@@ -1,0 +1,4 @@
+var structkamping_1_1internal_1_1FlatContainer_3_01T_00_01std_1_1enable__if__t_3_01is__sparse__send__buffer__v_3_01T_01_4_01_4_01_4 =
+[
+    [ "type", "structkamping_1_1internal_1_1FlatContainer_3_01T_00_01std_1_1enable__if__t_3_01is__sparse__send__buffer__v_3_01T_01_4_01_4_01_4.html#a75e3b85daa4d6357ba49dc24b2dce071", null ]
+];

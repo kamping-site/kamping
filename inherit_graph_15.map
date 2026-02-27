@@ -1,0 +1,13 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classkamping_1_1internal_1_1CopyMoveEnabler.html" title="Class optionally containing a copy constructor while supporting move assignment/construction." alt="" coords="5,170,204,210"/>
+<area shape="rect" id="Node000001" href="$classkamping_1_1internal_1_1RankDataBuffer_3_01RankType_1_1any_00_01type_01_4.html" title="Encapsulates the rank of a PE. This is needed for p2p communication and rooted MPI collectives like M..." alt="" coords="271,5,473,60"/>
+<area shape="poly" id="edge8_Node000000_Node000001" title=" " alt="" coords="134,158,186,113,251,69,274,58,277,63,253,74,189,117,138,162"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1internal_1_1RankDataBuffer_3_01RankType_1_1null_00_01type_01_4.html" title="Encapsulates the rank of a PE. This is needed for p2p communication and rooted MPI collectives like M..." alt="" coords="271,84,473,139"/>
+<area shape="poly" id="edge9_Node000000_Node000002" title=" " alt="" coords="186,164,278,136,279,141,187,169"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1internal_1_1SendModeParameter.html" title="Parameter object for send_mode encapsulating the send mode compile&#45;time tag." alt="" coords="252,163,492,217"/>
+<area shape="poly" id="edge10_Node000000_Node000003" title=" " alt="" coords="218,187,252,187,252,193,218,193"/>
+<area shape="rect" id="Node000004" href="$classkamping_1_1internal_1_1TagParam_3_01TagType_1_1any_00_01parameter__type___01_4.html" title="Encapsulates a message tag. Specialization if the value is MPI_ANY_TAG." alt="" coords="278,241,466,296"/>
+<area shape="poly" id="edge11_Node000000_Node000004" title=" " alt="" coords="187,211,279,239,278,244,186,216"/>
+<area shape="rect" id="Node000005" href="$classkamping_1_1internal_1_1TagParam_3_01TagType_1_1value_00_01parameter__type___01_4.html" title="Encapsulates a message tag. Specialization if an explicit tag value is provided." alt="" coords="272,320,472,375"/>
+<area shape="poly" id="edge12_Node000000_Node000005" title=" " alt="" coords="138,217,190,262,253,305,280,318,277,322,251,310,186,266,134,221"/>
+</map>

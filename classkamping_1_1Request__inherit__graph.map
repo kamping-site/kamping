@@ -1,0 +1,5 @@
+<map id="kamping::Request" name="kamping::Request">
+<area shape="rect" id="Node000001" title="Wrapper for MPI request handles (aka. MPI_Request)." alt="" coords="21,93,160,119"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1RequestBase.html" title=" " alt="" coords="5,5,176,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="93,59,93,93,88,93,88,59"/>
+</map>

@@ -1,0 +1,17 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,213,124,239"/>
+<area shape="rect" id="Node000001" href="$structkamping_1_1builtin__type.html" title="Checks if the type T is a builtin MPI type." alt="" coords="185,5,387,31"/>
+<area shape="poly" id="edge52_Node000000_Node000001" title=" " alt="" coords="71,199,84,163,105,120,134,77,170,41,194,28,196,33,174,45,138,81,110,123,89,165,76,201"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1has__static__type.html" title="Check if the type has a static type definition, i.e. mpi_type_traits is defined." alt="" coords="183,55,389,95"/>
+<area shape="poly" id="edge53_Node000000_Node000002" title=" " alt="" coords="79,200,117,152,142,127,171,105,194,93,196,98,173,110,146,131,121,155,84,203"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1internal_1_1has__data__member.html" title="Helper to decide if data type has .data() method." alt="" coords="172,120,400,175"/>
+<area shape="poly" id="edge54_Node000000_Node000003" title=" " alt="" coords="111,206,171,183,203,172,205,177,173,189,113,211"/>
+<area shape="rect" id="Node000004" href="$structkamping_1_1internal_1_1is__specialization.html" title="Type trait to check if a type is an instance of a templated type." alt="" coords="207,199,365,253"/>
+<area shape="poly" id="edge55_Node000000_Node000004" title=" " alt="" coords="138,223,207,223,207,229,138,229"/>
+<area shape="rect" id="Node000005" href="$structkamping_1_1internal_1_1is__std__array.html" title="Helper to check if a type is a std::array." alt="" coords="214,278,358,318"/>
+<area shape="poly" id="edge56_Node000000_Node000005" title=" " alt="" coords="113,241,173,262,215,275,213,280,171,267,111,246"/>
+<area shape="rect" id="Node000006" href="$structkamping_1_1internal_1_1is__std__pair.html" title="Helper to check if a type is a std::pair." alt="" coords="214,342,358,382"/>
+<area shape="poly" id="edge57_Node000000_Node000006" title=" " alt="" coords="86,248,124,289,147,310,173,328,215,345,213,350,171,332,144,314,120,293,82,251"/>
+<area shape="rect" id="Node000007" href="$structkamping_1_1internal_1_1is__std__tuple.html" title="Helper to check if a type is a std::tuple." alt="" coords="214,406,358,446"/>
+<area shape="poly" id="edge58_Node000000_Node000007" title=" " alt="" coords="78,250,92,283,113,321,140,359,174,392,193,403,215,412,213,417,191,408,170,396,136,363,108,324,87,285,73,252"/>
+</map>

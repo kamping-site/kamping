@@ -1,0 +1,5 @@
+<map id="kamping::byte_serialized&lt; T &gt;" name="kamping::byte_serialized&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Constructs a type that is serialized as a sequence of sizeof(T) bytes using MPI_BYTE...." alt="" coords="5,93,228,119"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1contiguous__type.html" title=" " alt="" coords="13,5,220,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,59,119,93,114,93,114,59"/>
+</map>
