@@ -80,3 +80,9 @@ add_executable(example_paper paper_example.cpp)
 target_link_libraries(example_paper kamping)
 # these examples generate some warning due to conciseness, therefore we do not enable warnings
 # target_compile_options(example_paper PRIVATE ${KAMPING_WARNING_FLAGS})
+
+find_package(KokkosComm REQUIRED)
+
+add_executable(example_kokkos kokkos_example.cpp)
+target_link_libraries(example_kokkos kamping KokkosComm::KokkosComm)
+target_compile_options(example_kokkos PRIVATE ${KAMPING_WARNING_FLAGS})
