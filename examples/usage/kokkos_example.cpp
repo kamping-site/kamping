@@ -22,16 +22,12 @@ public:
         return data();
     }
     auto end() {
-        if (! _view.span_is_contiguous()) {
-            throw std::runtime_error("View is not contiguous");
-        }
+        KASSERT(_view.span_is_contiguous(), "View is not contiguous");
         return data() + _view.size();
     }
 
     auto data() {
-        if (! _view.span_is_contiguous()) {
-            throw std::runtime_error("View is not contiguous");
-        }
+        KASSERT(_view.span_is_contiguous(), "View is not contiguous");
         return _view.data();
     }
 
@@ -43,7 +39,7 @@ public:
         Kokkos::resize(_view, size);
     }
 
-
+private:
     ViewType& _view;
 };
 
@@ -52,10 +48,8 @@ void print_view(const char* prefix, const Kokkos::View<DataType, Properties...>&
     auto view_host = Kokkos::create_mirror_view(view);
     Kokkos::deep_copy(view_host, view);
 
-    if (!view_host.span_is_contiguous()) {
-        throw std::runtime_error("View is not contiguous");
-    }
 
+    KASSERT(view.span_is_contiguous(), "View is not contiguous");
     std::string output = prefix;
     auto* ptr = view_host.data();
     for (size_t i = 0; i < view_host.size(); ++i) {
@@ -86,7 +80,7 @@ int main(int argc, char **argv) {
             Kokkos::Random_XorShift64_Pool<> random_pool(rank);
             Kokkos::fill_random(to_send, random_pool, 0.0, 1.0);
 
-            // Will just throw MPI_ERR_TRUNCATE if to_recv is to small
+            // Will just throw MPI_ERR_TRUNCATE if to_recv is too small
             view_type to_recv("", 10);
 
 
@@ -131,11 +125,8 @@ int main(int argc, char **argv) {
             }
         }
 
-
-
+        Kokkos::finalize();
+        return 0;
     }
-
-    Kokkos::finalize();
-    return 0;
 }
 
