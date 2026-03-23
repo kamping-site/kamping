@@ -81,7 +81,21 @@ target_link_libraries(example_paper kamping)
 # these examples generate some warning due to conciseness, therefore we do not enable warnings
 # target_compile_options(example_paper PRIVATE ${KAMPING_WARNING_FLAGS})
 
-find_package(KokkosComm REQUIRED)
+# find_package(KokkosComm REQUIRED)
+FetchContent_Declare(
+  Kokkos
+  URL https://github.com/kokkos/kokkos/releases/download/5.0.2/kokkos-5.0.2.tar.gz
+  URL_HASH SHA256=188817bb452ca805ee8701f1c5adbbb4fb83dc8d1c50624566a18a719ba0fa5e
+  OVERRIDE_FIND_PACKAGE
+  SYSTEM
+)
+FetchContent_Declare(
+  KokkosComm
+  GIT_REPOSITORY https://github.com/kokkos/kokkos-comm.git
+  SYSTEM
+)
+FetchContent_MakeAvailable(Kokkos KokkosComm)
+add_library(KokkosComm::KokkosComm ALIAS KokkosComm)
 
 add_executable(example_kokkos kokkos_example.cpp)
 target_link_libraries(example_kokkos kamping KokkosComm::KokkosComm)

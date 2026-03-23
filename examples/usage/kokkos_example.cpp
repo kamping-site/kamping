@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <KokkosComm/KokkosComm.hpp>
+#include <KokkosComm.hpp>
 #include <Kokkos_Random.hpp>
 
 #include "kamping/communicator.hpp"
