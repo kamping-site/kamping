@@ -91,11 +91,11 @@ FetchContent_Declare(
 )
 FetchContent_Declare(
   KokkosComm
-  GIT_REPOSITORY https://github.com/kokkos/kokkos-comm.git
+  GIT_REPOSITORY https://github.com/kamping-site/kokkos-comm.git
+  GIT_TAG develop
   SYSTEM
 )
 FetchContent_MakeAvailable(Kokkos KokkosComm)
-add_library(KokkosComm::KokkosComm ALIAS KokkosComm)
 
 add_executable(example_kokkos kokkos_example.cpp)
 target_link_libraries(example_kokkos kamping KokkosComm::KokkosComm)
