@@ -280,12 +280,12 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::sendrecv(
     int send_size = asserting_cast<int>(std::ranges::size(sbuf));
     int recv_size = asserting_cast<int>(std::ranges::size(rbuf));
 
-    KASSERT(
+    KAMPING_ASSERT(
         Environment<>::is_valid_tag(send_tag),
         "invalid send tag " << send_tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
     );
 
-    KASSERT(recv_size >= send_size, "The receive buffer is not large enough", assert::light);
+    KAMPING_ASSERT(recv_size >= send_size, "The receive buffer is not large enough", assert::light);
 
     auto status = status_param.construct_buffer_or_rebind();
 

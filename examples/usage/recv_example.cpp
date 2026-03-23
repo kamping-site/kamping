@@ -52,7 +52,7 @@ int main() {
     kamping::Environment  e;
     kamping::Communicator comm;
 
-    KASSERT(comm.size() == 2uz, "This example must be run with exactly 2 ranks.");
+    KAMPING_ASSERT(comm.size() == 2uz, "This example must be run with exactly 2 ranks.");
 
     {
         if (comm.rank_signed() == 0) {

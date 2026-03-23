@@ -22,12 +22,12 @@ public:
         return data();
     }
     auto end() {
-        KASSERT(_view.span_is_contiguous(), "View is not contiguous");
+        KAMPING_ASSERT(_view.span_is_contiguous(), "View is not contiguous");
         return data() + _view.size();
     }
 
     auto data() {
-        KASSERT(_view.span_is_contiguous(), "View is not contiguous");
+        KAMPING_ASSERT(_view.span_is_contiguous(), "View is not contiguous");
         return _view.data();
     }
 
@@ -49,7 +49,7 @@ void print_view(const char* prefix, const Kokkos::View<DataType, Properties...>&
     Kokkos::deep_copy(view_host, view);
 
 
-    KASSERT(view.span_is_contiguous(), "View is not contiguous");
+    KAMPING_ASSERT(view.span_is_contiguous(), "View is not contiguous");
     std::string output = prefix;
     auto* ptr = view_host.data();
     for (size_t i = 0; i < view_host.size(); ++i) {

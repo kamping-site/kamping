@@ -55,7 +55,7 @@ struct auto_displs_view : pipe_view_interface<auto_displs_view<ResizePolicy, R, 
             auto&  counts = this->size_v();
             size_t ranks  = std::ranges::size(counts);
             kamping::ranges::resize<ResizePolicy>(displs_, ranks);
-            KASSERT(
+            KAMPING_ASSERT(
                 std::ranges::size(displs_) >= ranks,
                 "Displs are not large enough, and resize is not enabled",
                 assert::light

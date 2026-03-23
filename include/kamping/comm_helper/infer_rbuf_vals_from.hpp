@@ -21,7 +21,7 @@ requires(type == CommType::allgather || type == CommType::alltoall) void infer(
 
 template <CommType type, typename SBuff, typename RBuff, typename Communicator>
 requires(type == CommType::alltoallv) void infer(SBuff& sbuf, RBuff& rbuf, Communicator& comm) {
-    KASSERT(
+    KAMPING_ASSERT(
         comm.is_same_on_all_ranks(ResizableSizeV<RBuff>),
         "Receive counts have to be computed on some ranks, but not on all or on none",
         assert::light_communication
@@ -39,7 +39,7 @@ requires(type == CommType::sendrecv) void infer(
     SBuff& sbuf, RBuff& rbuf, int source, int destination, Communicator& comm
 ) {
     // Use sendrecv to exchange the recv sizes
-    KASSERT(
+    KAMPING_ASSERT(
         comm.is_same_on_all_ranks(ResizableBuffer<RBuff>),
         "Receive count has to be computed on some ranks, but not on all or on none",
         assert::light_communication

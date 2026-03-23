@@ -468,14 +468,14 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::allgather(SBuff&& 
     size_t send_size = std::ranges::size(sbuf);
     size_t recv_size = std::ranges::size(rbuf);
 
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(send_size),
         "All PEs have to send the same number of elements. Use allgatherv, if you want to send a different number "
         "of elements.",
         assert::light_communication
     );
 
-    KASSERT(recv_size >= send_size, "The receive buffer is not large enough", assert::light);
+    KAMPING_ASSERT(recv_size >= send_size, "The receive buffer is not large enough", assert::light);
 
     // error code can be unused if KTHROW is removed at compile time
     [[maybe_unused]] int err = MPI_Allgather(
