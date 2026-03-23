@@ -16,7 +16,6 @@
 #include <tuple>
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
@@ -26,6 +25,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -33,10 +33,10 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-//// @addtogroup kamping_collectives
+/// @addtogroup kamping_collectives
 /// @{
 
-// @brief Wrapper for \c MPI_Reduce.
+/// @brief Wrapper for \c MPI_Reduce.
 ///
 /// This wraps \c MPI_Reduce. The operation combines the elements in the input buffer provided via \c
 /// kamping::send_buf() and returns the combined value on the root rank.
@@ -53,7 +53,7 @@
 /// The following parameters are optional:
 /// - \ref kamping::send_recv_count() specifying how many elements of the buffer take part in the reduction.
 /// If omitted, the size of the send buffer is used as a default. This parameter is mandatory if \ref
-/// kamping::send_type() is given.
+/// kamping::send_recv_type() is given.
 ///
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as send_recv type. If omitted, the \c MPI
 /// datatype is derived automatically based on send_buf's underlying \c value_type.
@@ -124,13 +124,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
     // from the standard:
     // > The routine is called by all group members using the same arguments for count, datatype, op,
     // > root and comm.
-    KASSERT(
+    KAMPING_ASSERT(
         this->is_same_on_all_ranks(send_recv_count.get_single_element()),
         "send_recv_count() has to be the same on all ranks.",
         assert::light_communication
     );
-    KASSERT(is_valid_rank(root.rank_signed()), "The provided root rank is invalid.", assert::light);
-    KASSERT(
+    KAMPING_ASSERT(is_valid_rank(root.rank_signed()), "The provided root rank is invalid.", assert::light);
+    KAMPING_ASSERT(
         this->is_same_on_all_ranks(root.rank_signed()),
         "Root has to be the same on all ranks.",
         assert::light_communication
@@ -141,7 +141,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::reduce(Args... arg
             return asserting_cast<size_t>(send_recv_count.get_single_element());
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             // if the send type is user provided, kamping cannot make any assumptions about the required size of the
             // recv buffer
             send_recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),

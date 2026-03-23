@@ -1,1 +1,1 @@
-docs/contribution_guidelines.md
+docs/guidelines/contribution_guidelines.md

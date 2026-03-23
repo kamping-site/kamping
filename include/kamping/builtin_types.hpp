@@ -16,6 +16,7 @@
 
 #pragma once
 #include <complex>
+#include <cstddef>
 #include <type_traits>
 
 #include <mpi.h>
@@ -226,6 +227,16 @@ struct builtin_type<bool> : std::true_type {
         return MPI_CXX_BOOL;
     }
     static constexpr TypeCategory category = TypeCategory::logical; ///< The types's \ref TypeCategory.
+};
+
+/// @brief Specialization of \ref builtin_type for `std::byte`.
+template <>
+struct builtin_type<std::byte> : std::true_type {
+    /// @brief Returns the matching \c MPI_Datatype.
+    static MPI_Datatype data_type() {
+        return MPI_BYTE;
+    }
+    static constexpr TypeCategory category = TypeCategory::byte; ///< The type's \ref TypeCategory.
 };
 
 /// @brief Specialization of \ref builtin_type for \ref kabool.

@@ -100,8 +100,8 @@ inline auto statuses_out(AllocNewUsingT<Container>) {
 }
 
 /// @brief Internally construct a container of \c MPI_Status, which will hold the returned statuses. The container's
-/// type is usually determined by operations called on a \ref RequestPool, and defaults to \ref
-/// RequestPool::default_container_type.
+/// type is usually determined by operations called on a \ref kamping::RequestPool, and defaults to \ref
+/// kamping::RequestPool::default_container_type.
 inline auto statuses_out() {
     return internal::make_data_buffer_builder<
         internal::ParameterType::statuses,

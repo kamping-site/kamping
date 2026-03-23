@@ -19,13 +19,13 @@
 #include <vector>
 
 #include <gtest/gtest.h>
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "helpers_for_testing.hpp"
 #include "kamping/comm_helper/num_numa_nodes.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/distributed_graph_communicator.hpp"
+#include "kamping/kassert/kassert.hpp"
 
 using namespace ::kamping;
 using namespace ::testing;

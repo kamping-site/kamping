@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/assertion_levels.hpp"
@@ -24,6 +23,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/error_handling.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/mpi_datatype.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
@@ -31,13 +31,13 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-//// @addtogroup kamping_collectives
+/// @addtogroup kamping_collectives
 /// @{
 
-// @brief Wrapper for \c MPI_Scan.
+/// @brief Wrapper for \c MPI_Scan.
 ///
 /// This wraps \c MPI_Scan, which is used to perform an inclusive prefix reduction on data distributed across the
-/// calling processes. / \c scan() returns in \c recv_buf of the process with rank \c i, the reduction (calculated
+/// calling processes. \c scan() returns in \c recv_buf of the process with rank \c i, the reduction (calculated
 /// according to the function op) of the values in the sendbufs of processes with ranks \f$0, ..., i\f$ (inclusive).
 ///
 /// The following parameters are required:
@@ -52,7 +52,8 @@
 /// is required.
 ///
 /// - \ref kamping::send_recv_count() containing the number of elements to be processed in this operation. This
-/// parameter has to be the same at each rank. If omitted, the size of the send buffer will be used as send_recv_count.
+/// parameter has to be the same at each rank. If omitted, the size of the send buffer will be used as
+/// `send_recv_count`.
 ///
 /// - \ref kamping::send_recv_type() specifying the \c MPI datatype to use as data type in this operation. If omitted,
 /// the \c MPI datatype is derived automatically based on send_buf's underlying \c value_type.
@@ -113,7 +114,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
             send_recv_count.underlying() = asserting_cast<int>(send_buf.size());
         }
 
-        KASSERT(
+        KAMPING_ASSERT(
             is_same_on_all_ranks(send_recv_count.get_single_element()),
             "The send_recv_count has to be the same on all ranks.",
             assert::light_communication
@@ -127,7 +128,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan(Args... args)
             return asserting_cast<size_t>(send_recv_count.get_single_element());
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             // if the send_recv type is user provided, kamping cannot make any assumptions about the required size of
             // the recv buffer
             send_recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),
@@ -217,7 +218,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_inplace(Args.
         count.underlying() = asserting_cast<int>(send_recv_buf.size());
     }
 
-    KASSERT(
+    KAMPING_ASSERT(
         is_same_on_all_ranks(count.get_single_element()),
         "The send_recv_count has to be the same on all ranks.",
         assert::light_communication
@@ -231,7 +232,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::scan_inplace(Args.
         return asserting_cast<size_t>(count.get_single_element());
     };
     send_recv_buf.resize_if_requested(compute_required_recv_buf_size);
-    KASSERT(
+    KAMPING_ASSERT(
         // if the send_recv type is user provided, kamping cannot make any assumptions about the required size of
         // the buffer
         type_is_in_param || send_recv_buf.size() >= compute_required_recv_buf_size(),

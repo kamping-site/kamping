@@ -57,7 +57,7 @@ public:
             data.end(),
             local_samples.begin(),
             oversampling_ratio,
-            std::mt19937{self.rank() + self.size()}
+            std::mt19937{static_cast<std::mt19937::result_type>(self.rank() + self.size())}
         );
 
         auto global_samples = self.allgatherv(send_buf(local_samples));

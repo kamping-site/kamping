@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2024 The KaMPIng Authors
+// Copyright 2021-2025 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -18,8 +18,9 @@
 
 #include <type_traits>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
+
+#include "kamping/kassert/kassert.hpp"
 #ifdef KAMPING_ENABLE_REFLECTION
     #include <boost/pfr.hpp>
 #endif
@@ -270,7 +271,7 @@ template <typename T>
 inline MPI_Datatype construct_and_commit_type() {
     MPI_Datatype type = mpi_type_traits<T>::data_type();
     MPI_Type_commit(&type);
-    KASSERT(type != MPI_DATATYPE_NULL);
+    KAMPING_ASSERT(type != MPI_DATATYPE_NULL);
     mpi_env.register_mpi_type(type);
     return type;
 }

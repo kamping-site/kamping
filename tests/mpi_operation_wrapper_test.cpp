@@ -117,7 +117,7 @@ auto make_op(Op&& op, Commutative commutative) {
 }
 
 void my_plus(void* invec, void* inoutvec, int* len, MPI_Datatype* type) {
-    KASSERT(*type == MPI_INT);
+    KAMPING_ASSERT(*type == MPI_INT);
     int* invec_    = static_cast<int*>(invec);
     int* inoutvec_ = static_cast<int*>(inoutvec);
     std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, std::plus<>{});

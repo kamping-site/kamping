@@ -18,12 +18,12 @@
 #include <type_traits>
 #include <utility>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/implementation_helpers.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
@@ -33,10 +33,10 @@
 #include "kamping/result.hpp"
 #include "kamping/status.hpp"
 
-///// @addtogroup kamping_p2p
+/// @addtogroup kamping_p2p
 /// @{
 
-// @brief Receives a message if one is available.
+/// @brief Receives a message if one is available.
 ///
 /// In contrast to \ref kamping::Communicator::recv(), this method does not block if no message is available. Instead,
 /// it will return a empty \c std::optional. Internally, this first does a matched probe (\c MPI_Improbe) to check if a
@@ -116,7 +116,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
     constexpr auto tag_type = std::remove_reference_t<decltype(tag_param)>::tag_type;
     if constexpr (tag_type == internal::TagType::value) {
         int tag = tag_param.tag();
-        KASSERT(
+        KAMPING_ASSERT(
             Environment<>::is_valid_tag(tag),
             "invalid tag " << tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
         );
@@ -129,7 +129,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
             args...
         )
             .construct_buffer_or_rebind();
-    KASSERT(internal::is_valid_rank_in_comm(source_param, *this, /*allow_null=*/true, /*allow_any=*/true));
+    KAMPING_ASSERT(internal::is_valid_rank_in_comm(source_param, *this, /*allow_null=*/true, /*allow_any=*/true));
     int source = source_param.rank_signed();
     int tag    = tag_param.tag();
 
@@ -157,7 +157,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::try_recv(Args... a
         // guarantees.
         if constexpr (std::remove_reference_t<decltype(source_param)>::rank_type != internal::RankType::null) {
             recv_buf.resize_if_requested([&] { return count; });
-            KASSERT(
+            KAMPING_ASSERT(
                 // If the recv type is user provided, kamping cannot make any assumptions about the required size of the
                 // recv buffer.
                 recv_type_is_in_param || recv_buf.size() >= count,

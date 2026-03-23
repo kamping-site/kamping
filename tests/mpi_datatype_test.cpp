@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2022 The KaMPIng Authors
+// Copyright 2021-2025 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -11,6 +11,7 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+#include <cstddef>
 #include <cstdint>
 #include <type_traits>
 #include <vector>
@@ -20,6 +21,7 @@
 #include <mpi.h>
 
 #include "helpers_for_testing.hpp"
+#include "kamping/builtin_types.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/mpi_datatype.hpp"
 
@@ -172,6 +174,7 @@ TEST(MpiDataTypeTest, mpi_datatype_basics) {
     EXPECT_THAT(possible_mpi_datatypes<uint32_t>(), Contains(mpi_type_traits<uint32_t>::data_type()));
     EXPECT_THAT(possible_mpi_datatypes<uint64_t>(), Contains(mpi_type_traits<uint64_t>::data_type()));
     EXPECT_THAT(possible_mpi_datatypes<bool>(), Contains(mpi_type_traits<bool>::data_type()));
+    EXPECT_THAT(possible_mpi_datatypes<std::byte>(), Contains(mpi_type_traits<std::byte>::data_type()));
     EXPECT_THAT(possible_mpi_datatypes<kamping::kabool>(), Contains(mpi_type_traits<kamping::kabool>::data_type()));
     EXPECT_THAT(
         possible_mpi_datatypes<std::complex<double>>(),
@@ -819,6 +822,8 @@ TEST(MpiDataTypeTest, test_type_groups) {
 
     EXPECT_EQ(kamping::mpi_type_traits<bool>::category, kamping::TypeCategory::logical);
     EXPECT_EQ(kamping::mpi_type_traits<kamping::kabool>::category, kamping::TypeCategory::logical);
+
+    EXPECT_EQ(kamping::mpi_type_traits<std::byte>::category, kamping::TypeCategory::byte);
 
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<float>>::category, kamping::TypeCategory::complex);
     EXPECT_EQ(kamping::mpi_type_traits<std::complex<double>>::category, kamping::TypeCategory::complex);

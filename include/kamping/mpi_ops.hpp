@@ -29,7 +29,7 @@ namespace internal {
 
 /// @brief Wrapper struct for std::max
 ///
-/// Other than the operators defined in `<functional>` like \c std::plus, \c std::max is a function and not a function
+/// Contrary to operators defined in `<functional>` like \c std::plus, \c std::max is a function and not a function
 /// object. To enable template matching for detection of builtin MPI operations we therefore need to wrap it.
 /// The actual implementation is used in case that the operation is a builtin operation for the given datatype.
 ///
@@ -65,7 +65,7 @@ struct max_impl<void> {
 
 /// @brief Wrapper struct for std::min
 ///
-/// Other than the operators defined in `<functional>` like \c std::plus, \c std::min is a function and not a function
+/// Contrary to operators defined in `<functional>` like \c std::plus, \c std::min is a function and not a function
 /// object. To enable template matching for detection of builtin MPI operations we therefore need to wrap it.
 /// The actual implementation is used in case that the operation is a builtin operation for the given datatype.
 ///
@@ -97,7 +97,7 @@ struct min_impl<void> {
     }
 };
 
-/// @brief Wrapper struct for logical xor, as the standard library does not provided a function object for it.
+/// @brief Wrapper struct for logical xor, as the standard library does not provide a function object for it.
 ///
 /// The actual implementation is used in case that the operation is a builtin operation for the given datatype.
 ///
@@ -202,7 +202,7 @@ struct undefined_commutative_tag {};
 namespace internal {
 
 #ifdef KAMPING_DOXYGEN_ONLY
-/// @brief Type trait for checking whether a functor is a builtin MPI reduction operation and query corresponding \c
+/// @brief Type trait for checking whether a functor is a builtin MPI reduction operation and query the corresponding \c
 /// MPI_Op.
 ///
 /// Example:
@@ -519,7 +519,7 @@ public:
     /// this parameter must match the semantics of the function pointer passed to \c MPI_Op_create according to the
     /// MPI standard.
     UserOperationPtrWrapper(mpi_custom_operation_type ptr) : _no_op(false) {
-        KASSERT(ptr != nullptr);
+        KAMPING_ASSERT(ptr != nullptr);
         MPI_Op_create(ptr, is_commutative, &_mpi_op);
     }
 
@@ -611,7 +611,7 @@ public:
                                               // need this information for a native \c MPI_Op
 
     T operator()(T const& lhs, T const& rhs) const {
-        KASSERT(_op != MPI_OP_NULL, "Cannot call MPI_OP_NULL.");
+        KAMPING_ASSERT(_op != MPI_OP_NULL, "Cannot call MPI_OP_NULL.");
         T result;
         internal::with_operation_functor(_op, [&result, lhs, rhs, this](auto operation) {
             if constexpr (!std::is_same_v<decltype(operation), ops::null<> >) {
@@ -670,7 +670,7 @@ class ReduceOperation<T, Op, Commutative, typename std::enable_if<!std::is_defau
 
 public:
     ReduceOperation(Op&& op, Commutative) : _op(op), _operation() {
-        // A lambda is may not be default constructed nor copied, so we need some hacks to deal with them.
+        // A lambda may not be default constructed nor copied, so we need some hacks to deal with them.
         // Because each lambda has a distinct type we initiate the static Op here and can access it from the static
         // context of function pointer created afterwards.
         static Op func = _op;

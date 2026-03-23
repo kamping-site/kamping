@@ -38,9 +38,9 @@
 #include "kamping/checking_casts.hpp"
 #include "kamping/has_member.hpp"
 #include "kamping/kabool.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/named_parameter_types.hpp"
 #include "kamping/span.hpp"
-#include "kassert/kassert.hpp"
 
 namespace kamping {
 /// @addtogroup kamping_mpi_utility
@@ -54,7 +54,7 @@ class Extractable {
 protected:
     /// @brief Set the extracted flag to indicate that the status stored in this buffer has been moved out.
     void set_extracted() {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
         is_extracted = true;
 #endif
     }
@@ -63,12 +63,12 @@ protected:
     ///
     /// @param message The message for the assertion.
     void kassert_not_extracted(std::string const message [[maybe_unused]]) const {
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-        KASSERT(!is_extracted, message, assert::normal);
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+        KAMPING_ASSERT(!is_extracted, message, assert::normal);
 #endif
     }
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
     bool is_extracted = false; ///< Has the status been extracted and is therefore in an invalid state?
 #endif
 };
@@ -158,16 +158,17 @@ static constexpr bool is_vector_bool_v = false;
 /// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
 /// This catches the edge case of elements which do not have a value type, they can not be a vector bool.
 ///
+/// \c true if \c T is an template instance of \c std::vector<bool>, \c false otherwise.
 /// @tparam T The type.
-/// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
 template <typename T>
 static constexpr bool is_vector_bool_v<
     T,
     typename std::enable_if<!has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> = false;
 
 /// @brief Boolean value helping to check if a type is an instance of \c std::vector<bool>.
+///
+/// \c true if \c T is an template instance of \c std::vector<bool>, \c false otherwise.
 /// @tparam T The type.
-/// @return \c true if \T is an template instance of \c std::vector<bool>, \c false otherwise.
 template <typename T>
 static constexpr bool
     is_vector_bool_v<T, typename std::enable_if<has_value_type_v<std::remove_cv_t<std::remove_reference_t<T>>>>::type> =
@@ -394,7 +395,7 @@ public:
     static constexpr bool is_modifiable =
         modifiability == BufferModifiability::modifiable; ///< Indicates whether the underlying storage is modifiable.
     static constexpr bool is_single_element =
-        !has_data_member_v<MemberType>; ///<`true` if the DataBuffer represents a singe element, `false` if the
+        !has_data_member_v<MemberType>; ///< `true` if the DataBuffer represents a single element, `false` if the
                                         ///< DataBuffer represents a container.
     using MemberTypeWithConst =
         std::conditional_t<is_modifiable, MemberType, MemberType const>; ///< The ContainerType as const or

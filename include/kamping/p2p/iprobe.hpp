@@ -27,10 +27,10 @@
 #include "kamping/named_parameters.hpp"
 #include "kamping/result.hpp"
 
-//// @addtogroup kamping_p2p
+/// @addtogroup kamping_p2p
 /// @{
 
-// @brief Wrapper for \c MPI_Iprobe.
+/// @brief Wrapper for \c MPI_Iprobe.
 ///
 /// This wraps \c MPI_Iprobe. This operation checks if there is a message matching the (optionally) specified source
 /// and tag that can be received, and returns a \c bool indicating whether a message matched by default.
@@ -76,7 +76,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
 
     constexpr auto tag_type = std::remove_reference_t<decltype(tag_param)>::tag_type;
     if constexpr (tag_type == internal::TagType::value) {
-        KASSERT(
+        KAMPING_ASSERT(
             Environment<>::is_valid_tag(tag),
             "invalid tag " << tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
         );
@@ -91,7 +91,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::iprobe(Args... arg
         )
             .construct_buffer_or_rebind();
 
-    KASSERT(internal::is_valid_rank_in_comm(source, *this, true, true), "Invalid source rank.");
+    KAMPING_ASSERT(internal::is_valid_rank_in_comm(source, *this, true, true), "Invalid source rank.");
 
     int                  flag;
     [[maybe_unused]] int err = MPI_Iprobe(

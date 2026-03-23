@@ -313,7 +313,11 @@ public:
 
         if constexpr (do_calculate_recv_counts) {
             recv_counts.resize_if_requested([&]() { return _size_of_orig_comm; });
-            KASSERT(recv_counts.size() >= _size_of_orig_comm, "Recv counts buffer is not large enough.", assert::light);
+            KAMPING_ASSERT(
+                recv_counts.size() >= _size_of_orig_comm,
+                "Recv counts buffer is not large enough.",
+                assert::light
+            );
             Span recv_counts_span(recv_counts.data(), recv_counts.size());
             std::fill(recv_counts_span.begin(), recv_counts_span.end(), 0);
 
@@ -321,7 +325,11 @@ public:
                 ++recv_counts_span[grid_recv_buf[i].get_source()];
             }
         } else {
-            KASSERT(recv_counts.size() >= _size_of_orig_comm, "Recv counts buffer is not large enough.", assert::light);
+            KAMPING_ASSERT(
+                recv_counts.size() >= _size_of_orig_comm,
+                "Recv counts buffer is not large enough.",
+                assert::light
+            );
         }
 
         // Get recv displs
@@ -336,7 +344,11 @@ public:
 
         if constexpr (do_calculate_recv_displs) {
             recv_displs.resize_if_requested([&]() { return _size_of_orig_comm; });
-            KASSERT(recv_displs.size() >= _size_of_orig_comm, "Recv displs buffer is not large enough.", assert::light);
+            KAMPING_ASSERT(
+                recv_displs.size() >= _size_of_orig_comm,
+                "Recv displs buffer is not large enough.",
+                assert::light
+            );
             Span recv_displs_span(recv_displs.data(), recv_displs.size());
             Span recv_counts_span(recv_counts.data(), recv_counts.size());
             std::exclusive_scan(recv_counts_span.begin(), recv_counts_span.end(), recv_displs_span.begin(), 0);
@@ -378,7 +390,7 @@ private:
         };
 
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             recv_buf.size() >= compute_required_recv_buf_size(),
             "Recv buffer is not large enough to hold all received elements.",
             assert::light
@@ -453,7 +465,6 @@ private:
                 entry            = MsgType(std::move(elem));
                 entry.set_destination(destination
                 ); // this has to be done independently of the envelope level, otherwise routing is not possible
-                   //
                 if constexpr (envelope_level != MessageEnvelopeLevel::no_envelope) {
                     entry.set_source(asserting_cast<int>(_rank_in_orig_comm));
                 }

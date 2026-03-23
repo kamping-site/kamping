@@ -38,6 +38,7 @@ kamping_register_test(test_measurement_utils FILES measurements/measurement_util
 kamping_register_test(test_traits FILES utils/traits_test.cpp)
 kamping_register_test(test_scoped_type FILES scoped_type_test.cpp)
 kamping_register_test(test_communication_graph FILES communication_graph_test.cpp)
+kamping_register_test(test_thread_levels FILES thread_levels_test.cpp)
 
 # Registering tests with MPI:
 

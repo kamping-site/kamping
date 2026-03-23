@@ -38,7 +38,7 @@ struct unused_tparam {};
 
 namespace params {
 
-//// @addtogroup kamping_named_parameters
+/// @addtogroup kamping_named_parameters
 /// @{
 
 /// @brief Generates a dummy send buf that wraps a \c nullptr.
@@ -1165,9 +1165,9 @@ inline auto request(Request& request) {
         BufferResizePolicy::no_resize>(request);
 }
 
-/// @brief Passes a request from a \ref RequestPool to the underlying MPI call.
+/// @brief Passes a request from a \ref kamping::RequestPool to the underlying MPI call.
 /// @param request The request handle.
-/// @tparam IndexType The type of the index used by the \ref RequestPool for requests.
+/// @tparam IndexType The type of the index used by the \ref kamping::RequestPool for requests.
 /// @return The corresponding parameter object.
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.
 template <typename IndexType>
@@ -1209,8 +1209,8 @@ inline auto send_mode(SendModeTag) {
 /// @tparam Commutative tag whether the operation is commutative
 /// @param op the operation
 /// @param commute the commutativity tag
-///     May be any instance of \c commutative, \c or non_commutative. Passing \c undefined_commutative is only
-///     supported for builtin and native operations. This is used to streamline the interface so that the use does not
+///     may be any instance of \c commutative, or \c non_commutative. Passing \c undefined_commutative is only
+///     supported for builtin and native operations. This is used to streamline the interface so that the user does not
 ///     have to provide commutativity info when the operation is builtin.
 /// @return The corresponding parameter object.
 /// @see \ref docs/parameter_handling.md for general information about parameter handling in KaMPIng.

@@ -5,11 +5,13 @@ function (kamping_set_kassert_flags KAMPING_TARGET_NAME)
     cmake_parse_arguments("KAMPING" "NO_EXCEPTION_MODE" "" "" ${ARGN})
 
     # Use global assertion level
-    target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKASSERT_ASSERTION_LEVEL=${KASSERT_ASSERTION_LEVEL})
+    target_compile_definitions(
+        ${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_ASSERT_ASSERTION_LEVEL=${KAMPING_ASSERT_ASSERTION_LEVEL}
+    )
 
     # Explicitly specify exception mode for tests, default to no exception mode
     if (NOT KAMPING_NO_EXCEPTION_MODE)
-        target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKASSERT_EXCEPTION_MODE)
+        target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_ASSERT_EXCEPTION_MODE)
     endif ()
 endfunction ()
 
@@ -24,7 +26,7 @@ function (kamping_register_test KAMPING_TARGET_NAME)
     add_executable(${KAMPING_TARGET_NAME} ${KAMPING_FILES})
     target_link_libraries(${KAMPING_TARGET_NAME} PRIVATE gtest gtest_main gmock kamping_base)
     target_compile_options(${KAMPING_TARGET_NAME} PRIVATE ${KAMPING_WARNING_FLAGS})
-    gtest_discover_tests(${KAMPING_TARGET_NAME} WORKING_DIRECTORY ${PROJECT_DIR} DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(${KAMPING_TARGET_NAME} WORKING_DIRECTORY ${PROJECT_BINARY_DIR} DISCOVERY_MODE PRE_TEST)
     kamping_set_kassert_flags(${KAMPING_TARGET_NAME} ${ARGN})
     if (NOT ${KAMPING_NO_GLIBCXX_DEBUG_CONTAINERS})
         target_compile_definitions(${KAMPING_TARGET_NAME} PRIVATE -D_GLIBCXX_DEBUG)

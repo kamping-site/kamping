@@ -132,8 +132,8 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works) {
     EXPECT_EQ(num_wait_calls, 1);
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data, expected_data);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -155,8 +155,8 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works_with_status_o
     EXPECT_EQ(status.tag(), TOUCHED_BY_MOCK_TAG);
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data, expected_data);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -178,8 +178,8 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_wait_works_with_status_i
     EXPECT_EQ(status.tag(), TOUCHED_BY_MOCK_TAG);
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data, expected_data);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -265,8 +265,8 @@ TEST_F(NonBlockingResultTest, owning_request_and_result_extract_works) {
 
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(recv_buf, expected_data);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -357,8 +357,8 @@ TEST_F(NonBlockingResultTest, owning_request_and_empty_result_extract_works) {
     auto req                = nonblocking_result.extract();
     EXPECT_TRUE((std::is_same_v<decltype(req), Request>));
 
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -395,8 +395,8 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_extract_works) {
 
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data, expected_data);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -414,8 +414,8 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_with_buffer_other_th
     EXPECT_TRUE((std::is_same_v<decltype(recv_count), int>));
 
     EXPECT_EQ(recv_count, 1);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -437,8 +437,8 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_with_implicit_recv_b
 
     auto expected_data = std::vector{42, 43, 44};
     EXPECT_EQ(data, expected_data);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -463,8 +463,8 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_with_implicit_recv_b
     auto expected_recv_buf = std::vector{42, 43, 44};
     EXPECT_EQ(recv_buf, expected_recv_buf);
     EXPECT_EQ(recv_count, 1);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -490,8 +490,8 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_with_recv_buffer_and
     auto expected_recv_buf = std::vector{42, 43, 44};
     EXPECT_EQ(recv_buf, expected_recv_buf);
     EXPECT_EQ(recv_count, 1);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -514,8 +514,8 @@ TEST_F(NonBlockingResultTest, non_owning_request_and_result_with_non_owning_recv
     auto expected_recv_buf = std::vector{42, 43, 44};
     EXPECT_EQ(recv_buf_storage, expected_recv_buf);
     EXPECT_EQ(recv_count, 1);
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(nonblocking_result.extract(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -524,8 +524,8 @@ TEST_F(NonBlockingResultTest, wait_on_extracted_request) {
     auto result      = kamping::internal::make_nonblocking_result(std::move(request_obj));
     auto req         = result.extract();
     (void)req;
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(result.wait(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(result.wait(), "The result of this request has already been extracted.");
 #endif
 }
 
@@ -534,7 +534,7 @@ TEST_F(NonBlockingResultTest, test_on_extracted_request) {
     auto result      = kamping::internal::make_nonblocking_result(std::move(request_obj));
     auto req         = result.extract();
     (void)req;
-#if KASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
-    EXPECT_KASSERT_FAILS(result.test(), "The result of this request has already been extracted.");
+#if KAMPING_ASSERT_ENABLED(KAMPING_ASSERTION_LEVEL_NORMAL)
+    EXPECT_KAMPING_ASSERT_FAILS(result.test(), "The result of this request has already been extracted.");
 #endif
 }

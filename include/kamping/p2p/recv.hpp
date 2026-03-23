@@ -19,7 +19,6 @@
 #include <type_traits>
 #include <utility>
 
-#include <kassert/kassert.hpp>
 #include <mpi.h>
 
 #include "kamping/comm_helper/generic_helper.hpp"
@@ -27,6 +26,7 @@
 #include "kamping/communicator.hpp"
 #include "kamping/data_buffer.hpp"
 #include "kamping/implementation_helpers.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/named_parameter_check.hpp"
 #include "kamping/named_parameter_selection.hpp"
 #include "kamping/named_parameter_types.hpp"
@@ -37,10 +37,10 @@
 #include "kamping/result.hpp"
 #include "kamping/status.hpp"
 
-///// @addtogroup kamping_p2p
+/// @addtogroup kamping_p2p
 /// @{
 
-// @brief Wrapper for \c MPI_Recv.
+/// @brief Wrapper for \c MPI_Recv.
 ///
 /// This wraps \c MPI_Recv. This operation performs a standard blocking receive.
 /// If the \ref kamping::recv_counts() parameter is not specified, this first performs a probe, followed by a receive of
@@ -54,7 +54,7 @@
 /// storage must be large enough to hold all received elements. If no \ref kamping::recv_buf() is provided, the \c
 /// value_type of the recv buffer has to be passed as a template parameter to \c recv().
 ///
-//  - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
+///  - \ref kamping::recv_type() specifying the \c MPI datatype to use as recv type. If omitted, the \c MPI datatype is
 /// derived automatically based on recv_buf's underlying \c value_type.
 ///
 /// - \ref kamping::source() receive a message sent from this source rank. Defaults to probing for an arbitrary source,
@@ -125,7 +125,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
     constexpr auto tag_type = std::remove_reference_t<decltype(tag_param)>::tag_type;
     if constexpr (tag_type == internal::TagType::value) {
         int tag = tag_param.tag();
-        KASSERT(
+        KAMPING_ASSERT(
             Environment<>::is_valid_tag(tag),
             "invalid tag " << tag << ", must be in range [0, " << Environment<>::tag_upper_bound() << "]"
         );
@@ -150,7 +150,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
         )
             .construct_buffer_or_rebind();
 
-    KASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
+    KAMPING_ASSERT(internal::is_valid_rank_in_comm(source_param, *this, true, true));
     int source = source_param.rank_signed();
     int tag    = tag_param.tag();
     if constexpr (internal::has_to_be_computed<decltype(recv_count_param)>) {
@@ -167,7 +167,7 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
             return asserting_cast<size_t>(recv_count_param.get_single_element());
         };
         recv_buf.resize_if_requested(compute_required_recv_buf_size);
-        KASSERT(
+        KAMPING_ASSERT(
             // if the recv type is user provided, kamping cannot make any assumptions about the required size of the
             // recv buffer
             recv_type_is_in_param || recv_buf.size() >= compute_required_recv_buf_size(),

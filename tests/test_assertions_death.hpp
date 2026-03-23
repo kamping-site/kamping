@@ -14,13 +14,13 @@
 #pragma once
 
 #include <gtest/gtest.h>
-#include <kassert/kassert.hpp>
 
 #include "kamping/assertion_levels.hpp"
+#include "kamping/kassert/kassert.hpp"
 
 //
-// Makros to test for failed KASSERT() statements by using a death test. This is usually only a last resort, when we
-// want to test KASSERTs in places which are not allowed to throw exceptions.
+// Makros to test for failed KAMPING_ASSERT() statements by using a death test. This is usually only a last resort, when
+// we want to test KAMPING_ASSERTs in places which are not allowed to throw exceptions.
 //
 // See test_assertions.hpp for the exception overriding version.
 //
@@ -28,14 +28,14 @@
 // this case, we keep the current definition.
 //
 
-#ifndef EXPECT_KASSERT_FAILS_WITH_DEATH
-    // EXPECT that a KASSERT assertion failed and that the error message contains a certain failure_message.
-    #define EXPECT_KASSERT_FAILS_WITH_DEATH(code, failure_message) \
+#ifndef EXPECT_KAMPING_ASSERT_FAILS_WITH_DEATH
+    // EXPECT that a KAMPING_ASSERT assertion failed and that the error message contains a certain failure_message.
+    #define EXPECT_KAMPING_ASSERT_FAILS_WITH_DEATH(code, failure_message) \
         EXPECT_EXIT({ code; }, ::testing::KilledBySignal(SIGABRT), failure_message);
 #endif
 
-#ifndef ASSERT_KASSERT_FAILS_WITH_DEATH
-    // ASSERT that a KASSERT assertion failed and that the error message contains a certain failure_message.
-    #define ASSERT_KASSERT_FAILS_WITH_DEATH(code, failure_message) \
+#ifndef ASSERT_KAMPING_ASSERT_FAILS_WITH_DEATH
+    // ASSERT that a KAMPING_ASSERT assertion failed and that the error message contains a certain failure_message.
+    #define ASSERT_KAMPING_ASSERT_FAILS_WITH_DEATH(code, failure_message) \
         ASSERT_EXIT({ code; }, ::testing::KilledBySignal(SIGABRT), failure_message);
 #endif
