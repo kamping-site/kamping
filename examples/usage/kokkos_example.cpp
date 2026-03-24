@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
         {
             if (rank == 0) std::cout << "Using Kokkos comm: " << std::endl;
             view_type to_send("", 10);
-            Kokkos::Random_XorShift64_Pool<> random_pool(rank);
+            Kokkos::Random_XorShift64_Pool<> random_pool(static_cast<std::uint64_t>(rank));
             Kokkos::fill_random(to_send, random_pool, 0.0, 1.0);
 
             // Will just throw MPI_ERR_TRUNCATE if to_recv is too small
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
             if (rank == 0) std::cout << "Using kamping with kokkos view: " << std::endl;
 
             Kokkos::View<double**> to_send ("", 3, 3);
-            Kokkos::Random_XorShift64_Pool<> random_pool(rank);
+            Kokkos::Random_XorShift64_Pool<> random_pool(static_cast<std::uint64_t>(rank));
             Kokkos::fill_random(to_send, random_pool, 0.0, 1.0);
 
             view_type to_recv("", 1);
