@@ -12,7 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 /// @file
-/// @brief Contiguous and byte-serialized MPI type helpers.
+/// @brief `MPI_Type_contiguous` implementation for \ref kamping::contiguous_type and \ref kamping::byte_serialized.
 
 #pragma once
 #include <cstddef>
@@ -27,6 +27,9 @@
 #include "kamping/types/mpi_type_traits.hpp"
 
 namespace kamping {
+
+/// @addtogroup kamping_types
+/// @{
 
 template <typename T, size_t N>
 MPI_Datatype contiguous_type<T, N>::data_type() {
@@ -46,5 +49,7 @@ MPI_Datatype contiguous_type<T, N>::data_type() {
     KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_contiguous failed");
     return type;
 }
+
+/// @}
 
 } // namespace kamping

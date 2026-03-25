@@ -25,14 +25,13 @@
 
 namespace kamping {
 
-/// @addtogroup kamping_mpi_utility
+/// @addtogroup kamping_types
 /// @{
 
-/// @brief the members specify which group the datatype belongs to according to the type groups specified in
-/// Section 6.9.2 of the MPI 4.0 standard.
+/// @brief Type groups as defined in Section 6.9.2 of the MPI 4.0 standard.
 enum class TypeCategory { integer, floating, complex, logical, byte, character, struct_like, contiguous };
 
-/// @brief Checks if a type of the given \p category has to commited before usage in MPI calls.
+/// @brief Returns whether an MPI_Datatype of the given \p category must be committed before use.
 constexpr bool category_has_to_be_committed(TypeCategory category) {
     switch (category) {
         case TypeCategory::integer:

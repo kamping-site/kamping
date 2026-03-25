@@ -32,6 +32,9 @@
 
 namespace kamping {
 
+/// @addtogroup kamping_types
+/// @{
+
 /// @brief Tag used for indicating that a struct is reflectable.
 /// @see struct_type
 struct kamping_tag {};
@@ -63,6 +66,8 @@ struct struct_type {
     /// @brief The MPI_Datatype corresponding to the type.
     static MPI_Datatype data_type();
 };
+
+/// @}
 
 namespace internal {
 

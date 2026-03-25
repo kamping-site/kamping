@@ -11,9 +11,21 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
+/// @file
+/// @brief Boolean wrapper type for use with MPI containers.
+
 #pragma once
+
 namespace kamping {
-/// @brief Wrapper around bool to allow handling containers of boolean values
+
+/// @addtogroup kamping_types
+/// @{
+
+/// @brief Wrapper around bool to allow handling containers of boolean values.
+///
+/// `std::vector<bool>` uses bit-packing which is incompatible with MPI's buffer model.
+/// Use `std::vector<kabool>` instead: `kabool` maps to `MPI_CXX_BOOL` and stores one
+/// `bool` per byte.
 class kabool {
 public:
     /// @brief default constructor for a \c kabool with value \c false
@@ -27,6 +39,9 @@ public:
     }
 
 private:
-    bool _value; /// < the wrapped boolean value
+    bool _value; ///< The wrapped boolean value.
 };
+
+/// @}
+
 } // namespace kamping

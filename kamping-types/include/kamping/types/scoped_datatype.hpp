@@ -12,7 +12,7 @@
 // <https://www.gnu.org/licenses/>.
 
 /// @file
-/// @brief RAII wrapper for MPI_Datatype commit/free, independent of mpi_env.
+/// @brief RAII wrapper that commits an \c MPI_Datatype on construction and frees it on destruction.
 
 #pragma once
 #include <utility>
@@ -21,10 +21,13 @@
 
 namespace kamping {
 
-/// @brief A scoped MPI_Datatype that commits the type on construction and frees it on destruction.
+/// @addtogroup kamping_types
+/// @{
+
+/// @brief RAII wrapper that commits an \c MPI_Datatype on construction and frees it on destruction.
 ///
-/// This is a standalone version that calls MPI_Type_commit/MPI_Type_free directly,
-/// without depending on KaMPIng's environment.
+/// Calls \c MPI_Type_commit / \c MPI_Type_free directly and does not depend on the KaMPIng
+/// environment. Useful for managing custom derived datatypes with automatic lifetime.
 class ScopedDatatype {
     MPI_Datatype _type; ///< The MPI_Datatype.
 public:
@@ -60,5 +63,7 @@ public:
         }
     }
 };
+
+/// @}
 
 } // namespace kamping

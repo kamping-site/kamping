@@ -42,3 +42,8 @@ if (KAMPING_TYPES_ENABLE_REFLECTION)
 endif ()
 
 add_library(kamping::types ALIAS kamping_types)
+
+option(KAMPING_TYPES_BUILD_EXAMPLES "Build kamping-types examples" ${PROJECT_IS_TOP_LEVEL})
+if (KAMPING_TYPES_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif ()

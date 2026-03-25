@@ -24,14 +24,21 @@
 
 namespace kamping {
 
-/// @brief The type dispatcher that maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
+/// @addtogroup kamping_types
+/// @{
+
+/// @brief Maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
 ///
-/// The mapping covers:
-/// - C++ types directly supported by MPI → corresponding `MPI_Datatype` via `builtin_type`.
-/// - Enums → underlying type.
-/// - C-style arrays (`T[N]`) and `std::array<T, N>` → `contiguous_type<T, N>`.
-/// - All other types → `internal::no_matching_type` (use `mpi_type_traits` specialization or
-///   KaMPIng's `extended_type_dispatcher` for trivially-copyable types).
+/// | C++ type | Result |
+/// |----------|--------|
+/// | MPI builtin (`int`, `double`, …, `kabool`) | `builtin_type<T>` |
+/// | Enum | dispatches to `type_dispatcher<underlying_type>()` |
+/// | `T[N]`, `std::array<T, N>` | `contiguous_type<T, N>` |
+/// | Everything else | `internal::no_matching_type` |
+///
+/// Specialize \ref mpi_type_traits to handle additional types.
+/// When using full KaMPIng, `extended_type_dispatcher` additionally maps trivially-copyable types
+/// to `byte_serialized`.
 ///
 /// @returns The corresponding type trait for the type \p T.
 template <typename T>
@@ -92,8 +99,10 @@ struct has_static_type : std::false_type {};
 template <typename T>
 struct has_static_type<T, std::void_t<decltype(mpi_type_traits<T>::data_type())>> : std::true_type {};
 
-/// @brief Check if the type has a static type definition via \ref mpi_type_traits.
+/// @brief `true` if \ref mpi_type_traits<T> provides a `data_type()` function.
 template <typename T>
 static constexpr bool has_static_type_v = has_static_type<T>::value;
+
+/// @}
 
 } // namespace kamping

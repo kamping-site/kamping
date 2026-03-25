@@ -1,0 +1,2 @@
+add_executable(example_type_traits type_traits_example.cpp)
+target_link_libraries(example_type_traits PRIVATE kamping_types)
