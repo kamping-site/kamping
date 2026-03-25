@@ -33,9 +33,8 @@
 // When using full KaMPIng, include <kamping/types/utility.hpp> instead.
 namespace kamping {
 template <typename A, typename B>
-struct mpi_type_traits<
-    std::pair<A, B>,
-    std::enable_if_t<has_static_type_v<A> && has_static_type_v<B>>> : struct_type<std::pair<A, B>> {};
+struct mpi_type_traits<std::pair<A, B>, std::enable_if_t<has_static_type_v<A> && has_static_type_v<B>>>
+    : struct_type<std::pair<A, B>> {};
 } // namespace kamping
 
 int main(int argc, char** argv) {
@@ -52,8 +51,7 @@ int main(int argc, char** argv) {
         std::cout << "=== Compile-time type queries ===\n" << std::boolalpha;
 
         auto info = [](char const* name, bool supported, bool needs_commit) {
-            std::cout << "  " << name << ": supported=" << supported
-                      << ", needs_commit=" << needs_commit << "\n";
+            std::cout << "  " << name << ": supported=" << supported << ", needs_commit=" << needs_commit << "\n";
         };
 
         // Builtins and enums are supported; no commit needed.
@@ -61,11 +59,7 @@ int main(int argc, char** argv) {
         info("double", kamping::has_static_type_v<double>, kamping::mpi_type_traits<double>::has_to_be_committed);
 
         // C-array and std::array map to contiguous types; commit is required.
-        info(
-            "float[4]",
-            kamping::has_static_type_v<float[4]>,
-            kamping::mpi_type_traits<float[4]>::has_to_be_committed
-        );
+        info("float[4]", kamping::has_static_type_v<float[4]>, kamping::mpi_type_traits<float[4]>::has_to_be_committed);
         info(
             "std::array<double,3>",
             kamping::has_static_type_v<std::array<double, 3>>,
@@ -86,8 +80,8 @@ int main(int argc, char** argv) {
     if (rank == 0) {
         std::cout << "\n=== Builtin type: int -> MPI_INT ===\n";
         MPI_Datatype int_type = kamping::mpi_type_traits<int>::data_type();
-        std::cout << "  mpi_type_traits<int>::data_type() == MPI_INT: " << std::boolalpha
-                  << (int_type == MPI_INT) << ".\n";
+        std::cout << "  mpi_type_traits<int>::data_type() == MPI_INT: " << std::boolalpha << (int_type == MPI_INT)
+                  << ".\n";
         // Builtin types are predefined constants — no commit or free required.
     }
 
@@ -109,8 +103,8 @@ int main(int argc, char** argv) {
             } else if (rank == 1) {
                 float recv[4] = {};
                 MPI_Recv(recv, 1, arr_type.data_type(), 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                std::cout << "  Rank 1 received: {" << recv[0] << ", " << recv[1] << ", " << recv[2] << ", "
-                          << recv[3] << "}.\n";
+                std::cout << "  Rank 1 received: {" << recv[0] << ", " << recv[1] << ", " << recv[2] << ", " << recv[3]
+                          << "}.\n";
             }
         } else if (rank == 0) {
             std::cout << "  (Run with at least 2 ranks to see the send/receive.)\n";

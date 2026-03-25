@@ -60,8 +60,9 @@ auto type_dispatcher() {
     } else if constexpr (std::is_array_v<T_no_const>) {
         return contiguous_type<std::remove_extent_t<T_no_const>, std::extent_v<T_no_const>>{};
     } else if constexpr (internal::is_std_array<T_no_const>::value) {
-        return contiguous_type<typename internal::is_std_array<T_no_const>::value_type,
-                               internal::is_std_array<T_no_const>::size>{};
+        return contiguous_type<
+            typename internal::is_std_array<T_no_const>::value_type,
+            internal::is_std_array<T_no_const>::size>{};
     } else {
         return internal::no_matching_type{};
     }
@@ -99,7 +100,7 @@ struct has_static_type : std::false_type {};
 template <typename T>
 struct has_static_type<T, std::void_t<decltype(mpi_type_traits<T>::data_type())>> : std::true_type {};
 
-/// @brief `true` if \ref mpi_type_traits<T> provides a `data_type()` function.
+/// @brief `true` if \ref mpi_type_traits provides a `data_type()` function.
 template <typename T>
 static constexpr bool has_static_type_v = has_static_type<T>::value;
 

@@ -20,9 +20,8 @@
 
 #include <mpi.h>
 
-#include "kamping/kassert/kassert.hpp"
-
 #include "kamping/environment.hpp"
+#include "kamping/kassert/kassert.hpp"
 #include "kamping/noexcept.hpp"
 #include "kamping/types/builtin_types.hpp"
 #include "kamping/types/contiguous_type.hpp"
@@ -63,8 +62,9 @@ template <typename T>
 struct mpi_type_traits<
     T,
     std::enable_if_t<
-        std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>
-        && std::is_trivially_copyable_v<std::remove_const_t<T>>>> {
+        std::is_same_v<
+            decltype(type_dispatcher<T>()),
+            internal::no_matching_type> && std::is_trivially_copyable_v<std::remove_const_t<T>>>> {
     /// @brief The base type of this trait obtained via \ref extended_type_dispatcher.
     using base = decltype(extended_type_dispatcher<T>());
     /// @brief The category of the type.

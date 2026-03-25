@@ -23,16 +23,21 @@
 
 namespace kamping {
 
+/// @addtogroup kamping_types
+/// @{
+
 /// @brief Constructs a contiguous MPI type of \p N elements of type \p T using `MPI_Type_contiguous`.
 template <typename T, size_t N>
 struct contiguous_type {
-    static constexpr TypeCategory category          = TypeCategory::contiguous;
+    static constexpr TypeCategory category            = TypeCategory::contiguous;
     static constexpr bool         has_to_be_committed = category_has_to_be_committed(category);
-    static MPI_Datatype data_type();
+    static MPI_Datatype           data_type();
 };
 
 /// @brief Constructs a type serialized as a sequence of `sizeof(T)` bytes using `MPI_BYTE`.
 template <typename T>
 struct byte_serialized : contiguous_type<std::byte, sizeof(T)> {};
+
+/// @}
 
 } // namespace kamping
