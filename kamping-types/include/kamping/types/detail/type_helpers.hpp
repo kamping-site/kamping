@@ -19,6 +19,7 @@
 #include <cstddef>
 #include <tuple>
 #include <utility>
+#include <type_traits>
 
 namespace kamping::internal {
 
