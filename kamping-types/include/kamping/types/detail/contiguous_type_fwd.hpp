@@ -26,8 +26,16 @@ namespace kamping::types {
 /// @addtogroup kamping_types
 /// @{
 
+/// @brief Forward declaration of the default lookup policy for \ref contiguous_type and \ref struct_type.
+/// @see type_dispatcher_lookup
+struct type_dispatcher_lookup;
+
 /// @brief Constructs a contiguous MPI type of \p N elements of type \p T using `MPI_Type_contiguous`.
-template <typename T, size_t N>
+/// @tparam T The element type.
+/// @tparam N The number of elements.
+/// @tparam Lookup The lookup policy used to resolve the MPI_Datatype for \p T.
+///   Defaults to \ref type_dispatcher_lookup, which uses \ref kamping::mpi_type_traits.
+template <typename T, size_t N, typename Lookup = type_dispatcher_lookup>
 struct contiguous_type {
     static constexpr TypeCategory category = TypeCategory::contiguous; ///< The type's \ref TypeCategory.
     static constexpr bool         has_to_be_committed =

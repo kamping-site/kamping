@@ -109,3 +109,29 @@ static constexpr bool has_static_type_v = has_static_type<T>::value;
 /// @}
 
 } // namespace kamping
+
+namespace kamping::types {
+
+/// @addtogroup kamping_types
+/// @{
+
+/// @brief Default lookup policy for \ref contiguous_type and \ref struct_type.
+///
+/// Resolves the MPI_Datatype for a type \p T by consulting \ref kamping::mpi_type_traits.
+/// Users of the kamping-types module can extend the supported types by specializing \ref kamping::mpi_type_traits.
+/// Upper-level frameworks may supply an alternative Lookup policy (e.g., to add a byte-serialization fallback).
+struct type_dispatcher_lookup {
+    /// @brief `true` if the Lookup can resolve an MPI_Datatype for \p T.
+    template <typename T>
+    static constexpr bool has_type_v = kamping::has_static_type_v<T>;
+
+    /// @brief Returns the MPI_Datatype for \p T.
+    template <typename T>
+    static MPI_Datatype get() {
+        return kamping::mpi_type_traits<T>::data_type();
+    }
+};
+
+/// @}
+
+} // namespace kamping::types

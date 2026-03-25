@@ -25,5 +25,6 @@ namespace kamping {
 template <typename First, typename Second>
 struct mpi_type_traits<
     std::pair<First, Second>,
-    std::enable_if_t<has_static_type_v<First> && has_static_type_v<Second>>> : struct_type<std::pair<First, Second>> {};
+    std::enable_if_t<has_static_type_v<First> && has_static_type_v<Second>>>
+    : struct_type<std::pair<First, Second>, kamping_lookup> {};
 } // namespace kamping

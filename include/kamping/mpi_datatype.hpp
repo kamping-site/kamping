@@ -116,6 +116,24 @@ template <typename T>
     }
 }
 
+/// @brief Lookup policy for KaMPIng that resolves MPI_Datatypes via \ref kamping::mpi_type_traits.
+///
+/// Unlike the module-level \ref kamping::types::type_dispatcher_lookup, this policy also covers trivially-copyable
+/// types not matched by \ref kamping::types::type_dispatcher (i.e., those handled via `types::byte_serialized`).
+/// Pass this as the \c Lookup argument to \ref kamping::types::struct_type or \ref kamping::types::contiguous_type
+/// to enable byte-serialization fallback for struct fields or contiguous element types.
+struct kamping_lookup {
+    /// @brief `true` if KaMPIng can resolve an MPI_Datatype for \p T.
+    template <typename T>
+    static constexpr bool has_type_v = has_static_type_v<T>;
+
+    /// @brief Returns the MPI_Datatype for \p T.
+    template <typename T>
+    static MPI_Datatype get() {
+        return mpi_type_traits<T>::data_type();
+    }
+};
+
 // Backward-compatible aliases for types moved to kamping::types::
 using types::builtin_type;
 using types::byte_serialized;
@@ -125,6 +143,7 @@ using types::is_builtin_type_v;
 using types::kamping_tag;
 using types::ScopedDatatype;
 using types::struct_type;
+using types::type_dispatcher_lookup;
 using types::TypeCategory;
 
 /// @}

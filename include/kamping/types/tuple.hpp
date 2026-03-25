@@ -24,5 +24,5 @@ namespace kamping {
 /// unsafe version in \ref kamping/types/unsafe/tuple.hpp.
 template <typename... Ts>
 struct mpi_type_traits<std::tuple<Ts...>, std::enable_if_t<(has_static_type_v<Ts> && ...)>>
-    : struct_type<std::tuple<Ts...>> {};
+    : struct_type<std::tuple<Ts...>, kamping_lookup> {};
 } // namespace kamping

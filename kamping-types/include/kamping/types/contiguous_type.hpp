@@ -32,18 +32,19 @@ namespace kamping::types {
 /// @addtogroup kamping_types
 /// @{
 
-template <typename T, size_t N>
-MPI_Datatype contiguous_type<T, N>::data_type() {
+template <typename T, size_t N, typename Lookup>
+MPI_Datatype contiguous_type<T, N, Lookup>::data_type() {
     MPI_Datatype type;
     MPI_Datatype base_type;
     if constexpr (std::is_same_v<T, std::byte>) {
         base_type = MPI_BYTE;
     } else {
         static_assert(
-            kamping::has_static_type_v<T>,
-            "\n --> Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
+            Lookup::template has_type_v<T>,
+            "\n --> Type not supported by the current Lookup policy. "
+            "Please specialize mpi_type_traits for this type or provide a custom Lookup."
         );
-        base_type = kamping::mpi_type_traits<T>::data_type();
+        base_type = Lookup::template get<T>();
     }
     int const count = static_cast<int>(N);
     int const err   = MPI_Type_contiguous(count, base_type, &type);
