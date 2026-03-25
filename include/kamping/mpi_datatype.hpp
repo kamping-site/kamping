@@ -120,8 +120,6 @@ template <typename T>
 ///
 /// Unlike the module-level \ref kamping::types::type_dispatcher_lookup, this policy also covers trivially-copyable
 /// types not matched by \ref kamping::types::type_dispatcher (i.e., those handled via `types::byte_serialized`).
-/// Pass this as the \c Lookup argument to \ref kamping::types::struct_type or \ref kamping::types::contiguous_type
-/// to enable byte-serialization fallback for struct fields or contiguous element types.
 struct kamping_lookup {
     /// @brief `true` if KaMPIng can resolve an MPI_Datatype for \p T.
     template <typename T>
@@ -138,13 +136,23 @@ struct kamping_lookup {
 using types::builtin_type;
 using types::byte_serialized;
 using types::category_has_to_be_committed;
-using types::contiguous_type;
 using types::is_builtin_type_v;
 using types::kamping_tag;
 using types::ScopedDatatype;
-using types::struct_type;
 using types::type_dispatcher_lookup;
 using types::TypeCategory;
+
+/// @brief Constructs a contiguous MPI type of \p N elements of type \p T, using \ref kamping_lookup
+/// to resolve element types (includes the byte-serialization fallback for trivially-copyable types).
+/// @see kamping::types::contiguous_type
+template <typename T, size_t N>
+using contiguous_type = types::contiguous_type<T, N, kamping_lookup>;
+
+/// @brief Constructs an MPI struct type for \p T, using \ref kamping_lookup to resolve field types
+/// (includes the byte-serialization fallback for trivially-copyable types).
+/// @see kamping::types::struct_type
+template <typename T>
+using struct_type = types::struct_type<T, kamping_lookup>;
 
 /// @}
 
