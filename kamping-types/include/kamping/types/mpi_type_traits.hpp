@@ -26,6 +26,7 @@ namespace kamping {
 /// @addtogroup kamping_types
 /// @{
 
+namespace types {
 /// @brief Maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
 ///
 /// | C++ type | Result |
@@ -35,10 +36,9 @@ namespace kamping {
 /// | `T[N]`, `std::array<T, N>` | `contiguous_type<T, N>` |
 /// | Everything else | `internal::no_matching_type` |
 ///
-/// Specialize \ref mpi_type_traits to handle additional types.
+/// Specialize \ref kamping::mpi_type_traits to handle additional types.
 ///
 /// @returns The corresponding type trait for the type \p T.
-namespace types {
 template <typename T>
 auto type_dispatcher() {
     using T_no_const = std::remove_const_t<T>;
@@ -66,7 +66,7 @@ auto type_dispatcher() {
     }
 }
 
-/// @brief Whether the type is handled by the auto-dispatcher \ref type_dispatcher.
+/// @brief Whether the type is handled by the auto-dispatcher \ref kamping::types::type_dispatcher().
 template <typename T>
 static constexpr bool has_auto_dispatched_type_v =
     !std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>;

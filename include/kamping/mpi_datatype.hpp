@@ -40,7 +40,7 @@ using internal::no_matching_type;
 
 /// @brief Maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
 ///
-/// Extends \ref kamping::types::type_dispatcher with:
+/// Extends \ref kamping::types::type_dispatcher() with:
 /// - All trivially copyable types not otherwise handled → `byte_serialized`.
 ///
 /// @returns The corresponding type trait for the type \p T.
