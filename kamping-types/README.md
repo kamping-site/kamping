@@ -11,7 +11,7 @@ include(FetchContent)
 FetchContent_Declare(
     kamping
     GIT_REPOSITORY https://github.com/kamping-site/kamping.git
-    GIT_TAG v0.2.1
+    GIT_TAG main
 )
 FetchContent_MakeAvailable(kamping)
 
