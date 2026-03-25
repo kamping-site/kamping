@@ -42,8 +42,7 @@ using internal::no_matching_type;
 /// @brief The extended type dispatcher that maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
 ///
 /// Extends the module's \ref type_dispatcher with:
-/// - C-style arrays and `std::array` → `contiguous_type`.
-/// - All other trivially copyable types → `byte_serialized`.
+/// - All trivially copyable types not otherwise handled → `byte_serialized`.
 ///
 /// @returns The corresponding type trait for the type \p T.
 template <typename T>
@@ -51,14 +50,6 @@ auto extended_type_dispatcher() {
     using T_no_const = std::remove_const_t<T>;
     if constexpr (!std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>) {
         return type_dispatcher<T>();
-    } else if constexpr (std::is_array_v<T_no_const>) {
-        constexpr size_t array_size = std::extent_v<T_no_const>;
-        using underlying_type       = std::remove_extent_t<T_no_const>;
-        return contiguous_type<underlying_type, array_size>{};
-    } else if constexpr (internal::is_std_array<T_no_const>::value) {
-        using underlying_type       = typename internal::is_std_array<T_no_const>::value_type;
-        constexpr size_t array_size = internal::is_std_array<T_no_const>::size;
-        return contiguous_type<underlying_type, array_size>{};
     } else if constexpr (std::is_trivially_copyable_v<T_no_const>) {
         return byte_serialized<T_no_const>{};
     } else {
@@ -66,14 +57,14 @@ auto extended_type_dispatcher() {
     }
 }
 
-/// @brief Partial specialization of \ref mpi_type_traits for types matched by \ref extended_type_dispatcher
-/// but NOT by \ref type_dispatcher (i.e., arrays and trivially-copyable types).
+/// @brief Partial specialization of \ref mpi_type_traits for trivially-copyable types not matched by
+/// \ref type_dispatcher (i.e., types handled only via `byte_serialized`).
 template <typename T>
 struct mpi_type_traits<
     T,
     std::enable_if_t<
         std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>
-        && !std::is_same_v<decltype(extended_type_dispatcher<T>()), internal::no_matching_type>>> {
+        && std::is_trivially_copyable_v<std::remove_const_t<T>>>> {
     /// @brief The base type of this trait obtained via \ref extended_type_dispatcher.
     using base = decltype(extended_type_dispatcher<T>());
     /// @brief The category of the type.

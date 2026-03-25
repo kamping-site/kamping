@@ -15,9 +15,11 @@
 /// @brief Type traits and dispatcher for mapping C++ types to MPI datatypes.
 
 #pragma once
+#include <array>
 #include <type_traits>
 
 #include "kamping/types/builtin_types.hpp"
+#include "kamping/types/detail/contiguous_type_fwd.hpp"
 #include "kamping/types/detail/type_helpers.hpp"
 
 namespace kamping {
@@ -27,8 +29,9 @@ namespace kamping {
 /// The mapping covers:
 /// - C++ types directly supported by MPI → corresponding `MPI_Datatype` via `builtin_type`.
 /// - Enums → underlying type.
+/// - C-style arrays (`T[N]`) and `std::array<T, N>` → `contiguous_type<T, N>`.
 /// - All other types → `internal::no_matching_type` (use `mpi_type_traits` specialization or
-///   KaMPIng's `extended_type_dispatcher` for arrays and trivially-copyable types).
+///   KaMPIng's `extended_type_dispatcher` for trivially-copyable types).
 ///
 /// @returns The corresponding type trait for the type \p T.
 template <typename T>
@@ -47,6 +50,11 @@ auto type_dispatcher() {
         return builtin_type<T_no_const>{};
     } else if constexpr (std::is_enum_v<T_no_const>) {
         return type_dispatcher<std::underlying_type_t<T_no_const>>();
+    } else if constexpr (std::is_array_v<T_no_const>) {
+        return contiguous_type<std::remove_extent_t<T_no_const>, std::extent_v<T_no_const>>{};
+    } else if constexpr (internal::is_std_array<T_no_const>::value) {
+        return contiguous_type<typename internal::is_std_array<T_no_const>::value_type,
+                               internal::is_std_array<T_no_const>::size>{};
     } else {
         return internal::no_matching_type{};
     }

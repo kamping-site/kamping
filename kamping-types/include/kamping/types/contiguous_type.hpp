@@ -21,24 +21,12 @@
 #include <mpi.h>
 
 #include "kamping/kassert/kassert.hpp"
-#include "kamping/types/builtin_types.hpp"
+// contiguous_type and byte_serialized structs are declared in the fwd header;
+// include it here so consumers only need this single header.
+#include "kamping/types/detail/contiguous_type_fwd.hpp"
 #include "kamping/types/mpi_type_traits.hpp"
 
 namespace kamping {
-
-/// @brief Constructs a contiguous MPI type of \p N elements of type \p T using `MPI_Type_contiguous`.
-template <typename T, size_t N>
-struct contiguous_type {
-    static constexpr TypeCategory category          = TypeCategory::contiguous; ///< The category of the type.
-    static constexpr bool         has_to_be_committed = category_has_to_be_committed(category); ///< Whether commit is needed.
-    /// @brief The MPI_Datatype corresponding to the type.
-    static MPI_Datatype data_type();
-};
-
-/// @brief Constructs a type serialized as a sequence of `sizeof(T)` bytes using `MPI_BYTE`.
-/// Note that you must ensure that this conversion is valid.
-template <typename T>
-struct byte_serialized : contiguous_type<std::byte, sizeof(T)> {};
 
 template <typename T, size_t N>
 MPI_Datatype contiguous_type<T, N>::data_type() {
