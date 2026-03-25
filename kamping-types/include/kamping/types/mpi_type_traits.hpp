@@ -15,7 +15,6 @@
 /// @brief Type traits and dispatcher for mapping C++ types to MPI datatypes.
 
 #pragma once
-#include <array>
 #include <type_traits>
 
 #include "kamping/types/builtin_types.hpp"
@@ -37,10 +36,9 @@ namespace kamping {
 /// | Everything else | `internal::no_matching_type` |
 ///
 /// Specialize \ref mpi_type_traits to handle additional types.
-/// When using full KaMPIng, `extended_type_dispatcher` additionally maps trivially-copyable types
-/// to `byte_serialized`.
 ///
 /// @returns The corresponding type trait for the type \p T.
+namespace types {
 template <typename T>
 auto type_dispatcher() {
     using T_no_const = std::remove_const_t<T>;
@@ -68,6 +66,12 @@ auto type_dispatcher() {
     }
 }
 
+/// @brief Whether the type is handled by the auto-dispatcher \ref type_dispatcher.
+template <typename T>
+static constexpr bool has_auto_dispatched_type_v =
+    !std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>;
+} // namespace types
+
 /// @brief The type trait that maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
 ///
 /// The default behavior is controlled by \ref type_dispatcher. Specialize this trait to support
@@ -77,18 +81,16 @@ struct mpi_type_traits {};
 
 /// @brief Partial specialization of \ref mpi_type_traits for types matched by \ref type_dispatcher.
 template <typename T>
-struct mpi_type_traits<
-    T,
-    std::enable_if_t<!std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>>> {
+struct mpi_type_traits<T, std::enable_if_t<types::has_auto_dispatched_type_v<T>>> {
     /// @brief The base type of this trait obtained via \ref type_dispatcher.
-    using base = decltype(type_dispatcher<T>());
+    using base = decltype(types::type_dispatcher<T>());
     /// @brief The category of the type.
     static constexpr TypeCategory category = base::category;
     /// @brief Whether the type has to be committed before it can be used in MPI calls.
     static constexpr bool has_to_be_committed = category_has_to_be_committed(category);
     /// @brief The MPI_Datatype corresponding to the type T.
     static MPI_Datatype data_type() {
-        return decltype(type_dispatcher<T>())::data_type();
+        return decltype(types::type_dispatcher<T>())::data_type();
     }
 };
 

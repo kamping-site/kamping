@@ -47,8 +47,8 @@ using internal::no_matching_type;
 template <typename T>
 auto extended_type_dispatcher() {
     using T_no_const = std::remove_const_t<T>;
-    if constexpr (!std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>) {
-        return type_dispatcher<T>();
+    if constexpr (types::has_auto_dispatched_type_v<T>) {
+        return types::type_dispatcher<T>();
     } else if constexpr (std::is_trivially_copyable_v<T_no_const>) {
         return byte_serialized<T_no_const>{};
     } else {
@@ -61,21 +61,24 @@ auto extended_type_dispatcher() {
 template <typename T>
 struct mpi_type_traits<
     T,
-    std::enable_if_t<
-        std::is_same_v<
-            decltype(type_dispatcher<T>()),
-            internal::no_matching_type> && std::is_trivially_copyable_v<std::remove_const_t<T>>>> {
-    /// @brief The base type of this trait obtained via \ref extended_type_dispatcher.
-    using base = decltype(extended_type_dispatcher<T>());
+    std::enable_if_t<!types::has_auto_dispatched_type_v<T> && std::is_trivially_copyable_v<std::remove_const_t<T>>>> {
+    /// @brief The base type of this trait.
+    using base = byte_serialized<std::remove_const_t<T>>;
     /// @brief The category of the type.
     static constexpr TypeCategory category = base::category;
     /// @brief Whether the type has to be committed before it can be used in MPI calls.
-    static constexpr bool has_to_be_committed = category_has_to_be_committed(category);
+    static constexpr bool has_to_be_committed = base::has_to_be_committed;
     /// @brief The MPI_Datatype corresponding to the type T.
     static MPI_Datatype data_type() {
-        return decltype(extended_type_dispatcher<T>())::data_type();
+        return base::data_type();
     }
 };
+
+/// @brief Whether the type is handled by the auto-dispatcher \ref extended_type_dispatcher,
+/// i.e. whether \ref mpi_type_traits is defined without a user-provided specialization.
+template <typename T>
+static constexpr bool has_auto_dispatched_type_v =
+    !std::is_same_v<decltype(extended_type_dispatcher<T>()), internal::no_matching_type>;
 
 /// @brief Register a new \c MPI_Datatype for \p T with the MPI environment. It will be freed when the environment is
 /// finalized.
