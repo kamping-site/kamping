@@ -34,7 +34,7 @@
 namespace kamping {
 template <typename A, typename B>
 struct mpi_type_traits<std::pair<A, B>, std::enable_if_t<has_static_type_v<A> && has_static_type_v<B>>>
-    : struct_type<std::pair<A, B>> {};
+    : types::struct_type<std::pair<A, B>> {};
 } // namespace kamping
 
 int main(int argc, char** argv) {
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
     }
     {
         // ScopedDatatype commits on construction and frees on destruction.
-        kamping::ScopedDatatype arr_type{kamping::mpi_type_traits<float[4]>::data_type()};
+        kamping::types::ScopedDatatype arr_type{kamping::mpi_type_traits<float[4]>::data_type()};
 
         if (size >= 2) {
             float data[4] = {1.0f, 2.0f, 3.0f, 4.0f};
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
         std::cout << "\n=== Struct type: std::pair<int,double> -> MPI_Type_create_struct ===\n";
     }
     {
-        kamping::ScopedDatatype pair_type{kamping::mpi_type_traits<std::pair<int, double>>::data_type()};
+        kamping::types::ScopedDatatype pair_type{kamping::mpi_type_traits<std::pair<int, double>>::data_type()};
 
         if (size >= 2) {
             std::pair<int, double> value = {42, 3.14159};

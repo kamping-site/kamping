@@ -41,7 +41,7 @@ using internal::no_matching_type;
 /// @brief Maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
 ///
 /// Extends \ref kamping::types::type_dispatcher() with:
-/// - All trivially copyable types not otherwise handled → `byte_serialized`.
+/// - All trivially copyable types not otherwise handled → `types::byte_serialized`.
 ///
 /// @returns The corresponding type trait for the type \p T.
 template <typename T>
@@ -50,22 +50,22 @@ auto type_dispatcher() {
     if constexpr (types::has_auto_dispatched_type_v<T>) {
         return types::type_dispatcher<T>();
     } else if constexpr (std::is_trivially_copyable_v<T_no_const>) {
-        return byte_serialized<T_no_const>{};
+        return types::byte_serialized<T_no_const>{};
     } else {
         return internal::no_matching_type{};
     }
 }
 
 /// @brief Partial specialization of \ref mpi_type_traits for trivially-copyable types not matched by
-/// \ref type_dispatcher (i.e., types handled only via `byte_serialized`).
+/// \ref type_dispatcher (i.e., types handled only via `types::byte_serialized`).
 template <typename T>
 struct mpi_type_traits<
     T,
     std::enable_if_t<!types::has_auto_dispatched_type_v<T> && std::is_trivially_copyable_v<std::remove_const_t<T>>>> {
     /// @brief The base type of this trait.
-    using base = byte_serialized<std::remove_const_t<T>>;
+    using base = types::byte_serialized<std::remove_const_t<T>>;
     /// @brief The category of the type.
-    static constexpr TypeCategory category = base::category;
+    static constexpr types::TypeCategory category = base::category;
     /// @brief Whether the type has to be committed before it can be used in MPI calls.
     static constexpr bool has_to_be_committed = base::has_to_be_committed;
     /// @brief The MPI_Datatype corresponding to the type T.
@@ -115,6 +115,17 @@ template <typename T>
         return mpi_type_traits<T>::data_type();
     }
 }
+
+// Backward-compatible aliases for types moved to kamping::types::
+using types::TypeCategory;
+using types::category_has_to_be_committed;
+using types::builtin_type;
+using types::is_builtin_type_v;
+using types::contiguous_type;
+using types::byte_serialized;
+using types::struct_type;
+using types::kamping_tag;
+using types::ScopedDatatype;
 
 /// @}
 

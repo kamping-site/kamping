@@ -19,7 +19,7 @@
 
 #include <mpi.h>
 
-namespace kamping {
+namespace kamping::types {
 
 /// @addtogroup kamping_types
 /// @{
@@ -66,4 +66,4 @@ public:
 
 /// @}
 
-} // namespace kamping
+} // namespace kamping::types

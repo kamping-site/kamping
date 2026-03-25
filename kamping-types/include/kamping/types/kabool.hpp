@@ -16,7 +16,7 @@
 
 #pragma once
 
-namespace kamping {
+namespace kamping::types {
 
 /// @addtogroup kamping_types
 /// @{
@@ -44,4 +44,4 @@ private:
 
 /// @}
 
-} // namespace kamping
+} // namespace kamping::types

@@ -26,7 +26,7 @@
 #include "kamping/types/detail/contiguous_type_fwd.hpp"
 #include "kamping/types/mpi_type_traits.hpp"
 
-namespace kamping {
+namespace kamping::types {
 
 /// @addtogroup kamping_types
 /// @{
@@ -39,10 +39,10 @@ MPI_Datatype contiguous_type<T, N>::data_type() {
         base_type = MPI_BYTE;
     } else {
         static_assert(
-            has_static_type_v<T>,
+            kamping::has_static_type_v<T>,
             "\n --> Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
         );
-        base_type = mpi_type_traits<T>::data_type();
+        base_type = kamping::mpi_type_traits<T>::data_type();
     }
     int const count = static_cast<int>(N);
     int const err   = MPI_Type_contiguous(count, base_type, &type);
@@ -52,4 +52,4 @@ MPI_Datatype contiguous_type<T, N>::data_type() {
 
 /// @}
 
-} // namespace kamping
+} // namespace kamping::types

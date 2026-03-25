@@ -23,7 +23,7 @@
 
 #include "kamping/types/kabool.hpp"
 
-namespace kamping {
+namespace kamping::types {
 
 /// @addtogroup kamping_types
 /// @{
@@ -278,4 +278,4 @@ struct builtin_type<std::complex<long double>> : std::true_type {
     static constexpr TypeCategory category = TypeCategory::complex; ///< The types's \ref TypeCategory.
 };
 /// @}
-} // namespace kamping
+} // namespace kamping::types

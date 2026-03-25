@@ -85,9 +85,9 @@ struct mpi_type_traits<T, std::enable_if_t<types::has_auto_dispatched_type_v<T>>
     /// @brief The base type of this trait obtained via \ref type_dispatcher.
     using base = decltype(types::type_dispatcher<T>());
     /// @brief The category of the type.
-    static constexpr TypeCategory category = base::category;
+    static constexpr types::TypeCategory category = base::category;
     /// @brief Whether the type has to be committed before it can be used in MPI calls.
-    static constexpr bool has_to_be_committed = category_has_to_be_committed(category);
+    static constexpr bool has_to_be_committed = types::category_has_to_be_committed(category);
     /// @brief The MPI_Datatype corresponding to the type T.
     static MPI_Datatype data_type() {
         return decltype(types::type_dispatcher<T>())::data_type();

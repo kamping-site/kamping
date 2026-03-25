@@ -21,7 +21,7 @@
 
 #include "kamping/types/builtin_types.hpp"
 
-namespace kamping {
+namespace kamping::types {
 
 /// @addtogroup kamping_types
 /// @{
@@ -41,4 +41,4 @@ struct byte_serialized : contiguous_type<std::byte, sizeof(T)> {};
 
 /// @}
 
-} // namespace kamping
+} // namespace kamping::types

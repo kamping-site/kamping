@@ -13,3 +13,7 @@
 
 #pragma once
 #include "kamping/types/kabool.hpp"
+
+namespace kamping {
+using types::kabool;
+} // namespace kamping

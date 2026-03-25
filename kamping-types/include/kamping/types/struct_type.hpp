@@ -30,7 +30,7 @@
 #include "kamping/types/detail/type_helpers.hpp"
 #include "kamping/types/mpi_type_traits.hpp"
 
-namespace kamping {
+namespace kamping::types {
 
 /// @addtogroup kamping_types
 /// @{
@@ -50,13 +50,14 @@ template <typename T>
 struct struct_type {
 #ifdef KAMPING_ENABLE_REFLECTION
     static_assert(
-        internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value
+        kamping::internal::is_std_pair<T>::value || kamping::internal::is_std_tuple<T>::value
             || boost::pfr::is_implicitly_reflectable<T, kamping_tag>::value,
         "Type must be a std::pair, std::tuple or reflectable"
     );
 #else
     static_assert(
-        internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value, "Type must be a std::pair or std::tuple"
+        kamping::internal::is_std_pair<T>::value || kamping::internal::is_std_tuple<T>::value,
+        "Type must be a std::pair or std::tuple"
     );
 #endif
     /// @brief The category of the type.
@@ -69,7 +70,9 @@ struct struct_type {
 
 /// @}
 
-namespace internal {
+} // namespace kamping::types
+
+namespace kamping::internal {
 
 /// @brief Applies functor \p f to each field of the tuple with an index in index sequence \p Is.
 template <typename T, typename F, size_t... Is>
@@ -88,13 +91,13 @@ void for_each_tuple_field(T& t, F&& f) {
 /// with types reflectable via [pfr](https://github.com/boostorg/pfr).
 template <typename T, typename F>
 void for_each_field(T& t, F&& f) {
-    if constexpr (internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value) {
+    if constexpr (is_std_pair<T>::value || is_std_tuple<T>::value) {
         for_each_tuple_field(t, std::forward<F>(f));
     } else {
 #ifdef KAMPING_ENABLE_REFLECTION
         boost::pfr::for_each_field(t, std::forward<F>(f));
 #else
-        static_assert(internal::is_std_pair<T>::value || internal::is_std_tuple<T>::value);
+        static_assert(is_std_pair<T>::value || is_std_tuple<T>::value);
 #endif
     }
 }
@@ -102,9 +105,9 @@ void for_each_field(T& t, F&& f) {
 /// @brief The number of elements in a tuple-like type.
 template <typename T>
 constexpr size_t tuple_size = [] {
-    if constexpr (internal::is_std_pair<T>::value) {
+    if constexpr (is_std_pair<T>::value) {
         return 2;
-    } else if constexpr (internal::is_std_tuple<T>::value) {
+    } else if constexpr (is_std_tuple<T>::value) {
         return std::tuple_size_v<T>;
     } else {
 #ifdef KAMPING_ENABLE_REFLECTION
@@ -119,29 +122,32 @@ constexpr size_t tuple_size = [] {
     }
 }();
 
-} // namespace internal
+} // namespace kamping::internal
+
+namespace kamping::types {
 
 template <typename T>
 MPI_Datatype struct_type<T>::data_type() {
     T        t{};
     MPI_Aint base;
     MPI_Get_address(&t, &base);
-    int          blocklens[internal::tuple_size<T>];
-    MPI_Datatype types[internal::tuple_size<T>];
-    MPI_Aint     disp[internal::tuple_size<T>];
-    internal::for_each_field(t, [&](auto& elem, size_t i) {
+    int          blocklens[kamping::internal::tuple_size<T>];
+    MPI_Datatype mpi_types[kamping::internal::tuple_size<T>];
+    MPI_Aint     disp[kamping::internal::tuple_size<T>];
+    kamping::internal::for_each_field(t, [&](auto& elem, size_t i) {
         MPI_Get_address(&elem, &disp[i]);
         using elem_type = std::remove_reference_t<decltype(elem)>;
         static_assert(
-            has_static_type_v<elem_type>,
+            kamping::has_static_type_v<elem_type>,
             "\n --> Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
         );
-        types[i]     = mpi_type_traits<elem_type>::data_type();
+        mpi_types[i] = kamping::mpi_type_traits<elem_type>::data_type();
         disp[i]      = MPI_Aint_diff(disp[i], base);
         blocklens[i] = 1;
     });
     MPI_Datatype type;
-    int          err = MPI_Type_create_struct(static_cast<int>(internal::tuple_size<T>), blocklens, disp, types, &type);
+    int          err =
+        MPI_Type_create_struct(static_cast<int>(kamping::internal::tuple_size<T>), blocklens, disp, mpi_types, &type);
     KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_create_struct failed");
     MPI_Datatype resized_type;
     err = MPI_Type_create_resized(type, 0, sizeof(T), &resized_type);
@@ -149,4 +155,4 @@ MPI_Datatype struct_type<T>::data_type() {
     return resized_type;
 }
 
-} // namespace kamping
+} // namespace kamping::types

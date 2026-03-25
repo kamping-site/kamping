@@ -16,3 +16,10 @@
 
 #pragma once
 #include "kamping/types/builtin_types.hpp"
+
+namespace kamping {
+using types::TypeCategory;
+using types::category_has_to_be_committed;
+using types::builtin_type;
+using types::is_builtin_type_v;
+} // namespace kamping
