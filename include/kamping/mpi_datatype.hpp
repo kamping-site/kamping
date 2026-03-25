@@ -38,14 +38,14 @@ namespace kamping {
 // Re-export no_matching_type into kamping:: for backward compatibility
 using internal::no_matching_type;
 
-/// @brief The extended type dispatcher that maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
+/// @brief Maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
 ///
-/// Extends the module's \ref type_dispatcher with:
+/// Extends \ref kamping::types::type_dispatcher with:
 /// - All trivially copyable types not otherwise handled → `byte_serialized`.
 ///
 /// @returns The corresponding type trait for the type \p T.
 template <typename T>
-auto extended_type_dispatcher() {
+auto type_dispatcher() {
     using T_no_const = std::remove_const_t<T>;
     if constexpr (types::has_auto_dispatched_type_v<T>) {
         return types::type_dispatcher<T>();
@@ -74,11 +74,11 @@ struct mpi_type_traits<
     }
 };
 
-/// @brief Whether the type is handled by the auto-dispatcher \ref extended_type_dispatcher,
+/// @brief Whether the type is handled by the auto-dispatcher \ref type_dispatcher,
 /// i.e. whether \ref mpi_type_traits is defined without a user-provided specialization.
 template <typename T>
 static constexpr bool has_auto_dispatched_type_v =
-    !std::is_same_v<decltype(extended_type_dispatcher<T>()), internal::no_matching_type>;
+    !std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>;
 
 /// @brief Register a new \c MPI_Datatype for \p T with the MPI environment. It will be freed when the environment is
 /// finalized.

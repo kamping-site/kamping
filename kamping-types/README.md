@@ -95,7 +95,7 @@ struct mpi_type_traits<Point> {
 
 When linking against `kamping::kamping` instead of `kamping::types`, you additionally get:
 
-- `extended_type_dispatcher<T>()` — also maps trivially-copyable types to `byte_serialized<T>`
+- `type_dispatcher<T>()` — also maps trivially-copyable types to `byte_serialized<T>`
 - `mpi_datatype<T>()` — returns a committed, environment-managed `MPI_Datatype`
 - `include/kamping/types/utility.hpp` — `mpi_type_traits` for `std::pair`
 - `include/kamping/types/tuple.hpp` — `mpi_type_traits` for `std::tuple`
