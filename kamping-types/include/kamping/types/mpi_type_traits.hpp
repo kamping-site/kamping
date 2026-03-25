@@ -21,12 +21,11 @@
 #include "kamping/types/detail/contiguous_type_fwd.hpp"
 #include "kamping/types/detail/type_helpers.hpp"
 
-namespace kamping {
+namespace kamping::types {
 
 /// @addtogroup kamping_types
 /// @{
 
-namespace types {
 /// @brief Maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
 ///
 /// | C++ type | Result |
@@ -36,7 +35,7 @@ namespace types {
 /// | `T[N]`, `std::array<T, N>` | `contiguous_type<T, N>` |
 /// | Everything else | `internal::no_matching_type` |
 ///
-/// Specialize \ref kamping::mpi_type_traits to handle additional types.
+/// Specialize \ref kamping::types::mpi_type_traits to handle additional types.
 ///
 /// @returns The corresponding type trait for the type \p T.
 template <typename T>
@@ -57,78 +56,71 @@ auto type_dispatcher() {
         return type_dispatcher<std::underlying_type_t<T_no_const>>();
     } else if constexpr (std::is_array_v<T_no_const>) {
         return contiguous_type<std::remove_extent_t<T_no_const>, std::extent_v<T_no_const>>{};
-    } else if constexpr (internal::is_std_array<T_no_const>::value) {
+    } else if constexpr (kamping::internal::is_std_array<T_no_const>::value) {
         return contiguous_type<
-            typename internal::is_std_array<T_no_const>::value_type,
-            internal::is_std_array<T_no_const>::size>{};
+            typename kamping::internal::is_std_array<T_no_const>::value_type,
+            kamping::internal::is_std_array<T_no_const>::size>{};
     } else {
-        return internal::no_matching_type{};
+        return kamping::internal::no_matching_type{};
     }
 }
 
 /// @brief Whether the type is handled by the auto-dispatcher \ref kamping::types::type_dispatcher().
 template <typename T>
 static constexpr bool has_auto_dispatched_type_v =
-    !std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>;
-} // namespace types
+    !std::is_same_v<decltype(type_dispatcher<T>()), kamping::internal::no_matching_type>;
 
-/// @brief The type trait that maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
+/// @brief The type trait that maps a C++ type \p T to an MPI_Datatype for the kamping-types module.
 ///
-/// The default behavior is controlled by \ref type_dispatcher. Specialize this trait to support
-/// additional types.
+/// The default behavior is controlled by \ref kamping::types::type_dispatcher(). Specialize this
+/// trait to support additional types within the module.
+/// Upper-level frameworks (e.g., full KaMPIng) define their own extension point on top.
 template <typename T, typename Enable = void>
 struct mpi_type_traits {};
 
-/// @brief Partial specialization of \ref mpi_type_traits for types matched by \ref type_dispatcher.
+/// @brief Partial specialization of \ref kamping::types::mpi_type_traits for types matched by
+/// \ref kamping::types::type_dispatcher().
 template <typename T>
-struct mpi_type_traits<T, std::enable_if_t<types::has_auto_dispatched_type_v<T>>> {
-    /// @brief The base type of this trait obtained via \ref type_dispatcher.
-    using base = decltype(types::type_dispatcher<T>());
+struct mpi_type_traits<T, std::enable_if_t<has_auto_dispatched_type_v<T>>> {
+    /// @brief The base type of this trait obtained via \ref kamping::types::type_dispatcher().
+    using base = decltype(type_dispatcher<T>());
     /// @brief The category of the type.
-    static constexpr types::TypeCategory category = base::category;
+    static constexpr TypeCategory category = base::category;
     /// @brief Whether the type has to be committed before it can be used in MPI calls.
-    static constexpr bool has_to_be_committed = types::category_has_to_be_committed(category);
+    static constexpr bool has_to_be_committed = category_has_to_be_committed(category);
     /// @brief The MPI_Datatype corresponding to the type T.
     static MPI_Datatype data_type() {
-        return decltype(types::type_dispatcher<T>())::data_type();
+        return decltype(type_dispatcher<T>())::data_type();
     }
 };
 
-/// @brief Check if the type has a static type definition, i.e. \ref mpi_type_traits is defined.
+/// @brief Check if the type has a static type definition, i.e. \ref kamping::types::mpi_type_traits is defined.
 template <typename, typename Enable = void>
 struct has_static_type : std::false_type {};
 
-/// @brief Check if the type has a static type definition, i.e. \ref mpi_type_traits is defined.
+/// @brief Check if the type has a static type definition, i.e. \ref kamping::types::mpi_type_traits is defined.
 template <typename T>
 struct has_static_type<T, std::void_t<decltype(mpi_type_traits<T>::data_type())>> : std::true_type {};
 
-/// @brief `true` if \ref mpi_type_traits provides a `data_type()` function.
+/// @brief `true` if \ref kamping::types::mpi_type_traits provides a `data_type()` function.
 template <typename T>
 static constexpr bool has_static_type_v = has_static_type<T>::value;
 
-/// @}
-
-} // namespace kamping
-
-namespace kamping::types {
-
-/// @addtogroup kamping_types
-/// @{
-
 /// @brief Default lookup policy for \ref contiguous_type and \ref struct_type.
 ///
-/// Resolves the MPI_Datatype for a type \p T by consulting \ref kamping::mpi_type_traits.
-/// Users of the kamping-types module can extend the supported types by specializing \ref kamping::mpi_type_traits.
-/// Upper-level frameworks may supply an alternative Lookup policy (e.g., to add a byte-serialization fallback).
+/// Resolves the MPI_Datatype for a type \p T by consulting \ref kamping::types::mpi_type_traits.
+/// Users of the kamping-types module can extend the supported types by specializing
+/// \ref kamping::types::mpi_type_traits. Upper-level frameworks may supply an alternative Lookup
+/// policy (e.g., to add a byte-serialization fallback).
 struct type_dispatcher_lookup {
     /// @brief `true` if the Lookup can resolve an MPI_Datatype for \p T.
     template <typename T>
-    static constexpr bool has_type_v = kamping::has_static_type_v<T>;
+    static constexpr bool has_type_v = has_static_type_v<T>;
 
     /// @brief Returns the MPI_Datatype for \p T.
     template <typename T>
     static MPI_Datatype get() {
-        return kamping::mpi_type_traits<T>::data_type();
+        return mpi_type_traits<T>::data_type();
     }
 };
 

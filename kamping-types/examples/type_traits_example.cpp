@@ -31,11 +31,11 @@
 
 // Teach kamping-types how to handle std::pair via struct_type.
 // When using full KaMPIng, include <kamping/types/utility.hpp> instead.
-namespace kamping {
+namespace kamping::types {
 template <typename A, typename B>
 struct mpi_type_traits<std::pair<A, B>, std::enable_if_t<has_static_type_v<A> && has_static_type_v<B>>>
-    : types::struct_type<std::pair<A, B>> {};
-} // namespace kamping
+    : struct_type<std::pair<A, B>> {};
+} // namespace kamping::types
 
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
@@ -55,22 +55,22 @@ int main(int argc, char** argv) {
         };
 
         // Builtins and enums are supported; no commit needed.
-        info("int", kamping::has_static_type_v<int>, kamping::mpi_type_traits<int>::has_to_be_committed);
-        info("double", kamping::has_static_type_v<double>, kamping::mpi_type_traits<double>::has_to_be_committed);
+        info("int", kamping::types::has_static_type_v<int>, kamping::types::mpi_type_traits<int>::has_to_be_committed);
+        info("double", kamping::types::has_static_type_v<double>, kamping::types::mpi_type_traits<double>::has_to_be_committed);
 
         // C-array and std::array map to contiguous types; commit is required.
-        info("float[4]", kamping::has_static_type_v<float[4]>, kamping::mpi_type_traits<float[4]>::has_to_be_committed);
+        info("float[4]", kamping::types::has_static_type_v<float[4]>, kamping::types::mpi_type_traits<float[4]>::has_to_be_committed);
         info(
             "std::array<double,3>",
-            kamping::has_static_type_v<std::array<double, 3>>,
-            kamping::mpi_type_traits<std::array<double, 3>>::has_to_be_committed
+            kamping::types::has_static_type_v<std::array<double, 3>>,
+            kamping::types::mpi_type_traits<std::array<double, 3>>::has_to_be_committed
         );
 
         // std::pair is handled via the struct_type specialization added above.
         info(
             "std::pair<int,double>",
-            kamping::has_static_type_v<std::pair<int, double>>,
-            kamping::mpi_type_traits<std::pair<int, double>>::has_to_be_committed
+            kamping::types::has_static_type_v<std::pair<int, double>>,
+            kamping::types::mpi_type_traits<std::pair<int, double>>::has_to_be_committed
         );
     }
 
@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
     // -----------------------------------------------------------------------
     if (rank == 0) {
         std::cout << "\n=== Builtin type: int -> MPI_INT ===\n";
-        MPI_Datatype int_type = kamping::mpi_type_traits<int>::data_type();
+        MPI_Datatype int_type = kamping::types::mpi_type_traits<int>::data_type();
         std::cout << "  mpi_type_traits<int>::data_type() == MPI_INT: " << std::boolalpha << (int_type == MPI_INT)
                   << ".\n";
         // Builtin types are predefined constants — no commit or free required.
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
     }
     {
         // ScopedDatatype commits on construction and frees on destruction.
-        kamping::types::ScopedDatatype arr_type{kamping::mpi_type_traits<float[4]>::data_type()};
+        kamping::types::ScopedDatatype arr_type{kamping::types::mpi_type_traits<float[4]>::data_type()};
 
         if (size >= 2) {
             float data[4] = {1.0f, 2.0f, 3.0f, 4.0f};
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
         std::cout << "\n=== Struct type: std::pair<int,double> -> MPI_Type_create_struct ===\n";
     }
     {
-        kamping::types::ScopedDatatype pair_type{kamping::mpi_type_traits<std::pair<int, double>>::data_type()};
+        kamping::types::ScopedDatatype pair_type{kamping::types::mpi_type_traits<std::pair<int, double>>::data_type()};
 
         if (size >= 2) {
             std::pair<int, double> value = {42, 3.14159};

@@ -56,8 +56,19 @@ auto type_dispatcher() {
     }
 }
 
-/// @brief Partial specialization of \ref mpi_type_traits for trivially-copyable types not matched by
-/// \ref type_dispatcher (i.e., types handled only via `types::byte_serialized`).
+/// @brief The type trait that maps a C++ type \p T to an MPI_Datatype for full KaMPIng.
+///
+/// Extends \ref kamping::types::mpi_type_traits with a byte-serialization fallback for
+/// trivially-copyable types not matched by \ref kamping::types::type_dispatcher().
+/// Specialize this trait in `namespace kamping` to support additional types within KaMPIng.
+///
+/// The primary template transparently inherits from \ref kamping::types::mpi_type_traits, so
+/// specializations of the module trait are automatically visible here unless overridden.
+template <typename T, typename Enable = void>
+struct mpi_type_traits : types::mpi_type_traits<T, Enable> {};
+
+/// @brief Partial specialization of \ref mpi_type_traits for trivially-copyable types not matched
+/// by \ref kamping::types::type_dispatcher() (i.e., types handled only via `types::byte_serialized`).
 template <typename T>
 struct mpi_type_traits<
     T,
@@ -73,6 +84,18 @@ struct mpi_type_traits<
         return base::data_type();
     }
 };
+
+/// @brief Check if the type has a static type definition, i.e. \ref kamping::mpi_type_traits is defined.
+template <typename, typename Enable = void>
+struct has_static_type : std::false_type {};
+
+/// @brief Check if the type has a static type definition, i.e. \ref kamping::mpi_type_traits is defined.
+template <typename T>
+struct has_static_type<T, std::void_t<decltype(mpi_type_traits<T>::data_type())>> : std::true_type {};
+
+/// @brief `true` if \ref kamping::mpi_type_traits provides a `data_type()` function.
+template <typename T>
+static constexpr bool has_static_type_v = has_static_type<T>::value;
 
 /// @brief Whether the type is handled by the auto-dispatcher \ref type_dispatcher,
 /// i.e. whether \ref mpi_type_traits is defined without a user-provided specialization.
@@ -118,8 +141,9 @@ template <typename T>
 
 /// @brief Lookup policy for KaMPIng that resolves MPI_Datatypes via \ref kamping::mpi_type_traits.
 ///
-/// Unlike the module-level \ref kamping::types::type_dispatcher_lookup, this policy also covers trivially-copyable
-/// types not matched by \ref kamping::types::type_dispatcher (i.e., those handled via `types::byte_serialized`).
+/// Unlike the module-level \ref kamping::types::type_dispatcher_lookup, this policy also covers
+/// trivially-copyable types not matched by \ref kamping::types::type_dispatcher() (i.e., those
+/// handled via `types::byte_serialized`).
 struct kamping_lookup {
     /// @brief `true` if KaMPIng can resolve an MPI_Datatype for \p T.
     template <typename T>
