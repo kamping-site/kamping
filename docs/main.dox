@@ -48,6 +48,9 @@ See `allgatherv_example.cpp` and the other files in `examples` directory for mor
   - \ref kamping_mpi_utility
   - \ref kamping_types
 
+  ## Standalone Modules
+  - \subpage kamping_types_readme
+
   ## Dependencies
   - Building this documentation requires `Doxygen 1.10.0`.
 
@@ -88,6 +91,9 @@ See `allgatherv_example.cpp` and the other files in `examples` directory for mor
   \ref kamping::types::ScopedDatatype "ScopedDatatype", and \ref kamping::types::kabool "kabool".
 
   Can be consumed independently of the KaMPIng communicator via the \c kamping::types CMake target.
+
+  See \ref kamping_types_readme for the full standalone documentation including CMake setup,
+  type dispatch rules, and custom type extension examples.
 
 */
 
