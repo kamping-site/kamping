@@ -84,7 +84,7 @@ See `allgatherv_example.cpp` and the other files in `examples` directory for mor
   \brief Standalone module for mapping C++ types to MPI datatypes.
 
   Provides \ref kamping::types::type_dispatcher "type_dispatcher", \ref kamping::mpi_type_traits "mpi_type_traits",
-  \ref kamping::types::contiguous_type "contiguous_type", \ref kamping::struct_type "struct_type",
+  \ref kamping::types::contiguous_type "contiguous_type", \ref kamping::types::struct_type "struct_type",
   \ref kamping::types::ScopedDatatype "ScopedDatatype", and \ref kamping::types::kabool "kabool".
 
   Can be consumed independently of the KaMPIng communicator via the \c kamping::types CMake target.
