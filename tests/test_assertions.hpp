@@ -45,6 +45,11 @@
 #include "kamping/assertion_levels.hpp"
 #include "kamping/kassert/kassert.hpp"
 
+// since we are redefining the KAMPING_ASSERT macro to throw exceptions, we need to disable the -Wexceptions warning for this header, otherwise we would get warnings for every assertion in destructors and other noexcept contexts.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wexceptions"
+
+
 // Redefine KAMPING_ASSERT implementation to throw an exception
 #undef KAMPING_ASSERT_KASSERT_HPP_KASSERT_IMPL
 #define KAMPING_ASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level)                                \
