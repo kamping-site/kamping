@@ -56,32 +56,32 @@ auto type_dispatcher() {
     }
 }
 
+/// @brief Whether the type is handled by the auto-dispatcher \ref type_dispatcher,
+/// i.e. whether \ref mpi_type_traits is defined without a user-provided specialization.
+template <typename T>
+static constexpr bool has_auto_dispatched_type_v =
+    !std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>;
+
 /// @brief The type trait that maps a C++ type \p T to an MPI_Datatype for full KaMPIng.
 ///
-/// Extends \ref kamping::types::mpi_type_traits with a byte-serialization fallback for
-/// trivially-copyable types not matched by \ref kamping::types::type_dispatcher().
-/// Specialize this trait in `namespace kamping` to support additional types within KaMPIng.
-///
-/// The primary template transparently inherits from \ref kamping::types::mpi_type_traits, so
-/// specializations of the module trait are automatically visible here unless overridden.
+/// The default behavior is controlled by \ref type_dispatcher. Specialize this trait in
+/// `namespace kamping` to support additional types. Specializations of
+/// \ref kamping::types::mpi_type_traits are intentionally ignored here.
 template <typename T, typename Enable = void>
-struct mpi_type_traits : types::mpi_type_traits<T, Enable> {};
+struct mpi_type_traits {};
 
-/// @brief Partial specialization of \ref mpi_type_traits for trivially-copyable types not matched
-/// by \ref kamping::types::type_dispatcher() (i.e., types handled only via `types::byte_serialized`).
+/// @brief Partial specialization of \ref mpi_type_traits for types handled by \ref type_dispatcher.
 template <typename T>
-struct mpi_type_traits<
-    T,
-    std::enable_if_t<!types::has_auto_dispatched_type_v<T> && std::is_trivially_copyable_v<std::remove_const_t<T>>>> {
-    /// @brief The base type of this trait.
-    using base = types::byte_serialized<std::remove_const_t<T>>;
+struct mpi_type_traits<T, std::enable_if_t<has_auto_dispatched_type_v<T>>> {
+    /// @brief The base type of this trait obtained via \ref type_dispatcher.
+    using base = decltype(type_dispatcher<T>());
     /// @brief The category of the type.
     static constexpr types::TypeCategory category = base::category;
     /// @brief Whether the type has to be committed before it can be used in MPI calls.
     static constexpr bool has_to_be_committed = base::has_to_be_committed;
     /// @brief The MPI_Datatype corresponding to the type T.
     static MPI_Datatype data_type() {
-        return base::data_type();
+        return decltype(type_dispatcher<T>())::data_type();
     }
 };
 
@@ -96,12 +96,6 @@ struct has_static_type<T, std::void_t<decltype(mpi_type_traits<T>::data_type())>
 /// @brief `true` if \ref kamping::mpi_type_traits provides a `data_type()` function.
 template <typename T>
 static constexpr bool has_static_type_v = has_static_type<T>::value;
-
-/// @brief Whether the type is handled by the auto-dispatcher \ref type_dispatcher,
-/// i.e. whether \ref mpi_type_traits is defined without a user-provided specialization.
-template <typename T>
-static constexpr bool has_auto_dispatched_type_v =
-    !std::is_same_v<decltype(type_dispatcher<T>()), internal::no_matching_type>;
 
 /// @brief Register a new \c MPI_Datatype for \p T with the MPI environment. It will be freed when the environment is
 /// finalized.

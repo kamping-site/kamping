@@ -42,7 +42,7 @@ struct kamping_tag {};
 /// @brief Constructs an MPI_Datatype for a struct-like type.
 /// @tparam T The type to construct the MPI_Datatype for.
 /// @tparam Lookup The lookup policy used to resolve the MPI_Datatype for each field of \p T.
-///   Defaults to \ref type_dispatcher_lookup, which uses \ref kamping::mpi_type_traits.
+///   Defaults to \ref type_dispatcher_lookup, which uses \ref kamping::types::mpi_type_traits.
 ///
 /// This requires that \p T is a `std::pair`, `std::tuple` or a type that is reflectable with
 /// [pfr](https://github.com/boostorg/pfr). If you do not agree with PFR's decision if a type is implicitly

@@ -34,7 +34,7 @@ struct type_dispatcher_lookup;
 /// @tparam T The element type.
 /// @tparam N The number of elements.
 /// @tparam Lookup The lookup policy used to resolve the MPI_Datatype for \p T.
-///   Defaults to \ref type_dispatcher_lookup, which uses \ref kamping::mpi_type_traits.
+///   Defaults to \ref type_dispatcher_lookup, which uses \ref kamping::types::mpi_type_traits.
 template <typename T, size_t N, typename Lookup = type_dispatcher_lookup>
 struct contiguous_type {
     static constexpr TypeCategory category = TypeCategory::contiguous; ///< The type's \ref TypeCategory.
