@@ -24,6 +24,7 @@
 #include "kamping/data_buffers/resize_pipes.hpp"
 #include "kamping/data_buffers/type_pipes.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/v2/views.hpp"
 #include "kamping/p2p/recv.hpp"
 #include "kamping/p2p/send.hpp"
 
@@ -54,68 +55,75 @@ int main() {
 
     KAMPING_ASSERT(comm.size() == 2uz, "This example must be run with exactly 2 ranks.");
 
-    {
-        if (comm.rank_signed() == 0) {
-            std::vector<int>                             data{1, 2, 3, 4, 5, 6, 7, 8, 9};
-            std::mdspan<int, std::extents<size_t, 3, 3>> to_send(data.data());
-            comm.send(adapter::MDSpanAdapter(to_send), 1);
-        } else {
-            std::vector<int>                             data(9);
-            std::mdspan<int, std::extents<size_t, 3, 3>> to_recv(data.data());
-            auto                                         received = comm.recv(adapter::MDSpanAdapter(to_recv), 0);
-            auto                                         result   = received.get_mdspan();
-        }
-    }
+    // {
+    //     if (comm.rank_signed() == 0) {
+    //         std::vector<int>                             data{1, 2, 3, 4, 5, 6, 7, 8, 9};
+    //         std::mdspan<int, std::extents<size_t, 3, 3>> to_send(data.data());
+    //         comm.send(adapter::MDSpanAdapter(to_send), 1);
+    //     } else {
+    //         std::vector<int>                             data(9);
+    //         std::mdspan<int, std::extents<size_t, 3, 3>> to_recv(data.data());
+    //         auto                                         received = comm.recv(adapter::MDSpanAdapter(to_recv), 0);
+    //         auto                                         result   = received.get_mdspan();
+    //     }
+    // }
+
+    // {
+    //     if (comm.rank_signed() == 0) {
+    //         std::random_device rd;
+    //         std::mt19937       gen(rd());
+
+    //         std::uniform_int_distribution<> dist(1, 10);
+    //         int                             ext1 = dist(gen);
+    //         int                             ext2 = dist(gen);
+
+    //         std::vector<int>                                                                 data(ext1 * ext2, 42);
+    //         std::mdspan<int, std::extents<size_t, std::dynamic_extent, std::dynamic_extent>> to_send(
+    //             data.data(),
+    //             ext1,
+    //             ext2
+    //         );
+
+    //         comm.send(std::ranges::single_view(ext1), 1);
+    //         comm.send(std::ranges::single_view(ext2), 1);
+    //         comm.send(adapter::MDSpanAdapter(to_send), 1);
+    //     } else {
+    //         std::ranges::single_view v1(0);
+    //         comm.recv(v1, 0);
+
+    //         std::ranges::single_view v2(0);
+    //         comm.recv(v2, 0);
+
+    //         int ext1 = v1.front();
+    //         int ext2 = v2.front();
+
+    //         std::vector<int>                                                                 data(ext1 * ext2);
+    //         std::mdspan<int, std::extents<size_t, std::dynamic_extent, std::dynamic_extent>> to_recv(
+    //             data.data(),
+    //             ext1,
+    //             ext2
+    //         );
+
+    //         auto received = comm.recv(adapter::MDSpanAdapter(to_recv), 0);
+
+    //         auto result = received.get_mdspan();
+    //     }
+    // }
 
     {
-        if (comm.rank_signed() == 0) {
-            std::random_device rd;
-            std::mt19937       gen(rd());
-
-            std::uniform_int_distribution<> dist(1, 10);
-            int                             ext1 = dist(gen);
-            int                             ext2 = dist(gen);
-
-            std::vector<int>                                                                 data(ext1 * ext2, 42);
-            std::mdspan<int, std::extents<size_t, std::dynamic_extent, std::dynamic_extent>> to_send(
-                data.data(),
-                ext1,
-                ext2
-            );
-
-            comm.send(std::ranges::single_view(ext1), 1);
-            comm.send(std::ranges::single_view(ext2), 1);
-            comm.send(adapter::MDSpanAdapter(to_send), 1);
+      if (comm.rank_signed() == 0) {
+	// comm.send(std::vector<int> {1, 2, 3, 4}, 1);
+	std::vector<example_struct> data(10, {42, 42.42});
+	
+	// comm.send(data, 1);
+        auto sbuf = kamping::ranges::with_type_view(data, example_type());
+        // sbuf.begin();
+	kamping::ranges::type(sbuf);
+	// kamping::ranges::data(data | with_type(example_type()));
+            // comm.send(data | with_type(example_type()), 1);
         } else {
-            std::ranges::single_view v1(0);
-            comm.recv(v1, 0);
-
-            std::ranges::single_view v2(0);
-            comm.recv(v2, 0);
-
-            int ext1 = v1.front();
-            int ext2 = v2.front();
-
-            std::vector<int>                                                                 data(ext1 * ext2);
-            std::mdspan<int, std::extents<size_t, std::dynamic_extent, std::dynamic_extent>> to_recv(
-                data.data(),
-                ext1,
-                ext2
-            );
-
-            auto received = comm.recv(adapter::MDSpanAdapter(to_recv), 0);
-
-            auto result = received.get_mdspan();
-        }
-    }
-
-    {
-        if (comm.rank_signed() == 0) {
-            std::vector<example_struct> data(10, {42, 42.42});
-            comm.send(data | with_type(example_type()), 1);
-        } else {
-            std::vector<example_struct> data;
-            auto                        result = comm.recv(data | with_type(example_type()) | resize_buf(), 0);
+            // std::vector<example_struct> data;
+            // auto                        result = comm.recv(data | with_type(example_type()) | resize_buf(), 0);
         }
     }
 }

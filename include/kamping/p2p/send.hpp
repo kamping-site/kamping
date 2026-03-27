@@ -20,6 +20,7 @@
 #include <mpi.h>
 
 #include "kamping/communicator.hpp"
+#include "kamping/v2/ranges.hpp"
 #include "kamping/implementation_helpers.hpp"
 #include "kamping/kassert/kassert.hpp"
 #include "kamping/named_parameter_check.hpp"
@@ -58,10 +59,8 @@
 /// <hr>
 /// \include{doc} docs/resize_policy.dox
 template <
-    template <typename...>
-    typename DefaultContainerType,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
 template <typename... Args>
 void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args) const {
     using namespace kamping::internal;
@@ -174,10 +173,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::send(Args... args)
 /// @brief Convenience wrapper for MPI_Bsend. Calls \ref kamping::Communicator::send() with the appropriate send mode
 /// set.
 template <
-    template <typename...>
-    typename DefaultContainerType,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
 template <typename... Args>
 void kamping::Communicator<DefaultContainerType, Plugins...>::bsend(Args... args) const {
     this->send(std::forward<Args>(args)..., send_mode(send_modes::buffered));
@@ -186,10 +183,8 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::bsend(Args... args
 /// @brief Convenience wrapper for MPI_Ssend. Calls \ref kamping::Communicator::send() with the appropriate send mode
 /// set.
 template <
-    template <typename...>
-    typename DefaultContainerType,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
 template <typename... Args>
 void kamping::Communicator<DefaultContainerType, Plugins...>::ssend(Args... args) const {
     this->send(std::forward<Args>(args)..., send_mode(send_modes::synchronous));
@@ -198,33 +193,33 @@ void kamping::Communicator<DefaultContainerType, Plugins...>::ssend(Args... args
 /// @brief Convenience wrapper for MPI_Rsend. Calls \ref kamping::Communicator::send() with the appropriate send mode
 /// set.
 template <
-    template <typename...>
-    typename DefaultContainerType,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
 template <typename... Args>
 void kamping::Communicator<DefaultContainerType, Plugins...>::rsend(Args... args) const {
     this->send(std::forward<Args>(args)..., send_mode(send_modes::ready));
 }
 
 template <
-    template <typename...>
-    typename DefaultContainerType,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
-template <kamping::SendDataBuffer SBuff>
-auto kamping::Communicator<DefaultContainerType, Plugins...>::send(SBuff&& sbuf, int dest, int send_tag) const {
-    if (send_tag == MPI_UNDEFINED) {
-        send_tag = default_tag();
-    }
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
+template <kamping::ranges::send_buffer SBuff>
+SBuff kamping::Communicator<DefaultContainerType, Plugins...>::send(SBuff&& sbuf, int dest) const {
+    return send(std::forward<SBuff>(sbuf), dest, default_tag());
+}
 
+template <
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
+template <kamping::ranges::send_buffer SBuff>
+SBuff kamping::Communicator<DefaultContainerType, Plugins...>::send(SBuff&& sbuf, int dest, int send_tag) const {
     [[maybe_unused]] int err = MPI_Send(
-        std::ranges::data(sbuf),                      // buf
-        asserting_cast<int>(std::ranges::size(sbuf)), // count
-        type(sbuf),                                   // datatype
-        dest,                                         // destination
-        send_tag,                                     // tag
-        this->mpi_communicator()                      // comm
+        kamping::ranges::data(sbuf),                      // buf
+        asserting_cast<int>(kamping::ranges::size(sbuf)), // count
+        kamping::ranges::type(sbuf),                      // datatype
+        dest,                                             // destination
+        send_tag,                                         // tag
+        this->mpi_communicator()                          // comm
     );
     this->mpi_error_hook(err, "MPI_Send");
 

@@ -36,6 +36,7 @@
 #include "kamping/parameter_objects.hpp"
 #include "kamping/result.hpp"
 #include "kamping/status.hpp"
+#include "kamping/v2/ranges.hpp"
 
 /// @addtogroup kamping_p2p
 /// @{
@@ -76,10 +77,8 @@
 /// <hr>
 /// \include{doc} docs/resize_policy.dox
 template <
-    template <typename...>
-    typename DefaultContainerType,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
 template <typename recv_value_type_tparam /* = kamping::internal::unused_tparam */, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args) const {
     using namespace kamping::internal;
@@ -214,18 +213,16 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(Args... args)
 /// @param args All required and any number of the optional buffers described above.
 /// @return The received value of type \c recv_value_type_tparam.
 template <
-    template <typename...>
-    typename DefaultContainerType,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
 template <typename recv_value_type_tparam, typename... Args>
 auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args... args) const {
     KAMPING_CHECK_PARAMETERS(Args, KAMPING_REQUIRED_PARAMETERS(), KAMPING_OPTIONAL_PARAMETERS(tag, source, status));
 
     using default_source_buf_type = decltype(kamping::source(rank::any));
     using source_param_type       = std::remove_reference_t<decltype(internal::select_parameter_type_or_default<
-                                                               internal::ParameterType::source,
-                                                               default_source_buf_type>({}, args...))>;
+                                                                     internal::ParameterType::source,
+                                                                     default_source_buf_type>({}, args...))>;
     static_assert(
         source_param_type::rank_type != internal::RankType::null,
         "You cannot receive an element from source kamping::rank::null."
@@ -233,8 +230,8 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args..
 
     using default_status_param_type = decltype(kamping::status(kamping::ignore<>));
     using status_param_type         = std::remove_reference_t<decltype(internal::select_parameter_type_or_default<
-                                                               internal::ParameterType::status,
-                                                               default_status_param_type>({}, args...))>;
+                                                                       internal::ParameterType::status,
+                                                                       default_status_param_type>({}, args...))>;
     static_assert(
         !internal::is_extractable<status_param_type>,
         "KaMPIng cannot allocate a status object for you here, because we have no way of returning it. Pass a "
@@ -244,12 +241,10 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv_single(Args..
 }
 
 template <
-    template <typename...>
-    typename DefaultContainerType,
-    template <typename, template <typename...> typename>
-    typename... Plugins>
-template <kamping::RecvDataBuffer RBuff, typename StatusObject>
-auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(
+    template <typename...> typename DefaultContainerType,
+    template <typename, template <typename...> typename> typename... Plugins>
+template <kamping::ranges::recv_buffer RBuff, typename StatusObject>
+RBuff kamping::Communicator<DefaultContainerType, Plugins...>::recv(
     RBuff&& rbuf, int source, int tag, StatusObject status_param
 ) const {
     infer<CommType::recv>(rbuf, *this);
@@ -261,13 +256,13 @@ auto kamping::Communicator<DefaultContainerType, Plugins...>::recv(
     auto status = status_param.construct_buffer_or_rebind();
 
     [[maybe_unused]] int err = MPI_Recv(
-        std::ranges::data(rbuf),                      // buf
-        asserting_cast<int>(std::ranges::size(rbuf)), // count
-        type(rbuf),                                   // datatype
-        source,                                       // source
-        tag,                                          // tag
-        this->mpi_communicator(),                     // comm
-        internal::status_param_to_native_ptr(status)  // status
+        kamping::ranges::data(rbuf),                      // buf
+        asserting_cast<int>(kamping::ranges::size(rbuf)), // count
+        kamping::ranges::type(rbuf),                      // datatype
+        source,                                           // source
+        tag,                                              // tag
+        this->mpi_communicator(),                         // comm
+        internal::status_param_to_native_ptr(status)      // status
     );
     this->mpi_error_hook(err, "MPI_Recv");
 
