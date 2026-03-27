@@ -56,10 +56,18 @@ int main(int argc, char** argv) {
 
         // Builtins and enums are supported; no commit needed.
         info("int", kamping::types::has_static_type_v<int>, kamping::types::mpi_type_traits<int>::has_to_be_committed);
-        info("double", kamping::types::has_static_type_v<double>, kamping::types::mpi_type_traits<double>::has_to_be_committed);
+        info(
+            "double",
+            kamping::types::has_static_type_v<double>,
+            kamping::types::mpi_type_traits<double>::has_to_be_committed
+        );
 
         // C-array and std::array map to contiguous types; commit is required.
-        info("float[4]", kamping::types::has_static_type_v<float[4]>, kamping::types::mpi_type_traits<float[4]>::has_to_be_committed);
+        info(
+            "float[4]",
+            kamping::types::has_static_type_v<float[4]>,
+            kamping::types::mpi_type_traits<float[4]>::has_to_be_committed
+        );
         info(
             "std::array<double,3>",
             kamping::types::has_static_type_v<std::array<double, 3>>,
