@@ -18,8 +18,8 @@
 #include "kamping/types/builtin_types.hpp"
 
 namespace kamping {
-using types::TypeCategory;
-using types::category_has_to_be_committed;
 using types::builtin_type;
+using types::category_has_to_be_committed;
 using types::is_builtin_type_v;
+using types::TypeCategory;
 } // namespace kamping

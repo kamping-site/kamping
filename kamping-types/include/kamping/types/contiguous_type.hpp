@@ -12,7 +12,8 @@
 // <https://www.gnu.org/licenses/>.
 
 /// @file
-/// @brief `MPI_Type_contiguous` implementation for \ref kamping::types::contiguous_type and \ref kamping::types::byte_serialized.
+/// @brief `MPI_Type_contiguous` implementation for \ref kamping::types::contiguous_type and \ref
+/// kamping::types::byte_serialized.
 
 #pragma once
 #include <cstddef>

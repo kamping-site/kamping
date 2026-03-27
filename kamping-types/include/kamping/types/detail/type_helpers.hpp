@@ -18,8 +18,8 @@
 #include <array>
 #include <cstddef>
 #include <tuple>
-#include <utility>
 #include <type_traits>
+#include <utility>
 
 namespace kamping::internal {
 

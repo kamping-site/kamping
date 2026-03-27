@@ -117,15 +117,15 @@ template <typename T>
 }
 
 // Backward-compatible aliases for types moved to kamping::types::
-using types::TypeCategory;
-using types::category_has_to_be_committed;
 using types::builtin_type;
-using types::is_builtin_type_v;
-using types::contiguous_type;
 using types::byte_serialized;
-using types::struct_type;
+using types::category_has_to_be_committed;
+using types::contiguous_type;
+using types::is_builtin_type_v;
 using types::kamping_tag;
 using types::ScopedDatatype;
+using types::struct_type;
+using types::TypeCategory;
 
 /// @}
 
