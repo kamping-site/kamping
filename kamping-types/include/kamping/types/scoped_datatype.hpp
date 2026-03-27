@@ -19,6 +19,8 @@
 
 #include <mpi.h>
 
+#include "kamping/kassert/kassert.hpp"
+
 namespace kamping::types {
 
 /// @addtogroup kamping_types
@@ -34,8 +36,10 @@ public:
     /// @brief Construct a new scoped MPI_Datatype and commit it.
     /// If no type is provided, defaults to `MPI_DATATYPE_NULL` and does not commit or free anything.
     ScopedDatatype(MPI_Datatype type = MPI_DATATYPE_NULL) : _type(type) {
+        // FIXME: ensure that we don't commit/free named types
         if (type != MPI_DATATYPE_NULL) {
-            MPI_Type_commit(&_type);
+            int const err = MPI_Type_commit(&_type);
+            KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_commit failed");
         }
     }
     /// @brief Deleted copy constructor.
@@ -59,7 +63,8 @@ public:
     /// @brief Free the MPI_Datatype.
     ~ScopedDatatype() {
         if (_type != MPI_DATATYPE_NULL) {
-            MPI_Type_free(&_type);
+            int const err = MPI_Type_free(&_type);
+            KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_free failed");
         }
     }
 };
