@@ -45,22 +45,21 @@
 #include "kamping/assertion_levels.hpp"
 #include "kamping/kassert/kassert.hpp"
 
-// since we are redefining the KAMPING_ASSERT macro to throw exceptions, we need to disable the -Wexceptions warning for this header, otherwise we would get warnings for every assertion in destructors and other noexcept contexts.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wexceptions"
-
-
-// Redefine KAMPING_ASSERT implementation to throw an exception
+// Redefine KAMPING_ASSERT implementation to throw an exception.
+// The throw is wrapped in a lambda so that the throw expression itself is not directly in a noexcept context
+// (e.g. a destructor), which would trigger -Wexceptions (Clang) / -Wterminate (GCC).
 #undef KAMPING_ASSERT_KASSERT_HPP_KASSERT_IMPL
-#define KAMPING_ASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level)                                \
-    do {                                                                                                         \
-        if constexpr (kassert::internal::assertion_enabled(level)) {                                             \
-            if (!(expression)) {                                                                                 \
-                throw kamping::testing::KassertTestingException(                                                 \
-                    (kassert::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str() \
-                );                                                                                               \
-            }                                                                                                    \
-        }                                                                                                        \
+#define KAMPING_ASSERT_KASSERT_HPP_KASSERT_IMPL(type, expression, message, level)                                    \
+    do {                                                                                                             \
+        if constexpr (kassert::internal::assertion_enabled(level)) {                                                 \
+            if (!(expression)) {                                                                                     \
+                [&]() {                                                                                              \
+                    throw kamping::testing::KassertTestingException(                                                 \
+                        (kassert::internal::RrefOStringstreamLogger{std::ostringstream{}} << message).stream().str() \
+                    );                                                                                               \
+                }();                                                                                                 \
+            }                                                                                                        \
+        }                                                                                                            \
     } while (false)
 
 // Makros to test for failed KAMPING_ASSERTs

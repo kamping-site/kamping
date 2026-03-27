@@ -318,31 +318,12 @@ public:
                 is_already_finalized = finalized();
             } catch (MpiErrorException&) {
                 // Just kassert. We can't throw exceptions in the destructor.
-
-                // During testing we sometimes force KAMPING_ASSERT to throw exceptions. During the resulting stack
-                // unwinding, code in this destructor might be executed and thus throwing another exception will result
-                // in calling std::abort(). We're disabling the respective warning here.
-#if defined(__GNUC__) and not defined(__clang__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wterminate"
-#endif
                 KAMPING_ASSERT(false, "MPI_Finalized call failed.");
-#if defined(__GNUC__) and not defined(__clang__)
-    #pragma GCC diagnostic pop
-#endif
             }
             if (!is_already_finalized) {
                 free_registered_mpi_types();
                 [[maybe_unused]] int err = MPI_Finalize();
-                // see above
-#if defined(__GNUC__) and not defined(__clang__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wterminate"
-#endif
                 KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Finalize call failed.");
-#if defined(__GNUC__) and not defined(__clang__)
-    #pragma GCC diagnostic pop
-#endif
             }
         }
     }
