@@ -14,7 +14,8 @@ template <class T>
 concept integer_like = std::integral<T> && !std::same_as<T, bool>;
 
 template <class T>
-concept ptr_to_object = std::is_pointer_v<T> && std::is_object_v<std::remove_pointer_t<T>>;
+concept ptr_to_object = std::is_pointer_v<T>
+                        && (std::is_object_v<std::remove_pointer_t<T>> || std::is_void_v<std::remove_pointer_t<T>>);
 
 template <typename T>
 concept has_mpi_compatible_size_member = requires(std::remove_reference_t<T> const& t) {
