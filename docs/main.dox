@@ -46,6 +46,10 @@ See `allgatherv_example.cpp` and the other files in `examples` directory for mor
   - \ref kamping_named_parameters
   - \ref kamping_utility
   - \ref kamping_mpi_utility
+  - \ref kamping_types
+
+  ## Standalone Modules
+  - \subpage kamping_types_readme
 
   ## Dependencies
   - Building this documentation requires `Doxygen 1.10.0`.
@@ -78,6 +82,18 @@ See `allgatherv_example.cpp` and the other files in `examples` directory for mor
   \brief Quality of life features for MPI like automatic type conversion (from C++ to MPI)
 
   - \ref mpi_datatype.hpp
+
+  \defgroup kamping_types MPI Type System
+  \brief Standalone module for mapping C++ types to MPI datatypes.
+
+  Provides \ref kamping::types::type_dispatcher "type_dispatcher", \ref kamping::mpi_type_traits "mpi_type_traits",
+  \ref kamping::types::contiguous_type "contiguous_type", \ref kamping::types::struct_type "struct_type",
+  \ref kamping::types::ScopedDatatype "ScopedDatatype", and \ref kamping::types::kabool "kabool".
+
+  Can be consumed independently of the KaMPIng communicator via the \c kamping::types CMake target.
+
+  See \ref kamping_types_readme for the full standalone documentation including CMake setup,
+  type dispatch rules, and custom type extension examples.
 
 */
 

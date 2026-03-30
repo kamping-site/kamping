@@ -239,6 +239,19 @@ else ()
     message(STATUS "Reflection: disabled")
 endif ()
 
+# Propagate reflection and example settings to kamping-types module
+if (KAMPING_ENABLE_REFLECTION)
+    set(KAMPING_TYPES_ENABLE_REFLECTION ON)
+endif ()
+if (PROJECT_IS_TOP_LEVEL OR KAMPING_BUILD_EXAMPLES_AND_TESTS)
+    set(KAMPING_TYPES_BUILD_EXAMPLES
+        ON
+        CACHE BOOL "" FORCE
+    )
+endif ()
+add_subdirectory(kamping-types)
+target_link_libraries(kamping_base INTERFACE kamping::types)
+
 if (KAMPING_ENABLE_SERIALIZATION)
     FetchContent_Declare(
         cereal

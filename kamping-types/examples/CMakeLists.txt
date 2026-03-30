@@ -1,0 +1,3 @@
+add_executable(example_type_traits type_traits_example.cpp)
+target_link_libraries(example_type_traits PRIVATE kamping_types)
+target_compile_definitions(example_type_traits PRIVATE KAMPING_ASSERT_ASSERTION_LEVEL=30)

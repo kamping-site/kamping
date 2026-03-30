@@ -1,6 +1,6 @@
 // This file is part of KaMPIng.
 //
-// Copyright 2021-2024 The KaMPIng Authors
+// Copyright 2021-2024, 2026 The KaMPIng Authors
 //
 // KaMPIng is free software : you can redistribute it and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
@@ -12,21 +12,8 @@
 // <https://www.gnu.org/licenses/>.
 
 #pragma once
+#include "kamping/types/kabool.hpp"
+
 namespace kamping {
-/// @brief Wrapper around bool to allow handling containers of boolean values
-class kabool {
-public:
-    /// @brief default constructor for a \c kabool with value \c false
-    constexpr kabool() noexcept : _value() {}
-    /// @brief constructor to construct a \c kabool out of a \c bool
-    constexpr kabool(bool value) noexcept : _value(value) {}
-
-    /// @brief implicit cast of \c kabool to \c bool
-    inline constexpr operator bool() const noexcept {
-        return _value;
-    }
-
-private:
-    bool _value; /// < the wrapped boolean value
-};
+using types::kabool;
 } // namespace kamping

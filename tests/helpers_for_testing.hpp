@@ -150,19 +150,19 @@ public:
         return !(*this == other);
     }
 
-    T* begin() const {
+    T* begin() const noexcept {
         return _data;
     }
 
-    T* end() const {
+    T* end() const noexcept {
         return _data + _size;
     }
 
-    T const* cbegin() const {
+    T const* cbegin() const noexcept {
         return _data;
     }
 
-    T const* cend() const {
+    T const* cend() const noexcept {
         return _data + _size;
     }
 

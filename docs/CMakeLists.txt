@@ -51,9 +51,9 @@ if (DOXYGEN_FOUND)
     set(DOXYGEN_FILE_PATTERNS *.cpp *.hpp *.dox *.md)
     set(DOXYGEN_WARN_AS_ERROR FAIL_ON_WARNINGS)
     set(CITE_BIB_FILES ${CMAKE_CURRENT_LIST_DIR}/literature.bib)
-
     doxygen_add_docs(
         docs ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/../include/
+        ${CMAKE_CURRENT_LIST_DIR}/../kamping-types/include/
         COMMENT "Generating Documentation"
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/..
     )

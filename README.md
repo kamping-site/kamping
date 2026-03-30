@@ -172,6 +172,12 @@ void sort(MPI_Comm comm_, std::vector<T>& data, size_t seed) {
 It is a lot more concise than the [(verbose) plain MPI implementation](./examples/applications/sample-sort/mpi.hpp), but also introduces no additional overhead to achieve this, as can be seen the following experiment. There we compare the sorting implementation in KaMPIng to other MPI bindings.
 
 ![](./plot.svg)
+## Standalone Modules
+
+Parts of KaMPIng are available as standalone libraries that can be consumed without the full communicator layer:
+
+- **[kamping-types](./kamping-types/README.md)** — maps C++ types to `MPI_Datatype`. Provides `mpi_type_traits<T>`, `type_dispatcher`, `contiguous_type`, `struct_type`, `ScopedDatatype`, and `kabool`. Link via `kamping::types`.
+
 ## Platform :desktop_computer:
 - intensively tested with GCC and Clang and OpenMPI
 - requires a C++17 ready compiler
