@@ -1,0 +1,15 @@
+<map id="include/kamping/builtin_types.hpp" name="include/kamping/builtin_types.hpp">
+<area shape="rect" id="Node000001" title="Mapping of C++ datatypes to builtin MPI types." alt="" coords="161,5,336,45"/>
+<area shape="rect" id="Node000002" href="$kamping-types_2include_2kamping_2types_2builtin__types_8hpp.html" title="Mapping of C++ datatypes to builtin MPI types." alt="" coords="167,93,330,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="251,46,251,79,246,79,246,46"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,181,84,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="201,136,89,179,87,174,199,131"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="108,181,179,207"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="225,136,172,175,168,171,222,131"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="203,181,295,207"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="251,134,251,167,246,167,246,134"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="319,181,378,207"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="275,131,324,170,321,175,271,136"/>
+<area shape="rect" id="Node000007" href="$kamping-types_2include_2kamping_2types_2kabool_8hpp.html" title="Boolean wrapper type for use with MPI containers." alt="" coords="403,181,596,207"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="309,131,450,175,449,180,308,136"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="kamping::types::contiguous_type&lt; T, N, Lookup &gt;" name="kamping::types::contiguous_type&lt; T, N, Lookup &gt;">
+<area shape="rect" id="Node000001" title="Constructs a contiguous MPI type of N elements of type T using MPI_Type_contiguous." alt="" coords="5,53,207,93"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1types_1_1byte__serialized.html" title=" " alt="" coords="259,5,419,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,50,258,44,259,49,221,56"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1types_1_1byte__serialized.html" title=" " alt="" coords="255,84,423,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,89,255,95,254,100,220,94"/>
+</map>

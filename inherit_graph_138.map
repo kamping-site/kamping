@@ -1,0 +1,19 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,267,124,293"/>
+<area shape="rect" id="Node000001" href="$structkamping_1_1has__static__type.html" title="Check if the type has a static type definition, i.e. kamping::mpi_type_traits is defined." alt="" coords="183,5,389,45"/>
+<area shape="poly" id="edge52_Node000000_Node000001" title=" " alt="" coords="68,253,80,210,100,157,129,102,148,77,170,55,188,43,191,48,174,59,152,81,134,105,105,159,85,212,74,255"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1internal_1_1has__data__member.html" title="Helper to decide if data type has .data() method." alt="" coords="172,70,400,125"/>
+<area shape="poly" id="edge53_Node000000_Node000002" title=" " alt="" coords="76,254,113,194,139,162,170,134,189,122,192,127,174,138,143,165,117,197,80,256"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1internal_1_1is__specialization.html" title="Type trait to check if a type is an instance of a templated type." alt="" coords="207,149,365,203"/>
+<area shape="poly" id="edge54_Node000000_Node000003" title=" " alt="" coords="94,258,171,214,206,199,208,204,173,218,97,262"/>
+<area shape="rect" id="Node000004" href="$structkamping_1_1internal_1_1is__std__array.html" title="Helper to check if a type is a std::array." alt="" coords="214,228,358,268"/>
+<area shape="poly" id="edge55_Node000000_Node000004" title=" " alt="" coords="137,267,213,256,214,261,138,272"/>
+<area shape="rect" id="Node000005" href="$structkamping_1_1internal_1_1is__std__pair.html" title="Helper to check if a type is a std::pair." alt="" coords="214,292,358,332"/>
+<area shape="poly" id="edge56_Node000000_Node000005" title=" " alt="" coords="138,288,214,299,213,304,137,293"/>
+<area shape="rect" id="Node000006" href="$structkamping_1_1internal_1_1is__std__tuple.html" title="Helper to check if a type is a std::tuple." alt="" coords="214,356,358,396"/>
+<area shape="poly" id="edge57_Node000000_Node000006" title=" " alt="" coords="97,298,132,321,173,342,215,357,213,362,171,346,130,325,94,303"/>
+<area shape="rect" id="Node000007" href="$structkamping_1_1types_1_1builtin__type.html" title="Checks if the type T is a builtin MPI type." alt="" coords="201,420,371,460"/>
+<area shape="poly" id="edge58_Node000000_Node000007" title=" " alt="" coords="82,303,119,355,145,383,173,406,202,420,199,425,171,410,141,387,115,359,78,306"/>
+<area shape="rect" id="Node000008" href="$structkamping_1_1types_1_1has__static__type.html" title="Check if the type has a static type definition, i.e. kamping::types::mpi_type_traits is defined." alt="" coords="193,485,379,539"/>
+<area shape="poly" id="edge59_Node000000_Node000008" title=" " alt="" coords="76,305,90,342,110,386,138,431,174,470,194,484,191,488,170,474,134,434,105,389,85,344,71,307"/>
+</map>

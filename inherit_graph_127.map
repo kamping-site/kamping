@@ -1,0 +1,12 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structkamping_1_1types_1_1contiguous__type.html" title=" " alt="" coords="5,37,212,77"/>
+<area shape="rect" id="Node000001" href="$structkamping_1_1types_1_1byte__serialized.html" title="Constructs a type serialized as a sequence of sizeof(T) bytes using MPI_BYTE." alt="" coords="264,37,423,77"/>
+<area shape="poly" id="edge29_Node000000_Node000001" title=" " alt="" coords="226,54,264,54,264,59,226,59"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1mpi__type__traits_3_01std_1_1pair_3_01First_00_01Second_01_4_00_01std_1_1enable8225356c1b4dd1afe36e838bc902e3db.html" title="Specialization of the mpi_type_traits type trait for std::pair, which represents the pair as a sequen..." alt="" coords="475,5,697,89"/>
+<area shape="poly" id="edge30_Node000001_Node000002" title=" " alt="" coords="437,50,474,49,475,54,437,56"/>
+<area shape="rect" id="Node000004" href="$structkamping_1_1mpi__type__traits_3_01std_1_1tuple_3_01Ts_8_8_8_01_4_00_01std_1_1enable__if__t_71629c10fd8c4629866f18448d725d4c.html" title="Specialization of the mpi_type_traits type trait for std::tuple, which represents the tuple as MPI st..." alt="" coords="482,114,690,183"/>
+<area shape="poly" id="edge31_Node000001_Node000004" title=" " alt="" coords="411,79,495,111,493,116,409,84"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1types_1_1struct__type.html" title="Constructs an MPI_Datatype for a struct&#45;like type." alt="" coords="260,110,427,150"/>
+<area shape="poly" id="edge32_Node000003_Node000002" title=" " alt="" coords="415,103,474,83,475,88,417,108"/>
+<area shape="poly" id="edge33_Node000003_Node000004" title=" " alt="" coords="441,135,482,138,482,143,440,140"/>
+</map>
