@@ -41,12 +41,14 @@ struct kamping_tag {};
 
 /// @brief Constructs an MPI_Datatype for a struct-like type.
 /// @tparam T The type to construct the MPI_Datatype for.
+/// @tparam Lookup The lookup policy used to resolve the MPI_Datatype for each field of \p T.
+///   Defaults to \ref type_dispatcher_lookup, which uses \ref kamping::types::mpi_type_traits.
 ///
 /// This requires that \p T is a `std::pair`, `std::tuple` or a type that is reflectable with
 /// [pfr](https://github.com/boostorg/pfr). If you do not agree with PFR's decision if a type is implicitly
 /// reflectable, you can override it by providing a specialization of \c pfr::is_reflectable with the tag \ref
 /// kamping_tag.
-template <typename T>
+template <typename T, typename Lookup = type_dispatcher_lookup>
 struct struct_type {
 #ifdef KAMPING_ENABLE_REFLECTION
     static_assert(
@@ -126,8 +128,8 @@ constexpr size_t tuple_size = [] {
 
 namespace kamping::types {
 
-template <typename T>
-MPI_Datatype struct_type<T>::data_type() {
+template <typename T, typename Lookup>
+MPI_Datatype struct_type<T, Lookup>::data_type() {
     T        t{};
     MPI_Aint base;
     MPI_Get_address(&t, &base);
@@ -138,10 +140,11 @@ MPI_Datatype struct_type<T>::data_type() {
         MPI_Get_address(&elem, &disp[i]);
         using elem_type = std::remove_reference_t<decltype(elem)>;
         static_assert(
-            kamping::has_static_type_v<elem_type>,
-            "\n --> Type not supported directly by KaMPIng. Please provide a specialization for mpi_type_traits."
+            Lookup::template has_type_v<elem_type>,
+            "\n --> Type not supported by the current Lookup policy. "
+            "Please specialize mpi_type_traits for this type or provide a custom Lookup."
         );
-        mpi_types[i] = kamping::mpi_type_traits<elem_type>::data_type();
+        mpi_types[i] = Lookup::template get<elem_type>();
         disp[i]      = MPI_Aint_diff(disp[i], base);
         blocklens[i] = 1;
     });

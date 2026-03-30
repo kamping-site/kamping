@@ -27,10 +27,10 @@ Then include what you need:
 #include "kamping/types/struct_type.hpp"
 
 // Obtain an MPI_Datatype for a builtin — no commit required
-MPI_Datatype int_type = kamping::mpi_type_traits<int>::data_type(); // MPI_INT
+MPI_Datatype int_type = kamping::types::mpi_type_traits<int>::data_type(); // MPI_INT
 
 // Commit and RAII-manage a contiguous type for float[4]
-kamping::ScopedDatatype arr_type{kamping::mpi_type_traits<float[4]>::data_type()};
+kamping::types::ScopedDatatype arr_type{kamping::types::mpi_type_traits<float[4]>::data_type()};
 MPI_Send(data, 1, arr_type.data_type(), dest, tag, MPI_COMM_WORLD);
 // type is freed when arr_type goes out of scope
 ```
@@ -73,7 +73,7 @@ Specialize `mpi_type_traits<T>` to support your own types:
 ```cpp
 struct Point { float x, y, z; };
 
-namespace kamping {
+namespace kamping::types {
 // Option 1: use struct_type (requires std::pair/std::tuple, or Boost.PFR reflection)
 template <>
 struct mpi_type_traits<std::pair<int, double>> : struct_type<std::pair<int, double>> {};
@@ -88,7 +88,7 @@ struct mpi_type_traits<Point> {
         return type;
     }
 };
-} // namespace kamping
+} // namespace kamping::types
 ```
 
 ## When Using Full KaMPIng
