@@ -1,4 +1,4 @@
-#include "ranges/adaptor.hpp"
-#include "ranges/adaptor_closure.hpp"
-#include "ranges/concepts.hpp"
-#include "ranges/ranges.hpp"
+#include "ranges/adaptor.hpp"         // IWYU pragma: export
+#include "ranges/adaptor_closure.hpp" // IWYU pragma: export
+#include "ranges/concepts.hpp"        // IWYU pragma: export
+#include "ranges/ranges.hpp"          // IWYU pragma: export

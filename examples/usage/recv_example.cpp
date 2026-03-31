@@ -15,17 +15,26 @@
 #include <mdspan>
 #include <vector>
 
+#include <cereal/types/string.hpp>
+#include <cereal/types/unordered_map.hpp>
 #include <mpi.h>
 
 #include "helpers_for_examples.hpp"
 #include "kamping/communicator.hpp"
 #include "kamping/environment.hpp"
+#include "kamping/p2p/recv.hpp" // IWYU pragma: keep
+#include "kamping/p2p/send.hpp" // IWYU pragma: keep
+#include "kamping/v2/contrib/cereal_view.hpp"
 #include "kamping/v2/views.hpp"
-#include "kamping/v2/views/with_type_view.hpp"
 
 struct example_struct {
     int    foo;
     double bar;
+
+    template <typename Archive>
+    void serialize(Archive& ar) {
+        ar(foo, bar);
+    }
 };
 
 MPI_Datatype example_type() {
@@ -115,6 +124,20 @@ int main() {
             rbuf[0] = 3;
         }
     }
+    // std::views::take: a standard library view that is not derived from view_interface_base.
+    // kamping::ranges::size/data/type dispatch through the std::ranges CPOs via the
+    // sized_range/contiguous_range fallback overloads — no kamping wrapping needed.
+    {
+        if (comm.rank_signed() == 0) {
+            std::vector<int> data{1, 2, 3, 4, 5, 6, 7, 8};
+            comm.send(data | std::views::take(4), 1); // sends only first 4 elements
+        } else {
+            std::vector<int> buf(4);
+            comm.recv(buf | std::views::take(4), 0);
+            KAMPING_ASSERT(buf[0] == 1 && buf[3] == 4, "take(4) recv mismatch.");
+        }
+    }
+
     // with_type on a vector: annotate a range with a custom MPI datatype
     {
         if (comm.rank_signed() == 0) {
@@ -190,6 +213,48 @@ int main() {
             auto             rbuf = comm.recv(buf | kamping::views::resize, 0);
             std::println("Received {}.", rbuf);
             KAMPING_ASSERT(rbuf.base().base().size() == 5uz, "Expected 5 elements after auto-resize.");
+        }
+    }
+    // views::serialize: send and receive non-contiguous / non-trivial objects via cereal.
+    // Rank 0 serializes the map to bytes and sends. Rank 1 receives the bytes and
+    // deserializes lazily when operator* is first called (triggering do_deserialize()).
+    {
+        if (comm.rank_signed() == 0) {
+            std::unordered_map<std::string, int> map{{"a", 1}, {"b", 2}, {"c", 3}};
+            comm.send(map | kamping::views::serialize, 1);
+        } else {
+            std::unordered_map<std::string, int> map;
+            auto                                 view = comm.recv(map | kamping::views::serialize, 0);
+            // operator* triggers deserialization; dereference before iterating.
+            for (auto const& [k, v]: *view) {
+                std::println("  {}: {}", k, v);
+            }
+            KAMPING_ASSERT(map.size() == 3uz, "Expected 3 entries after deserialization.");
+        }
+    }
+
+    // views::serialize on a non-range type: operator* and operator-> trigger deserialization.
+    {
+        if (comm.rank_signed() == 0) {
+            example_struct s{42, 3.14};
+            comm.send(s | kamping::views::serialize, 1);
+        } else {
+            example_struct s{};
+            auto           view = comm.recv(s | kamping::views::serialize, 0);
+            std::println("foo={} bar={}", view->foo, view->bar);
+            KAMPING_ASSERT((*view).foo == 42, "Deserialization mismatch.");
+        }
+    }
+
+    // views::deserialize<T>: recv into an owning view without a pre-existing object.
+    {
+        if (comm.rank_signed() == 0) {
+            example_struct s{7, 2.71};
+            comm.send(s | kamping::views::serialize, 1);
+        } else {
+            auto view = comm.recv(kamping::views::deserialize<example_struct>(), 0);
+            std::println("foo={} bar={}", view->foo, view->bar);
+            KAMPING_ASSERT((*view).foo == 7, "deserialize<T> mismatch.");
         }
     }
 }

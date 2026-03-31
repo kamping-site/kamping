@@ -10,6 +10,10 @@
 
 namespace kamping::ranges {
 
+// Tag base for all kamping views. Used to guard the std::ranges::size fallback
+// against ADL circularity (std::ranges::size → ADL kamping::ranges::size → std::ranges::sized_range).
+struct view_interface_base {};
+
 template <class T>
 concept integer_like = std::integral<T> && !std::same_as<T, bool>;
 
@@ -51,8 +55,15 @@ constexpr auto size(T&& t) {
     return t.mpi_size();
 }
 
-template <std::ranges::sized_range T>
+// The !derived_from guard prevents evaluating std::ranges::sized_range for kamping view
+// types, breaking the ADL cycle: std::ranges::size → ADL kamping::ranges::size
+// → std::ranges::sized_range → std::ranges::size → … (circular hard error).
+// Standard library types are not derived from view_interface_base, so they reach
+// std::ranges::size correctly.
+template <typename T>
     requires(!has_mpi_compatible_size_member<T>)
+          && (!std::derived_from<std::remove_cvref_t<T>, view_interface_base>)
+          && std::ranges::sized_range<T>
 constexpr auto size(T&& t) {
     return std::ranges::size(std::forward<T>(t));
 }
@@ -62,8 +73,12 @@ constexpr auto data(T&& t) {
     return t.mpi_data();
 }
 
-template <std::ranges::contiguous_range T>
+// std::ranges::data has no ADL step so no circular dependency risk, but the
+// !derived_from guard is added for consistency with the size() overload.
+template <typename T>
     requires(!has_mpi_compatible_data_member<T>)
+          && (!std::derived_from<std::remove_cvref_t<T>, view_interface_base>)
+          && std::ranges::contiguous_range<T>
 constexpr auto data(T&& t) {
     return std::ranges::data(std::forward<T>(t));
 }

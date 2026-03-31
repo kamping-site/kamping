@@ -18,8 +18,6 @@ concept has_const_base_range = requires(D const& d) {
 };
 } // namespace detail
 
-struct view_interface_base {};
-
 template <typename Derived>
 struct view_interface : public view_interface_base, public std::ranges::view_interface<Derived> {
     constexpr Derived& derived() noexcept {
