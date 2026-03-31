@@ -4,6 +4,7 @@
 #include <mpi.h>
 
 #include "kamping/v2/ranges/adaptor.hpp"
+#include "kamping/v2/ranges/all.hpp"
 #include "kamping/v2/ranges/view_interface.hpp"
 
 namespace kamping {
@@ -29,14 +30,14 @@ public:
 };
 
 template <typename R>
-with_type_view(R&&, MPI_Datatype) -> with_type_view<std::views::all_t<R>>;
+with_type_view(R&&, MPI_Datatype) -> with_type_view<kamping::ranges::all_t<R>>;
 
 } // namespace ranges
 
 namespace views {
 
 inline constexpr kamping::ranges::adaptor<1, decltype([](auto&& r, MPI_Datatype type) {
-    return kamping::ranges::with_type_view(std::forward<decltype(r)>(r), type);
+    return kamping::ranges::with_type_view(kamping::ranges::all(std::forward<decltype(r)>(r)), type);
 })> with_type{};
 
 } // namespace views

@@ -6,10 +6,22 @@
 #include "ranges.hpp"
 
 namespace kamping::ranges {
+namespace detail {
+template <typename D>
+concept has_base_range = requires(D& d) {
+    { d.base() } -> std::ranges::range;
+};
+
+template <typename D>
+concept has_const_base_range = requires(D const& d) {
+    { d.base() } -> std::ranges::range;
+};
+} // namespace detail
+
 struct view_interface_base {};
 
 template <typename Derived>
-struct view_interface : public std::ranges::view_interface<Derived> {
+struct view_interface : public view_interface_base, public std::ranges::view_interface<Derived> {
     constexpr Derived& derived() noexcept {
         return static_cast<Derived&>(*this);
     }
@@ -18,14 +30,26 @@ struct view_interface : public std::ranges::view_interface<Derived> {
         return static_cast<Derived const&>(*this);
     }
 
+    constexpr auto begin()
+        requires detail::has_base_range<Derived>
+    {
+        return std::ranges::begin(derived().base());
+    }
+
+    constexpr auto end()
+        requires detail::has_base_range<Derived>
+    {
+        return std::ranges::end(derived().base());
+    }
+
     constexpr auto begin() const
-        requires std::ranges::range<decltype(derived().base())>
+        requires detail::has_const_base_range<Derived>
     {
         return std::ranges::begin(derived().base());
     }
 
     constexpr auto end() const
-        requires std::ranges::range<decltype(derived().base())>
+        requires detail::has_const_base_range<Derived>
     {
         return std::ranges::end(derived().base());
     }
@@ -56,3 +80,7 @@ struct view_interface : public std::ranges::view_interface<Derived> {
     }
 };
 } // namespace kamping::ranges
+
+/* template <typename Derived> */
+/* inline constexpr bool std::ranges::enable_borrowed_range<kamping::ranges::view_interface<Derived>> = */
+/*     std::ranges::borrowed_range<decltype(std::declval<Derived&>().base())>; */
