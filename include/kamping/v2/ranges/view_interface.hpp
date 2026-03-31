@@ -78,6 +78,13 @@ struct view_interface : public view_interface_base, public std::ranges::view_int
     {
         return kamping::ranges::data(derived().base());
     }
+
+    void mpi_resize_for_receive(std::ptrdiff_t n)
+        requires(kamping::ranges::has_mpi_resize_for_receive<decltype(derived().base())>
+                 || kamping::ranges::has_resize<decltype(derived().base())>)
+    {
+        kamping::ranges::resize_for_receive(derived().base(), n);
+    }
 };
 } // namespace kamping::ranges
 

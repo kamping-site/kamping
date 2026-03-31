@@ -36,6 +36,16 @@ template <typename T>
 concept range_of_builtin_mpi_type =
     std::ranges::range<T> && kamping::is_builtin_type_v<std::remove_cvref_t<std::ranges::range_value_t<T>>>;
 
+/// Type implements the custom MPI resize protocol (preferred over plain resize()).
+template <typename T>
+concept has_mpi_resize_for_receive = requires(T& t, std::ptrdiff_t n) {
+    t.mpi_resize_for_receive(n);
+};
+
+/// Type is a standard resizable container (e.g. std::vector).
+template <typename T>
+concept has_resize = requires(T& t, std::size_t n) { t.resize(n); };
+
 template <has_mpi_compatible_size_member T>
 constexpr auto size(T&& t) {
     return t.mpi_size();
@@ -67,6 +77,20 @@ template <range_of_builtin_mpi_type T>
     requires(!has_mpi_compatible_type_member<T>)
 constexpr auto type(T&& /* t */) {
     return builtin_type<std::remove_cvref_t<std::ranges::range_value_t<T>>>::data_type();
+}
+
+/// Resize t to hold n MPI elements before a receive. Dispatches to:
+///   1. t.mpi_resize_for_receive(n) — custom protocol (e.g. resize_and_overwrite, NUMA alloc)
+///   2. t.resize(n)                 — standard containers
+template <has_mpi_resize_for_receive T>
+void resize_for_receive(T& t, std::ptrdiff_t n) {
+    t.mpi_resize_for_receive(n);
+}
+
+template <typename T>
+    requires(!has_mpi_resize_for_receive<T>) && has_resize<T>
+void resize_for_receive(T& t, std::ptrdiff_t n) {
+    t.resize(static_cast<std::size_t>(n));
 }
 
 } // namespace kamping::ranges

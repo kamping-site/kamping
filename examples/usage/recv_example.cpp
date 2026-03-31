@@ -11,22 +11,17 @@
 // You should have received a copy of the GNU Lesser General Public License along with KaMPIng.  If not, see
 // <https://www.gnu.org/licenses/>.
 
-#include <iostream>
+#include <algorithm>
 #include <mdspan>
-#include <random>
 #include <vector>
 
 #include <mpi.h>
 
 #include "helpers_for_examples.hpp"
-#include "kamping/adapter/mdspan_adapter.hpp"
 #include "kamping/communicator.hpp"
-#include "kamping/data_buffers/resize_pipes.hpp"
-#include "kamping/data_buffers/type_pipes.hpp"
 #include "kamping/environment.hpp"
 #include "kamping/v2/views.hpp"
-#include "kamping/p2p/recv.hpp"
-#include "kamping/p2p/send.hpp"
+#include "kamping/v2/views/with_type_view.hpp"
 
 struct example_struct {
     int    foo;
@@ -111,19 +106,90 @@ int main() {
     // }
 
     {
-      if (comm.rank_signed() == 0) {
-	// comm.send(std::vector<int> {1, 2, 3, 4}, 1);
-	std::vector<example_struct> data(10, {42, 42.42});
-	
-	// comm.send(data, 1);
-        auto sbuf = kamping::ranges::with_type_view(data, example_type());
-        // sbuf.begin();
-	kamping::ranges::type(sbuf);
-	// kamping::ranges::data(data | with_type(example_type()));
-            // comm.send(data | with_type(example_type()), 1);
+        if (comm.rank_signed() == 0) {
+            comm.send(std::vector{1, 2, 3, 4}, 1);
+
         } else {
-            // std::vector<example_struct> data;
-            // auto                        result = comm.recv(data | with_type(example_type()) | resize_buf(), 0);
+            auto rbuf = comm.recv(std::vector<int>(4) | views::with_type(MPI_INT), 0);
+            std::ranges::sort(rbuf);
+            rbuf[0] = 3;
+        }
+    }
+    // with_type on a vector: annotate a range with a custom MPI datatype
+    {
+        if (comm.rank_signed() == 0) {
+            std::vector<example_struct> data(10, {42, 42.42});
+            comm.send(data | kamping::views::with_type(example_type()), 1);
+        } else {
+            std::vector<example_struct> data(10);
+            // auto                        rbuf = data | kamping::views::with_type(example_type());
+            comm.recv(data | kamping::views::with_type(example_type()), 0);
+        }
+    }
+
+    // with_type on a non-range: a plain struct that provides mpi_data/mpi_size but no mpi_type.
+    // with_type adds the missing type annotation so the result satisfies data_buffer.
+    {
+        struct single_buffer {
+            example_struct value;
+            void*          mpi_data() {
+                return &value;
+            }
+            std::size_t mpi_size() const {
+                return 1;
+            }
+        };
+
+        if (comm.rank_signed() == 0) {
+            single_buffer buf{{42, 42.42}};
+            auto          view = buf | kamping::views::with_type(example_type());
+            static_assert(kamping::ranges::data_buffer<decltype(view)>);
+            // comm.send(view, 1);
+        }
+    }
+
+    // Pre-bound adaptor: store the partial application as a value and reuse it.
+    {
+        auto const typed_struct = kamping::views::with_type(example_type());
+
+        std::vector<example_struct> a(5, {1, 1.0});
+        std::vector<example_struct> b(5, {2, 2.0});
+        (void)(a | typed_struct);
+        (void)(b | typed_struct);
+    }
+
+    // Closure composition: a struct exposing only mpi_data() becomes a full data_buffer
+    // by piping with_size and with_type. Neither view alone is sufficient.
+    {
+        struct data_only_buffer {
+            example_struct value;
+            void*          mpi_data() {
+                return &value;
+            }
+        };
+
+        auto const as_single_struct = kamping::views::with_size(1) | kamping::views::with_type(example_type());
+
+        if (comm.rank_signed() == 0) {
+            data_only_buffer buf{{42, 42.42}};
+            auto             view = buf | as_single_struct;
+            static_assert(kamping::ranges::data_buffer<decltype(view)>);
+            // comm.send(view, 1);
+        }
+    }
+
+    // views::resize: auto-sizing recv buffer.
+    // The size is not known upfront; infer() probes MPI and calls set_recv_count(n),
+    // which triggers the actual resize lazily on first mpi_data() access.
+    {
+        if (comm.rank_signed() == 0) {
+            std::vector<int> data{10, 20, 30, 40, 50};
+            comm.send(data, 1);
+        } else {
+            std::vector<int> buf; // starts empty — size inferred at recv time
+            auto             rbuf = comm.recv(buf | kamping::views::resize, 0);
+            std::println("Received {}.", rbuf);
+            KAMPING_ASSERT(rbuf.base().base().size() == 5uz, "Expected 5 elements after auto-resize.");
         }
     }
 }

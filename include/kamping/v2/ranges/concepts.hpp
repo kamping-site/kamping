@@ -35,4 +35,11 @@ template <typename T>
 concept recv_buffer = data_buffer<T> && requires(T&& t) {
     { kamping::ranges::data(t) } -> std::convertible_to<void*>;
 };
+
+/// Recv buffer whose size is not known upfront. The collective calls set_recv_count(n) after
+/// inferring n; the view then lazily resizes on first mpi_data() access.
+template <typename T>
+concept resizable_recv_buf = requires(T& t, std::ptrdiff_t n) {
+    t.set_recv_count(n);
+};
 } // namespace kamping::ranges

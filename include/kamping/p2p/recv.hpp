@@ -36,6 +36,7 @@
 #include "kamping/parameter_objects.hpp"
 #include "kamping/result.hpp"
 #include "kamping/status.hpp"
+#include "kamping/v2/infer.hpp"
 #include "kamping/v2/ranges.hpp"
 
 /// @addtogroup kamping_p2p
@@ -247,7 +248,7 @@ template <kamping::ranges::recv_buffer RBuff, typename StatusObject>
 RBuff kamping::Communicator<DefaultContainerType, Plugins...>::recv(
     RBuff&& rbuf, int source, int tag, StatusObject status_param
 ) const {
-    infer<CommType::recv>(rbuf, *this);
+    infer(kamping::comm_op::recv{}, rbuf, source, tag, *this);
 
     static_assert(
         StatusObject::parameter_type == internal::ParameterType::status,
