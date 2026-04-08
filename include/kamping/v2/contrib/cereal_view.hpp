@@ -9,6 +9,7 @@
 
 #include "kamping/builtin_types.hpp"
 #include "kamping/v2/ranges/adaptor_closure.hpp"
+#include "kamping/v2/ranges/concepts.hpp"
 
 namespace kamping::ranges {
 
@@ -140,6 +141,10 @@ serialization_view(T&) -> serialization_view<T&>;
 template <typename T>
     requires(!std::is_lvalue_reference_v<T>)
 serialization_view(T&&) -> serialization_view<T>;
+
+// Non-owning (T is an lvalue reference) → borrowed; owning (T is a value type) → not borrowed.
+template <typename T>
+inline constexpr bool enable_borrowed_buffer<serialization_view<T>> = std::is_lvalue_reference_v<T>;
 
 } // namespace kamping::ranges
 

@@ -32,6 +32,9 @@ public:
 template <typename R>
 with_type_view(R&&, MPI_Datatype) -> with_type_view<kamping::ranges::all_t<R>>;
 
+template <typename Base>
+inline constexpr bool enable_borrowed_buffer<with_type_view<Base>> = enable_borrowed_buffer<Base>;
+
 } // namespace ranges
 
 namespace views {

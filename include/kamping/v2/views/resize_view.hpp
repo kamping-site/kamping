@@ -50,6 +50,9 @@ public:
 template <typename R>
 resize_buf_view(R&&) -> resize_buf_view<kamping::ranges::all_t<R>>;
 
+template <typename Base>
+inline constexpr bool enable_borrowed_buffer<resize_buf_view<Base>> = enable_borrowed_buffer<Base>;
+
 } // namespace kamping::ranges
 
 namespace kamping::views {

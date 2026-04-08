@@ -56,4 +56,9 @@ constexpr auto all(R&& r) {
 template <typename R>
 using all_t = decltype(all(std::declval<R>()));
 
+// ref_view is non-owning — always borrowed.
+// owning_view owns its data — not borrowed (default false is correct).
+template <typename T>
+inline constexpr bool enable_borrowed_buffer<ref_view<T>> = true;
+
 } // namespace kamping::ranges

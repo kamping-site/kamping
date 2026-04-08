@@ -32,33 +32,35 @@ struct sendrecv {};
 
 // ---- Default infer() overloads ----------------------------------------------
 
-template <kamping::ranges::recv_buffer RBuf, typename Comm>
-void infer(comm_op::recv, RBuf& rbuf, int source, int tag, Comm const& comm) {
+template <kamping::ranges::recv_buffer RBuf>
+void infer(comm_op::recv, RBuf& rbuf, int source, int tag, MPI_Comm comm) {
     if constexpr (kamping::ranges::resizable_recv_buf<RBuf>) {
         MPI_Status status;
-        MPI_Probe(source, tag, comm.mpi_communicator(), &status);
+        MPI_Probe(source, tag, comm, &status);
         int count;
         MPI_Get_count(&status, kamping::ranges::type(rbuf), &count);
         rbuf.set_recv_count(static_cast<std::ptrdiff_t>(count));
     }
 }
 
-template <kamping::ranges::send_buffer SBuf, kamping::ranges::recv_buffer RBuf, typename Comm>
-void infer(comm_op::allgather, SBuf const& sbuf, RBuf& rbuf, Comm const& comm) {
+template <kamping::ranges::send_buffer SBuf, kamping::ranges::recv_buffer RBuf>
+void infer(comm_op::allgather, SBuf const& sbuf, RBuf& rbuf, MPI_Comm comm) {
     if constexpr (kamping::ranges::resizable_recv_buf<RBuf>) {
-        rbuf.set_recv_count(comm.size() * static_cast<std::ptrdiff_t>(kamping::ranges::size(sbuf)));
+        int comm_size = 0;
+        MPI_Comm_size(comm, &comm_size);
+        rbuf.set_recv_count(comm_size * static_cast<std::ptrdiff_t>(kamping::ranges::size(sbuf)));
     }
 }
 
-template <kamping::ranges::send_buffer SBuf, kamping::ranges::recv_buffer RBuf, typename Comm>
-void infer(comm_op::alltoall, SBuf const& sbuf, RBuf& rbuf, Comm const& /* comm */) {
+template <kamping::ranges::send_buffer SBuf, kamping::ranges::recv_buffer RBuf>
+void infer(comm_op::alltoall, SBuf const& sbuf, RBuf& rbuf, MPI_Comm /* comm */) {
     if constexpr (kamping::ranges::resizable_recv_buf<RBuf>) {
         rbuf.set_recv_count(static_cast<std::ptrdiff_t>(kamping::ranges::size(sbuf)));
     }
 }
 
 template <kamping::ranges::send_buffer SBuf, kamping::ranges::recv_buffer RBuf, typename Comm>
-void infer(comm_op::sendrecv, SBuf const& sbuf, RBuf& rbuf, int dest, int source, Comm const& comm) {
+void infer(comm_op::sendrecv, SBuf const& sbuf, RBuf& rbuf, int dest, int source, MPI_Comm comm) {
     if constexpr (kamping::ranges::resizable_recv_buf<RBuf>) {
         int const send_count = static_cast<int>(kamping::ranges::size(sbuf));
         int       recv_count = 0;
@@ -73,7 +75,7 @@ void infer(comm_op::sendrecv, SBuf const& sbuf, RBuf& rbuf, int dest, int source
             MPI_INT,
             source,
             MPI_ANY_TAG,
-            comm.mpi_communicator(),
+            comm,
             MPI_STATUS_IGNORE
         );
         rbuf.set_recv_count(static_cast<std::ptrdiff_t>(recv_count));

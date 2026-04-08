@@ -248,7 +248,7 @@ template <kamping::ranges::recv_buffer RBuff, typename StatusObject>
 RBuff kamping::Communicator<DefaultContainerType, Plugins...>::recv(
     RBuff&& rbuf, int source, int tag, StatusObject status_param
 ) const {
-    infer(kamping::comm_op::recv{}, rbuf, source, tag, *this);
+    infer(kamping::comm_op::recv{}, rbuf, source, tag, this->mpi_communicator());
 
     static_assert(
         StatusObject::parameter_type == internal::ParameterType::status,

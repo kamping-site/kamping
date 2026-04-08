@@ -33,6 +33,9 @@ public:
 template <typename R>
 with_size_view(R&&, std::ptrdiff_t) -> with_size_view<kamping::ranges::all_t<R>>;
 
+template <typename Base>
+inline constexpr bool enable_borrowed_buffer<with_size_view<Base>> = enable_borrowed_buffer<Base>;
+
 } // namespace ranges
 
 namespace views {
