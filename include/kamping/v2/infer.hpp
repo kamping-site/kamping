@@ -7,6 +7,7 @@
 #include "kamping/v2/p2p/mprobe.hpp"
 #include "kamping/v2/ranges/concepts.hpp"
 #include "kamping/v2/ranges/ranges.hpp"
+#include "kamping/v2/status.hpp"
 
 /// @file
 /// infer() is a customization point that transfers metadata from the sending to the receiving
@@ -36,12 +37,10 @@ struct sendrecv {};
 template <kamping::ranges::recv_buffer RBuf>
 auto infer(comm_op::recv, RBuf& rbuf, int source, int tag, MPI_Comm comm) {
     if constexpr (kamping::ranges::resizable_recv_buf<RBuf>) {
-        MPI_Status  status;
+        v2::status  status;
         MPI_Message message = MPI_MESSAGE_NULL;
-        core::mprobe(source, tag, comm, &message, &status);
-        int count;
-        MPI_Get_count(&status, kamping::ranges::type(rbuf), &count);
-        rbuf.set_recv_count(static_cast<std::ptrdiff_t>(count));
+        core::mprobe(source, tag, comm, &message, status);
+        rbuf.set_recv_count(static_cast<std::ptrdiff_t>(status.count(kamping::ranges::type(rbuf))));
         return message;
     }
 }
