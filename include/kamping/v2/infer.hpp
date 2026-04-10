@@ -4,6 +4,7 @@
 
 #include <mpi.h>
 
+#include "kamping/v2/p2p/mprobe.hpp"
 #include "kamping/v2/ranges/concepts.hpp"
 #include "kamping/v2/ranges/ranges.hpp"
 
@@ -33,13 +34,15 @@ struct sendrecv {};
 // ---- Default infer() overloads ----------------------------------------------
 
 template <kamping::ranges::recv_buffer RBuf>
-void infer(comm_op::recv, RBuf& rbuf, int source, int tag, MPI_Comm comm) {
+auto infer(comm_op::recv, RBuf& rbuf, int source, int tag, MPI_Comm comm) {
     if constexpr (kamping::ranges::resizable_recv_buf<RBuf>) {
-        MPI_Status status;
-        MPI_Probe(source, tag, comm, &status);
+        MPI_Status  status;
+        MPI_Message message = MPI_MESSAGE_NULL;
+        core::mprobe(source, tag, comm, &message, &status);
         int count;
         MPI_Get_count(&status, kamping::ranges::type(rbuf), &count);
         rbuf.set_recv_count(static_cast<std::ptrdiff_t>(count));
+        return message;
     }
 }
 
@@ -59,8 +62,8 @@ void infer(comm_op::alltoall, SBuf const& sbuf, RBuf& rbuf, MPI_Comm /* comm */)
     }
 }
 
-template <kamping::ranges::send_buffer SBuf, kamping::ranges::recv_buffer RBuf, typename Comm>
-void infer(comm_op::sendrecv, SBuf const& sbuf, RBuf& rbuf, int dest, int source, MPI_Comm comm) {
+template <kamping::ranges::send_buffer SBuf, kamping::ranges::recv_buffer RBuf>
+void infer(comm_op::sendrecv, SBuf const& sbuf, RBuf& rbuf, int dest, int send_tag, int source, int recv_tag, MPI_Comm comm) {
     if constexpr (kamping::ranges::resizable_recv_buf<RBuf>) {
         int const send_count = static_cast<int>(kamping::ranges::size(sbuf));
         int       recv_count = 0;
@@ -69,12 +72,12 @@ void infer(comm_op::sendrecv, SBuf const& sbuf, RBuf& rbuf, int dest, int source
             1,
             MPI_INT,
             dest,
-            MPI_ANY_TAG,
+            send_tag,
             &recv_count,
             1,
             MPI_INT,
             source,
-            MPI_ANY_TAG,
+            recv_tag,
             comm,
             MPI_STATUS_IGNORE
         );

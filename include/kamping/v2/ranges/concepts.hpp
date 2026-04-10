@@ -62,20 +62,4 @@ inline constexpr bool enable_borrowed_buffer = std::ranges::borrowed_range<T>;
 template <typename T>
 concept borrowed_buffer = enable_borrowed_buffer<std::remove_cvref_t<T>>;
 
-// Result type for single-buffer returns (send, recv):
-//   - non-borrowed rvalue: by value (ownership transfer)
-//   - lvalue reference or borrowed: passthrough reference
-template <typename Buf>
-using buf_result_t = std::conditional_t<
-    !std::is_reference_v<Buf> && !borrowed_buffer<Buf>,
-    std::remove_cvref_t<Buf>,
-    Buf&&>;
-
-// Result type for tuple elements (sendrecv, collectives):
-//   - lvalue reference: kept as reference
-//   - rvalue (owned or borrowed): by value — avoids T&& in tuples
-template <typename Buf>
-using buf_tuple_element_t =
-    std::conditional_t<std::is_lvalue_reference_v<Buf>, Buf, std::remove_cvref_t<Buf>>;
-
 } // namespace kamping::ranges
