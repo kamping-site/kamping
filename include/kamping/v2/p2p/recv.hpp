@@ -5,6 +5,7 @@
 #include "kamping/v2/error_handling.hpp"
 #include "kamping/v2/infer.hpp"
 #include "kamping/v2/native_handle.hpp"
+#include "kamping/v2/p2p/mrecv.hpp"
 #include "kamping/v2/ranges/concepts.hpp"
 #include "kamping/v2/ranges/ranges.hpp"
 
@@ -38,7 +39,6 @@ void recv(
 } // namespace kamping::core
 
 namespace kamping::v2 {
-
 template <
     ranges::recv_buffer                               RBuf,
     bridge::mpi_rank                                  Source = int,
@@ -51,20 +51,38 @@ auto recv(
     Tag         tag    = MPI_ANY_TAG,
     Comm const& comm   = MPI_COMM_WORLD,
     Status&&    status = MPI_STATUS_IGNORE
-) -> ranges::buf_result_t<RBuf> {
-    infer(
-        comm_op::recv{},
-        rbuf,
-        kamping::bridge::to_rank(source),
-        kamping::bridge::to_tag(tag),
-        kamping::bridge::native_handle(comm)
-    );
-    if constexpr (!std::is_reference_v<RBuf> && !ranges::borrowed_buffer<RBuf>) {
-        auto buf = std::move(rbuf);
-        core::recv(buf, std::move(source), std::move(tag), comm, status);
-        return buf;
+) -> RBuf {
+    constexpr bool infer_returns_mpi_message =
+        requires(RBuf&& rbuf_, Source source_, Tag tag_, Comm const& comm_) {
+        {
+            infer(
+                comm_op::recv{},
+                rbuf_,
+                kamping::bridge::to_rank(source_),
+                kamping::bridge::to_tag(tag_),
+                kamping::bridge::native_handle(comm_)
+            )
+        } -> std::same_as<MPI_Message>;
+    };
+    if constexpr (infer_returns_mpi_message) {
+        MPI_Message msg = infer(
+            comm_op::recv{},
+            rbuf,
+            kamping::bridge::to_rank(source),
+            kamping::bridge::to_tag(tag),
+            kamping::bridge::native_handle(comm)
+        );
+        core::mrecv(rbuf, &msg, std::forward<Status>(status));
+        return std::forward<RBuf>(rbuf);
     } else {
-        core::recv(rbuf, std::move(source), std::move(tag), comm, status);
+        infer(
+            comm_op::recv{},
+            rbuf,
+            kamping::bridge::to_rank(source),
+            kamping::bridge::to_tag(tag),
+            kamping::bridge::native_handle(comm)
+        );
+        core::recv(rbuf, std::move(source), std::move(tag), comm, std::forward<Status>(status));
         return std::forward<RBuf>(rbuf);
     }
 }
@@ -72,7 +90,7 @@ template <
     ranges::recv_buffer                               RBuf,
     bridge::convertible_to_mpi_handle<MPI_Comm>       Comm,
     bridge::convertible_to_mpi_handle_ptr<MPI_Status> Status = MPI_Status*>
-auto recv(RBuf&& rbuf, Comm const& comm, Status&& status = MPI_STATUS_IGNORE) -> ranges::buf_result_t<RBuf> {
+auto recv(RBuf&& rbuf, Comm const& comm, Status&& status = MPI_STATUS_IGNORE) -> RBuf {
     return recv(std::forward<RBuf>(rbuf), MPI_ANY_SOURCE, MPI_ANY_TAG, comm, std::forward<Status>(status));
 }
 } // namespace kamping::v2

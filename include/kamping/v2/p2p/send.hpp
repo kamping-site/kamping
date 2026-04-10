@@ -8,6 +8,7 @@
 #include "kamping/v2/p2p/send_mode.hpp"
 #include "kamping/v2/ranges/concepts.hpp"
 #include "kamping/v2/ranges/ranges.hpp"
+#include "kamping/v2/result.hpp"
 
 namespace kamping::core {
 template <
@@ -96,7 +97,7 @@ template <
     bridge::mpi_tag                             Tag  = int,
     bridge::convertible_to_mpi_handle<MPI_Comm> Comm = MPI_Comm>
 auto send(SendMode&&, SBuf&& sbuf, Dest dest, Tag tag = DEFAULT_SEND_TAG, Comm const& comm = MPI_COMM_WORLD)
-    -> ranges::buf_result_t<SBuf> {
+    -> SBuf {
     auto send_impl = [](auto&&... args) {
         if constexpr (std::same_as<std::decay_t<SendMode>, send_mode::standard_t>) {
             kamping::core::send(std::forward<decltype(args)>(args)...);
@@ -108,14 +109,8 @@ auto send(SendMode&&, SBuf&& sbuf, Dest dest, Tag tag = DEFAULT_SEND_TAG, Comm c
             kamping::core::rsend(std::forward<decltype(args)>(args)...);
         }
     };
-    if constexpr (!std::is_reference_v<SBuf> && !ranges::borrowed_buffer<SBuf>) {
-        auto buf = std::move(sbuf);
-        send_impl(buf, std::move(dest), std::move(tag), comm);
-        return buf; // NRVO
-    } else {
-        send_impl(sbuf, std::move(dest), std::move(tag), comm);
-        return std::forward<SBuf>(sbuf);
-    }
+    send_impl(sbuf, std::move(dest), std::move(tag), comm);
+    return std::forward<SBuf>(sbuf);
 }
 
 template <
@@ -124,12 +119,12 @@ template <
     bridge::mpi_tag                             Tag  = int,
     bridge::convertible_to_mpi_handle<MPI_Comm> Comm = MPI_Comm>
 auto send(SBuf&& sbuf, Dest dest, Tag tag = DEFAULT_SEND_TAG, Comm const& comm = MPI_COMM_WORLD)
-    -> ranges::buf_result_t<SBuf> {
+    -> SBuf {
     return send(send_mode::standard, std::forward<SBuf>(sbuf), std::move(dest), std::move(tag), comm);
 }
 
 template <ranges::send_buffer SBuf, bridge::mpi_rank Dest = int, bridge::convertible_to_mpi_handle<MPI_Comm> Comm>
-auto send(SBuf&& sbuf, Dest dest, Comm const& comm) -> ranges::buf_result_t<SBuf> {
+auto send(SBuf&& sbuf, Dest dest, Comm const& comm) -> SBuf {
     return send(send_mode::standard, std::forward<SBuf>(sbuf), std::move(dest), DEFAULT_SEND_TAG, comm);
 }
 } // namespace kamping::v2
