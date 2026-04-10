@@ -10,10 +10,12 @@
 #include "kamping/environment.hpp"
 #include "kamping/v2/contrib/cereal_view.hpp"
 #include "kamping/v2/native_handle.hpp"
+#include "kamping/v2/p2p/irecv.hpp"
 #include "kamping/v2/p2p/isend.hpp"
+#include "kamping/v2/p2p/isendrecv.hpp"
 #include "kamping/v2/p2p/recv.hpp"
 #include "kamping/v2/p2p/send.hpp"
-#include "kamping/v2/p2p/send_mode.hpp"
+#include "kamping/v2/p2p/sendrecv.hpp"
 #include "kamping/v2/views/resize_view.hpp"
 
 template <>
@@ -51,13 +53,13 @@ int main(int, char*[]) {
     kamping::core::send(my_struct{}, MPI_PROC_NULL, 0, MPI_COMM_WORLD);
     if (comm.rank() == 0) {
         std::vector<int> v{1, 2, 3, 4};
-        kamping::v2::send(v, 1, comm);
+        kamping::v2::send(std::move(v), 1, comm);
     } else if (comm.rank() == 1) {
         std::vector<int> v;
         kamping::v2::recv(v | kamping::views::resize);
         std::println("result = {}", v);
     }
-    // std::vector v = {1, 2, 3};
+
     if (comm.rank() == 0) {
         std::unordered_map<std::string, int> map{{"one", 1}, {"two", 2}, {"forty-two", 42}};
         kamping::v2::send(map | kamping::views::serialize, 1, comm);
@@ -65,15 +67,40 @@ int main(int, char*[]) {
         auto result = kamping::v2::recv(kamping::views::deserialize<std::unordered_map<std::string, int>>(), comm);
         std::println("result = {}", *result);
     }
+    if (comm.rank() == 0) {
+        std::vector<int> const v{11, 12, 13, 14};
+        kamping::v2::isend(v, 1).wait();
+    } else if (comm.rank() == 1) {
+      MPI_Status status;
+      auto       v = kamping::v2::irecv(std::vector<int>{10} | kamping::views::resize).wait(&status);
+      std::println("v = {}", v);
+    }
 
     if (comm.rank() == 0) {
         std::unordered_map<std::string, int> map{{"ett", 1}, {"två", 2}, {"fyrtio-två", 42}};
-        MPI_Request                          request = MPI_REQUEST_NULL;
-        kamping::v2::isend(kamping::v2::send_mode::standard, &request, map | kamping::views::serialize, 1);
-        MPI_Wait(&request, MPI_STATUS_IGNORE);
+        kamping::v2::isend(map | kamping::views::serialize, 1).wait();
     } else if (comm.rank() == 1) {
         auto result = kamping::v2::recv(kamping::views::deserialize<std::unordered_map<std::string, int>>());
         std::println("result = {}", *result);
+    }
+
+    // sendrecv: each rank simultaneously sends to the other and receives from the other
+    if (comm.size() >= 2 && (comm.rank() == 0 || comm.rank() == 1)) {
+        int const         peer = 1 - static_cast<int>(comm.rank());
+        std::vector<int>  send_data = (comm.rank() == 0) ? std::vector<int>{1, 2, 3} : std::vector<int>{4, 5, 6};
+        std::vector<int>  recv_data;
+        auto&& [_, recvd] = kamping::v2::sendrecv(send_data, peer, recv_data | kamping::views::resize, peer, comm);
+        std::println("rank {} recvd = {}", comm.rank(), recvd);
+    }
+
+    // isendrecv: non-blocking sendrecv, wait() to retrieve the result
+    if (comm.size() >= 2 && (comm.rank() == 0 || comm.rank() == 1)) {
+        int const        peer = 1 - static_cast<int>(comm.rank());
+        std::vector<int> send_data = (comm.rank() == 0) ? std::vector<int>{7, 8, 9} : std::vector<int>{10, 11, 12};
+        std::vector<int> recv_data;
+        auto&& [_2, recvd2] =
+            kamping::v2::isendrecv(send_data, peer, recv_data | kamping::views::resize, peer, comm).wait();
+        std::println("rank {} isendrecv recvd = {}", comm.rank(), recvd2);
     }
     return 0;
 }
