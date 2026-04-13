@@ -31,14 +31,20 @@ namespace kamping::types {
 /// | C++ type | Result |
 /// |----------|--------|
 /// | MPI builtin (`int`, `double`, …, `kabool`) | `builtin_type<T>` |
-/// | Enum | dispatches to `type_dispatcher<underlying_type>()` |
-/// | `T[N]`, `std::array<T, N>` | `contiguous_type<T, N>` |
+/// | Enum | dispatches to `type_dispatcher<underlying_type, Lookup>()` |
+/// | `T[N]`, `std::array<T, N>` | `contiguous_type<T, N, Lookup>` |
 /// | Everything else | `internal::no_matching_type` |
 ///
 /// Specialize \ref kamping::types::mpi_type_traits to handle additional types.
 ///
+/// @tparam T The C++ type to map.
+/// @tparam Lookup The lookup policy used to resolve element types inside array and enum branches.
+///   Defaults to \ref type_dispatcher_lookup (module-level resolution via
+///   \ref kamping::types::mpi_type_traits). Upper-level frameworks (e.g., full KaMPIng) pass
+///   \ref kamping::kamping_lookup so that array element types benefit from the byte-serialization
+///   fallback.
 /// @returns The corresponding type trait for the type \p T.
-template <typename T>
+template <typename T, typename Lookup = type_dispatcher_lookup>
 auto type_dispatcher() {
     using T_no_const = std::remove_const_t<T>;
 
@@ -53,22 +59,26 @@ auto type_dispatcher() {
     if constexpr (is_builtin_type_v<T_no_const>) {
         return builtin_type<T_no_const>{};
     } else if constexpr (std::is_enum_v<T_no_const>) {
-        return type_dispatcher<std::underlying_type_t<T_no_const>>();
+        return type_dispatcher<std::underlying_type_t<T_no_const>, Lookup>();
     } else if constexpr (std::is_array_v<T_no_const>) {
-        return contiguous_type<std::remove_extent_t<T_no_const>, std::extent_v<T_no_const>>{};
+        return contiguous_type<std::remove_extent_t<T_no_const>, std::extent_v<T_no_const>, Lookup>{};
     } else if constexpr (kamping::internal::is_std_array<T_no_const>::value) {
         return contiguous_type<
             typename kamping::internal::is_std_array<T_no_const>::value_type,
-            kamping::internal::is_std_array<T_no_const>::size>{};
+            kamping::internal::is_std_array<T_no_const>::size,
+            Lookup>{};
     } else {
         return kamping::internal::no_matching_type{};
     }
 }
 
 /// @brief Whether the type is handled by the auto-dispatcher \ref kamping::types::type_dispatcher().
-template <typename T>
+/// @tparam T The C++ type to check.
+/// @tparam Lookup The lookup policy forwarded to \ref kamping::types::type_dispatcher(). Defaults to
+///   \ref type_dispatcher_lookup so all existing call sites are unaffected.
+template <typename T, typename Lookup = type_dispatcher_lookup>
 static constexpr bool has_auto_dispatched_type_v =
-    !std::is_same_v<decltype(type_dispatcher<T>()), kamping::internal::no_matching_type>;
+    !std::is_same_v<decltype(type_dispatcher<T, Lookup>()), kamping::internal::no_matching_type>;
 
 /// @brief The type trait that maps a C++ type \p T to an MPI_Datatype for the kamping-types module.
 ///

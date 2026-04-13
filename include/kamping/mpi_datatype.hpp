@@ -38,17 +38,24 @@ namespace kamping {
 // Re-export no_matching_type into kamping:: for backward compatibility
 using internal::no_matching_type;
 
+// Forward declaration: fully defined below, after mpi_type_traits.
+struct kamping_lookup;
+
 /// @brief Maps a C++ type \p T to a type trait for constructing an MPI_Datatype.
 ///
 /// Extends \ref kamping::types::type_dispatcher() with:
 /// - All trivially copyable types not otherwise handled → `types::byte_serialized`.
 ///
+/// \ref kamping_lookup is forwarded into \ref kamping::types::type_dispatcher() so that array and
+/// enum branches resolve element types via the kamping layer (which includes the byte-serialization
+/// fallback for trivially-copyable types).
+///
 /// @returns The corresponding type trait for the type \p T.
 template <typename T>
 auto type_dispatcher() {
     using T_no_const = std::remove_const_t<T>;
-    if constexpr (types::has_auto_dispatched_type_v<T>) {
-        return types::type_dispatcher<T>();
+    if constexpr (types::has_auto_dispatched_type_v<T, kamping_lookup>) {
+        return types::type_dispatcher<T, kamping_lookup>();
     } else if constexpr (std::is_trivially_copyable_v<T_no_const>) {
         return types::byte_serialized<T_no_const>{};
     } else {
