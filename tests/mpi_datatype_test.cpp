@@ -800,17 +800,11 @@ TEST(MpiDataTypeTest, mpi_datatype_array_of_trivially_copyable) {
     // between independently-allocated MPI types of the same structure).
     auto elem_matcher = ContiguousType(MPI_BYTE, sizeof(TrivialStruct));
     {
-        EXPECT_THAT(
-            (mpi_type_traits<std::array<TrivialStruct, 3>>::data_type()),
-            ContiguousType(elem_matcher, 3)
-        );
+        EXPECT_THAT((mpi_type_traits<std::array<TrivialStruct, 3>>::data_type()), ContiguousType(elem_matcher, 3));
         EXPECT_EQ((mpi_type_traits<std::array<TrivialStruct, 3>>::category), TypeCategory::contiguous);
     }
     {
-        EXPECT_THAT(
-            (mpi_type_traits<TrivialStruct[3]>::data_type()),
-            ContiguousType(elem_matcher, 3)
-        );
+        EXPECT_THAT((mpi_type_traits<TrivialStruct[3]>::data_type()), ContiguousType(elem_matcher, 3));
         EXPECT_EQ((mpi_type_traits<TrivialStruct[3]>::category), TypeCategory::contiguous);
     }
 }
