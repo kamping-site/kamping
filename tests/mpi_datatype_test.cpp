@@ -87,7 +87,7 @@ MATCHER_P2(ContiguousType, type, n, "") {
         *result_listener << "wrong count";
         return false;
     }
-    return underlying_type == type;
+    return ExplainMatchResult(type, underlying_type, result_listener);
 }
 
 class StructTypeMatcher {
@@ -783,6 +783,35 @@ TEST(MpiDataTypeTest, mpi_datatype_c_array) {
         std::array<double, 3> cpp_array;
         EXPECT_THAT(mpi_type_traits<decltype(cpp_array)>::data_type(), ContiguousType(MPI_DOUBLE, 3));
         EXPECT_EQ(mpi_type_traits<decltype(cpp_array)>::category, TypeCategory::contiguous);
+    }
+}
+
+TEST(MpiDataTypeTest, mpi_datatype_array_of_trivially_copyable) {
+    // std::array and C-arrays of trivially-copyable (but non-builtin) types should be handled by
+    // resolving each element via kamping_lookup, which byte-serializes it. The result is a nested
+    // contiguous type: contiguous(N, contiguous(sizeof(T), MPI_BYTE)).
+    struct TrivialStruct {
+        int   a;
+        float b;
+    };
+    static_assert(std::is_trivially_copyable_v<TrivialStruct>);
+    // The expected structure is contiguous(N, contiguous(sizeof(T), MPI_BYTE)).
+    // Use nested ContiguousType matchers for structural comparison (pointer identity would differ
+    // between independently-allocated MPI types of the same structure).
+    auto elem_matcher = ContiguousType(MPI_BYTE, sizeof(TrivialStruct));
+    {
+        EXPECT_THAT(
+            (mpi_type_traits<std::array<TrivialStruct, 3>>::data_type()),
+            ContiguousType(elem_matcher, 3)
+        );
+        EXPECT_EQ((mpi_type_traits<std::array<TrivialStruct, 3>>::category), TypeCategory::contiguous);
+    }
+    {
+        EXPECT_THAT(
+            (mpi_type_traits<TrivialStruct[3]>::data_type()),
+            ContiguousType(elem_matcher, 3)
+        );
+        EXPECT_EQ((mpi_type_traits<TrivialStruct[3]>::category), TypeCategory::contiguous);
     }
 }
 
