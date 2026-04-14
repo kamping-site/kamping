@@ -65,11 +65,14 @@ public:
     void operator=(UserOperationWrapper<is_commutative, T, Op>&)  = delete;
     void operator=(UserOperationWrapper<is_commutative, T, Op>&&) = delete;
 
+    /// @brief Creates an MPI operation for the specified functor.
+    /// @param op the functor to call for reduction.
     UserOperationWrapper(Op&& op [[maybe_unused]]) : _operation(std::forward<Op>(op)) {
         static_assert(std::is_invocable_r_v<T, Op, T const&, T const&>, "Type of custom operation does not match.");
         MPI_Op_create(UserOperationWrapper<is_commutative, T, Op>::execute, is_commutative, &_mpi_op);
     }
 
+    /// @brief Wrapper around the provided functor which is called by MPI.
     static void execute(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
         T* invec_    = static_cast<T*>(invec);
         T* inoutvec_ = static_cast<T*>(inoutvec);
@@ -77,6 +80,7 @@ public:
         std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, op);
     }
 
+    /// @brief Call the wrapped operation.
     T operator()(T const& lhs, T const& rhs) const {
         return _operation(lhs, rhs);
     }
@@ -108,6 +112,7 @@ class UserOperationPtrWrapper {
 public:
     UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative> const&) = delete;
 
+    /// @brief Move assignment operator.
     UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative>&& other_op) {
         this->_mpi_op   = other_op._mpi_op;
         this->_no_op    = other_op._no_op;
@@ -117,16 +122,20 @@ public:
 
     UserOperationPtrWrapper(UserOperationPtrWrapper<is_commutative> const&) = delete;
 
+    /// @brief Move constructor.
     UserOperationPtrWrapper(UserOperationPtrWrapper<is_commutative>&& other_op) {
         this->_mpi_op   = other_op._mpi_op;
         this->_no_op    = other_op._no_op;
         other_op._no_op = true;
     }
 
+    /// @brief Creates an empty operation wrapper.
     UserOperationPtrWrapper() : _no_op(true) {
         _mpi_op = MPI_OP_NULL;
     }
 
+    /// @brief Creates an MPI operation for the specified function pointer.
+    /// @param ptr the function pointer to call for reduction.
     UserOperationPtrWrapper(mpi_custom_operation_type ptr) : _no_op(false) {
         KAMPING_ASSERT(ptr != nullptr);
         MPI_Op_create(ptr, is_commutative, &_mpi_op);
@@ -161,13 +170,19 @@ private:
 template <typename T, typename Op, typename Commutative>
 class ReduceOperation {
 public:
+    /// @brief Constructs an operation wrapper.
+    /// @param op the operation (function object, lambda, or \c std::function)
+    /// @param commutative commutativity tag (\c kamping::ops::commutative or \c kamping::ops::non_commutative)
     ReduceOperation(Op&& op, Commutative commutative);
 
     static constexpr bool is_builtin;  ///< True if this is a predefined MPI operation.
     static constexpr bool commutative; ///< True if the operation is commutative.
 
+    /// @returns the \c MPI_Op associated with this operation.
     MPI_Op op();
-    T      operator()(T const& lhs, T const& rhs) const;
+
+    /// @brief Call the underlying operation with the provided arguments.
+    T operator()(T const& lhs, T const& rhs) const;
 
     /// @brief Returns the identity element for this operation and data type.
     ///

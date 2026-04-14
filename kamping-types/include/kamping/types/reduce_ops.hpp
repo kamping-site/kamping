@@ -42,14 +42,23 @@ namespace kamping::ops::internal {
 ///
 /// `std::max` is a function, not a function object. This wrapper allows template matching for
 /// builtin MPI operation detection. The `<void>` specialization uses type deduction.
+/// @tparam T the type of the operands
 template <typename T>
 struct max_impl {
+    /// @brief Returns the maximum of the two parameters.
+    /// @param lhs the first operand
+    /// @param rhs the second operand
     constexpr T operator()(T const& lhs, T const& rhs) const {
         return std::max(lhs, rhs);
     }
 };
+/// @brief Template specialization of max_impl without type parameter, leaving the operand type to be deduced.
 template <>
 struct max_impl<void> {
+    /// @brief Returns the maximum of the two parameters.
+    /// @tparam T the type of the operands
+    /// @param lhs the first operand
+    /// @param rhs the second operand
     template <typename T>
     constexpr auto operator()(T const& lhs, T const& rhs) const {
         return std::max(lhs, rhs);
@@ -57,14 +66,23 @@ struct max_impl<void> {
 };
 
 /// @brief Wrapper struct for std::min (same rationale as max_impl).
+/// @tparam T the type of the operands
 template <typename T>
 struct min_impl {
+    /// @brief Returns the minimum of the two parameters.
+    /// @param lhs the first operand
+    /// @param rhs the second operand
     constexpr T operator()(T const& lhs, T const& rhs) const {
         return std::min(lhs, rhs);
     }
 };
+/// @brief Template specialization of min_impl without type parameter, leaving the operand type to be deduced.
 template <>
 struct min_impl<void> {
+    /// @brief Returns the minimum of the two parameters.
+    /// @tparam T the type of the operands
+    /// @param lhs the first operand
+    /// @param rhs the second operand
     template <typename T>
     constexpr auto operator()(T const& lhs, T const& rhs) const {
         return std::min(lhs, rhs);
@@ -72,14 +90,24 @@ struct min_impl<void> {
 };
 
 /// @brief Logical XOR function object (no STL equivalent).
+/// @tparam T type of the operands
 template <typename T>
 struct logical_xor_impl {
+    /// @brief Returns the logical XOR of the two parameters.
+    /// @param lhs the first operand
+    /// @param rhs the second operand
     constexpr bool operator()(T const& lhs, T const& rhs) const {
         return (lhs && !rhs) || (!lhs && rhs);
     }
 };
+/// @brief Template specialization of logical_xor_impl without type parameter, leaving operand types to be deduced.
 template <>
 struct logical_xor_impl<void> {
+    /// @brief Returns the logical XOR of the two parameters.
+    /// @tparam T type of the left operand
+    /// @tparam S type of the right operand
+    /// @param lhs the left operand
+    /// @param rhs the right operand
     template <typename T, typename S>
     constexpr bool operator()(T const& lhs, S const& rhs) const {
         return (lhs && !rhs) || (!lhs && rhs);
@@ -152,6 +180,7 @@ struct null {};
 
 namespace kamping::types {
 
+#ifdef KAMPING_DOXYGEN_ONLY
 /// @brief Type trait that maps a (functor type, element type) pair to its builtin `MPI_Op`.
 ///
 /// `mpi_operation_traits<Op, T>::is_builtin` is `true` when `Op` applied to `T` corresponds to
@@ -165,6 +194,25 @@ namespace kamping::types {
 /// mpi_operation_traits<std::plus<>, int>::is_builtin            // true
 /// mpi_operation_traits<std::minus<>, int>::is_builtin           // false
 /// @endcode
+/// @tparam Op     Functor type of the operation.
+/// @tparam T      Element type to apply the operation to.
+template <typename Op, typename T>
+struct mpi_operation_traits {
+    /// @brief \c true if \c Op applied to \c T corresponds to a predefined MPI operation constant.
+    static constexpr bool is_builtin;
+
+    /// @brief The identity element for this operation and data type.
+    ///
+    /// Only defined when \c is_builtin is \c true.
+    static constexpr T identity;
+
+    /// @brief Returns the predefined \c MPI_Op constant for this operation.
+    ///
+    /// Only defined when \c is_builtin is \c true.
+    static MPI_Op op();
+};
+#else
+
 template <typename Op, typename T, typename Enable = void>
 struct mpi_operation_traits {
     static constexpr bool is_builtin = false;
@@ -312,6 +360,8 @@ struct mpi_operation_traits<
     }
 };
 
+#endif // KAMPING_DOXYGEN_ONLY
+
 // ---------------------------------------------------------------------------
 // ScopedOp — RAII handle for MPI_Op
 // ---------------------------------------------------------------------------
@@ -333,9 +383,11 @@ public:
     ScopedOp(ScopedOp const&)            = delete;
     ScopedOp& operator=(ScopedOp const&) = delete;
 
+    /// @brief Move constructor. Transfers ownership; the moved-from handle no longer frees the op.
     ScopedOp(ScopedOp&& other) noexcept : _op(other._op), _owns(other._owns) {
         other._owns = false;
     }
+    /// @brief Move assignment. Frees any currently owned op, then transfers ownership.
     ScopedOp& operator=(ScopedOp&& other) noexcept {
         if (this != &other) {
             _free();
