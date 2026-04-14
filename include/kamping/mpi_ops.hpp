@@ -12,11 +12,11 @@
 // <https://www.gnu.org/licenses/>.
 
 /// @file
-/// @brief MPI reduction operation wrappers (v1 layer).
+/// @brief MPI reduction operation wrappers.
 ///
 /// The functor vocabulary (`kamping::ops::`), type traits (`mpi_operation_traits`), and the
 /// RAII `ScopedOp` handle live in `kamping/types/reduce_ops.hpp` (the `kamping-types` module)
-/// and are included from there. This file adds the v1-specific wrappers (`UserOperationWrapper`,
+/// and are included from there. This file adds the higher-level wrappers (`UserOperationWrapper`,
 /// `UserOperationPtrWrapper`, `ReduceOperation`) that depend on the named-parameter system.
 
 #pragma once
@@ -33,7 +33,7 @@
 namespace kamping {
 namespace internal {
 
-// Bring kamping::types::mpi_operation_traits into kamping::internal so that existing v1 code
+// Bring kamping::types::mpi_operation_traits into kamping::internal so that existing code
 // that references kamping::internal::mpi_operation_traits<Op, T> continues to compile without
 // change. Specializations are resolved through the primary template in kamping::types.
 using kamping::types::mpi_operation_traits;
@@ -158,7 +158,7 @@ private:
 };
 
 // ---------------------------------------------------------------------------
-// ReduceOperation — high-level op wrapper used by v1 collectives
+// ReduceOperation — high-level op wrapper used by collectives
 // ---------------------------------------------------------------------------
 
 #ifdef KAMPING_DOXYGEN_ONLY
