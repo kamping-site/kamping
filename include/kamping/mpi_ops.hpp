@@ -182,8 +182,10 @@ public:
 template <typename T, typename Op, typename Commutative, class Enable = void>
 class ReduceOperation {
     static_assert(
-        std::is_same_v<Commutative, kamping::ops::internal::commutative_tag>
-            || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
+        std::is_same_v<
+            Commutative,
+            kamping::ops::internal::
+                commutative_tag> || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
         "For custom operations you have to specify whether they are commutative."
     );
 
@@ -215,7 +217,7 @@ public:
         KAMPING_ASSERT(_op != MPI_OP_NULL, "Cannot call MPI_OP_NULL.");
         T result;
         internal::with_operation_functor(_op, [&result, lhs, rhs, this](auto operation) {
-            if constexpr (!std::is_same_v<decltype(operation), ops::null<>>) {
+            if constexpr (!std::is_same_v<decltype(operation), ops::null<> >) {
                 result = operation(lhs, rhs);
             } else {
                 result = rhs;
@@ -235,7 +237,7 @@ private:
 
 // Specialization: builtin op — maps directly to a predefined MPI_Op constant.
 template <typename T, typename Op, typename Commutative>
-class ReduceOperation<T, Op, Commutative, std::enable_if_t<mpi_operation_traits<Op, T>::is_builtin>> {
+class ReduceOperation<T, Op, Commutative, std::enable_if_t<mpi_operation_traits<Op, T>::is_builtin> > {
     static_assert(
         std::is_same_v<Commutative, kamping::ops::internal::undefined_commutative_tag>,
         "For builtin operations you don't need to specify whether they are commutative."
@@ -261,10 +263,12 @@ public:
 
 // Specialization: non-default-constructible functor (lambda with captures).
 template <typename T, typename Op, typename Commutative>
-class ReduceOperation<T, Op, Commutative, std::enable_if_t<!std::is_default_constructible_v<Op>>> {
+class ReduceOperation<T, Op, Commutative, std::enable_if_t<!std::is_default_constructible_v<Op> > > {
     static_assert(
-        std::is_same_v<Commutative, kamping::ops::internal::commutative_tag>
-            || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
+        std::is_same_v<
+            Commutative,
+            kamping::ops::internal::
+                commutative_tag> || std::is_same_v<Commutative, kamping::ops::internal::non_commutative_tag>,
         "For custom operations you have to specify whether they are commutative."
     );
 

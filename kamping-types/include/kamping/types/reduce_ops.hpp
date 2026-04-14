@@ -174,132 +174,142 @@ template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::max<S>,
     T,
-    std::enable_if_t<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)
-        && (builtin_type<T>::category == TypeCategory::integer
-            || builtin_type<T>::category == TypeCategory::floating)>> {
+    std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::floating
+    )>> {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = std::numeric_limits<T>::lowest();
-    static MPI_Op         op() { return MPI_MAX; }
+    static MPI_Op         op() {
+                return MPI_MAX;
+    }
 };
 
 template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::min<S>,
     T,
-    std::enable_if_t<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)
-        && (builtin_type<T>::category == TypeCategory::integer
-            || builtin_type<T>::category == TypeCategory::floating)>> {
+    std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::floating
+    )>> {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = std::numeric_limits<T>::max();
-    static MPI_Op         op() { return MPI_MIN; }
+    static MPI_Op         op() {
+                return MPI_MIN;
+    }
 };
 
 template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::plus<S>,
     T,
-    std::enable_if_t<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)
-        && (builtin_type<T>::category == TypeCategory::integer
-            || builtin_type<T>::category == TypeCategory::floating
-            || builtin_type<T>::category == TypeCategory::complex)>> {
+    std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::floating
+        || builtin_type<T>::category == TypeCategory::complex
+    )>> {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = 0;
-    static MPI_Op         op() { return MPI_SUM; }
+    static MPI_Op         op() {
+                return MPI_SUM;
+    }
 };
 
 template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::multiplies<S>,
     T,
-    std::enable_if_t<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)
-        && (builtin_type<T>::category == TypeCategory::integer
-            || builtin_type<T>::category == TypeCategory::floating
-            || builtin_type<T>::category == TypeCategory::complex)>> {
+    std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::floating
+        || builtin_type<T>::category == TypeCategory::complex
+    )>> {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = 1;
-    static MPI_Op         op() { return MPI_PROD; }
+    static MPI_Op         op() {
+                return MPI_PROD;
+    }
 };
 
 template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::logical_and<S>,
     T,
-    std::enable_if_t<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)
-        && (builtin_type<T>::category == TypeCategory::integer
-            || builtin_type<T>::category == TypeCategory::logical)>> {
+    std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::logical
+    )>> {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = true;
-    static MPI_Op         op() { return MPI_LAND; }
+    static MPI_Op         op() {
+                return MPI_LAND;
+    }
 };
 
 template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::logical_or<S>,
     T,
-    std::enable_if_t<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)
-        && (builtin_type<T>::category == TypeCategory::integer
-            || builtin_type<T>::category == TypeCategory::logical)>> {
+    std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::logical
+    )>> {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = false;
-    static MPI_Op         op() { return MPI_LOR; }
+    static MPI_Op         op() {
+                return MPI_LOR;
+    }
 };
 
 template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::logical_xor<S>,
     T,
-    std::enable_if_t<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)
-        && (builtin_type<T>::category == TypeCategory::integer
-            || builtin_type<T>::category == TypeCategory::logical)>> {
+    std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::logical
+    )>> {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = false;
-    static MPI_Op         op() { return MPI_LXOR; }
+    static MPI_Op         op() {
+                return MPI_LXOR;
+    }
 };
 
 template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::bit_and<S>,
     T,
-    std::enable_if_t<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)
-        && (builtin_type<T>::category == TypeCategory::integer
-            || builtin_type<T>::category == TypeCategory::byte)>> {
+    std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::byte
+    )>> {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = ~(T{0});
-    static MPI_Op         op() { return MPI_BAND; }
+    static MPI_Op         op() {
+                return MPI_BAND;
+    }
 };
 
 template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::bit_or<S>,
     T,
-    std::enable_if_t<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)
-        && (builtin_type<T>::category == TypeCategory::integer
-            || builtin_type<T>::category == TypeCategory::byte)>> {
+    std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::byte
+    )>> {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = T{0};
-    static MPI_Op         op() { return MPI_BOR; }
+    static MPI_Op         op() {
+                return MPI_BOR;
+    }
 };
 
 template <typename T, typename S>
 struct mpi_operation_traits<
     kamping::ops::bit_xor<S>,
     T,
-    std::enable_if_t<
-        (std::is_same_v<S, void> || std::is_same_v<T, S>)
-        && (builtin_type<T>::category == TypeCategory::integer
-            || builtin_type<T>::category == TypeCategory::byte)>> {
+    std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
+        builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::byte
+    )>> {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = T{0};
-    static MPI_Op         op() { return MPI_BXOR; }
+    static MPI_Op         op() {
+                return MPI_BXOR;
+    }
 };
 
 // ---------------------------------------------------------------------------
@@ -370,17 +380,28 @@ private:
 /// @tparam Functor  Callable accepting any `kamping::ops::*` functor type.
 template <typename Functor>
 auto with_operation_functor(MPI_Op op, Functor&& func) {
-    if (op == MPI_MAX)       return func(ops::max<>{});
-    else if (op == MPI_MIN)  return func(ops::min<>{});
-    else if (op == MPI_SUM)  return func(ops::plus<>{});
-    else if (op == MPI_PROD) return func(ops::multiplies<>{});
-    else if (op == MPI_LAND) return func(ops::logical_and<>{});
-    else if (op == MPI_LOR)  return func(ops::logical_or<>{});
-    else if (op == MPI_LXOR) return func(ops::logical_xor<>{});
-    else if (op == MPI_BAND) return func(ops::bit_and<>{});
-    else if (op == MPI_BOR)  return func(ops::bit_or<>{});
-    else if (op == MPI_BXOR) return func(ops::bit_xor<>{});
-    else                     return func(ops::null<>{});
+    if (op == MPI_MAX)
+        return func(ops::max<>{});
+    else if (op == MPI_MIN)
+        return func(ops::min<>{});
+    else if (op == MPI_SUM)
+        return func(ops::plus<>{});
+    else if (op == MPI_PROD)
+        return func(ops::multiplies<>{});
+    else if (op == MPI_LAND)
+        return func(ops::logical_and<>{});
+    else if (op == MPI_LOR)
+        return func(ops::logical_or<>{});
+    else if (op == MPI_LXOR)
+        return func(ops::logical_xor<>{});
+    else if (op == MPI_BAND)
+        return func(ops::bit_and<>{});
+    else if (op == MPI_BOR)
+        return func(ops::bit_or<>{});
+    else if (op == MPI_BXOR)
+        return func(ops::bit_xor<>{});
+    else
+        return func(ops::null<>{});
 }
 
 } // namespace kamping::types
