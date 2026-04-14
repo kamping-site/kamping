@@ -1,6 +1,6 @@
 # kamping-types
 
-A standalone C++17 header-only library that maps C++ types to MPI datatypes.
+A standalone C++17 header-only library that maps C++ types to MPI datatypes and reduction operations.
 
 `kamping-types` is extracted from [KaMPIng](https://github.com/kamping-site/kamping) and can be consumed independently — without the KaMPIng communicator layer.
 
@@ -52,6 +52,7 @@ MPI_Send(data, 1, arr_type.data_type(), dest, tag, MPI_COMM_WORLD);
 | `kamping/types/struct_type.hpp` | `kamping_tag`, `struct_type<T>` |
 | `kamping/types/scoped_datatype.hpp` | `ScopedDatatype` — RAII commit/free wrapper |
 | `kamping/types/kabool.hpp` | `kabool` — bool wrapper safe for MPI containers |
+| `kamping/types/reduce_ops.hpp` | `kamping::ops::` functors, `mpi_operation_traits<Op,T>`, `ScopedOp`, `with_operation_functor` |
 
 ## Type Dispatch Rules
 
@@ -89,6 +90,76 @@ struct mpi_type_traits<Point> {
     }
 };
 } // namespace kamping::types
+```
+
+## Reduction Operations
+
+`kamping/types/reduce_ops.hpp` provides a C++ functor vocabulary that maps to MPI's builtin reduction ops.
+
+### Builtin Functor Types (`kamping::ops::`)
+
+| Functor | MPI constant | Identity |
+|---------|-------------|---------|
+| `ops::max<T>` | `MPI_MAX` | `std::numeric_limits<T>::lowest()` |
+| `ops::min<T>` | `MPI_MIN` | `std::numeric_limits<T>::max()` |
+| `ops::plus<T>` | `MPI_SUM` | `0` |
+| `ops::multiplies<T>` | `MPI_PROD` | `1` |
+| `ops::logical_and<T>` | `MPI_LAND` | `true` |
+| `ops::logical_or<T>` | `MPI_LOR` | `false` |
+| `ops::logical_xor<T>` | `MPI_LXOR` | `false` |
+| `ops::bit_and<T>` | `MPI_BAND` | `~T{0}` |
+| `ops::bit_or<T>` | `MPI_BOR` | `T{0}` |
+| `ops::bit_xor<T>` | `MPI_BXOR` | `T{0}` |
+
+All functors default to `T = void`, enabling deduced argument types.
+
+### Querying the MPI_Op at Compile Time
+
+`mpi_operation_traits<Op, T>` maps a (functor, element type) pair to its builtin `MPI_Op`:
+
+```cpp
+#include "kamping/types/reduce_ops.hpp"
+
+using T = mpi_operation_traits<kamping::ops::plus<>, int>;
+static_assert(T::is_builtin);           // true — maps to MPI_SUM
+MPI_Op op = T::op();                    // MPI_SUM
+int identity = T::identity;             // 0
+```
+
+`is_builtin` is `false` for functors not covered by a predefined MPI operation (e.g., `std::minus<>`).
+
+### RAII Handle: `ScopedOp`
+
+`ScopedOp` wraps an `MPI_Op` and calls `MPI_Op_free` on destruction only when it owns the op (user-defined ops created via `MPI_Op_create`). Predefined constants are wrapped non-owning.
+
+Analogous to `ScopedDatatype` for `MPI_Datatype`.
+
+```cpp
+MPI_Op raw_op;
+MPI_Op_create(&my_reduce_fn, /*commute=*/1, &raw_op);
+kamping::types::ScopedOp scoped{raw_op, /*owns=*/true};
+// MPI_Op_free called automatically when scoped goes out of scope
+```
+
+### Runtime Dispatch: `with_operation_functor`
+
+`with_operation_functor` maps a runtime `MPI_Op` handle to its C++ functor and invokes a callable:
+
+```cpp
+kamping::types::with_operation_functor(MPI_SUM, [](auto op) {
+    // op is kamping::ops::plus<>{}
+});
+```
+
+Unknown ops dispatch to `kamping::ops::null<>{}`.
+
+### Commutativity Tags
+
+User-defined operations can be tagged:
+
+```cpp
+kamping::ops::commutative      // ops::internal::commutative_tag
+kamping::ops::non_commutative  // ops::internal::non_commutative_tag
 ```
 
 ## When Using Full KaMPIng

@@ -168,7 +168,12 @@ public:
 
     MPI_Op op();
     T      operator()(T const& lhs, T const& rhs) const;
-    T      identity();
+
+    /// @brief Returns the identity element for this operation and data type.
+    ///
+    /// Only available when `is_builtin == true`. For custom operations this member does not exist;
+    /// callers must guard with `if constexpr (operation.is_builtin)`.
+    T identity();
 };
 
 #else
