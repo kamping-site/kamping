@@ -23,8 +23,8 @@
 TEST(ScopedFunctorOpTest, test_local_reduction_stl_operation) {
     {
         kamping::types::ScopedFunctorOp<true, int, std::plus<>> op(std::plus<>{});
-        std::array<int, 2>                                       a = {42, 69};
-        std::array<int, 2>                                       b = {24, 96};
+        std::array<int, 2>                                      a = {42, 69};
+        std::array<int, 2>                                      b = {24, 96};
         MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
@@ -35,8 +35,8 @@ TEST(ScopedFunctorOpTest, test_local_reduction_stl_operation) {
     }
     {
         kamping::types::ScopedFunctorOp<false, int, std::plus<>> op(std::plus<>{});
-        std::array<int, 2>                                        a = {42, 69};
-        std::array<int, 2>                                        b = {24, 96};
+        std::array<int, 2>                                       a = {42, 69};
+        std::array<int, 2>                                       b = {24, 96};
         MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
@@ -55,8 +55,8 @@ TEST(ScopedFunctorOpTest, test_local_reduction_function_object) {
     };
     {
         kamping::types::ScopedFunctorOp<true, int, MyOperation> op(MyOperation{});
-        std::array<int, 2>                                       a = {42, 69};
-        std::array<int, 2>                                       b = {24, 96};
+        std::array<int, 2>                                      a = {42, 69};
+        std::array<int, 2>                                      b = {24, 96};
         MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
@@ -67,8 +67,8 @@ TEST(ScopedFunctorOpTest, test_local_reduction_function_object) {
     }
     {
         kamping::types::ScopedFunctorOp<false, int, MyOperation> op(MyOperation{});
-        std::array<int, 2>                                        a = {42, 69};
-        std::array<int, 2>                                        b = {24, 96};
+        std::array<int, 2>                                       a = {42, 69};
+        std::array<int, 2>                                       b = {24, 96};
         MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);

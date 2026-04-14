@@ -198,8 +198,8 @@ public:
     }
 
 private:
-    Op                                              _op;
-    kamping::types::ScopedCallbackOp<commutative>  _operation;
+    Op                                            _op;
+    kamping::types::ScopedCallbackOp<commutative> _operation;
 };
 
 #endif // KAMPING_DOXYGEN_ONLY
