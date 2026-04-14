@@ -18,95 +18,96 @@
 #include <mpi.h>
 
 #include "kamping/mpi_ops.hpp"
+#include "kamping/types/reduce_ops.hpp"
 
-TEST(UserOperationWrapperTest, test_local_reduction_stl_operation) {
+TEST(ScopedFunctorOpTest, test_local_reduction_stl_operation) {
     {
-        kamping::internal::UserOperationWrapper<true, int, std::plus<>> op(std::plus<>{});
-        std::array<int, 2>                                              a = {42, 69};
-        std::array<int, 2>                                              b = {24, 96};
-        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get_mpi_op());
+        kamping::types::ScopedFunctorOp<true, int, std::plus<>> op(std::plus<>{});
+        std::array<int, 2>                                       a = {42, 69};
+        std::array<int, 2>                                       b = {24, 96};
+        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
         int commute;
-        MPI_Op_commutative(op.get_mpi_op(), &commute);
+        MPI_Op_commutative(op.get(), &commute);
         ASSERT_TRUE(commute);
     }
     {
-        kamping::internal::UserOperationWrapper<false, int, std::plus<>> op(std::plus<>{});
-        std::array<int, 2>                                               a = {42, 69};
-        std::array<int, 2>                                               b = {24, 96};
-        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get_mpi_op());
+        kamping::types::ScopedFunctorOp<false, int, std::plus<>> op(std::plus<>{});
+        std::array<int, 2>                                        a = {42, 69};
+        std::array<int, 2>                                        b = {24, 96};
+        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
         int commute;
-        MPI_Op_commutative(op.get_mpi_op(), &commute);
+        MPI_Op_commutative(op.get(), &commute);
         ASSERT_FALSE(commute);
     }
 }
 
-TEST(UserOperationWrapperTest, test_local_reduction_function_object) {
+TEST(ScopedFunctorOpTest, test_local_reduction_function_object) {
     struct MyOperation {
         int operator()(int const& a, int const& b) {
             return a + b;
         }
     };
     {
-        kamping::internal::UserOperationWrapper<true, int, MyOperation> op(MyOperation{});
-        std::array<int, 2>                                              a = {42, 69};
-        std::array<int, 2>                                              b = {24, 96};
-        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get_mpi_op());
+        kamping::types::ScopedFunctorOp<true, int, MyOperation> op(MyOperation{});
+        std::array<int, 2>                                       a = {42, 69};
+        std::array<int, 2>                                       b = {24, 96};
+        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
         int commute;
-        MPI_Op_commutative(op.get_mpi_op(), &commute);
+        MPI_Op_commutative(op.get(), &commute);
         ASSERT_TRUE(commute);
     }
     {
-        kamping::internal::UserOperationWrapper<false, int, MyOperation> op(MyOperation{});
-        std::array<int, 2>                                               a = {42, 69};
-        std::array<int, 2>                                               b = {24, 96};
-        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get_mpi_op());
+        kamping::types::ScopedFunctorOp<false, int, MyOperation> op(MyOperation{});
+        std::array<int, 2>                                        a = {42, 69};
+        std::array<int, 2>                                        b = {24, 96};
+        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
         int commute;
-        MPI_Op_commutative(op.get_mpi_op(), &commute);
+        MPI_Op_commutative(op.get(), &commute);
         ASSERT_FALSE(commute);
     }
 }
 
-TEST(UserOperationPtrWrapper, test_local_reduction_with_wrapped_function_ptr) {
-    kamping::internal::mpi_custom_operation_type op_ptr =
+TEST(ScopedCallbackOpTest, test_local_reduction_with_wrapped_function_ptr) {
+    kamping::types::ScopedCallbackOp<true>::callback_type op_ptr =
         [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
             int* invec_    = static_cast<int*>(invec);
             int* inoutvec_ = static_cast<int*>(inoutvec);
             std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, std::plus<>{});
         };
     {
-        kamping::internal::UserOperationPtrWrapper<true> op(op_ptr);
-        std::array<int, 2>                               a = {42, 69};
-        std::array<int, 2>                               b = {24, 96};
-        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get_mpi_op());
+        kamping::types::ScopedCallbackOp<true> op(op_ptr);
+        std::array<int, 2>                     a = {42, 69};
+        std::array<int, 2>                     b = {24, 96};
+        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
         int commute;
-        MPI_Op_commutative(op.get_mpi_op(), &commute);
+        MPI_Op_commutative(op.get(), &commute);
         EXPECT_TRUE(commute);
     }
     {
-        kamping::internal::UserOperationPtrWrapper<false> op(op_ptr);
-        std::array<int, 2>                                a = {42, 69};
-        std::array<int, 2>                                b = {24, 96};
-        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get_mpi_op());
+        kamping::types::ScopedCallbackOp<false> op(op_ptr);
+        std::array<int, 2>                      a = {42, 69};
+        std::array<int, 2>                      b = {24, 96};
+        MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
         std::array<int, 2> expected_result = {42 + 24, 69 + 96};
         EXPECT_EQ(b, expected_result);
 
         int commute;
-        MPI_Op_commutative(op.get_mpi_op(), &commute);
+        MPI_Op_commutative(op.get(), &commute);
         EXPECT_FALSE(commute);
     }
 }

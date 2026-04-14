@@ -17,7 +17,9 @@
 /// Provides:
 /// - `kamping::ops::` — functor types and commutativity tags
 /// - `kamping::types::mpi_operation_traits<Op, T>` — maps (functor, element type) → `MPI_Op`
-/// - `kamping::types::ScopedOp` — RAII wrapper for a custom `MPI_Op`
+/// - `kamping::types::ScopedOp` — RAII wrapper for an `MPI_Op`
+/// - `kamping::types::ScopedFunctorOp` — creates an `MPI_Op` from a default-constructible C++ functor
+/// - `kamping::types::ScopedCallbackOp` — creates an `MPI_Op` from a raw MPI callback function pointer
 /// - `kamping::types::with_operation_functor` — maps a runtime `MPI_Op` to its functor
 
 #pragma once
@@ -375,6 +377,9 @@ struct mpi_operation_traits<
 /// Analogous to `ScopedDatatype` for `MPI_Datatype`.
 class ScopedOp {
 public:
+    /// @brief Constructs an empty, non-owning handle (`MPI_OP_NULL`).
+    ScopedOp() noexcept : _op(MPI_OP_NULL), _owns(false) {}
+
     /// @brief Wrap an existing `MPI_Op`.
     /// @param op    The op to wrap.
     /// @param owns  If `true`, `MPI_Op_free` is called on destruction.
@@ -418,6 +423,116 @@ private:
 
     MPI_Op _op;
     bool   _owns;
+};
+
+// ---------------------------------------------------------------------------
+// ScopedFunctorOp — MPI_Op_create from a default-constructible C++ functor
+// ---------------------------------------------------------------------------
+
+/// @brief RAII handle that creates an `MPI_Op` from a default-constructible C++ functor.
+///
+/// Calls `MPI_Op_create` on construction and `MPI_Op_free` on destruction.
+/// The functor is invoked via `MPI_Op_create`'s callback and must be default-constructible
+/// (i.e. stateless or state carried via static variables). For capturing lambdas use `ScopedCallbackOp`.
+///
+/// @tparam is_commutative Whether the operation is commutative.
+/// @tparam T              Element type the functor operates on.
+/// @tparam Op             Functor type. Must be default-constructible and callable as `T(T const&, T const&)`.
+template <bool is_commutative, typename T, typename Op>
+class ScopedFunctorOp {
+    static_assert(
+        std::is_default_constructible_v<Op>,
+        "ScopedFunctorOp requires a default-constructible functor. Use ScopedCallbackOp for lambdas."
+    );
+    static_assert(std::is_invocable_r_v<T, Op, T const&, T const&>, "Op must be callable as T(T const&, T const&).");
+
+public:
+    /// @brief Creates an `MPI_Op` for the given functor.
+    ScopedFunctorOp(Op op) : _functor(std::move(op)), _op(_make_scoped_op()) {}
+
+    ScopedFunctorOp(ScopedFunctorOp const&)            = delete;
+    ScopedFunctorOp& operator=(ScopedFunctorOp const&) = delete;
+    ScopedFunctorOp(ScopedFunctorOp&&)                 = delete;
+    ScopedFunctorOp& operator=(ScopedFunctorOp&&)      = delete;
+
+    /// @returns The underlying `MPI_Op`. Do not free manually — the destructor does it.
+    MPI_Op get() const noexcept {
+        return _op.get();
+    }
+
+    /// @brief Applies the functor to two values.
+    T operator()(T const& lhs, T const& rhs) const {
+        return _functor(lhs, rhs);
+    }
+
+private:
+    /// @brief MPI callback: applies a default-constructed `Op` element-wise.
+    static void _execute(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
+        T* in    = static_cast<T*>(invec);
+        T* inout = static_cast<T*>(inoutvec);
+        std::transform(in, in + *len, inout, inout, Op{});
+    }
+
+    static ScopedOp _make_scoped_op() {
+        MPI_Op raw;
+        MPI_Op_create(_execute, static_cast<int>(is_commutative), &raw);
+        return ScopedOp{raw, true};
+    }
+
+    Op       _functor;
+    ScopedOp _op;
+};
+
+// ---------------------------------------------------------------------------
+// ScopedCallbackOp — MPI_Op_create from a raw MPI callback function pointer
+// ---------------------------------------------------------------------------
+
+/// @brief RAII handle that creates an `MPI_Op` from a raw MPI callback function pointer.
+///
+/// Calls `MPI_Op_create` on construction and `MPI_Op_free` on destruction.
+/// A default-constructed `ScopedCallbackOp` is empty (`MPI_OP_NULL`, non-owning).
+/// Supports move construction and assignment; the moved-from handle becomes empty.
+///
+/// Typically used for lambdas with captures, where the lambda is stored separately and a
+/// raw function pointer (via a static trampoline) is passed to `MPI_Op_create`.
+///
+/// @tparam is_commutative Whether the operation is commutative.
+template <bool is_commutative>
+class ScopedCallbackOp {
+public:
+    /// @brief The MPI callback signature expected by `MPI_Op_create`.
+    using callback_type = void (*)(void*, void*, int*, MPI_Datatype*);
+
+    /// @brief Constructs an empty, non-owning handle (`MPI_OP_NULL`).
+    ScopedCallbackOp() noexcept = default;
+
+    /// @brief Creates an `MPI_Op` for the given callback.
+    /// @param ptr Non-null MPI callback function pointer.
+    explicit ScopedCallbackOp(callback_type ptr) : _op(_make_scoped_op(ptr)) {
+        KAMPING_ASSERT(ptr != nullptr);
+    }
+
+    ScopedCallbackOp(ScopedCallbackOp const&)            = delete;
+    ScopedCallbackOp& operator=(ScopedCallbackOp const&) = delete;
+
+    /// @brief Move constructor. The moved-from handle becomes empty.
+    ScopedCallbackOp(ScopedCallbackOp&&) noexcept = default;
+    /// @brief Move assignment. Frees any currently owned op, then takes ownership.
+    ScopedCallbackOp& operator=(ScopedCallbackOp&&) noexcept = default;
+
+    /// @returns The underlying `MPI_Op` (`MPI_OP_NULL` if default-constructed). Do not free manually.
+    MPI_Op get() const noexcept {
+        return _op.get();
+    }
+
+private:
+    static ScopedOp _make_scoped_op(callback_type ptr) {
+        MPI_Op raw;
+        MPI_Op_create(ptr, static_cast<int>(is_commutative), &raw);
+        return ScopedOp{raw, true};
+    }
+
+    ScopedOp _op; // default-constructed: MPI_OP_NULL, non-owning
 };
 
 // ---------------------------------------------------------------------------

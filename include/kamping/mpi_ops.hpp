@@ -14,10 +14,11 @@
 /// @file
 /// @brief MPI reduction operation wrappers.
 ///
-/// The functor vocabulary (`kamping::ops::`), type traits (`mpi_operation_traits`), and the
-/// RAII `ScopedOp` handle live in `kamping/types/reduce_ops.hpp` (the `kamping-types` module)
-/// and are included from there. This file adds the higher-level wrappers (`UserOperationWrapper`,
-/// `UserOperationPtrWrapper`, `ReduceOperation`) that depend on the named-parameter system.
+/// The functor vocabulary (`kamping::ops::`), type traits (`mpi_operation_traits`),
+/// `ScopedOp`, `ScopedFunctorOp`, and `ScopedCallbackOp` live in
+/// `kamping/types/reduce_ops.hpp` (the `kamping-types` module) and are included from there.
+/// This file adds `ReduceOperation`, which selects among these building blocks based on
+/// the operation and commutative tag types.
 
 #pragma once
 
@@ -40,122 +41,6 @@ using kamping::types::mpi_operation_traits;
 
 // Bring with_operation_functor into kamping::internal (backward compat).
 using kamping::types::with_operation_functor;
-
-// ---------------------------------------------------------------------------
-// UserOperationWrapper — RAII MPI_Op_create for default-constructible functors
-// ---------------------------------------------------------------------------
-
-/// @brief type used by user-defined operations passed to \c MPI_Op_create
-using mpi_custom_operation_type = void (*)(void*, void*, int*, MPI_Datatype*);
-
-/// @brief Wrapper for a user-defined reduction operation based on a default-constructible functor.
-///
-/// Calls `MPI_Op_create` on construction and `MPI_Op_free` on destruction.
-/// @tparam is_commutative Whether the operation is commutative.
-/// @tparam T              Element type.
-/// @tparam Op             Functor type (must be default-constructible).
-template <bool is_commutative, typename T, typename Op>
-class UserOperationWrapper {
-public:
-    static_assert(
-        std::is_default_constructible_v<Op>,
-        "This wrapper only works with default constructible functors, i.e., not with lambdas."
-    );
-
-    void operator=(UserOperationWrapper<is_commutative, T, Op>&)  = delete;
-    void operator=(UserOperationWrapper<is_commutative, T, Op>&&) = delete;
-
-    /// @brief Creates an MPI operation for the specified functor.
-    /// @param op the functor to call for reduction.
-    UserOperationWrapper(Op&& op [[maybe_unused]]) : _operation(std::forward<Op>(op)) {
-        static_assert(std::is_invocable_r_v<T, Op, T const&, T const&>, "Type of custom operation does not match.");
-        MPI_Op_create(UserOperationWrapper<is_commutative, T, Op>::execute, is_commutative, &_mpi_op);
-    }
-
-    /// @brief Wrapper around the provided functor which is called by MPI.
-    static void execute(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
-        T* invec_    = static_cast<T*>(invec);
-        T* inoutvec_ = static_cast<T*>(inoutvec);
-        Op op{};
-        std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, op);
-    }
-
-    /// @brief Call the wrapped operation.
-    T operator()(T const& lhs, T const& rhs) const {
-        return _operation(lhs, rhs);
-    }
-
-    ~UserOperationWrapper() {
-        MPI_Op_free(&_mpi_op);
-    }
-
-    /// @returns The `MPI_Op` for this operation. Do not free manually — the destructor does it.
-    MPI_Op get_mpi_op() {
-        return _mpi_op;
-    }
-
-private:
-    Op     _operation;
-    MPI_Op _mpi_op;
-};
-
-// ---------------------------------------------------------------------------
-// UserOperationPtrWrapper — RAII MPI_Op_create for function pointers / lambdas
-// ---------------------------------------------------------------------------
-
-/// @brief Wrapper for a user-defined reduction operation given as a raw function pointer.
-///
-/// Calls `MPI_Op_create` on construction and `MPI_Op_free` on destruction.
-/// @tparam is_commutative Whether the operation is commutative.
-template <bool is_commutative>
-class UserOperationPtrWrapper {
-public:
-    UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative> const&) = delete;
-
-    /// @brief Move assignment operator.
-    UserOperationPtrWrapper<is_commutative>& operator=(UserOperationPtrWrapper<is_commutative>&& other_op) {
-        this->_mpi_op   = other_op._mpi_op;
-        this->_no_op    = other_op._no_op;
-        other_op._no_op = true;
-        return *this;
-    }
-
-    UserOperationPtrWrapper(UserOperationPtrWrapper<is_commutative> const&) = delete;
-
-    /// @brief Move constructor.
-    UserOperationPtrWrapper(UserOperationPtrWrapper<is_commutative>&& other_op) {
-        this->_mpi_op   = other_op._mpi_op;
-        this->_no_op    = other_op._no_op;
-        other_op._no_op = true;
-    }
-
-    /// @brief Creates an empty operation wrapper.
-    UserOperationPtrWrapper() : _no_op(true) {
-        _mpi_op = MPI_OP_NULL;
-    }
-
-    /// @brief Creates an MPI operation for the specified function pointer.
-    /// @param ptr the function pointer to call for reduction.
-    UserOperationPtrWrapper(mpi_custom_operation_type ptr) : _no_op(false) {
-        KAMPING_ASSERT(ptr != nullptr);
-        MPI_Op_create(ptr, is_commutative, &_mpi_op);
-    }
-
-    ~UserOperationPtrWrapper() {
-        if (!_no_op) {
-            MPI_Op_free(&_mpi_op);
-        }
-    }
-
-    /// @returns The `MPI_Op` for this operation. Do not free manually — the destructor does it.
-    MPI_Op get_mpi_op() {
-        return _mpi_op;
-    }
-
-private:
-    bool   _no_op;
-    MPI_Op _mpi_op;
-};
 
 // ---------------------------------------------------------------------------
 // ReduceOperation — high-level op wrapper used by collectives
@@ -214,11 +99,11 @@ public:
     }
 
     MPI_Op op() {
-        return _operation.get_mpi_op();
+        return _operation.get();
     }
 
 private:
-    UserOperationWrapper<commutative, T, Op> _operation;
+    kamping::types::ScopedFunctorOp<commutative, T, Op> _operation;
 };
 
 // Specialization: raw MPI_Op passthrough.
@@ -288,23 +173,24 @@ class ReduceOperation<T, Op, Commutative, std::enable_if_t<!std::is_default_cons
     );
 
 public:
-    ReduceOperation(Op&& op, Commutative) : _op(op), _operation() {
+    ReduceOperation(Op&& op, Commutative) : _op(op) {
         // Each lambda type is distinct, so a static Op per instantiation is safe for a single
-        // concurrent reduction. See UserOperationPtrWrapper for the general caveat.
+        // concurrent reduction.
         static Op func = _op;
 
-        mpi_custom_operation_type ptr = [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
-            T* invec_    = static_cast<T*>(invec);
-            T* inoutvec_ = static_cast<T*>(inoutvec);
-            std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, func);
-        };
-        _operation = {ptr};
+        typename kamping::types::ScopedCallbackOp<commutative>::callback_type ptr =
+            [](void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
+                T* invec_    = static_cast<T*>(invec);
+                T* inoutvec_ = static_cast<T*>(inoutvec);
+                std::transform(invec_, invec_ + *len, inoutvec_, inoutvec_, func);
+            };
+        _operation = kamping::types::ScopedCallbackOp<commutative>{ptr};
     }
     static constexpr bool is_builtin  = false;
     static constexpr bool commutative = std::is_same_v<Commutative, kamping::ops::internal::commutative_tag>;
 
     MPI_Op op() {
-        return _operation.get_mpi_op();
+        return _operation.get();
     }
 
     T operator()(T const& lhs, T const& rhs) const {
@@ -312,8 +198,8 @@ public:
     }
 
 private:
-    Op                                   _op;
-    UserOperationPtrWrapper<commutative> _operation;
+    Op                                              _op;
+    kamping::types::ScopedCallbackOp<commutative>  _operation;
 };
 
 #endif // KAMPING_DOXYGEN_ONLY
