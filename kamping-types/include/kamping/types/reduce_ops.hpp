@@ -224,7 +224,7 @@ struct mpi_operation_traits<
     T,
     std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::floating
-    )>> {
+    )> > {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = std::numeric_limits<T>::lowest();
     static MPI_Op         op() {
@@ -238,7 +238,7 @@ struct mpi_operation_traits<
     T,
     std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::floating
-    )>> {
+    )> > {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = std::numeric_limits<T>::max();
     static MPI_Op         op() {
@@ -253,7 +253,7 @@ struct mpi_operation_traits<
     std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::floating
         || builtin_type<T>::category == TypeCategory::complex
-    )>> {
+    )> > {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = 0;
     static MPI_Op         op() {
@@ -268,7 +268,7 @@ struct mpi_operation_traits<
     std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::floating
         || builtin_type<T>::category == TypeCategory::complex
-    )>> {
+    )> > {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = 1;
     static MPI_Op         op() {
@@ -282,7 +282,7 @@ struct mpi_operation_traits<
     T,
     std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::logical
-    )>> {
+    )> > {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = true;
     static MPI_Op         op() {
@@ -296,7 +296,7 @@ struct mpi_operation_traits<
     T,
     std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::logical
-    )>> {
+    )> > {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = false;
     static MPI_Op         op() {
@@ -310,7 +310,7 @@ struct mpi_operation_traits<
     T,
     std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::logical
-    )>> {
+    )> > {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = false;
     static MPI_Op         op() {
@@ -324,7 +324,7 @@ struct mpi_operation_traits<
     T,
     std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::byte
-    )>> {
+    )> > {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = ~(T{0});
     static MPI_Op         op() {
@@ -338,7 +338,7 @@ struct mpi_operation_traits<
     T,
     std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::byte
-    )>> {
+    )> > {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = T{0};
     static MPI_Op         op() {
@@ -352,7 +352,7 @@ struct mpi_operation_traits<
     T,
     std::enable_if_t<(std::is_same_v<S, void> || std::is_same_v<T, S>)&&(
         builtin_type<T>::category == TypeCategory::integer || builtin_type<T>::category == TypeCategory::byte
-    )>> {
+    )> > {
     static constexpr bool is_builtin = true;
     static constexpr T    identity   = T{0};
     static MPI_Op         op() {
