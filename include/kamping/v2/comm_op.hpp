@@ -15,4 +15,6 @@ struct gather {};
 struct gatherv {};
 struct scatter {};
 struct scatterv {};
+struct scan {};
+struct exscan {};
 } // namespace kamping::comm_op

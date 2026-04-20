@@ -172,4 +172,22 @@ void infer(comm_op::scatterv, SBuf const& sbuf, RBuf& rbuf, int root, MPI_Comm c
     }
 }
 
+template <mpi::experimental::send_buffer SBuf, mpi::experimental::recv_buffer RBuf>
+void infer(comm_op::scan, SBuf const& sbuf, RBuf& rbuf, MPI_Op, MPI_Comm) {
+    if constexpr (kamping::v2::deferred_recv_buf<RBuf>) {
+        if (mpi::experimental::ptr(sbuf) != MPI_IN_PLACE) {
+            rbuf.set_recv_count(static_cast<std::ptrdiff_t>(mpi::experimental::count(sbuf)));
+        }
+    }
+}
+
+template <mpi::experimental::send_buffer SBuf, mpi::experimental::recv_buffer RBuf>
+void infer(comm_op::exscan, SBuf const& sbuf, RBuf& rbuf, MPI_Op, MPI_Comm) {
+    if constexpr (kamping::v2::deferred_recv_buf<RBuf>) {
+        if (mpi::experimental::ptr(sbuf) != MPI_IN_PLACE) {
+            rbuf.set_recv_count(static_cast<std::ptrdiff_t>(mpi::experimental::count(sbuf)));
+        }
+    }
+}
+
 } // namespace kamping

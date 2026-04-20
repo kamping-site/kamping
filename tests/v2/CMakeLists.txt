@@ -69,6 +69,18 @@ kamping_register_mpi_test(
 )
 
 kamping_register_mpi_test(
+    test_v2_scan
+    FILES v2_scan_test.cpp
+    CORES 1 2 4
+)
+
+kamping_register_mpi_test(
+    test_v2_exscan
+    FILES v2_exscan_test.cpp
+    CORES 1 2 4
+)
+
+kamping_register_mpi_test(
     test_v2_info
     FILES info_test.cpp
     CORES 1
