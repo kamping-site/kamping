@@ -191,49 +191,37 @@ harder to review. Open a dedicated issue/PR for the MPI-4 large-count pass.
 
 - [ ] **`v2::psets` namespace** — port `psets::world` / `psets::self` constants from PR #772.
 
-- [ ] **`Group` at `mpi::experimental::` layer** (`include/mpi/group.hpp`) —
+- [x] **`Group` at `mpi::experimental::` layer** (`include/mpi/group.hpp`) —
   `group_view` (non-owning) + `group` (owning, move-only).
   `MPI_Group` added to `builtin_handle` in `handle.hpp`.
+  Core accessors implemented: `size()`, `rank()` (→ `optional`), `contains_self()`,
+  `compare()`, `native()`. `group::from_native()` is public (needed by `comm.hpp`).
+  `group` implicitly converts to `group_view`.
+  Re-exported in `kamping::v2::` via `include/kamping/v2/group.hpp`.
 
-  **`GroupEquality` enum** — `Identical` / `Similar` / `Unequal` (no ordering, no spaceship).
+  **Deferred** (not yet implemented):
+  - `translate_rank` / `translate_ranks`
+  - Set algebra: `intersection`, `difference`, `set_union`
+  - Subgroup selection: `include`, `exclude`, `include_ranges`, `exclude_ranges`, `rank_range`
 
-  **`group_accessors<Derived>` CRTP mixin** (shared by `group` and `group_view`):
-  - `size() → int`
-  - `rank() → std::optional<int>` — `nullopt` when calling process is not in the group
-    (MPI returns `MPI_UNDEFINED`; v1 exposed the magic value, v2 uses `optional`)
-  - `contains_self() → bool` — convenience over `rank().has_value()`
-  - `compare(group_view) → GroupEquality`
-  - `translate_rank(int, group_view) → std::optional<int>` — `nullopt` for non-members
-  - `translate_ranks(range<int>, group_view) → std::vector<int>` — `MPI_UNDEFINED` for
-    non-members; C++20 range input replaces v1's static_asserted iterator pair
-  - Set algebra (all return owning `group`):
-    - `intersection(group_view) → group`
-    - `difference(group_view) → group`
-    - `set_union(group_view) → group`
-  - Subgroup by rank selection (missing from v1):
-    - `include(range<int>) → group` — `MPI_Group_incl`; keeps only the listed ranks
-    - `exclude(range<int>) → group` — `MPI_Group_excl`; removes the listed ranks
-    - `include_ranges(range<rank_range>) → group` — `MPI_Group_range_incl`
-    - `exclude_ranges(range<rank_range>) → group` — `MPI_Group_range_excl`
-    - `struct rank_range { int first, last, stride = 1; }` replaces raw `int[][3]`
-  - `native() → MPI_Group`
-
-  **`group`** — owning, move-only; `static group::empty()` for `MPI_GROUP_EMPTY`.
-
-  **Dependency rule — `group.hpp` must not include `comm.hpp` or `session.hpp`.**
-  Group creation from those types is exposed as methods on the other side:
-  - `comm_view::group() → group` (`MPI_Comm_group`) — in `comm.hpp`
-  - `session::group_from_pset(pset) → group` (`MPI_Group_from_session_pset`) — in `session.hpp`
+  **Dependency rule** upheld — `group.hpp` does not include `comm.hpp` or `session.hpp`.
+  - `comm_view::group() → group` (`MPI_Comm_group`) — in `comm.hpp` ✓
+  - `session::group_from_pset(pset) → group` — deferred with session work
 
 ## Handle types
 
 - [x] **`mpi::experimental::status`** / **`status_view`** — done (`include/mpi/status.hpp`); re-exported from `kamping::v2::` via `include/kamping/v2/status.hpp`
-- [x] **`mpi::experimental::comm_view`** — non-owning wrapper (`include/mpi/comm.hpp`); CRTP mixin `comm_accessors` with `.rank()`, `.size()`, `.native()`
+- [x] **`mpi::experimental::comm_view`** — non-owning wrapper (`include/mpi/comm.hpp`); CRTP mixin `comm_accessors` with `.rank()`, `.size()`, `.native()`, `.group()`
 - [x] **`mpi::experimental::request_view`** — non-owning wrapper (`include/mpi/request.hpp`); re-exported from `kamping::v2::` via `include/kamping/v2/request.hpp`; used in `iresult_base` do_wait/do_test
-- [ ] **`kamping::v2::comm`** — owning communicator with RAII `MPI_Comm_free`. Prerequisite for
-  split/dup below. Extends `comm_accessors` like `comm_view`.
-- [ ] **`comm_view::dup()`** → `v2::comm` — `MPI_Comm_dup`; most common subcommunicator operation.
-- [ ] **`comm_view::split(color, key)`** → `v2::comm` — `MPI_Comm_split`.
+- [x] **`mpi::experimental::comm`** — owning RAII communicator (`include/mpi/comm.hpp`);
+  move-only; `MPI_Comm_free` on destruction; `from_native()` static adoption factory;
+  default constructor for use as MPI out-parameter; implicit conversion to `comm_view`.
+  Re-exported in `kamping::v2::` via `include/kamping/v2/comm.hpp`.
+- [x] **`dup` / `split` free functions** — `mpi::experimental::dup(Comm, NewComm&)` /
+  `split(Comm, color, key, NewComm&)` templated on `convertible_to_mpi_handle` /
+  `convertible_to_mpi_handle_ptr`; mirror C API in/out signature; return `void`.
+  `comm::dup()` / `comm::split()` member methods delegate to these.
+  `comm_view` intentionally has no `dup`/`split` — those are only on the owning `comm`.
 
 ## Request pool
 

@@ -85,3 +85,9 @@ kamping_register_mpi_test(
     FILES info_test.cpp
     CORES 1
 )
+
+kamping_register_mpi_test(
+    test_v2_group
+    FILES group_test.cpp
+    CORES 1 2 4
+)
