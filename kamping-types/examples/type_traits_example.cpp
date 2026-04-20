@@ -23,19 +23,36 @@
 
 #include <mpi.h>
 
-#include "kamping/types/builtin_types.hpp"
-#include "kamping/types/contiguous_type.hpp"
 #include "kamping/types/mpi_type_traits.hpp"
 #include "kamping/types/scoped_datatype.hpp"
+#include "kamping/types/std/unsafe/trivially_copyable.hpp"
+#include "kamping/types/std/utility.hpp"
 #include "kamping/types/struct_type.hpp"
 
-// Teach kamping-types how to handle std::pair via struct_type.
-// When using full KaMPIng, include <kamping/types/utility.hpp> instead.
+// -----------------------------------------------------------------------
+// Manual mpi_type_traits specialization for a user-defined struct.
+//
+// Specialize mpi_type_traits in namespace kamping::types to register any
+// type that struct_type can reflect (std::pair, std::tuple, or a
+// Boost.PFR-reflectable aggregate when KAMPING_ENABLE_REFLECTION is set).
+// -----------------------------------------------------------------------
+struct Particle {
+    float  position[3]; ///< x, y, z
+    double mass;
+};
+
 namespace kamping::types {
-template <typename A, typename B>
-struct mpi_type_traits<std::pair<A, B>, std::enable_if_t<has_static_type_v<A> && has_static_type_v<B>>>
-    : struct_type<std::pair<A, B>> {};
+template <>
+struct mpi_type_traits<Particle> : struct_type<Particle> {};
 } // namespace kamping::types
+
+static_assert(kamping::types::has_static_type_v<Particle>);
+
+// A plain trivially-copyable struct — registered automatically by trivially_copyable.hpp.
+struct Point3D {
+    float x, y, z;
+};
+static_assert(kamping::types::has_static_type_v<Point3D>);
 
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
