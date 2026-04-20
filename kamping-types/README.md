@@ -199,10 +199,3 @@ kamping::ops::commutative      // ops::internal::commutative_tag
 kamping::ops::non_commutative  // ops::internal::non_commutative_tag
 ```
 
-## When Using Full KaMPIng
-
-When linking against `kamping::kamping` instead of `kamping::types`, you additionally get:
-
-- `type_dispatcher<T>()` — also maps trivially-copyable types to `byte_serialized<T>` automatically (no opt-in needed)
-- `mpi_datatype<T>()` — returns a committed, environment-managed `MPI_Datatype`
-- `include/kamping/types/utility.hpp` and `include/kamping/types/tuple.hpp` — additionally specialize `kamping::mpi_type_traits` (the full KaMPIng trait) for `std::pair` and `std::tuple`; use these instead of the `kamping/types/std/` headers when working with the full KaMPIng communicator
