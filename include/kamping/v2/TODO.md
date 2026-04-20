@@ -572,18 +572,17 @@ borrows it safely via the existing `store_arg` `std::ref` path.
 
 ## kamping-types: standard-library type specializations
 
-v1 ships `include/kamping/types/utility.hpp` and `tuple.hpp` for `std::pair` and `std::tuple`
-(struct-type serialization). The kamping-types module has no equivalent yet.
+Done. Shipped in PR #802 (`kamping-types-std-specializations` branch, cherry-picked to main).
+Headers live under `kamping-types/include/kamping/types/std/` (not the `types/` root, to keep
+opt-in extensions separate from core infrastructure):
 
-- [ ] **`kamping/types/utility.hpp`** — specialize `kamping::types::mpi_type_traits` for
-  `std::pair<F, S>` via `struct_type` (mirroring v1).
-- [ ] **`kamping/types/tuple.hpp`** — same for `std::tuple<Ts...>`.
-- [ ] **`kamping/types/unsafe/utility.hpp`** — `std::pair<F, S>` via `byte_serialized` (ignores padding; mirrors v1 unsafe variant).
-- [ ] **`kamping/types/unsafe/tuple.hpp`** — `std::tuple<Ts...>` via `byte_serialized` (same caveat).
-- [ ] **`kamping/types/unsafe/trivially_copyable.hpp`** — opt-in catch-all partial specialization
-  for any `std::is_trivially_copyable_v<T>` type not already covered, using `byte_serialized<T>`.
-  Padding bytes are silently included — correct for packed structs, wrong for structs with
-  padding holes. Users opt in knowingly.
+- [x] **`kamping/types/std/utility.hpp`** — `std::pair<F, S>` via `struct_type` (safe)
+- [x] **`kamping/types/std/tuple.hpp`** — `std::tuple<Ts...>` via `struct_type` (safe)
+- [x] **`kamping/types/std/unsafe/utility.hpp`** — `std::pair<F, S>` via `byte_serialized`
+- [x] **`kamping/types/std/unsafe/tuple.hpp`** — `std::tuple<Ts...>` via `byte_serialized`
+- [x] **`kamping/types/std/unsafe/trivially_copyable.hpp`** — opt-in catch-all for any
+  `std::is_trivially_copyable_v<T>` not already covered; excludes `std::pair`/`std::tuple`
+  so it composes with the above headers.
 
 ## `recv_v<T>()` helper
 
