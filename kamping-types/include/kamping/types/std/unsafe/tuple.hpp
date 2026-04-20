@@ -21,6 +21,9 @@
 
 namespace kamping::types {
 
+/// @addtogroup kamping_types
+/// @{
+
 /// @brief Specialization of \ref kamping::types::mpi_type_traits for `std::tuple`, representing
 ///        the tuple as a flat sequence of `sizeof(std::tuple<Ts...>)` bytes using `MPI_BYTE`.
 ///
@@ -36,5 +39,7 @@ namespace kamping::types {
 template <typename... Ts>
 struct mpi_type_traits<std::tuple<Ts...>, std::enable_if_t<(has_static_type_v<Ts> && ...)>>
     : byte_serialized<std::tuple<Ts...>> {};
+
+/// @}
 
 } // namespace kamping::types

@@ -21,6 +21,9 @@
 
 namespace kamping::types {
 
+/// @addtogroup kamping_types
+/// @{
+
 /// @brief Specialization of \ref kamping::types::mpi_type_traits for `std::pair`, representing
 ///        the pair as a flat sequence of `sizeof(std::pair<First, Second>)` bytes using `MPI_BYTE`.
 ///
@@ -38,5 +41,7 @@ struct mpi_type_traits<
     std::pair<First, Second>,
     std::enable_if_t<has_static_type_v<First> && has_static_type_v<Second>>>
     : byte_serialized<std::pair<First, Second>> {};
+
+/// @}
 
 } // namespace kamping::types

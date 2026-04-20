@@ -21,6 +21,9 @@
 
 namespace kamping::types {
 
+/// @addtogroup kamping_types
+/// @{
+
 /// @brief Opt-in catch-all specialization of \ref kamping::types::mpi_type_traits for any
 ///        trivially copyable type not already covered by the built-in dispatcher.
 ///
@@ -41,5 +44,7 @@ struct mpi_type_traits<
         std::is_trivially_copyable<T>::value && !has_auto_dispatched_type_v<T>
         && !kamping::internal::is_std_pair<T>::value && !kamping::internal::is_std_tuple<T>::value>>
     : byte_serialized<T> {};
+
+/// @}
 
 } // namespace kamping::types
