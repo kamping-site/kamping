@@ -41,9 +41,9 @@ template <typename T>
 struct mpi_type_traits<
     T,
     std::enable_if_t<
-        std::is_trivially_copyable<T>::value && !has_auto_dispatched_type_v<T>
-        && !kamping::internal::is_std_pair<T>::value && !kamping::internal::is_std_tuple<T>::value>>
-    : byte_serialized<T> {};
+        std::is_trivially_copyable<T>::value
+        && !has_auto_dispatched_type_v<T> && !kamping::internal::is_std_pair<T>::value
+        && !kamping::internal::is_std_tuple<T>::value>> : byte_serialized<T> {};
 
 /// @}
 
