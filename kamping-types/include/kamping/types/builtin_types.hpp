@@ -45,6 +45,7 @@ constexpr bool category_has_to_be_committed(TypeCategory category) {
         case TypeCategory::contiguous:
             return true;
     }
+    return true;
 }
 
 /// @brief Checks if the type \p T is a builtin MPI type.
