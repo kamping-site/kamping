@@ -13,6 +13,7 @@
 
 /// @file
 /// @brief Forward declarations for contiguous_type and byte_serialized to break include cycles.
+// IWYU pragma: private, include "kamping/types/contiguous_type.hpp"
 
 #pragma once
 #include <cstddef>

@@ -44,6 +44,8 @@ MPI_Send(data, 1, arr_type.data_type(), dest, tag, MPI_COMM_WORLD);
 
 ## Headers
 
+### Core
+
 | Header | Contents |
 |--------|----------|
 | `kamping/types/builtin_types.hpp` | `TypeCategory`, `builtin_type<T>`, `is_builtin_type_v<T>` |
@@ -53,6 +55,18 @@ MPI_Send(data, 1, arr_type.data_type(), dest, tag, MPI_COMM_WORLD);
 | `kamping/types/scoped_datatype.hpp` | `ScopedDatatype` — RAII commit/free wrapper |
 | `kamping/types/kabool.hpp` | `kabool` — bool wrapper safe for MPI containers |
 | `kamping/types/reduce_ops.hpp` | `kamping::ops::` functors, `mpi_operation_traits<Op,T>`, `ScopedOp`, `with_operation_functor` |
+
+### Opt-in standard library specializations (`kamping/types/std/`)
+
+These headers register standard library types with `mpi_type_traits`. Include only what you need; the safe and unsafe variants for the same type are mutually exclusive.
+
+| Header | Type | How |
+|--------|------|-----|
+| `kamping/types/std/utility.hpp` | `std::pair<F,S>` | `struct_type` — models field layout; field types must have a static MPI type |
+| `kamping/types/std/tuple.hpp` | `std::tuple<Ts...>` | `struct_type` — models field layout; all element types must have a static MPI type |
+| `kamping/types/std/unsafe/utility.hpp` | `std::pair<F,S>` | `byte_serialized` — flat byte copy; ignores padding |
+| `kamping/types/std/unsafe/tuple.hpp` | `std::tuple<Ts...>` | `byte_serialized` — flat byte copy; ignores padding |
+| `kamping/types/std/unsafe/trivially_copyable.hpp` | any `std::is_trivially_copyable<T>` not already registered | `byte_serialized` — catch-all; excludes `std::pair`/`std::tuple` so it composes with the above |
 
 ## Type Dispatch Rules
 
@@ -69,17 +83,31 @@ Use `has_static_type_v<T>` to check at compile time whether a type is handled.
 
 ## Extending for Custom Types
 
-Specialize `mpi_type_traits<T>` to support your own types:
+For `std::pair` and `std::tuple`, include the ready-made headers from `kamping/types/std/`:
 
 ```cpp
-struct Point { float x, y, z; };
+#include "kamping/types/std/utility.hpp"  // std::pair via struct_type (safe)
+#include "kamping/types/std/tuple.hpp"    // std::tuple via struct_type (safe)
+
+static_assert(kamping::types::has_static_type_v<std::pair<int, double>>); // true
+```
+
+For your own types, specialize `mpi_type_traits<T>` directly:
+
+```cpp
+struct Particle { float position[3]; double mass; };
+struct Point    { float x, y, z; };  // tightly packed — byte serialization is safe
 
 namespace kamping::types {
-// Option 1: use struct_type (requires std::pair/std::tuple, or Boost.PFR reflection)
+// Option 1: struct_type — correct field-aware layout (requires Boost.PFR or std::pair/tuple)
 template <>
-struct mpi_type_traits<std::pair<int, double>> : struct_type<std::pair<int, double>> {};
+struct mpi_type_traits<Particle> : struct_type<Particle> {};
 
-// Option 2: build the type manually
+// Option 2: byte_serialized — flat byte copy; only correct when there is no padding
+template <>
+struct mpi_type_traits<Point> : byte_serialized<Point> {};
+
+// Option 3: build the MPI_Datatype manually for full control
 template <>
 struct mpi_type_traits<Point> {
     static constexpr bool has_to_be_committed = true;
@@ -90,6 +118,15 @@ struct mpi_type_traits<Point> {
     }
 };
 } // namespace kamping::types
+```
+
+To register all trivially copyable types at once, include the catch-all:
+
+```cpp
+#include "kamping/types/std/unsafe/trivially_copyable.hpp"
+
+struct Point { float x, y, z; };
+static_assert(kamping::types::has_static_type_v<Point>); // true — registered automatically
 ```
 
 ## Reduction Operations
@@ -162,11 +199,3 @@ kamping::ops::commutative      // ops::internal::commutative_tag
 kamping::ops::non_commutative  // ops::internal::non_commutative_tag
 ```
 
-## When Using Full KaMPIng
-
-When linking against `kamping::kamping` instead of `kamping::types`, you additionally get:
-
-- `type_dispatcher<T>()` — also maps trivially-copyable types to `byte_serialized<T>`
-- `mpi_datatype<T>()` — returns a committed, environment-managed `MPI_Datatype`
-- `include/kamping/types/utility.hpp` — `mpi_type_traits` for `std::pair`
-- `include/kamping/types/tuple.hpp` — `mpi_type_traits` for `std::tuple`
