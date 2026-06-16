@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.25)
 project(kamping-types LANGUAGES CXX)
 
 if (TARGET kamping::types)
-  return()
-endif()
+    return()
+endif ()
 
 add_library(kamping_types INTERFACE)
 target_include_directories(kamping_types INTERFACE include)
