@@ -154,6 +154,7 @@ MPI_Datatype struct_type<T, Lookup>::data_type() {
     KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_create_struct failed");
     MPI_Datatype resized_type;
     err = MPI_Type_create_resized(type, 0, sizeof(T), &resized_type);
+    MPI_Type_free(&type);
     KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_create_resized failed");
     return resized_type;
 }
