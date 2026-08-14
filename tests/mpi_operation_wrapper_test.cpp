@@ -122,9 +122,7 @@ struct PickGreaterFirst {
 
 TEST(ScopedFunctorOpTest, test_local_reduction_ordinary_pair_value_type) {
     kamping::types::ScopedFunctorOp<true, std::pair<int, int>, PickGreaterFirst> op(PickGreaterFirst{});
-    std::array<std::pair<int, int>, 2>                                           a = {
-        std::pair<int, int>{1, 10}, std::pair<int, int>{2, 20}
-    };
+    std::array<std::pair<int, int>, 2> a = {std::pair<int, int>{1, 10}, std::pair<int, int>{2, 20}};
     std::array<std::pair<int, int>, 2> b = {std::pair<int, int>{5, 50}, std::pair<int, int>{0, 0}};
     // std::pair<int,int> matches MPI_2INT's layout (two packed ints).
     MPI_Reduce_local(a.data(), b.data(), 2, MPI_2INT, op.get());
