@@ -27,7 +27,9 @@
 #include <algorithm>
 #include <functional>
 #include <limits>
+#include <new>
 #include <type_traits>
+#include <utility>
 
 #include <mpi.h>
 
@@ -436,7 +438,9 @@ private:
 /// (i.e. stateless or state carried via static variables). For capturing lambdas use `ScopedCallbackOp`.
 ///
 /// @tparam is_commutative Whether the operation is commutative.
-/// @tparam T              Element type the functor operates on.
+/// @tparam T              Element type the functor operates on. Must be destructible and
+///                        move- or copy-constructible. Notably T need *not* be assignable --
+///                        see _execute()'s comment.
 /// @tparam Op             Functor type. Must be default-constructible and callable as `T(T const&, T const&)`.
 template <bool is_commutative, typename T, typename Op>
 class ScopedFunctorOp {
@@ -445,6 +449,11 @@ class ScopedFunctorOp {
         "ScopedFunctorOp requires a default-constructible functor. Use ScopedCallbackOp for lambdas."
     );
     static_assert(std::is_invocable_r_v<T, Op, T const&, T const&>, "Op must be callable as T(T const&, T const&).");
+    static_assert(
+        std::is_destructible_v<T> && (std::is_move_constructible_v<T> || std::is_copy_constructible_v<T>),
+        "T must be destructible and move- or copy-constructible (T need not be assignable -- "
+        "_execute() combines by destroying and reconstructing elements in place, not by assignment)."
+    );
 
 public:
     /// @brief Creates an `MPI_Op` for the given functor.
@@ -467,10 +476,33 @@ public:
 
 private:
     /// @brief MPI callback: applies a default-constructed `Op` element-wise.
+    ///
+    /// Combines by copy-constructing the winner into a local first (`Op` returns `T` by value),
+    /// then destroying `inout[i]` and reconstructing it in place via an explicit destructor
+    /// call and placement-new -- not by assignment. (kamping-types targets C++17, so this uses
+    /// the underlying C++17-legal mechanism directly rather than C++20's
+    /// std::destroy_at/std::construct_at, which are thin wrappers around the same thing.) This
+    /// means T only needs to be destructible and move-/copy-constructible, not assignable: e.g.
+    /// std::pair<const K, V> (a std::map's/flat_hash_map's value type) has a deleted
+    /// `operator=` but a perfectly usable copy constructor, and works here.
+    ///
+    /// Deliberately *not* gated on std::is_trivially_copyable_v<T>: that trait is a poor proxy
+    /// for what's needed. Even an ordinary std::pair<int, int> is never trivially copyable,
+    /// because the standard never specifies pair's assignment operators as defaulted/trivial
+    /// (see https://stackoverflow.com/q/58283694), even though copying two ints plainly is
+    /// trivial -- requiring it would reject the common case. The actual precondition -- that
+    /// invec[i]/inout[i] may be read as a live T, i.e. T's MPI-transported byte representation
+    /// is meaningful without going through a constructor -- already had to hold for any T
+    /// reaching this callback under the old assignment-based implementation too (it also read
+    /// `*in`/`*inout` as `T const&`); this function adds no new requirement on top of that.
     static void _execute(void* invec, void* inoutvec, int* len, MPI_Datatype* /*datatype*/) {
         T* in    = static_cast<T*>(invec);
         T* inout = static_cast<T*>(inoutvec);
-        std::transform(in, in + *len, inout, inout, Op{});
+        for (int i = 0; i < *len; ++i) {
+            T combined = Op{}(in[i], inout[i]);
+            inout[i].~T();
+            ::new (static_cast<void*>(inout + i)) T(std::move(combined));
+        }
     }
 
     static ScopedOp _make_scoped_op() {
