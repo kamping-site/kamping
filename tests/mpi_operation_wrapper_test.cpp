@@ -13,6 +13,7 @@
 
 #include <array>
 #include <type_traits>
+#include <utility>
 
 #include <gtest/gtest.h>
 #include <mpi.h>
@@ -77,6 +78,56 @@ TEST(ScopedFunctorOpTest, test_local_reduction_function_object) {
         MPI_Op_commutative(op.get(), &commute);
         ASSERT_FALSE(commute);
     }
+}
+
+// Copy-constructible but not assignable (mirrors std::map's/absl::flat_hash_map's value type,
+// std::pair<const K, V>). ScopedFunctorOp::_execute() combines by destroying and
+// reconstructing elements in place, not by assignment, so this must work end-to-end.
+namespace {
+struct NonAssignable {
+    int value;
+    NonAssignable(int v) : value(v) {}
+    NonAssignable(NonAssignable const&)            = default;
+    NonAssignable& operator=(NonAssignable const&) = delete;
+    NonAssignable& operator=(NonAssignable&&)      = delete;
+};
+struct PickGreater {
+    NonAssignable operator()(NonAssignable const& a, NonAssignable const& b) const {
+        return a.value > b.value ? a : b;
+    }
+};
+} // namespace
+
+TEST(ScopedFunctorOpTest, test_local_reduction_non_assignable_value_type) {
+    kamping::types::ScopedFunctorOp<true, NonAssignable, PickGreater> op(PickGreater{});
+    std::array<NonAssignable, 2>                                      a = {NonAssignable{42}, NonAssignable{69}};
+    std::array<NonAssignable, 2>                                      b = {NonAssignable{24}, NonAssignable{96}};
+    // NonAssignable wraps a single int; reinterpret its bytes as MPI_INT for this local test.
+    MPI_Reduce_local(a.data(), b.data(), 2, MPI_INT, op.get());
+    EXPECT_EQ(b[0].value, 42);
+    EXPECT_EQ(b[1].value, 96);
+}
+
+// std::pair is never std::is_trivially_copyable_v -- its assignment operators aren't specified
+// as defaulted/trivial even for two plain ints (see https://stackoverflow.com/q/58283694) --
+// so ScopedFunctorOp must not require that trait, only destructibility and
+// move-/copy-constructibility. This is the regression guard for that.
+namespace {
+struct PickGreaterFirst {
+    std::pair<int, int> operator()(std::pair<int, int> const& a, std::pair<int, int> const& b) const {
+        return a.first > b.first ? a : b;
+    }
+};
+} // namespace
+
+TEST(ScopedFunctorOpTest, test_local_reduction_ordinary_pair_value_type) {
+    kamping::types::ScopedFunctorOp<true, std::pair<int, int>, PickGreaterFirst> op(PickGreaterFirst{});
+    std::array<std::pair<int, int>, 2> a = {std::pair<int, int>{1, 10}, std::pair<int, int>{2, 20}};
+    std::array<std::pair<int, int>, 2> b = {std::pair<int, int>{5, 50}, std::pair<int, int>{0, 0}};
+    // std::pair<int,int> matches MPI_2INT's layout (two packed ints).
+    MPI_Reduce_local(a.data(), b.data(), 2, MPI_2INT, op.get());
+    EXPECT_EQ(b[0], (std::pair<int, int>{5, 50}));
+    EXPECT_EQ(b[1], (std::pair<int, int>{2, 20}));
 }
 
 TEST(ScopedCallbackOpTest, test_local_reduction_with_wrapped_function_ptr) {
