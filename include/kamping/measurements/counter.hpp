@@ -71,10 +71,12 @@ public:
     }
 
     /// @brief Aggregate the measurement entries globally.
+    /// @param max_bytes_at_root Upper bound on the number of bytes gathered at the root rank per collective
+    /// operation. Must be the same on all ranks, see AggregatedTree.
     /// @return AggregatedTree object which encapsulates the aggregated data in a tree structure representing the
     /// measurements.
-    auto aggregate() {
-        AggregatedTree<DataType> aggregated_tree(_tree.root, _comm);
+    auto aggregate(std::size_t max_bytes_at_root = internal::default_max_bytes_at_root) {
+        AggregatedTree<DataType> aggregated_tree(_tree.root, _comm, max_bytes_at_root);
         return aggregated_tree;
     }
 
@@ -97,9 +99,11 @@ public:
     /// timing data. Printer must possess a member print() which accepts a
     /// EvaluationTreeNode as parameter.
     /// @param printer Printer object used to output the aggregated timing data.
+    /// @param max_bytes_at_root Upper bound on the number of bytes gathered at the root rank per collective
+    /// operation. Must be the same on all ranks, see AggregatedTree.
     template <typename Printer>
-    void aggregate_and_print(Printer&& printer) {
-        auto const aggregated_tree = aggregate();
+    void aggregate_and_print(Printer&& printer, std::size_t max_bytes_at_root = internal::default_max_bytes_at_root) {
+        auto const aggregated_tree = aggregate(max_bytes_at_root);
         if (_comm.is_root()) {
             printer.print(aggregated_tree.root());
         }

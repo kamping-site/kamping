@@ -184,12 +184,13 @@ public:
     /// node globally. The measured durations are aggregated over all participating ranks and the result is stored at
     /// the root rank of the given communicator. The used aggregation operations can be specified via
     /// TimerTreeNode::data_aggregation_operations().
-    /// The durations are aggregated node by node.
     ///
+    /// @param max_bytes_at_root Upper bound on the number of bytes gathered at the root rank per collective
+    /// operation. Must be the same on all ranks, see AggregatedTree.
     /// @return AggregatedTree object which encapsulated the aggregated data in a tree structure representing the
     /// measurements.
-    auto aggregate() {
-        AggregatedTree<Duration> aggregated_tree(_timer_tree.root, _comm);
+    auto aggregate(std::size_t max_bytes_at_root = internal::default_max_bytes_at_root) {
+        AggregatedTree<Duration> aggregated_tree(_timer_tree.root, _comm, max_bytes_at_root);
         return aggregated_tree;
     }
 
@@ -218,9 +219,11 @@ public:
     /// @tparam Printer Type of printer which is used to output the aggregated timing data. Printer must possess a
     /// member print() which accepts a AggregatedTreeNode as parameter.
     /// @param printer Printer object used to output the aggregated timing data.
+    /// @param max_bytes_at_root Upper bound on the number of bytes gathered at the root rank per collective
+    /// operation. Must be the same on all ranks, see AggregatedTree.
     template <typename Printer>
-    void aggregate_and_print(Printer&& printer) {
-        auto const aggregated_tree = aggregate();
+    void aggregate_and_print(Printer&& printer, std::size_t max_bytes_at_root = internal::default_max_bytes_at_root) {
+        auto const aggregated_tree = aggregate(max_bytes_at_root);
         if (_comm.is_root()) {
             printer.print(aggregated_tree.root());
         }
