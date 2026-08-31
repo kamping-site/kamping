@@ -1,0 +1,45 @@
+<map id="include/kamping/environment.hpp" name="include/kamping/environment.hpp">
+<area shape="rect" id="Node000001" title="Wrapper for MPI functions that don&#39;t require a communicator." alt="" coords="475,5,719,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,68,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="474,33,292,52,88,81,82,82,81,77,87,76,291,47,474,27"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="225,152,283,177"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="475,29,263,49,177,64,148,72,133,81,127,91,128,101,134,111,145,120,176,137,212,150,210,155,174,142,142,125,130,114,123,103,122,90,129,77,146,67,176,58,262,44,474,24"/>
+<area shape="rect" id="Node000004" href="$assertion__levels_8hpp_source.html" title=" " alt="" coords="143,79,359,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="542,33,321,78,320,73,541,28"/>
+<area shape="rect" id="Node000005" href="$checking__casts_8hpp.html" title="Helper functions that make casts safer." alt="" coords="607,79,816,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="616,28,682,69,680,74,614,33"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="870,152,1078,177"/>
+<area shape="poly" id="edge18_Node000001_Node000011" title=" " alt="" coords="719,24,928,44,1013,59,1042,67,1059,77,1065,87,1066,97,1056,117,1036,134,1013,148,1010,143,1033,129,1052,113,1060,96,1060,89,1055,81,1040,72,1012,64,927,49,719,30"/>
+<area shape="rect" id="Node000013" href="$error__handling_8hpp.html" title="Code for error handling." alt="" coords="840,79,1044,104"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="653,28,873,73,872,78,652,33"/>
+<area shape="rect" id="Node000016" href="$span_8hpp_source.html" title=" " alt="" coords="1231,79,1373,104"/>
+<area shape="poly" id="edge19_Node000001_Node000016" title=" " alt="" coords="710,28,1218,79,1217,84,710,33"/>
+<area shape="rect" id="Node000019" href="$thread__levels_8hpp.html" title="MPI thread support levels." alt="" coords="384,79,583,104"/>
+<area shape="poly" id="edge23_Node000001_Node000019" title=" " alt="" coords="580,33,515,74,512,69,577,28"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="307,152,374,177"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="642,107,388,154,387,149,641,101"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="398,152,457,177"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="664,107,471,154,470,149,662,102"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="481,152,568,177"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="682,107,569,149,567,145,680,102"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="787,152,846,177"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="730,102,790,142,787,147,727,106"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="1103,152,1195,177"/>
+<area shape="poly" id="edge9_Node000005_Node000010" title=" " alt="" coords="789,101,1090,149,1089,155,789,107"/>
+<area shape="poly" id="edge10_Node000005_Node000011" title=" " alt="" coords="754,101,919,146,917,151,753,107"/>
+<area shape="rect" id="Node000012" href="$noexcept_8hpp.html" title="Defines the macro KAMPING_NOEXCEPT to be used instad of noexcept." alt="" coords="593,152,763,177"/>
+<area shape="poly" id="edge11_Node000005_Node000012" title=" " alt="" coords="708,105,692,141,687,139,703,103"/>
+<area shape="poly" id="edge16_Node000013_Node000003" title=" " alt="" coords="840,105,828,107,680,118,563,123,446,133,298,155,297,149,446,127,563,118,679,112,827,101,839,100"/>
+<area shape="poly" id="edge15_Node000013_Node000009" title=" " alt="" coords="923,106,850,147,848,143,921,102"/>
+<area shape="poly" id="edge17_Node000013_Node000011" title=" " alt="" coords="950,103,966,139,961,141,945,105"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="1219,152,1275,177"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="998,101,1206,149,1205,154,997,107"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="1300,152,1387,177"/>
+<area shape="poly" id="edge14_Node000013_Node000015" title=" " alt="" coords="1013,101,1287,149,1286,155,1012,107"/>
+<area shape="poly" id="edge22_Node000016_Node000010" title=" " alt="" coords="1278,106,1187,149,1185,144,1276,102"/>
+<area shape="rect" id="Node000017" title=" " alt="" coords="1411,152,1481,177"/>
+<area shape="poly" id="edge20_Node000016_Node000017" title=" " alt="" coords="1326,102,1411,143,1409,148,1324,106"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="1505,152,1576,177"/>
+<area shape="poly" id="edge21_Node000016_Node000018" title=" " alt="" coords="1341,101,1493,146,1491,151,1340,107"/>
+<area shape="poly" id="edge24_Node000019_Node000003" title=" " alt="" coords="447,107,297,153,296,148,446,101"/>
+</map>

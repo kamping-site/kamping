@@ -1,0 +1,29 @@
+<map id="kamping&#45;types/include/kamping/types/reduce_ops.hpp" name="kamping&#45;types/include/kamping/types/reduce_ops.hpp">
+<area shape="rect" id="Node000001" title="MPI reduction operation functor vocabulary, type traits, and RAII handle." alt="" coords="312,5,483,60"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,115,91,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="312,56,103,111,94,113,92,108,102,105,311,51"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="115,115,202,141"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="331,63,202,113,200,108,329,58"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="227,115,285,141"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="359,62,286,110,283,106,356,58"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="310,115,359,141"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="382,62,353,105,348,102,377,59"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="327,196,419,221"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="396,61,379,183,374,182,391,60"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="673,115,733,141"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="484,52,570,76,661,105,667,108,665,113,659,111,568,81,482,57"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="444,196,503,221"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="411,59,465,182,460,185,406,61"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="757,115,965,141"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="484,48,792,110,791,115,482,54"/>
+<area shape="rect" id="Node000010" href="$kamping-types_2include_2kamping_2types_2builtin__types_8hpp.html" title="Mapping of C++ datatypes to builtin MPI types." alt="" coords="485,108,648,148"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="446,58,522,99,519,104,444,62"/>
+<area shape="poly" id="edge12_Node000010_Node000006" title=" " alt="" coords="521,150,415,193,413,188,519,146"/>
+<area shape="poly" id="edge13_Node000010_Node000008" title=" " alt="" coords="546,150,500,189,496,185,542,146"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="527,196,606,221"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="569,148,569,182,564,182,564,148"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="630,196,701,221"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="592,146,641,185,638,189,589,150"/>
+<area shape="rect" id="Node000013" href="$kamping-types_2include_2kamping_2types_2kabool_8hpp.html" title="Boolean wrapper type for use with MPI containers." alt="" coords="725,196,918,221"/>
+<area shape="poly" id="edge14_Node000010_Node000013" title=" " alt="" coords="628,145,772,189,770,194,627,151"/>
+</map>

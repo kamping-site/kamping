@@ -1,0 +1,7 @@
+\_form#0=29x10:$i > 0$
+\_form#1=60x11:$0, \ldots, i - 1$
+\_form#2=33x11:$0, ..., i$
+\_form#3=5x9:$i$
+\_form#4=33x11:$0, ...,
+i$
+\_form#5=203x14:$ new\_rank=(rank + distance) \% size $

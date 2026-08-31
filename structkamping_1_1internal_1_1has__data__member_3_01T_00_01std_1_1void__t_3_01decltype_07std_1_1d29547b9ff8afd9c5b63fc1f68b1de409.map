@@ -1,0 +1,5 @@
+<map id="kamping::internal::has_data_member&lt; T, std::void_t&lt; decltype(std::declval&lt; T &gt;().data())&gt; &gt;" name="kamping::internal::has_data_member&lt; T, std::void_t&lt; decltype(std::declval&lt; T &gt;().data())&gt; &gt;">
+<area shape="rect" id="Node000001" title="Helper to decide if data type has .data() method." alt="" coords="5,79,229,148"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="61,5,173,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,44,120,79,115,79,115,44"/>
+</map>

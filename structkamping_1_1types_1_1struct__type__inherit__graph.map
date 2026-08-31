@@ -1,0 +1,7 @@
+<map id="kamping::types::struct_type&lt; T, Lookup &gt;" name="kamping::types::struct_type&lt; T, Lookup &gt;">
+<area shape="rect" id="Node000001" title="Constructs an MPI_Datatype for a struct&#45;like type." alt="" coords="5,78,172,118"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1mpi__type__traits_3_01std_1_1pair_3_01First_00_01Second_01_4_00_01std_1_1enable8225356c1b4dd1afe36e838bc902e3db.html" title="Specialization of the mpi_type_traits type trait for std::pair, which represents the pair as a sequen..." alt="" coords="220,5,443,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,75,219,68,220,73,186,80"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1mpi__type__traits_3_01std_1_1tuple_3_01Ts_8_8_8_01_4_00_01std_1_1enable__if__t_71629c10fd8c4629866f18448d725d4c.html" title="Specialization of the mpi_type_traits type trait for std::tuple, which represents the tuple as MPI st..." alt="" coords="227,114,435,183"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="186,116,228,124,227,130,185,121"/>
+</map>

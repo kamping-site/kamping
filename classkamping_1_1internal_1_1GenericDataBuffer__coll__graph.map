@@ -1,0 +1,7 @@
+<map id="kamping::internal::GenericDataBuffer&lt; MemberType, TParameterType, parameter_type_param, modifiability, ownership, buffer_type_param &gt;" name="kamping::internal::GenericDataBuffer&lt; MemberType, TParameterType, parameter_type_param, modifiability, ownership, buffer_type_param &gt;">
+<area shape="rect" id="Node000001" title="A more generic version of a DataBuffer which stores an object of type." alt="" coords="328,27,573,111"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1internal_1_1CopyMoveEnabler.html" title=" " alt="" coords="5,5,280,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="294,48,328,52,328,57,293,53"/>
+<area shape="rect" id="Node000003" href="$classkamping_1_1internal_1_1Extractable.html" title="Base class containing logic to verify whether a buffer&#39;s data has already been extracted...." alt="" coords="71,85,215,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="228,92,327,80,328,86,228,97"/>
+</map>

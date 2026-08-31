@@ -1,0 +1,5 @@
+<map id="kamping::PooledRequest&lt; IndexType &gt;" name="kamping::PooledRequest&lt; IndexType &gt;">
+<area shape="rect" id="Node000001" title="Wrapper for MPI requests owned by a RequestPool." alt="" coords="37,93,219,133"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1RequestBase.html" title=" " alt="" coords="5,5,251,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,59,131,93,125,93,125,59"/>
+</map>
