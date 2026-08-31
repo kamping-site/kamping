@@ -3,6 +3,9 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10949643.svg)](https://doi.org/10.5281/zenodo.10949643)
 [![HiRSE Code Promo Badge](https://img.shields.io/badge/Promo-8db427?label=HiRSE&labelColor=005aa0&link=https%3A%2F%2Fgo.fzj.de%2FCodePromo)](https://go.fzj.de/CodePromo)
 
+> [!TIP]
+> Check out the next generation of KaMPIng, [KaMPIng-v2](https://github.com/kamping-site/kamping-v2), adding C++20 support, GPU capabilities and a more ergonomic interface.
+
 # KaMPIng: Karlsruhe MPI next generation :rocket:
 
 ![KaMPIng logo](./docs/images/logo.svg)
