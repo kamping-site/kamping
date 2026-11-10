@@ -1,0 +1,7 @@
+var structkamping_1_1mpi__type__traits_3_01T_00_01std_1_1enable__if__t_3_01has__auto__dispatched__type__v_3_01T_01_4_01_4_01_4 =
+[
+    [ "base", "structkamping_1_1mpi__type__traits_3_01T_00_01std_1_1enable__if__t_3_01has__auto__dispatched__type__v_3_01T_01_4_01_4_01_4.html#a6b15eb3d59fc01ff9d41e41b6debf6aa", null ],
+    [ "data_type", "structkamping_1_1mpi__type__traits_3_01T_00_01std_1_1enable__if__t_3_01has__auto__dispatched__type__v_3_01T_01_4_01_4_01_4.html#a9c77664efc913db4bffeee749914f360", null ],
+    [ "category", "structkamping_1_1mpi__type__traits_3_01T_00_01std_1_1enable__if__t_3_01has__auto__dispatched__type__v_3_01T_01_4_01_4_01_4.html#a5d9396c94c2f86fd84a973b06b26db19", null ],
+    [ "has_to_be_committed", "structkamping_1_1mpi__type__traits_3_01T_00_01std_1_1enable__if__t_3_01has__auto__dispatched__type__v_3_01T_01_4_01_4_01_4.html#a7387d2d4ca8f33cceb1926ac633eb0bb", null ]
+];

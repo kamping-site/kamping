@@ -1,0 +1,11 @@
+<map id="kamping::measurements::internal::ScalarOrVectorPrinter&lt; T &gt;" name="kamping::measurements::internal::ScalarOrVectorPrinter&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Able to print either a single value or a vector of value to the given outstream." alt="" coords="5,332,271,372"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="86,244,190,269"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,283,141,332,135,332,135,283"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="65,155,211,195"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="141,208,141,244,135,244,135,208"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="53,80,223,105"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="141,119,141,155,135,155,135,119"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="85,5,191,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="141,45,141,80,135,80,135,45"/>
+</map>

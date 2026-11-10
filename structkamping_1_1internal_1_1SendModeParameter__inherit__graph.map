@@ -1,0 +1,5 @@
+<map id="kamping::internal::SendModeParameter&lt; SendModeTag &gt;" name="kamping::internal::SendModeParameter&lt; SendModeTag &gt;">
+<area shape="rect" id="Node000001" title="Parameter object for send_mode encapsulating the send mode compile&#45;time tag." alt="" coords="5,93,245,148"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1internal_1_1CopyMoveEnabler.html" title="Class optionally containing a copy constructor while supporting move assignment/construction." alt="" coords="26,5,225,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="128,59,128,93,123,93,123,59"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structkamping_1_1types_1_1contiguous__type.html" title="Constructs a contiguous MPI type of N elements of type T using MPI_Type_contiguous." alt="" coords="5,91,207,131"/>
+<area shape="rect" id="Node000001" href="$structkamping_1_1types_1_1byte__serialized.html" title=" " alt="" coords="277,5,437,60"/>
+<area shape="poly" id="edge35_Node000000_Node000001" title=" " alt="" coords="183,85,275,55,277,60,184,90"/>
+<area shape="rect" id="Node000004" href="$structkamping_1_1types_1_1byte__serialized.html" title=" " alt="" coords="273,163,441,217"/>
+<area shape="poly" id="edge37_Node000000_Node000004" title=" " alt="" coords="184,133,273,161,272,166,183,138"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1types_1_1mpi__type__traits_3_01std_1_1pair_3_01First_00_01Second_01_4_00_01std_f8a7e5555a90ec160759b6e9ad480abe.html" title="Specialization of kamping::types::mpi_type_traits for std::pair, representing the pair as a flat sequ..." alt="" coords="507,35,728,134"/>
+<area shape="poly" id="edge36_Node000001_Node000002" title=" " alt="" coords="450,49,507,60,506,65,449,54"/>
+<area shape="rect" id="Node000005" href="$structkamping_1_1types_1_1mpi__type__traits_3_01std_1_1tuple_3_01Ts_8_8_8_01_4_00_01std_1_1enablc772da40cb4a44cff6f6f6546d44f493.html" title="Specialization of kamping::types::mpi_type_traits for std::tuple, representing the tuple as an MPI st..." alt="" coords="526,176,709,260"/>
+<area shape="poly" id="edge38_Node000004_Node000005" title=" " alt="" coords="455,198,526,206,525,211,454,203"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1types_1_1struct__type.html" title=" " alt="" coords="270,84,443,139"/>
+<area shape="poly" id="edge39_Node000003_Node000002" title=" " alt="" coords="457,98,506,93,507,99,457,104"/>
+<area shape="rect" id="Node000006" href="$structkamping_1_1types_1_1struct__type.html" title=" " alt="" coords="255,242,459,282"/>
+<area shape="poly" id="edge40_Node000006_Node000005" title=" " alt="" coords="472,240,525,231,526,236,473,245"/>
+</map>

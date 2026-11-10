@@ -1,0 +1,9 @@
+<map id="kamping&#45;types/include/kamping/types/scoped_datatype.hpp" name="kamping&#45;types/include/kamping/types/scoped_datatype.hpp">
+<area shape="rect" id="Node000001" title="RAII wrapper that commits an MPI_Datatype on construction and frees it on destruction." alt="" coords="33,5,205,60"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,115,65,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="97,62,57,107,53,103,94,59"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="90,115,149,141"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="122,60,122,101,117,101,117,60"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="173,108,343,148"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="160,58,220,98,217,103,157,62"/>
+</map>

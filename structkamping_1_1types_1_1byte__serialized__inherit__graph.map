@@ -1,0 +1,11 @@
+<map id="kamping::types::byte_serialized&lt; T &gt;" name="kamping::types::byte_serialized&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Constructs a type serialized as a sequence of sizeof(T) bytes using MPI_BYTE." alt="" coords="260,129,419,169"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1mpi__type__traits_3_01std_1_1pair_3_01First_00_01Second_01_4_00_01std_1_1enable8225356c1b4dd1afe36e838bc902e3db.html" title="Specialization of the mpi_type_traits type trait for std::pair, which represents the pair as a sequen..." alt="" coords="495,5,717,89"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="405,121,494,87,496,92,407,126"/>
+<area shape="rect" id="Node000004" href="$structkamping_1_1mpi__type__traits_3_01std_1_1tuple_3_01Ts_8_8_8_01_4_00_01std_1_1enable__if__t_71629c10fd8c4629866f18448d725d4c.html" title="Specialization of the mpi_type_traits type trait for std::tuple, which represents the tuple as MPI st..." alt="" coords="502,114,710,183"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="432,146,502,146,502,151,432,151"/>
+<area shape="rect" id="Node000005" href="$structkamping_1_1types_1_1mpi__type__traits_3_01T_00_01std_1_1enable__if__t_3_01std_1_1is__trivic5ca8e96a71008bbc2b5842708653523.html" title="Opt&#45;in catch&#45;all specialization of kamping::types::mpi_type_traits for any trivially copyable type no..." alt="" coords="467,207,745,335"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="398,172,468,205,466,210,396,177"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1types_1_1contiguous__type.html" title=" " alt="" coords="5,129,212,169"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,146,260,146,260,151,226,151"/>
+</map>

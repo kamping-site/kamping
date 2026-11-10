@@ -1,0 +1,7 @@
+<map id="kamping::measurements::internal::TimerTreeNode&lt; TimePoint, Duration &gt;" name="kamping::measurements::internal::TimerTreeNode&lt; TimePoint, Duration &gt;">
+<area shape="rect" id="Node000001" title="Class representing a node in the timer tree. Each node represents a time measurement (or multiple wit..." alt="" coords="364,57,551,111"/>
+<area shape="rect" id="Node000002" href="$classkamping_1_1measurements_1_1internal_1_1TreeNode.html" title=" " alt="" coords="50,5,271,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="285,56,364,68,363,73,284,61"/>
+<area shape="rect" id="Node000003" href="$classkamping_1_1measurements_1_1internal_1_1NodeMeasurements.html" title=" " alt="" coords="5,99,316,154"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="329,100,363,95,364,100,330,105"/>
+</map>

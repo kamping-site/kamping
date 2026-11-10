@@ -1,0 +1,14 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structkamping_1_1types_1_1contiguous__type.html" title=" " alt="" coords="5,121,212,161"/>
+<area shape="rect" id="Node000001" href="$structkamping_1_1types_1_1byte__serialized.html" title="Constructs a type serialized as a sequence of sizeof(T) bytes using MPI_BYTE." alt="" coords="264,121,423,161"/>
+<area shape="poly" id="edge29_Node000000_Node000001" title=" " alt="" coords="226,139,264,139,264,144,226,144"/>
+<area shape="rect" id="Node000002" href="$structkamping_1_1mpi__type__traits_3_01std_1_1pair_3_01First_00_01Second_01_4_00_01std_1_1enable8225356c1b4dd1afe36e838bc902e3db.html" title="Specialization of the mpi_type_traits type trait for std::pair, which represents the pair as a sequen..." alt="" coords="503,99,725,183"/>
+<area shape="poly" id="edge30_Node000001_Node000002" title=" " alt="" coords="437,139,502,139,502,144,437,144"/>
+<area shape="rect" id="Node000004" href="$structkamping_1_1mpi__type__traits_3_01std_1_1tuple_3_01Ts_8_8_8_01_4_00_01std_1_1enable__if__t_71629c10fd8c4629866f18448d725d4c.html" title="Specialization of the mpi_type_traits type trait for std::tuple, which represents the tuple as MPI st..." alt="" coords="510,5,718,75"/>
+<area shape="poly" id="edge31_Node000001_Node000004" title=" " alt="" coords="404,114,474,86,510,72,512,77,476,90,405,118"/>
+<area shape="rect" id="Node000005" href="$structkamping_1_1types_1_1mpi__type__traits_3_01T_00_01std_1_1enable__if__t_3_01std_1_1is__trivic5ca8e96a71008bbc2b5842708653523.html" title="Opt&#45;in catch&#45;all specialization of kamping::types::mpi_type_traits for any trivially copyable type no..." alt="" coords="475,208,753,336"/>
+<area shape="poly" id="edge32_Node000001_Node000005" title=" " alt="" coords="399,165,482,206,480,210,397,170"/>
+<area shape="rect" id="Node000003" href="$structkamping_1_1types_1_1struct__type.html" title="Constructs an MPI_Datatype for a struct&#45;like type." alt="" coords="260,39,427,79"/>
+<area shape="poly" id="edge33_Node000003_Node000002" title=" " alt="" coords="423,80,503,105,502,110,422,85"/>
+<area shape="poly" id="edge34_Node000003_Node000004" title=" " alt="" coords="440,49,510,45,510,50,441,55"/>
+</map>
