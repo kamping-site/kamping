@@ -21,7 +21,7 @@
 
 #include <mpi.h>
 
-#include "kamping/kassert/kassert.hpp"
+#include "kamping/types/kassert/kassert.hpp"
 #ifdef KAMPING_ENABLE_REFLECTION
     #include <boost/pfr.hpp>
 #endif
@@ -151,11 +151,11 @@ MPI_Datatype struct_type<T, Lookup>::data_type() {
     MPI_Datatype type;
     int          err =
         MPI_Type_create_struct(static_cast<int>(kamping::internal::tuple_size<T>), blocklens, disp, mpi_types, &type);
-    KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_create_struct failed");
+    KAMPING_TYPES_ASSERT(err == MPI_SUCCESS, "MPI_Type_create_struct failed");
     MPI_Datatype resized_type;
     err = MPI_Type_create_resized(type, 0, sizeof(T), &resized_type);
     MPI_Type_free(&type);
-    KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_create_resized failed");
+    KAMPING_TYPES_ASSERT(err == MPI_SUCCESS, "MPI_Type_create_resized failed");
     return resized_type;
 }
 

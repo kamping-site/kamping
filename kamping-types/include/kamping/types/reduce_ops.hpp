@@ -33,8 +33,8 @@
 
 #include <mpi.h>
 
-#include "kamping/kassert/kassert.hpp"
 #include "kamping/types/builtin_types.hpp"
+#include "kamping/types/kassert/kassert.hpp"
 
 // ---------------------------------------------------------------------------
 // kamping::ops — functor vocabulary
@@ -418,7 +418,7 @@ private:
     void _free() noexcept {
         if (_owns) {
             int const err = MPI_Op_free(&_op);
-            KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Op_free failed");
+            KAMPING_TYPES_ASSERT(err == MPI_SUCCESS, "MPI_Op_free failed");
             _owns = false;
         }
     }
@@ -541,7 +541,7 @@ public:
     /// @brief Creates an `MPI_Op` for the given callback.
     /// @param ptr Non-null MPI callback function pointer.
     explicit ScopedCallbackOp(callback_type ptr) : _op(_make_scoped_op(ptr)) {
-        KAMPING_ASSERT(ptr != nullptr);
+        KAMPING_TYPES_ASSERT(ptr != nullptr);
     }
 
     ScopedCallbackOp(ScopedCallbackOp const&)            = delete;

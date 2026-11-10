@@ -146,57 +146,60 @@ endif ()
 # * Level 60: Heavy assertions = assertions that introduce overhead which renders some library operations infeasible
 #   when invoked with any significant work load.
 #
-# Assertion levels can be set explicitly using the -DKAMPING_ASSERTION_LEVEL=... flag. If no level is set explicitly, we
-# set it to 10 (exceptions only) in Release mode and 30 (up to normal assertions) in Debug mode.
+# Set it with -DKAMPING_ASSERTION_LEVEL=<name or number>. By default, it is 30 (normal) in Debug mode and 10 (exceptions
+# only) otherwise. It is the default level of KaMPIng's kassert instance (kamping::kassert), so it applies to every
+# target linking to kamping::kamping; a single target can override it with the KAMPING_ASSERT_ASSERTION_LEVEL property.
+# It is also the default level of kamping-types (see KAMPING_TYPES_ASSERTION_LEVEL there).
 set(KAMPING_ASSERTION_LEVEL
-    $<IF:$<CONFIG:Debug>,"normal","exceptions">
+    $<IF:$<CONFIG:Debug>,normal,exceptions>
     CACHE STRING "Assertion level"
 )
-set_property(
-    CACHE KAMPING_ASSERTION_LEVEL
-    PROPERTY STRINGS
-             none
-             exceptions
-             light
-             normal
-             light_communication
-             heavy_communication
-             heavy
+set(kamping_assertion_level_names
+    none
+    exceptions
+    light
+    normal
+    light_communication
+    heavy_communication
+    heavy
 )
-message(STATUS "Assertion level: ${KAMPING_ASSERTION_LEVEL}")
+set_property(CACHE KAMPING_ASSERTION_LEVEL PROPERTY STRINGS ${kamping_assertion_level_names})
 
-# If KAMPING_ASSERTION_LEVEL defaults to the generator expression, ${KAMPING_ASSERTION_LEVEL} may not be quoted.
-# However, if it is explicitly set to some constant string, it must be quoted. Thus, all levels are listed twice, once
-# with and without quotes. @todo find a better solution for this problem
-string(
-    CONCAT KAMPING_ASSERT_ASSERTION_LEVEL
-           $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"none">:0>
-           $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","none">:0>
-           $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"exceptions">:10>
-           $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","exceptions">:10>
-           $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"light">:20>
-           $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","light">:20>
-           $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"normal">:30>
-           $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","normal">:30>
-           $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"light_communication">:40>
-           $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","light_communication">:40>
-           $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy_communication">:50>
-           $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy_communication">:50>
-           $<$<STREQUAL:${KAMPING_ASSERTION_LEVEL},"heavy">:60>
-           $<$<STREQUAL:"${KAMPING_ASSERTION_LEVEL}","heavy">:60>
-)
-target_compile_definitions(kamping INTERFACE -DKAMPING_ASSERT_ASSERTION_LEVEL=${KAMPING_ASSERT_ASSERTION_LEVEL})
+# Older versions used $<IF:$<CONFIG:Debug>,"normal","exceptions"> as default, which may still be in existing caches.
+string(REPLACE "\"" "" kamping_assertion_level "${KAMPING_ASSERTION_LEVEL}")
+if (kamping_assertion_level MATCHES "^[0-9]+$")
+    set(kamping_assertion_level_number ${kamping_assertion_level})
+else ()
+    if (NOT kamping_assertion_level MATCHES "^\\$<" AND NOT kamping_assertion_level IN_LIST
+                                                        kamping_assertion_level_names
+    )
+        message(FATAL_ERROR "Invalid KAMPING_ASSERTION_LEVEL '${KAMPING_ASSERTION_LEVEL}'. Use a number or one of: "
+                            "${kamping_assertion_level_names}"
+        )
+    endif ()
+    # The level may be a generator expression, so map names to numbers with generator expressions, too.
+    set(kamping_assertion_level_number "")
+    set(number 0)
+    foreach (name IN LISTS kamping_assertion_level_names)
+        string(APPEND kamping_assertion_level_number "$<$<STREQUAL:${kamping_assertion_level},${name}>:${number}>")
+        math(EXPR number "${number} + 10")
+    endforeach ()
+endif ()
+message(STATUS "KaMPIng assertion level: ${KAMPING_ASSERTION_LEVEL}")
 
 FetchContent_Declare(
     kamping_kassert
     GIT_REPOSITORY https://github.com/kamping-site/kassert
-    GIT_TAG v1.0.0
+    GIT_TAG v1.1.0
 )
+block()
 set(KASSERT_VENDOR_ID kamping)
 set(KASSERT_CXX_NAMESPACE kamping::kassert)
 set(KASSERT_INCLUDE_SUBDIR kamping/kassert)
 set(KASSERT_PREFIX KAMPING_ASSERT)
+set(KASSERT_DEFAULT_ASSERTION_LEVEL ${kamping_assertion_level_number})
 FetchContent_MakeAvailable(kamping_kassert)
+endblock()
 
 target_link_libraries(kamping_base INTERFACE kamping::kassert)
 
@@ -249,6 +252,7 @@ if (PROJECT_IS_TOP_LEVEL OR KAMPING_BUILD_EXAMPLES_AND_TESTS)
         CACHE BOOL "" FORCE
     )
 endif ()
+set(KAMPING_TYPES_DEFAULT_ASSERTION_LEVEL ${kamping_assertion_level_number})
 add_subdirectory(kamping-types)
 target_link_libraries(kamping_base INTERFACE kamping::types)
 

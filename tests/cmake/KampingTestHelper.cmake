@@ -4,10 +4,7 @@ include(GoogleTest)
 function (kamping_set_kassert_flags KAMPING_TARGET_NAME)
     cmake_parse_arguments("KAMPING" "NO_EXCEPTION_MODE" "" "" ${ARGN})
 
-    # Use global assertion level
-    target_compile_definitions(
-        ${KAMPING_TARGET_NAME} PRIVATE -DKAMPING_ASSERT_ASSERTION_LEVEL=${KAMPING_ASSERT_ASSERTION_LEVEL}
-    )
+    # The assertion level is the global KAMPING_ASSERTION_LEVEL, which kamping::kassert applies by default.
 
     # Explicitly specify exception mode for tests, default to no exception mode
     if (NOT KAMPING_NO_EXCEPTION_MODE)

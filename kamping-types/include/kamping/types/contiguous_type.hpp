@@ -21,7 +21,7 @@
 
 #include <mpi.h>
 
-#include "kamping/kassert/kassert.hpp"
+#include "kamping/types/kassert/kassert.hpp"
 // contiguous_type and byte_serialized structs are declared in the fwd header;
 // include it here so consumers only need this single header.
 #include "kamping/types/detail/contiguous_type_fwd.hpp"
@@ -48,7 +48,7 @@ MPI_Datatype contiguous_type<T, N, Lookup>::data_type() {
     }
     int const count = static_cast<int>(N);
     int const err   = MPI_Type_contiguous(count, base_type, &type);
-    KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_contiguous failed");
+    KAMPING_TYPES_ASSERT(err == MPI_SUCCESS, "MPI_Type_contiguous failed");
     return type;
 }
 
