@@ -19,7 +19,7 @@
 
 #include <mpi.h>
 
-#include "kamping/kassert/kassert.hpp"
+#include "kamping/types/kassert/kassert.hpp"
 
 namespace kamping::types {
 
@@ -39,7 +39,7 @@ public:
         // FIXME: ensure that we don't commit/free named types
         if (type != MPI_DATATYPE_NULL) {
             int const err = MPI_Type_commit(&_type);
-            KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_commit failed");
+            KAMPING_TYPES_ASSERT(err == MPI_SUCCESS, "MPI_Type_commit failed");
         }
     }
     /// @brief Deleted copy constructor.
@@ -64,7 +64,7 @@ public:
     ~ScopedDatatype() {
         if (_type != MPI_DATATYPE_NULL) {
             int const err = MPI_Type_free(&_type);
-            KAMPING_ASSERT(err == MPI_SUCCESS, "MPI_Type_free failed");
+            KAMPING_TYPES_ASSERT(err == MPI_SUCCESS, "MPI_Type_free failed");
         }
     }
 };
